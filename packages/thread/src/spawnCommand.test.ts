@@ -1,7 +1,6 @@
-// src\utils\spawn.test.ts
-/* eslint-disable jest/no-conditional-expect */
+// src\utils\spawnCommand.test.ts
 
-process.argv = [...originalProcessArgv, '--verbose'];
+/* eslint-disable jest/no-conditional-expect */
 
 // Mock the spawn function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
 jest.unstable_mockModule('node:child_process', async () => {
@@ -15,14 +14,14 @@ jest.unstable_mockModule('node:child_process', async () => {
     }),
   };
 });
-
 const { spawn } = await import('node:child_process');
-import { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
+
+import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
 import { jest } from '@jest/globals';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/jest-utils';
 
-import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
-import { spawnCommand } from './spawn.js';
+import { spawnCommand } from './spawnCommand.js';
 
 await setupTest('SpawnCommand', false);
 
@@ -38,11 +37,11 @@ describe('Spawn', () => {
   });
 
   it('should spawn a command successfully -nosudo', async () => {
-    process.argv = ['node', 'spawn.test.js', '--verbose', '-nosudo'];
+    process.argv = ['node', 'spawnCommand.test.js', '--verbose', '--nosudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
-    const result = await spawnCommand(command, args);
+    const result = await spawnCommand(command, args, 'install', 'test-package');
 
     expect(spawn).toHaveBeenCalled();
     expect(result).toBe(true);
@@ -54,7 +53,7 @@ describe('Spawn', () => {
   }, 10000);
 
   it('should mock a spawn command with sudo', async () => {
-    process.argv = ['node', 'spawn.test.js', '--verbose', '-sudo'];
+    process.argv = ['node', 'spawnCommand.test.js', '--verbose', '--sudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
@@ -67,7 +66,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    const result = await spawnCommand(command, args);
+    const result = await spawnCommand(command, args, 'uninstall', 'test-package');
 
     expect(result).toBe(true);
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command sudo with`));

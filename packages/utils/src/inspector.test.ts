@@ -47,7 +47,7 @@ describe('Inspector', () => {
     process.argv.push('--verbose');
     const { Inspector } = await import('./inspector.js');
     delete (global as any).gc;
-    const inspector = new Inspector('Inspector', true);
+    const inspector = new Inspector(undefined, true);
     expect(inspector['debug']).toBe(true);
     expect(inspector['verbose']).toBe(true);
     const debugSpy = jest.spyOn((inspector as any)['log'], 'debug');

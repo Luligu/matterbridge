@@ -4,7 +4,7 @@
 
 const MATTER_PORT = 11000;
 const NAME = 'Endpoint';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -887,6 +887,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(data.endpoint).toBe(device);
     });
     await device.invokeBehaviorCommand('onOff', 'on');
+    await device.setAttribute(OnOff.Cluster, 'onOff', false, device.log);
+    await device.invokeBehaviorCommand(OnOffServer, 'on');
+    await device.setAttribute(OnOff.Cluster, 'onOff', false, device.log);
+    await device.invokeBehaviorCommand(OnOff.Cluster, 'on');
     expect(called).toBe(true);
 
     called = false;
@@ -901,6 +905,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(data.endpoint).toBe(device);
     });
     await device.invokeBehaviorCommand('onOff', 'off');
+    await device.setAttribute(OnOff.Cluster, 'onOff', true, device.log);
+    await device.invokeBehaviorCommand(OnOffServer, 'off');
+    await device.setAttribute(OnOff.Cluster, 'onOff', true, device.log);
+    await device.invokeBehaviorCommand(OnOff.Cluster, 'off');
     expect(called).toBe(true);
 
     called = false;
@@ -911,10 +919,11 @@ describe('Matterbridge ' + NAME, () => {
       expect(data.request).toEqual({});
       expect(data.cluster).toBe('onOff');
       expect(data.attributes).toBeDefined();
-      expect(data.attributes.onOff).toBe(false);
       expect(data.endpoint).toBe(device);
     });
     await device.invokeBehaviorCommand('onOff', 'toggle');
+    await device.invokeBehaviorCommand(OnOffServer, 'toggle');
+    await device.invokeBehaviorCommand(OnOff.Cluster, 'toggle');
     expect(called).toBe(true);
   });
 

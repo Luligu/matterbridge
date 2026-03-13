@@ -27,7 +27,7 @@ import EventEmitter from 'node:events';
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
-import { hasParameter } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, db, idn, LogLevel, nf, rs, TimestampFormat } from 'node-ansi-logger';
 

@@ -22,54 +22,24 @@
  * limitations under the License.
  */
 
-import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
+import { inspectError } from '@matterbridge/utils/error';
+import { getGlobalNodeModules } from '@matterbridge/utils/npm-prefix';
+import { LogLevel } from 'node-ansi-logger';
 
-import { getGlobalNodeModules, hasParameter, inspectError } from '@matterbridge/utils';
-import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
+import { WorkerWrapper } from './workerWrapper.js';
 
-import { BroadcastServer } from './broadcastServer.js';
-import { logWorkerInfo, parentLog, parentPost, threadLogger } from './worker.js';
-
-const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-worker') || hasParameter('verbose-worker');
-const verbose = hasParameter('verbose') || hasParameter('verbose-worker');
-const name = 'MatterbridgeGlobalPrefix';
-
-// Send init message
-if (!isMainThread && parentPort) {
-  parentPost({ type: 'init', threadId, threadName: workerData.threadName, success: true });
-  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} initialized.`);
-}
-
-// Broadcast server
-const log = new AnsiLogger({
-  logName: name,
-  logNameColor: MAGENTA,
-  logTimestampFormat: TimestampFormat.TIME_MILLIS,
-  logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO,
+export default new WorkerWrapper('GlobalPrefix', async (worker) => {
+  let prefix: string;
+  worker.logger(LogLevel.INFO, `Starting global prefix check...`);
+  let success = false;
+  try {
+    prefix = await getGlobalNodeModules();
+    worker.server.request({ type: 'matterbridge_global_prefix', src: `matterbridge`, dst: 'matterbridge', params: { prefix } });
+    worker.logger(LogLevel.INFO, `Global node_modules directory: ${prefix}`);
+    success = true;
+  } catch (error) {
+    const errorMessage = inspectError(worker.log, `Failed to get global node modules`, error);
+    worker.logger(LogLevel.ERROR, errorMessage);
+  }
+  return success;
 });
-const server = new BroadcastServer('matterbridge', log);
-
-// Log worker info
-if (verbose) logWorkerInfo(log, verbose);
-
-let prefix: string;
-threadLogger(name, LogLevel.INFO, `Starting global prefix check...`);
-let success = false;
-try {
-  prefix = await getGlobalNodeModules();
-  server.request({ type: 'matterbridge_global_prefix', src: `matterbridge`, dst: 'matterbridge', params: { prefix } });
-  threadLogger(name, LogLevel.INFO, `Global node_modules directory: ${prefix}`);
-  success = true;
-} catch (error) {
-  const errorMessage = inspectError(log, `Failed to get global node modules`, error);
-  threadLogger(name, LogLevel.ERROR, errorMessage);
-}
-
-// Close the broadcast server
-server.close();
-
-// Send exit message
-if (!isMainThread && parentPort) {
-  parentPost({ type: 'exit', threadId, threadName: workerData.threadName, success });
-  if (debug) parentLog(name, LogLevel.INFO, `Worker ${workerData.threadName}:${threadId} exiting with success: ${success}.`);
-}

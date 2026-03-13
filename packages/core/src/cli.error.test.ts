@@ -1,6 +1,6 @@
 // src\cli.error.test.ts
 const NAME = 'CliError';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
 

@@ -32,12 +32,18 @@ npm run deepClean || true
 echo "4 - Setting ownership of directories..."
 ls .
 sudo chown -R node:node /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
-sudo chmod +x bin/*.js
+# sudo chmod +x bin/*.js
 
-echo "5 - Building the package..."
+echo "5 - Installing dependencies..."
 npm install --no-fund --no-audit
+
+echo "6 - Building the package..."
 npm run build
+
+echo "7 - Linking the package globally..."
 sudo npm link --no-fund --no-audit
+
+echo "8 - Checking for outdated packages..."
 npm outdated || true
 
-echo "6 - Setup completed!"
+echo "9 - Setup completed!"

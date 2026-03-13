@@ -1,6 +1,6 @@
 /**
- * @description This file contains the spawn functions.
- * @file spawn.ts
+ * @description This file contains the spawnCommand function.
+ * @file spawnCommand.ts
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.2.0
@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-import { BroadcastServer } from '@matterbridge/thread';
-import { hasParameter } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
+import { BroadcastServer } from './broadcastServer.js';
 
 /**
  * Spawns a child process with the given command and arguments.
@@ -38,8 +39,9 @@ export async function spawnCommand(command: string, args: string[], packageComma
   const { spawn } = await import('node:child_process');
 
   /** Broadcast server */
-  const debug = hasParameter('debug') || hasParameter('verbose');
-  const verbose = hasParameter('verbose');
+  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-spawn') || hasParameter('verbose-spawn');
+  const verbose = hasParameter('verbose') || hasParameter('verbose-spawn');
   const log = new AnsiLogger({ logName: 'Spawn', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
   const server = new BroadcastServer('spawn', log);
 
@@ -52,6 +54,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
     }
   };
 
+  // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
   if (verbose) log.debug(`Spawning command: ${command} with ${args.join(' ')} ${packageCommand} ${packageName}`);
 
   /*

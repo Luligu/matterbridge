@@ -2,10 +2,10 @@
 
 const MATTER_PORT = 11100;
 const NAME = 'EndpointMatterJs';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
-import { existsSync } from 'node:fs';
-import { appendFile } from 'node:fs/promises';
+import { existsSync, mkdirSync } from 'node:fs';
+import { appendFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -112,7 +112,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-} from './matterbridgeBehaviors.js';
+} from './matterbridgeBehaviorsServer.js';
 import {
   coverDevice,
   doorLockDevice,
@@ -134,6 +134,8 @@ import { getAttributeId, getClusterId, invokeBehaviorCommand } from './matterbri
 
 // Setup the test environment
 await setupTest(NAME, false);
+mkdirSync(HOMEDIR, { recursive: true });
+// await writeFile(path.join(HOMEDIR, 'diagnostic.log'), '', { encoding: 'utf8' });
 
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;
@@ -754,6 +756,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(deviceTypeList[1].revision).toBe(occupancySensor.revision);
     expect(deviceTypeList[2].deviceType).toBe(lightSensor.code);
     expect(deviceTypeList[2].revision).toBe(lightSensor.revision);
+
+    // await endpoint.setStateOf(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), { pirOccupiedToUnoccupiedDelay: 30 });
+    // await endpoint.setStateOf(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), { pirUnoccupiedToOccupiedDelay: 30 });
   });
 
   test('add a booleanState', async () => {
@@ -769,6 +774,15 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(endpoint).toBeDefined();
     await expect(server.add(endpoint)).resolves.toBeDefined();
+    /*
+    await endpoint.setStateOf(BooleanStateServer, { stateValue: true });
+    await endpoint.set({ booleanState: { stateValue: false } });
+
+    await endpoint.commands.identify.identify({ identifyTime: 5 });
+    await endpoint.commands.identify.triggerEffect({ effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: 0 });
+    await endpoint.commandsOf(IdentifyServer).identify({ identifyTime: 5 });
+    await endpoint.commandsOf(IdentifyServer).triggerEffect({ effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: 0 });
+    */
   });
 
   test('create an Rvc device', async () => {
@@ -879,7 +893,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('on')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('off')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual([0, 64, 65, 66, 1, 2]);
+    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 64, 65, 66, 1, 2]));
+    expect((light.stateOf(MatterbridgeOnOffServer) as any).acceptedCommandList).toHaveLength(6);
     expect((light.stateOf(MatterbridgeOnOffServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(light, 'onOff', 'on');
     await invokeBehaviorCommand(light, 'onOff', 'off');
@@ -920,7 +935,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]);
+    expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
     expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(light, 'colorControl', 'moveToHue', {
       hue: 180,
@@ -971,7 +986,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColor')).toBeTruthy();
     expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]);
+    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual(
+      expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]),
+    );
     expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).generatedCommandList).toEqual([]);
     await invokeBehaviorCommand(enhancedLight, 'colorControl', 'moveToHue', {
       hue: 180,

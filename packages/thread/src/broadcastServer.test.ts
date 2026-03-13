@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 0;
 const NAME = 'BroadcastServer';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
 import { BroadcastChannel } from 'node:worker_threads';
@@ -292,6 +292,29 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
+  test("respond: should swap dst when dst is 'all'", async () => {
+    const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage');
+    const responseMsg = {
+      id: 654321,
+      timestamp: Date.now() - 1000,
+      type: 'jest',
+      src: 'frontend',
+      dst: 'all',
+      result: { name: 'Bob', age: 42 },
+    } as const;
+    server.respond(responseMsg);
+    expect(postMessageSpy).toHaveBeenCalledWith({
+      id: 654321,
+      timestamp: expect.any(Number),
+      elapsed: expect.any(Number),
+      type: 'jest',
+      src: 'manager',
+      dst: 'all',
+      result: { name: 'Bob', age: 42 },
+    });
+    postMessageSpy.mockRestore();
+  });
+
   test('respond: should not broadcast an invalid response message', () => {
     const postMessageSpy = jest.spyOn((server as any).broadcastChannel, 'postMessage').mockImplementation(() => {});
     const logErrorSpy = jest.spyOn(log, 'error').mockImplementation(() => {});
@@ -359,6 +382,18 @@ describe('BroadcastServer', () => {
     }, 10);
     const result = await server.fetch(requestMsg);
     expect(result).toEqual({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
+  });
+
+  test('fetch: should keep provided timestamp', async () => {
+    const originalTimestamp = 123456;
+    const requestMsg = { id: 888888, timestamp: originalTimestamp, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const responseMsg = { id: 888888, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
+    setTimeout(() => {
+      // Simulate receiving the response
+      (server as any).broadcastChannel.onmessage({ data: responseMsg });
+    }, 10);
+    await server.fetch(requestMsg);
+    expect((requestMsg as any).timestamp).toBe(originalTimestamp);
   });
 
   test('fetch: should resolve with correct response from another thread', async () => {
@@ -486,5 +521,22 @@ describe('BroadcastServer', () => {
     expect(broadcastServerRespondSpy).toHaveBeenCalledWith(responseMsg);
     // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast response message/));
     broadcastServerRespondSpy.mockRestore();
+  });
+
+  test('broadcast/request/respond: should catch postMessage errors (no throw)', () => {
+    // Create a fresh server instance so this test is isolated from any previous close() calls.
+    const isolatedServer = new BroadcastServer('manager', log, NAME);
+    const postMessageSpy = jest.spyOn((isolatedServer as any).broadcastChannel, 'postMessage').mockImplementation(() => {
+      throw new Error('postMessage failed');
+    });
+
+    expect(() => isolatedServer.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
+    expect(() => isolatedServer.request({ type: 'jest_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
+    // respond() requires an id to pass validation and reach postMessage.
+    expect(() => isolatedServer.respond({ id: 1, timestamp: Date.now(), type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } } as any)).not.toThrow();
+
+    expect(postMessageSpy).toHaveBeenCalledTimes(3);
+    postMessageSpy.mockRestore();
+    isolatedServer.close();
   });
 });

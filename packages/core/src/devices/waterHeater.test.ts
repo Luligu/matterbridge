@@ -3,7 +3,7 @@
 
 const MATTER_PORT = 8016;
 const NAME = 'WaterHeater';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
@@ -39,7 +39,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeThermostatServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeThermostatServer } from '../matterbridgeBehaviorsServer.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';

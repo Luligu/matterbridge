@@ -31,6 +31,7 @@ import { LogLevel } from 'node-ansi-logger';
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -145,6 +146,32 @@ export type WorkerMessageTypes = {
   set_log_level: {
     request: { params: { logLevel: LogLevel } };
     response: { result: { logLevel: LogLevel } };
+  };
+
+  // ThreadsManager methods
+  manager_run: {
+    request: {
+      /** Parameters for running a worker */
+      params: {
+        /** The name of the worker to run */
+        name: ThreadNames;
+        /** Optional data to pass to the worker */
+        workerData?: WorkerData;
+        /** Optional arguments to pass to the worker */
+        argv?: string[];
+        /** Optional environment variables for the worker */
+        env?: NodeJS.ProcessEnv;
+        /** Optional exec arguments for the worker */
+        execArgv?: string[];
+        /** Whether to pipe the output of the worker */
+        pipedOutput?: boolean;
+      };
+    };
+    response: { result: { success: boolean } };
+  };
+  manager_spawn_response: {
+    request: { params: undefined };
+    response: { result: { command: string; args: string[]; packageCommand: 'install' | 'uninstall'; packageName: string; success: boolean } };
   };
 
   // Matterbridge methods
@@ -291,18 +318,12 @@ export type WorkerMessageTypes = {
   };
   plugins_install: {
     request: { params: { packageName: string } };
-    response: { result: { packageName: string; success: boolean } };
+    response: { result: { packageName: string } };
   };
   plugins_uninstall: {
     request: { params: { packageName: string } };
-    response: { result: { packageName: string; success: boolean } };
+    response: { result: { packageName: string } };
   };
-  /*
-  plugins_parse: {
-    request: { params: { plugin: Plugin } };
-    response: { result: { packageJson: Record<string, unknown> | null } };
-  };
-  */
   plugins_enable: {
     request: { params: { nameOrPath: string } };
     response: { result: { plugin: ApiPlugin | null } };

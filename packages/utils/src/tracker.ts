@@ -24,6 +24,7 @@
 
 /* eslint-disable no-console */
 
+// istanbul ignore next line - loader/debug/verbose flags are only used for development and testing, not in production
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mTracker loaded.\u001B[40;0m');
 
 import EventEmitter from 'node:events';
@@ -196,6 +197,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       const currentCpus = os.cpus();
       const loads = currentCpus.map((cpu, idx) => {
         const prev = this.prevCpus[idx]?.times;
+        // istanbul ignore if - is just a precaution
         if (!prev) return 0;
         const cur = cpu.times;
         const idleDelta = cur.idle - prev.idle;
@@ -294,10 +296,12 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     if (global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (${type}-${execution}) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
         global.gc();
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
       }

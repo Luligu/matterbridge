@@ -6,6 +6,8 @@
   },
   "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "diffEditor.ignoreTrimWhitespace": false,
   "git.autofetch": true,
   "files.eol": "\n",

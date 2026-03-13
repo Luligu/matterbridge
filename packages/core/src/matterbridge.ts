@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.6.2
+ * @version 1.7.0
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -51,13 +51,13 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { CommissioningDiscovery, Endpoint, NetworkClient, ServerNode, SessionsBehavior } from '@matter/node';
+import { type CommissioningDiscovery, Endpoint, NetworkClient, ServerNode, type SessionsBehavior } from '@matter/node';
 import { BasicInformationClient, BasicInformationServer } from '@matter/node/behaviors/basic-information';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiMatter,
   MaybePromise,
@@ -69,21 +69,13 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import {
-  copyDirectory,
-  createDirectory,
-  excludedInterfaceNamePattern,
-  formatBytes,
-  formatPercent,
-  formatUptime,
-  getIntParameter,
-  getParameter,
-  hasParameter,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  parseVersionString,
-} from '@matterbridge/utils';
+import { wait } from '@matterbridge/utils';
+import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
+import { copyDirectory } from '@matterbridge/utils/copy-dir';
+import { createDirectory } from '@matterbridge/utils/create-dir';
+import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
+import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
+import { isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import {
   AnsiLogger,
@@ -296,7 +288,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   aggregatorVendorName = getParameter('vendorName') ?? 'Matterbridge';
   aggregatorProductId = getIntParameter('productId') ?? 0x8000;
-  aggregatorProductName = getParameter('productName') ?? 'Matterbridge aggregator';
+  aggregatorProductName = getParameter('productName') ?? 'Matterbridge Aggregator';
   aggregatorDeviceType = DeviceTypeId(getIntParameter('deviceType') ?? bridge.code);
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
@@ -306,7 +298,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   controllerVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   controllerVendorName = getParameter('vendorName') ?? 'Matterbridge';
   controllerProductId = getIntParameter('productId') ?? 0x8000;
-  controllerProductName = getParameter('productName') ?? 'Matterbridge controller';
+  controllerProductName = getParameter('productName') ?? 'Matterbridge Controller';
 
   /** Advertising nodes map: time advertising started keyed by storeId */
   advertisingNodes = new Map<string, number>();
@@ -394,6 +386,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -436,6 +429,24 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'manager_spawn_response':
+          // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+          if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
+            this.restartRequired = true;
+            this.fixedRestartRequired = true;
+            const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+            if (packageName === 'matterbridge') {
+              this.log.info('Matterbridge has been updated. Full restart required.');
+              if (this.restartMode !== '') await this.cleanup('updating...', false);
+            }
+          }
+          break;
+      }
+    }
   }
 
   //* ************************************************************************************************************************************ */
@@ -470,8 +481,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A Promise that resolves when the initialization is complete.
    */
   private async initialize(): Promise<void> {
-    // for (let i = 1; i <= 255; i++) console.log(`\x1b[38;5;${i}mColor: ${i}`);
-
     // Emit the initialize_started event
     this.emit('initialize_started');
 
@@ -632,7 +641,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       // Set the certification for matter.js if it is present in the pairing file
       if (pairingFileJson.privateKey && pairingFileJson.certificate && pairingFileJson.intermediateCertificate && pairingFileJson.declaration) {
-        const { hexToBuffer } = await import('@matterbridge/utils');
+        const { hexToBuffer } = await import('@matterbridge/utils/hex');
         this.certification = {
           privateKey: hexToBuffer(pairingFileJson.privateKey),
           certificate: hexToBuffer(pairingFileJson.certificate),
@@ -676,6 +685,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.logLevel = this.log.logLevel;
     this.frontend.logLevel = this.log.logLevel;
     MatterbridgeEndpoint.logLevel = this.log.logLevel;
+    this.server.request({ type: 'set_log_level', params: { logLevel: this.log.logLevel }, dst: 'all', src: 'matterbridge' });
 
     // Create the file logger for matterbridge (context: matterbridgeFileLog)
     if (hasParameter('filelogger') || (await this.nodeContext.get<boolean>('matterbridgeFileLog', false))) {
@@ -836,19 +846,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       );
       // Try to reinstall the plugin from npm (for Docker pull and external plugins)
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        !fs.existsSync(plugin.path) &&
-        !hasParameter('add') &&
-        !hasParameter('remove') &&
-        !hasParameter('enable') &&
-        !hasParameter('disable') &&
-        !hasParameter('reset') &&
-        !hasParameter('factoryreset') &&
-        !hasParameter('systemcheck')
-      ) {
+      if (!fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
-        const { spawnCommand } = await import('./spawn.js');
-        if (await spawnCommand('npm', ['install', '-g', `${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}`, '--omit=dev', '--verbose'], 'install', plugin.name)) {
+        const { execSync } = await import('node:child_process');
+        const sudo =
+          hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
+        if (execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --omit=dev`)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
         } else {
@@ -900,36 +903,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Emit the initialize_completed event
     this.emit('initialize_completed');
     this.initialized = true;
-  }
-
-  /**
-   * Resolve a file path located in the `@matterbridge/core` distribution directory.
-   *
-   * @remarks
-   * Matterbridge spawns ESM workers from built JavaScript files (e.g. `workerCheckUpdates.js`).
-   * Depending on how the code is executed:
-   * - **Production**: `import.meta.url` points inside `.../node_modules/@matterbridge/core/dist/...`
-   *   and the worker file is usually alongside the current module.
-   * - **Development / tests**: `import.meta.url` may point inside `.../packages/core/src/...`
-   *   while the worker file exists in `.../packages/core/dist/...`.
-   *
-   * This helper tries both locations and returns the first existing candidate.
-   *
-   * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
-   * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
-   */
-  resolveWorkerDistFilePath(fileName: string): string {
-    const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
-    // This core package's src or dist directory or the global installation dist directory for thread package
-    const candidates = [
-      path.join(currentModuleDirectory, fileName), // Dist directory for local development with local packages
-      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for jest tests
-      path.join(this.rootDirectory, 'node_modules', '@matterbridge', 'thread', 'dist', fileName), // Global installation dist directory for production with thread package
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) return candidate;
-    }
-    return candidates[0];
   }
 
   /**
@@ -985,7 +958,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     if (hasParameter('loginterfaces')) {
-      const { logInterfaces } = await import('@matterbridge/utils');
+      const { logInterfaces } = await import('@matterbridge/utils/network');
       logInterfaces();
       this.shutdown = true;
       return;
@@ -995,6 +968,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('systemcheck')) {
       const { systemCheck } = await import('@matterbridge/thread');
       await systemCheck();
+      await wait(1000); // Wait for the thread to log the results before shutting down
       this.shutdown = true;
       return;
     }
@@ -1083,24 +1057,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Run in 2 minutes the system check
     clearTimeout(this.systemCheckTimeout);
-    this.systemCheckTimeout = setTimeout(async () => {
-      const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('SystemCheck', this.resolveWorkerDistFilePath('workerSystemCheck.js'));
+    this.systemCheckTimeout = setTimeout(() => {
+      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'SystemCheck' } });
     }, 120 * 1000).unref();
 
     // Check in 5 minutes the latest and dev versions of matterbridge and the plugins
     clearTimeout(this.checkUpdateTimeout);
-    this.checkUpdateTimeout = setTimeout(async () => {
-      const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
+    this.checkUpdateTimeout = setTimeout(() => {
+      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
     clearInterval(this.checkUpdateInterval);
     this.checkUpdateInterval = setInterval(
-      async () => {
-        const { createESMWorker } = await import('@matterbridge/thread');
-        createESMWorker('CheckUpdates', this.resolveWorkerDistFilePath('workerCheckUpdates.js'));
+      () => {
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();
@@ -1127,7 +1098,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Wait delay if specified (default 2 minutes) and the system uptime is less than 5 minutes. It solves race conditions on system startup.
     if (hasParameter('delay') && os.uptime() <= 60 * 5) {
-      const { wait } = await import('@matterbridge/utils');
+      const { wait } = await import('@matterbridge/utils/wait');
       const delay = getIntParameter('delay') || 120;
       this.log.warn('Delay switch found with system uptime less then 5 minutes. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Race condition delay', true);
@@ -1135,7 +1106,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Wait delay if specified (default 2 minutes). It solves race conditions on docker compose startup.
     if (hasParameter('fixed_delay')) {
-      const { wait } = await import('@matterbridge/utils');
+      const { wait } = await import('@matterbridge/utils/wait');
       const delay = getIntParameter('fixed_delay') || 120;
       this.log.warn('Fixed delay switch found. Waiting for ' + delay + ' seconds before starting matterbridge...');
       await wait(delay * 1000, 'Fixed race condition delay', true);
@@ -1355,7 +1326,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // First run of Matterbridge so the node storage is empty
       this.log.debug(`Getting global node_modules directory...`);
       try {
-        const { getGlobalNodeModules } = await import('@matterbridge/utils');
+        const { getGlobalNodeModules } = await import('@matterbridge/utils/npm-prefix');
         this.globalModulesDirectory = await getGlobalNodeModules();
         this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
         await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
@@ -1365,8 +1336,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
       // this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-      const { createESMWorker } = await import('@matterbridge/thread');
-      createESMWorker('NpmGlobalPrefix', this.resolveWorkerDistFilePath('workerGlobalPrefix.js'));
+      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix' } });
     }
 
     // Matterbridge version
@@ -1495,20 +1465,27 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Update matterbridge and shut down the process (virtual device 'Update Matterbridge').
+   * Update matterbridge and shut down the process (called by virtual device 'Update Matterbridge').
    *
    * @returns {Promise<void>} A promise that resolves when the update is completed.
    */
   async updateProcess(): Promise<void> {
     this.log.info('Updating matterbridge...');
-    const { spawnCommand } = await import('./spawn.js');
-    if (await spawnCommand('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge')) {
-      this.log.info('Matterbridge has been updated. Full restart required.');
-    } else {
-      this.log.error('Error updating matterbridge.');
-    }
-    this.frontend.wssSendRestartRequired();
-    await this.cleanup('updating...', false);
+    this.server.request({
+      type: 'manager_run',
+      src: 'matterbridge',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
+          packageCommand: 'install',
+          packageName: 'matterbridge',
+        },
+      },
+    });
   }
 
   /**
@@ -1519,7 +1496,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
-    const { wait } = await import('@matterbridge/utils');
+    const { wait } = await import('@matterbridge/utils/wait');
     this.log.info('Unregistering all devices and shutting down...');
     if (this.serverNode) await this.serverNode.setStateOf(BasicInformationServer, { configurationVersion: this.serverNode.state.basicInformation.configurationVersion + 1 });
     for (const plugin of this.plugins.array()) {
@@ -1626,7 +1603,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter server nodes
       this.log.notice(`Stopping matter server nodes in ${this.bridgeMode} mode...`);
       if (pause > 0) {
-        const { wait } = await import('@matterbridge/utils');
+        const { wait } = await import('@matterbridge/utils/wait');
         this.log.debug(`Waiting ${pause}ms for the MessageExchange to finish...`);
         await wait(pause, `Waiting ${pause}ms for the MessageExchange to finish...`, false);
       }
@@ -1701,27 +1678,30 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         try {
           log.debug(`Removing ${path}...`);
           unlinkSync(path);
+          // istanbul ignore next
           log.debug(`Removed ${path}`);
         } catch {
           // Ignore errors if the file does not exist
         }
       }
-      // Remove the resumption records for Matterbridge (bridge mode)
-      this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
-      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
-      unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
-      for (const plugin of this.plugins.array()) {
-        // Remove the resumption records for the plugins (childbridge mode)
-        this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
-      }
-      for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
-        if (!device.deviceName) continue;
-        // Remove the resumption records for the server mode devices
-        this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+      // Remove the resumption records and subscriptions. Till the matter.js team solves the issue of closing server node when resumption didn't work.
+      if (hasParameter('reset-sessions') || !hasParameter('no-reset-sessions')) {
+        this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
+        for (const plugin of this.plugins.array()) {
+          // Remove the resumption records for the plugins (childbridge mode)
+          this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
+        }
+        for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
+          if (!device.deviceName) continue;
+          // Remove the resumption records for the server mode devices
+          this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+        }
       }
 
       // Stop the frontend
@@ -1956,7 +1936,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
-    const { wait } = await import('@matterbridge/utils');
+    const { wait } = await import('@matterbridge/utils/wait');
 
     // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
     this.log.debug('Loading all plugins in childbridge mode...');
@@ -2118,7 +2098,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await this.controllerContext.set('vendorName', this.controllerVendorName.slice(0, 32));
     await this.controllerContext.set('productId', this.controllerProductId);
     await this.controllerContext.set('productName', this.controllerProductName.slice(0, 32));
-    await this.controllerContext.set('productLabel', this.controllerProductName.slice(0, 32));
+    await this.controllerContext.set('productLabel', this.controllerProductName.replace(this.controllerVendorName, '').trim().slice(0, 32));
     await this.controllerContext.set('nodeLabel', storeId.slice(0, 32));
     await this.controllerContext.set('serialNumber', await this.controllerContext.get('serialNumber', 'SN' + random));
     await this.controllerContext.set('uniqueId', await this.controllerContext.get('uniqueId', 'UI' + random));
@@ -2500,7 +2480,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await storageContext.set('vendorName', vendorName.slice(0, 32));
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('productLabel', productName.slice(0, 32));
+    await storageContext.set('productLabel', productName.replace(vendorName, '').trim().slice(0, 32));
     await storageContext.set('nodeLabel', deviceName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
@@ -2603,7 +2583,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
         productId: await storageContext.get<number>('productId'),
         productName: await storageContext.get<string>('productName'),
-        productLabel: await storageContext.get<string>('productName'),
+        productLabel: await storageContext.get<string>('productLabel'),
 
         serialNumber: await storageContext.get<string>('serialNumber'),
         uniqueId: await storageContext.get<string>('uniqueId'),
@@ -2758,7 +2738,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
   private async stopServerNode(matterServerNode: ServerNode, timeout: number = 10000): Promise<void> {
-    const { withTimeout } = await import('@matterbridge/utils');
+    const { withTimeout } = await import('@matterbridge/utils/wait');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);
 
@@ -2899,7 +2879,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the bridged endpoint has been added.
    */
   async addBridgedEndpoint(pluginName: string, device: MatterbridgeEndpoint): Promise<void> {
-    const { waiter } = await import('@matterbridge/utils');
+    const { waiter } = await import('@matterbridge/utils/wait');
     // Check if the plugin is registered
     const plugin = this.plugins.get(pluginName);
     if (!plugin) {
@@ -3073,7 +3053,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * The delay is useful to allow the controllers to receive a single subscription for each device removed.
    */
   async removeAllBridgedEndpoints(pluginName: string, delay: number = 0): Promise<void> {
-    const { wait } = await import('@matterbridge/utils');
+    const { wait } = await import('@matterbridge/utils/wait');
     this.log.debug(`Removing all bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}`);
     for (const device of this.devices.array().filter((device) => device.plugin === pluginName)) {
       await this.removeBridgedEndpoint(pluginName, device);

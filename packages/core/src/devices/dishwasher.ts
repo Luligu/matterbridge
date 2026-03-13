@@ -30,7 +30,7 @@ import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
@@ -138,6 +138,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   // Dead Front OnOff Cluster
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // istanbul ignore else
     if (onOff === false) {
       device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;

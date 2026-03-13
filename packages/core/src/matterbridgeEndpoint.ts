@@ -96,7 +96,8 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
 import { Semtag } from '@matter/types/globals';
 // @matterbridge
-import { inspectError, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils';
+import { inspectError } from '@matterbridge/utils/error';
+import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 
@@ -125,7 +126,7 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
-} from './matterbridgeBehaviors.js';
+} from './matterbridgeBehaviorsServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   addClusterServers,
@@ -565,12 +566,54 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
+   * @param {Behavior.Type} cluster - The cluster to set.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  async setCluster<T extends Behavior.Type>(cluster: T, value: Behavior.StateOf<T>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
+   * @param {ClusterType} cluster - The cluster to set.
+   * @param {ClusterType.AttributeValues<T>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async setCluster<T extends ClusterType>(cluster: T, value: ClusterType.AttributeValues<T>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
+   * @param {ClusterId | string} cluster - The cluster to set.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  async setCluster(cluster: ClusterId | string, value: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Sets the state of the provided cluster on a given endpoint.
+   *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to set.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} value - The state to set for the cluster.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   async setCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -583,11 +626,49 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the state of the provided cluster from the given endpoint.
    *
+   * @param {Behavior.Type} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  getCluster<T extends Behavior.Type>(cluster: T, log?: AnsiLogger): Behavior.StateOf<T> | undefined;
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
+   * @param {ClusterType} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {ClusterType.AttributeValues<T> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterType.AttributeValues<T> | undefined;
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
+   * @param {ClusterType | ClusterId | string} cluster - The cluster to retrieve the state from.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
+   * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   *
+   * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   */
+  getCluster(cluster: ClusterId | string, log?: AnsiLogger): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined;
+  /**
+   * Retrieves the state of the provided cluster from the given endpoint.
+   *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the state from.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
    * @returns {Record<string, boolean | number | bigint | string | object | undefined | null> | undefined} The state of the cluster, or undefined if the cluster is not found.
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
+   *
+   * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
    */
   getCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -689,6 +770,60 @@ export class MatterbridgeEndpoint extends Endpoint {
     await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
   }
 
+  /* eslint-disable @typescript-eslint/unified-signatures */
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand<
+    T extends Behavior.Type,
+    C extends keyof {
+      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
+    },
+  >(
+    cluster: T,
+    command: C,
+    params?: {
+      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
+    }[C] extends (...args: infer P) => unknown
+      ? P[0]
+      : never,
+  ): Promise<void>;
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand<T extends ClusterType, C extends keyof ClusterType.CommandsOf<T>>(
+    cluster: T,
+    command: C,
+    params?: ClusterType.CommandsOf<T>[C] extends { requestSchema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
+      ? import('@matter/types/tlv').TypeFromSchema<S>
+      : never,
+  ): Promise<void>;
+  /**
+   * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {string} command - The command to invoke.
+   * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
+   */
+  async invokeBehaviorCommand(
+    cluster: ClusterId | string,
+    command: keyof MatterbridgeEndpointCommands,
+    params?: Record<string, boolean | number | bigint | string | object | null>,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
@@ -705,6 +840,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ) {
     await invokeBehaviorCommand(this, cluster, command, params);
   }
+  /* eslint-enable @typescript-eslint/unified-signatures */
 
   /**
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
@@ -1256,7 +1392,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
         productUrl: this.productUrl.slice(0, 256),
-        productLabel: productName.slice(0, 64),
+        productLabel: productName.replace(vendorName, '').trim().slice(0, 64),
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.uniqueId.slice(0, 32),
@@ -2267,7 +2403,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
-        numberOfPresets: Array.isArray(presetsList) ? presetsList.length : 0,
+        numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
         activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
         presets: (presetsList ?? []).map((p) => ({

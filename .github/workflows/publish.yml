@@ -141,7 +141,7 @@ jobs:
               ref: 'main'
             })
 
-      - name: Trigger Matterbridge Docker Build s6-rc overlay
+      - name: Trigger Matterbridge Docker Build s6-rc
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
@@ -150,6 +150,18 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-s6-rc.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build s6-rc-legacy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-s6-rc-legacy.yml',
               ref: 'main'
             })
 

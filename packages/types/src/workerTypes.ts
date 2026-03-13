@@ -24,10 +24,77 @@
 
 import type { LogLevel } from 'node-ansi-logger';
 
+/** Thread names used in the thread system */
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand';
+
+/** Base worker data for all workers */
+export type BaseWorkerData = { threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
+
+/** Worker data for spawn command worker */
+export type SpawnWorkerData = {
+  threadName: ThreadNames;
+  logLevel?: LogLevel;
+  debug?: boolean;
+  verbose?: boolean;
+  tracker?: boolean;
+  command: string;
+  args: string[];
+  packageCommand: 'install' | 'uninstall';
+  packageName: string;
+};
+
+/** Worker data for all workers */
+export type WorkerData = BaseWorkerData | SpawnWorkerData;
+
+/**
+ *  Type guard to check if the workerData is valid.
+ *
+ * @param {unknown} data - The worker data to check.
+ * @returns {data is WorkerData} True if the data is valid worker data, false otherwise.
+ */
+export function isWorkerData(data: unknown): data is WorkerData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'threadName' in data &&
+    typeof data.threadName === 'string' &&
+    'logLevel' in data &&
+    typeof data.logLevel === 'string' &&
+    'debug' in data &&
+    typeof data.debug === 'boolean' &&
+    'verbose' in data &&
+    typeof data.verbose === 'boolean' &&
+    'tracker' in data &&
+    typeof data.tracker === 'boolean'
+  );
+}
+
+/**
+ * Type guard to check if the workerData is for the spawn command worker.
+ *
+ * @param {WorkerData} data - The worker data to check.
+ * @returns {data is SpawnWorkerData} True if the data is for the spawn command worker, false otherwise.
+ */
+export function isSpawnWorkerData(data: unknown): data is SpawnWorkerData {
+  return (
+    isWorkerData(data) &&
+    typeof data === 'object' &&
+    data !== null &&
+    'command' in data &&
+    typeof data.command === 'string' &&
+    'args' in data &&
+    Array.isArray(data.args) &&
+    'packageCommand' in data &&
+    (data.packageCommand === 'install' || data.packageCommand === 'uninstall') &&
+    'packageName' in data &&
+    typeof data.packageName === 'string'
+  );
+}
+
 /** Control messages sent through parentPort manager <-> workers */
 export type ParentPortMessage =
-  | { type: 'init'; threadName: string | null; threadId: number; success: boolean }
-  | { type: 'ping'; threadName: string | null; threadId: number }
-  | { type: 'pong'; threadName: string | null; threadId: number }
-  | { type: 'log'; threadName: string | null; threadId: number; logName: string | undefined; logLevel: LogLevel; message: string }
-  | { type: 'exit'; threadName: string | null; threadId: number; success: boolean };
+  | { type: 'init'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean }
+  | { type: 'ping'; threadName: ThreadNames; threadId: number }
+  | { type: 'pong'; threadName: ThreadNames; threadId: number }
+  | { type: 'log'; threadName: ThreadNames; threadId: number; logName: string | undefined; logLevel: LogLevel; message: string }
+  | { type: 'exit'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean };

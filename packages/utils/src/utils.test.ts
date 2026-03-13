@@ -553,8 +553,8 @@ describe('Utils test', () => {
   });
 
   it('should copy a directory', async () => {
-    await fs.mkdir(path.join('jest', 'CopyDir'), { recursive: true });
-    const result = await copyDirectory(path.join('scripts'), path.join('jest', 'CopyDir'));
+    await fs.mkdir(path.join('.cache', 'jest', 'CopyDir'), { recursive: true });
+    const result = await copyDirectory(path.join('scripts'), path.join('.cache', 'jest', 'CopyDir'));
     expect(result).toBeTruthy();
   });
 

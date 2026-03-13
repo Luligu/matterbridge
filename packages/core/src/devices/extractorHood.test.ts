@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 8006;
 const NAME = 'ExtractorHood';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
@@ -31,7 +31,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviorsServer.js';
 import { extractorHood } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
@@ -111,7 +111,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MatterbridgeHepaFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
     expect((device as any).state['hepaFilterMonitoring'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['hepaFilterMonitoring'].generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(device, 'hepaFilterMonitoring', 'resetCondition', {}); // Reset condition
+    await device.invokeBehaviorCommand(HepaFilterMonitoringServer, 'resetCondition'); // Reset condition
     await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
@@ -124,7 +124,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MatterbridgeActivatedCarbonFilterMonitoringServer).commands.has('resetCondition')).toBeTruthy();
     expect((device as any).state['activatedCarbonFilterMonitoring'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['activatedCarbonFilterMonitoring'].generatedCommandList).toEqual([]);
-    await invokeBehaviorCommand(device, 'activatedCarbonFilterMonitoring', 'resetCondition', {}); // Reset condition
+    await device.invokeBehaviorCommand(ActivatedCarbonFilterMonitoringServer, 'resetCondition'); // Reset condition
     await wait(100); // Wait for the device to be ready
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);

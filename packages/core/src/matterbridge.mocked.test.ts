@@ -1,15 +1,14 @@
 // src\matterbridge.test.ts
 
 const NAME = 'MatterbridgeMocked';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
-// Mock selected functions from @matterbridge/utils before importing Matterbridge
-const originalUtilsModule = await import('../../utils/src/export.js');
-jest.unstable_mockModule('@matterbridge/utils', async () => {
+// Matterbridge now uses tree-shaken subpath imports from @matterbridge/utils.
+// Mock the exact specifiers that Matterbridge imports (including dynamic imports).
+const originalWaitModule = await import('../../utils/src/wait.js');
+jest.unstable_mockModule('@matterbridge/utils/wait', async () => {
   return {
-    ...originalUtilsModule,
-    getGlobalNodeModules: jest.fn(() => Promise.resolve('usr/local/lib/node_modules')),
-    logInterfaces: jest.fn(() => undefined),
+    ...originalWaitModule,
     waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
       return Promise.resolve(true); // Mock the waiter function to resolve immediately
     }),
@@ -21,22 +20,30 @@ jest.unstable_mockModule('@matterbridge/utils', async () => {
     }),
   };
 });
-const utilsModule = await import('@matterbridge/utils');
+const waitModule = await import('@matterbridge/utils/wait');
+const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
+const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
+const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
-const getGlobalNodeModulesMock = utilsModule.getGlobalNodeModules as jest.MockedFunction<typeof utilsModule.getGlobalNodeModules>;
-const logInterfacesMock = utilsModule.logInterfaces as jest.MockedFunction<typeof utilsModule.logInterfaces>;
-const wait = utilsModule.wait as jest.MockedFunction<typeof utilsModule.wait>;
-const waiter = utilsModule.waiter as jest.MockedFunction<typeof utilsModule.waiter>;
-const withTimeout = utilsModule.withTimeout as jest.MockedFunction<typeof utilsModule.withTimeout>;
+const originalNpmPrefixModule = await import('../../utils/src/npmPrefix.js');
+jest.unstable_mockModule('@matterbridge/utils/npm-prefix', async () => {
+  return {
+    ...originalNpmPrefixModule,
+    getGlobalNodeModules: jest.fn(() => Promise.resolve('usr/local/lib/node_modules')),
+  };
+});
+const npmPrefixModule = await import('@matterbridge/utils/npm-prefix');
+const getGlobalNodeModulesMock = npmPrefixModule.getGlobalNodeModules as jest.MockedFunction<typeof npmPrefixModule.getGlobalNodeModules>;
 
-// Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./spawn.js', () => ({
-  spawnCommand: jest.fn((command: string, args: string[]) => {
-    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
-  }),
-}));
-const spawnModule = await import('./spawn.js');
-const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
+const originalNetworkModule = await import('../../utils/src/network.js');
+jest.unstable_mockModule('@matterbridge/utils/network', async () => {
+  return {
+    ...originalNetworkModule,
+    logInterfaces: jest.fn(() => undefined),
+  };
+});
+const networkModule = await import('@matterbridge/utils/network');
+const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typeof networkModule.logInterfaces>;
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('@matterbridge/thread', () => ({
@@ -45,8 +52,22 @@ jest.unstable_mockModule('@matterbridge/thread', () => ({
   }),
 }));
 const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
+// Mock the exec function from the child_process module. We use jest.unstable_mockModule to ensure that the mock is applied correctly and can be used in the tests.
+jest.unstable_mockModule('node:child_process', async () => {
+  const originalModule = jest.requireActual<typeof import('node:child_process')>('node:child_process');
+  return {
+    ...originalModule,
+    execSync: jest.fn((command: string) => {
+      // console.error('execSync called with command:', command);
+      return command;
+    }),
+  };
+});
+const childprocessModule = await import('node:child_process');
+const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
+
+import { exec } from 'node:child_process';
 import fs, { mkdirSync, PathLike, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -55,12 +76,23 @@ import { jest } from '@jest/globals';
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { VendorId } from '@matter/types';
 import { plg } from '@matterbridge/types';
-import { getParameter } from '@matterbridge/utils';
+import { getParameter } from '@matterbridge/utils/cli';
 import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
-import { closeMdnsInstance, configurePluginSpy, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import {
+  broadcastServerRequestSpy,
+  broadcastServerRespondSpy,
+  closeMdnsInstance,
+  configurePluginSpy,
+  destroyInstance,
+  loggerErrorSpy,
+  loggerInfoSpy,
+  loggerLogSpy,
+  setDebug,
+  setupTest,
+} from './jestutils/jestHelpers.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 
@@ -108,16 +140,11 @@ describe('Matterbridge mocked', () => {
     jest.restoreAllMocks();
   });
 
-  test('verify mocked spawnCommand', async () => {
-    const { spawnCommand } = await import('./spawn.js');
-    const result = await spawnCommand('echo', ['Hello, World!'], 'install', 'echo');
-    expect(result).toBe(true);
-    expect(spawnCommand).toHaveBeenCalledWith('echo', ['Hello, World!'], 'install', 'echo');
-  });
-
-  test('verify mocked createESMWorker', async () => {
-    createESMWorker('NpmGlobalPrefix', './dist/workerGlobalPrefix.js');
-    expect(createESMWorker).toHaveBeenCalled();
+  test('verify mocked execSync', async () => {
+    const { execSync } = await import('node:child_process');
+    const result = execSync('echo "Hello, World!"');
+    expect(result).toBeDefined();
+    expect(execSyncMock).toHaveBeenCalledWith('echo "Hello, World!"');
   });
 
   test('verify mocked wait', async () => {
@@ -237,25 +264,22 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${HOMEDIR}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join(HOMEDIR, '.matterbridge')}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`),
+      expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'certs')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`),
+      expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
+      expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join(HOMEDIR, 'Matterbridge', 'profiles', 'Jest')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`),
-    );
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`),
+      expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
     // -frontend 0
@@ -304,8 +328,8 @@ describe('Matterbridge mocked', () => {
       '-matterfilelogger',
       '-debug',
     ];
-    const filePath = path.join('jest', NAME, '.mattercert', 'profiles', 'Jest', 'pairing.json');
-    mkdirSync(path.join('jest', NAME, 'profiles', 'Jest', '.mattercert'), { recursive: true });
+    const filePath = path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest', 'pairing.json');
+    mkdirSync(path.join(HOMEDIR, 'profiles', 'Jest', '.mattercert'), { recursive: true });
     writeFileSync(
       filePath,
       `{
@@ -335,29 +359,23 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge')}`),
+      expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'certs')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'certs')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.matterbridge', 'profiles', 'Jest', 'uploads')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', 'Matterbridge', 'profiles', 'Jest')}`),
+      expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join(HOMEDIR, 'Matterbridge', 'profiles', 'Jest')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeMocked', '.mattercert', 'profiles', 'Jest')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
     unlinkSync(path.join(matterbridge.matterbridgeCertDirectory, 'pairing.json'));
@@ -714,17 +732,18 @@ describe('Matterbridge mocked', () => {
     const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
       return false; // Simulate a plugin that does not exist
     });
-    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
-      return Promise.resolve(false); // Simulate a failed installation
+    // @ts-expect-error Mock the execSync to simulate a not successful npm install
+    execSyncMock.mockImplementationOnce(() => {
+      return null; // Simulate a not successful npm install
     });
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(plugins.length).toBe(6);
-    expect(existSpy).toHaveBeenCalledTimes(3 + 6); // Six plugins checked for existence
+    expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
     expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
-    expect(spawnCommandMock).toHaveBeenCalledTimes(6); // Six plugins attempted to install
+    expect(execSyncMock).toHaveBeenCalledTimes(6);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reinstalling plugin'));
 
@@ -912,7 +931,7 @@ describe('Matterbridge mocked', () => {
     jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
     jest.useRealTimers();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
-    expect(createESMWorker).toHaveBeenCalledTimes(3); // 1 systemCheck and 2 update checks
+    expect(broadcastServerRequestSpy).toHaveBeenCalled();
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
@@ -1292,18 +1311,9 @@ describe('Matterbridge mocked', () => {
     jest.clearAllMocks();
 
     await matterbridge.updateProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matterbridge has been updated. Full restart required.'));
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'manager_run', src: 'matterbridge', dst: 'manager' }));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Updating matterbridge...'));
     jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await matterbridge.updateProcess();
-    expect(cleanupSpy).toHaveBeenCalledWith('updating...', false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', expect.arrayContaining(['install', '-g', 'matterbridge', '--omit=dev', '--verbose']), 'install', 'matterbridge');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error updating matterbridge.'));
 
     cleanupSpy.mockRestore();
   });

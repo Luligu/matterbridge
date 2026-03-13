@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 6300;
 const NAME = 'MatterbridgeDeviceMatter';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -23,15 +23,6 @@ process.argv = [
 ];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
-
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
 
@@ -179,6 +170,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   });

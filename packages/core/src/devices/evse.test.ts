@@ -3,7 +3,7 @@
 
 const MATTER_PORT = 8005;
 const NAME = 'Evse';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
@@ -46,7 +46,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviorsServer.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';

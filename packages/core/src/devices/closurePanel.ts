@@ -29,7 +29,7 @@ import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
 
 import { ClosureDimension } from '../clusters/closure-dimension.js';
-import { MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
@@ -43,7 +43,7 @@ const ClosureDimensionSchema = ClusterElement(
     classification: 'application',
   },
   // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureDimension.Base.revision ?? 1 }),
+  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureDimension.Base.revision }),
   AttributeElement(
     { id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M' },
     FieldElement({ name: 'POS', constraint: '0', title: 'Positioning' }),

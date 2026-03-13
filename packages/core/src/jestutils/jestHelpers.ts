@@ -71,7 +71,7 @@ import { MdnsService } from '@matter/protocol';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
@@ -178,7 +178,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
-  HOMEDIR = path.join('jest', name);
+  HOMEDIR = path.join('.cache', 'jest', name);
 
   // Cleanup any existing home directory
   rmSync(HOMEDIR, { recursive: true, force: true });
@@ -372,10 +372,10 @@ export async function startMatterbridge(
   expect(matterbridge.initialized).toBeTruthy();
   expect(matterbridge.log).toBeDefined();
   expect(matterbridge.rootDirectory).toBe(path.resolve('./'));
-  expect(matterbridge.homeDirectory).toBe(path.join('jest', NAME));
-  expect(matterbridge.matterbridgeDirectory).toBe(path.join('jest', NAME, '.matterbridge'));
-  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join('jest', NAME, 'Matterbridge'));
-  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join('jest', NAME, '.mattercert'));
+  expect(matterbridge.homeDirectory).toBe(path.join(HOMEDIR));
+  expect(matterbridge.matterbridgeDirectory).toBe(path.join(HOMEDIR, '.matterbridge'));
+  expect(matterbridge.matterbridgePluginDirectory).toBe(path.join(HOMEDIR, 'Matterbridge'));
+  expect(matterbridge.matterbridgeCertDirectory).toBe(path.join(HOMEDIR, '.mattercert'));
 
   expect(plugins).toBeDefined();
   expect(plugins.size).toBe(pluginSize);
@@ -459,6 +459,7 @@ export async function startMatterbridge(
  *
  * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
  * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
+ * @param {closeMdns} closeMdns Whether to close the mDNS service. Default is true.
  *
  * @example
  * ```typescript
@@ -466,8 +467,8 @@ export async function startMatterbridge(
  * await stopMatterbridge();
  * ```
  */
-export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250) {
-  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause);
+export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true) {
+  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause, closeMdns);
 }
 
 /**
@@ -492,13 +493,13 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.6.0';
+  matterbridge.matterbridgeVersion = '3.6.1';
   matterbridge.bridgeMode = 'bridge';
-  matterbridge.rootDirectory = path.join('jest', name);
-  matterbridge.homeDirectory = path.join('jest', name);
-  matterbridge.matterbridgeDirectory = path.join('jest', name, '.matterbridge');
-  matterbridge.matterbridgePluginDirectory = path.join('jest', name, 'Matterbridge');
-  matterbridge.matterbridgeCertDirectory = path.join('jest', name, '.mattercert');
+  matterbridge.rootDirectory = path.join(HOMEDIR);
+  matterbridge.homeDirectory = path.join(HOMEDIR);
+  matterbridge.matterbridgeDirectory = path.join(HOMEDIR, '.matterbridge');
+  matterbridge.matterbridgePluginDirectory = path.join(HOMEDIR, 'Matterbridge');
+  matterbridge.matterbridgeCertDirectory = path.join(HOMEDIR, '.mattercert');
   matterbridge.log.logLevel = LogLevel.DEBUG;
 
   // Get the frontend, plugins and devices
@@ -769,13 +770,13 @@ export function createTestEnvironment(name: string, createOnly: boolean = false)
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Cleanup any existing home directory
-  rmSync(path.join('jest', name), { recursive: true, force: true });
+  rmSync(path.join(HOMEDIR), { recursive: true, force: true });
 
   // Setup the matter environment
   environment = Environment.default;
   environment.vars.set('log.level', MatterLogLevel.DEBUG);
   environment.vars.set('log.format', MatterLogFormat.ANSI);
-  environment.vars.set('path.root', path.join('jest', name, '.matterbridge', MATTER_STORAGE_NAME));
+  environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_NAME));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
 
@@ -1110,6 +1111,7 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
     process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
+  await device.construction.ready;
   expect(owner.parts.has(device)).toBeTruthy();
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   expect(device.lifecycle.isReady).toBeTruthy();
@@ -1217,6 +1219,27 @@ export function getMoveToHueRequest(hue: number, transitionTime: number, execute
 }
 
 /**
+ * Build a Matter ColorControl `EnhancedMoveToHueRequest` payload.
+ *
+ * Uses `ColorControl.Direction.Shortest` by default.
+ *
+ * @param {number} enhancedHue Target enhanced hue (Matter `uint16`; commonly 0–65535).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedMoveToHueRequest} The request payload.
+ */
+export function getEnhancedMoveToHueRequest(enhancedHue: number, transitionTime: number, executeIfOff: boolean): ColorControl.EnhancedMoveToHueRequest {
+  const request: ColorControl.EnhancedMoveToHueRequest = {
+    enhancedHue,
+    transitionTime,
+    direction: ColorControl.Direction.Shortest,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
  * Build a Matter ColorControl `MoveToSaturationRequest` payload.
  *
  * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
@@ -1246,6 +1269,31 @@ export function getMoveToSaturationRequest(saturation: number, transitionTime: n
 export function getMoveToHueAndSaturationRequest(hue: number, saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToHueAndSaturationRequest {
   const request: ColorControl.MoveToHueAndSaturationRequest = {
     hue,
+    saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `EnhancedMoveToHueAndSaturationRequest` payload.
+ *
+ * @param {number} enhancedHue Target enhanced hue (Matter `uint16`; commonly 0–65535).
+ * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedMoveToHueAndSaturationRequest} The request payload.
+ */
+export function getEnhancedMoveToHueAndSaturationRequest(
+  enhancedHue: number,
+  saturation: number,
+  transitionTime: number,
+  executeIfOff: boolean,
+): ColorControl.EnhancedMoveToHueAndSaturationRequest {
+  const request: ColorControl.EnhancedMoveToHueAndSaturationRequest = {
+    enhancedHue,
     saturation,
     transitionTime,
     optionsMask: { executeIfOff },

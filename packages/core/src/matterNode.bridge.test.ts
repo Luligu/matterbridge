@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 10010;
 const NAME = 'MatterNodeBridge';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const PASSCODE = 123457;
 const DISCRIMINATOR = 3861;
 const STRESS_TEST_ITERATIONS = 5;

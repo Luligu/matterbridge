@@ -5,7 +5,7 @@
 const MATTER_PORT = 9000;
 const FRONTEND_PORT = 8284;
 const NAME = 'Frontend';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -48,8 +48,8 @@ const { Frontend } = await import('./frontend.js');
 import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread';
-import { wait, waiter } from '@matterbridge/utils';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import { wait, waiter } from '@matterbridge/utils/wait';
 
 import { cliEmitter } from './cliEmitter.js';
 import type { Frontend as FrontendType } from './frontend.js';
@@ -182,9 +182,12 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { level: 'info', time: 'time', name: 'jest', message: 'info' },
     } as any);
-    for (const type of ['plugins_install', 'plugins_uninstall'] as const) {
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: true, packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, type, src: 'manager', dst: 'all', result: { success: false, packageName: 'testPlugin' } } as any);
+    // prettier-ignore
+    {
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
+      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
     }
   });
 

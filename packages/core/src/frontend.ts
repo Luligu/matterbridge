@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.3.3
+ * @version 1.4.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -42,7 +42,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiClusters,
   ApiDevice,
@@ -68,22 +68,12 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import {
-  createZip,
-  formatBytes,
-  formatPercent,
-  formatUptime,
-  getParameter,
-  hasParameter,
-  inspectError,
-  isValidArray,
-  isValidBoolean,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  wait,
-  withTimeout,
-} from '@matterbridge/utils';
+import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { inspectError } from '@matterbridge/utils/error';
+import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
+import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
+import { wait, withTimeout } from '@matterbridge/utils/wait';
+import { createZip } from '@matterbridge/utils/zip';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
@@ -220,28 +210,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    if (this.server.isWorkerResponse(msg) && msg.result) {
-      // istanbul ignore next
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
-        case 'plugins_install':
-          this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
-          if (msg.result.success) {
-            this.wssSendRestartRequired(true, true);
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
-          } else {
-            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
+        case 'manager_spawn_response':
+          if (msg.result && msg.result.packageCommand === 'install') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
+            if (msg.result.success) {
+              this.wssSendRestartRequired(true, true);
+              this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
+            } else {
+              this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
+            }
           }
-          break;
-        case 'plugins_uninstall':
-          this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
-          if (msg.result.success) {
-            this.wssSendRestartRequired(true, true);
-            this.wssSendRefreshRequired('plugins');
-            this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
-          } else {
-            this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
+          if (msg.result && msg.result.packageCommand === 'uninstall') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
+            if (msg.result.success) {
+              this.wssSendRestartRequired(true, true);
+              this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
+            } else {
+              this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
+            }
           }
           break;
       }
@@ -255,6 +247,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.logLevel = logLevel;
   }
 
+  /**
+   * Validates the incoming request for protected endpoints by checking the client's IP address against the list of authorized clients.
+   * If the client's IP address is not in the list, it responds with a 401 Unauthorized status and an error message.
+   *
+   * @param {import('express').Request} req - The incoming request object.
+   * @param {import('express').Response} res - The response object.
+   * @returns {boolean} - Returns true if the request is authorized, false otherwise.
+   */
   private validateReq(req: import('express').Request<unknown, unknown, unknown, { password?: string }>, res: import('express').Response): boolean {
     if (req.ip && !this.authClients.has(req.ip)) {
       this.log.warn(`Warning blocked unauthorized access request ${req.originalUrl ?? req.url} from ${req.ip}`);
@@ -984,6 +984,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to upload a package
     this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+      this.log.debug('The frontend sent /api/uploadpackage');
       if (!this.validateReq(req, res)) return;
       const { filename } = req.body;
       const file = req.file;
@@ -994,7 +995,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.status(400).send('Invalid request: file and filename are required');
         return;
       }
-      this.wssSendSnackbarMessage(`Installing package ${filename}. Please wait...`, 0);
+      this.wssSendSnackbarMessage(`Installing package ${filename}...`, 0);
 
       // Define the path where the plugin file will be saved
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
@@ -1007,25 +1008,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
         // Install the plugin package
         if (filename.endsWith('.tgz')) {
-          const { spawnCommand } = await import('./spawn.js');
-          if (await spawnCommand('npm', ['install', '-g', filePath, '--omit=dev', '--verbose'], 'install', filename)) {
-            this.log.info(`Plugin package ${plg}${filename}${nf} installed successfully. Full restart required.`);
-            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
-            this.wssSendSnackbarMessage(`Installed package ${filename}`, 10, 'success');
-            this.wssSendRestartRequired();
-            res.send(`Plugin package ${filename} uploaded and installed successfully`);
-          } else {
-            this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}`);
-            this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
-            this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
-            res.status(500).send(`Error uploading or installing plugin package ${filename}`);
-          }
-        } else {
-          res.send(`File ${filename} uploaded successfully`);
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                packageCommand: 'install',
+                packageName: filename,
+              },
+            },
+          });
         }
+        res.send(`File ${filename} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
-        this.wssSendCloseSnackbarMessage(`Installing package ${filename}. Please wait...`);
+        this.wssSendCloseSnackbarMessage(`Installing package ${filename}...`);
         this.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
         res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
@@ -1648,7 +1650,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/install') {
         if (isValidString(data.params.packageName, 12) && isValidBoolean(data.params.restart)) {
           this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-          this.server.request({ type: 'plugins_install', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'],
+                packageCommand: 'install',
+                packageName: data.params.packageName,
+              },
+            },
+          });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' });
@@ -1656,7 +1672,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/uninstall') {
         if (isValidString(data.params.packageName, 12)) {
           this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-          this.server.request({ type: 'plugins_uninstall', src: this.server.name, dst: 'plugins', params: { packageName: data.params.packageName } });
+          this.server.request({
+            type: 'manager_run',
+            src: 'frontend',
+            dst: 'manager',
+            params: {
+              name: 'SpawnCommand',
+              workerData: {
+                threadName: 'SpawnCommand',
+                command: 'npm',
+                args: ['uninstall', '-g', data.params.packageName, '--omit=dev', '--verbose'],
+                packageCommand: 'uninstall',
+                packageName: data.params.packageName,
+              },
+            },
+          });
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' });
@@ -1834,8 +1864,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
       } else if (data.method === '/api/checkupdates') {
-        const { createESMWorker } = await import('@matterbridge/thread');
-        createESMWorker('CheckUpdates', this.matterbridge.resolveWorkerDistFilePath('workerCheckUpdates.js'));
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         /*

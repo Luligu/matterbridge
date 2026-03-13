@@ -63,7 +63,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
-  HOMEDIR = path.join('temp', name);
+  HOMEDIR = path.join('.cache', 'vitest', name);
 
   // Create the AnsiLogger instance
   log = new AnsiLogger({ logName: 'Vitest', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });

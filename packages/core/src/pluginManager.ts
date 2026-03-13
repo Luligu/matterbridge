@@ -4,7 +4,7 @@
  * @file plugins.ts
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.3.5
+ * @version 1.4.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -37,10 +37,11 @@ import type { StorageContext } from '@matter/general';
 import type { Endpoint as EndpointNode, ServerNode } from '@matter/node';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
-import { hasParameter, inspectError, logError } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
+import { inspectError, logError } from '@matterbridge/utils/error';
 // AnsiLogger
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 // NodeStorage
@@ -50,7 +51,7 @@ import type { NodeStorage } from 'node-persist-manager';
 import type { Matterbridge } from './matterbridge.js';
 import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
 
 /** Define an interface for matterbridge */
@@ -78,6 +79,24 @@ interface PluginManagerEvents {
   shutdown: [name: string];
 }
 
+type PackageJsonDependencies = Record<string, string> | string[];
+
+type PackageJsonLike = Record<string, unknown> & {
+  name?: string;
+  dependencies?: PackageJsonDependencies;
+  devDependencies?: PackageJsonDependencies;
+  peerDependencies?: PackageJsonDependencies;
+  optionalDependencies?: PackageJsonDependencies;
+  bundledDependencies?: PackageJsonDependencies;
+  bundleDependencies?: PackageJsonDependencies;
+};
+
+type InvalidDependencies = {
+  dependencyType: keyof Pick<PackageJsonLike, 'dependencies' | 'devDependencies' | 'peerDependencies' | 'optionalDependencies' | 'bundledDependencies' | 'bundleDependencies'>;
+  packages: string[];
+  isMatterbridgePackage: boolean;
+};
+
 /**
  * Manages Matterbridge plugins.
  */
@@ -87,6 +106,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   private readonly server: BroadcastServer;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
+  private readonly dependencyTypes = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies', 'bundledDependencies', 'bundleDependencies'] as const;
 
   /**
    * Creates an instance of PluginManager.
@@ -108,6 +128,54 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   destroy(): void {
     this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
+  }
+
+  private getDependencyNames(dependencies: PackageJsonDependencies | undefined): string[] {
+    if (!dependencies) return [];
+    return Array.isArray(dependencies) ? dependencies : Object.keys(dependencies);
+  }
+
+  private findInvalidDependencies(packageJson: PackageJsonLike): InvalidDependencies | null {
+    for (const dependencyType of this.dependencyTypes) {
+      const packages = this.getDependencyNames(packageJson[dependencyType]);
+      const matterbridgePackages = packages.filter((pkg) => pkg.startsWith('matterbridge'));
+      if (matterbridgePackages.length > 0) {
+        return { dependencyType, packages: matterbridgePackages, isMatterbridgePackage: true };
+      }
+
+      const scopedPackages = packages.filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matterbridge') || pkg.startsWith('@matter'));
+      if (scopedPackages.length > 0) {
+        return { dependencyType, packages: scopedPackages, isMatterbridgePackage: false };
+      }
+    }
+    return null;
+  }
+
+  private logInvalidDependencies(packageJson: PackageJsonLike, invalidDependencies: InvalidDependencies, pluginName?: string): void {
+    if (invalidDependencies.isMatterbridgePackage) {
+      this.log.error(`Found matterbridge package in the plugin${pluginName ? ` ${plg}${pluginName}${er}` : ''} ${invalidDependencies.dependencyType}.`);
+    } else {
+      this.log.error(
+        `Found invalid packages "${invalidDependencies.packages.join(', ')}" in plugin${pluginName ? ` ${plg}${pluginName}${er}` : ''} ${invalidDependencies.dependencyType}.`,
+      );
+    }
+    this.log.error(`Please open an issue on the plugin repository to remove them.`);
+    this.server.request({
+      type: 'frontend_snackbarmessage',
+      src: 'plugins',
+      dst: 'frontend',
+      params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
+    });
+  }
+
+  /**
+   * Checks whether the package.json contains forbidden dependencies.
+   *
+   * @param {PackageJsonLike} packageJson - The package.json object to validate.
+   * @returns {boolean} True if no forbidden dependencies are present, otherwise false.
+   */
+  checkDependencies(packageJson: PackageJsonLike): boolean {
+    return this.findInvalidDependencies(packageJson) === null;
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
@@ -151,10 +219,12 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.server.respond({ ...msg, result: { plugins: this.apiPluginArray() } });
           break;
         case 'plugins_install':
-          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.install(msg.params.packageName) } });
+          this.install(msg.params.packageName);
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName } });
           break;
         case 'plugins_uninstall':
-          this.server.respond({ ...msg, result: { packageName: msg.params.packageName, success: await this.uninstall(msg.params.packageName) } });
+          this.uninstall(msg.params.packageName);
+          this.server.respond({ ...msg, result: { packageName: msg.params.packageName } });
           break;
         case 'plugins_add':
           {
@@ -291,7 +361,53 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           }
           break;
         default:
+          // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+      }
+    }
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
+      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      switch (msg.type) {
+        case 'manager_spawn_response':
+          if (msg.result && msg.result.packageCommand === 'install') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            if (msg.result.packageName.endsWith('.tgz')) return; // Ignore install responses for tarball packages
+            if (msg.result.success) {
+              const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+              // istanbul ignore else
+              if (packageName !== 'matterbridge') {
+                // istanbul ignore else
+                if (!this.has(packageName)) await this.add(packageName);
+                const plugin = this.get(packageName);
+                // istanbul ignore else
+                if (plugin && !plugin.loaded) {
+                  await this.load(plugin);
+                  this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
+                }
+              }
+              this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
+            } else {
+              this.log.error(`Failed to install plugin ${plg}${msg.result.packageName}${er}`);
+            }
+          }
+          if (msg.result && msg.result.packageCommand === 'uninstall') {
+            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            if (msg.result.success) {
+              // istanbul ignore else
+              if (this.has(msg.result.packageName)) {
+                const plugin = this.get(msg.result.packageName);
+                // istanbul ignore else
+                if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+                await this.remove(msg.result.packageName);
+                this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
+              }
+              this.log.info(`Uninstalled plugin ${plg}${msg.result.packageName}${db} successfully`);
+            } else {
+              this.log.error(`Failed to uninstall plugin ${plg}${msg.result.packageName}${er}`);
+            }
+          }
+          break;
       }
     }
   }
@@ -571,85 +687,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         return null;
       }
 
-      // Check for @project-chip and @matter packages in dependencies and devDependencies
-      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
-      };
-      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
-      if (projectChipDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
-      if (projectChipDevDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
-      if (projectChipPeerDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-
-      // Check for matterbridge package in dependencies and devDependencies
-      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
-      };
-      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
-      if (matterbridgeDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
-      if (matterbridgeDevDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
-      if (matterbridgePeerDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
+      const invalidDependencies = this.findInvalidDependencies(packageJson);
+      if (invalidDependencies) {
+        this.logInvalidDependencies(packageJson, invalidDependencies);
         return null;
       }
 
@@ -668,58 +708,51 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
-   * Installs a package globally using npm.
+   * Installs a package globally using npm. Called from the frontend /api/install with packageName.
    *
    * @param {string} packageName - The name of the package to install.
-   * @returns {Promise<boolean>} A promise that resolves to true if the installation was successful, false otherwise.
    */
-  async install(packageName: string): Promise<boolean> {
+  install(packageName: string): void {
     this.log.debug(`Installing plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./spawn.js');
-    if (await spawnCommand('npm', ['install', '-g', packageName, '--omit=dev', '--verbose'], 'install', packageName)) {
-      this.matterbridge.restartRequired = true;
-      this.matterbridge.fixedRestartRequired = true;
-      packageName = packageName.replace(/@.*$/, ''); // Remove @version if present
-      if (packageName !== 'matterbridge') {
-        if (!this.has(packageName)) await this.add(packageName);
-        const plugin = this.get(packageName);
-        if (plugin && !plugin.loaded) await this.load(plugin);
-      } else {
-        if (this.matterbridge.restartMode !== '') {
-          await this.matterbridge.shutdownProcess();
-        }
-      }
-      this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
-      return true;
-    } else {
-      this.log.error(`Failed to install plugin ${plg}${packageName}${er}`);
-      return false;
-    }
+    this.server.request({
+      type: 'manager_run',
+      src: 'plugins',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['install', '-g', packageName, '--omit=dev', '--verbose'],
+          packageCommand: 'install',
+          packageName: packageName,
+        },
+      },
+    });
   }
 
   /**
-   * Uninstalls a package globally using npm.
+   * Uninstalls a package globally using npm. Called from the frontend /api/uninstall with packageName.
    *
    * @param {string} packageName - The name of the package to uninstall.
-   * @returns {Promise<boolean>} A promise that resolves to true if the uninstallation was successful, false otherwise.
    */
-  async uninstall(packageName: string): Promise<boolean> {
+  uninstall(packageName: string): void {
     this.log.debug(`Uninstalling plugin ${plg}${packageName}${db}...`);
-    const { spawnCommand } = await import('./spawn.js');
-    packageName = packageName.replace(/@.*$/, '');
-    if (packageName === 'matterbridge') return false;
-    if (this.has(packageName)) {
-      const plugin = this.get(packageName);
-      if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
-      await this.remove(packageName);
-    }
-    if (await spawnCommand('npm', ['uninstall', '-g', packageName, '--verbose'], 'uninstall', packageName)) {
-      this.log.info(`Uninstalled plugin ${plg}${packageName}${db} successfully`);
-      return true;
-    } else {
-      this.log.error(`Failed to uninstall plugin ${plg}${packageName}${er}`);
-      return false;
-    }
+    this.server.request({
+      type: 'manager_run',
+      src: 'plugins',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: ['uninstall', '-g', packageName, '--omit=dev', '--verbose'],
+          packageCommand: 'uninstall',
+          packageName: packageName,
+        },
+      },
+    });
   }
 
   /**
@@ -816,6 +849,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Normalize funding into an array.
     const fundingEntries = Array.isArray(funding) ? funding : [funding];
     for (const entry of fundingEntries) {
+      // istanbul ignore else
       if (entry && typeof entry === 'string' && entry.startsWith('http')) {
         // If the funding entry is a string, assume it is a URL.
         return entry;
@@ -864,85 +898,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       plugin.funding = this.getFunding(packageJson);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
 
-      // Check for @project-chip and @matter packages in dependencies and devDependencies
-      const checkForProjectChipPackages = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg.startsWith('@project-chip') || pkg.startsWith('@matter'));
-      };
-      const projectChipDependencies = checkForProjectChipPackages(packageJson.dependencies || {});
-      if (projectChipDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipDevDependencies = checkForProjectChipPackages(packageJson.devDependencies || {});
-      if (projectChipDevDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipDevDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const projectChipPeerDependencies = checkForProjectChipPackages(packageJson.peerDependencies || {});
-      if (projectChipPeerDependencies.length > 0) {
-        this.log.error(`Found @project-chip packages "${projectChipPeerDependencies.join(', ')}" in plugin ${plg}${plugin.name}${er} peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-
-      // Check for matterbridge package in dependencies and devDependencies
-      const checkForMatterbridgePackage = (dependencies: Record<string, string>) => {
-        return Object.keys(dependencies).filter((pkg) => pkg === 'matterbridge');
-      };
-      const matterbridgeDependencies = checkForMatterbridgePackage(packageJson.dependencies || {});
-      if (matterbridgeDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} dependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgeDevDependencies = checkForMatterbridgePackage(packageJson.devDependencies || {});
-      if (matterbridgeDevDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} devDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
-        return null;
-      }
-      const matterbridgePeerDependencies = checkForMatterbridgePackage(packageJson.peerDependencies || {});
-      if (matterbridgePeerDependencies.length > 0) {
-        this.log.error(`Found matterbridge package in the plugin ${plg}${plugin.name}${er} peerDependencies.`);
-        this.log.error(`Please open an issue on the plugin repository to remove them.`);
-        this.server.request({
-          type: 'frontend_snackbarmessage',
-          src: 'plugins',
-          dst: 'frontend',
-          params: { message: `Found not allowed package in plugin ${packageJson.name} package.json`, timeout: 30, severity: 'error' },
-        });
+      const invalidDependencies = this.findInvalidDependencies(packageJson as PackageJsonLike);
+      if (invalidDependencies) {
+        this.logInvalidDependencies(packageJson as PackageJsonLike, invalidDependencies, plugin.name);
         return null;
       }
 

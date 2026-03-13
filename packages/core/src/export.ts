@@ -26,7 +26,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 export { addVirtualDevice } from './helpers.js';
 export * from './matterbridgeAccessoryPlatform.js';
-export * from './matterbridgeBehaviors.js';
+export * from './matterbridgeBehaviorsServer.js';
 export * from './matterbridgeDeviceTypes.js';
 export * from './matterbridgeDynamicPlatform.js';
 export * from './matterbridgeEndpoint.js';

@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 10040;
 const NAME = 'MatterNodeAccessory';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const PASSCODE = 123458;
 const DISCRIMINATOR = 3862;
 const STRESS_TEST_ITERATIONS = 5;

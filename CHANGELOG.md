@@ -27,28 +27,51 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Project evolution
 
-The project is evolving to a multi-threaded architecture (the CLI will become the thread manager) with these initial threads:
-
-- matterbridge;
-- frontend;
-- plugins;
-- devices;
-- all plugins in bridge mode;
-- each plugin in childbridge mode;
-
-Advantages:
+The project is evolving to a multi-threaded architecture with these advantages:
 
 - real concurrency outside the Node.js main loop;
+- memory and performace optimization;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;
+
+✅ The CLI is the threads manager.
 
 These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
-- npm install;
+- ✅ npm install;
 - ✅ check the global node_modules directory;
+
+These classes will run as threads in the next releases:
+
+- matterbridge;
+- frontend;
+- all plugins in bridge mode;
+- each plugin in childbridge mode;
+
+## [3.6.1] - 2026-03-13
+
+### Dev Breaking Changes
+
+- [getCluster]: The overloads of `getCluster()` method that take Behavior.Type or ClusterType are now typed.
+- [setCluster]: The overloads of `setCluster()` method that take Behavior.Type or ClusterType are now typed.
+
+### Added
+
+- [package]: Enable tree-shaking for @matterbridge/utils.
+- [package]: Enable tree-shaking for @matterbridge/thread.
+- [threads]: Add ThreadsManager class to the cli.
+- [threads]: Add WorkerWrapper class.
+- [reset-sessions]: Add --reset-sessions parameter to disable resumption records. Use it only if your controller doesn't support resumption.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.0.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.6.0] - 2026-03-06
 
@@ -61,6 +84,9 @@ These threads already run as workers:
 - [SolarPower]: Refactor `SolarPower` class as composed device.
 - [BatteryStorage]: Refactor `BatteryStorage` class as composed device.
 - [HeatPump]: Refactor `HeatPump` class as composed device.
+
+### Dev News
+
 - [matter1.5.0]: Add SoilMeasurement cluster and corresponding test.
 - [matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.
 - [matter1.5.0]: Add SoilSensor class and corresponding tests.

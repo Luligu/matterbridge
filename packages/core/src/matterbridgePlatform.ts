@@ -29,14 +29,15 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // Node.js modules
 import path from 'node:path';
 
-// Matter
+// @matter
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
-import { hasParameter, isValidArray, isValidObject, isValidString } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
+import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module

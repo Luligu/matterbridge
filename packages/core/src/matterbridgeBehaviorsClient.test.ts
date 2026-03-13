@@ -1,19 +1,16 @@
-// src\matterbridgeBehaviors.test.ts
+// src\matterbridgeBehaviorsClient.test.ts
 
-const NAME = 'MatterbridgeBehaviors';
+const NAME = 'MatterbridgeBehaviorsClient';
 const MATTER_PORT = 11400;
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
-import { EndpointNumber, GroupId, NodeId } from '@matter/main/types';
-import { BindingServer } from '@matter/node/behaviors/binding';
+import { EndpointNumber, NodeId } from '@matter/main/types';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { IdentifyClient, IdentifyServer } from '@matter/node/behaviors/identify';
-import { OnOffClient, OnOffServer } from '@matter/node/behaviors/on-off';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 
@@ -25,8 +22,8 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
-import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './matterbridgeBehaviors.js';
 import { MatterbridgeBindingServer } from './matterbridgeBehaviorsClient.js';
+import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './matterbridgeBehaviorsServer.js';
 import { onOffSwitch } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 

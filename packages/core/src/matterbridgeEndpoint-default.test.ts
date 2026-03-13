@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 11200;
 const NAME = 'EndpointDefault';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -853,7 +853,7 @@ describe('Matterbridge ' + NAME, () => {
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(0);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
     const retrievedPresetTypes = device.getAttribute(Thermostat.Cluster.id, 'presetTypes');
@@ -901,7 +901,7 @@ describe('Matterbridge ' + NAME, () => {
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(2);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(2);
     expect(JSON.stringify(Object.values(retrievedPresets[0].presetHandle))).toBe(JSON.stringify([0]));
@@ -960,7 +960,7 @@ describe('Matterbridge ' + NAME, () => {
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(2);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

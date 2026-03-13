@@ -3,7 +3,7 @@
 
 const MATTER_PORT = 8007;
 const NAME = 'HeatPump';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';

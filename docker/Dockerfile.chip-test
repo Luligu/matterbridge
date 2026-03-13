@@ -67,9 +67,12 @@ RUN bash -lc "\
   du -sh out/host/chip-tool out/python_env || true; \
   "
 
+# Allow overriding the cache version
+ARG CACHE_VERSION=3.6.X
+RUN echo "Builder with cache version ${CACHE_VERSION}"
+
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
-RUN echo "Build matterbridge module 3.6.0 0304"
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
@@ -137,6 +140,10 @@ RUN \
 ENV CHIP_ROOT=/root/connectedhomeip
 ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
+
+# Allow overriding the cache version
+ARG CACHE_VERSION=3.6.X
+RUN echo "Release with cache version ${CACHE_VERSION}"
 
 # Matterbridge module (global install copied from builder)
 COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
@@ -231,34 +238,39 @@ import re
 path = Path('/root/connectedhomeip/src/python_testing/TC_DeviceBasicComposition.py')
 text = path.read_text(encoding='utf-8')
 
-def replace_one(pattern: str, replacement: str, *, label: str) -> str:
-  matches = list(re.finditer(pattern, text, flags=re.MULTILINE))
-  if len(matches) != 1:
-    raise SystemExit(f'Expected exactly 1 match for {label} in {path}, found {len(matches)}; file likely changed upstream')
-  return re.sub(pattern, replacement, text, count=1, flags=re.MULTILINE)
+# If upstream already fixed it (or renamed variables), don't fail the image build.
+if 'no_duplicate_tag_keys' in text and 'tag_key' in text:
+  print(f'{path}: duplicate-tag patch already present; skipping')
+  raise SystemExit(0)
 
-text = replace_one(
-  r'(^[ \t]*)no_duplicate_tag\s*=\s*\[\]\s*\n',
-  r'\1no_duplicate_tag_keys = set()\n',
-  label='no_duplicate_tag init',
-)
+patterns = {
+  'no_duplicate_tag init': (
+    r'(^[ \t]*)no_duplicate_tag\s*=\s*\[\]\s*\n',
+    r'\1no_duplicate_tag_keys = set()\n',
+  ),
+  'duplicate-tag if check': (
+    r'(^[ \t]*)if\s+tag_struct\.tag\s+in\s+no_duplicate_tag\s*:\s*\n',
+    r"\1mfg_code_key = None if isinstance(tag_struct.mfgCode, Nullable) else int(tag_struct.mfgCode)\n"
+    r"\1tag_key = (mfg_code_key, int(tag_struct.namespaceID), int(tag_struct.tag))\n"
+    r"\1if tag_key in no_duplicate_tag_keys:\n",
+  ),
+  'no_duplicate_tag append': (
+    r'(^[ \t]*)no_duplicate_tag\.append\(\s*tag_struct\.tag\s*\)\s*\n',
+    r'\1no_duplicate_tag_keys.add(tag_key)\n',
+  ),
+}
 
-text = replace_one(
-  r'(^[ \t]*)if\s+tag_struct\.tag\s+in\s+no_duplicate_tag\s*:\s*\n',
-  r"\1mfg_code_key = None if isinstance(tag_struct.mfgCode, Nullable) else int(tag_struct.mfgCode)\n"
-  r"\1tag_key = (mfg_code_key, int(tag_struct.namespaceID), int(tag_struct.tag))\n"
-  r"\1if tag_key in no_duplicate_tag_keys:\n",
-  label='duplicate-tag if check',
-)
+counts = {label: len(list(re.finditer(pattern, text, flags=re.MULTILINE))) for label, (pattern, _) in patterns.items()}
 
-text = replace_one(
-  r'(^[ \t]*)no_duplicate_tag\.append\(\s*tag_struct\.tag\s*\)\s*\n',
-  r'\1no_duplicate_tag_keys.add(tag_key)\n',
-  label='no_duplicate_tag append',
-)
-
-path.write_text(text, encoding='utf-8')
-print(f'Patched {path}')
+if all(v == 1 for v in counts.values()):
+  for label, (pattern, replacement) in patterns.items():
+    text = re.sub(pattern, replacement, text, count=1, flags=re.MULTILINE)
+  path.write_text(text, encoding='utf-8')
+  print(f'Patched {path} (duplicate-tag detection)')
+elif any(v > 1 for v in counts.values()):
+  raise SystemExit(f'Ambiguous matches while patching {path}: {counts}')
+else:
+  print(f'Skipping duplicate-tag patch for {path}: patterns not found (upstream likely changed). Counts: {counts}')
 PY
 
 # Persist pairing state for yaml and python tests

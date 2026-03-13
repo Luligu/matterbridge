@@ -29,7 +29,12 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
 
 // @matterbridge
-import { formatBytes, formatUptime, hasAnyParameter, hasParameter, inspectError, Inspector, Tracker, TrackerSnapshot } from '@matterbridge/utils';
+import { ThreadsManager } from '@matterbridge/thread/manager';
+import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
+import { inspectError } from '@matterbridge/utils/error';
+import { formatBytes, formatUptime } from '@matterbridge/utils/format';
+import { Inspector } from '@matterbridge/utils/inspector';
+import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -41,6 +46,7 @@ import type { Matterbridge } from './matterbridge.js';
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
+const manager = new ThreadsManager();
 
 if (process.argv.includes('--no-ansi') || process.argv.includes('-no-ansi')) process.env.NO_COLOR = '1';
 
@@ -144,6 +150,8 @@ async function shutdown() {
 
   stopCpuMemoryCheck();
 
+  manager.destroy();
+
   cliEmitter.emit('shutdown');
 
   process.exit(0);
@@ -235,13 +243,25 @@ if (hasAnyParameter('help', 'h')) help();
 
 if (hasAnyParameter('version', 'v')) await version();
 
+// if (hasAnyParameter('systemcheck', 's')) await systemCheck();
+
 main().catch((error) => {
   inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
   shutdown();
 });
 
 /**
- * Displays the version.
+ * Performs a system check and exits.
+ */
+/*
+async function systemCheck(): Promise<void> {
+  manager.runThread('SystemCheck');
+  process.exit(0);
+}
+*/
+
+/**
+ * Displays the version and exits.
  */
 async function version(): Promise<void> {
   // Dynamic JSON import (Node >= 20) with import attributes
@@ -251,7 +271,7 @@ async function version(): Promise<void> {
 }
 
 /**
- * Displays the help.
+ * Displays the help and exits.
  */
 function help(): void {
   console.log(`
@@ -308,6 +328,7 @@ function help(): void {
       --delay [seconds]:       set a delay in seconds before starting Matterbridge in the first 5 minutes from a reboot (default 120)
       --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
       --no-ansi:               disable ANSI color output in the logs    
+      --reset-sessions:        reset sessions and resumption records on shutdown (use only if your controller has issue reconnecting on restart)
   `);
   process.exit(0);
 }

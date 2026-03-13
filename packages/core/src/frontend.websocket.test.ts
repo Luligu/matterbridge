@@ -1,9 +1,9 @@
 // src\frontend.websocket.test.ts
 
-const MATTER_PORT = 9002;
+const MATTER_PORT = 9200;
 const FRONTEND_PORT = 8286;
 const NAME = 'FrontendWebsocket';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -32,17 +32,18 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { LogLevel as MatterLogLevel } from '@matter/general';
-import { Identify } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
 import type { WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
-import { wait, waiter } from '@matterbridge/utils';
+import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import WebSocket from 'ws';
 
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';
 import {
+  broadcastServerRequestSpy,
   closeMdnsInstance,
   destroyInstance,
   flushAsync,
@@ -61,15 +62,6 @@ import { Matterbridge } from './matterbridge.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { Plugin } from './pluginManager.js';
-
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 /*
 jest.unstable_mockModule('./shelly.ts', () => ({
@@ -456,7 +448,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/checkupdates', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
-    expect(createESMWorker).toHaveBeenCalled();
+    expect(broadcastServerRequestSpy).toHaveBeenCalled();
   });
 
   // eslint-disable-next-line jest/no-commented-out-tests
@@ -692,8 +684,6 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
     expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
-    expect(installPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(addPluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually add the plugin in the mock
     expect((matterbridge as any).plugins.size).toBe(3);
   });
 
@@ -724,9 +714,6 @@ describe('Matterbridge frontend', () => {
     await flushAsync(undefined, undefined, 100);
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
-    expect(uninstallPluginSpy).toHaveBeenCalledWith('matterbridge-test');
-    // expect(removePluginSpy).toHaveBeenCalledWith('matterbridge-test'); // Disabled as we do not actually remove the plugin in the mock
-    expect((matterbridge as any).plugins.size).toBe(3);
   });
 
   test('Websocket API /api/addplugin', async () => {

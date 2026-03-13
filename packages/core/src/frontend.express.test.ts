@@ -1,9 +1,9 @@
 // src\frontend.express.test.ts
 
-const MATTER_PORT = 9001;
+const MATTER_PORT = 9100;
 const FRONTEND_PORT = 8285;
 const NAME = 'FrontendExpress';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -33,7 +33,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE } from '@matterbridge/types';
-import { waiter } from '@matterbridge/utils';
+import { waiter } from '@matterbridge/utils/wait';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import type { Frontend as FrontendType } from './frontend.js';
@@ -49,15 +49,6 @@ const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond
 const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
   return Promise.resolve(undefined) as any;
 });
-
-// Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./spawn.js', () => ({
-  spawnCommand: jest.fn((command: string, args: string[]) => {
-    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
-  }),
-}));
-const spawnModule = await import('./spawn.js');
-const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -501,6 +492,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 60000);
 
   test('POST /api/uploadpackage with invalid request', async () => {
+    // await setDebug(true);
     // Read the test file
     const response = await makeRequest('/api/uploadpackage', 'POST', { filename: 'test.zip' });
     expect(response.status).toBe(500);
@@ -513,46 +505,35 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('File test.zip uploaded successfully');
+    expect(broadcastServerRequestSpy).not.toHaveBeenCalled();
     await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/test.zip'))).resolves.toBeUndefined();
   }, 30000);
 
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
-    // setDebug(true);
     // Read the test file
     const testFileContent = await fs.readFile(new URL('./mock/matterbridge-plugin-template._tgz', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('Plugin package matterbridge-plugin-template.tgz uploaded and installed successfully');
-    await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
-    // setDebug(false);
-  }, 30000);
-
-  test('POST /api/uploadpackage with wrong tgz', async () => {
-    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
-      return Promise.resolve(false);
-    });
-    // Read the test file
-    const testFileContent = await fs.readFile(new URL('./mock/test.zip', import.meta.url));
-    const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
-    expect(response.status).toBe(500);
-    expect(typeof response.body).toBe('string');
-    expect(response.body).toContain('Error uploading or installing plugin package matterbridge-plugin-template.tgz');
+    expect(response.body).toContain('File matterbridge-plugin-template.tgz uploaded successfully');
+    expect(broadcastServerRequestSpy).toHaveBeenCalled();
     await expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
   }, 30000);
 
-  test('POST /api/uploadpackage throw error', async () => {
-    spawnCommandMock.mockImplementationOnce((command: string, args: string[]) => {
-      throw new Error('Mocked spawnCommand error for install');
+  test('POST /api/uploadpackage with matterbridge-plugin-template.tgz throw error', async () => {
+    broadcastServerRequestSpy.mockImplementationOnce(() => {
+      throw new Error('Test error');
     });
     // Read the test file
     const testFileContent = await fs.readFile(new URL('./mock/matterbridge-plugin-template._tgz', import.meta.url));
     const response = await makeMultipartRequest('/api/uploadpackage', 'matterbridge-plugin-template.tgz', testFileContent);
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
+    expect(response.body).toContain('Error uploading or installing');
   }, 30000);
 
   test('GET Fallback for routing', async () => {
+    await setDebug(false);
     const response = await makeRequest('/whatever', 'GET');
 
     expect(response.status).toBe(200);

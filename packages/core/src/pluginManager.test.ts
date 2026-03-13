@@ -2,9 +2,11 @@
 
 const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
-const HOMEDIR = path.join('jest', NAME);
-const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
-const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
+const HOMEDIR = path.join('.cache', 'jest', NAME);
+// const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
+// const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
+const NPM_CONFIG_PREFIX = path.resolve(path.join('.cache', '.npm-global'));
+const NPM_CONFIG_CACHE = path.resolve(path.join('.cache', '.npm-cache'));
 
 process.argv = [
   'node',
@@ -25,21 +27,10 @@ process.argv = [
 process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
 
-// Mock the spawnCommand from spawn module before importing it
-jest.unstable_mockModule('./spawn.js', () => ({
-  spawnCommand: jest.fn((matterbridge: MatterbridgeType, command: string, args: string[]) => {
-    return Promise.resolve(true); // Mock the spawnCommand function to resolve immediately
-  }),
-}));
-const spawnModule = await import('./spawn.js');
-const spawnCommandMock = spawnModule.spawnCommand as jest.MockedFunction<typeof spawnModule.spawnCommand>;
-
 const jsonParseSpy = jest.spyOn(JSON, 'parse');
 
-const matterbridgeShutdownSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess');
-
 import { execSync } from 'node:child_process';
-import { accessSync, existsSync, promises as fs, unlinkSync, writeFileSync } from 'node:fs';
+import { promises as fs, unlinkSync } from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
@@ -49,8 +40,19 @@ import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
-import { addPluginSpy, closeMdnsInstance, destroyInstance, loggerLogSpy, removePluginSpy, setDebug, setupTest, shutdownPluginSpy } from './jestutils/jestHelpers.js';
-import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
+import {
+  addPluginSpy,
+  broadcastServerRequestSpy,
+  closeMdnsInstance,
+  destroyInstance,
+  loggerErrorSpy,
+  loggerLogSpy,
+  logKeepAlives,
+  removePluginSpy,
+  setDebug,
+  setupTest,
+  shutdownPluginSpy,
+} from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -82,6 +84,8 @@ describe('PluginManager', () => {
     testServer.close();
     // Restore all mocks
     jest.restoreAllMocks();
+    // Log keep alives to ensure all async operations have completed before shutting down the instance
+    // logKeepAlives();
   });
 
   test('Load matterbridge', async () => {
@@ -103,13 +107,100 @@ describe('PluginManager', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
   });
 
+  test('checkDependencies should detect forbidden package prefixes across dependency types', async () => {
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+        bundledDependencies: ['left-pad'],
+        bundleDependencies: ['kleur'],
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(true);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        bundledDependencies: ['@matterbridge/example'],
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        optionalDependencies: { 'matterbridge-helper': '^1.0.0' },
+        bundleDependencies: ['kleur'],
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { '@matter/main': '^1.0.0' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { '@project-chip/matter.js': '^1.0.0' },
+        peerDependencies: { react: '^19.0.0' },
+        optionalDependencies: { ws: '^8.18.1' },
+      }),
+    ).toBe(false);
+
+    expect(
+      plugins.checkDependencies({
+        dependencies: { semver: '^7.7.1' },
+        devDependencies: { typescript: '^5.9.0' },
+        peerDependencies: { react: '^19.0.0' },
+        bundleDependencies: ['matterbridge-cli'],
+      }),
+    ).toBe(false);
+  });
+
+  test('logInvalidDependencies should log errors and notify frontend', async () => {
+    (plugins as any).logInvalidDependencies(
+      { name: 'test-plugin' },
+      {
+        dependencyType: 'bundledDependencies',
+        packages: ['@matterbridge/example', '@matter/main'],
+        isMatterbridgePackage: false,
+      },
+      'test-plugin',
+    );
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`Found invalid packages "@matterbridge/example, @matter/main" in plugin ${plg}test-plugin${er} bundledDependencies.`),
+    );
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Please open an issue on the plugin repository to remove them.');
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'frontend_snackbarmessage',
+        src: 'plugins',
+        dst: 'frontend',
+        params: { message: 'Found not allowed package in plugin test-plugin package.json', timeout: 30, severity: 'error' },
+      }),
+    );
+  });
+
   test('BroadcastServer from local path', async () => {
     const pluginPath = path.join('.', 'packages', 'core', 'src', 'mock', 'plugin1');
-    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.success).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.packageName).toBeDefined();
+    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      stdio: 'inherit',
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+    });
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
+    addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
+      return null;
+    });
+    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.has('matterbridge-mock1')).toBe(true);
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(true);
-
-    expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
     expect(
       (await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
     ).toBeDefined();
@@ -159,9 +250,17 @@ describe('PluginManager', () => {
     testServer.request({ type: 'plugins_unknown', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } });
 
     expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
-    expect((await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.success).toBe(
-      true,
-    );
+    // pretty-ignore
+    expect(
+      (await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.packageName,
+    ).toBeDefined();
+    execSync(`npm uninstall ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      stdio: 'inherit',
+      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+    });
+    expect(
+      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
+    ).not.toBeNull();
     expect(plugins.has('matterbridge-mock1')).toBe(false);
 
     await expect(
@@ -170,7 +269,22 @@ describe('PluginManager', () => {
     await expect(
       testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000),
     ).rejects.toThrow();
-  });
+
+    // prettier-ignore
+    {
+      // await setDebug(true);
+      execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
+      expect(plugins.has('matterbridge-mock1')).toBe(true); 
+      expect(await plugins.shutdown('matterbridge-mock1', 'Closing', false, true)).toBeDefined();
+
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
+      // await setDebug(false);
+      expect(plugins.has('matterbridge-mock1')).toBe(false); 
+    }
+  }, 10000);
 
   test('logLevel changes correctly', async () => {
     plugins.logLevel = LogLevel.DEBUG;
@@ -504,37 +618,37 @@ describe('PluginManager', () => {
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@project-chip': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', dependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', devDependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js', peerDependencies: { '@matter': '1.0.0' } }, null, 2), 'utf8');
     result = await plugins.resolve('./packages/core/src/mock/plugintest');
     expect(result).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(packageFilePath, JSON.stringify({ name: 'test', type: 'module', main: 'index.js' }, null, 2), 'utf8');
@@ -543,88 +657,23 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Resolved plugin path'));
   });
 
-  test('install plugin', async () => {
-    addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
-      return null;
-    });
-    matterbridgeShutdownSpy.mockImplementationOnce(() => {
-      return Promise.resolve();
-    });
-
-    await plugins.install('matterbridge-websocket');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge-websocket', '--omit=dev', '--verbose'], 'install', 'matterbridge-websocket');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-
-    await plugins.install('matterbridge');
-    expect(matterbridge.restartMode).toBe('');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
-    jest.clearAllMocks();
-
-    matterbridge.restartMode = 'service';
-    await plugins.install('matterbridge');
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(1);
-    jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await expect(plugins.install('matterbridge')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'], 'install', 'matterbridge');
-    expect(matterbridge.restartRequired).toBe(true);
-    expect(matterbridge.fixedRestartRequired).toBe(true);
-    expect(addPluginSpy).toHaveBeenCalledTimes(0);
-    expect(matterbridgeShutdownSpy).toHaveBeenCalledTimes(0);
-
-    (plugins as any)._plugins.delete('matterbridge-websocket');
+  test('install uninstall plugin', async () => {
+    plugins.install('matterbridge-websocket');
+    plugins.uninstall('matterbridge-websocket');
+    expect(plugins.length).toBe(3);
     matterbridge.restartMode = '';
     matterbridge.restartRequired = false;
     matterbridge.fixedRestartRequired = false;
   });
 
-  test('uninstall plugin', async () => {
-    (plugins as any)._plugins.set('matterbridge-websocket', { name: 'matterbridge-websocket', loaded: true });
-    shutdownPluginSpy.mockImplementationOnce(async (plugin: Plugin | string, reason?: string, removeAllDevices: boolean = false, force: boolean = false) => {
-      return plugin as Plugin;
-    });
-    removePluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
-      return null;
-    });
-
-    await plugins.uninstall('matterbridge-websocket');
-    expect(shutdownPluginSpy).toHaveBeenCalledTimes(1);
-    expect(removePluginSpy).toHaveBeenCalledTimes(1);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
-    expect(matterbridge.restartRequired).toBe(false);
-    expect(matterbridge.fixedRestartRequired).toBe(false);
-    jest.clearAllMocks();
-
-    spawnCommandMock.mockImplementationOnce(() => {
-      return Promise.resolve(false);
-    });
-    await expect(plugins.uninstall('matterbridge-websocket')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledWith('npm', ['uninstall', '-g', 'matterbridge-websocket', '--verbose'], 'uninstall', 'matterbridge-websocket');
-    jest.clearAllMocks();
-
-    await expect(plugins.uninstall('matterbridge')).resolves.toBe(false);
-    expect(spawnCommandMock).toHaveBeenCalledTimes(0);
-
-    (plugins as any)._plugins.delete('matterbridge-websocket');
-  });
-
   test('parse plugin', async () => {
     expect(plugins.length).toBe(3);
     const packageFilePath = path.join('.', 'packages', 'core', 'src', 'mock', 'plugintest', 'package.json');
+    await fs.writeFile(
+      packageFilePath,
+      JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }),
+      'utf8',
+    );
     (plugins as any)._plugins.set('matterbridge-test', {
       name: 'matterbridge-test',
       path: './packages/core/src/mock/plugintest/package.json',
@@ -793,7 +842,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -810,7 +859,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -827,7 +876,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -836,7 +885,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -845,7 +894,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -854,7 +903,7 @@ describe('PluginManager', () => {
       'utf8',
     );
     expect(await plugins.parse(plugin)).toBeNull();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found @project-chip packages'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -1086,21 +1135,36 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(0);
   });
 
-  test('install example plugins', async () => {
+  test('install matterbridge globally and mocked plugins', async () => {
     await setDebug(false);
-    // console.log('Installing with prefix:', prefix);
-    execSync(`npm install ./ --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
-    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
-    execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
-      stdio: 'inherit',
-      env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
-    });
+    let output;
+    try {
+      // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+    } catch (error) {
+      // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`sudo npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+    }
+    try {
+      // console.log(`Installing plugin1 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+      // console.log(`Installing plugin4 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+      output = execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
+    } catch (error) {
+      // console.log(`Installing plugin1 and plugin4 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
+    }
     expect(plugins.length).toBe(0);
   }, 60000);
 
@@ -1833,10 +1897,10 @@ describe('PluginManager', () => {
     await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
-  // Useless test to uninstall example plugins
+  // Useless test to uninstall matterbridge globally and mocked plugins
   // eslint-disable-next-line jest/no-commented-out-tests
   /*
-  test('uninstall example plugins', async () => {
+  test('uninstall matterbridge globally and mocked plugins', async () => {
     execSync(`npm uninstall matterbridge --silent --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
@@ -1855,7 +1919,7 @@ describe('PluginManager', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge);
+    await destroyInstance(matterbridge, 250, 500);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);

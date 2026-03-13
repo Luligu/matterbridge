@@ -31,7 +31,7 @@ import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
@@ -164,6 +164,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // istanbul ignore else
     if (onOff === false) {
       device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;

@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 8013;
 const NAME = 'Vacuum';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
@@ -25,7 +25,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviors.js';
+import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';

@@ -22,6 +22,7 @@
  * limitations under the License.
  */
 
+// istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mBroadcastServer loaded.\u001B[40;0m');
 
@@ -37,7 +38,8 @@ import type {
   WorkerMessageTypes,
   WorkerSrcType,
 } from '@matterbridge/types';
-import { hasParameter, logError } from '@matterbridge/utils';
+import { hasParameter } from '@matterbridge/utils/cli';
+import { logError } from '@matterbridge/utils/error';
 import { AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 
 interface BroadcastServerEvents {
@@ -272,7 +274,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    if (message.dst === this.name || message.dst === 'all') {
+    if (message.dst === this.name /* || message.dst === 'all'*/) {
       message.dst = message.src;
     }
     message.src = this.name;

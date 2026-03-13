@@ -33,7 +33,7 @@ const jestConfig = {
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     'matterNode',
-    'jestHelpers.ts',
+    'jestHelpers',
   ], // Ignore specific paths for test files
   coveragePathIgnorePatterns: [
     '/.cache/',
@@ -46,7 +46,7 @@ const jestConfig = {
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     'matterNode',
-    'jestHelpers.ts',
+    'jestHelpers',
   ], // Ignore specific paths for test and coverage
   maxWorkers: '100%', // Use all available CPU cores for running tests
 };

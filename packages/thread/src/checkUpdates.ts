@@ -25,7 +25,7 @@
 // @matterbridge
 import type { ApiPlugin, SharedMatterbridge } from '@matterbridge/types';
 import { plg } from '@matterbridge/types';
-import { isValidString } from '@matterbridge/utils';
+import { isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
@@ -82,7 +82,7 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
  * @param {BroadcastServer} server - The broadcast server instance.
  */
 export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<void> {
-  const { getGitHubUpdate } = await import('@matterbridge/utils');
+  const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
 
   const branch = matterbridge.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main';
   try {
@@ -121,7 +121,7 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
  * @returns {Promise<string | undefined>} A promise that resolves when the latest version is retrieved.
  */
 export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<string | undefined> {
-  const { getNpmPackageVersion } = await import('@matterbridge/utils');
+  const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
 
   try {
     const version = await getNpmPackageVersion('matterbridge');
@@ -146,7 +146,6 @@ export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbri
     }
     return version;
   } catch (error) {
-    // logError(matterbridge.log, `Error getting Matterbridge latest version`, error);
     log.warn(`Error getting Matterbridge latest version: ${error instanceof Error ? error.message : error}`);
   }
 }
@@ -161,7 +160,7 @@ export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbri
  * @returns {Promise<string | undefined>} A promise that resolves when the latest dev version is retrieved.
  */
 export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<string | undefined> {
-  const { getNpmPackageVersion } = await import('@matterbridge/utils');
+  const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
 
   try {
     const version = await getNpmPackageVersion('matterbridge', 'dev');
@@ -200,7 +199,7 @@ export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge
  * @returns {Promise<string | undefined>} A promise that resolves when the latest version is retrieved.
  */
 export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastServer, plugin: ApiPlugin): Promise<string | undefined> {
-  const { getNpmPackageVersion } = await import('@matterbridge/utils');
+  const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
 
   try {
     const version = await getNpmPackageVersion(plugin.name);
@@ -228,7 +227,7 @@ export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastS
  * @returns {Promise<string | undefined>} A promise that resolves when the latest dev version is retrieved.
  */
 export async function getPluginDevVersion(log: AnsiLogger, server: BroadcastServer, plugin: ApiPlugin): Promise<string | undefined> {
-  const { getNpmPackageVersion } = await import('@matterbridge/utils');
+  const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
 
   try {
     const version = await getNpmPackageVersion(plugin.name, 'dev');

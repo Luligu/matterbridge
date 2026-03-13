@@ -6,7 +6,7 @@
 const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;
 const NAME = 'MatterbridgeChildBridge';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
@@ -34,15 +34,6 @@ process.argv = [
 ];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
-
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./helpers.js', () => ({
@@ -332,6 +323,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock2')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
+    expect(plugins.apiPluginArray().length).toBe(4);
   }, 60000);
 
   test('addBridgedEndpoint fails adding for DynamicPlatform cause aggregatorNode', async () => {
@@ -388,6 +380,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.devices.size).toBe(0);
 
     // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   }, 60000);

@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 6100;
 const NAME = 'MatterbridgeMatterjs';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -20,15 +20,6 @@ process.argv = [
   '-port',
   MATTER_PORT.toString(),
 ];
-
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
 
 import path from 'node:path';
 

@@ -2,7 +2,7 @@
 
 const MATTER_PORT = 6000;
 const NAME = 'MatterbridgeGlobal';
-const HOMEDIR = path.join('jest', NAME);
+const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
   'node',
@@ -25,27 +25,17 @@ process.argv = [
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
-// Mock the createESMWorker from workers module before importing it
-jest.unstable_mockModule('@matterbridge/thread', () => ({
-  createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
-  }),
-}));
-const workerModule = await import('@matterbridge/thread');
-const createESMWorker = workerModule.createESMWorker as jest.MockedFunction<typeof workerModule.createESMWorker>;
-
-import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { SessionsBehavior } from '@matter/node';
-import { ExposedFabricInformation } from '@matter/protocol';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types';
-import { BroadcastServer } from '@matterbridge/thread';
+import type { SessionsBehavior } from '@matter/node';
+import type { ExposedFabricInformation } from '@matter/protocol';
+import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
-import { getParameter, hasParameter } from '@matterbridge/utils';
+import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { LogLevel, nf } from 'node-ansi-logger';
 
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
@@ -150,6 +140,14 @@ describe('Matterbridge', () => {
     expect(matterbridge.shellyMainUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
+
+    // Responses
+    const cleanupSpy = jest.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
+    // prettier-ignore
+    await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', result: { packageCommand: 'install', packageName: 'matterbridge', success: true } } as any);
+    // prettier-ignore
+    await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
+    cleanupSpy.mockRestore();
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -207,25 +205,22 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Matterbridge profile: Jest'));
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Home Directory: ${HOMEDIR}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Created Matterbridge Directory: ${path.join(HOMEDIR, '.matterbridge')}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge')}`),
+      expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'certs')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Frontend Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'certs')}`),
+      expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Frontend Uploads Directory: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
+      expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join(HOMEDIR, 'Matterbridge', 'profiles', 'Jest')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Plugin Directory: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge', 'profiles', 'Jest')}`),
-    );
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert', 'profiles', 'Jest')}`),
+      expect.stringContaining(`Created Matterbridge Matter Certificate Directory: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
     // -frontend 0
@@ -235,6 +230,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
     await destroyInstance(matterbridge, 0, 0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
 
@@ -279,29 +275,23 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Directory Matterbridge Home Directory already exists at path: ${HOMEDIR}`));
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest')}`),
+      expect.stringContaining(`Directory Matterbridge Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'certs')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Frontend Certificate Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'certs')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.matterbridge', 'profiles', 'Jest', 'uploads')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Frontend Uploads Directory already exists at path: ${path.join(HOMEDIR, '.matterbridge', 'profiles', 'Jest', 'uploads')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', 'Matterbridge', 'profiles', 'Jest')}`),
+      expect.stringContaining(`Directory Matterbridge Plugin Directory already exists at path: ${path.join(HOMEDIR, 'Matterbridge', 'profiles', 'Jest')}`),
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      expect.stringContaining(
-        `Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join('jest', 'MatterbridgeGlobal', '.mattercert', 'profiles', 'Jest')}`,
-      ),
+      expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
     // -frontend 8081
@@ -311,45 +301,6 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
   }, 60000);
-
-  test('resolveWorkerDistFilePath() should return current module dir candidate when file exists', async () => {
-    const fileName = `__jest_worker_${process.pid}_${Date.now()}_a.js`;
-    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-    try {
-      // Create the file where resolveWorkerDistFilePath expects it (candidate1)
-      fs.writeFileSync(candidate1, '// jest worker placeholder', 'utf8');
-      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-      expect(path.resolve(resolved)).toBe(path.resolve(candidate1));
-    } finally {
-      fs.rmSync(candidate1, { force: true });
-    }
-  });
-
-  test('resolveWorkerDistFilePath() should fall back to ../dist when current module dir candidate is missing', async () => {
-    const fileName = `__jest_worker_${process.pid}_${Date.now()}_b.js`;
-    const candidate1 = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-    const moduleDir = path.dirname(candidate1);
-    const candidate2 = path.resolve(moduleDir, '..', 'dist', fileName);
-
-    try {
-      // Ensure candidate1 does not exist and create candidate2
-      fs.rmSync(candidate1, { force: true });
-      fs.mkdirSync(path.dirname(candidate2), { recursive: true });
-      fs.writeFileSync(candidate2, '// jest worker placeholder', 'utf8');
-
-      const resolved = (matterbridge as any).resolveWorkerDistFilePath(fileName) as string;
-      expect(path.resolve(resolved)).toBe(path.resolve(candidate2));
-    } finally {
-      fs.rmSync(candidate2, { force: true });
-      // Optional: clean dist dir if we created it and it is empty
-      try {
-        const distDir = path.dirname(candidate2);
-        if (fs.existsSync(distDir) && fs.readdirSync(distDir).length === 0) fs.rmdirSync(distDir);
-      } catch {
-        // ignore cleanup errors
-      }
-    }
-  });
 
   test('destroy instance', async () => {
     // Destroy the Matterbridge instance
