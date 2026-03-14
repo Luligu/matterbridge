@@ -57,6 +57,8 @@ These classes will run as threads in the next releases:
 
 - [package]: Update dependencies.
 - [package]: Update actions in workflows.
+- [frontend]: Bumped `frontend` version to v. 3.4.8.
+- [frontend]: Change basePath to pathName for BrowserRouter.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
