@@ -382,7 +382,73 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send /api/create-backup', async () => {
+    jest.spyOn(frontend, 'zip');
     const msg = await waitMessageId(++WS_ID, '/api/create-backup', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/create-backup', params: {} });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-matterbridge-storage-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-matterbridge-storage-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-matterbridge-storage-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-matter-storage-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-matter-storage-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-matter-storage-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-plugin-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-plugin-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-plugin-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-config-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-config-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-config-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(msg.success).toBe(true);
   });

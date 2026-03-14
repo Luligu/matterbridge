@@ -35,6 +35,7 @@ import { WebSocketContext } from './WebSocketProvider';
 import { viewportHeight, viewportWidth } from './MbfScreen';
 import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
 import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
+import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../../../../packages/types/src/matterbridgeTypes';
 // const debug = true;
 
 function Header() {
@@ -51,7 +52,6 @@ function Header() {
   const uniqueId = useRef(getUniqueId());
   // Menu states
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
-  const [backupMenuAnchorEl, setBackupMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [viewMenuAnchorEl, setViewMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [downloadMenuAnchorEl, setDownloadMenuAnchorEl] = useState<HTMLElement | null>(null);
   const [resetMenuAnchorEl, setResetMenuAnchorEl] = useState<HTMLElement | null>(null);
@@ -243,6 +243,14 @@ function Header() {
       handleRebootClick();
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'create-matterbridge-storage-backup') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-matterbridge-storage-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'create-matter-storage-backup') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-matter-storage-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'create-plugin-backup') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-plugin-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    } else if (value === 'create-config-backup') {
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-config-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'unregister') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/unregister', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'reset') {
@@ -255,14 +263,6 @@ function Header() {
   const handleMenuCloseCancel = (value: string) => {
     if (debug) console.log('Header: handleMenuCloseCancel:', value);
     setMenuAnchorEl(null);
-  };
-
-  const handleBackupMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setBackupMenuAnchorEl(event.currentTarget);
-  };
-
-  const handleBackupMenuClose = () => {
-    setBackupMenuAnchorEl(null);
   };
 
   const handleViewMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -347,6 +347,13 @@ function Header() {
       } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success === true) {
         if (debug) console.log('Header received /api/downloadhistorypage success');
         window.location.href = `./api/downloadhistory`;
+      } else if (msg.method === 'archive' && msg.success === true && msg.response.command === 'zip') {
+        if (debug) console.log('Header received archive success response for zip command', msg.response);
+        if (msg.response.archivePath.endsWith('matterbridge.backup.zip')) window.location.href = `./api/download-backup`;
+        else if (msg.response.archivePath.endsWith(`matterbridge.${NODE_STORAGE_DIR}.zip`)) window.location.href = `./api/download-mbstorage`;
+        else if (msg.response.archivePath.endsWith(`matterbridge.${MATTER_STORAGE_NAME}.zip`)) window.location.href = `./api/download-mjstorage`;
+        else if (msg.response.archivePath.endsWith('matterbridge.pluginstorage.zip')) window.location.href = `./api/download-pluginstorage`;
+        else if (msg.response.archivePath.endsWith('matterbridge.pluginconfig.zip')) window.location.href = `./api/download-pluginconfig`;
       }
     };
 
@@ -725,7 +732,7 @@ function Header() {
           <Menu id='sub-menu-download' anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('download-mbstorage');
+                handleMenuCloseConfirm('create-matterbridge-storage-backup');
                 handleDownloadMenuClose();
               }}
             >
@@ -736,7 +743,7 @@ function Header() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('download-pluginstorage');
+                handleMenuCloseConfirm('create-plugin-backup');
                 handleDownloadMenuClose();
               }}
             >
@@ -747,7 +754,7 @@ function Header() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('download-pluginconfig');
+                handleMenuCloseConfirm('create-config-backup');
                 handleDownloadMenuClose();
               }}
             >
@@ -769,7 +776,7 @@ function Header() {
             </MenuItem>
             <MenuItem
               onClick={() => {
-                handleMenuCloseConfirm('download-mjstorage');
+                handleMenuCloseConfirm('create-matter-storage-backup');
                 handleDownloadMenuClose();
               }}
             >
@@ -841,36 +848,16 @@ function Header() {
           </Menu>
 
           <Divider />
-          <MenuItem onClick={handleBackupMenuOpen}>
+          <MenuItem
+            onClick={() => {
+              handleMenuCloseConfirm('create-backup');
+            }}
+          >
             <ListItemIcon>
               <SaveIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
             <ListItemText primary='Backup' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
-          <Menu id='sub-menu-backup' anchorEl={backupMenuAnchorEl} keepMounted open={Boolean(backupMenuAnchorEl)} onClose={handleBackupMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
-            <MenuItem
-              onClick={() => {
-                handleMenuCloseConfirm('create-backup');
-                handleBackupMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                <SaveIcon style={{ color: 'var(--main-icon-color)' }} />
-              </ListItemIcon>
-              <ListItemText primary='Create backup' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                handleMenuCloseConfirm('download-backup');
-                handleBackupMenuClose();
-              }}
-            >
-              <ListItemIcon>
-                <SaveIcon style={{ color: 'var(--main-icon-color)' }} />
-              </ListItemIcon>
-              <ListItemText primary='Download backup' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
-            </MenuItem>
-          </Menu>
 
           <Divider />
           <MenuItem onClick={handleResetMenuOpen}>

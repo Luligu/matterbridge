@@ -85,6 +85,7 @@ export class ThreadsManager {
     { name: 'SystemCheck', path: 'workerSystemCheck.js', type: 'worker' },
     { name: 'GlobalPrefix', path: 'workerGlobalPrefix.js', type: 'worker' },
     { name: 'SpawnCommand', path: 'workerSpawnCommand.js', type: 'worker' },
+    { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
   ];
 
   /**

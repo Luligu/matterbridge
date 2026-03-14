@@ -73,7 +73,6 @@ import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { wait, withTimeout } from '@matterbridge/utils/wait';
-import { createZip } from '@matterbridge/utils/zip';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
@@ -234,6 +233,31 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
             }
+          }
+          break;
+        case 'manager_archive_response':
+          if (
+            msg.result &&
+            msg.result.success &&
+            isValidString(msg.result.command) &&
+            isValidString(msg.result.archivePath) &&
+            isValidArray(msg.result.sourcePaths) &&
+            isValidString(msg.result.destinationPath)
+          ) {
+            this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+            this.wssBroadcastMessage({
+              id: 0,
+              src: 'Matterbridge',
+              dst: 'Frontend',
+              method: 'archive',
+              success: true,
+              response: {
+                command: msg.result.command as 'zip' | 'verify' | 'unzip',
+                archivePath: msg.result.archivePath,
+                sourcePaths: msg.result.sourcePaths,
+                destinationPath: msg.result.destinationPath,
+              },
+            });
           }
           break;
       }
@@ -730,6 +754,35 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
     });
 
+    // Endpoint to download the matterbridge log
+    this.expressApp.get('/api/download-mblog', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
+      if (!this.validateReq(req, res)) return;
+      const fs = await import('node:fs');
+      try {
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
+      } catch (error) {
+        await fs.promises.writeFile(
+          path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE),
+          'Enable the matterbridge log on file in the settings to download the matterbridge log.',
+          'utf-8',
+        );
+        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
+      }
+      res.type('text/plain; charset=utf-8');
+      res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matterbridge log file');
+        } else {
+          this.log.debug(`Matterbridge log file ${MATTERBRIDGE_LOGGER_FILE} downloaded successfully`);
+        }
+      });
+    });
+
     // Endpoint to view the matter.js log
     this.expressApp.get('/api/view-mjlog', async (req, res) => {
       this.log.debug('The frontend sent /api/view-mjlog');
@@ -743,6 +796,31 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.error(`Error reading matter log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
         res.status(500).send('Error reading matter log file. Please enable the matter log on file in the settings.');
       }
+    });
+
+    // Endpoint to download the matter log
+    this.expressApp.get('/api/download-mjlog', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE)}`);
+      if (!this.validateReq(req, res)) return;
+      const fs = await import('node:fs');
+      try {
+        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
+        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
+      } catch (error) {
+        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
+        this.log.debug(`Error in /api/download-mjlog: ${error instanceof Error ? error.message : error}`);
+      }
+      res.type('text/plain; charset=utf-8');
+      res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send('Error downloading the matter log file');
+        } else {
+          this.log.debug(`Matter log file ${MATTER_LOGGER_FILE} downloaded successfully`);
+        }
+      });
     });
 
     // Endpoint to view the diagnostic.log
@@ -783,6 +861,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the diagnostic log file');
+        } else {
+          this.log.debug(`Diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE} downloaded successfully`);
         }
       });
     });
@@ -817,6 +897,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (error) {
             this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
             res.status(500).send('Error downloading history file');
+          } else {
+            this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
         });
       } catch (error) {
@@ -826,6 +908,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to view the shelly log
+    /*
     this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellyviewsystemlog');
       if (!this.validateReq(req, res)) return;
@@ -839,58 +922,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
       }
     });
-
-    // Endpoint to download the matterbridge log
-    this.expressApp.get('/api/download-mblog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
-      if (!this.validateReq(req, res)) return;
-      const fs = await import('node:fs');
-      try {
-        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), fs.constants.F_OK);
-        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'utf8');
-        await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), data, 'utf-8');
-      } catch (error) {
-        await fs.promises.writeFile(
-          path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE),
-          'Enable the matterbridge log on file in the settings to download the matterbridge log.',
-          'utf-8',
-        );
-        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
-      }
-      res.type('text/plain; charset=utf-8');
-      res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
-        /* istanbul ignore if */
-        if (error) {
-          this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matterbridge log file');
-        }
-      });
-    });
-
-    // Endpoint to download the matter log
-    this.expressApp.get('/api/download-mjlog', async (req, res) => {
-      this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
-      if (!this.validateReq(req, res)) return;
-      const fs = await import('node:fs');
-      try {
-        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), fs.constants.F_OK);
-        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'utf8');
-        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
-      } catch (error) {
-        await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
-        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
-      }
-      res.type('text/plain; charset=utf-8');
-      res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
-        /* istanbul ignore if */
-        if (error) {
-          this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matter log file');
-        }
-      });
-    });
+    */
 
     // Endpoint to download the shelly log
+    /*
     this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
       this.log.debug('The frontend sent /api/shellydownloadsystemlog');
       if (!this.validateReq(req, res)) return;
@@ -905,10 +940,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading Shelly system log file');
+        }
+      });
+    });
+    */
+
+    // Endpoint to download the matterbridge backup (created with the backup command)
+    this.expressApp.get('/api/download-backup', async (req, res) => {
+      this.log.debug('The frontend sent /api/download-backup');
+      if (!this.validateReq(req, res)) return;
+      res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
+        this.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
+        /* istanbul ignore if */
+        if (error) {
+          this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+        } else {
+          this.log.debug('Backup matterbridge.backup.zip downloaded successfully');
         }
       });
     });
@@ -917,26 +968,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-mbstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
       if (!this.validateReq(req, res)) return;
-      await createZip(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR));
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
+        this.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${NODE_STORAGE_DIR}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
+        } else {
+          this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
         }
       });
     });
 
-    // Endpoint to download the matter storage file
+    // Endpoint to download the matter storage directory
     this.expressApp.get('/api/download-mjstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
       if (!this.validateReq(req, res)) return;
-      await createZip(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), `matterbridge.${MATTER_STORAGE_NAME}.zip`, (error) => {
+        this.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_NAME}.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter storage zip file');
+        } else {
+          this.log.debug(`Matter storage matterbridge.${MATTER_STORAGE_NAME}.zip downloaded successfully`);
         }
       });
     });
@@ -945,12 +1000,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       if (!this.validateReq(req, res)) return;
-      await createZip(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), this.matterbridge.matterbridgePluginDirectory);
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
+        this.wssSendCloseSnackbarMessage('Creating plugin backup...');
         /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
+        } else {
+          this.log.debug('Plugin storage matterbridge.pluginstorage.zip downloaded successfully');
         }
       });
     });
@@ -959,25 +1016,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       if (!this.validateReq(req, res)) return;
-      await createZip(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), path.relative(process.cwd(), path.join(this.matterbridge.matterbridgeDirectory, '*.config.json')));
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
+        this.wssSendCloseSnackbarMessage('Creating config backup...');
         /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginconfig.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin config file');
-        }
-      });
-    });
-
-    // Endpoint to download the matterbridge backup (created with the backup command)
-    this.expressApp.get('/api/download-backup', async (req, res) => {
-      this.log.debug('The frontend sent /api/download-backup');
-      if (!this.validateReq(req, res)) return;
-      res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
-        /* istanbul ignore if */
-        if (error) {
-          this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+        } else {
+          this.log.debug('Plugin config matterbridge.pluginconfig.zip downloaded successfully');
         }
       });
     });
@@ -1615,13 +1661,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     try {
       data = JSON.parse(message.toString());
-      if (
-        !isValidNumber(data.id) ||
-        !isValidString(data.dst) ||
-        !isValidString(data.src) ||
-        !isValidString(data.method) /* || !isValidObject(data.params)*/ ||
-        data.dst !== 'Matterbridge'
-      ) {
+      if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || data.dst !== 'Matterbridge') {
         this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' });
         return;
@@ -1918,17 +1958,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await this.matterbridge.shutdownProcess();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/create-backup') {
-        this.wssSendSnackbarMessage('Creating backup...', 0);
-        this.log.notice(`Creating the backup...`);
-        await createZip(
+        this.wssSendSnackbarMessage('Creating matterbridge backup...', 0);
+        this.log.notice(`Creating matterbridge backup...`);
+        this.zip(
+          'zip',
           path.join(os.tmpdir(), `matterbridge.backup.zip`),
-          path.join(this.matterbridge.matterbridgeDirectory),
-          path.join(this.matterbridge.matterbridgePluginDirectory),
-          path.join(this.matterbridge.matterbridgeCertDirectory),
+          [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory],
+          '',
         );
-        this.log.notice(`Backup ready to be downloaded.`);
-        this.wssSendCloseSnackbarMessage('Creating backup...');
-        this.wssSendSnackbarMessage('Backup ready to be downloaded', 10);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-matterbridge-storage-backup') {
+        this.wssSendSnackbarMessage('Creating matterbridge storage backup...', 0);
+        this.log.notice(`Creating matterbridge storage backup...`);
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), [path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR)], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-matter-storage-backup') {
+        this.wssSendSnackbarMessage('Creating matter storage backup...', 0);
+        this.log.notice(`Creating matter storage backup...`);
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), [path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME)], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-plugin-backup') {
+        this.wssSendSnackbarMessage('Creating plugin backup...', 0);
+        this.log.notice(`Creating plugin backup...`);
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), [this.matterbridge.matterbridgePluginDirectory], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-config-backup') {
+        this.wssSendSnackbarMessage('Creating config backup...', 0);
+        this.log.notice(`Creating config backup...`);
+        const plugins = (await this.server.fetch({ type: 'plugins_storagepluginarray', src: this.server.name, dst: 'plugins' }, 5000)).result.plugins || [];
+        const pluginsPaths = plugins.map((p: { name: string }) => path.join(this.matterbridge.matterbridgeDirectory, p.name + '.config.json'));
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), pluginsPaths, '');
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/unregister') {
         this.wssSendSnackbarMessage('Unregistering all bridged devices...', 0);
@@ -2655,6 +2714,32 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (client.readyState === client.OPEN) {
         client.send(stringifiedMsg);
       }
+    });
+  }
+
+  /**
+   * Sends a zip or verify command to the manager to create or verify an archive of the source paths at the destination path.
+   *
+   * @param {'zip' | 'verify' | 'unzip'} command - The command to execute: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive.
+   * @param {string} archivePath - The path of the archive to create, verify or extract.
+   * @param {string[]} sourcePaths - The paths of the files or directories to include in the archive (only for 'zip' command).
+   * @param {string} destinationPath - The path where the archive should be extracted (only for 'unzip' command).
+   */
+  zip(command: 'zip' | 'verify' | 'unzip', archivePath: string, sourcePaths: string[], destinationPath: string): void {
+    this.server.request({
+      type: 'manager_run',
+      src: 'frontend',
+      dst: 'manager',
+      params: {
+        name: 'ArchiveCommand',
+        workerData: {
+          threadName: 'ArchiveCommand',
+          command,
+          archivePath,
+          sourcePaths,
+          destinationPath,
+        },
+      },
     });
   }
 }

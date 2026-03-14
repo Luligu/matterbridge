@@ -41,7 +41,8 @@ These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
-- ✅ npm install;
+- ✅ spawn commands;
+- ✅ archive commands;
 - ✅ check the global node_modules directory;
 
 These classes will run as threads in the next releases:
@@ -53,15 +54,22 @@ These classes will run as threads in the next releases:
 
 ## [3.6.2] - Dev branch
 
+### Dev News
+
+- [DevContainer]: Change base image to "mcr.microsoft.com/devcontainers/javascript-node:24-trixie".
+
 ### Added
 
 - [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
+- [threads]: Add ArchiveCommand thread.
+- [threads]: Add WorkerWrapper class.
 
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Update actions in workflows.
+- [package]: Update actions versions in workflows.
 - [frontend]: Bumped `frontend` version to v. 3.4.8.
+- [frontend]: Refactor archives creation using threads.
 - [frontend]: Change basePath to pathName for BrowserRouter.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>

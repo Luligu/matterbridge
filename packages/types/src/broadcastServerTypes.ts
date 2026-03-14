@@ -173,6 +173,10 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { command: string; args: string[]; packageCommand: 'install' | 'uninstall'; packageName: string; success: boolean } };
   };
+  manager_archive_response: {
+    request: { params: undefined };
+    response: { result: { command: string; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
+  };
 
   // Matterbridge methods
   matterbridge_initialize: {

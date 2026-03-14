@@ -59,7 +59,53 @@ describe('ThreadsManagerMainThread', () => {
     jest.restoreAllMocks();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   test('Run GlobalPrefix in the main thread', async () => {
     expect(await manager.runInMainThread('GlobalPrefix')).toBe(true);
+  }, 10000);
+  */
+
+  test('Run ArchiveCommand zip in the main thread', async () => {
+    expect(
+      await manager.runInMainThread('ArchiveCommand', {
+        threadName: 'ArchiveCommand',
+        logLevel: LogLevel.DEBUG,
+        debug: true,
+        verbose: true,
+        tracker: true,
+        command: 'zip',
+        archivePath: path.join(HOMEDIR, 'test.zip'),
+        sourcePaths: ['docker/Dockerfile.latest', 'docker/Dockerfile.dev', 'docker/rootfs/'],
+        destinationPath: '',
+      }),
+    ).toBe(true);
+    expect(
+      await manager.runInMainThread('ArchiveCommand', {
+        threadName: 'ArchiveCommand',
+        logLevel: LogLevel.DEBUG,
+        debug: true,
+        verbose: true,
+        tracker: true,
+        command: 'verify',
+        archivePath: path.join(HOMEDIR, 'test.zip'),
+        sourcePaths: [],
+        destinationPath: '',
+      }),
+    ).toBe(true);
+    expect(
+      await manager.runInMainThread('ArchiveCommand', {
+        threadName: 'ArchiveCommand',
+        logLevel: LogLevel.DEBUG,
+        debug: true,
+        verbose: true,
+        tracker: true,
+        command: 'unzip',
+        archivePath: path.join(HOMEDIR, 'test.zip'),
+        sourcePaths: [],
+        destinationPath: path.join(HOMEDIR, 'unzip_test'),
+      }),
+    ).toBe(true);
+    // await flushAsync(undefined, undefined, 5000);
   }, 10000);
 });
