@@ -77,7 +77,7 @@
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npm run reset"
   },
   "overrides": {
-    "eslint": "10.0.2",
+    "eslint": "10.0.3",
     "@eslint/js": "10.0.1"
   },
   "dependencies": {
@@ -85,8 +85,8 @@
     "@emotion/styled": "11.14.1",
     "@mdi/js": "7.4.47",
     "@mdi/react": "1.6.1",
-    "@mui/icons-material": "7.3.8",
-    "@mui/material": "7.3.8",
+    "@mui/icons-material": "7.3.9",
+    "@mui/material": "7.3.9",
     "@rjsf/core": "5.24.13",
     "@rjsf/utils": "5.24.13",
     "@rjsf/validator-ajv8": "5.24.13",
@@ -101,13 +101,13 @@
     "@eslint/js": "10.0.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/node": "25.3.3",
+    "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@typescript-eslint/eslint-plugin": "8.56.1",
     "@typescript-eslint/parser": "8.56.1",
     "@vitejs/plugin-react": "5.1.4",
-    "eslint": "10.0.2",
+    "eslint": "10.0.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
@@ -121,6 +121,6 @@
     "typescript": "5.9.3",
     "typescript-eslint": "8.56.1",
     "vite": "7.3.1",
-    "vitest": "4.0.18"
+    "vitest": "4.1.0"
   }
 }

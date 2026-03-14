@@ -53,6 +53,10 @@ These classes will run as threads in the next releases:
 
 ## [3.6.2] - Dev branch
 
+### Added
+
+- [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
+
 ### Changed
 
 - [package]: Update dependencies.

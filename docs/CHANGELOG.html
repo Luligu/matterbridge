@@ -143,6 +143,10 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="362-dev-branch">[3.6.2] - Dev branch</h2>
+<h3 id="added">Added</h3>
+<ul>
+<li>[frontend]: Add support for Hass Ingress project (<a href="https://github.com/lovelylain/hass_ingress">https://github.com/lovelylain/hass_ingress</a>). Thanks kramttocs (<a href="https://github.com/Luligu/matterbridge/discussions/524">https://github.com/Luligu/matterbridge/discussions/524</a>).</li>
+</ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Update dependencies.</li>
@@ -157,7 +161,7 @@
 <li>[getCluster]: The overloads of <code>getCluster()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[setCluster]: The overloads of <code>setCluster()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 </ul>
-<h3 id="added">Added</h3>
+<h3 id="added-1">Added</h3>
 <ul>
 <li>[package]: Enable tree-shaking for @matterbridge/utils.</li>
 <li>[package]: Enable tree-shaking for @matterbridge/thread.</li>
@@ -198,7 +202,7 @@
 <li>[chip-test]: ✅ <code>TC_DeviceConformance.py</code> passes.</li>
 <li>[chip-test]: ✅ <code>TC_DefaultWarnings.py</code> passes.</li>
 </ul>
-<h3 id="added-1">Added</h3>
+<h3 id="added-2">Added</h3>
 <ul>
 <li>[docker]: Add the image (tag <strong>s6-rc-legacy</strong> 83 MB). It includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:22-bullseye-slim</code> (the last node version supporting armv7), supports <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It will be used for the legacy <a href="https://github.com/Luligu/matterbridge-home-assistant-addon-legacy">Matterbridge Home Assistant Application (Legacy)</a>.</li>
 <li>[frontend]: Add the ability to filter by plugin in the Devices page. Thanks <a href="https://github.com/tammeryousef1006">Tamer Salah</a>.</li>
@@ -238,7 +242,7 @@
 <li>[styleguide]: Add <a href="STYLEGUIDE.html">STYLEGUIDE.html</a>.</li>
 <li>[contributing]: Add <a href="CONTRIBUTING.html">CONTRIBUTING.html</a>.</li>
 </ul>
-<h3 id="added-2">Added</h3>
+<h3 id="added-3">Added</h3>
 <ul>
 <li>[nvm]: Add detection for Nvm (not for production with systemd service).</li>
 <li>[nvm]: Clarify in systemd guides that Nvm cannot be used for production.</li>
@@ -263,7 +267,7 @@
 <li>[Node.Js]: Consider to update all not docker based setups to Node.Js 24 that is now the LTS.</li>
 <li>[docker]: Use mb_health instead of curl for HEALTHCHECK. This allows to save around 15MB on the docker image size. If you override the UI port or the protocol, update the health check CMD with mb_health <a href="https://localhost/health">https://localhost/health</a> or disable it.</li>
 </ul>
-<h3 id="added-3">Added</h3>
+<h3 id="added-4">Added</h3>
 <ul>
 <li>[images]: Add OCI standard labels (<a href="https://opencontainers.org/">https://opencontainers.org/</a>) to docker pipelines.</li>
 <li>[frontend]: Add frontend publishing steps to publish workflow.</li>
@@ -294,7 +298,7 @@
 <li>[Node.Js]: Restricted <strong>Node.Js requirents</strong> to <code>&gt;= 20.19</code> &lt; 21 or <code>&gt;= 22.13</code> &lt; 23 or <code>&gt;= 24</code> &lt; 25.</li>
 <li>[Node.Js]: Consider to update all all not docker based setups to Node.Js 24 that is now the LTS.</li>
 </ul>
-<h3 id="added-4">Added</h3>
+<h3 id="added-5">Added</h3>
 <ul>
 <li>[packages]: Added <strong>@matterbridge/types</strong> monorepo scoped package.</li>
 <li>[packages]: Added <strong>@matterbridge/core</strong> monorepo scoped package.</li>
@@ -335,7 +339,7 @@
 <li>[docker]: Updated latest and dev docker images to use node:24-trixie-slim as base.</li>
 <li>[node]: Consider to update all setups to node 24 that is now the LTS.</li>
 </ul>
-<h3 id="added-5">Added</h3>
+<h3 id="added-6">Added</h3>
 <ul>
 <li>[docker]: Added workflow, scripts and dockerfile to build the <strong>s6-rc-base</strong> base image used by the Matterbridge Home Assistant Application.</li>
 <li>[docker]: Added workflow, scripts and dockerfile to build the <strong>24-ubuntu-slim</strong> base image used by the ubuntu Matterbridge docker image.</li>
@@ -363,7 +367,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="352-2026-01-31">[3.5.2] - 2026-01-31</h2>
-<h3 id="added-6">Added</h3>
+<h3 id="added-7">Added</h3>
 <ul>
 <li>[matterbridge]: Added brand to MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.</li>
 <li>[PluginManager]: Verify brand of MatterbridgePlatform, MatterbridgeAccessoryPlatform and MatterbridgeDynamicPlatform.</li>
@@ -387,7 +391,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="351-2026-01-24">[3.5.1] - 2026-01-24</h2>
-<h3 id="added-7">Added</h3>
+<h3 id="added-8">Added</h3>
 <ul>
 <li>[mb_mdns]: Added additional mDNS service types for discovery.</li>
 <li>[workflows]: Added npm registry URL and caching to Node.js setup in workflow files.</li>
@@ -443,7 +447,7 @@
 <li>[RvcOperationalState]: Revision 4 - Added several operational states and errors.</li>
 <li>[ServiceArea]: Revision 2 - Renamed InitialTimeEstimate to EstimatedTime.</li>
 </ul>
-<h3 id="added-8">Added</h3>
+<h3 id="added-9">Added</h3>
 <ul>
 <li>[jest]: Added cache inside the repo in .cache/jest.</li>
 <li>[frontend]: Enhanced logging for HTTP/HTTPS server binding in Frontend class.</li>
@@ -475,7 +479,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="347-2026-01-12">[3.4.7] - 2026-01-12</h2>
-<h3 id="added-9">Added</h3>
+<h3 id="added-10">Added</h3>
 <ul>
 <li>[docker]: Released for test and development the alpine and ubuntu images on Docker Hub. They are for amd64 arm64 and based on node 24. No plugins inside.</li>
 <li>[docker]: Updated <a href="README-DOCKER.html">README-DOCKER.html</a> to include alpine and ubuntu images specifications.</li>
@@ -501,7 +505,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="346-2026-01-02">[3.4.6] - 2026-01-02</h2>
-<h3 id="added-10">Added</h3>
+<h3 id="added-11">Added</h3>
 <ul>
 <li>[MdnsReflectorClient]: Added already seen cache.</li>
 <li>[MdnsReflectorServer]: Added --share-with-clients to share mDNS between all reflector clients.</li>
@@ -520,7 +524,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="345-2025-12-27">[3.4.5] - 2025-12-27</h2>
-<h3 id="added-11">Added</h3>
+<h3 id="added-12">Added</h3>
 <ul>
 <li>[DevContainer]: Refactored Dev Container setup. The Matterbridge instance can now be paired on native Linux hosts or WSL 2 with Docker engine CLI integration. On Docker Desktop on Windows or macOS is not possible cause Docker Desktop runs inside a VM and not directly on the host so mDNS is not supported.</li>
 <li>[DevContainer]: Since is now possible to pair from Dev Container, named volumes have been added to persist storage and plugins across rebuilds.</li>
@@ -537,7 +541,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="344-2025-12-19">[3.4.4] - 2025-12-19</h2>
-<h3 id="added-12">Added</h3>
+<h3 id="added-13">Added</h3>
 <ul>
 <li>[frontend]: Set automatically autoScroll to false in mobileMode.</li>
 <li>[frontend]: Added Log length: 100, 200, 500, 1000.</li>
@@ -566,7 +570,7 @@
 Mobile mode starts automatically below 1200 x 900 pixels.
 From the View menu of the frontend is possible to request the desktop site or the mobile site for the mobile mode.</li>
 </ul>
-<h3 id="added-13">Added</h3>
+<h3 id="added-14">Added</h3>
 <ul>
 <li>[frontend]: Added homepage icon and link to <a href="https://matterbridge.io/">https://matterbridge.io/</a>.</li>
 <li>[frontend]: Added settings to request Desktop site or Mobile site in mobile mode.</li>
@@ -596,7 +600,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <p>Race condition can cause missing configuration or missed devices on the controller side. All Matterbridge official plugins already wait for system and network components to be ready so there is no need of delay.</p>
 <p>To solve the race condition on blackout, use the --delay parameter. There is no delay on normal restart cause the delay is applied only in the first 5 minutes from system reboot.</p>
 <p>To solve the race condition on docker compose, use the --fixed_delay parameter. The start will always be delayed.</p>
-<h3 id="added-14">Added</h3>
+<h3 id="added-15">Added</h3>
 <ul>
 <li>[frontend]: Added throttle and timeout to autoScroll in the logs.</li>
 <li>[frontend]: Log filters are now applied to existing messages too.</li>
@@ -619,7 +623,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="341-2025-12-01">[3.4.1] - 2025-12-01</h2>
-<h3 id="added-15">Added</h3>
+<h3 id="added-16">Added</h3>
 <ul>
 <li>[matterbridge.io]: Updated website <a href="https://matterbridge.io">https://matterbridge.io</a> with all guides.</li>
 <li>[matterbridge]: Added addVirtualEndpoint() to match Matterbridge thread module.</li>
@@ -650,7 +654,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[endpoint]: uniqueStorageKey instead of id in MatterbridgeEndpointOptions (deprecated since months).</li>
 <li>[endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).</li>
 </ul>
-<h3 id="added-16">Added</h3>
+<h3 id="added-17">Added</h3>
 <ul>
 <li>[endpoint]: Added getChildEndpointById() and getChildEndpointByOriginalId().</li>
 <li>[endpoint]: Deprecated getChildEndpointByName(). Use getChildEndpointById() or getChildEndpointByOriginalId().</li>
@@ -682,7 +686,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[endpoint]: endpointId instead of number in MatterbridgeEndpointOptions (deprecated since months).</li>
 </ul>
 <p>So please update your plugin.</p>
-<h3 id="added-17">Added</h3>
+<h3 id="added-18">Added</h3>
 <ul>
 <li>[endpoint]: Added matterbridgeEndpointTypes.</li>
 <li>[devices]: Added tests for device types and their revision changes.</li>
@@ -711,7 +715,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[frontend]: When a plugin is first added, it will not be anymore started to allow to configure it before restarting.</li>
 </ul>
-<h3 id="added-18">Added</h3>
+<h3 id="added-19">Added</h3>
 <ul>
 <li>[matterbridge]: Added a first check for plugin existence (docker pull or Hass add-on rebuild) and reinstall it before parsing the plugin. The error messages have been removed.</li>
 <li>[service]: Added <a href="README-SERVICE-OPT.html">configuration</a> to run matterbridge as a daemon with systemctl (Linux only), private global node_modules, user/group matterbridge and no sudo required.</li>
@@ -753,7 +757,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[concentrationMeasurement]: Changed the default unit of measurement of some concentration measurement clusters to adapt to the generally used (and supported by Apple Home). Is is always possible to pass a different unit of measurement (Tvoc is Ugm3. Formaldehyde is Mgm3. Pm1, Pm2.5 and Pm10 are Ugm3. Ozone is Ugm3. Radon is Bqm3.)</li>
 </ul>
-<h3 id="added-19">Added</h3>
+<h3 id="added-20">Added</h3>
 <ul>
 <li>[thread]: Added get_log_level and set_log_level to BroadcastServer.</li>
 <li>[frontend]: Added password check to WebSocket.</li>
@@ -777,7 +781,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[nodejs]: Matterbridge will not start if the Node.js version is less then 20.x.x.</li>
 </ul>
-<h3 id="added-20">Added</h3>
+<h3 id="added-21">Added</h3>
 <ul>
 <li>[frontend]: Added debounce to MatterSettings.</li>
 <li>[cli]: Bumped <code>cli</code> version to 3.0.0 with backport of Traker and Inspector from thread module.</li>
@@ -803,7 +807,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="333-2025-10-18">[3.3.3] - 2025-10-18</h2>
-<h3 id="added-21">Added</h3>
+<h3 id="added-22">Added</h3>
 <ul>
 <li>[thread]: Added timestamp to WorkerMessage.</li>
 <li>[macOS]: Added the <a href="README-MACOS-PLIST.html">plist configuration guide</a>.</li>
@@ -843,7 +847,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[frontend]: When a plugin is first installed, it will not be anymore started to allow to configure it before restarting.</li>
 <li>[index]: Removed old plugin api compatibility since it was changed one year ago.</li>
 </ul>
-<h3 id="added-22">Added</h3>
+<h3 id="added-23">Added</h3>
 <ul>
 <li>[network]: Added getInterfaceDetails() function.</li>
 <li>[network]: Added getInterfaceName() function.</li>
@@ -931,7 +935,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 };
 </code></pre>
 <p>In this phase (matterbridge <code>3.4.x</code>) all plugins will not build and will not run without updates.</p>
-<h3 id="added-23">Added</h3>
+<h3 id="added-24">Added</h3>
 <ul>
 <li>[frontend]: Bumped <code>frontend</code> version to 3.2.0.</li>
 <li>[frontend]: Added SystemInfo to Settings.</li>
@@ -959,7 +963,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>[profiles]: Profile management has changed. Now, each profile has its own independent directories under <code>profiles</code> with storage, matterstorage, plugin config, and plugin directory. This means that if you are using profiles, Matterbridge will not find the old profile data. The new profile management allows to run multiple instances of matterbridge (change the frontend port and the matter port for each profile) or to simply make a test of a new plugin without modifing your production setup.</li>
 </ul>
-<h3 id="added-24">Added</h3>
+<h3 id="added-25">Added</h3>
 <ul>
 <li>[frontend]: Bumped <code>frontend</code> version to 3.1.0. Now, 100% on typescript and fully typed with the backend.</li>
 <li>[frontend]: Removed legacy <code>react-table</code> and created an autonomous component <code>MbfTable</code>. Features: unique UI for all tables with integrated column sorting and column selection.</li>
@@ -985,7 +989,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="328-2025-09-20">[3.2.8] - 2025-09-20</h2>
-<h3 id="added-25">Added</h3>
+<h3 id="added-26">Added</h3>
 <ul>
 <li>[logger]: Set different color for log names to matterbridge, frontend and matter.js.</li>
 <li>[frontend]: Bumped <code>frontend</code> version to 3.0.0.</li>
@@ -1018,7 +1022,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <li>[platform]: Typed PlatformConfig with the default properties: name, type, version, debug and unregisterOnShutdown.</li>
 <li>[platform]: Removed DefaultPlatformConfig interface definition.</li>
 </ul>
-<h3 id="added-26">Added</h3>
+<h3 id="added-27">Added</h3>
 <ul>
 <li>[jest]: Added Jest helpers module.</li>
 <li>[colorControl]: Added createEnhancedColorControlClusterServer (provisional to run compatibility tests on all controllers).</li>
@@ -1036,7 +1040,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="326-2025-09-06">[3.2.6] - 2025-09-06</h2>
-<h3 id="added-27">Added</h3>
+<h3 id="added-28">Added</h3>
 <ul>
 <li>[frontend]: Added primary color to QR icon in childbridge mode if the plugin is not paired.</li>
 <li>[frontend]: Added secondary color to QR icon in childbridge mode if the plugin server node is paired but doesn&#39;t have at least 1 session and 1 subscription.</li>
@@ -1071,7 +1075,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="325-2025-09-02">[3.2.5] - 2025-09-02</h2>
-<h3 id="added-28">Added</h3>
+<h3 id="added-29">Added</h3>
 <ul>
 <li>[refrigerator]: Added RefrigeratorAlarm cluster.</li>
 <li>[refrigerator]: Added setDoorOpenState method to set the doorOpen state of RefrigeratorAlarm cluster.</li>
@@ -1093,7 +1097,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="324-2025-08-29">[3.2.4] - 2025-08-29</h2>
-<h3 id="added-29">Added</h3>
+<h3 id="added-30">Added</h3>
 <ul>
 <li>[platform]: Added clearEntitySelect() to Platform.</li>
 </ul>
@@ -1106,7 +1110,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="323-2025-08-20">[3.2.3] - 2025-08-20</h2>
-<h3 id="added-30">Added</h3>
+<h3 id="added-31">Added</h3>
 <ul>
 <li>[Oven]: Added Oven() class and Jest test. It is not supported by the Home app.</li>
 <li>[MicrowaveOven]: Added MicrowaveOven() class and Jest test. It is not supported by the Home app.</li>
@@ -1138,7 +1142,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </a>
 
 <h2 id="321-2025-08-10">[3.2.1] - 2025-08-10</h2>
-<h3 id="added-31">Added</h3>
+<h3 id="added-32">Added</h3>
 <ul>
 <li>[platform]: Added uniqueId validation in registerDevice method. It prevents to register a device if the implementation didn&#39;t call createDefaultBasicInformationClusterServer() or createDefaultBridgedDeviceBasicInformationClusterServer().</li>
 <li>[platform]: Added deviceName validation in registerDevice method.</li>
@@ -1172,7 +1176,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 Please install Node.js 22 LTS.
 Don&#39;t use Node.js Current but always the Node.js LTS.
 Node.js 23, like all odd-numbered versions, is not supported.</p>
-<h3 id="added-32">Added</h3>
+<h3 id="added-33">Added</h3>
 <ul>
 <li>[update]: Added a Snackbar message for available updates from npm. It differs for latest and dev versions. The update check, as always, is performed at restart (1 minute after) and each 12 hours. It can be triggered manually from the frontend.</li>
 <li>[update]: First steps of update and log important messages from GitHub.</li>
@@ -1192,7 +1196,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="318-2025-07-28">[3.1.8] - 2025-07-28</h2>
-<h3 id="added-33">Added</h3>
+<h3 id="added-34">Added</h3>
 <ul>
 <li>[Jest]: Total coverage 100%.</li>
 <li>[certification]: Improved certification management in pairing.json. Added pemToBuffer function for converting PEM strings to Uint8Array.</li>
@@ -1221,7 +1225,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="317-2025-07-25">[3.1.7] - 2025-07-25</h2>
-<h3 id="added-34">Added</h3>
+<h3 id="added-35">Added</h3>
 <ul>
 <li>[docker]: Added trigger of Build Docker Image latest from publish.yml.</li>
 <li>[docker]: Added trigger of Build Docker Image dev from publish-dev-daily.yml.</li>
@@ -1244,7 +1248,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="316-2025-07-22">[3.1.6] - 2025-07-22</h2>
-<h3 id="added-35">Added</h3>
+<h3 id="added-36">Added</h3>
 <ul>
 <li>[reset]: Improved &quot;Reset all devices&quot; command in the frontend. It will shutdown all the plugins and recreate the devices with new state and enpoint numbers even if the device is not selected.</li>
 <li>[enpoint]: Enhanced HEPA and Activated Carbon Filter Monitoring Cluster Server methods with additional features and improved default parameters.</li>
@@ -1263,7 +1267,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="315-2025-07-19">[3.1.5] - 2025-07-19</h2>
-<h3 id="added-36">Added</h3>
+<h3 id="added-37">Added</h3>
 <ul>
 <li>[error]: Added error logging functions and corresponding tests.</li>
 <li>[matterbridge]: Improved test units on Matterbridge class (total coverage 99%).</li>
@@ -1281,7 +1285,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="314-2025-07-16">[3.1.4] - 2025-07-16</h2>
-<h3 id="added-37">Added</h3>
+<h3 id="added-38">Added</h3>
 <ul>
 <li>[frontend]: Added support for p12 certificates. Add cert.p12 and cert.pass in the &#39;.matterbridge/cert&#39; directory. If both .p12 and cert.pem are present, only the .p12 will be used. See the README.html for more info.</li>
 <li>[frontend]: Added support for p12 certificates with mTLS: both the server and the client must present the correct certificate. Add the parameter &#39;-mtls&#39;. See the README.html for more info.</li>
@@ -1301,7 +1305,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="313-2025-07-14">[3.1.3] - 2025-07-14</h2>
-<h3 id="added-38">Added</h3>
+<h3 id="added-39">Added</h3>
 <ul>
 <li>[endpoint]: Improved jsdoc description on endpoint helpers.</li>
 <li>[endpoint]: Added createDefaultMomentarySwitchClusterServer() cluster helper.</li>
@@ -1328,7 +1332,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
 <li>[RoboticVacuumCleaner]: The signature of the constructor has changed to add the mode property. Mode <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
 </ul>
-<h3 id="added-39">Added</h3>
+<h3 id="added-40">Added</h3>
 <ul>
 <li>[test]: Improved test units on Frontend class (coverage 97%).</li>
 </ul>
@@ -1346,7 +1350,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>
 </ul>
-<h3 id="added-40">Added</h3>
+<h3 id="added-41">Added</h3>
 <ul>
 <li>[LaundryDryer]: Added LaundryDryer (not supported by the Home app) class and Jest test.</li>
 <li>[DeviceEnergyManagement]: Added MatterbridgeDeviceEnergyManagementServer with power adjustment methods.</li>
@@ -1368,7 +1372,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="310-2025-06-28">[3.1.0] - 2025-06-28</h2>
-<h3 id="added-41">Added</h3>
+<h3 id="added-42">Added</h3>
 <ul>
 <li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.html#matterbridge-dev-container"><strong>Matterbridge Dev Container</strong></a> with an optimized named volume for <code>node_modules</code>.</li>
 <li>[DevContainer]: Added support for the <a href="https://github.com/Luligu/matterbridge/blob/dev/README-DEV.html#matterbridge-plugin-dev-container"><strong>Matterbridge Plugin Dev Container</strong></a> with an optimized named volume for <code>matterbridge</code> and <code>node_modules</code>.</li>
@@ -1400,7 +1404,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <ul>
 <li>[devices]: The single devices (i.e. Rvc, Evse etc...) are exported from matterbridge/devices. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 </ul>
-<h3 id="added-42">Added</h3>
+<h3 id="added-43">Added</h3>
 <ul>
 <li>[template]: Added the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a>. It supports Dev Container and Vitest.</li>
 <li>[platform]: Add getDevices() method to retrieve the registered devices in MatterbridgePlatform.</li>
@@ -1417,7 +1421,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="306-2025-06-13">[3.0.6] - 2025-06-13</h2>
-<h3 id="added-43">Added</h3>
+<h3 id="added-44">Added</h3>
 <ul>
 <li>[tests] Update Jest test coverage on addBridgedEndpoint and removeBridgedEndpoint.</li>
 <li>[fan]: Added createMultiSpeedFanControlClusterServer cluster helper with MultiSpeed feature.</li>
@@ -1445,7 +1449,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="305-2025-06-07">[3.0.5] - 2025-06-07</h2>
-<h3 id="added-44">Added</h3>
+<h3 id="added-45">Added</h3>
 <ul>
 <li>[cli]: Added takeHeapSnapshot() and triggerGarbageCollection() for internal testing.</li>
 <li>[LaundryWasher]: Added Evse class and Jest test. Thanks Ludovic BOUÉ.</li>
@@ -1468,7 +1472,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 </a>
 
 <h2 id="304-2025-05-26">[3.0.4] - 2025-05-26</h2>
-<h3 id="added-45">Added</h3>
+<h3 id="added-46">Added</h3>
 <ul>
 <li>[jsdoc]: Improved jsdoc for cluster helpers.</li>
 <li>[cover]: Added createDefaultLiftTiltWindowCoveringClusterServer() that create a window covering cluser with both lift and tilt features (supported by Apple Home).</li>
@@ -1494,7 +1498,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <p><a href="https://github.com/thoukydides/matterbridge-aeg-robot">Aeg robot</a></p>
 <p>AEG RX 9 / Electrolux Pure i9 robot vacuum plugin for Matterbridge.</p>
-<h3 id="added-46">Added</h3>
+<h3 id="added-47">Added</h3>
 <ul>
 <li>[virtual]: Added virtual devices configuration mode in the Matterbridge Settings: &#39;Disabled&#39;, &#39;Light&#39;, &#39;Outlet&#39;, &#39;Switch&#39;, &#39;Mounted_switch&#39;. Switch is not supported by Alexa. Mounted Switch is not supported by Apple.</li>
 <li>[deviceTypes]: Added evse, waterHeater, solarPower, batteryStorage and heatPump device type.</li>
@@ -1514,7 +1518,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="302-2025-05-14">[3.0.2] - 2025-05-14</h2>
-<h3 id="added-47">Added</h3>
+<h3 id="added-48">Added</h3>
 <ul>
 <li>[virtual] Added virtual devices Restart Matterbridge and Update Matterbridge and full Jest tests (can be disabled adding -novirtual to the command line).</li>
 <li>[virtual] Added virtual devices Reboot Matterbridge for Shelly board and full Jest tests (can be disabled adding -novirtual to the command line).</li>
@@ -1536,7 +1540,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="301-2025-05-06">[3.0.1] - 2025-05-06</h2>
-<h3 id="added-48">Added</h3>
+<h3 id="added-49">Added</h3>
 <ul>
 <li>[docker]: The builder for the <strong>docker</strong> image with tag <strong>latest</strong> will run each day at 00:00 UTC if there are new releases. Inside the image matterbridge and all plugins with the latest release (as published on npm) are already loaded. You can just pull the new image and matterbridge with all plugins will be updated to the latest.</li>
 <li>[docker]: The builder for the <strong>docker</strong> image with tag <strong>dev</strong> will run each day at 00:00 UTC if there are new commits. Inside the image matterbridge and all plugins with the dev release (as pushed on GitHub) are already loaded. You can just pull the new image and matterbridge with all plugins will be updated to the latest dev. It is possible that the devs are outdated by some published latests.</li>
@@ -1577,7 +1581,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <ul>
 <li>OccupancySensing cluster.</li>
 </ul>
-<h3 id="added-49">Added</h3>
+<h3 id="added-50">Added</h3>
 <ul>
 <li>[addEndpoint]: Added an error handler with deep stack on aggregatorNode.add() and serverNode.add() calls.</li>
 <li>[endpoint]: Added createOffOnlyOnOffClusterServer().</li>
@@ -1633,7 +1637,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="229-2025-04-18">[2.2.9] - 2025-04-18</h2>
-<h3 id="added-50">Added</h3>
+<h3 id="added-51">Added</h3>
 <ul>
 <li>[deviceTypes]: Added extendedColorLight device type.</li>
 </ul>
@@ -1651,7 +1655,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="228-2025-04-10">[2.2.8] - 2025-04-10</h2>
-<h3 id="added-51">Added</h3>
+<h3 id="added-52">Added</h3>
 <ul>
 <li>[platform]: Added stack to error messages.</li>
 <li>[endpoint]: Added createLevelControlClusterServer()</li>
@@ -1674,7 +1678,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="227-2025-04-06">[2.2.7] - 2025-04-06</h2>
-<h3 id="added-52">Added</h3>
+<h3 id="added-53">Added</h3>
 <ul>
 <li>[package]: Process author, homepage, repository, funding, README.html and CHANGELOG.html for third-party plugins. If the default implementation doesn&#39;t fit, it is possible to add a custom property &quot;help&quot; and &quot;changelog&quot; to the package.json.</li>
 <li>[frontend]: Added a link the plugin homepage (click on the plugin name or on the plugin description).</li>
@@ -1694,7 +1698,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="226-2025-04-01">[2.2.6] - 2025-04-01</h2>
-<h3 id="added-53">Added</h3>
+<h3 id="added-54">Added</h3>
 <ul>
 <li>[matterbridge]: New plugin matterbridge-webhooks.</li>
 <li>[ipv4address]: The ipv4address entered by the user on the command line or on the frontend is validated on startup. If the value is not correct an error message is logged and the parameter is discarded.</li>
@@ -1717,7 +1721,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="225-2025-03-19">[2.2.5] - 2025-03-19</h2>
-<h3 id="added-54">Added</h3>
+<h3 id="added-55">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.6.0.</li>
 <li>[frontend]: The Devices panel on the Home page selects and unselects using the device serial or device name (it reads the plugin schema).</li>
@@ -1742,7 +1746,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="224-2025-03-10">[2.2.4] - 2025-03-10</h2>
-<h3 id="added-55">Added</h3>
+<h3 id="added-56">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.5.2.</li>
 <li>[frontend]: Added push updates for reachability in the Home page Devices panel.</li>
@@ -1756,7 +1760,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="223-2025-03-05">[2.2.3] - 2025-03-05</h2>
-<h3 id="added-56">Added</h3>
+<h3 id="added-57">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.5.1.</li>
 </ul>
@@ -1773,7 +1777,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="222-2025-03-05">[2.2.2] - 2025-03-05</h2>
-<h3 id="added-57">Added</h3>
+<h3 id="added-58">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.5.0.</li>
 <li>[frontend]: Added in the Header the primary color for update and restart icons when they are needed.</li>
@@ -1790,7 +1794,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="221-2025-03-02">[2.2.1] - 2025-03-02</h2>
-<h3 id="added-58">Added</h3>
+<h3 id="added-59">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.5.0.</li>
 <li>[frontend]: Added in the Settings the option to hide Install plugins and Plugins in the Home page.</li>
@@ -1808,7 +1812,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="220-2025-02-27">[2.2.0] - 2025-02-27</h2>
-<h3 id="added-59">Added</h3>
+<h3 id="added-60">Added</h3>
 <ul>
 <li>[docker]: Added health check directly in the docker image. No need to change configuration of docker compose.</li>
 <li>[platform]: Saving in the storage the selects for faster loading of plugins.</li>
@@ -1836,7 +1840,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="215-2025-02-11">[2.1.5] - 2025-02-11</h2>
-<h3 id="added-60">Added</h3>
+<h3 id="added-61">Added</h3>
 <ul>
 <li>[frontend]: Frontend v.2.4.1.</li>
 <li>[frontend]: Optimized rendering of all pages.</li>
@@ -1860,7 +1864,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="214-2025-02-07">[2.1.4] - 2025-02-07</h2>
-<h3 id="added-61">Added</h3>
+<h3 id="added-62">Added</h3>
 <ul>
 <li>[frontend]: Added memorycheck before cleanup.</li>
 <li>[platform]: Added a check for not latin characters.</li>
@@ -1876,7 +1880,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="213-2025-02-04">[2.1.3] - 2025-02-04</h2>
-<h3 id="added-62">Added</h3>
+<h3 id="added-63">Added</h3>
 <ul>
 <li>[matter.js]: Added temporary solution to prevent serverNode.close() not returning.</li>
 </ul>
@@ -1889,7 +1893,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="212-2025-02-03">[2.1.2] - 2025-02-03</h2>
-<h3 id="added-63">Added</h3>
+<h3 id="added-64">Added</h3>
 <ul>
 <li>[frontend]: Added rss and heap to SystemInformation.</li>
 <li>[memorydump]: Added cpu to memoryDump.</li>
@@ -1914,7 +1918,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="210-2025-02-02">[2.1.0] - 2025-02-02</h2>
-<h3 id="added-64">Added</h3>
+<h3 id="added-65">Added</h3>
 <ul>
 <li>[matterbridge]: Added MatterbridgeModeSelectServer.</li>
 <li>[matterbridge]: Added MatterbridgeSwitchServer.</li>
@@ -1935,7 +1939,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="200-2025-01-20">[2.0.0] - 2025-01-20</h2>
-<h3 id="added-65">Added</h3>
+<h3 id="added-66">Added</h3>
 <ul>
 <li>[behavior]: Added MatterbridgeValveConfigurationAndControlServer behavior with open close command.</li>
 <li>[matterbridge]: Added /memory endpoint for debugging memory use.</li>
@@ -1965,7 +1969,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="173-2025-01-11">[1.7.3] - 2025-01-11</h2>
-<h3 id="added-66">Added</h3>
+<h3 id="added-67">Added</h3>
 <ul>
 <li>[platform]: Added selectDevice list to deviceFeatureBlackList to get the device names from a list in the config editor.</li>
 </ul>
@@ -1979,7 +1983,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="172-2025-01-11">[1.7.2] - 2025-01-11</h2>
-<h3 id="added-67">Added</h3>
+<h3 id="added-68">Added</h3>
 <ul>
 <li>[platform]: Added selectEntity to get the entity names from a list in the config editor.</li>
 <li>[websocket]: Added api /api/select/entities.</li>
@@ -2005,7 +2009,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="171-2025-01-07">[1.7.1] - 2025-01-07</h2>
-<h3 id="added-68">Added</h3>
+<h3 id="added-69">Added</h3>
 <ul>
 <li>[platform]: Added selectDevice to get the device names from a list in the config editor.</li>
 <li>[websocket]: Added api /api/select.</li>
@@ -2027,7 +2031,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 </a>
 
 <h2 id="170-2025-01-04">[1.7.0] - 2025-01-04</h2>
-<h3 id="added-69">Added</h3>
+<h3 id="added-70">Added</h3>
 <ul>
 <li>[edge]: Added guide <a href="README-EDGE.html">README-EDGE.html</a>.</li>
 <li>[storage]: Added conversion from old matter storage to the new api format with fabrics, resumptionRecords, network, commissioning, operationalCredentials, acl and parts number. The conversion is triggered every time you shutdown or restart matterbridge till the new storage has been used with matterbridge edge.</li>
@@ -2062,7 +2066,7 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <h3 id="breaking-changes-14">Breaking Changes</h3>
 <p>In this release some device types and the OnOff, LevelControl and ColorControl have been updated to be fully compliant with Matter 1.3 specifications.
 It is possible that some controllers see them as new devices or need time to read the new clusters. It can be useful after the upgrade to power off the controller, wait a few minutes and power it on again.</p>
-<h3 id="added-70">Added</h3>
+<h3 id="added-71">Added</h3>
 <ul>
 <li>[readme]: Update README to clarify Node.js installation instructions and emphasize LTS version.</li>
 <li>[deviceTypes]: Add airPurifier definition.</li>
@@ -2085,7 +2089,7 @@ It is possible that some controllers see them as new devices or need time to rea
 </a>
 
 <h2 id="166-2024-12-12">[1.6.6] - 2024-12-12</h2>
-<h3 id="added-71">Added</h3>
+<h3 id="added-72">Added</h3>
 <ul>
 <li>[frontend]: Added the possibility to install a specific version or the dev of any plugin (i.e. you can install matterbridge-hass@dev or <a href="mailto:matterbridge-hass@0.0.3">matterbridge-hass@0.0.3</a>).
 It is also possible to use the install plugin to install a specific version of matterbridge (i.e. you can install matterbridge@dev or <a href="mailto:matterbridge@1.6.5">matterbridge@1.6.5</a>)</li>
@@ -2155,7 +2159,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="162-2024-11-25">[1.6.2] - 2024-11-25</h2>
-<h3 id="added-72">Added</h3>
+<h3 id="added-73">Added</h3>
 <ul>
 <li>[matter.js]: Almost completed the phase 2 of migration to edge (matter.js new API).</li>
 <li>[nginx]: Added the route /matterbridge/ to be used with nginx proxy server <a href="README-NGINX.html">README-NGINX.html</a>.</li>
@@ -2188,7 +2192,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="161-2024-11-02">[1.6.1] - 2024-11-02</h2>
-<h3 id="added-73">Added</h3>
+<h3 id="added-74">Added</h3>
 <ul>
 <li>[matterbridge]: Added automatic recovery for matterbridge node storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.</li>
 <li>[matterbridge]: Added automatic recovery for matter storage when it gets corrupted for a power outage or hardware failure. Unattended setups can automatically recover restoring the previous automatic backup.</li>
@@ -2205,7 +2209,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="160-2024-10-28">[1.6.0] - 2024-10-28</h2>
-<h3 id="added-74">Added</h3>
+<h3 id="added-75">Added</h3>
 <ul>
 <li>[matterbridge]: Added WebSocket for the Matetrbridge cockpit dashboard (Shelly gateway).</li>
 </ul>
@@ -2250,7 +2254,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="158-2024-09-21">[1.5.8] - 2024-09-21</h2>
-<h3 id="added-75">Added</h3>
+<h3 id="added-76">Added</h3>
 <ul>
 <li>[readme]: Added podman guidelines to the README.html</li>
 <li>[readme]: Added instructions for setting permanent journalctl settings in service mode to prevent journal to grow</li>
@@ -2270,7 +2274,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="157-2024-09-17">[1.5.7] - 2024-09-17</h2>
-<h3 id="added-76">Added</h3>
+<h3 id="added-77">Added</h3>
 <ul>
 <li>[matterbridge]: Added the <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Official Matterbridge Home Assistant Add-on</a></li>
 </ul>
@@ -2286,7 +2290,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="156-2024-09-13">[1.5.6] - 2024-09-13</h2>
-<h3 id="added-77">Added</h3>
+<h3 id="added-78">Added</h3>
 <ul>
 <li>[matterbridge]: Updated to support ingress (will be released soon in the <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Official Matterbridge Home Assistant Add-on</a>).</li>
 <li>[frontend]: Updated to support ingress.</li>
@@ -2325,7 +2329,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="153-2024-09-04">[1.5.3] - 2024-09-04</h2>
-<h3 id="added-78">Added</h3>
+<h3 id="added-79">Added</h3>
 <ul>
 <li>[frontend]: Added mattermdnsinterface, matteripv4address and matteripv6address to the matter settings. If no parameters are added, Matterbridge will use the settings from the frontend that are saved. The default is all interfaces. If you are facing issues with pairing, I suggest to try first to put the interfaceName (e.g eth0, WiFi) in the MdnsInterface field. When nothing is selected, NodeJs will choose the interface but sometimes the choice is not correct at all.</li>
 </ul>
@@ -2353,7 +2357,7 @@ It is also possible to use the install plugin to install a specific version of m
 <ul>
 <li>please read this <a href="README-DEV.html">Development guide lines</a></li>
 </ul>
-<h3 id="added-79">Added</h3>
+<h3 id="added-80">Added</h3>
 <ul>
 <li>[frontend]: Added a confirmation message for removing and disabling plugins.</li>
 <li>[matterbridge cli]: Added the parameter <code>-sudo</code> to force the use of sudo when installing or updating a package (this is useful when the internal logic is not working in your setup).</li>
@@ -2369,7 +2373,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="151-2024-08-28">[1.5.1] - 2024-08-28</h2>
-<h3 id="added-80">Added</h3>
+<h3 id="added-81">Added</h3>
 <h3 id="changed-89">Changed</h3>
 <ul>
 <li>[matterbridgeDevice]: refactor WindowCovering cluster (removed AbsolutePosition).</li>
@@ -2381,7 +2385,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="150-2024-08-27">[1.5.0] - 2024-08-27</h2>
-<h3 id="added-81">Added</h3>
+<h3 id="added-82">Added</h3>
 <ul>
 <li>[frontend]: Added menu item &quot;Update&quot;.</li>
 <li>[frontend]: Added menu item &quot;Restart&quot;.</li>
@@ -2401,7 +2405,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="143-2024-08-22">[1.4.3] - 2024-08-22</h2>
-<h3 id="added-82">Added</h3>
+<h3 id="added-83">Added</h3>
 <ul>
 <li>[frontend]: Added menu with Update, Restart and Shutdown.</li>
 <li>[frontend]: Added menu item Download matterbridge.log.</li>
@@ -2422,7 +2426,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="142-2024-08-20">[1.4.2] - 2024-08-20</h2>
-<h3 id="added-83">Added</h3>
+<h3 id="added-84">Added</h3>
 <ul>
 <li>[logger]: Integrated matter.js logger in the matterbridge logger.</li>
 </ul>
@@ -2442,7 +2446,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="141-2024-07-28">[1.4.1] - 2024-07-28</h2>
-<h3 id="added-84">Added</h3>
+<h3 id="added-85">Added</h3>
 <ul>
 <li>[matterbridge]: Added logger levels: debug, info, notice, warn, error, fatal (parameter -logger with default info)</li>
 </ul>
@@ -2458,7 +2462,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="140-2024-07-23">[1.4.0] - 2024-07-23</h2>
-<h3 id="added-85">Added</h3>
+<h3 id="added-86">Added</h3>
 <h3 id="changed-94">Changed</h3>
 <ul>
 <li>[package]: Update dependencies.</li>
@@ -2479,7 +2483,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="1313-2024-07-11">[1.3.13] - 2024-07-11</h2>
-<h3 id="added-86">Added</h3>
+<h3 id="added-87">Added</h3>
 <h3 id="changed-95">Changed</h3>
 <ul>
 <li>[frontend]: The Logs window in the Home page has the same filter as the Logs page.</li>
@@ -2496,7 +2500,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="1312-2024-07-10">[1.3.12] - 2024-07-10</h2>
-<h3 id="added-87">Added</h3>
+<h3 id="added-88">Added</h3>
 <h3 id="changed-96">Changed</h3>
 <ul>
 <li>[frontend]: The Logs in Home page has the same filter as the Logs page.</li>
@@ -2511,7 +2515,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="1311-2024-07-08">[1.3.11] - 2024-07-08</h2>
-<h3 id="added-88">Added</h3>
+<h3 id="added-89">Added</h3>
 <ul>
 <li>[device]: Added addRequiredClusterServers and addOptionalClusterServers methods.</li>
 <li>[frontend]: Added separated settings for the two logging systems (Matterbridge and Matter.js).</li>
@@ -2527,7 +2531,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="1310-2024-07-05">[1.3.10] - 2024-07-05</h2>
-<h3 id="added-89">Added</h3>
+<h3 id="added-90">Added</h3>
 <ul>
 <li>[fabrics]: Added fabricInfo to matterbridge in bridge mode and to the plugins in childbridge mode.</li>
 <li>[sessions]: Added sessionInfo to matterbridge in bridge mode and to the plugins in childbridge mode.</li>
@@ -2564,7 +2568,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="137-2024-06-30">[1.3.7] - 2024-06-30</h2>
-<h3 id="added-90">Added</h3>
+<h3 id="added-91">Added</h3>
 <ul>
 <li>[matter.js]: Added -mdnsinterface command line parameter to limit the MdnsBroadcaster to a single interface (e.g. matterbridge -bridge -mdnsinterface eth0). Matterbridge will validate the given interface and log a message if the interface is not available and will use all available interfaces.</li>
 </ul>
@@ -2595,7 +2599,7 @@ It is also possible to use the install plugin to install a specific version of m
 </a>
 
 <h2 id="135-2024-06-26">[1.3.5] - 2024-06-26</h2>
-<h3 id="added-91">Added</h3>
+<h3 id="added-92">Added</h3>
 <ul>
 <li>[matterbridgeDevice]: Added createDefaultLatchingSwitchClusterServer and getDefaultLatchingSwitchClusterServer for (<a href="https://github.com/Luligu/matterbridge-shelly">https://github.com/Luligu/matterbridge-shelly</a>)</li>
 <li>[frontend]: Added interfaceName</li>
@@ -2647,7 +2651,7 @@ It is also possible to use the install plugin to install a specific version of m
 <li>The Matter device takes the name configured in the Shelly device&#39;s web page.</li>
 <li>A 10-minute timer checks if the device has reported in that time.</li>
 </ul>
-<h3 id="added-92">Added</h3>
+<h3 id="added-93">Added</h3>
 <ul>
 <li>[matterbridgeDevice]: Added all clusters for airQualitySensor:
 CarbonMonoxideConcentrationMeasurement,
@@ -2698,7 +2702,7 @@ RadonConcentrationMeasurement,</li>
 <li>[matterbridge]: Updated dependencies</li>
 <li>[matterbridge]: Default config and schema for the new plugin matterbridge-shelly (will be published after this release)</li>
 </ul>
-<h3 id="added-93">Added</h3>
+<h3 id="added-94">Added</h3>
 <ul>
 <li>[matterbridgeDevice]: Added waterFreezeDetector, waterLeakDetector, rainSensor, smokeCoAlarm, electricalSensor and deviceEnergyManagement device types as conformance to Matter 1.3</li>
 <li>[matterbridgeDevice]: Added all clusters needed for the above Matter 1.3 device types</li>
@@ -2777,7 +2781,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[matterbridge]: Fixed /api/settings error after resetting commissioning server</li>
 <li>[matterbridge]: Added error message and clean shutdown when WebSocketServer or ExpressServer ports are already in use</li>
 </ul>
-<h3 id="added-94">Added</h3>
+<h3 id="added-95">Added</h3>
 <ul>
 <li>[frontend]: Added a dropdown menu in Add Remove plugin to select the plugins</li>
 </ul>
@@ -2796,7 +2800,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[matterbridge]: Updated dependencies</li>
 <li>[matterbridge]: Moved eslint to @typescript-eslint/strict and @typescript-eslint/stylistic</li>
 </ul>
-<h3 id="added-95">Added</h3>
+<h3 id="added-96">Added</h3>
 <ul>
 <li>[frontend]: Fetch data in Home page every minute</li>
 <li>[device]: Added new method addClusterServerFromList</li>
@@ -2813,7 +2817,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[matter.js]: Update to @project-chip/matter-node.js v. 0.9.0</li>
 </ul>
-<h3 id="added-96">Added</h3>
+<h3 id="added-97">Added</h3>
 <ul>
 <li>[frontend]: Frontend updated to 1.0.0.</li>
 <li>[frontend]: Added check version interval.</li>
@@ -2827,7 +2831,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1215-2024-05-14">[1.2.15] - 2024-05-14</h2>
-<h3 id="added-97">Added</h3>
+<h3 id="added-98">Added</h3>
 <ul>
 <li>[frontend]: Added sponsor link in Header.</li>
 <li>[frontend]: Added sponsor link in the plugin list.</li>
@@ -2841,7 +2845,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1214-2024-05-09">[1.2.14] - 2024-05-09</h2>
-<h3 id="added-98">Added</h3>
+<h3 id="added-99">Added</h3>
 <ul>
 <li>[frontend]: Frontend updated to 0.9.0.</li>
 <li>[frontend]: Added Plugin config editor</li>
@@ -2854,7 +2858,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1213-2024-05-05">[1.2.13] - 2024-05-05</h2>
-<h3 id="added-99">Added</h3>
+<h3 id="added-100">Added</h3>
 <ul>
 <li>[frontend]: Added plugin version check (you can update from the badge)</li>
 <li>[frontend]: Added tooltip to plugin name showing plugin path</li>
@@ -2869,7 +2873,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1212-2024-04-30">[1.2.12] - 2024-04-30</h2>
-<h3 id="added-100">Added</h3>
+<h3 id="added-101">Added</h3>
 <ul>
 <li>[frontend]: Added the device child enpoints to the table in the Devices page</li>
 <li>[docker]: Added architectures to the docker image on the docker hub: linux/amd64, linux/arm64</li>
@@ -2884,7 +2888,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 </a>
 
 <h2 id="1211-2024-04-25">[1.2.11] - 2024-04-25</h2>
-<h3 id="added-101">Added</h3>
+<h3 id="added-102">Added</h3>
 <ul>
 <li>[matterbridge]: Added user to system information.</li>
 <li>[frontend]: Persist the filter selection (debug level and search criteria) in the Logs route.</li>
@@ -2903,16 +2907,16 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>Matterbridge Somfy Tahoma <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">https://github.com/Luligu/matterbridge-somfy-tahoma</a></li>
 </ul>
 <h2 id="1210-2024-04-23">[1.2.10] - 2024-04-23</h2>
-<h3 id="added-102">Added</h3>
+<h3 id="added-103">Added</h3>
 <ul>
 <li>[extension]: Finalized implementation of zigbee2MQTT internal extension v. 1.0.0.</li>
 </ul>
 <h2 id="129-2024-04-19">[1.2.9] - 2024-04-19</h2>
-<h3 id="added-103">Added</h3>
+<h3 id="added-104">Added</h3>
 <ul>
 <li>[Matterbridge]: Added call to set reachability at start.</li>
 </ul>
-<h3 id="added-104">Added</h3>
+<h3 id="added-105">Added</h3>
 <ul>
 <li>[Matterbridge]: Added call to set reachability at start.</li>
 <li>[frontend]: Added filter for log level and search criteria in the Logs page.</li>
@@ -2928,7 +2932,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[matter.js]: Update to @project-chip/matter-node.js v. 0.8.1</li>
 </ul>
-<h3 id="added-105">Added</h3>
+<h3 id="added-106">Added</h3>
 <ul>
 <li>[frontend]: Added logs in the Home page and in the Log page.</li>
 <li>[frontend]: Frontend got updated to 0.8.6.</li>
@@ -2945,14 +2949,14 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[matterbridge]: The default frontend port is now 8283!.</li>
 <li>[matterbridge.service]: Updated matterbridge.service instructions to fix restart when Matterbridge runs as a daemon with systemctl.</li>
 </ul>
-<h3 id="added-106">Added</h3>
+<h3 id="added-107">Added</h3>
 <ul>
 <li>[frontend]: Added manual pairing code. Allows to pair Matterbridge without using the phone.</li>
 <li>[MatterbridgeDevice]: Added api to create child endpoints (see matterbridge-example-dynamic-platform).</li>
 <li>[MatterbridgeDevice]: Added FlowMeasurement cluster.</li>
 </ul>
 <h2 id="126-2024-04-11">[1.2.6] - 2024-04-11</h2>
-<h3 id="added-107">Added</h3>
+<h3 id="added-108">Added</h3>
 <ul>
 <li>[matterbridge]: Added -factoryreset parameter to factory reset Matterbridge (see the readme.html for more explanations).</li>
 <li>[matterbridge]: Added -reset parameter to reset the commissioning of Matterbridge (bridge mode).</li>
@@ -2969,7 +2973,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[childbridge mode]: Fixed a syncronize issue on the start.</li>
 </ul>
 <h2 id="125-2024-04-08">[1.2.5] - 2024-04-08</h2>
-<h3 id="added-108">Added</h3>
+<h3 id="added-109">Added</h3>
 <ul>
 <li>[frontend]: Added update Matterbridge (spawn the command: &#39;npm -install -g matterbridge&#39;). The console inherit the the spawned process running so you can check.</li>
 <li>[frontend]: Added install plugin (spawn the command: &#39;npm -install -g plugin-name&#39;). The console inherit the the spawned process running so you can check.</li>
@@ -2983,23 +2987,23 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[matter.js]: Updated the code to matter.js release 0.80.0.</li>
 </ul>
-<h3 id="added-109">Added</h3>
+<h3 id="added-110">Added</h3>
 <ul>
 <li>[MatterbridgeDevice]: Added DoorLock and Thermostat clusters.</li>
 </ul>
 <h2 id="123-2024-03-28">[1.2.3] - 2024-03-28</h2>
-<h3 id="added-110">Added</h3>
+<h3 id="added-111">Added</h3>
 <ul>
 <li>[Matterbridge]: Enable plugin now start the plugin (no need to restart in bridge mode).</li>
 <li>[Matterbridge]: Disable plugin now shutdown the plugin (no need to restart).</li>
 </ul>
 <h2 id="122-2024-03-26">[1.2.2] - 2024-03-26</h2>
-<h3 id="added-111">Added</h3>
+<h3 id="added-112">Added</h3>
 <ul>
 <li>[MatterbridgeDevice]: Added Cluster DoorLock and command handler.</li>
 </ul>
 <h2 id="121-2024-03-25">[1.2.1] - 2024-03-25</h2>
-<h3 id="added-112">Added</h3>
+<h3 id="added-113">Added</h3>
 <ul>
 <li>[frontend]: Remove plugin from frontend.</li>
 <li>[frontend]: Add plugin from frontend.</li>
@@ -3018,7 +3022,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[plugin default entry point]: export default function initializePlugin(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)</li>
 <li>[platform constructor]: constructor(matterbridge: Matterbridge, log: AnsiLogger, config: PlatformConfig)</li>
 </ul>
-<h3 id="added-113">Added</h3>
+<h3 id="added-114">Added</h3>
 <ul>
 <li>[platform]: Added async loadPluginConfig() and async savePluginConfig() to store plugin config.</li>
 <li>[platform]: Added: config: PlatformConfig (JSON) property to platforms to store plugin config.</li>
@@ -3028,12 +3032,12 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[dependencies]: Updated dependencies.</li>
 </ul>
 <h2 id="1111-2024-03-19">[1.1.11] - 2024-03-19</h2>
-<h3 id="added-114">Added</h3>
+<h3 id="added-115">Added</h3>
 <ul>
 <li>[frontend]: Frontend got updated to 0.8.3.</li>
 </ul>
 <h2 id="1110-2024-03-17">[1.1.10] - 2024-03-17</h2>
-<h3 id="added-115">Added</h3>
+<h3 id="added-116">Added</h3>
 <ul>
 <li>[matterbridge]: added unregisterAllDevices() to the platforms</li>
 <li>[matterbridge]: added unregisterDevice(device: MatterbridgeDevice) to the platforms</li>
@@ -3041,7 +3045,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Frontend got updated to 0.8.2.</li>
 </ul>
 <h2 id="119-2024-03-16">[1.1.9] - 2024-03-16</h2>
-<h3 id="added-116">Added</h3>
+<h3 id="added-117">Added</h3>
 <ul>
 <li>[frontend]: Selecting a plugin in the home page show the corresponding QR code.</li>
 <li>[frontend]: Settings page now controll the global logger level.</li>
@@ -3049,7 +3053,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[frontend]: Frontend got updated to 0.8.1.</li>
 </ul>
 <h2 id="118-2024-03-15">[1.1.8] - 2024-03-15</h2>
-<h3 id="added-117">Added</h3>
+<h3 id="added-118">Added</h3>
 <ul>
 <li>[cli]: Resolve the plugin name from absolute or relative path or from globally installed modules (see the help).</li>
 <li>[frontend]: Added some fancy stuff still not visible.</li>
@@ -3064,13 +3068,13 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[install]: Fixed the install error (thanks <a href="https://github.com/khaidakin">https://github.com/khaidakin</a>).</li>
 </ul>
 <h2 id="116-2024-03-14">[1.1.6] - 2024-03-14</h2>
-<h3 id="added-118">Added</h3>
+<h3 id="added-119">Added</h3>
 <ul>
 <li>[async]: Plugins are loaded started configured fully asyncronously.</li>
 <li>[frontend]: Added configured button.</li>
 </ul>
 <h2 id="115-2024-03-12">[1.1.5] - 2024-03-12</h2>
-<h3 id="added-119">Added</h3>
+<h3 id="added-120">Added</h3>
 <ul>
 <li>[debug]: Added public property enableDebug to Matterbridge.</li>
 <li>[debug]: Added parameter -debug to the command line.</li>
@@ -3087,7 +3091,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[cli]: Updated the loading from cli.</li>
 </ul>
 <h2 id="113-2024-03-10">[1.1.3] - 2024-03-10</h2>
-<h3 id="added-120">Added</h3>
+<h3 id="added-121">Added</h3>
 <ul>
 <li>[onMatterStarted]: onMatterStarted() is called after matter server started.</li>
 <li>[onConfigure]: onConfigure() is called after the platform controller is commissioned.</li>
@@ -3101,7 +3105,7 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <li>[Plugin route]: Fixed the plugin device route in frontend.</li>
 </ul>
 <h2 id="112-2024-03-08">[1.1.2] - 2024-03-08</h2>
-<h3 id="added-121">Added</h3>
+<h3 id="added-122">Added</h3>
 <ul>
 <li>[async]: All code is asyncronous where it makes sense.</li>
 <li>[JSDoc]: Added JSDoc to the code.</li>
