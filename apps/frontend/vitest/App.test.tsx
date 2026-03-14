@@ -190,14 +190,14 @@ describe('toggleDebug', () => {
     delete window.location;
     Object.defineProperty(window, 'location', {
       value: {
-        pathname: '/api/hassio_ingress/abc',
-        href: 'http://localhost/api/hassio_ingress/abc',
+        pathname: '/api/hassio_ingress/abc/',
+        href: 'http://localhost/api/hassio_ingress/abc/',
         origin: 'http://localhost',
         host: 'localhost',
         protocol: 'http:',
         search: '',
         hash: '',
-        toString: () => 'http://localhost/api/hassio_ingress/abc',
+        toString: () => 'http://localhost/api/hassio_ingress/abc/',
       },
       configurable: true,
       writable: true,
@@ -223,23 +223,20 @@ describe('toggleDebug', () => {
 
 describe('App', () => {
   beforeEach(() => {
-    // Ensure window.location is always defined for each test
-    if (!window.location) {
-      Object.defineProperty(window, 'location', {
-        value: {
-          pathname: '/',
-          href: 'http://localhost/',
-          origin: 'http://localhost',
-          host: 'localhost',
-          protocol: 'http:',
-          search: '',
-          hash: '',
-          toString: () => 'http://localhost/',
-        },
-        configurable: true,
-        writable: true,
-      });
-    }
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/',
+        href: 'http://localhost/',
+        origin: 'http://localhost',
+        host: 'localhost',
+        protocol: 'http:',
+        search: '',
+        hash: '',
+        toString: () => 'http://localhost/',
+      },
+      configurable: true,
+      writable: true,
+    });
   });
 
   afterEach(() => {
