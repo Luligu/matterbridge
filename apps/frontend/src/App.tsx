@@ -158,7 +158,8 @@ function App(): React.JSX.Element {
   // Set the base name for the BrowserRouter
   hRef = window.location.href;
   pathName = window.location.pathname;
-  basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : '/';
+  // basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : pathName.includes('/api/ingress/') ? pathName : '/';
+  basePath = pathName.endsWith('/') ? pathName : pathName + '/';
   isIngress = pathName.includes('/api/hassio_ingress/');
   // if (debug) {
   console.log(`Loading App...`);
