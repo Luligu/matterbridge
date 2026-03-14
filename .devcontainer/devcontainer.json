@@ -31,7 +31,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // Name of the dev container
   "name": "Matterbridge",
   // Use the pre-built image with Node+TypeScript
-  "image": "mcr.microsoft.com/vscode/devcontainers/typescript-node:latest",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
   // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
   "containerEnv": {
     "TZ": "${localEnv:TZ}"
@@ -52,6 +52,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
+    // Always pull the latest image to ensure we have the latest Node.js and security updates
+    "--pull=always",
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
     "${localWorkspaceFolderBasename}",
@@ -81,7 +83,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
       ],
       // Settings for the VS Code environment
       "settings": {
-        "terminal.integrated.shell.linux": "/bin/bash",
+        "terminal.integrated.defaultProfile.linux": "bash",
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
         "editor.formatOnSave": true,
@@ -94,9 +96,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "git.autofetch": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true,
-        "js/ts.tsdk.path": "node_modules/typescript/lib",
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false
+        "files.trimFinalNewlines": true
       }
     }
   }
