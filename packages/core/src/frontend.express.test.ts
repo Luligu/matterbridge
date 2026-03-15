@@ -25,6 +25,7 @@ process.argv = [
   '3860',
 ];
 
+import * as nodeFs from 'node:fs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
@@ -34,6 +35,7 @@ import { jest } from '@jest/globals';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils/wait';
+import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import type { Frontend as FrontendType } from './frontend.js';
@@ -146,6 +148,45 @@ describe('Matterbridge frontend express with http', () => {
       req.end();
     });
   };
+
+  const makeMultipartRequestWithoutFile = (path: string, filename: string) => {
+    return new Promise<{ status: number; body: any }>((resolve, reject) => {
+      const boundary = '----formdata-boundary';
+      const formData = [`--${boundary}`, `Content-Disposition: form-data; name="filename"`, '', filename, `--${boundary}--`, ''].join('\r\n');
+
+      const req = http.request(
+        `http://localhost:${FRONTEND_PORT}${path}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            'Content-Length': Buffer.byteLength(formData, 'binary'),
+          },
+        },
+        (res) => {
+          let responseBody = '';
+          res.on('data', (chunk) => (responseBody += chunk));
+          res.on('end', () => {
+            resolve({
+              status: res.statusCode || 500,
+              body: responseBody,
+            });
+          });
+        },
+      );
+      req.on('error', reject);
+      req.write(formData, 'binary');
+      req.end();
+    });
+  };
+
+  const mockDownloadErrorOnce = () =>
+    jest.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        (done as (error: Error) => void)(new Error('Test download error'));
+      }
+    }) as typeof expressResponse.download);
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
@@ -331,10 +372,41 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
   }, 30000);
 
+  test('GET /api/view-diagnostic error', async () => {
+    const readFileSpy = jest.spyOn(nodeFs.promises, 'readFile').mockImplementation((async (filePath, ...args) => {
+      if (typeof filePath === 'string' && filePath.endsWith(MATTERBRIDGE_DIAGNOSTIC_FILE)) {
+        throw new Error('Test diagnostic read error');
+      }
+      return Reflect.apply(fs.readFile, fs, [filePath, ...args]) as ReturnType<typeof fs.readFile>;
+    }) as typeof nodeFs.promises.readFile);
+
+    try {
+      const response = await makeRequest('/api/view-diagnostic', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error reading diagnostic log file.');
+    } finally {
+      readFileSpy.mockRestore();
+    }
+  }, 30000);
+
   test('GET /api/download-diagnostic', async () => {
     const response = await makeRequest('/api/download-diagnostic', 'GET');
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
+  }, 30000);
+
+  test('GET /api/download-diagnostic error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-diagnostic', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the diagnostic log file');
+    } finally {
+      downloadSpy.mockRestore();
+    }
   }, 30000);
 
   test('GET /api/viewhistory', async () => {
@@ -367,6 +439,26 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
+  }, 30000);
+
+  test('GET /api/downloadhistory error', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
+    const downloadSpy = jest.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        (done as (error: Error) => void)(new Error('Test download error'));
+      }
+    }) as typeof expressResponse.download);
+
+    try {
+      const response = await makeRequest('/api/downloadhistory', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading history file');
+    } finally {
+      downloadSpy.mockRestore();
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
+    }
   }, 30000);
 
   // eslint-disable-next-line jest/no-commented-out-tests
@@ -410,6 +502,26 @@ describe('Matterbridge frontend express with http', () => {
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE));
   }, 30000);
 
+  test('GET /api/download-mblog error', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'Test error content', 'utf8');
+    const downloadSpy = jest.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        (done as (error: Error) => void)(new Error('Test download error'));
+      }
+    }) as typeof expressResponse.download);
+
+    try {
+      const response = await makeRequest('/api/download-mblog', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matterbridge log file');
+    } finally {
+      downloadSpy.mockRestore();
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE));
+    }
+  }, 30000);
+
   test('GET /api/download-mjlog no log', async () => {
     const response = await makeRequest('/api/download-mjlog', 'GET');
 
@@ -427,6 +539,26 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body).toBe('Test log content');
 
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE));
+  }, 30000);
+
+  test('GET /api/download-mjlog error', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'Test error content', 'utf8');
+    const downloadSpy = jest.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        (done as (error: Error) => void)(new Error('Test download error'));
+      }
+    }) as typeof expressResponse.download);
+
+    try {
+      const response = await makeRequest('/api/download-mjlog', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matter log file');
+    } finally {
+      downloadSpy.mockRestore();
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE));
+    }
   }, 30000);
 
   // eslint-disable-next-line jest/no-commented-out-tests
@@ -464,6 +596,19 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.startsWith('PK')).toBe(true);
   }, 30000);
 
+  test('GET /api/download-mbstorage error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-mbstorage', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matterbridge storage file');
+    } finally {
+      downloadSpy.mockRestore();
+    }
+  }, 30000);
+
   test('GET /api/download-mjstorage', async () => {
     try {
       await fs.access(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), fs.constants.F_OK);
@@ -475,6 +620,19 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
+  }, 30000);
+
+  test('GET /api/download-mjstorage error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-mjstorage', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matter storage zip file');
+    } finally {
+      downloadSpy.mockRestore();
+    }
   }, 30000);
 
   test('GET /api/download-pluginstorage', async () => {
@@ -490,6 +648,19 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.startsWith('PK')).toBe(true);
   }, 30000);
 
+  test('GET /api/download-pluginstorage error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-pluginstorage', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matterbridge plugin storage file');
+    } finally {
+      downloadSpy.mockRestore();
+    }
+  }, 30000);
+
   test('GET /api/download-pluginconfig', async () => {
     try {
       await fs.access(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), fs.constants.F_OK);
@@ -501,6 +672,19 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     expect(response.body.startsWith('PK')).toBe(true);
+  }, 30000);
+
+  test('GET /api/download-pluginconfig error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-pluginconfig', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toBe('Error downloading the matterbridge plugin config file');
+    } finally {
+      downloadSpy.mockRestore();
+    }
   }, 30000);
 
   test('GET /api/download-backup', async () => {
@@ -517,11 +701,25 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.startsWith('PK')).toBe(true);
   }, 60000);
 
+  test('GET /api/download-backup error', async () => {
+    const downloadSpy = mockDownloadErrorOnce();
+
+    try {
+      const response = await makeRequest('/api/download-backup', 'GET');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toContain('Error downloading file matterbridge.backup.zip: Test download error');
+    } finally {
+      downloadSpy.mockRestore();
+    }
+  }, 30000);
+
   test('POST /api/uploadpackage with invalid request', async () => {
-    // await setDebug(true);
-    // Read the test file
-    const response = await makeRequest('/api/uploadpackage', 'POST', { filename: 'test.zip' });
-    expect(response.status).toBe(500);
+    const response = await makeMultipartRequestWithoutFile('/api/uploadpackage', 'test.zip');
+
+    expect(response.status).toBe(400);
+    expect(typeof response.body).toBe('string');
+    expect(response.body).toBe('Invalid request: file and filename are required');
   }, 30000);
 
   test('POST /api/uploadpackage with test.zip', async () => {

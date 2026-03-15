@@ -718,21 +718,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.status(200).json(memoryReport);
     });
 
-    // Endpoint to provide settings
+    // Endpoint to provide settings (debug only reasons - not used in production)
     this.expressApp.get('/api/settings', express.json(), async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
       res.json(await this.getApiSettings());
     });
 
-    // Endpoint to provide plugins
+    // Endpoint to provide plugins (debug only reasons - not used in production)
     this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       if (!this.validateReq(req, res)) return;
       res.json(this.matterbridge.hasCleanupStarted ? [] : this.getPlugins());
     });
 
-    // Endpoint to provide devices
+    // Endpoint to provide devices (debug only reasons - not used in production)
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
@@ -773,7 +773,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge log file');
@@ -813,7 +812,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter log file');
@@ -834,9 +832,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/plain; charset=utf-8');
         res.send(data.slice(29));
       } catch (error) {
-        // istanbul ignore next
         this.log.error(`Error reading diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
-        // istanbul ignore next
         res.status(500).send('Error reading diagnostic log file.');
       }
     });
@@ -857,7 +853,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the diagnostic log file');
@@ -893,7 +888,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), data, 'utf-8');
         res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
-          /* istanbul ignore if */
           if (error) {
             this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
             res.status(500).send('Error downloading history file');
@@ -954,7 +948,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
@@ -970,7 +963,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file ${`matterbridge.${NODE_STORAGE_DIR}.zip`}: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
@@ -986,7 +978,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), `matterbridge.${MATTER_STORAGE_NAME}.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matter storage backup...');
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_NAME}.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matter storage zip file');
@@ -1002,7 +993,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating plugin backup...');
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
@@ -1018,7 +1008,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating config backup...');
-        /* istanbul ignore if */
         if (error) {
           this.log.error(`Error downloading file matterbridge.pluginconfig.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge plugin config file');
@@ -1035,7 +1024,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const { filename } = req.body;
       const file = req.file;
 
-      /* istanbul ignore if */
       if (!file || !filename) {
         this.log.error(`uploadpackage: invalid request: file and filename are required`);
         res.status(400).send('Invalid request: file and filename are required');
