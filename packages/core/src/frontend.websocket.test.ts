@@ -34,7 +34,7 @@ import { jest } from '@jest/globals';
 import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
-import type { WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
+import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -43,6 +43,7 @@ import WebSocket from 'ws';
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';
 import {
+  broadcastServerFetchSpy,
   broadcastServerRequestSpy,
   closeMdnsInstance,
   destroyInstance,
@@ -950,6 +951,9 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/removeplugin', async () => {
+    (broadcastServerFetchSpy as any).mockImplementationOnce(async (msg: WorkerMessage, timeout: number) => {
+      return { result: { devices: [{ mode: 'server', uniqueId: '' }] } };
+    });
     const pluginName = 'matterbridge-mock4';
     const data = await waitMessageId(++WS_ID, '/api/removeplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/removeplugin', params: { pluginName } });
     expect(data.error).toBeUndefined();

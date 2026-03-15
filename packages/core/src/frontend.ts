@@ -114,6 +114,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private httpsServer: HttpsServer | undefined;
   private webSocketServer: WebSocketServer | undefined;
   private readonly server: BroadcastServer;
+  private serverFetchTimeout = 2000;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
@@ -1678,21 +1679,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/install') {
         if (isValidString(data.params.packageName, 12) && isValidBoolean(data.params.restart)) {
           this.wssSendSnackbarMessage(`Installing package ${data.params.packageName}...`, 0);
-          this.server.request({
-            type: 'manager_run',
-            src: 'frontend',
-            dst: 'manager',
-            params: {
-              name: 'SpawnCommand',
-              workerData: {
-                threadName: 'SpawnCommand',
-                command: 'npm',
-                args: ['install', '-g', data.params.packageName, '--omit=dev', '--verbose'],
-                packageCommand: 'install',
-                packageName: data.params.packageName,
-              },
-            },
-          });
+          this.spawn('install', data.params.packageName);
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/install' });
@@ -1700,21 +1687,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/uninstall') {
         if (isValidString(data.params.packageName, 12)) {
           this.wssSendSnackbarMessage(`Uninstalling package ${data.params.packageName}...`, 0);
-          this.server.request({
-            type: 'manager_run',
-            src: 'frontend',
-            dst: 'manager',
-            params: {
-              name: 'SpawnCommand',
-              workerData: {
-                threadName: 'SpawnCommand',
-                command: 'npm',
-                args: ['uninstall', '-g', data.params.packageName, '--omit=dev', '--verbose'],
-                packageCommand: 'uninstall',
-                packageName: data.params.packageName,
-              },
-            },
-          });
+          this.spawn('uninstall', data.params.packageName);
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter packageName in /api/uninstall' });
@@ -1726,60 +1699,47 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
           return;
         }
-        this.wssSendSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`, 5);
+        this.wssSendSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`, 0);
         this.log.debug(`Adding plugin ${data.params.pluginNameOrPath}...`);
         data.params.pluginNameOrPath = data.params.pluginNameOrPath.replace(/@.*$/, ''); // Remove @version if present
-
-        /*
-        const plugin = (await this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginNameOrPath } }, 5000)).response.plugin;
+        const plugin = (
+          await this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginNameOrPath } }, this.serverFetchTimeout)
+        ).result.plugin;
         if (plugin) {
+          this.wssSendCloseSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`);
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
-          await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: plugin.name } }, 5000);
+          await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: plugin.name } }, this.serverFetchTimeout);
           this.wssSendRestartRequired();
           this.wssSendRefreshRequired('plugins');
           this.wssSendRefreshRequired('devices');
           this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         } else {
+          this.wssSendCloseSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`);
           this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` });
-        }
-        */
-
-        const plugin = await this.matterbridge.plugins.add(data.params.pluginNameOrPath);
-        if (plugin) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-          this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
-          this.matterbridge.plugins
-            .load(plugin)
-            .then(() => {
-              this.wssSendRefreshRequired('plugins');
-              this.wssSendRefreshRequired('devices');
-              this.wssSendSnackbarMessage(`Loaded plugin ${localData.params.pluginNameOrPath}`, 5, 'success');
-              return;
-            })
-            .catch(/* istanbul ignore next */ (_error) => {});
-        } else {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin ${data.params.pluginNameOrPath} not added` });
-          this.wssSendSnackbarMessage(`Plugin ${data.params.pluginNameOrPath} not added`, 10, 'error');
         }
       } else if (data.method === '/api/removeplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/removeplugin' });
           return;
         }
-        this.wssSendSnackbarMessage(`Removing plugin ${data.params.pluginName}...`, 5);
+        this.wssSendSnackbarMessage(`Removing plugin ${data.params.pluginName}...`, 0);
         this.log.debug(`Removing plugin ${data.params.pluginName}...`);
-
-        /*
-        await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been removed.', removeAllDevices: true } }, 5000);
-        await this.server.fetch({ type: 'plugins_remove', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, 5000);
-        */
-
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
-        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been removed.', true);
-        await this.matterbridge.plugins.remove(data.params.pluginName);
-
+        // Stop server nodes of devices of the plugin first
+        // prettier-ignore
+        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        for (const device of devices.filter((d) => d.mode === 'server')) {
+          // prettier-ignore
+          if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
+        }
+        // prettier-ignore
+        await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been removed.', removeAllDevices: true, force: true } }, this.serverFetchTimeout);
+        // Stop plugin server node if exists (in childbridge mode)
+        // prettier-ignore
+        await this.server.fetch({ type: 'matterbridge_stop_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
+        await this.server.fetch({ type: 'plugins_remove', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
+        this.wssSendCloseSnackbarMessage(`Removing plugin ${data.params.pluginName}...`);
         this.wssSendSnackbarMessage(`Removed plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
@@ -1790,47 +1750,41 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
-        plugin.locked = undefined;
-        plugin.error = undefined;
-        plugin.loaded = undefined;
-        plugin.started = undefined;
-        plugin.configured = undefined;
-        plugin.platform = undefined;
-        plugin.registeredDevices = undefined;
-        plugin.matter = undefined;
-        await this.matterbridge.plugins.enable(data.params.pluginName);
+        // prettier-ignore
+        await this.server.fetch({ type: 'plugins_enable', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
         this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
-        setImmediate(async () => {
-          await this.matterbridge.plugins.load(plugin, true, 'The plugin has been enabled', true);
-          // @ts-expect-error Accessing private method
-          if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
-          for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode))
-            // @ts-expect-error Accessing private method
-            await this.matterbridge.startServerNode(device.serverNode);
-          this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
-          this.wssSendRefreshRequired('plugins');
-          this.wssSendRefreshRequired('devices');
-          sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
-        });
+        await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
+        await this.server.fetch({ type: 'plugins_start', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
+        await this.server.fetch({ type: 'plugins_configure', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
+        // prettier-ignore
+        await this.server.fetch({ type: 'matterbridge_start_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
+        // prettier-ignore
+        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        for (const device of devices.filter((d) => d.mode === 'server')) {
+          // prettier-ignore
+          if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_start_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
+        }
+        this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
+        this.wssSendRefreshRequired('plugins');
+        this.wssSendRefreshRequired('devices');
+        sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
       } else if (data.method === '/api/disableplugin') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' });
           return;
         }
-        const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
-        // Stop server nodes devices first
-        for (const device of this.matterbridge.devices.array().filter((d) => d.plugin === plugin.name && d.serverNode)) {
-          // @ts-expect-error Accessing private method
-          await this.matterbridge.stopServerNode(device.serverNode);
-          device.serverNode = undefined;
+        // prettier-ignore
+        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        for (const device of devices.filter((d) => d.mode === 'server')) {
+          // prettier-ignore
+          if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
         }
-        // Then shutdown plugin removing devices, disable it and stop plugin server node
-        await this.matterbridge.plugins.shutdown(plugin, 'The plugin has been disabled.', true);
-        await this.matterbridge.plugins.disable(data.params.pluginName);
-        // @ts-expect-error Accessing private method
-        if (plugin.serverNode) await this.matterbridge.stopServerNode(plugin.serverNode);
-        plugin.serverNode = undefined;
+        // prettier-ignore
+        await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been disabled.', removeAllDevices: true, force: true } }, this.serverFetchTimeout * 10);
+        // prettier-ignore
+        await this.server.fetch({ type: 'matterbridge_stop_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
+        // prettier-ignore
+        await this.server.fetch({ type: 'plugins_disable', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
@@ -1973,7 +1927,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/create-config-backup') {
         this.wssSendSnackbarMessage('Creating config backup...', 0);
         this.log.notice(`Creating config backup...`);
-        const plugins = (await this.server.fetch({ type: 'plugins_storagepluginarray', src: this.server.name, dst: 'plugins' }, 5000)).result.plugins || [];
+        const plugins = (await this.server.fetch({ type: 'plugins_storagepluginarray', src: this.server.name, dst: 'plugins' }, this.serverFetchTimeout)).result.plugins || [];
         const pluginsPaths = plugins.map((p: { name: string }) => path.join(this.matterbridge.matterbridgeDirectory, p.name + '.config.json'));
         this.zip('zip', path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), pluginsPaths, '');
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2705,6 +2659,29 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
   }
 
+  /**
+   * Sends an install command to the manager to install a global npm package.
+   *
+   * @param {'install' | 'uninstall'} command - The command to execute: 'install' to install the package, 'uninstall' to uninstall the package.
+   * @param {string} packageName - The name of the npm package to install.
+   */
+  spawn(command: 'install' | 'uninstall', packageName: string): void {
+    this.server.request({
+      type: 'manager_run',
+      src: 'frontend',
+      dst: 'manager',
+      params: {
+        name: 'SpawnCommand',
+        workerData: {
+          threadName: 'SpawnCommand',
+          command: 'npm',
+          args: [command, '-g', packageName, '--omit=dev', '--verbose'],
+          packageCommand: command,
+          packageName: packageName,
+        },
+      },
+    });
+  }
   /**
    * Sends a zip or verify command to the manager to create or verify an archive of the source paths at the destination path.
    *
