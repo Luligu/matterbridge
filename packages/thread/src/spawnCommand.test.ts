@@ -236,7 +236,11 @@ describe('Spawn', () => {
     const result = await spawnCommand(command, args);
 
     expect(result).toBe(true);
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command sudo with npm install -g test-package'));
+    if (process.env.PATH?.includes('/.nvm/versions/node/')) {
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command npm with install -g test-package'));
+    } else {
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Spawn command sudo with npm install -g test-package'));
+    }
 
     Object.defineProperty(process, 'platform', {
       value: originalPlatform,
