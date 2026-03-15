@@ -5,6 +5,7 @@ import { act, render, waitFor } from '@testing-library/react';
 import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
 import { MbfScreen, MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD, isMobile } from '../src/components/MbfScreen';
 import { UiContext, UiContextType } from '../src/components/UiProvider';
+import { WebSocketContext } from '../src/components/WebSocketProvider';
 
 // Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
 vi.mock('../src/components/WebSocketProvider', () => ({
@@ -45,11 +46,18 @@ describe('MbfScreen', () => {
     setInstallAutoExit: vi.fn() as React.Dispatch<React.SetStateAction<boolean>>,
   });
 
-  const renderWithContext = (mobile: boolean, children: React.ReactNode = <div>child</div>, setMobileFn = vi.fn()) =>
+  const renderWithContext = (
+    mobile: boolean,
+    children: React.ReactNode = <div>child</div>,
+    setMobileFn = vi.fn(),
+    logAutoScroll = { current: true }
+  ) =>
     render(
-      <UiContext.Provider value={getMockUiContext(mobile, setMobileFn)}>
-        <MbfScreen>{children}</MbfScreen>
-      </UiContext.Provider>
+      <WebSocketContext.Provider value={{ logAutoScroll } as any}>
+        <UiContext.Provider value={getMockUiContext(mobile, setMobileFn)}>
+          <MbfScreen>{children}</MbfScreen>
+        </UiContext.Provider>
+      </WebSocketContext.Provider>
     );
 
   const originalViewport = {
@@ -63,6 +71,7 @@ describe('MbfScreen', () => {
     consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     debugValue = false;
     enableMobileValue = true;
+    localStorage.clear();
     resetViewport();
   });
 
@@ -223,5 +232,41 @@ describe('MbfScreen', () => {
 
     addListenerSpy.mockRestore();
     removeListenerSpy.mockRestore();
+  });
+
+  it('disables log auto scroll and persists it when resizing into mobile mode', async () => {
+    setViewport(1400, 1100);
+    const setMobile = vi.fn();
+    const logAutoScroll = { current: true };
+
+    renderWithContext(false, <div>child</div>, setMobile, logAutoScroll);
+
+    setViewport(1000, 800);
+    await act(async () => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => expect(setMobile).toHaveBeenCalledWith(true));
+    expect(logAutoScroll.current).toBe(false);
+    expect(localStorage.getItem('logAutoScroll')).toBe('false');
+  });
+
+  it('keeps log auto scroll enabled when resizing within desktop mode', async () => {
+    setViewport(1400, 1100);
+    const setMobile = vi.fn();
+    const logAutoScroll = { current: true };
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+    renderWithContext(false, <div>child</div>, setMobile, logAutoScroll);
+
+    setViewport(1500, 1000);
+    await act(async () => {
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    await waitFor(() => expect(setMobile).toHaveBeenCalledWith(false));
+    expect(logAutoScroll.current).toBe(true);
+    expect(setItemSpy).not.toHaveBeenCalledWith('logAutoScroll', 'false');
+    setItemSpy.mockRestore();
   });
 });

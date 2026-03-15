@@ -10,6 +10,13 @@ vi.mock('../src/App', () => ({
   debug: false,
 }));
 
+async function loadMbfPage(debug = false) {
+  vi.resetModules();
+  vi.doMock('../src/App', () => ({ debug }));
+  const [{ MbfPage }, { UiContext }] = await Promise.all([import('../src/components/MbfPage'), import('../src/components/UiProvider')]);
+  return { MbfPage, UiContext };
+}
+
 describe('MbfPage', () => {
   const getMockUiContext = (setCurrentPage = vi.fn()): UiContextType => ({
     mobile: false,
@@ -66,5 +73,19 @@ describe('MbfPage', () => {
     const div = container.firstChild as HTMLElement;
     expect(div).toHaveStyle({ background: 'red', width: '80%' });
     expect(div).toHaveStyle({ display: 'flex', flexDirection: 'column' });
+  });
+
+  it('logs when debug is enabled', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const setCurrentPage = vi.fn();
+    const { MbfPage: DebugMbfPage, UiContext: DebugUiContext } = await loadMbfPage(true);
+
+    render(
+      <DebugUiContext.Provider value={getMockUiContext(setCurrentPage)}>
+        <DebugMbfPage name="DebugPage">Debug</DebugMbfPage>
+      </DebugUiContext.Provider>
+    );
+
+    expect(consoleSpy).toHaveBeenCalledWith('MbfPage: current page set to DebugPage');
   });
 });

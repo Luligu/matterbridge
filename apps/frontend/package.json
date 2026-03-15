@@ -1,7 +1,7 @@
 {
   "name": "@matterbridge/frontend",
   "version": "3.4.8",
-  "description": "Matterbridge plugin manager for Matter",
+  "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
   "homepage": "https://matterbridge.io/",
@@ -72,7 +72,7 @@
     "softReset": "npm install --no-fund --no-audit && npm run build && npm run typecheck && npm run test",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install --no-fund --no-audit && npm run cleanBuild",
-    "runMeBeforePublish": "npm run lint && npm run build && npm run test",
+    "runMeBeforePublish": "npm run lint && npm run build && npm run typecheck && npm run test",
     "prepublishOnly": "npm run cleanBuild && npm pkg delete devDependencies scripts && npx shx rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "npmPack": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm pack && npx shx cp package.json.backup package.json && npm run reset",
     "npmPublishTagDev": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag dev && npx shx cp package.json.backup package.json && npm run reset",

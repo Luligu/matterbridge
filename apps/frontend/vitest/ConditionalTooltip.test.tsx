@@ -1,11 +1,23 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, screen, fireEvent, act, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
 
-import { ConditionalTooltip } from '../src/components/ConditionalTooltip';
+async function loadConditionalTooltip() {
+  return import('../src/components/ConditionalTooltip');
+}
 
 describe('ConditionalTooltip', () => {
+  afterEach(() => {
+    cleanup();
+    vi.resetModules();
+    vi.doUnmock('react');
+  });
+
   it('does not show tooltip when not clipped', async () => {
+    const { ConditionalTooltip, shouldTooltipOpen } = await loadConditionalTooltip();
+
+    expect(shouldTooltipOpen(null)).toBe(false);
+
     render(
       <ConditionalTooltip title="Alpha">
         <span>Alpha</span>
@@ -38,6 +50,8 @@ describe('ConditionalTooltip', () => {
   });
 
   it('shows tooltip when clipped', async () => {
+    const { ConditionalTooltip } = await loadConditionalTooltip();
+
     render(
       <ConditionalTooltip title="Alpha">
         <span>Alpha</span>
@@ -74,5 +88,16 @@ describe('ConditionalTooltip', () => {
     await waitFor(() => {
       expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
     });
+  });
+
+  it('does not open the tooltip when the internal ref is unavailable', async () => {
+    const { shouldTooltipOpen } = await loadConditionalTooltip();
+
+    expect(
+      shouldTooltipOpen({
+        scrollWidth: 100,
+        clientWidth: 100,
+      } as HTMLSpanElement)
+    ).toBe(false);
   });
 });

@@ -1,39 +1,55 @@
-// Silence all console output during tests (must be before all imports)
-globalThis.console = {
-  ...console,
-  log: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  info: vi.fn(),
-  debug: vi.fn(),
-  trace: vi.fn(),
-};
-import { vi, describe, it, expect } from 'vitest';
-import { createMuiTheme, getCssVariable } from '../src/utils/muiTheme';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock getComputedStyle for getCssVariable
 const originalGetComputedStyle = window.getComputedStyle;
 
+async function loadMuiTheme(debug = false) {
+  vi.resetModules();
+  vi.doMock('../src/App', () => ({ debug }));
+  return import('../src/utils/muiTheme');
+}
+
 describe('muiTheme', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     window.getComputedStyle = originalGetComputedStyle;
   });
 
-  it('getCssVariable returns value from CSS', () => {
+  it('getCssVariable returns value from CSS', async () => {
+    const { getCssVariable } = await loadMuiTheme();
     window.getComputedStyle = vi.fn().mockReturnValue({
       getPropertyValue: (name: string) => name === '--primary-color' ? 'red' : '',
     }) as any;
     expect(getCssVariable('--primary-color', 'blue')).toBe('red');
   });
 
-  it('getCssVariable returns default if not set', () => {
+  it('getCssVariable logs when debug is enabled', async () => {
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const { getCssVariable } = await loadMuiTheme(true);
+
+    window.getComputedStyle = vi.fn().mockReturnValue({
+      getPropertyValue: () => ' teal ',
+    }) as any;
+
+    expect(getCssVariable('--primary-color', 'blue')).toBe('teal');
+    expect(consoleSpy).toHaveBeenCalledWith('getCssVariable:', '--primary-color', 'defaultValue', 'blue');
+  });
+
+  it('getCssVariable returns default if not set', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { getCssVariable } = await loadMuiTheme();
     window.getComputedStyle = vi.fn().mockReturnValue({
       getPropertyValue: () => '',
     }) as any;
     expect(getCssVariable('--not-set', 'fallback')).toBe('fallback');
+    expect(errorSpy).toHaveBeenCalledWith('getCssVariable: undefined', '');
   });
 
-  it('createMuiTheme returns theme with correct primary color', () => {
+  it('createMuiTheme returns theme with correct primary color', async () => {
+    const { createMuiTheme } = await loadMuiTheme();
     const theme = createMuiTheme('#123456');
     expect(theme.palette.primary.main).toBe('#123456');
     expect(theme.typography.fontFamily).toContain('Roboto');
