@@ -132,7 +132,8 @@
 <ul>
 <li>✅ check updates;</li>
 <li>✅ system check;</li>
-<li>✅ npm install;</li>
+<li>✅ spawn commands;</li>
+<li>✅ archive commands;</li>
 <li>✅ check the global node_modules directory;</li>
 </ul>
 <p>These classes will run as threads in the next releases:</p>
@@ -143,16 +144,24 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="362-dev-branch">[3.6.2] - Dev branch</h2>
+<h3 id="dev-news">Dev News</h3>
+<ul>
+<li>[DevContainer]: Change base image to <code>mcr.microsoft.com/devcontainers/javascript-node:24-trixie</code>.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[frontend]: Add support for Hass Ingress project (<a href="https://github.com/lovelylain/hass_ingress">https://github.com/lovelylain/hass_ingress</a>). Thanks kramttocs (<a href="https://github.com/Luligu/matterbridge/discussions/524">https://github.com/Luligu/matterbridge/discussions/524</a>).</li>
+<li>[threads]: Add ArchiveCommand thread.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Update dependencies.</li>
-<li>[package]: Update actions in workflows.</li>
-<li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.8.</li>
+<li>[package]: Update actions versions in workflows.</li>
+<li>[frontend]: Bump <code>frontend</code> version to v. 3.4.8.</li>
+<li>[frontend]: Refactor archives creation using threads.</li>
 <li>[frontend]: Change basePath to pathName for BrowserRouter.</li>
+<li>[archive]: Use <code>zipjs</code> package.</li>
+<li>[archive]: Remove <code>archiver</code> and <code>glob</code> packages.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="361-2026-03-13">[3.6.1] - 2026-03-13</h2>
@@ -186,7 +195,7 @@
 <li>[BatteryStorage]: Refactor <code>BatteryStorage</code> class as composed device.</li>
 <li>[HeatPump]: Refactor <code>HeatPump</code> class as composed device.</li>
 </ul>
-<h3 id="dev-news">Dev News</h3>
+<h3 id="dev-news-1">Dev News</h3>
 <ul>
 <li>[matter1.5.0]: Add SoilMeasurement cluster and corresponding test.</li>
 <li>[matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.</li>
@@ -215,7 +224,7 @@
 <li>[package]: Add <code>@eslint/json</code>.</li>
 <li>[package]: Add <code>@eslint/markdown</code>.</li>
 <li>[docker]: The base image <code>24-ubuntu-slim</code> is now built with the latest node 24 release.</li>
-<li>[frontend]: Bumped <code>frontend</code> version to v. 3.4.7.</li>
+<li>[frontend]: Bump <code>frontend</code> version to v. 3.4.7.</li>
 <li>[frontend]: Update dependencies.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
@@ -235,7 +244,7 @@
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">dev container setup</a>.</li>
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/Reflector.html">reflector dev container setup</a>.</li>
 </ul>
-<h3 id="dev-news-1">Dev News</h3>
+<h3 id="dev-news-2">Dev News</h3>
 <ul>
 <li>[binding]: Add for test only MatterbridgeBindingServer.</li>
 <li>[docker]: Add <strong>luligu/matterbridge:chip-test</strong> image (400MB): it is based on Ubuntu LTS, Node.Js 24 LTS and includes connectedhomeip repository with chip-tool, chip-cert and all packages requierd to run yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the yaml or phyton tests. Matterbridge frontend is bound on port 8283. No volumes or port mapping needed.</li>
