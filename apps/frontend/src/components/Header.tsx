@@ -26,16 +26,13 @@ import Favorite from '@mui/icons-material/Favorite';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
-// Backend
-import { ApiSettings, WsMessageApiResponse } from '../utils/backendTypes';
-
 // Frontend
 import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { viewportHeight, viewportWidth } from './MbfScreen';
 import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
+import { ApiSettings, MATTER_STORAGE_NAME, NODE_STORAGE_DIR, WsMessageApiResponse } from '../utils/backendShared';
 import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
-import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../../../../packages/types/src/matterbridgeTypes';
 // const debug = true;
 
 function Header() {

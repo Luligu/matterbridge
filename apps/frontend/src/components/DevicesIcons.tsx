@@ -63,7 +63,7 @@ import {
 } from '@mdi/js';
 
 // Backend
-import { WsMessageApiClustersResponse, WsMessageApiResponse, WsMessageApiStateUpdate, ApiDevice, Cluster } from '../utils/backendTypes';
+import { WsMessageApiClustersResponse, WsMessageApiResponse, WsMessageApiStateUpdate, ApiDevice, Cluster } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

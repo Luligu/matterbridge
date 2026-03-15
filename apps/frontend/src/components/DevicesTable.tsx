@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 // Backend
-import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendTypes';
+import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

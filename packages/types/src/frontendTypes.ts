@@ -723,6 +723,7 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
 
 /**
  * Type guard to check if a message is a WsMessageApiResponse.
+ * Intentionally duplicated in apps/frontend/src/utils/backendShared.ts.
  *
  * @param {WsMessage} msg - The message to check.
  *

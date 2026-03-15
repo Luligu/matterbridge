@@ -18,7 +18,7 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import ClearIcon from '@mui/icons-material/Clear';
 
 // Backend
-import { WsMessageApiResponse } from '../utils/backendTypes';
+import { WsMessageApiResponse } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

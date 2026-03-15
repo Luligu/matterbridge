@@ -2,7 +2,7 @@
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
 // Backend
-import { ApiSettings, WsMessageApiResponse, ApiClusters, ApiDevice, ApiPlugin } from '../utils/backendTypes';
+import { ApiSettings, WsMessageApiResponse, ApiClusters, ApiDevice, ApiPlugin } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

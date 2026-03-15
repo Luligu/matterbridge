@@ -10,7 +10,7 @@ import Icon from '@mdi/react';
 import { mdiChartTimelineVariantShimmer } from '@mdi/js';
 
 // Backend
-import { SystemInformation, WsMessageApiResponse } from '../utils/backendTypes';
+import { SystemInformation, WsMessageApiResponse } from '../utils/backendShared';
 
 // Frontend
 import { TruncatedText } from './TruncatedText';

@@ -15,7 +15,7 @@ import QrCode2 from '@mui/icons-material/QrCode2';
 // @mdi/js
 
 // Backend
-import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatter, ApiPlugin } from '../utils/backendTypes';
+import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatter, ApiPlugin } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

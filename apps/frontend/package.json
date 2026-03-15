@@ -69,6 +69,7 @@
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "npx shx rm -rf package.json.backup package-lock.json npm-shrinkwrap.json build node_modules/* node_modules/.[!.]* node_modules/..?*",
     "reset": "npm run deepClean && npm install --no-fund --no-audit && npm run build && npm run typecheck && npm run test",
+    "softReset": "npm install --no-fund --no-audit && npm run build && npm run typecheck && npm run test",
     "checkDependencies": "npx npm-check-updates",
     "updateDependencies": "npx npm-check-updates -u && npm install --no-fund --no-audit && npm run cleanBuild",
     "runMeBeforePublish": "npm run lint && npm run build && npm run test",

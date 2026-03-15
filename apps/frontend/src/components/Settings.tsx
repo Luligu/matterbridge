@@ -13,7 +13,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 
 // Backend
-import { WsMessageApiResponse, MatterbridgeInformation, SystemInformation } from '../utils/backendTypes';
+import { WsMessageApiResponse, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
 
 // Frontend
 import { Connecting } from './Connecting';

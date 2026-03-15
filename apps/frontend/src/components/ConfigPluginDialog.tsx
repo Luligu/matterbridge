@@ -66,7 +66,7 @@ import {
 } from '@rjsf/utils';
 
 // Backend
-import { ApiPlugin, ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../utils/backendTypes';
+import { ApiPlugin, ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

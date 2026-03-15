@@ -2,7 +2,7 @@
 import { memo, useContext, useState } from 'react';
 
 // Backend
-import { MatterbridgeInformation } from '../utils/backendTypes';
+import { MatterbridgeInformation } from '../utils/backendShared';
 
 // Frontend
 import { UiContext } from './UiProvider';
