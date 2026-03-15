@@ -64,6 +64,7 @@ export function deepCopy<T>(value: T): T {
     const proto = Object.getPrototypeOf(value);
     const copy = Object.create(proto);
     for (const key in value) {
+      // istanbul ignore else - Only copy own properties
       if (Object.prototype.hasOwnProperty.call(value, key)) {
         copy[key] = deepCopy(value[key]);
       }

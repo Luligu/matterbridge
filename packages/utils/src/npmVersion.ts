@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+import { getErrorMessage } from './error.js';
+
 /**
  * Retrieves the version of an npm package from the npm registry.
  *
@@ -66,14 +68,14 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
             reject(new Error(`Tag "${tag}" not found for package "${packageName}"`));
           }
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${error instanceof Error ? error.message : error}`));
+          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     req.on('error', (error) => {
       clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

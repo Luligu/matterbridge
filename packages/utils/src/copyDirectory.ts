@@ -25,6 +25,8 @@
 // AnsiLogger module
 import { AnsiLogger } from 'node-ansi-logger';
 
+import { getErrorMessage } from './error.js';
+
 /**
  * Copies a directory and all its subdirectories and files to a new location.
  *
@@ -76,7 +78,7 @@ export async function copyDirectory(srcDir: string, destDir: string, log?: AnsiL
     }
     return true;
   } catch (error) {
-    log?.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${error instanceof Error ? error.message : error}`);
+    log?.error(`copyDirectory error copying from ${srcDir} to ${destDir}: ${getErrorMessage(error)}`);
     return false;
   }
 }

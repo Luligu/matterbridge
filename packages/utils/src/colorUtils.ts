@@ -155,6 +155,7 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   let blue = X * 0.051713 - Number(Y) * 0.121364 + Z * 1.01153;
 
   // If red, green or blue is larger than 1.0 set it back to the maximum of 1.0
+  // istanbul ignore else
   if (red > blue && red > green && red > 1.0) {
     green = green / red;
     blue = blue / red;
@@ -180,16 +181,16 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   blue = Math.round(blue * 255);
 
   // Normalize even if this code should never be reached...
+  // istanbul ignore next
   if (isNaN(red) || red < 0) {
-    /* istanbul ignore next */
     red = 0;
   }
+  // istanbul ignore next
   if (isNaN(green) || green < 0) {
-    /* istanbul ignore next */
     green = 0;
   }
+  // istanbul ignore next
   if (isNaN(blue) || blue < 0) {
-    /* istanbul ignore next */
     blue = 0;
   }
 

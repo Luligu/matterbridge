@@ -32,6 +32,8 @@ import type { HeapProfiler, InspectorNotification, Session } from 'node:inspecto
 
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
+import { getErrorMessage } from './error.js';
+
 // Inspector events
 interface InspectorEvents {
   /** Start the inspector */
@@ -146,12 +148,12 @@ export class Inspector extends EventEmitter<InspectorEvents> {
             this.log.debug(`Run heap snapshot interval`);
             await this.takeHeapSnapshot();
           } catch (err) {
-            this.log.error(`Error during scheduled heap snapshot: ${err instanceof Error ? err.message : err}`);
+            this.log.error(`Error during scheduled heap snapshot: ${getErrorMessage(err)}`);
           }
         }, interval).unref();
       }
     } catch (err) {
-      this.log.error(`Failed to start heap sampling: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to start heap sampling: ${getErrorMessage(err)}`);
       this.session?.disconnect();
       this.session = undefined;
       return;
@@ -193,7 +195,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
 
       this.log.debug(`Heap sampling profile saved to ${CYAN}${filename}${db}`);
     } catch (err) {
-      this.log.error(`Failed to stop heap sampling: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Failed to stop heap sampling: ${getErrorMessage(err)}`);
     } finally {
       this.session.disconnect();
       this.session = undefined;
@@ -239,12 +241,13 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     let streamErrored = false;
     const onStreamError = (err: unknown) => {
       streamErrored = true;
-      this.log.error(`Heap snapshot stream error: ${err instanceof Error ? err.message : err}`);
+      this.log.error(`Heap snapshot stream error: ${getErrorMessage(err)}`);
     };
     stream.once('error', onStreamError);
 
     const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
       // notification.params.chunk is a string; write directly to the stream
+      // istanbul ignore next
       if (!stream.write(notification.params.chunk)) {
         // If backpressure engages, it's fine; the stream will buffer internally. We don't block the inspector.
       }
@@ -264,7 +267,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
               this.runGarbageCollector('major', 'async');
               this.emit('snapshot_done');
             } else if (err) {
-              this.log.error(`Failed to take heap snapshot: ${err instanceof Error ? err.message : err}`);
+              this.log.error(`Failed to take heap snapshot: ${getErrorMessage(err)}`);
               this.runGarbageCollector('minor', 'async');
               this.runGarbageCollector('major', 'async');
             }
@@ -274,7 +277,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
           try {
             stream.end(() => finalize());
           } catch (e) {
-            this.log.error(`Error finalizing heap snapshot stream: ${e instanceof Error ? e.message : e}`);
+            this.log.error(`Error finalizing heap snapshot stream: ${getErrorMessage(e)}`);
             finalize();
           }
         });

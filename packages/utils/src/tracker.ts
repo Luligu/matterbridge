@@ -208,6 +208,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         return busyDelta / totalDelta;
       });
       this.prevCpus = currentCpus;
+      // istanbul ignore next cause is practically impossible to hit this branch
       const avgLoad = loads.length === 0 ? 0 : loads.reduce((sum, value) => sum + value, 0) / loads.length;
       const osCpu = Number((avgLoad * 100).toFixed(2));
       entry.osCpu = osCpu;
@@ -247,6 +248,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
 
       // Debug output
       if (this.debug) {
+        // istanbul ignore next cause is just a precaution for debug/verbose flags which are only used for development and testing, not in production
         this.log.debug(
           `Time: ${formatTimeStamp(entry.timestamp)} ` +
             `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +

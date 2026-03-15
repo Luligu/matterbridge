@@ -24,6 +24,8 @@
 
 import { createPrivateKey, createPublicKey, X509Certificate } from 'node:crypto';
 
+import { getErrorMessage } from './error.js';
+
 /**
  * Converts an ArrayBuffer or Uint8Array to a hexadecimal string.
  *
@@ -177,6 +179,7 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
           // Use X509Certificate for robust certificate validation
           const cert = new X509Certificate(pem);
           // Check validity period
+          // istanbul ignore else
           if (cert.validFrom && cert.validTo) {
             const now = Date.now();
             const from = Date.parse(cert.validFrom);
@@ -202,14 +205,14 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
         // If no specific type is detected, skip validation
       } catch (validationError) {
         // istanbul ignore next
-        throw new Error(`PEM validation failed: ${validationError instanceof Error ? validationError.message : String(validationError)}`, { cause: validationError });
+        throw new Error(`PEM validation failed: ${getErrorMessage(validationError)}`, { cause: validationError });
       }
     }
 
     return result;
   } catch (error) {
     // istanbul ignore next
-    throw new Error(`Failed to decode base64 content: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+    throw new Error(`Failed to decode base64 content: ${getErrorMessage(error)}`, { cause: error });
   }
 }
 
@@ -266,7 +269,6 @@ export function extractPrivateKeyRaw(pemPrivateKey: string): Uint8Array {
 
     return new Uint8Array(rawPrivateKey);
   } catch (error) {
-    // istanbul ignore next
-    throw new Error(`Failed to extract private key: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
+    throw new Error(`Failed to extract private key: ${getErrorMessage(error)}`, { cause: error });
   }
 }

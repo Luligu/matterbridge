@@ -1,5 +1,7 @@
 // src\utils\colorUtils.test.ts
 
+import { jest } from '@jest/globals';
+
 import { hslColorToRgbColor, kelvinToMireds, kelvinToRGB, miredsToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from './colorUtils.js';
 
 /* prettier-ignore */
@@ -50,6 +52,16 @@ describe('Utils test', () => {
       const color = colors[1];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
+
+      test('luminance below 50 hits lower luminance branch', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        try {
+          expect(hslColorToRgbColor(0, 100, 40)).toStrictEqual({ r: 204, g: 0, b: 0 });
+        } finally {
+          consoleErrorSpy.mockRestore();
+        }
+      });
 
     test('Pure Yellow', async () => {
       const color = colors[2];

@@ -27,6 +27,16 @@ import { inspect } from 'node:util';
 import { type AnsiLogger, RESET } from 'node-ansi-logger';
 
 /**
+ * Returns a readable message for unknown error-like values.
+ *
+ * @param {unknown} error - The error object or value.
+ * @returns {string} The extracted message for Error instances, otherwise the stringified value.
+ */
+export function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/**
  * Logs an error message using the provided AnsiLogger instance.
  *
  * @param {AnsiLogger} log - The AnsiLogger instance to use for logging.
