@@ -240,9 +240,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = await this.remove(msg.params.nameOrPath);
             if (plugin) {
-              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
+              this.server.respond({ ...msg, result: { success: true } });
             } else {
-              this.server.respond({ ...msg, result: { plugin } });
+              this.server.respond({ ...msg, result: { success: false } });
             }
           }
           break;
