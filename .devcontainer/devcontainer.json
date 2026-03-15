@@ -30,7 +30,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
 {
   // Name of the dev container
   "name": "Matterbridge",
-  // Use the pre-built image with Node+TypeScript
+  // Use the Microsoft pre-built image with Debian (Trixie) and Node.js 24 for a consistent and optimized development environment
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
   // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
   "containerEnv": {
@@ -47,14 +47,14 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
-  // Create the matterbridge Docker network if it doesn't exist (runs on the HOST before the container starts).
-  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge",
-  // On startup, update npm, build matterbridge and link it globally
+  // Create the matterbridge Docker network if it doesn't exist and pull the base image (runs on the HOST before the container starts).
+  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
+  // On startup build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
-    "${localWorkspaceFolderBasename}",
+    "${localWorkspaceFolderBasename}-dev-container",
     // Publish Matterbridge frontend port
     "-p",
     "8283:8283/tcp",
