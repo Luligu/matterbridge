@@ -58,7 +58,7 @@ describe('Matterbridge', () => {
   });
 
   it('should start matterbridge and fail', async () => {
-    process.argv = ['node', './cli.js', '-frontend', '0', '-logger', 'debug', '-matterlogger', 'debug'];
+    process.argv = ['node', './cli.js', '-frontend', '0', '-logger', 'debug', '-matterlogger', 'debug', '--no-ansi'];
     const cli = await import('./cli.js');
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(cli.instance).toBeUndefined();
