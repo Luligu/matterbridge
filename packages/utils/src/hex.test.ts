@@ -21,6 +21,11 @@ describe('bufferToHex()', () => {
     expect(bufferToHex(arr)).toBe('0a0b0c0d');
   });
 
+  it('should work with other ArrayBufferView inputs', () => {
+    const arr = new Uint16Array([0x0102, 0x0304]);
+    expect(bufferToHex(arr)).toBe('02010403');
+  });
+
   it('should work with ArrayBuffer input', () => {
     const buf = new Uint8Array([1, 2, 3, 250]).buffer;
     expect(bufferToHex(buf)).toBe('010203fa');

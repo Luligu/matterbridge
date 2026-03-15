@@ -35,19 +35,19 @@ import { getErrorMessage } from './error.js';
  * its bytes directly. This function normalizes both by creating a Uint8Array view
  * before conversion.
  *
- * @param {ArrayBufferLike} buffer - The buffer or typed-array view to convert.
+ * @param {ArrayBufferLike | ArrayBufferView} buffer - The buffer or typed-array view to convert.
  * @returns {string} A lowercase hex string representation of the buffer's bytes.
  *
  * @throws {TypeError} If the input is not an ArrayBuffer or ArrayBufferView.
  */
-export function bufferToHex(buffer: ArrayBufferLike): string {
+export function bufferToHex(buffer: ArrayBufferLike | ArrayBufferView): string {
   // Check if the input is an ArrayBuffer or ArrayBufferView
   if (!(buffer instanceof ArrayBuffer || ArrayBuffer.isView(buffer))) {
     throw new TypeError('Expected input to be an ArrayBuffer or ArrayBufferView');
   }
 
   // Create a Uint8Array view over the buffer
-  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const bytes = buffer instanceof Uint8Array ? buffer : ArrayBuffer.isView(buffer) ? new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength) : new Uint8Array(buffer);
 
   // Convert each byte to 2-digit hex
   return Array.from(bytes)

@@ -53,15 +53,15 @@ describe('Utils test', () => {
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-      test('luminance below 50 hits lower luminance branch', async () => {
-        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    test('luminance below 50 hits lower luminance branch', async () => {
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        try {
-          expect(hslColorToRgbColor(0, 100, 40)).toStrictEqual({ r: 204, g: 0, b: 0 });
-        } finally {
-          consoleErrorSpy.mockRestore();
-        }
-      });
+      try {
+        expect(hslColorToRgbColor(0, 100, 40)).toStrictEqual({ r: 204, g: 0, b: 0 });
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
 
     test('Pure Yellow', async () => {
       const color = colors[2];
