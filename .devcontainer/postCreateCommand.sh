@@ -31,7 +31,7 @@ npm run deepClean || true
 
 echo "4 - Setting ownership of directories..."
 ls .
-sudo chown -R node:node .cache node_modules /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
+sudo chown -R node:node .cache node_modules apps/frontend/node_modules /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 sudo chmod +x bin/*.js
 
 echo "5 - Installing dependencies..."
@@ -42,6 +42,7 @@ npm run build
 
 echo "7 - Building the frontend package..."
 cd apps/frontend
+# Uncomment if you want to reset the frontend before building
 # sudo rm -rf build coverage node_modules
 npm install --no-fund --no-audit
 npm run build

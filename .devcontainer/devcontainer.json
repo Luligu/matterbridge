@@ -42,6 +42,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // Mount the Matterbridge, .matterbridge and .mattercert folders to the container's volumes to persist the storages between container restarts and rebuilds
   "mounts": [
     "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
@@ -49,7 +50,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   ],
   // Create the matterbridge Docker network if it doesn't exist and pull the base image (runs on the HOST before the container starts).
   "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
-  // On startup build matterbridge and link it globally
+  // On startup build matterbridge and link it globally (runs inside the container after it starts)
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
@@ -61,7 +62,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
     // Publish Matter port range (to allow childbridge mode and devices with mode server) to the host
     "-p",
     "5540-5549:5540-5549/udp",
-    // Use network host mode if on Docker Engine on Linux or WSL 2 to allow full local network access and mDNS support
+    // Use network host mode if on Docker Engine on Linux or WSL 2 with mirrored mode to allow full local network access and mDNS support
     // "--network=host"
     // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
     "--network=matterbridge"
@@ -90,7 +91,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "eslint.format.enable": true,
         "eslint.useFlatConfig": true,
-        "diffEditor.ignoreTrimWhitespace": false,
+        "diffEditor.ignoreTrimWhitespace": true,
         "git.autofetch": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
