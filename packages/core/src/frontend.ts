@@ -1506,11 +1506,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {number} endpointNumber - The endpoint number.
+   * @param {string} serialNumber - The device serial number
    * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
    */
-  private getClusters(pluginName: string, endpointNumber: number): ApiClusters | undefined {
+  private getClusters(pluginName: string, endpointNumber: number, serialNumber?: string): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
-    const endpoint = this.matterbridge.devices.array().find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber);
+    const endpoint = this.matterbridge.devices
+      .array()
+      .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber));
     if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(`getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
       return;
@@ -2060,7 +2063,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
           return;
         }
-        const response = this.getClusters(data.params.plugin, data.params.endpoint);
+        const response = this.getClusters(data.params.plugin, data.params.endpoint, data.params.serial);
         if (response) {
           sendResponse({
             id: data.id,
