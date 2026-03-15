@@ -52,8 +52,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // On startup, update npm, build matterbridge and link it globally
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   "runArgs": [
-    // Always pull the latest image to ensure we have the latest Node.js and security updates
-    "--pull=always",
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
     "${localWorkspaceFolderBasename}",
