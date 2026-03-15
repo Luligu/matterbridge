@@ -56,21 +56,22 @@ These classes will run as threads in the next releases:
 
 ### Dev News
 
-- [DevContainer]: Change base image to "mcr.microsoft.com/devcontainers/javascript-node:24-trixie".
+- [DevContainer]: Change base image to `mcr.microsoft.com/devcontainers/javascript-node:24-trixie`.
 
 ### Added
 
 - [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
 - [threads]: Add ArchiveCommand thread.
-- [threads]: Add WorkerWrapper class.
 
 ### Changed
 
 - [package]: Update dependencies.
 - [package]: Update actions versions in workflows.
-- [frontend]: Bumped `frontend` version to v. 3.4.8.
+- [frontend]: Bump `frontend` version to v. 3.4.8.
 - [frontend]: Refactor archives creation using threads.
 - [frontend]: Change basePath to pathName for BrowserRouter.
+- [archive]: Use `zipjs` package.
+- [archive]: Remove `archiver` and `glob` packages.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -137,7 +138,7 @@ These classes will run as threads in the next releases:
 - [package]: Add `@eslint/json`.
 - [package]: Add `@eslint/markdown`.
 - [docker]: The base image `24-ubuntu-slim` is now built with the latest node 24 release.
-- [frontend]: Bumped `frontend` version to v. 3.4.7.
+- [frontend]: Bump `frontend` version to v. 3.4.7.
 - [frontend]: Update dependencies.
 
 ### Fixed
