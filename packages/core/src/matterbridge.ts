@@ -425,6 +425,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
           break;
+        case 'matterbridge_stop_plugin_server':
+          {
+            const plugin = this.plugins.get(msg.params.pluginName);
+            if (plugin && plugin.serverNode) this.stopServerNode(plugin.serverNode);
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
+        case 'matterbridge_stop_device_server':
+          {
+            const device = this.devices.get(msg.params.deviceUniqueId);
+            if (device && device.serverNode) this.stopServerNode(device.serverNode);
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
