@@ -425,17 +425,33 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
           break;
+        case 'matterbridge_start_plugin_server':
+          {
+            const plugin = this.plugins.get(msg.params.pluginName);
+            if (plugin && plugin.serverNode) await this.startServerNode(plugin.serverNode);
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
         case 'matterbridge_stop_plugin_server':
           {
             const plugin = this.plugins.get(msg.params.pluginName);
-            if (plugin && plugin.serverNode) this.stopServerNode(plugin.serverNode);
+            if (plugin && plugin.serverNode) await this.stopServerNode(plugin.serverNode);
+            if (plugin && plugin.serverNode) plugin.serverNode = undefined;
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
+        case 'matterbridge_start_device_server':
+          {
+            const device = this.devices.get(msg.params.deviceUniqueId);
+            if (device && device.serverNode) await this.startServerNode(device.serverNode);
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;
         case 'matterbridge_stop_device_server':
           {
             const device = this.devices.get(msg.params.deviceUniqueId);
-            if (device && device.serverNode) this.stopServerNode(device.serverNode);
+            if (device && device.serverNode) await this.stopServerNode(device.serverNode);
+            if (device && device.serverNode) device.serverNode = undefined;
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;

@@ -140,7 +140,9 @@ describe('Matterbridge', () => {
     expect(matterbridge.shellyMainUpdate).toBe(true);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);
 
     // Responses

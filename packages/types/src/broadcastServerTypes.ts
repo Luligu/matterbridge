@@ -211,8 +211,16 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
+  matterbridge_start_plugin_server: {
+    request: { params: { pluginName: string } };
+    response: { result: { success: boolean } };
+  };
   matterbridge_stop_plugin_server: {
     request: { params: { pluginName: string } };
+    response: { result: { success: boolean } };
+  };
+  matterbridge_start_device_server: {
+    request: { params: { deviceUniqueId: string } };
     response: { result: { success: boolean } };
   };
   matterbridge_stop_device_server: {
