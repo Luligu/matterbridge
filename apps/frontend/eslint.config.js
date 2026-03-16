@@ -10,14 +10,13 @@ import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import prettier from 'eslint-plugin-prettier/recommended';
 
-const __filename = url.fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 /** @type {import('eslint').Linter.Config[]} */
 export default defineConfig([
@@ -31,7 +30,7 @@ export default defineConfig([
   // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
   // tseslint.configs.strictTypeChecked,
   // Prettier config disables formatting-related rules from ESLint
-  prettierConfig,
+  prettier,
   {
     name: 'Global Configuration Options',
     languageOptions: {
@@ -41,7 +40,7 @@ export default defineConfig([
         ...globals.serviceworker,
         ...globals.browser,
       },
-      parser: tsParser,
+      parser: tseslint.parser,
       parserOptions: {
         project: './tsconfig.json',
         tsconfigRootDir: __dirname,
