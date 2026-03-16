@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 
 - [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
 - [threads]: Add ArchiveCommand thread.
+- [endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.
 
 ### Changed
 

@@ -253,7 +253,7 @@ describe('Server clusters and behaviors', () => {
     ];
 
     thermostatPreset = new MatterbridgeEndpoint(thermostatDevice, { id: 'thermostatPreset' });
-    thermostatPreset.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 50, 0, 50, undefined, undefined, undefined, undefined, 0, presets, presetTypes);
+    thermostatPreset.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, 0, presets, presetTypes);
     thermostatPreset.addRequiredClusterServers();
     expect(thermostatPreset).toBeDefined();
     expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();

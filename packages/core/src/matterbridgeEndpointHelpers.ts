@@ -115,7 +115,6 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, VendorId } from '@matter/types/datatype';
 import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
-import { deepCopy } from '@matterbridge/utils/deep-copy';
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
@@ -163,6 +162,46 @@ export function capitalizeFirstLetter(name: string): string {
 export function lowercaseFirstLetter(name: string): string {
   if (!name) return name;
   return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+/**
+ * Converts a managed Matter cluster value into a plain detached snapshot.
+ *
+ * @template T
+ * @param {T} value - The value to snapshot.
+ * @returns {T} A plain recursively copied value without managed Matter prototypes.
+ */
+export function getSnapshot<T>(value: T): T {
+  if (typeof value !== 'object' || value === null) return value;
+
+  // Preserve binary payloads as detached copies so handles remain comparable in tests.
+  if (Buffer.isBuffer(value)) return Buffer.from(value) as T;
+  if (value instanceof Uint8Array) return Uint8Array.from(value) as T;
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => getSnapshot(entry)) as T;
+  }
+
+  // Keep built-in container/value types intact while recursively detaching their contents.
+  if (value instanceof Date) return new Date(value.getTime()) as T;
+  if (value instanceof RegExp) return new RegExp(value.source, value.flags) as T;
+  if (value instanceof Map) {
+    const mapCopy = new Map();
+    for (const [key, entry] of value.entries()) {
+      mapCopy.set(getSnapshot(key), getSnapshot(entry));
+    }
+    return mapCopy as T;
+  }
+  if (value instanceof Set) {
+    return new Set(Array.from(value, (entry) => getSnapshot(entry))) as T;
+  }
+
+  // Plain objects intentionally drop managed Matter prototypes and hidden accessors.
+  const plainObject: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    plainObject[key] = getSnapshot(entry);
+  }
+  return plainObject as T;
 }
 
 /**
@@ -671,7 +710,7 @@ export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.T
   }
 
   let value = state[clusterName][attribute];
-  if (typeof value === 'object') value = deepCopy(value);
+  if (typeof value === 'object') value = getSnapshot(value);
   log?.info(
     `${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} value ${YELLOW}${value !== null && typeof value === 'object' ? debugStringify(value) : value}${db}`,
   );
@@ -717,7 +756,7 @@ export async function setAttribute(
     return false;
   }
   let oldValue = state[clusterName][attribute];
-  if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
+  if (typeof oldValue === 'object') oldValue = getSnapshot(oldValue);
   await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
   log?.info(
     `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
@@ -768,7 +807,7 @@ export async function updateAttribute(
   let oldValue = state[clusterName][attribute];
   if (typeof oldValue === 'object') {
     if (deepEqual(oldValue, value)) return false;
-    oldValue = deepCopy(oldValue);
+    oldValue = getSnapshot(oldValue);
   } else if (oldValue === value) return false;
   await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
   log?.info(
@@ -893,7 +932,7 @@ export function getCluster(
   }
 
   const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>;
-  const value = deepCopy(state[clusterName]);
+  const value = getSnapshot(state[clusterName]);
   log?.info(`${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} cluster ${hk}${capitalizeFirstLetter(clusterName)}${db} state ${debugStringify(value)}}`);
   return value;
 }
