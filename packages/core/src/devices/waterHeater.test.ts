@@ -119,6 +119,43 @@ describe('Matterbridge Water Heater', () => {
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
   });
 
+    test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
+      const device = new WaterHeater('Water Heater Test Device', 'WH123456');
+      const spy = jest.spyOn(device.behaviors, 'require');
+      // Call with all parameters
+      device.createDefaultWaterHeaterManagementClusterServer(
+        { immersionElement1: true, immersionElement2: true },
+        { immersionElement1: false, immersionElement2: true },
+        77,
+        WaterHeaterManagement.BoostState.Active,
+      );
+      expect(spy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          heaterTypes: { immersionElement1: true, immersionElement2: true },
+          heatDemand: { immersionElement1: false, immersionElement2: true },
+          tankPercentage: 77,
+          boostState: WaterHeaterManagement.BoostState.Active,
+        })
+      );
+      // Call with defaults
+      device.createDefaultWaterHeaterManagementClusterServer();
+      expect(spy).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          heaterTypes: { immersionElement1: true },
+          heatDemand: {},
+          tankPercentage: 100,
+          boostState: WaterHeaterManagement.BoostState.Inactive,
+        })
+      );
+      // Chaining
+      expect(
+        device.createDefaultWaterHeaterManagementClusterServer()
+      ).toBe(device);
+      spy.mockRestore();
+    });
+
   test('add a water heater device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });

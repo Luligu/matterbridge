@@ -49,14 +49,13 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviorsServer.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let device: MatterbridgeEndpoint;
+  let device: Evse;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -104,6 +103,49 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+  });
+
+  test('createDefaultEnergyEvseClusterServer argument normalization and chaining', () => {
+    const spy = jest.spyOn(device.behaviors, 'require');
+    // Call with all parameters
+    device.createDefaultEnergyEvseClusterServer(EnergyEvse.State.PluggedInCharging, EnergyEvse.SupplyState.ChargingEnabled, EnergyEvse.FaultState.NoError);
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        state: EnergyEvse.State.PluggedInCharging,
+        supplyState: EnergyEvse.SupplyState.ChargingEnabled,
+        faultState: EnergyEvse.FaultState.NoError,
+        chargingEnabledUntil: null,
+        circuitCapacity: 32000,
+        minimumChargeCurrent: 6000,
+        maximumChargeCurrent: 32000,
+        userMaximumChargeCurrent: 32000,
+        sessionId: null,
+        sessionDuration: null,
+        sessionEnergyCharged: null,
+      }),
+    );
+    // Call with defaults
+    device.createDefaultEnergyEvseClusterServer();
+    expect(spy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        state: EnergyEvse.State.NotPluggedIn,
+        supplyState: EnergyEvse.SupplyState.ChargingEnabled,
+        faultState: EnergyEvse.FaultState.NoError,
+        chargingEnabledUntil: null,
+        circuitCapacity: 32000,
+        minimumChargeCurrent: 6000,
+        maximumChargeCurrent: 32000,
+        userMaximumChargeCurrent: 32000,
+        sessionId: null,
+        sessionDuration: null,
+        sessionEnergyCharged: null,
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultEnergyEvseClusterServer()).toBe(device);
+    spy.mockRestore();
   });
 
   test('add a Evse device', async () => {

@@ -178,6 +178,38 @@ describe('Matterbridge ' + NAME, () => {
     expect(attributes.length).toBe(47);
   });
 
+  test('createDefaultOvenCavityOperationalStateClusterServer normalizes different parameters', () => {
+    const requireSpy = jest.spyOn(cabinet1.behaviors as any, 'require').mockImplementation(() => undefined);
+
+    expect(device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1)).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(1, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: null,
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Stopped,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    expect(
+      device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1, OperationalState.OperationalStateEnum.Running, 1, ['pre-heating', 'pre-heated', 'cooling down']),
+    ).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(2, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: ['pre-heating', 'pre-heated', 'cooling down'],
+      currentPhase: 1,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+  });
+
   test('invoke MatterbridgeOvenModeServer commands', async () => {
     expect(cabinet1.behaviors.has(OvenModeServer)).toBeTruthy();
     expect(cabinet1.behaviors.has(MatterbridgeOvenModeServer)).toBeTruthy();
