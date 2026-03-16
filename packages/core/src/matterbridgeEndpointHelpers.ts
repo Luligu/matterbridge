@@ -384,8 +384,6 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
- *
- * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,
