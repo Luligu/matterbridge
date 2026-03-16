@@ -26,6 +26,7 @@ import {
   ElectricalEnergyMeasurement,
   ElectricalPowerMeasurement,
   EnergyEvse,
+  EnergyEvseMode,
   Identify,
   PowerSource,
 } from '@matter/types/clusters';
@@ -49,7 +50,6 @@ import {
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviorsServer.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 
 // Setup the test environment
@@ -142,10 +142,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((dem as any).state['deviceEnergyManagementMode'].acceptedCommandList).toEqual([0]);
     expect((dem as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(dem, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(dem, 'deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
+    await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -166,33 +166,33 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([0]);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvse', 'disable');
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
 
     jest.clearAllMocks();
     await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
-    await invokeBehaviorCommand(device, 'energyEvse', 'disable');
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'disable');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
 
     jest.clearAllMocks();
     await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
-    await invokeBehaviorCommand(device, 'energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvse', 'setTargets', { chargingTargetSchedules: [] });
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', { chargingTargetSchedules: [] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`SetTargets`));
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvse', 'getTargets');
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'getTargets');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`GetTargets`));
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvse', 'clearTargets');
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`ClearTargets`));
   });
 
@@ -205,11 +205,11 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['energyEvseMode'].generatedCommandList).toEqual([1]);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: 0`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'energyEvseMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseModeServer changeToMode called with newMode 1 => On demand`);
   });

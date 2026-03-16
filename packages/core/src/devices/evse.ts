@@ -169,6 +169,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     device.commandHandler.executeHandler('enableCharging', { request, cluster: EnergyEvseServer.id, attributes: this.state, endpoint: this.endpoint });
     device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
     this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
+    // istanbul ignore else
     if (this.state.state === EnergyEvse.State.PluggedInDemand) {
       this.state.state = EnergyEvse.State.PluggedInCharging;
     }
