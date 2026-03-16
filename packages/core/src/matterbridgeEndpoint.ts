@@ -2194,7 +2194,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -2209,7 +2209,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     localTemperature: number = 23,
     occupiedHeatingSetpoint: number = 21,
     occupiedCoolingSetpoint: number = 25,
-    minSetpointDeadBand: number = 1,
+    minSetpointDeadBand: number = 0,
     minHeatSetpointLimit: number = 0,
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
@@ -2330,7 +2330,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 2°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -2348,7 +2348,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     localTemperature: number = 23,
     occupiedHeatingSetpoint: number = 21,
     occupiedCoolingSetpoint: number = 25,
-    minSetpointDeadBand: number = 2,
+    minSetpointDeadBand: number = 0,
     minHeatSetpointLimit: number = 0,
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
