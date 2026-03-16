@@ -86,12 +86,10 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
    * Initializes the server and logs the configured temperature levels.
    */
   override initialize() {
-    if (this.state.supportedTemperatureLevels.length >= 2) {
-      const device = this.endpoint.stateOf(MatterbridgeServer);
-      device.log.info(
-        `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`,
-      );
-    }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`,
+    );
   }
 
   /**
