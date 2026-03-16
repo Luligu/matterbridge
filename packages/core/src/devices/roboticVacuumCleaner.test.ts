@@ -35,7 +35,7 @@ import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, 
 await setupTest(NAME, false);
 
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
-  let device: MatterbridgeEndpoint;
+  let device: RoboticVacuumCleaner;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -72,51 +72,42 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(device.hasClusterServer(ServiceArea.Cluster.id)).toBeTruthy();
   });
 
-    test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {
-      const device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
-      const spy = jest.spyOn(device.behaviors, 'require');
-      // Call with all parameters
-      device.createDefaultRvcOperationalStateClusterServer(
-        ['Phase1', 'Phase2'],
-        1,
-        [
-          { operationalStateId: RvcOperationalState.OperationalState.Stopped },
-          { operationalStateId: RvcOperationalState.OperationalState.Running },
-        ],
-        RvcOperationalState.OperationalState.Running,
-        { errorStateId: RvcOperationalState.ErrorState.Error, errorStateDetails: 'Test error' },
-      );
-      expect(spy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          phaseList: ['Phase1', 'Phase2'],
-          currentPhase: 1,
-          operationalStateList: [
-            { operationalStateId: RvcOperationalState.OperationalState.Stopped },
-            { operationalStateId: RvcOperationalState.OperationalState.Running },
-          ],
-          operationalState: RvcOperationalState.OperationalState.Running,
-          operationalError: { errorStateId: RvcOperationalState.ErrorState.Error, errorStateDetails: 'Test error' },
-        })
-      );
-      // Call with defaults
-      device.createDefaultRvcOperationalStateClusterServer();
-      expect(spy).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({
-          phaseList: null,
-          currentPhase: null,
-          operationalStateList: expect.any(Array),
-          operationalState: RvcOperationalState.OperationalState.Docked,
-          operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-        })
-      );
-      // Chaining
-      expect(
-        device.createDefaultRvcOperationalStateClusterServer()
-      ).toBe(device);
-      spy.mockRestore();
-    });
+  test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    device.createDefaultRvcOperationalStateClusterServer(
+      ['Phase1', 'Phase2'],
+      1,
+      [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+      RvcOperationalState.OperationalState.Running,
+      { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: ['Phase1', 'Phase2'],
+        currentPhase: 1,
+        operationalStateList: [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+        operationalState: RvcOperationalState.OperationalState.Running,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+      }),
+    );
+    // Call with defaults
+    device.createDefaultRvcOperationalStateClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: null,
+        currentPhase: null,
+        operationalStateList: expect.any(Array),
+        operationalState: RvcOperationalState.OperationalState.Docked,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultRvcOperationalStateClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
 
   test('add an RVC device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();

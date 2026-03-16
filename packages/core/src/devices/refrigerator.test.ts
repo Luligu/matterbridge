@@ -222,6 +222,8 @@ describe('Matterbridge ' + NAME, () => {
       supported: { doorOpen: true },
       state: { doorOpen: true },
     });
+
+    requireSpy.mockRestore();
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {

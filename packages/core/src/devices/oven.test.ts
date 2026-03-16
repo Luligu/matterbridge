@@ -208,6 +208,8 @@ describe('Matterbridge ' + NAME, () => {
       operationalState: OperationalState.OperationalStateEnum.Running,
       operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     });
+
+    requireSpy.mockRestore();
   });
 
   test('invoke MatterbridgeOvenModeServer commands', async () => {

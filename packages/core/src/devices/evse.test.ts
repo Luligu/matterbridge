@@ -106,10 +106,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultEnergyEvseClusterServer argument normalization and chaining', () => {
-    const spy = jest.spyOn(device.behaviors, 'require');
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
     // Call with all parameters
     device.createDefaultEnergyEvseClusterServer(EnergyEvse.State.PluggedInCharging, EnergyEvse.SupplyState.ChargingEnabled, EnergyEvse.FaultState.NoError);
-    expect(spy).toHaveBeenCalledWith(
+    expect(requireSpy).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         state: EnergyEvse.State.PluggedInCharging,
@@ -127,7 +127,7 @@ describe('Matterbridge ' + NAME, () => {
     );
     // Call with defaults
     device.createDefaultEnergyEvseClusterServer();
-    expect(spy).toHaveBeenCalledWith(
+    expect(requireSpy).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         state: EnergyEvse.State.NotPluggedIn,
@@ -145,7 +145,7 @@ describe('Matterbridge ' + NAME, () => {
     );
     // Chaining
     expect(device.createDefaultEnergyEvseClusterServer()).toBe(device);
-    spy.mockRestore();
+    requireSpy.mockRestore();
   });
 
   test('add a Evse device', async () => {
