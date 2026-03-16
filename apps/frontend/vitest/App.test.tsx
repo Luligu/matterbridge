@@ -244,6 +244,43 @@ describe('toggleDebug', () => {
     });
   });
 
+  it('baseName strips known child routes before computing the router basename', async () => {
+    const origLocation = window.location;
+    // @ts-expect-error Vitest: need to delete window.location to mock it for router baseName test
+    delete window.location;
+    Object.defineProperty(window, 'location', {
+      value: {
+        pathname: '/matterbridge/devices',
+        href: 'http://localhost/matterbridge/devices',
+        origin: 'http://localhost',
+        host: 'localhost',
+        protocol: 'http:',
+        search: '',
+        hash: '',
+        toString: () => 'http://localhost/matterbridge/devices',
+      },
+      configurable: true,
+      writable: true,
+    });
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ valid: true }),
+    }) as unknown as typeof fetch;
+    render(<App />);
+    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.input(input, { target: { value: 'test' } });
+      fireEvent.click(screen.getByRole('button', { name: /log in/i }));
+    });
+    expect(await screen.findByText('UiProvider')).toBeInTheDocument();
+    expect(basePath).toBe('/matterbridge/');
+    Object.defineProperty(window, 'location', {
+      value: origLocation,
+      configurable: true,
+      writable: true,
+    });
+  });
+
   it('baseName: /api/hassio_ingress/', async () => {
     const origLocation = window.location;
     // @ts-expect-error Vitest: need to delete window.location to mock it for router baseName test
