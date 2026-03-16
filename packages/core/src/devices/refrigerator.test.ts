@@ -206,6 +206,26 @@ describe('Matterbridge ' + NAME, () => {
     expect(attributes.length).toBe(29);
   });
 
+  test('createDefaultRefrigeratorAlarmClusterServer normalizes different parameters', () => {
+    const requireSpy = jest.spyOn(device.behaviors as any, 'require').mockImplementation(() => undefined);
+
+    expect(device.createDefaultRefrigeratorAlarmClusterServer(device)).toBe(device);
+    expect(requireSpy).toHaveBeenNthCalledWith(1, expect.any(Function), {
+      mask: { doorOpen: true },
+      supported: { doorOpen: true },
+      state: { doorOpen: false },
+    });
+
+    expect(device.createDefaultRefrigeratorAlarmClusterServer(device, true)).toBe(device);
+    expect(requireSpy).toHaveBeenNthCalledWith(2, expect.any(Function), {
+      mask: { doorOpen: true },
+      supported: { doorOpen: true },
+      state: { doorOpen: true },
+    });
+
+    requireSpy.mockRestore();
+  });
+
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {
     expect(device.behaviors.has(RefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer)).toBeTruthy();

@@ -55,4 +55,10 @@ describe('Matterbridge Temperature Control', () => {
     expect(device).toBeDefined();
     createLevelTemperatureControlClusterServer(device);
   });
+
+  test('create a laundryWasher device with custom parameters', async () => {
+    device = new MatterbridgeEndpoint(laundryWasher, { id: 'TestDevice-005' });
+    expect(device).toBeDefined();
+    createLevelTemperatureControlClusterServer(device, 0, ['Warm']);
+  });
 });

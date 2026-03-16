@@ -49,7 +49,7 @@ import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeSer
 await setupTest(NAME, false);
 
 describe('Matterbridge Water Heater', () => {
-  let device: MatterbridgeEndpoint;
+  let device: WaterHeater;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -117,6 +117,40 @@ describe('Matterbridge Water Heater', () => {
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+  });
+
+  test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    device.createDefaultWaterHeaterManagementClusterServer(
+      { immersionElement1: true, immersionElement2: true },
+      { immersionElement1: false, immersionElement2: true },
+      77,
+      WaterHeaterManagement.BoostState.Active,
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true, immersionElement2: true },
+        heatDemand: { immersionElement1: false, immersionElement2: true },
+        tankPercentage: 77,
+        boostState: WaterHeaterManagement.BoostState.Active,
+      }),
+    );
+    // Call with defaults
+    device.createDefaultWaterHeaterManagementClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true },
+        heatDemand: {},
+        tankPercentage: 100,
+        boostState: WaterHeaterManagement.BoostState.Inactive,
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultWaterHeaterManagementClusterServer()).toBe(device);
+    requireSpy.mockRestore();
   });
 
   test('add a water heater device', async () => {
