@@ -467,7 +467,14 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         // Request clusters for all devices
         for (const device of msg.response) {
           if (debug) console.log('DevicesIcons sending /api/clusters');
-          sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: device.pluginName, endpoint: device.endpoint || 0 } });
+          sendMessage({
+            id: uniqueId.current,
+            sender: 'DevicesIcons',
+            method: '/api/clusters',
+            src: 'Frontend',
+            dst: 'Matterbridge',
+            params: { plugin: device.pluginName, endpoint: device.endpoint || 0, serialNumber: device.serial },
+          });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
         clusterUpdate(msg);

@@ -213,10 +213,10 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   // Send /api/clusters request when a device row is clicked
   useEffect(() => {
-    if (pluginName && endpoint) {
+    if (pluginName && endpoint && selectedDeviceUniqueId) {
       if (debug) console.log('DevicesTable sending /api/clusters');
+      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId } });
       // console.log(`DevicesTable useEffect: selected device "${deviceName}" with uniqueId "${selectedDeviceUniqueId}", plugin "${pluginName}", endpoint "${endpoint}"`);
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint) } });
     }
   }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
 
