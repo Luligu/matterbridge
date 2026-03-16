@@ -824,14 +824,14 @@ export async function updateAttribute(
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the attribute to.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
  * @param {string} attribute - The name of the attribute to subscribe to.
- * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. When context.offline === true then the change is locally generated and not from the controller.
+ * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
  * @returns {boolean} - A boolean indicating whether the subscription was successful.
  *
  * @remarks The listener function (cannot be async) will receive three parameters:
  * - `newValue`: The new value of the attribute.
  * - `oldValue`: The old value of the attribute.
- * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
+ * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  */
 export async function subscribeAttribute(
   endpoint: MatterbridgeEndpoint,

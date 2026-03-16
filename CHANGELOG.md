@@ -54,6 +54,13 @@ These classes will run as threads in the next releases:
 
 ## [3.6.2] - Dev branch
 
+### Dev Breaking Changes
+
+- [getAttribute]: The overloads of `getAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [setAttribute]: The overloads of `setAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [updateAttribute]: The overloads of `updateAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType are now typed.
+
 ### Dev News
 
 - [DevContainer]: Change base image to `mcr.microsoft.com/devcontainers/javascript-node:24-trixie`.

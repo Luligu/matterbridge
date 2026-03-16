@@ -27,7 +27,6 @@ import {
 import { temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
-  getSnapshot,
   getApparentElectricalPowerMeasurementClusterServer,
   getCluster,
   getDefaultDeviceEnergyManagementClusterServer,
@@ -45,6 +44,7 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   getSemtag,
+  getSnapshot,
   setCluster,
 } from './matterbridgeEndpointHelpers.js';
 

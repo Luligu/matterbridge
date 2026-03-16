@@ -107,15 +107,15 @@ export class Speaker extends MatterbridgeEndpoint {
     if (!Number.isFinite(level)) return;
     if (level < 1) level = 1;
     if (level > 254) level = 254;
-    await this.setAttribute(LevelControl.Cluster.id, 'currentLevel', level);
+    await this.setAttribute(LevelControl.Cluster, 'currentLevel', level);
   }
 
   /**
    * Get current volume.
    *
-   * @returns {number} Current level (1..254).
+   * @returns {number | null| undefined} Current level (1..254).
    */
-  getVolume(): number {
-    return this.getAttribute(LevelControl.Cluster.id, 'currentLevel');
+  getVolume(): number | null | undefined {
+    return this.getAttribute(LevelControl.Cluster, 'currentLevel');
   }
 }

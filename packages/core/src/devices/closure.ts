@@ -213,9 +213,9 @@ export class Closure extends MatterbridgeEndpoint {
   /**
    * Gets the ClosureControl `mainState` attribute.
    *
-   * @returns {ClosureControl.MainState} Current main state.
+   * @returns {ClosureControl.MainState | undefined} Current main state.
    */
-  getMainState(): ClosureControl.MainState {
-    return this.getAttribute(ClosureControl.Cluster.id, 'mainState');
+  getMainState(): ClosureControl.MainState | undefined {
+    return this.getAttribute(ClosureControlServer, 'mainState');
   }
 }

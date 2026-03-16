@@ -144,6 +144,13 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="362-dev-branch">[3.6.2] - Dev branch</h2>
+<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<ul>
+<li>[getAttribute]: The overloads of <code>getAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
+<li>[setAttribute]: The overloads of <code>setAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
+<li>[updateAttribute]: The overloads of <code>updateAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
+<li>[subscribeAttribute]: The overloads of <code>subscribeAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
+</ul>
 <h3 id="dev-news">Dev News</h3>
 <ul>
 <li>[DevContainer]: Change base image to <code>mcr.microsoft.com/devcontainers/javascript-node:24-trixie</code>.</li>
@@ -152,6 +159,7 @@
 <ul>
 <li>[frontend]: Add support for Hass Ingress project (<a href="https://github.com/lovelylain/hass_ingress">https://github.com/lovelylain/hass_ingress</a>). Thanks kramttocs (<a href="https://github.com/Luligu/matterbridge/discussions/524">https://github.com/Luligu/matterbridge/discussions/524</a>).</li>
 <li>[threads]: Add ArchiveCommand thread.</li>
+<li>[endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -174,7 +182,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="361-2026-03-13">[3.6.1] - 2026-03-13</h2>
-<h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
 <ul>
 <li>[getCluster]: The overloads of <code>getCluster()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[setCluster]: The overloads of <code>setCluster()</code> method that take Behavior.Type or ClusterType are now typed.</li>
@@ -194,7 +202,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="360-2026-03-06">[3.6.0] - 2026-03-06</h2>
-<h3 id="dev-breaking-changes-1">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
 <ul>
 <li>[Oven]: Refactor <code>Oven</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
 <li>[Refrigerator]: Refactor <code>Refrigerator</code> class to use TemperatureNumber for TemperatureControlledCabinet device type.</li>
@@ -246,7 +254,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="356-2026-02-27">[3.5.6] - 2026-02-27</h2>
-<h3 id="dev-breaking-changes-2">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-3">Dev Breaking Changes</h3>
 <ul>
 <li>[rootNode]: The serialNumber and uniqueId for accessory plugins in childbridge mode, and for devices with mode = server, are now taken from the device. These values are persisted in storage and cannot be changed later.</li>
 <li>[devContainer]: Add the guide to <a href="README-DEV.html#how-to-pair-matterbridge-in-dev-containers">pair Matterbridge with Dev Container</a></li>
@@ -305,7 +313,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="354-2026-02-13">[3.5.4] - 2026-02-13</h2>
-<h3 id="dev-breaking-changes-3">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-4">Dev Breaking Changes</h3>
 <ul>
 <li>[exports]: Removed Matterbridge export from matterbridge.</li>
 </ul>
@@ -348,7 +356,7 @@
 <p>In short: you can safely ignore this message; it is a dependency warning, not a Matterbridge vulnerability.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="353-2026-02-06">[3.5.3] - 2026-02-06</h2>
-<h3 id="dev-breaking-changes-4">Dev Breaking Changes</h3>
+<h3 id="dev-breaking-changes-5">Dev Breaking Changes</h3>
 <ul>
 <li>[logger]: The logger (node-ansi-logger) has been refactored and updated (v.3.2.0) to support the new features below.</li>
 </ul>
