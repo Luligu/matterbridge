@@ -393,7 +393,8 @@ export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   params: {
     plugin: string;
     endpoint: number;
-    serial?: string;
+    serialNumber?: string;
+    uniqueId?: string;
   };
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {

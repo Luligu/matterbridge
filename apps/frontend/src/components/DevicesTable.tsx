@@ -213,11 +213,11 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   // Send /api/clusters request when plugin and endpoint are set
   useEffect(() => {
-    if (pluginName && endpoint) {
+    if (pluginName && endpoint && selectedDeviceUniqueId) {
       if (debug) console.log('DevicesTable sending /api/clusters');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint) } });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId } });
     }
-  }, [pluginName, endpoint, sendMessage]);
+  }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
 
   useEffect(() => {
     const normalizedPlugin = filterPlugins?.trim().toLowerCase();

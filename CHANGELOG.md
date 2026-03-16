@@ -73,6 +73,8 @@ These classes will run as threads in the next releases:
 - [archive]: Use `zipjs` package.
 - [archive]: Remove `archiver` and `glob` packages.
 
+- [frontend]: Fix edge case of more then one device with mode = 'server' in the same plugin. Thanks Ryan (https://github.com/Luligu/matterbridge/pull/528).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.6.1] - 2026-03-13
