@@ -104,13 +104,29 @@ describe('Server clusters and behaviors', () => {
     { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
   ];
   const thermostatPresets: Thermostat.Preset[] = [
-    { presetHandle: Buffer.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: null },
-    { presetHandle: Buffer.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: null },
+    { presetHandle: Uint8Array.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: null },
+    { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: null },
   ];
 
   function createPresetThermostatEndpoint(id: string) {
     const endpoint = new MatterbridgeEndpoint(thermostatDevice, { id });
-    endpoint.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, 0, thermostatPresets, thermostatPresetTypes);
+    endpoint.createDefaultPresetsThermostatClusterServer(
+      23,
+      21,
+      25,
+      2,
+      0,
+      48,
+      2,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      Uint8Array.from([0]), // activePresetHandle: Uint8Array | null
+      thermostatPresets, // presetsList: Thermostat.Preset[]
+      thermostatPresetTypes, // presetTypesList: Thermostat.PresetType[]
+    );
     endpoint.addRequiredClusterServers();
     return endpoint;
   }

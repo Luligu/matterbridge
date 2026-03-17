@@ -893,7 +893,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresets' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, 0, presetsList, presetTypes);
+    device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, Buffer.from([0]), presetsList, presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(false);
@@ -1000,7 +1000,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsOccupancy' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultPresetsThermostatClusterServer(22, 20, 24, 2, 0, 48, 2, 50, 18, 26, true, undefined, 0, presetsList, presetTypes);
+    device.createDefaultPresetsThermostatClusterServer(22, 20, 24, 2, 0, 48, 2, 50, 18, 26, true, undefined, Buffer.from([0]), presetsList, presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(true);

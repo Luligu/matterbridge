@@ -2910,7 +2910,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
-   * @param {number | undefined} [activePresetHandle] - The active preset handle. Defaults to undefined.
+   * @param {Uint8Array | null} [activePresetHandle] - The active preset handle. Defaults to null.
    * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
    * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -2928,7 +2928,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
-    activePresetHandle: number | undefined = undefined,
+    activePresetHandle: Uint8Array | null = null,
     presetsList: Thermostat.Preset[] | null | undefined = undefined,
     presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
@@ -2968,10 +2968,10 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
-        activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
+        activePresetHandle: activePresetHandle ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
         presets: (presetsList ?? []).map((p) => ({
-          presetHandle: Uint8Array.from(p.presetHandle || [0]),
+          presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,
           coolingSetpoint: p.coolingSetpoint,
