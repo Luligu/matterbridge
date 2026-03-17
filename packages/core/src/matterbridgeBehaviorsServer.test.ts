@@ -795,6 +795,7 @@ describe('Server clusters and behaviors', () => {
     thermostatPreset = createPresetThermostatEndpoint('thermostatPresetBehavior');
     expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
 
+    const formatPresetHandleForLog = (presetHandle: Uint8Array | null) => (presetHandle ? `0x${Buffer.from(presetHandle).toString('hex')}` : 'null');
     const setHeatRequest = { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 };
     const setCoolRequest = { mode: Thermostat.SetpointRaiseLowerMode.Cool, amount: 5 };
     const firstPresetRequest = { presetHandle: Uint8Array.from([0]) };
@@ -871,17 +872,26 @@ describe('Server clusters and behaviors', () => {
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', firstPresetRequest);
 
     expect(presetCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: firstPresetRequest });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting preset to ${firstPresetRequest.presetHandle} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting preset to ${formatPresetHandleForLog(firstPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+    );
     expectPresetThermostatAttributes(null, 2100, 2500);
 
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', secondPresetRequest);
     expect(presetCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: secondPresetRequest });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting preset to ${secondPresetRequest.presetHandle} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting preset to ${formatPresetHandleForLog(secondPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+    );
     expectPresetThermostatAttributes(null, 1900, 2700);
 
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', clearPresetRequest);
     expect(presetCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: clearPresetRequest });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting preset to ${clearPresetRequest.presetHandle} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting preset to ${formatPresetHandleForLog(clearPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+    );
     expectPresetThermostatAttributes(null, 1900, 2700);
 
     await expect(thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', invalidPresetRequest)).rejects.toThrow('Requested PresetHandle not found');
