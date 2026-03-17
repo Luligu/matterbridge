@@ -870,6 +870,7 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
     device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
     await super.setActivePresetRequest(request);
     // matter.js currently clears activePresetHandle again while applying preset-derived setpoint writes: that behavior appears questionable versus the Thermostat preset spec.
+    // 4.3.10.9.2. Effect on Receipt. The server SHALL set the ActivePresetHandle attribute to the value of the PresetHandle field.
   }
 }
 

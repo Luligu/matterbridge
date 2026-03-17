@@ -86,6 +86,7 @@ These classes will run as threads in the next releases:
 ### Fixed
 
 - [frontend]: Fix edge case when more then one device with mode = 'server' is in the same plugin. Thanks Ryan (https://github.com/Luligu/matterbridge/pull/528).
+- [thermostat]: Fix Thermostat preset implementation.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

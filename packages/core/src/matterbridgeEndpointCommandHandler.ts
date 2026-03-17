@@ -76,6 +76,9 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
  */
 export type CommandHandlers = keyof CommandHandlerDataMap;
 
+/** @deprecated Use CommandHandlers instead */
+export type MatterbridgeEndpointCommands = keyof CommandHandlerDataMap;
+
 /**
  * Data passed to command handlers for a specific command. The type is determined by the command name and contains the request, cluster, attributes, and endpoint related to the command.
  */
