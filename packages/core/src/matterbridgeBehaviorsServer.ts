@@ -818,25 +818,9 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
     device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
-    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
-    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedHeatingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
-    }
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedCoolingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
-    }
-
-    // super.setpointRaiseLower(request);
+    await super.setpointRaiseLower(request);
   }
 }
 
@@ -864,25 +848,9 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
-    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
-    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedHeatingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
-    }
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedCoolingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
-    }
-
-    // super.setpointRaiseLower(request);
+    device.log.debug(`MatterbridgePresetThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
+    await super.setpointRaiseLower(request);
   }
 
   /**
@@ -899,15 +867,9 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-
-    if (request.presetHandle !== null) {
-      const preset = this.state.persistedPresets?.find((storedPreset) => storedPreset.presetHandle !== null && Bytes.areEqual(storedPreset.presetHandle, request.presetHandle));
-      if (preset === undefined) throw new StatusResponse.InvalidCommandError('Requested PresetHandle not found');
-    }
-    this.state.activePresetHandle = request.presetHandle;
     device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
-
-    // super.setActivePresetRequest(request);
+    await super.setActivePresetRequest(request);
+    // matter.js currently clears activePresetHandle again while applying preset-derived setpoint writes: that behavior appears questionable versus the Thermostat preset spec.
   }
 }
 
