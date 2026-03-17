@@ -1310,6 +1310,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
+   * The command shall be a string in the format of "Cluster.command" (e.g. "OnOff.toggle"). Requires matterbridge version 3.7.0 or higher.
+   *
+   * The cluster name and command name should be the same as those found in the Matter specifications.
+   *
+   * Aliases for the most used clusters command (e.g. "on" or "off") are also supported ("toggle" is the same as "OnOff.toggle").
+   *
+   * When you require Matterbridge version 3.7.0 or higher, you should update the command name (OnOff.toggle instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name.
+   *
+   * @remarks
    * The handler function will receive an object with the following properties:
    * - `request`: The request object sent with the command.
    * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
