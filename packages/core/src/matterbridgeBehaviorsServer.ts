@@ -860,14 +860,18 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
    */
   override async setActivePresetRequest(request: Thermostat.SetActivePresetRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Setting preset to ${request.presetHandle ? Array.from(request.presetHandle).join(',') : 'null'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('Thermostat.setActivePresetRequest', {
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
+    device.log.debug(
+      `MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle ? Array.from(request.presetHandle).join(',') : 'null'}`,
+    );
     await super.setActivePresetRequest(request);
     // matter.js currently clears activePresetHandle again while applying preset-derived setpoint writes: that behavior appears questionable versus the Thermostat preset spec.
     // 4.3.10.9.2. Effect on Receipt. The server SHALL set the ActivePresetHandle attribute to the value of the PresetHandle field.
