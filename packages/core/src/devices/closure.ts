@@ -23,7 +23,6 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, EventElement, FieldElement } from '@matter/main/model';
 import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
@@ -154,10 +153,15 @@ export namespace ClosureControlServer {
 export class ClosureControlServer extends ClosureControlBehavior.with(ClosureControl.Feature.Positioning) {
   declare state: ClosureControlServer.State;
 
-  override moveTo = (request: ClosureControl.MoveToRequest): MaybePromise => {
+  override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MoveTo (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveTo', { request, cluster: ClosureControl.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ClosureControl.moveTo', {
+      request,
+      cluster: ClosureControlServer.id,
+      attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
@@ -171,10 +175,15 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
     this.state.mainState = ClosureControl.MainState.Moving;
   };
 
-  override stop = (): MaybePromise => {
+  override stop = async (): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('stop', { request: {}, cluster: ClosureControl.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ClosureControl.stop', {
+      request: {},
+      cluster: ClosureControlServer.id,
+      attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     this.state.mainState = ClosureControl.MainState.Stopped;
   };

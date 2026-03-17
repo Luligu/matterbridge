@@ -32,7 +32,6 @@ import {
 // Matterbridge
 import { basicVideoPlayer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { BasicVideoPlayer } from './basicVideoPlayer.js';
 
 // Setup the test environment
@@ -114,47 +113,47 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['keypadInput'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['keypadInput'].generatedCommandList).toEqual([1]);
 
-    await invokeBehaviorCommand(device, 'onOff', 'on', {});
+    await device.invokeBehaviorCommand('onOff', 'OnOff.on', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'pause', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.pause', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'stop', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.stop', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'previous', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.previous', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Previous (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'next', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.next', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Next (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'skipForward', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.skipForward', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SkipForward (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'skipBackward', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.skipBackward', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SkipBackward (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'keypadInput', 'sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
+    await device.invokeBehaviorCommand('keypadInput', 'KeypadInput.sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'onOff', 'off', {});
+    await device.invokeBehaviorCommand('onOff', 'OnOff.off', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'pause', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.pause', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'stop', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.stop', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
   });
 

@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
@@ -177,10 +176,15 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: LaundryWasherModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('LaundryWasherMode.changeToMode', {
+      request,
+      cluster: LaundryWasherModeServer.id,
+      attributes: this.state as unknown as (typeof LaundryWasherMode.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
       device.log.debug(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);

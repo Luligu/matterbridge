@@ -34,7 +34,7 @@ import {
 import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviorsServer.js';
 import { extractorHood } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand, invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
+import { invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
 import { ExtractorHood } from './extractorHood.js';
 
 // Setup the test environment

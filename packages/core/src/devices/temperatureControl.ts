@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 
@@ -97,10 +96,15 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
    *
    * @param {TemperatureControl.SetTemperatureRequest} request - Temperature set request payload.
    */
-  override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
+  override async setTemperature(request: TemperatureControl.SetTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
+      request,
+      cluster: TemperatureControlServer.id,
+      attributes: this.state as unknown as (typeof TemperatureControl.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
       device.log.debug(
         `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`,
@@ -134,10 +138,15 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
    *
    * @param {TemperatureControl.SetTemperatureRequest} request - Temperature set request payload.
    */
-  override setTemperature(request: TemperatureControl.SetTemperatureRequest): MaybePromise {
+  override async setTemperature(request: TemperatureControl.SetTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setTemperature', { request, cluster: TemperatureControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
+      request,
+      cluster: TemperatureControlServer.id,
+      attributes: this.state as unknown as (typeof TemperatureControl.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
       device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
       this.state.temperatureSetpoint = request.targetTemperature;

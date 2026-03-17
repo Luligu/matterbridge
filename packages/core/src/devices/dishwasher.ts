@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
@@ -151,10 +150,15 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: DishwasherModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DishwasherMode.changeToMode', {
+      request,
+      cluster: DishwasherModeServer.id,
+      attributes: this.state as unknown as (typeof DishwasherMode.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
       device.log.info(`DishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);

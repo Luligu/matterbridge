@@ -28,7 +28,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { oven } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
 
 // Setup the test environment
@@ -221,12 +220,12 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenMode', 'changeToMode', { newMode: 2 });
+    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with mode 2 = Convection`);
 
     // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenMode', 'changeToMode', { newMode: 15 });
+    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
   });
 
@@ -242,7 +241,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'start', { newMode: 2 });
+    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
@@ -250,7 +249,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'stop', { newMode: 15 });
+    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,

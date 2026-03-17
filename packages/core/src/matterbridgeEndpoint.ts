@@ -30,7 +30,7 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
 
 // @matter/general
-import { AtLeastOne, Lifecycle, NamedHandler, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
 import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
@@ -128,6 +128,7 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
 } from './matterbridgeBehaviorsServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterServers,
   addFixedLabel,
@@ -169,7 +170,7 @@ import {
   triggerEvent,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
@@ -281,7 +282,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
   /** Command handler for the MatterbridgeEndpoint commands */
-  readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
+  readonly commandHandler = new CommandHandler();
 
   /**
    * Represents a MatterbridgeEndpoint.
@@ -1304,39 +1305,51 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a command handler for the specified command.
    *
-   * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
-   * @param {CommandHandlerFunction} handler - The handler function to execute when the command is received.
+   * @param {CommandHandlers} command - The command to add the handler for.
+   * @param {CommandHandlerFunction<C>} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * The handler function will receive an object with the following properties:
    * - `request`: The request object sent with the command.
    * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
-   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}).
+   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}). Be aware that this is the actual cluster state but is typed as if it were from a complete instance of the cluster.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
-  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
+  addCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
     this.commandHandler.addHandler(command, handler);
+    return this;
+  }
+
+  /**
+   * Removes a command handler for the specified command.
+   *
+   * @param {CommandHandlers} command - The command to remove the handler for.
+   * @param {CommandHandlerFunction<C>} handler - The handler function to remove.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  removeCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
+    this.commandHandler.removeHandler(command, handler);
     return this;
   }
 
   /**
    * Execute the command handler for the specified command. Used ONLY in Jest tests.
    *
-   * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
-   * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
-   * @param {string} [cluster] - The optional cluster to pass to the handler function.
-   * @param {Record<string, boolean | number | bigint | string | object | null>} [attributes] - The optional attributes to pass to the handler function.
-   * @param {MatterbridgeEndpoint} [endpoint] - The optional MatterbridgeEndpoint instance to pass to the handler function
+   * @param {CommandHandlers} command - The command to execute.
+   * @param {CommandHandlerData<C>['request']} request - The request to pass to the handler function.
+   * @param {CommandHandlerData<C>['cluster']} cluster - The cluster to pass to the handler function.
+   * @param {CommandHandlerData<C>['attributes']} attributes - The attributes to pass to the handler function.
+   * @param {CommandHandlerData<C>['endpoint']} endpoint - The MatterbridgeEndpoint instance to pass to the handler function.
    */
-  async executeCommandHandler(
-    command: keyof MatterbridgeEndpointCommands,
-    request?: Record<string, boolean | number | bigint | string | object | null>,
-    cluster?: string,
-    attributes?: Record<string, boolean | number | bigint | string | object | null>,
-    endpoint?: MatterbridgeEndpoint,
+  async executeCommandHandler<C extends CommandHandlers>(
+    command: C,
+    request: CommandHandlerData<C>['request'],
+    cluster: CommandHandlerData<C>['cluster'],
+    attributes: CommandHandlerData<C>['attributes'],
+    endpoint: CommandHandlerData<C>['endpoint'],
   ): Promise<void> {
-    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
+    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint } as CommandHandlerData<C>);
   }
 
   /**
@@ -1368,11 +1381,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
    */
-  async invokeBehaviorCommand(
-    cluster: ClusterId | string,
-    command: keyof MatterbridgeEndpointCommands,
-    params?: Record<string, boolean | number | bigint | string | object | null>,
-  ): Promise<void>;
+  async invokeBehaviorCommand(cluster: ClusterId | string, command: CommandHandlers, params?: Record<string, boolean | number | bigint | string | object | null>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
@@ -1382,7 +1391,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async invokeBehaviorCommand(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
-    command: keyof MatterbridgeEndpointCommands,
+    command: CommandHandlers,
     params?: Record<string, boolean | number | bigint | string | object | null>,
   ) {
     await invokeBehaviorCommand(this, cluster, command, params);

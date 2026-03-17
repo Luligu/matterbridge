@@ -32,7 +32,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { microwaveOven } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';
 
 // Setup the test environment
@@ -122,17 +121,17 @@ describe('Matterbridge ' + NAME, () => {
 
     // Default cookTime from constructor is 60; adding 1 should log setting cookTime to 61
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'addMoreTime', { timeToAdd: 1 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to 61`);
 
     // Adding -1 should log invalid cookTime
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'addMoreTime', { timeToAdd: -1 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: -1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeMicrowaveOvenControlServer: addMoreTime called with invalid cookTime -1`);
 
     // Test setCookingParameters command - all unspecified -> defaults
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', {});
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
@@ -142,7 +141,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test setCookingParameters - valid cookMode only
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 2 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 2`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
@@ -152,21 +151,21 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test setCookingParameters - no cookMode provided but valid cookTime and wattSettingIndex
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookTime: 120, wattSettingIndex: 3 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 120, wattSettingIndex: 3 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 120`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 3`);
 
     // Test setCookingParameters - invalid cookTime (<0) -> default to 30sec
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: -5, wattSettingIndex: 0 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: -5, wattSettingIndex: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 7`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 0`);
 
     // Test setCookingParameters - cookTime > maxCookTime -> default to 30sec
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
@@ -176,7 +175,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test setCookingParameters - invalid wattSettingIndex (out of range) -> default to highest supported index
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, wattSettingIndex: 100 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, wattSettingIndex: 100 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 3`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 45`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
@@ -186,20 +185,20 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test setCookingParameters - all valid values
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { cookMode: 4, cookTime: 90, wattSettingIndex: 2 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 4, cookTime: 90, wattSettingIndex: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 4`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 90`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 2`);
 
     // Test setCookingParameters - startAfterSetting false (no change expected)
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: false });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { startAfterSetting: false });
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
 
     // Test setCookingParameters - startAfterSetting true (transition to Running)
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'microwaveOvenControl', 'setCookingParameters', { startAfterSetting: true });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { startAfterSetting: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
   });

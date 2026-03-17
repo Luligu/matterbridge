@@ -102,9 +102,11 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "matterbridgeEndpoint.test.ts",
         "matterbridgeEndpoint-default.test.ts",
         "matterbridgeEndpoint-matterjs.test.ts",
+        "matterbridgeEndpoint.test.ts",
+        "matterbridgeEndpoint.typed.test.ts",
+        "matterbridgeEndpointCommandHandler.test.ts",
         "matterbridgeEndpointHelpers.test.ts"
       ],
       "group": {

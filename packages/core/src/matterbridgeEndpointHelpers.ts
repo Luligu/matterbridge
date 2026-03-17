@@ -140,7 +140,7 @@ import {
   MatterbridgeValveConfigurationAndControlServer,
 } from './matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
+import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 
 /**
  *  Capitalizes the first letter of a string.
@@ -419,7 +419,7 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the command on.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
- * @param {keyof MatterbridgeEndpointCommands} command - The command to invoke.
+ * @param {CommandHandlers} command - The command to invoke.
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
@@ -427,7 +427,7 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
-  command: keyof MatterbridgeEndpointCommands,
+  command: CommandHandlers,
   params?: Record<string, boolean | number | bigint | string | object | null>,
 ): Promise<boolean> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
@@ -436,6 +436,7 @@ export async function invokeBehaviorCommand(
     return false;
   }
 
+  command = command.includes('.') ? (command.split('.')[1] as CommandHandlers) : command;
   let invoked = true;
   await endpoint.act(async (agent) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -496,8 +497,7 @@ export async function invokeSubscribeHandler(
     return false;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error - The events object is dynamically typed and may not have the expected structure, but we want to allow this for testing purposes.
   await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false, fabric: 1 }));
   return true;
 }

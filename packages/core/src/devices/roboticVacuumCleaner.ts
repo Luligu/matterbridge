@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { AreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
@@ -224,10 +223,15 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: RvcRunModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('RvcRunMode.changeToMode', {
+      request,
+      cluster: RvcRunModeServer.id,
+      attributes: this.state as unknown as (typeof RvcRunMode.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
@@ -259,10 +263,15 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: RvcCleanModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('RvcCleanMode.changeToMode', {
+      request,
+      cluster: RvcCleanModeServer.id,
+      attributes: this.state as unknown as (typeof RvcCleanMode.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
@@ -283,10 +292,15 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
    *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
-  override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async pause(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('pause', { request: {}, cluster: RvcOperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('RvcOperationalState.pause', {
+      request: {},
+      cluster: RvcOperationalStateServer.id,
+      attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
@@ -301,10 +315,15 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
    *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
-  override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async resume(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('resume', { request: {}, cluster: RvcOperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('RvcOperationalState.resume', {
+      request: {},
+      cluster: RvcOperationalStateServer.id,
+      attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 2; // RvcRunMode.ModeTag.Cleaning
     this.state.operationalState = RvcOperationalState.OperationalState.Running;
@@ -319,11 +338,16 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
    *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
-  override goHome(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async goHome(): Promise<OperationalState.OperationalCommandResponse> {
     // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`GoHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('goHome', { request: {}, cluster: RvcOperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('RvcOperationalState.goHome', {
+      request: {},
+      cluster: RvcOperationalStateServer.id,
+      attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');
     this.agent.get(MatterbridgeRvcRunModeServer).state.currentMode = 1; // RvcRunMode.ModeTag.Idle
     this.state.operationalState = RvcOperationalState.OperationalState.Docked;

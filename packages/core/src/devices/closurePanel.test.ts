@@ -75,13 +75,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ClosureDimension.Cluster.id, 'targetState')).toBeNull();
     expect(device.getAttribute(ClosureDimension.Cluster.id, 'currentState')).toBeNull();
 
-    await device.invokeBehaviorCommand('closureDimension', 'setTarget', { position: 5000 });
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
     expect(device.getAttribute(ClosureDimension.Cluster.id, 'targetState')).toMatchObject({ position: 5000 });
 
     // Exercise latch/speed optional fields.
-    await device.invokeBehaviorCommand('closureDimension', 'setTarget', { latch: true, speed: 2 });
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: 2 });
 
-    await device.invokeBehaviorCommand('closureDimension', 'step', {
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Increase,
       numberOfSteps: 2,
       speed: 1,
@@ -91,7 +91,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ClosureDimension.Cluster.id, 'targetState')).toMatchObject({ position: 5200 });
 
     // Exercise the "decrease" branch + currentState.position path.
-    await device.invokeBehaviorCommand('closureDimension', 'step', {
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Decrease,
       numberOfSteps: 1,
     });
@@ -107,13 +107,13 @@ describe('Matterbridge ' + NAME, () => {
     device2 = new ClosurePanel('Closure Panel Test Device 2', 'CP654321', { resolution: 2, stepValue: 6000 });
     expect(await addDevice(server, device2)).toBeTruthy();
 
-    await device2.invokeBehaviorCommand('closureDimension', 'step', {
+    await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Increase,
       numberOfSteps: 2,
     });
     expect(device2.getAttribute(ClosureDimension.Cluster.id, 'currentState')).toMatchObject({ position: 10000 });
 
-    await device2.invokeBehaviorCommand('closureDimension', 'step', {
+    await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Decrease,
       numberOfSteps: 2,
     });

@@ -9,7 +9,6 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -73,7 +72,7 @@ import {
   waterValve,
 } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import type { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
+import { type CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 
 jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementation(async () => {
   return Promise.resolve();
@@ -103,7 +102,7 @@ describe('Server clusters and behaviors', () => {
   async function expectCommand(
     endpoint: MatterbridgeEndpoint,
     cluster: any,
-    command: keyof MatterbridgeEndpointCommands,
+    command: CommandHandlers,
     expectedRequest?: Record<string, boolean | number | bigint | string | object | null>,
     check?: (data: any) => void,
   ) {
@@ -754,9 +753,9 @@ describe('Server clusters and behaviors', () => {
     };
     const thermostatServer = { state: thermostatState, endpoint } as unknown as MatterbridgeThermostatServer;
 
-    MatterbridgeThermostatServer.prototype.setpointRaiseLower.call(thermostatServer, { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
+    await MatterbridgeThermostatServer.prototype.setpointRaiseLower.call(thermostatServer, { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
 
-    expect(executeHandler).toHaveBeenCalledWith('setpointRaiseLower', {
+    expect(executeHandler).toHaveBeenCalledWith('Thermostat.setpointRaiseLower', {
       request: { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 },
       cluster: 'thermostat',
       attributes: thermostatState,
@@ -1011,7 +1010,7 @@ describe('Server clusters and behaviors', () => {
     );
 
     await energyManagement.invokeBehaviorCommand('deviceEnergyManagement', 'cancelPowerAdjustRequest');
-    expect(cancelCalls[0]).toEqual({ cluster: 'deviceEnergyManagement', endpoint: energyManagement, request: undefined });
+    expect(cancelCalls[0]).toEqual({ cluster: 'deviceEnergyManagement', endpoint: energyManagement, request: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called');
     expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
   });

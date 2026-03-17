@@ -23,7 +23,6 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement } from '@matter/main/model';
 import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
@@ -107,10 +106,15 @@ export namespace ClosureDimensionServer {
 export class ClosureDimensionServer extends ClosureDimensionBehavior.with(ClosureDimension.Feature.Positioning) {
   declare state: ClosureDimensionServer.State;
 
-  override setTarget = (request: ClosureDimension.SetTargetRequest): MaybePromise => {
+  override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setTarget', { request, cluster: ClosureDimension.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ClosureDimension.setTarget', {
+      request,
+      cluster: ClosureDimensionServer.id,
+      attributes: this.state as unknown as (typeof ClosureDimension.Complete)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     const previousTarget = this.state.targetState ?? {};
     const nextTarget = {
@@ -123,10 +127,15 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
     this.state.targetState = nextTarget;
   };
 
-  override step = (request: ClosureDimension.StepRequest): MaybePromise => {
+  override step = async (request: ClosureDimension.StepRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Step (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('step', { request, cluster: ClosureDimension.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ClosureDimension.step', {
+      request,
+      cluster: ClosureDimensionServer.id,
+      attributes: this.state as unknown as (typeof ClosureDimension.Complete)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     const stepValue: number = this.state.stepValue;
     const numberOfSteps: number = request.numberOfSteps;

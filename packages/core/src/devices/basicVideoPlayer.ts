@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
 import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
 import { KeypadInput } from '@matter/types/clusters/keypad-input';
@@ -129,10 +128,15 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    *
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override play(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async play(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('play', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.play', {
+      request: {},
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Playing;
     return { status: MediaPlayback.Status.Success };
   }
@@ -142,10 +146,15 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    *
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override pause(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async pause(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('pause', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.pause', {
+      request: {},
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Paused;
     return { status: MediaPlayback.Status.Success };
   }
@@ -155,10 +164,15 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    *
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override stop(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async stop(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('stop', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.stop', {
+      request: {},
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
     return { status: MediaPlayback.Status.Success };
   }
@@ -168,10 +182,15 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    *
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override previous(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async previous(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('previous', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.previous', {
+      request: {},
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -180,34 +199,51 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    *
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override next(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async next(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('next', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.next', {
+      request: {},
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { status: MediaPlayback.Status.Success };
   }
 
   /**
    * Handles the MediaPlayback `SkipForward` command.
    *
+   * @param {MediaPlayback.SkipForwardRequest} request - Skip forward request payload.
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override skipForward(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async skipForward(request: MediaPlayback.SkipForwardRequest): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('skipForward', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.skipForward', {
+      request,
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { status: MediaPlayback.Status.Success };
   }
 
   /**
    * Handles the MediaPlayback `SkipBackward` command.
    *
+   * @param {MediaPlayback.SkipBackwardRequest} request - Skip backward request payload.
    * @returns {MediaPlayback.PlaybackResponse} Command response with status.
    */
-  override skipBackward(): MaybePromise<MediaPlayback.PlaybackResponse> {
+  override async skipBackward(request: MediaPlayback.SkipBackwardRequest): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('skipBackward', { request: undefined, cluster: MediaPlaybackServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MediaPlayback.skipBackward', {
+      request,
+      cluster: MediaPlaybackServer.id,
+      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { status: MediaPlayback.Status.Success };
   }
 }
@@ -230,10 +266,15 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
    * @param {KeypadInput.SendKeyRequest} request - Key request payload.
    * @returns {KeypadInput.SendKeyResponse} Command response with status.
    */
-  override sendKey(request: KeypadInput.SendKeyRequest): MaybePromise<KeypadInput.SendKeyResponse> {
+  override async sendKey(request: KeypadInput.SendKeyRequest): Promise<KeypadInput.SendKeyResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('sendKey', { request, cluster: KeypadInputServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('KeypadInput.sendKey', {
+      request,
+      cluster: KeypadInputServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { status: KeypadInput.Status.Success };
   }
 }

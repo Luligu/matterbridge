@@ -835,15 +835,16 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultOnOffClusterServer();
     expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
     expect(device.hasAttributeServer(LevelControlBehavior, 'currentLevel')).toBe(false);
+    await add(device);
 
     let called = false;
 
     // consoleLogSpy.mockRestore();
-    device.addCommandHandler('on', async (data) => {
+    device.addCommandHandler('on', async () => {
       called = true;
       console.log('OnOff.Cluster.on');
     });
-    await device.executeCommandHandler('on');
+    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
     expect(called).toBe(true);
 
     called = false;
@@ -851,7 +852,7 @@ describe('Matterbridge ' + NAME, () => {
       called = true;
       console.log('OnOff.Cluster.off');
     });
-    await device.executeCommandHandler('off');
+    await device.executeCommandHandler('off', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
     expect(called).toBe(true);
 
     called = false;
@@ -859,7 +860,7 @@ describe('Matterbridge ' + NAME, () => {
       called = true;
       console.log('OnOff.Cluster.toggle');
     });
-    await device.executeCommandHandler('toggle');
+    await device.executeCommandHandler('toggle', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
     expect(called).toBe(true);
 
     await add(device);
@@ -925,6 +926,26 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand(OnOffServer, 'toggle');
     await device.invokeBehaviorCommand(OnOff.Cluster, 'toggle');
     expect(called).toBe(true);
+  });
+
+  test('removeCommandHandler', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight9' });
+    expect(device).toBeDefined();
+    device.createDefaultOnOffClusterServer();
+    expect(device.hasAttributeServer(OnOffBehavior, 'onOff')).toBe(true);
+    await add(device);
+
+    let called = false;
+    const handler = async () => {
+      called = true;
+    };
+
+    device.addCommandHandler('on', handler);
+    device.removeCommandHandler('on', handler);
+
+    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
+
+    expect(called).toBe(false);
   });
 
   test('addRequiredClusterServers', async () => {

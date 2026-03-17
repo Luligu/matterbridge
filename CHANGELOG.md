@@ -60,6 +60,7 @@ These classes will run as threads in the next releases:
 - [setAttribute]: The overloads of `setAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [updateAttribute]: The overloads of `updateAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [addCommandHandler]: The `addCommandHandler()` method is now typed.
 
 ### Dev News
 
@@ -70,6 +71,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
 - [threads]: Add ArchiveCommand thread.
 - [endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.
+- [endpoint]: Add removeCommandHandler() method.
 
 ### Changed
 

@@ -146,10 +146,15 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Disables charging and updates EVSE state.
    */
-  override disable(): MaybePromise {
+  override async disable(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('disable', { request: {}, cluster: EnergyEvseServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('EnergyEvse.disable', {
+      request: {},
+      cluster: EnergyEvseServer.id,
+      attributes: this.state as unknown as (typeof EnergyEvse.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
     this.state.supplyState = EnergyEvse.SupplyState.Disabled;
     // istanbul ignore else
@@ -164,10 +169,15 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
    *
    * @param {EnergyEvse.EnableChargingRequest} request - Charging enable request payload.
    */
-  override enableCharging(request: EnergyEvse.EnableChargingRequest): MaybePromise {
+  override async enableCharging(request: EnergyEvse.EnableChargingRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('enableCharging', { request, cluster: EnergyEvseServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('EnergyEvse.enableCharging', {
+      request,
+      cluster: EnergyEvseServer.id,
+      attributes: this.state as unknown as (typeof EnergyEvse.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
     this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
     // istanbul ignore else
@@ -232,10 +242,15 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: EnergyEvseModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('EnergyEvseMode.changeToMode', {
+      request,
+      cluster: EnergyEvseModeServer.id,
+      attributes: this.state as unknown as (typeof EnergyEvseMode.ClusterInstance)['attributes'],
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeEnergyEvseModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
