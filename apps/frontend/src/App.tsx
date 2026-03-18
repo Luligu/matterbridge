@@ -159,7 +159,7 @@ function App(): React.JSX.Element {
   hRef = window.location.href;
   pathName = window.location.pathname;
   // Refresh the page if we are on a subpage (e.g. /devices) to reset the pathName to the base path, otherwise the BrowserRouter will use the subpage as the base path and all navigation will be broken. This can happen when the user refreshes the page while on a subpage, or when they log in while on a subpage.
-  if (pathName.endsWith('/devices') || pathName.endsWith('/logs') || pathName.endsWith('/settings') || pathName.endsWith('/test')) {
+  if (pathName.endsWith('/devices') || pathName.endsWith('/log') || pathName.endsWith('/settings') || pathName.endsWith('/test')) {
     pathName = pathName.substring(0, pathName.lastIndexOf('/'));
   }
   // basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : pathName.includes('/api/ingress/') ? pathName : '/';
