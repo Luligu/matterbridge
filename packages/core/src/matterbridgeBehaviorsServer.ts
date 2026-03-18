@@ -151,7 +151,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       command: 'identify',
       request,
       cluster: IdentifyServer.id,
-      attributes: this.state as unknown as (typeof Identify.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof Identify.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeIdentifyServer: identify called`);
@@ -170,7 +170,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       command: 'triggerEffect',
       request,
       cluster: IdentifyServer.id,
-      attributes: this.state as unknown as (typeof Identify.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof Identify.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
@@ -192,7 +192,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'on',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OnOff.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: on called`);
@@ -209,7 +209,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'off',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OnOff.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: off called`);
@@ -226,7 +226,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'toggle',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OnOff.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
@@ -250,7 +250,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       command: 'moveToLevel',
       request,
       cluster: LevelControlServer.id,
-      attributes: this.state as unknown as (typeof LevelControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof LevelControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
@@ -269,7 +269,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       command: 'moveToLevelWithOnOff',
       request,
       cluster: LevelControlServer.id,
-      attributes: this.state as unknown as (typeof LevelControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof LevelControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
@@ -293,7 +293,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       command: 'moveToHue',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
@@ -312,7 +312,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       command: 'moveToSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
@@ -333,7 +333,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       command: 'moveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
@@ -354,7 +354,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       command: 'moveToColor',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
@@ -375,7 +375,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       command: 'moveToColorTemperature',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
@@ -404,7 +404,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'moveToHue',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
@@ -425,7 +425,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'enhancedMoveToHue',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
@@ -444,7 +444,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'moveToSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
@@ -465,7 +465,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'moveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
@@ -486,7 +486,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'enhancedMoveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
@@ -507,7 +507,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'moveToColor',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
@@ -528,7 +528,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       command: 'moveToColorTemperature',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ColorControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
@@ -550,7 +550,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       command: 'upOrOpen',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
@@ -567,7 +567,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       command: 'downOrClose',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
@@ -584,7 +584,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       command: 'stopMotion',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
@@ -603,7 +603,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       command: 'goToLiftPercentage',
       request,
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
@@ -642,7 +642,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       command: 'upOrOpen',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
@@ -659,7 +659,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       command: 'downOrClose',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
@@ -676,7 +676,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       command: 'stopMotion',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
@@ -695,7 +695,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       command: 'goToLiftPercentage',
       request,
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
@@ -714,7 +714,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       command: 'goToTiltPercentage',
       request,
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof WindowCovering.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
@@ -748,7 +748,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
       command: 'lockDoor',
       request: {},
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as (typeof DoorLock.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof DoorLock.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
@@ -765,7 +765,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
       command: 'unlockDoor',
       request: {},
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as (typeof DoorLock.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof DoorLock.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
@@ -789,7 +789,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       command: 'step',
       request,
       cluster: FanControlServer.id,
-      attributes: this.state as unknown as (typeof FanControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof FanControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -847,7 +847,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
       command: 'setpointRaiseLower',
       request,
       cluster: ThermostatServer.id,
-      attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof Thermostat.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
@@ -878,7 +878,7 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
       command: 'setpointRaiseLower',
       request,
       cluster: ThermostatServer.id,
-      attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof Thermostat.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
@@ -899,7 +899,7 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
       command: 'setActivePresetRequest',
       request,
       cluster: ThermostatServer.id,
-      attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof Thermostat.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
@@ -931,7 +931,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       command: 'open',
       request,
       cluster: ValveConfigurationAndControlServer.id,
-      attributes: this.state as unknown as (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ValveConfigurationAndControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel}`);
@@ -956,7 +956,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       command: 'close',
       request: {},
       cluster: ValveConfigurationAndControlServer.id,
-      attributes: this.state as unknown as (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ValveConfigurationAndControl.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
@@ -986,7 +986,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       command: 'selfTestRequest',
       request: {},
       cluster: SmokeCoAlarmServer.id,
-      attributes: this.state as unknown as (typeof SmokeCoAlarm.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof SmokeCoAlarm.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
@@ -1016,7 +1016,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       command: 'enableDisableAlarm',
       request,
       cluster: BooleanStateConfigurationServer.id,
-      attributes: this.state as unknown as (typeof BooleanStateConfiguration.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof BooleanStateConfiguration.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
@@ -1065,7 +1065,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'pause',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OperationalState.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
@@ -1090,7 +1090,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'stop',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OperationalState.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
@@ -1115,7 +1115,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'start',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OperationalState.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
@@ -1140,7 +1140,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'resume',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof OperationalState.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
@@ -1171,7 +1171,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       command: 'selectAreas',
       request,
       cluster: ServiceAreaServer.id,
-      attributes: this.state as unknown as (typeof ServiceArea.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ServiceArea.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     for (const area of request.newAreas) {
@@ -1204,7 +1204,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       command: 'changeToMode',
       request,
       cluster: ModeSelectServer.id,
-      attributes: this.state as unknown as (typeof ModeSelect.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ModeSelect.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
@@ -1226,7 +1226,7 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
       command: 'resetCondition',
       request: {},
       cluster: MatterbridgeHepaFilterMonitoringServer.id,
-      attributes: this.state as unknown as (typeof HepaFilterMonitoring.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof HepaFilterMonitoring.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     this.state.condition = 100; // Reset condition to 100%
@@ -1249,7 +1249,7 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
       command: 'resetCondition',
       request: {},
       cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
-      attributes: this.state as unknown as (typeof ActivatedCarbonFilterMonitoring.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof ActivatedCarbonFilterMonitoring.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     this.state.condition = 100; // Reset condition to 100%
@@ -1277,7 +1277,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'powerAdjustRequest',
       request,
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as (typeof DeviceEnergyManagement.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof DeviceEnergyManagement.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${request.power} duration ${request.duration} cause ${request.cause}`);
@@ -1295,7 +1295,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'cancelPowerAdjustRequest',
       request: {},
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as (typeof DeviceEnergyManagement.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof DeviceEnergyManagement.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
@@ -1322,7 +1322,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       command: 'changeToMode',
       request,
       cluster: DeviceEnergyManagementModeServer.id,
-      attributes: this.state as unknown as (typeof DeviceEnergyManagementMode.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof DeviceEnergyManagementMode.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);

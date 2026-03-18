@@ -226,7 +226,7 @@
     "docker:run:local:s6-rc-legacy:amd64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/amd64 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-amd64",
     "docker:run:local:s6-rc-legacy:arm64": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm64 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-arm64",
     "docker:run:local:s6-rc-legacy:armv7": "npm run docker:rm:all && docker run -dit --restart always --platform linux/arm/v7 --name matterbridge-s6-rc-legacy-local -v matterbridge-local-storage:/addons/matterbridge/.matterbridge -v matterbridge-local-plugins:/addons/matterbridge/Matterbridge -p 8283:8283 matterbridge:s6-rc-legacy-armv7",
-    "docker:build:local:chip-test": "docker build --build-arg CACHE_VERSION=3.7.0.1 --pull -f docker/Dockerfile.chip-test -t matterbridge:chip-test .",
+    "docker:build:local:chip-test": "docker build --build-arg CACHE_VERSION=3.7.0.2 --pull -f docker/Dockerfile.chip-test -t matterbridge:chip-test .",
     "docker:run:local:chip-test": "npm run docker:rm:all && docker run -dit --restart always --name matterbridge-chip-test-local -p 8283:8283 -v \"%USERPROFILE%/GitHub/matterbridge/temp:/tmp/matter_testing/logs\" matterbridge:chip-test",
     "docker:buildx:cloud:cache:remove": "docker buildx imagetools inspect luligu/matterbridge:buildcache && docker rmi luligu/matterbridge:buildcache",
     "docker:buildx:cloud:cache:prune": "docker buildx du --builder cloud-luligu-matterbridge-builder && docker buildx prune --builder cloud-luligu-matterbridge-builder -a -f",
@@ -239,7 +239,8 @@
     "docker:buildx:remove": "docker rm -f buildx_buildkit_matterbridge0 && docker buildx use desktop-linux && docker buildx rm matterbridge && docker buildx ls",
     "docker:rm:all": "docker rm -f matterbridge-latest-local matterbridge-dev-local matterbridge-ubuntu-local matterbridge-24-ubuntu-slim-local matterbridge-alpine-local matterbridge-s6-rc-local matterbridge-s6-rc-hub matterbridge-s6-rc-legacy-local matterbridge-s6-rc-legacy-hub matterbridge-latest-hub matterbridge-dev-hub matterbridge-ubuntu-hub matterbridge-24-ubuntu-slim-hub matterbridge-alpine-hub matterbridge-chip-test-local matterbridge-chip-test-hub || node -e \"process.exit(0)\"",
     "docker:prune:builder": "docker builder prune --all -f",
-    "docker:prune:buildx": "docker buildx prune --builder matterbridge --all -f",
+    "docker:prune:buildx": "docker buildx prune --all -f",
+    "docker:prune:system": "docker system prune --all -f",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",
     "publish:latest": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest && npm run reset",
@@ -247,13 +248,13 @@
     "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.6.2",
-    "@matterbridge/dgram": "3.6.2",
-    "@matterbridge/jest-utils": "3.6.2",
-    "@matterbridge/thread": "3.6.2",
-    "@matterbridge/types": "3.6.2",
-    "@matterbridge/utils": "3.6.2",
-    "@matterbridge/vitest-utils": "3.6.2"
+    "@matterbridge/core": "3.7.0",
+    "@matterbridge/dgram": "3.7.0",
+    "@matterbridge/jest-utils": "3.7.0",
+    "@matterbridge/thread": "3.7.0",
+    "@matterbridge/types": "3.7.0",
+    "@matterbridge/utils": "3.7.0",
+    "@matterbridge/vitest-utils": "3.7.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -183,7 +183,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
       command: 'changeToMode',
       request,
       cluster: LaundryWasherModeServer.id,
-      attributes: this.state as unknown as (typeof LaundryWasherMode.ClusterInstance)['attributes'],
+      attributes: this.state as unknown as (typeof LaundryWasherMode.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

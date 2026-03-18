@@ -135,7 +135,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'play',
       request: {},
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Playing;
@@ -154,7 +154,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'pause',
       request: {},
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Paused;
@@ -173,7 +173,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'stop',
       request: {},
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
@@ -192,7 +192,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'previous',
       request: {},
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { status: MediaPlayback.Status.Success };
@@ -210,7 +210,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'next',
       request: {},
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { status: MediaPlayback.Status.Success };
@@ -229,7 +229,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'skipForward',
       request,
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { status: MediaPlayback.Status.Success };
@@ -248,7 +248,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       command: 'skipBackward',
       request,
       cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
+      attributes: this.state as unknown as (typeof MediaPlayback.Complete)['attributes'],
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { status: MediaPlayback.Status.Success };

@@ -844,7 +844,7 @@ describe('Matterbridge ' + NAME, () => {
       called = true;
       console.log('OnOff.Cluster.on');
     });
-    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
+    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.Complete)['attributes'], device);
     expect(called).toBe(true);
 
     called = false;
@@ -852,7 +852,7 @@ describe('Matterbridge ' + NAME, () => {
       called = true;
       console.log('OnOff.Cluster.off');
     });
-    await device.executeCommandHandler('off', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
+    await device.executeCommandHandler('off', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.Complete)['attributes'], device);
     expect(called).toBe(true);
 
     called = false;
@@ -860,7 +860,7 @@ describe('Matterbridge ' + NAME, () => {
       called = true;
       console.log('OnOff.Cluster.toggle');
     });
-    await device.executeCommandHandler('toggle', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
+    await device.executeCommandHandler('toggle', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.Complete)['attributes'], device);
     expect(called).toBe(true);
 
     await add(device);
@@ -943,7 +943,7 @@ describe('Matterbridge ' + NAME, () => {
     device.addCommandHandler('on', handler);
     device.removeCommandHandler('on', handler);
 
-    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.ClusterInstance)['attributes'], device);
+    await device.executeCommandHandler('on', {}, 'onOff', device.stateOf(OnOffServer) as unknown as (typeof OnOff.Complete)['attributes'], device);
 
     expect(called).toBe(false);
   });
