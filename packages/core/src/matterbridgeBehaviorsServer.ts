@@ -148,6 +148,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Identify.identify', {
+      command: 'identify',
       request,
       cluster: IdentifyServer.id,
       attributes: this.state as unknown as (typeof Identify.ClusterInstance)['attributes'],
@@ -166,6 +167,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Identify.triggerEffect', {
+      command: 'triggerEffect',
       request,
       cluster: IdentifyServer.id,
       attributes: this.state as unknown as (typeof Identify.ClusterInstance)['attributes'],
@@ -187,6 +189,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device on (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OnOff.on', {
+      command: 'on',
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
@@ -203,6 +206,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OnOff.off', {
+      command: 'off',
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
@@ -219,6 +223,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Toggle device on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OnOff.toggle', {
+      command: 'toggle',
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state as unknown as (typeof OnOff.ClusterInstance)['attributes'],
@@ -242,6 +247,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('LevelControl.moveToLevel', {
+      command: 'moveToLevel',
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as (typeof LevelControl.ClusterInstance)['attributes'],
@@ -260,6 +266,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('LevelControl.moveToLevelWithOnOff', {
+      command: 'moveToLevelWithOnOff',
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as (typeof LevelControl.ClusterInstance)['attributes'],
@@ -283,6 +290,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ColorControl.moveToHue', {
+      command: 'moveToHue',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -301,6 +309,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
+      command: 'moveToSaturation',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -321,6 +330,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
+      command: 'moveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -341,6 +351,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToColor', {
+      command: 'moveToColor',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -361,6 +372,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
+      command: 'moveToColorTemperature',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -389,6 +401,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ColorControl.moveToHue', {
+      command: 'moveToHue',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -409,6 +422,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       `Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHue', {
+      command: 'enhancedMoveToHue',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -427,6 +441,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
+      command: 'moveToSaturation',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -447,6 +462,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
+      command: 'moveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -467,6 +483,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       `Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHueAndSaturation', {
+      command: 'enhancedMoveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -487,6 +504,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToColor', {
+      command: 'moveToColor',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -507,6 +525,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
+      command: 'moveToColorTemperature',
       request,
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as (typeof ColorControl.ClusterInstance)['attributes'],
@@ -528,6 +547,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.upOrOpen', {
+      command: 'upOrOpen',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -544,6 +564,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.downOrClose', {
+      command: 'downOrClose',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -560,6 +581,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.stopMotion', {
+      command: 'stopMotion',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -578,6 +600,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.goToLiftPercentage', {
+      command: 'goToLiftPercentage',
       request,
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -616,6 +639,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.upOrOpen', {
+      command: 'upOrOpen',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -632,6 +656,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.downOrClose', {
+      command: 'downOrClose',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -648,6 +673,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.stopMotion', {
+      command: 'stopMotion',
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -666,6 +692,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.goToLiftPercentage', {
+      command: 'goToLiftPercentage',
       request,
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -684,6 +711,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.goToTiltPercentage', {
+      command: 'goToTiltPercentage',
       request,
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as (typeof WindowCovering.CompleteInstance)['attributes'],
@@ -717,6 +745,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.lockDoor', {
+      command: 'lockDoor',
       request: {},
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as (typeof DoorLock.ClusterInstance)['attributes'],
@@ -733,6 +762,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.unlockDoor', {
+      command: 'unlockDoor',
       request: {},
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as (typeof DoorLock.ClusterInstance)['attributes'],
@@ -756,6 +786,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stepping fan with direction ${request.direction} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('FanControl.step', {
+      command: 'step',
       request,
       cluster: FanControlServer.id,
       attributes: this.state as unknown as (typeof FanControl.ClusterInstance)['attributes'],
@@ -813,6 +844,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
+      command: 'setpointRaiseLower',
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
@@ -843,6 +875,7 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
+      command: 'setpointRaiseLower',
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
@@ -863,6 +896,7 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
     const presetHandle = request.presetHandle ? `0x${Buffer.from(request.presetHandle).toString('hex')}` : 'null';
     device.log.info(`Setting preset to ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setActivePresetRequest', {
+      command: 'setActivePresetRequest',
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as (typeof Thermostat.CompleteInstance)['attributes'],
@@ -894,6 +928,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       `Opening valve to ${request.targetLevel ? request.targetLevel + '%' : 'fully opened'} ${request.openDuration ? 'for ' + request.openDuration + 's' : 'until closed'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     await device.commandHandler.executeHandler('ValveConfigurationAndControl.open', {
+      command: 'open',
       request,
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'],
@@ -918,6 +953,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing valve (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ValveConfigurationAndControl.close', {
+      command: 'close',
       request: {},
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'],
@@ -947,6 +983,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('SmokeCoAlarm.selfTestRequest', {
+      command: 'selfTestRequest',
       request: {},
       cluster: SmokeCoAlarmServer.id,
       attributes: this.state as unknown as (typeof SmokeCoAlarm.CompleteInstance)['attributes'],
@@ -976,6 +1013,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('BooleanStateConfiguration.enableDisableAlarm', {
+      command: 'enableDisableAlarm',
       request,
       cluster: BooleanStateConfigurationServer.id,
       attributes: this.state as unknown as (typeof BooleanStateConfiguration.ClusterInstance)['attributes'],
@@ -1024,6 +1062,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OperationalState.pause', {
+      command: 'pause',
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
@@ -1048,6 +1087,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OperationalState.stop', {
+      command: 'stop',
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
@@ -1072,6 +1112,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OperationalState.start', {
+      command: 'start',
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
@@ -1096,6 +1137,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('OperationalState.resume', {
+      command: 'resume',
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as (typeof OperationalState.ClusterInstance)['attributes'],
@@ -1126,6 +1168,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ServiceArea.selectAreas', {
+      command: 'selectAreas',
       request,
       cluster: ServiceAreaServer.id,
       attributes: this.state as unknown as (typeof ServiceArea.ClusterInstance)['attributes'],
@@ -1158,6 +1201,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ModeSelect.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: ModeSelectServer.id,
       attributes: this.state as unknown as (typeof ModeSelect.ClusterInstance)['attributes'],
@@ -1179,6 +1223,7 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('HepaFilterMonitoring.resetCondition', {
+      command: 'resetCondition',
       request: {},
       cluster: MatterbridgeHepaFilterMonitoringServer.id,
       attributes: this.state as unknown as (typeof HepaFilterMonitoring.CompleteInstance)['attributes'],
@@ -1201,6 +1246,7 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ActivatedCarbonFilterMonitoring.resetCondition', {
+      command: 'resetCondition',
       request: {},
       cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
       attributes: this.state as unknown as (typeof ActivatedCarbonFilterMonitoring.CompleteInstance)['attributes'],
@@ -1228,6 +1274,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DeviceEnergyManagement.powerAdjustRequest', {
+      command: 'powerAdjustRequest',
       request,
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state as unknown as (typeof DeviceEnergyManagement.CompleteInstance)['attributes'],
@@ -1245,6 +1292,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancelling power adjustment (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DeviceEnergyManagement.cancelPowerAdjustRequest', {
+      command: 'cancelPowerAdjustRequest',
       request: {},
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state as unknown as (typeof DeviceEnergyManagement.CompleteInstance)['attributes'],
@@ -1271,6 +1319,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DeviceEnergyManagementMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: DeviceEnergyManagementModeServer.id,
       attributes: this.state as unknown as (typeof DeviceEnergyManagementMode.ClusterInstance)['attributes'],

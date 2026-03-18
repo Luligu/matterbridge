@@ -227,6 +227,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcRunMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: RvcRunModeServer.id,
       attributes: this.state as unknown as (typeof RvcRunMode.ClusterInstance)['attributes'],
@@ -267,6 +268,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcCleanMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: RvcCleanModeServer.id,
       attributes: this.state as unknown as (typeof RvcCleanMode.ClusterInstance)['attributes'],
@@ -296,6 +298,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.pause', {
+      command: 'pause',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],
@@ -319,6 +322,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.resume', {
+      command: 'resume',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],
@@ -343,6 +347,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`GoHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.goHome', {
+      command: 'goHome',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state as unknown as (typeof RvcOperationalState.ClusterInstance)['attributes'],

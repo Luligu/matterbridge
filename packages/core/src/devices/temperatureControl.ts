@@ -100,6 +100,7 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
+      command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
       attributes: this.state as unknown as (typeof TemperatureControl.CompleteInstance)['attributes'],
@@ -142,6 +143,7 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
+      command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
       attributes: this.state as unknown as (typeof TemperatureControl.CompleteInstance)['attributes'],

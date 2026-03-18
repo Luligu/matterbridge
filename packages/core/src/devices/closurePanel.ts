@@ -110,6 +110,7 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ClosureDimension.setTarget', {
+      command: 'setTarget',
       request,
       cluster: ClosureDimensionServer.id,
       attributes: this.state as unknown as (typeof ClosureDimension.Complete)['attributes'],
@@ -131,6 +132,7 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Step (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ClosureDimension.step', {
+      command: 'step',
       request,
       cluster: ClosureDimensionServer.id,
       attributes: this.state as unknown as (typeof ClosureDimension.Complete)['attributes'],

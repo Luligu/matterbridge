@@ -175,6 +175,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterManagement.boost', {
+      command: 'boost',
       request,
       cluster: WaterHeaterManagementServer.id,
       attributes: this.state as unknown as (typeof WaterHeaterManagement.ClusterInstance)['attributes'],
@@ -194,6 +195,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterManagement.cancelBoost', {
+      command: 'cancelBoost',
       request: {},
       cluster: WaterHeaterManagementServer.id,
       attributes: this.state as unknown as (typeof WaterHeaterManagement.ClusterInstance)['attributes'],
@@ -221,6 +223,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: WaterHeaterModeServer.id,
       attributes: this.state as unknown as (typeof WaterHeaterMode.ClusterInstance)['attributes'],

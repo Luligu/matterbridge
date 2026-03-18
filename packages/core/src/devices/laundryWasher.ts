@@ -180,6 +180,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('LaundryWasherMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: LaundryWasherModeServer.id,
       attributes: this.state as unknown as (typeof LaundryWasherMode.ClusterInstance)['attributes'],

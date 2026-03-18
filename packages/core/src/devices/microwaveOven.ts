@@ -155,6 +155,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MicrowaveOvenControl.setCookingParameters', {
+      command: 'setCookingParameters',
       request,
       cluster: MicrowaveOvenControlServer.id,
       attributes: this.state as unknown as (typeof MicrowaveOvenControl.CompleteInstance)['attributes'],
@@ -207,6 +208,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: addMoreTime (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MicrowaveOvenControl.addMoreTime', {
+      command: 'addMoreTime',
       request,
       cluster: MicrowaveOvenControlServer.id,
       attributes: this.state as unknown as (typeof MicrowaveOvenControl.CompleteInstance)['attributes'],

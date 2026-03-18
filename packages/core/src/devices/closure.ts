@@ -157,6 +157,7 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MoveTo (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ClosureControl.moveTo', {
+      command: 'moveTo',
       request,
       cluster: ClosureControlServer.id,
       attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],
@@ -179,6 +180,7 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ClosureControl.stop', {
+      command: 'stop',
       request: {},
       cluster: ClosureControlServer.id,
       attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],

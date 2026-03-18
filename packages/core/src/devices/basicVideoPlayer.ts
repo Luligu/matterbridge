@@ -132,6 +132,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.play', {
+      command: 'play',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -150,6 +151,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.pause', {
+      command: 'pause',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -168,6 +170,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.stop', {
+      command: 'stop',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -186,6 +189,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.previous', {
+      command: 'previous',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -203,6 +207,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.next', {
+      command: 'next',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -221,6 +226,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.skipForward', {
+      command: 'skipForward',
       request,
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -239,6 +245,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SkipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.skipBackward', {
+      command: 'skipBackward',
       request,
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as (typeof MediaPlayback.CompleteInstance)['attributes'],
@@ -270,6 +277,7 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('KeypadInput.sendKey', {
+      command: 'sendKey',
       request,
       cluster: KeypadInputServer.id,
       attributes: this.state,

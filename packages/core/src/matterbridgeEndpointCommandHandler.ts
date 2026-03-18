@@ -228,12 +228,14 @@ export type CommandHandlerDataMap = {
   'identify': CommandHandlerData<'Identify.identify'>;
   'triggerEffect': CommandHandlerData<'Identify.triggerEffect'>;
   'Identify.identify': {
+    command: 'identify';
     request: Identify.IdentifyRequest;
     cluster: 'identify';
     attributes: (typeof Identify.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'Identify.triggerEffect': {
+    command: 'triggerEffect';
     request: Identify.TriggerEffectRequest;
     cluster: 'identify';
     attributes: (typeof Identify.ClusterInstance)['attributes'];
@@ -246,24 +248,28 @@ export type CommandHandlerDataMap = {
   'toggle': CommandHandlerData<'OnOff.toggle'>;
   'offWithEffect': CommandHandlerData<'OnOff.offWithEffect'>;
   'OnOff.on': {
+    command: 'on';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
     attributes: (typeof OnOff.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.off': {
+    command: 'off';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
     attributes: (typeof OnOff.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.toggle': {
+    command: 'toggle';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
     attributes: (typeof OnOff.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.offWithEffect': {
+    command: 'offWithEffect';
     request: OnOff.OffWithEffectRequest;
     cluster: 'onOff';
     attributes: (typeof OnOff.ClusterInstance)['attributes'];
@@ -274,12 +280,14 @@ export type CommandHandlerDataMap = {
   'moveToLevel': CommandHandlerData<'LevelControl.moveToLevel'>;
   'moveToLevelWithOnOff': CommandHandlerData<'LevelControl.moveToLevelWithOnOff'>;
   'LevelControl.moveToLevel': {
+    command: 'moveToLevel';
     request: LevelControl.MoveToLevelRequest;
     cluster: 'levelControl';
     attributes: (typeof LevelControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'LevelControl.moveToLevelWithOnOff': {
+    command: 'moveToLevelWithOnOff';
     request: LevelControl.MoveToLevelRequest;
     cluster: 'levelControl';
     attributes: (typeof LevelControl.ClusterInstance)['attributes'];
@@ -303,90 +311,105 @@ export type CommandHandlerDataMap = {
   'enhancedMoveToHueAndSaturation': CommandHandlerData<'ColorControl.enhancedMoveToHueAndSaturation'>;
   'moveToColorTemperature': CommandHandlerData<'ColorControl.moveToColorTemperature'>;
   'ColorControl.moveToColor': {
+    command: 'moveToColor';
     request: ColorControl.MoveToColorRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveColor': {
+    command: 'moveColor';
     request: ColorControl.MoveColorRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepColor': {
+    command: 'stepColor';
     request: ColorControl.StepColorRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToHue': {
+    command: 'moveToHue';
     request: ColorControl.MoveToHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveHue': {
+    command: 'moveHue';
     request: ColorControl.MoveHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepHue': {
+    command: 'stepHue';
     request: ColorControl.StepHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveToHue': {
+    command: 'enhancedMoveToHue';
     request: ColorControl.EnhancedMoveToHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveHue': {
+    command: 'enhancedMoveHue';
     request: ColorControl.EnhancedMoveHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedStepHue': {
+    command: 'enhancedStepHue';
     request: ColorControl.EnhancedStepHueRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToSaturation': {
+    command: 'moveToSaturation';
     request: ColorControl.MoveToSaturationRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveSaturation': {
+    command: 'moveSaturation';
     request: ColorControl.MoveSaturationRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepSaturation': {
+    command: 'stepSaturation';
     request: ColorControl.StepSaturationRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToHueAndSaturation': {
+    command: 'moveToHueAndSaturation';
     request: ColorControl.MoveToHueAndSaturationRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveToHueAndSaturation': {
+    command: 'enhancedMoveToHueAndSaturation';
     request: ColorControl.EnhancedMoveToHueAndSaturationRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToColorTemperature': {
+    command: 'moveToColorTemperature';
     request: ColorControl.MoveToColorTemperatureRequest;
     cluster: 'colorControl';
     attributes: (typeof ColorControl.ClusterInstance)['attributes'];
@@ -400,30 +423,35 @@ export type CommandHandlerDataMap = {
   'goToLiftPercentage': CommandHandlerData<'WindowCovering.goToLiftPercentage'>;
   'goToTiltPercentage': CommandHandlerData<'WindowCovering.goToTiltPercentage'>;
   'WindowCovering.upOrOpen': {
+    command: 'upOrOpen';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
     attributes: (typeof WindowCovering.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.downOrClose': {
+    command: 'downOrClose';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
     attributes: (typeof WindowCovering.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.stopMotion': {
+    command: 'stopMotion';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
     attributes: (typeof WindowCovering.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.goToLiftPercentage': {
+    command: 'goToLiftPercentage';
     request: WindowCovering.GoToLiftPercentageRequest;
     cluster: 'windowCovering';
     attributes: (typeof WindowCovering.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.goToTiltPercentage': {
+    command: 'goToTiltPercentage';
     request: WindowCovering.GoToTiltPercentageRequest;
     cluster: 'windowCovering';
     attributes: (typeof WindowCovering.CompleteInstance)['attributes'];
@@ -433,12 +461,14 @@ export type CommandHandlerDataMap = {
   // Closure Control
   'moveTo': CommandHandlerData<'ClosureControl.moveTo'>;
   'ClosureControl.moveTo': {
+    command: 'moveTo';
     request: ClosureControl.MoveToRequest;
     cluster: 'closureControl';
     attributes: (typeof ClosureControl.Complete)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ClosureControl.stop': {
+    command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'closureControl';
     attributes: (typeof ClosureControl.Complete)['attributes'];
@@ -448,12 +478,14 @@ export type CommandHandlerDataMap = {
   // Closure Dimension
   'setTarget': CommandHandlerData<'ClosureDimension.setTarget'>;
   'ClosureDimension.setTarget': {
+    command: 'setTarget';
     request: ClosureDimension.SetTargetRequest;
     cluster: 'closureDimension';
     attributes: (typeof ClosureDimension.Complete)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ClosureDimension.step': {
+    command: 'step';
     request: ClosureDimension.StepRequest;
     cluster: 'closureDimension';
     attributes: (typeof ClosureDimension.Complete)['attributes'];
@@ -464,12 +496,14 @@ export type CommandHandlerDataMap = {
   'lockDoor': CommandHandlerData<'DoorLock.lockDoor'>;
   'unlockDoor': CommandHandlerData<'DoorLock.unlockDoor'>;
   'DoorLock.lockDoor': {
+    command: 'lockDoor';
     request: DoorLock.LockDoorRequest;
     cluster: 'doorLock';
     attributes: (typeof DoorLock.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.unlockDoor': {
+    command: 'unlockDoor';
     request: DoorLock.UnlockDoorRequest;
     cluster: 'doorLock';
     attributes: (typeof DoorLock.ClusterInstance)['attributes'];
@@ -480,12 +514,14 @@ export type CommandHandlerDataMap = {
   'setpointRaiseLower': CommandHandlerData<'Thermostat.setpointRaiseLower'>;
   'setActivePresetRequest': CommandHandlerData<'Thermostat.setActivePresetRequest'>;
   'Thermostat.setpointRaiseLower': {
+    command: 'setpointRaiseLower';
     request: Thermostat.SetpointRaiseLowerRequest;
     cluster: 'thermostat';
     attributes: (typeof Thermostat.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'Thermostat.setActivePresetRequest': {
+    command: 'setActivePresetRequest';
     request: Thermostat.SetActivePresetRequest;
     cluster: 'thermostat';
     attributes: (typeof Thermostat.CompleteInstance)['attributes'];
@@ -495,6 +531,7 @@ export type CommandHandlerDataMap = {
   // Fan Control
   'step': CommandHandlerData<'FanControl.step'>;
   'FanControl.step': {
+    command: 'step';
     request: FanControl.StepRequest;
     cluster: 'fanControl';
     attributes: (typeof FanControl.ClusterInstance)['attributes'];
@@ -504,6 +541,7 @@ export type CommandHandlerDataMap = {
   // Mode Select
   'changeToMode': CommandHandlerData<'ModeSelect.changeToMode'>;
   'ModeSelect.changeToMode': {
+    command: 'changeToMode';
     request: ModeSelect.ChangeToModeRequest;
     cluster: 'modeSelect';
     attributes: (typeof ModeSelect.ClusterInstance)['attributes'];
@@ -512,6 +550,7 @@ export type CommandHandlerDataMap = {
 
   // Dishwasher Mode
   'DishwasherMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'dishwasherMode';
     attributes: (typeof DishwasherMode.ClusterInstance)['attributes'];
@@ -520,6 +559,7 @@ export type CommandHandlerDataMap = {
 
   // Laundry Washer Mode
   'LaundryWasherMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'laundryWasherMode';
     attributes: (typeof LaundryWasherMode.ClusterInstance)['attributes'];
@@ -528,6 +568,7 @@ export type CommandHandlerDataMap = {
 
   // Energy EVSE Mode
   'EnergyEvseMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'energyEvseMode';
     attributes: (typeof EnergyEvseMode.ClusterInstance)['attributes'];
@@ -536,6 +577,7 @@ export type CommandHandlerDataMap = {
 
   // Rvc Run Mode
   'RvcRunMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'rvcRunMode';
     attributes: (typeof RvcRunMode.ClusterInstance)['attributes'];
@@ -544,6 +586,7 @@ export type CommandHandlerDataMap = {
 
   // Rvc Clean Mode
   'RvcCleanMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'rvcCleanMode';
     attributes: (typeof RvcCleanMode.ClusterInstance)['attributes'];
@@ -552,6 +595,7 @@ export type CommandHandlerDataMap = {
 
   // Water Heater Mode
   'WaterHeaterMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'waterHeaterMode';
     attributes: (typeof WaterHeaterMode.ClusterInstance)['attributes'];
@@ -560,6 +604,7 @@ export type CommandHandlerDataMap = {
 
   // Device Energy Management Mode
   'DeviceEnergyManagementMode.changeToMode': {
+    command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'deviceEnergyManagementMode';
     attributes: (typeof DeviceEnergyManagementMode.ClusterInstance)['attributes'];
@@ -570,12 +615,14 @@ export type CommandHandlerDataMap = {
   'open': CommandHandlerData<'ValveConfigurationAndControl.open'>;
   'close': CommandHandlerData<'ValveConfigurationAndControl.close'>;
   'ValveConfigurationAndControl.open': {
+    command: 'open';
     request: ValveConfigurationAndControl.OpenRequest;
     cluster: 'valveConfigurationAndControl';
     attributes: (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'ValveConfigurationAndControl.close': {
+    command: 'close';
     request: {}; // TlvNoArguments
     cluster: 'valveConfigurationAndControl';
     attributes: (typeof ValveConfigurationAndControl.ClusterInstance)['attributes'];
@@ -586,12 +633,14 @@ export type CommandHandlerDataMap = {
   'suppressAlarm': CommandHandlerData<'BooleanStateConfiguration.suppressAlarm'>;
   'enableDisableAlarm': CommandHandlerData<'BooleanStateConfiguration.enableDisableAlarm'>;
   'BooleanStateConfiguration.suppressAlarm': {
+    command: 'suppressAlarm';
     request: BooleanStateConfiguration.SuppressAlarmRequest;
     cluster: 'booleanStateConfiguration';
     attributes: (typeof BooleanStateConfiguration.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'BooleanStateConfiguration.enableDisableAlarm': {
+    command: 'enableDisableAlarm';
     request: BooleanStateConfiguration.EnableDisableAlarmRequest;
     cluster: 'booleanStateConfiguration';
     attributes: (typeof BooleanStateConfiguration.ClusterInstance)['attributes'];
@@ -601,6 +650,7 @@ export type CommandHandlerDataMap = {
   // Smoke and CO Alarm
   'selfTestRequest': CommandHandlerData<'SmokeCoAlarm.selfTestRequest'>;
   'SmokeCoAlarm.selfTestRequest': {
+    command: 'selfTestRequest';
     request: {}; // TlvNoArguments
     cluster: 'smokeCoAlarm';
     attributes: (typeof SmokeCoAlarm.CompleteInstance)['attributes'];
@@ -610,6 +660,7 @@ export type CommandHandlerDataMap = {
   // Thread Network Diagnostics
   'resetCounts': CommandHandlerData<'ThreadNetworkDiagnostics.resetCounts'>;
   'ThreadNetworkDiagnostics.resetCounts': {
+    command: 'resetCounts';
     request: {}; // TlvNoArguments
     cluster: 'threadNetworkDiagnostics';
     attributes: (typeof ThreadNetworkDiagnostics.ClusterInstance)['attributes'];
@@ -621,18 +672,21 @@ export type CommandHandlerDataMap = {
   'setTimeZone': CommandHandlerData<'TimeSynchronization.setTimeZone'>;
   'setDstOffset': CommandHandlerData<'TimeSynchronization.setDstOffset'>;
   'TimeSynchronization.setUtcTime': {
+    command: 'setUtcTime';
     request: TimeSynchronization.SetUtcTimeRequest;
     cluster: 'timeSynchronization';
     attributes: (typeof TimeSynchronization.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'TimeSynchronization.setTimeZone': {
+    command: 'setTimeZone';
     request: TimeSynchronization.SetTimeZoneRequest;
     cluster: 'timeSynchronization';
     attributes: (typeof TimeSynchronization.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'TimeSynchronization.setDstOffset': {
+    command: 'setDstOffset';
     request: TimeSynchronization.SetDstOffsetRequest;
     cluster: 'timeSynchronization';
     attributes: (typeof TimeSynchronization.ClusterInstance)['attributes'];
@@ -645,24 +699,28 @@ export type CommandHandlerDataMap = {
   'powerAdjustRequest': CommandHandlerData<'DeviceEnergyManagement.powerAdjustRequest'>;
   'cancelPowerAdjustRequest': CommandHandlerData<'DeviceEnergyManagement.cancelPowerAdjustRequest'>;
   'DeviceEnergyManagement.pauseRequest': {
+    command: 'pauseRequest';
     request: DeviceEnergyManagement.PauseRequest;
     cluster: 'deviceEnergyManagement';
     attributes: (typeof DeviceEnergyManagement.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.resumeRequest': {
+    command: 'resumeRequest';
     request: {}; // TlvNoArguments
     cluster: 'deviceEnergyManagement';
     attributes: (typeof DeviceEnergyManagement.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.powerAdjustRequest': {
+    command: 'powerAdjustRequest';
     request: DeviceEnergyManagement.PowerAdjustRequest;
     cluster: 'deviceEnergyManagement';
     attributes: (typeof DeviceEnergyManagement.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.cancelPowerAdjustRequest': {
+    command: 'cancelPowerAdjustRequest';
     request: {}; // TlvNoArguments
     cluster: 'deviceEnergyManagement';
     attributes: (typeof DeviceEnergyManagement.CompleteInstance)['attributes'];
@@ -675,24 +733,28 @@ export type CommandHandlerDataMap = {
   'start': CommandHandlerData<'OperationalState.start'>;
   'resume': CommandHandlerData<'OperationalState.resume'>;
   'OperationalState.pause': {
+    command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
     attributes: (typeof OperationalState.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.stop': {
+    command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
     attributes: (typeof OperationalState.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.start': {
+    command: 'start';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
     attributes: (typeof OperationalState.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.resume': {
+    command: 'resume';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
     attributes: (typeof OperationalState.ClusterInstance)['attributes'];
@@ -702,18 +764,21 @@ export type CommandHandlerDataMap = {
   // Rvc Operational State
   'goHome': CommandHandlerData<'RvcOperationalState.goHome'>;
   'RvcOperationalState.pause': {
+    command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
     attributes: (typeof RvcOperationalState.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'RvcOperationalState.resume': {
+    command: 'resume';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
     attributes: (typeof RvcOperationalState.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'RvcOperationalState.goHome': {
+    command: 'goHome';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
     attributes: (typeof RvcOperationalState.ClusterInstance)['attributes'];
@@ -723,6 +788,7 @@ export type CommandHandlerDataMap = {
   // Service Area
   'selectAreas': CommandHandlerData<'ServiceArea.selectAreas'>;
   'ServiceArea.selectAreas': {
+    command: 'selectAreas';
     request: ServiceArea.SelectAreasRequest;
     cluster: 'serviceArea';
     attributes: (typeof ServiceArea.ClusterInstance)['attributes'];
@@ -733,12 +799,14 @@ export type CommandHandlerDataMap = {
   'boost': CommandHandlerData<'WaterHeaterManagement.boost'>;
   'cancelBoost': CommandHandlerData<'WaterHeaterManagement.cancelBoost'>;
   'WaterHeaterManagement.boost': {
+    command: 'boost';
     request: WaterHeaterManagement.BoostRequest;
     cluster: 'waterHeaterManagement';
     attributes: (typeof WaterHeaterManagement.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'WaterHeaterManagement.cancelBoost': {
+    command: 'cancelBoost';
     request: {}; // TlvNoArguments
     cluster: 'waterHeaterManagement';
     attributes: (typeof WaterHeaterManagement.ClusterInstance)['attributes'];
@@ -752,30 +820,35 @@ export type CommandHandlerDataMap = {
   'getTargets': CommandHandlerData<'EnergyEvse.getTargets'>;
   'clearTargets': CommandHandlerData<'EnergyEvse.clearTargets'>;
   'EnergyEvse.enableCharging': {
+    command: 'enableCharging';
     request: EnergyEvse.EnableChargingRequest;
     cluster: 'energyEvse';
     attributes: (typeof EnergyEvse.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.disable': {
+    command: 'disable';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
     attributes: (typeof EnergyEvse.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.setTargets': {
+    command: 'setTargets';
     request: EnergyEvse.SetTargetsRequest;
     cluster: 'energyEvse';
     attributes: (typeof EnergyEvse.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.getTargets': {
+    command: 'getTargets';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
     attributes: (typeof EnergyEvse.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.clearTargets': {
+    command: 'clearTargets';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
     attributes: (typeof EnergyEvse.ClusterInstance)['attributes'];
@@ -785,6 +858,7 @@ export type CommandHandlerDataMap = {
   // Temperature Control
   'setTemperature': CommandHandlerData<'TemperatureControl.setTemperature'>;
   'TemperatureControl.setTemperature': {
+    command: 'setTemperature';
     request: TemperatureControl.SetTemperatureRequest;
     cluster: 'temperatureControl';
     attributes: (typeof TemperatureControl.CompleteInstance)['attributes'];
@@ -795,12 +869,14 @@ export type CommandHandlerDataMap = {
   'setCookingParameters': CommandHandlerData<'MicrowaveOvenControl.setCookingParameters'>;
   'addMoreTime': CommandHandlerData<'MicrowaveOvenControl.addMoreTime'>;
   'MicrowaveOvenControl.setCookingParameters': {
+    command: 'setCookingParameters';
     request: MicrowaveOvenControl.SetCookingParametersRequest;
     cluster: 'microwaveOvenControl';
     attributes: (typeof MicrowaveOvenControl.CompleteInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MicrowaveOvenControl.addMoreTime': {
+    command: 'addMoreTime';
     request: MicrowaveOvenControl.AddMoreTimeRequest;
     cluster: 'microwaveOvenControl';
     attributes: (typeof MicrowaveOvenControl.CompleteInstance)['attributes'];
@@ -814,42 +890,49 @@ export type CommandHandlerDataMap = {
   'skipForward': CommandHandlerData<'MediaPlayback.skipForward'>;
   'skipBackward': CommandHandlerData<'MediaPlayback.skipBackward'>;
   'MediaPlayback.pause': {
+    command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.stop': {
+    command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.play': {
+    command: 'play';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.previous': {
+    command: 'previous';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.next': {
+    command: 'next';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.skipForward': {
+    command: 'skipForward';
     request: MediaPlayback.SkipForwardRequest;
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.skipBackward': {
+    command: 'skipBackward';
     request: MediaPlayback.SkipBackwardRequest;
     cluster: 'mediaPlayback';
     attributes: (typeof MediaPlayback.ClusterInstance)['attributes'];
@@ -859,6 +942,7 @@ export type CommandHandlerDataMap = {
   // Keypad Input
   'sendKey': CommandHandlerData<'KeypadInput.sendKey'>;
   'KeypadInput.sendKey': {
+    command: 'sendKey';
     request: KeypadInput.SendKeyRequest;
     cluster: 'keypadInput';
     attributes: (typeof KeypadInput.ClusterInstance)['attributes'];
@@ -868,6 +952,7 @@ export type CommandHandlerDataMap = {
   // Resource Monitoring
   'resetCondition': CommandHandlerData<'ResourceMonitoring.resetCondition'>;
   'ResourceMonitoring.resetCondition': {
+    command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'resourceMonitoring';
     attributes: (typeof ResourceMonitoring.CompleteInstance)['attributes'];
@@ -876,6 +961,7 @@ export type CommandHandlerDataMap = {
 
   // Hepa Filter Monitoring
   'HepaFilterMonitoring.resetCondition': {
+    command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'hepaFilterMonitoring';
     attributes: (typeof HepaFilterMonitoring.CompleteInstance)['attributes'];
@@ -884,6 +970,7 @@ export type CommandHandlerDataMap = {
 
   // Activated Carbon Filter Monitoring
   'ActivatedCarbonFilterMonitoring.resetCondition': {
+    command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'activatedCarbonFilterMonitoring';
     attributes: (typeof ActivatedCarbonFilterMonitoring.CompleteInstance)['attributes'];

@@ -1320,6 +1320,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks
    * The handler function will receive an object with the following properties:
+   * - `command`: The command that was received (e.g. "toggle").
    * - `request`: The request object sent with the command.
    * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
    * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}). Be aware that this is the actual cluster state but is typed as if it were from a complete instance of the cluster.
@@ -1358,7 +1359,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     attributes: CommandHandlerData<C>['attributes'],
     endpoint: CommandHandlerData<C>['endpoint'],
   ): Promise<void> {
-    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint } as CommandHandlerData<C>);
+    await this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
   }
 
   /**

@@ -150,6 +150,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Disable charging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('EnergyEvse.disable', {
+      command: 'disable',
       request: {},
       cluster: EnergyEvseServer.id,
       attributes: this.state as unknown as (typeof EnergyEvse.ClusterInstance)['attributes'],
@@ -173,6 +174,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`EnableCharging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('EnergyEvse.enableCharging', {
+      command: 'enableCharging',
       request,
       cluster: EnergyEvseServer.id,
       attributes: this.state as unknown as (typeof EnergyEvse.ClusterInstance)['attributes'],
@@ -246,6 +248,7 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('EnergyEvseMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: EnergyEvseModeServer.id,
       attributes: this.state as unknown as (typeof EnergyEvseMode.ClusterInstance)['attributes'],

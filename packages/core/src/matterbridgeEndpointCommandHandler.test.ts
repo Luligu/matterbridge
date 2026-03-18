@@ -10,7 +10,9 @@ type LocalHandlers = {
 };
 
 function createOnOffCommandData<T extends keyof LocalHandlers>(command: T): CommandHandlerData<T> {
+  const shortCommand = (command.includes('.') ? command.split('.').pop() : command) as unknown as CommandHandlerData<T>['command'];
   return {
+    command: shortCommand,
     request: {},
     cluster: 'onOff',
     attributes: { onOff: command === 'OnOff.off' } as unknown as CommandHandlerData<T>['attributes'],
@@ -156,6 +158,7 @@ describe('CommandHandler type bindings', () => {
 
     await commandHandler.executeHandler('OnOff.on', createOnOffCommandData('OnOff.on'));
     await commandHandler.executeHandler('Identify.triggerEffect', {
+      command: 'triggerEffect',
       request: {} as CommandHandlerData<'Identify.triggerEffect'>['request'],
       cluster: 'identify',
       attributes: {} as unknown as CommandHandlerData<'Identify.triggerEffect'>['attributes'],
@@ -190,6 +193,7 @@ describe('CommandHandler type bindings', () => {
 
     commandHandler.addHandler('OnOff.offWithEffect', offWithEffectHandler);
     await commandHandler.executeHandler('OnOff.offWithEffect', {
+      command: 'offWithEffect',
       request: {} as CommandHandlerData<'OnOff.offWithEffect'>['request'],
       cluster: 'onOff',
       attributes: {} as unknown as CommandHandlerData<'OnOff.offWithEffect'>['attributes'],
@@ -213,6 +217,7 @@ describe('CommandHandler type bindings', () => {
     let triggerEffectAliasCalled = false;
 
     const identifyAliasPayload: CommandHandlerData<'identify'> = {
+      command: 'identify',
       request: {} as CommandHandlerData<'Identify.identify'>['request'],
       cluster: 'identify',
       attributes: {} as unknown as CommandHandlerData<'Identify.identify'>['attributes'],
@@ -220,6 +225,7 @@ describe('CommandHandler type bindings', () => {
     };
     const identifyQualifiedPayload: CommandHandlerData<'Identify.identify'> = identifyAliasPayload;
     const triggerEffectAliasPayload: CommandHandlerData<'triggerEffect'> = {
+      command: 'triggerEffect',
       request: {} as CommandHandlerData<'Identify.triggerEffect'>['request'],
       cluster: 'identify',
       attributes: {} as unknown as CommandHandlerData<'Identify.triggerEffect'>['attributes'],

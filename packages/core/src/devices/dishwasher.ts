@@ -154,6 +154,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DishwasherMode.changeToMode', {
+      command: 'changeToMode',
       request,
       cluster: DishwasherModeServer.id,
       attributes: this.state as unknown as (typeof DishwasherMode.ClusterInstance)['attributes'],
