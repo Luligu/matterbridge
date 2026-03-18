@@ -52,7 +52,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.6.2] - Dev branch
+## [3.7.0] - Dev branch
 
 ### Dev Breaking Changes
 
@@ -61,6 +61,18 @@ These classes will run as threads in the next releases:
 - [updateAttribute]: The overloads of `updateAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [addCommandHandler]: The `addCommandHandler()` method is now typed.
+  The command must be a string in the format "Cluster.command" (e.g. "OnOff.toggle"). The cluster name and command name should match the Matter specifications.
+  For backward compatibility, aliases for the most used cluster commands (e.g. "on" or "off") are also supported ("toggle" is treated as "OnOff.toggle").
+  When you require Matterbridge >= 3.7.0 (verifyMatterbridgeVersion('3.7.0')), prefer the fully qualified command name (e.g. "OnOff.toggle" instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name. The short form is deprecated and will be removed in the next releases.
+
+At runtime none of these changes will create issues because this is a typing-only change (the runtime signatures didn't change).
+
+At build time (TypeScript compile time), you may see new type errors in plugins that call these overloads, because the types are now more strict/precise.
+
+If you hit build errors:
+
+- update your code to match the new typings (often it is just adjusting the generic/type argument or the inferred type);
+- change your verifyMatterbridgeVersion('3.7.0') to require Matterbridge >= 3.7.0.
 
 ### Dev News
 
