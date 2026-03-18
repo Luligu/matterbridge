@@ -30,6 +30,7 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpointTypes loaded.\u001B[40;0m');
 
 // @matter
+import { HandlerFunction } from '@matter/general';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -71,13 +72,141 @@ import { ClosureControl } from './clusters/closure-control.js';
 import { ClosureDimension } from './clusters/closure-dimension.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
+/** @deprecated Use CommandHandlers instead. This signature is still here for backward compatibility and will be removed in a future release. */
+export interface MatterbridgeEndpointCommands {
+  // Identify
+  identify: HandlerFunction;
+  triggerEffect: HandlerFunction;
+
+  // On/Off
+  on: HandlerFunction;
+  off: HandlerFunction;
+  toggle: HandlerFunction;
+  offWithEffect: HandlerFunction;
+
+  // Level Control
+  moveToLevel: HandlerFunction;
+  moveToLevelWithOnOff: HandlerFunction;
+
+  // Color Control
+  moveToColor: HandlerFunction;
+  moveColor: HandlerFunction;
+  stepColor: HandlerFunction;
+  moveToHue: HandlerFunction;
+  moveHue: HandlerFunction;
+  stepHue: HandlerFunction;
+  enhancedMoveToHue: HandlerFunction;
+  enhancedMoveHue: HandlerFunction;
+  enhancedStepHue: HandlerFunction;
+  moveToSaturation: HandlerFunction;
+  moveSaturation: HandlerFunction;
+  stepSaturation: HandlerFunction;
+  moveToHueAndSaturation: HandlerFunction;
+  enhancedMoveToHueAndSaturation: HandlerFunction;
+  moveToColorTemperature: HandlerFunction;
+
+  // Window Covering
+  upOrOpen: HandlerFunction;
+  downOrClose: HandlerFunction;
+  stopMotion: HandlerFunction;
+  goToLiftPercentage: HandlerFunction;
+  goToTiltPercentage: HandlerFunction;
+
+  // Closure
+  moveTo: HandlerFunction;
+  setTarget: HandlerFunction;
+
+  // Door Lock
+  lockDoor: HandlerFunction;
+  unlockDoor: HandlerFunction;
+
+  // Thermostat
+  setpointRaiseLower: HandlerFunction;
+  setActivePresetRequest: HandlerFunction;
+
+  // Fan Control
+  step: HandlerFunction;
+
+  // Mode Select
+  changeToMode: HandlerFunction;
+
+  // Valve Configuration and Control
+  open: HandlerFunction;
+  close: HandlerFunction;
+
+  // Boolean State Configuration
+  suppressAlarm: HandlerFunction;
+  enableDisableAlarm: HandlerFunction;
+
+  // Smoke and CO Alarm
+  selfTestRequest: HandlerFunction;
+
+  // Thread Network Diagnostics
+  resetCounts: HandlerFunction;
+
+  // Time Synchronization
+  setUtcTime: HandlerFunction;
+  setTimeZone: HandlerFunction;
+  setDstOffset: HandlerFunction;
+
+  // Device Energy Management
+  pauseRequest: HandlerFunction;
+  resumeRequest: HandlerFunction;
+
+  // Operational State
+  pause: HandlerFunction;
+  stop: HandlerFunction;
+  start: HandlerFunction;
+  resume: HandlerFunction;
+
+  // Rvc Operational State
+  goHome: HandlerFunction;
+
+  // Rvc Service Area
+  selectAreas: HandlerFunction;
+
+  // Water Heater Management
+  boost: HandlerFunction;
+  cancelBoost: HandlerFunction;
+
+  // Energy Evse
+  enableCharging: HandlerFunction;
+  disable: HandlerFunction;
+  setTargets: HandlerFunction;
+  getTargets: HandlerFunction;
+  clearTargets: HandlerFunction;
+
+  // Device Energy Management
+  powerAdjustRequest: HandlerFunction;
+  cancelPowerAdjustRequest: HandlerFunction;
+
+  // Temperature Control
+  setTemperature: HandlerFunction;
+
+  // Microwave Oven Control
+  setCookingParameters: HandlerFunction;
+  addMoreTime: HandlerFunction;
+
+  // MediaPlayback Control
+  play: HandlerFunction;
+  // pause: HandlerFunction; Already defined
+  // stop: HandlerFunction; Already defined
+  previous: HandlerFunction;
+  next: HandlerFunction;
+  skipForward: HandlerFunction;
+  skipBackward: HandlerFunction;
+
+  // KeypadInput Control
+  sendKey: HandlerFunction;
+
+  // Resource Monitoring
+  resetCondition: HandlerFunction;
+}
+
 /**
  * Keys of the supported commands for MatterbridgeEndpoint. The keys are in the format 'ClusterName.commandName' and correspond to the commands defined in the clusters used by MatterbridgeEndpoint.
  */
 export type CommandHandlers = keyof CommandHandlerDataMap;
-
-/** @deprecated Use CommandHandlers instead */
-export type MatterbridgeEndpointCommands = keyof CommandHandlerDataMap;
 
 /**
  * Data passed to command handlers for a specific command. The type is determined by the command name and contains the request, cluster, attributes, and endpoint related to the command.
@@ -302,6 +431,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Closure Control
+  'moveTo': CommandHandlerData<'ClosureControl.moveTo'>;
   'ClosureControl.moveTo': {
     request: ClosureControl.MoveToRequest;
     cluster: 'closureControl';
@@ -316,6 +446,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Closure Dimension
+  'setTarget': CommandHandlerData<'ClosureDimension.setTarget'>;
   'ClosureDimension.setTarget': {
     request: ClosureDimension.SetTargetRequest;
     cluster: 'closureDimension';
@@ -477,6 +608,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Thread Network Diagnostics
+  'resetCounts': CommandHandlerData<'ThreadNetworkDiagnostics.resetCounts'>;
   'ThreadNetworkDiagnostics.resetCounts': {
     request: {}; // TlvNoArguments
     cluster: 'threadNetworkDiagnostics';
@@ -485,6 +617,9 @@ export type CommandHandlerDataMap = {
   };
 
   // Time Synchronization
+  'setUtcTime': CommandHandlerData<'TimeSynchronization.setUtcTime'>;
+  'setTimeZone': CommandHandlerData<'TimeSynchronization.setTimeZone'>;
+  'setDstOffset': CommandHandlerData<'TimeSynchronization.setDstOffset'>;
   'TimeSynchronization.setUtcTime': {
     request: TimeSynchronization.SetUtcTimeRequest;
     cluster: 'timeSynchronization';
@@ -648,6 +783,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Temperature Control
+  'setTemperature': CommandHandlerData<'TemperatureControl.setTemperature'>;
   'TemperatureControl.setTemperature': {
     request: TemperatureControl.SetTemperatureRequest;
     cluster: 'temperatureControl';
@@ -672,6 +808,11 @@ export type CommandHandlerDataMap = {
   };
 
   // Media Playback
+  'play': CommandHandlerData<'MediaPlayback.play'>;
+  'previous': CommandHandlerData<'MediaPlayback.previous'>;
+  'next': CommandHandlerData<'MediaPlayback.next'>;
+  'skipForward': CommandHandlerData<'MediaPlayback.skipForward'>;
+  'skipBackward': CommandHandlerData<'MediaPlayback.skipBackward'>;
   'MediaPlayback.pause': {
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
@@ -716,6 +857,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Keypad Input
+  'sendKey': CommandHandlerData<'KeypadInput.sendKey'>;
   'KeypadInput.sendKey': {
     request: KeypadInput.SendKeyRequest;
     cluster: 'keypadInput';
