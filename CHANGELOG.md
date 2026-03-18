@@ -59,8 +59,8 @@ These classes will run as threads in the next releases:
 - [getAttribute]: The overloads of `getAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [setAttribute]: The overloads of `setAttribute()` method that take Behavior.Type or ClusterType are now typed.
 - [updateAttribute]: The overloads of `updateAttribute()` method that take Behavior.Type or ClusterType are now typed.
-- [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType are now typed.
-- [addCommandHandler]: The `addCommandHandler()` method is now typed.
+- [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType and the handler function are now typed.
+- [addCommandHandler]: The `addCommandHandler()` method and the handler function are now typed.
   The command must be a string in the format "Cluster.command" (e.g. "OnOff.toggle"). The cluster name and command name should match the Matter specifications.
   For backward compatibility, aliases for the most used cluster commands (e.g. "on" or "off") are also supported ("toggle" is treated as "OnOff.toggle").
   When you require Matterbridge >= 3.7.0 (verifyMatterbridgeVersion('3.7.0')), prefer the fully qualified command name (e.g. "OnOff.toggle" instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name. The short form is deprecated and will be removed in the next releases.
@@ -77,6 +77,7 @@ If you hit build errors:
 ### Dev News
 
 - [DevContainer]: Change base image to `mcr.microsoft.com/devcontainers/javascript-node:24-trixie`.
+- [DevContainer]: Add postStartCommand.
 
 ### Added
 

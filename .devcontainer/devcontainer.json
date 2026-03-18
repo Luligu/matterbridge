@@ -50,8 +50,10 @@ Dev containers have networking limitations depending on the host OS and Docker s
   ],
   // Create the matterbridge Docker network if it doesn't exist and pull the base image (runs on the HOST before the container starts).
   "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
-  // On startup build matterbridge and link it globally (runs inside the container after it starts)
+  // On create, build matterbridge and link it globally (runs inside the container after the first start)
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
+  // On start, run the plugin in watch mode (runs inside the container after every start)
+  "postStartCommand": "bash .devcontainer/postStartCommand.sh",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
