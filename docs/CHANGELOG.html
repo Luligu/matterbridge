@@ -143,14 +143,24 @@
 <li>all plugins in bridge mode;</li>
 <li>each plugin in childbridge mode;</li>
 </ul>
-<h2 id="362-dev-branch">[3.6.2] - Dev branch</h2>
+<h2 id="370-dev-branch">[3.7.0] - Dev branch</h2>
 <h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
 <ul>
 <li>[getAttribute]: The overloads of <code>getAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[setAttribute]: The overloads of <code>setAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[updateAttribute]: The overloads of <code>updateAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[subscribeAttribute]: The overloads of <code>subscribeAttribute()</code> method that take Behavior.Type or ClusterType are now typed.</li>
-<li>[addCommandHandler]: The <code>addCommandHandler()</code> method is now typed.</li>
+<li>[addCommandHandler]: The <code>addCommandHandler()</code> method is now typed.
+The command must be a string in the format &quot;Cluster.command&quot; (e.g. &quot;OnOff.toggle&quot;). The cluster name and command name should match the Matter specifications.
+For backward compatibility, aliases for the most used cluster commands (e.g. &quot;on&quot; or &quot;off&quot;) are also supported (&quot;toggle&quot; is treated as &quot;OnOff.toggle&quot;).
+When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&#39;)), prefer the fully qualified command name (e.g. &quot;OnOff.toggle&quot; instead of just &quot;toggle&quot;) to avoid conflicts with other clusters that have commands with the same name. The short form is deprecated and will be removed in the next releases.</li>
+</ul>
+<p>At runtime none of these changes will create issues because this is a typing-only change (the runtime signatures didn&#39;t change).</p>
+<p>At build time (TypeScript compile time), you may see new type errors in plugins that call these overloads, because the types are now more strict/precise.</p>
+<p>If you hit build errors:</p>
+<ul>
+<li>update your code to match the new typings (often it is just adjusting the generic/type argument or the inferred type);</li>
+<li>change your verifyMatterbridgeVersion(&#39;3.7.0&#39;) to require Matterbridge &gt;= 3.7.0.</li>
 </ul>
 <h3 id="dev-news">Dev News</h3>
 <ul>
