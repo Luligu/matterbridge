@@ -214,7 +214,7 @@ export type CommandHandlers = keyof CommandHandlerDataMap;
 export type CommandHandlerData<T extends CommandHandlers = CommandHandlers> = CommandHandlerDataMap[T];
 
 /**
- * Type of the command handler function for MatterbridgeEndpoint. The function receives data related to the executed command, including the request, cluster, attributes, and endpoint.
+ * Type of the command handler function for MatterbridgeEndpoint. The function receives data related to the received command, including the command,request, cluster, attributes, and endpoint.
  */
 export type CommandHandlerFunction<T extends CommandHandlers = CommandHandlers> = (data: CommandHandlerData<T>) => void | Promise<void>;
 
