@@ -38,6 +38,7 @@ import { ServiceArea } from '@matter/types/clusters/service-area';
 import { MatterbridgeServer, MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
 import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Matterbridge endpoint representing a robotic vacuum cleaner device.
@@ -230,7 +231,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcRunModeServer.id,
-      attributes: this.state as unknown as (typeof RvcRunMode.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcRunMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -271,7 +272,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcCleanModeServer.id,
-      attributes: this.state as unknown as (typeof RvcCleanMode.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcCleanMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -301,7 +302,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
       command: 'pause',
       request: {},
       cluster: RvcOperationalStateServer.id,
-      attributes: this.state as unknown as (typeof RvcOperationalState.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle');
@@ -325,7 +326,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
       command: 'resume',
       request: {},
       cluster: RvcOperationalStateServer.id,
-      attributes: this.state as unknown as (typeof RvcOperationalState.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning');
@@ -350,7 +351,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
       command: 'goHome',
       request: {},
       cluster: RvcOperationalStateServer.id,
-      attributes: this.state as unknown as (typeof RvcOperationalState.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle');

@@ -32,6 +32,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { MatterbridgeOperationalStateServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Matterbridge endpoint representing a microwave oven device.
@@ -158,7 +159,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       command: 'setCookingParameters',
       request,
       cluster: MicrowaveOvenControlServer.id,
-      attributes: this.state as unknown as (typeof MicrowaveOvenControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -211,7 +212,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       command: 'addMoreTime',
       request,
       cluster: MicrowaveOvenControlServer.id,
-      attributes: this.state as unknown as (typeof MicrowaveOvenControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.timeToAdd !== undefined && request.timeToAdd > 0 && this.state.cookTime + request.timeToAdd <= this.state.maxCookTime) {

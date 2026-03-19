@@ -1714,8 +1714,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Ignore errors if the file does not exist
         }
       }
-      // Remove the resumption records and subscriptions. Till the matter.js team solves the issue of closing server node when resumption didn't work.
-      if (hasParameter('reset-sessions') || !hasParameter('no-reset-sessions')) {
+      // Remove the resumption records and subscriptions. It forces the clients to do a full re-commissioning and re-subscribe to the bridge after the restart. It solves some issues with stale sessions and subscriptions that can cause problems after a restart.
+      if (hasParameter('reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
@@ -2622,6 +2622,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         softwareVersionString: await storageContext.get<string>('softwareVersionString'),
         hardwareVersion: await storageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
+
+        // specificationVersion: 0x01050000, // Matter 1.5
 
         reachable: true,
       },

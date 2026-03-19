@@ -33,6 +33,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 /**
@@ -183,7 +184,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
       command: 'changeToMode',
       request,
       cluster: LaundryWasherModeServer.id,
-      attributes: this.state as unknown as (typeof LaundryWasherMode.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LaundryWasherMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

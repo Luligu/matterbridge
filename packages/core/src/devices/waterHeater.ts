@@ -34,6 +34,7 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Matterbridge endpoint representing a water heater device.
@@ -178,7 +179,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       command: 'boost',
       request,
       cluster: WaterHeaterManagementServer.id,
-      attributes: this.state as unknown as (typeof WaterHeaterManagement.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(request)}`);
@@ -198,7 +199,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       command: 'cancelBoost',
       request: {},
       cluster: WaterHeaterManagementServer.id,
-      attributes: this.state as unknown as (typeof WaterHeaterManagement.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
@@ -226,7 +227,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
       command: 'changeToMode',
       request,
       cluster: WaterHeaterModeServer.id,
-      attributes: this.state as unknown as (typeof WaterHeaterMode.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);

@@ -74,6 +74,7 @@ import {
   Thermostat,
   WaterHeaterManagement,
   WaterHeaterMode,
+  WindowCovering,
 } from '@matter/types/clusters';
 import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 
@@ -103,7 +104,6 @@ import {
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
   MatterbridgeLiftTiltWindowCoveringServer,
-  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -111,6 +111,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviorsServer.js';
 import {
   coverDevice,
@@ -1054,15 +1055,16 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeLiftWindowCoveringServer commands', async () => {
+    const coverLiftServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
     expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
-    expect(coverLift.behaviors.has(MatterbridgeLiftWindowCoveringServer)).toBeTruthy();
-    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
-    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
-    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
-    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
-    expect(coverLift.behaviors.elementsOf(MatterbridgeLiftWindowCoveringServer).commands.has('goToTiltPercentage')).toBeFalsy();
-    expect((coverLift.stateOf(MatterbridgeLiftWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
-    expect((coverLift.stateOf(MatterbridgeLiftWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+    expect(coverLift.behaviors.has(coverLiftServer)).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('goToLiftPercentage')).toBeTruthy();
+    expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('goToTiltPercentage')).toBeFalsy();
+    expect((coverLift.stateOf(coverLiftServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5]);
+    expect((coverLift.stateOf(coverLiftServer) as any).generatedCommandList).toEqual([]);
     await coverLift.invokeBehaviorCommand('windowCovering', 'upOrOpen');
     await coverLift.invokeBehaviorCommand('windowCovering', 'downOrClose');
     await coverLift.invokeBehaviorCommand('windowCovering', 'stopMotion');
@@ -1074,15 +1076,21 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeLiftTiltWindowCoveringServer commands', async () => {
+    const coverLiftTiltServer = MatterbridgeWindowCoveringServer.with(
+      WindowCovering.Feature.Lift,
+      WindowCovering.Feature.PositionAwareLift,
+      WindowCovering.Feature.Tilt,
+      WindowCovering.Feature.PositionAwareTilt,
+    );
     expect(coverLiftTilt.behaviors.has(WindowCoveringServer)).toBeTruthy();
-    expect(coverLiftTilt.behaviors.has(MatterbridgeLiftTiltWindowCoveringServer)).toBeTruthy();
-    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('upOrOpen')).toBeTruthy();
-    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('downOrClose')).toBeTruthy();
-    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('stopMotion')).toBeTruthy();
-    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToLiftPercentage')).toBeTruthy();
-    expect(coverLiftTilt.behaviors.elementsOf(MatterbridgeLiftTiltWindowCoveringServer).commands.has('goToTiltPercentage')).toBeTruthy();
-    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5, 8]);
-    expect((coverLiftTilt.stateOf(MatterbridgeLiftTiltWindowCoveringServer) as any).generatedCommandList).toEqual([]);
+    expect(coverLiftTilt.behaviors.has(coverLiftTiltServer)).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(coverLiftTiltServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(coverLiftTiltServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(coverLiftTiltServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(coverLiftTiltServer).commands.has('goToLiftPercentage')).toBeTruthy();
+    expect(coverLiftTilt.behaviors.elementsOf(coverLiftTiltServer).commands.has('goToTiltPercentage')).toBeTruthy();
+    expect((coverLiftTilt.stateOf(coverLiftTiltServer) as any).acceptedCommandList).toEqual([0, 1, 2, 5, 8]);
+    expect((coverLiftTilt.stateOf(coverLiftTiltServer) as any).generatedCommandList).toEqual([]);
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'upOrOpen');
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'downOrClose');
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'stopMotion');

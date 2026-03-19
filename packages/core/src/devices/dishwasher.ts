@@ -32,6 +32,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 /**
@@ -39,7 +40,7 @@ import { createLevelTemperatureControlClusterServer, createNumberTemperatureCont
  */
 export class Dishwasher extends MatterbridgeEndpoint {
   /**
-   * Creates an instance of the DishWasher class.
+   * Creates an instance of the Dishwasher class.
    *
    * @param {string} name - The name of the dish washer.
    * @param {string} serial - The serial number of the dish washer.
@@ -157,7 +158,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
       command: 'changeToMode',
       request,
       cluster: DishwasherModeServer.id,
-      attributes: this.state as unknown as (typeof DishwasherMode.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DishwasherMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

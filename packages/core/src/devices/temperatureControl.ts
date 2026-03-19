@@ -25,9 +25,10 @@
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 
-// Matterbridge imports
+// Matterbridge
 import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Creates a TemperatureControl Cluster Server with feature TemperatureLevel.
@@ -103,7 +104,7 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
-      attributes: this.state as unknown as (typeof TemperatureControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
@@ -146,7 +147,7 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
-      attributes: this.state as unknown as (typeof TemperatureControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {

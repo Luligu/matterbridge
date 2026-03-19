@@ -563,7 +563,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Opening, lift: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Stopped },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 0,
     });
@@ -572,7 +572,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Closing, lift: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Stopped },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 10000,
     });
@@ -583,14 +583,14 @@ describe('Server clusters and behaviors', () => {
     expectLiftCoverAttributes({
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
-      targetPositionLiftPercent100ths: 0,
+      targetPositionLiftPercent100ths: 10000,
     });
 
     await expectCommand(coverLift, WindowCovering.Cluster, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Closing, lift: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Stopped },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 5000,
     });
@@ -615,7 +615,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Opening, lift: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Opening },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 0,
       currentPositionTiltPercent100ths: 0,
@@ -626,7 +626,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Closing, lift: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Closing },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 10000,
       currentPositionTiltPercent100ths: 0,
@@ -639,27 +639,27 @@ describe('Server clusters and behaviors', () => {
     expectLiftTiltCoverAttributes({
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
-      targetPositionLiftPercent100ths: 0,
+      targetPositionLiftPercent100ths: 10000,
       currentPositionTiltPercent100ths: 0,
-      targetPositionTiltPercent100ths: 0,
+      targetPositionTiltPercent100ths: 10000,
     });
 
     await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Closing, lift: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Stopped },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 5000,
       currentPositionTiltPercent100ths: 0,
-      targetPositionTiltPercent100ths: 0,
+      targetPositionTiltPercent100ths: 10000,
     });
 
     await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'goToTiltPercentage', { tiltPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
-      operationalStatus: { global: WindowCovering.MovementStatus.Closing, lift: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Closing },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 5000,
       currentPositionTiltPercent100ths: 0,

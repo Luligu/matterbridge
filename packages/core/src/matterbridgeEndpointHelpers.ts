@@ -130,7 +130,6 @@ import {
   MatterbridgeFanControlServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
-  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -138,6 +137,7 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
@@ -345,7 +345,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
   if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
   if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeLiftWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
   if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
   if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
   if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;

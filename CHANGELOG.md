@@ -65,6 +65,10 @@ These classes will run as threads in the next releases:
   For backward compatibility, aliases for the most used cluster commands (e.g. "on" or "off") are also supported ("toggle" is treated as "OnOff.toggle").
   When you require Matterbridge >= 3.7.0 (verifyMatterbridgeVersion('3.7.0')), prefer the fully qualified command name (e.g. "OnOff.toggle" instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name. The short form is deprecated and will be removed in the next releases.
 
+  > The attributes property of data (passed to the handler function) is writable inside the handler function.
+
+  > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION.
+
 At runtime none of these changes will create issues because this is a typing-only change (the runtime signatures didn't change).
 
 At build time (TypeScript compile time), you may see new type errors in plugins that call these overloads, because the types are now more strict/precise.

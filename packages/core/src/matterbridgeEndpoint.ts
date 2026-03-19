@@ -114,8 +114,6 @@ import {
   MatterbridgeHepaFilterMonitoringServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
-  MatterbridgeLiftTiltWindowCoveringServer,
-  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -126,6 +124,7 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviorsServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
@@ -1305,11 +1304,16 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a command handler for the specified command.
    *
+   * The handler function will be called when the specified command is received on the endpoint before the default behavior is executed.
+   *
+   * The handler function is called with await and shall return immediately.
+   *
    * @param {CommandHandlers} command - The command to add the handler for.
    * @param {CommandHandlerFunction<C>} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
+   *
    * The command shall be a string in the format of "Cluster.command" (e.g. "OnOff.toggle"). Requires matterbridge version 3.7.0 or higher.
    *
    * The cluster name and command name should be the same as those found in the Matter specifications.
@@ -1319,11 +1323,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * When you require Matterbridge version 3.7.0 or higher, you should update the command name (OnOff.toggle instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name.
    *
    * @remarks
+   *
    * The handler function will receive an object with the following properties:
    * - `command`: The command that was received (e.g. "toggle").
-   * - `request`: The request object sent with the command.
+   * - `request`: The typed request object sent with the command.
    * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
-   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}). Be aware that this is the actual cluster state but is typed as if it were from a complete instance of the cluster.
+   * - `attributes`: The current writable attributes of the cluster that received the command (i.e. { onOff: true}).
+   * > Be aware that this is the actual cluster state but is typed as a complete instance of the cluster.
+   * > You can use this directly to access and change the current state of the cluster inside the handler function.
+   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implmentation shall update the current position).
+   * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
+   * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
   addCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
@@ -2584,7 +2594,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
   ): this {
-    this.behaviors.require(MatterbridgeLiftWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type, // Must support feature Lift
       numberOfActuationsLift: 0,
       configStatus: {
@@ -2625,7 +2635,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
   ): this {
     this.behaviors.require(
-      MatterbridgeLiftTiltWindowCoveringServer.with(
+      MatterbridgeWindowCoveringServer.with(
         WindowCovering.Feature.Lift,
         WindowCovering.Feature.PositionAwareLift,
         WindowCovering.Feature.Tilt,

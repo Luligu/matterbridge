@@ -27,10 +27,12 @@ import { AttributeElement, ClusterElement, ClusterModel, CommandElement, Datatyp
 import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
 
+// Matterbridge
 import { ClosureControl } from '../clusters/closure-control.js';
 import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { closure } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * ClosureControl schema.
@@ -160,7 +162,7 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
       command: 'moveTo',
       request,
       cluster: ClosureControlServer.id,
-      attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -183,7 +185,7 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
       command: 'stop',
       request: {},
       cluster: ClosureControlServer.id,
-      attributes: this.state as unknown as (typeof ClosureControl.Complete)['attributes'],
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
