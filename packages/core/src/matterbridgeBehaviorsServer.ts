@@ -155,7 +155,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeIdentifyServer: identify called`);
-    super.identify(request);
+    await super.identify(request);
   }
 
   /**
@@ -174,7 +174,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
-    super.triggerEffect(request);
+    await super.triggerEffect(request);
   }
 }
 
@@ -196,7 +196,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: on called`);
-    super.on();
+    await super.on();
   }
 
   /**
@@ -213,7 +213,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: off called`);
-    super.off();
+    await super.off();
   }
 
   /**
@@ -230,7 +230,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
-    super.toggle();
+    await super.toggle();
   }
 }
 
@@ -254,7 +254,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
-    super.moveToLevel(request);
+    await super.moveToLevel(request);
   }
 
   /**
@@ -273,7 +273,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
-    super.moveToLevelWithOnOff(request);
+    await super.moveToLevelWithOnOff(request);
   }
 }
 
@@ -297,7 +297,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    super.moveToHue(request);
+    await super.moveToHue(request);
   }
 
   /**
@@ -316,7 +316,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    super.moveToSaturation(request);
+    await super.moveToSaturation(request);
   }
 
   /**
@@ -337,7 +337,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    super.moveToHueAndSaturation(request);
+    await super.moveToHueAndSaturation(request);
   }
 
   /**
@@ -358,7 +358,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    super.moveToColor(request);
+    await super.moveToColor(request);
   }
 
   /**
@@ -379,7 +379,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    super.moveToColorTemperature(request);
+    await super.moveToColorTemperature(request);
   }
 }
 
@@ -408,7 +408,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    super.moveToHue(request);
+    await super.moveToHue(request);
   }
 
   /**
@@ -429,7 +429,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
-    super.enhancedMoveToHue(request);
+    await super.enhancedMoveToHue(request);
   }
 
   /**
@@ -448,7 +448,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    super.moveToSaturation(request);
+    await super.moveToSaturation(request);
   }
 
   /**
@@ -469,7 +469,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    super.moveToHueAndSaturation(request);
+    await super.moveToHueAndSaturation(request);
   }
 
   /**
@@ -490,7 +490,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
-    super.enhancedMoveToHueAndSaturation(request);
+    await super.enhancedMoveToHueAndSaturation(request);
   }
 
   /**
@@ -511,7 +511,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    super.moveToColor(request);
+    await super.moveToColor(request);
   }
 
   /**
@@ -532,7 +532,7 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    super.moveToColorTemperature(request);
+    await super.moveToColorTemperature(request);
   }
 }
 
@@ -554,7 +554,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
-    super.upOrOpen();
+    await super.upOrOpen();
   }
 
   /**
@@ -571,7 +571,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
-    super.downOrClose();
+    await super.downOrClose();
   }
 
   /**
@@ -588,7 +588,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
-    super.stopMotion();
+    await super.stopMotion();
   }
 
   /**
@@ -607,7 +607,7 @@ export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
-    super.goToLiftPercentage(request);
+    await super.goToLiftPercentage(request);
   }
 
   /**
@@ -646,7 +646,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
-    super.upOrOpen();
+    await super.upOrOpen();
   }
 
   /**
@@ -663,7 +663,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
-    super.downOrClose();
+    await super.downOrClose();
   }
 
   /**
@@ -680,7 +680,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
-    super.stopMotion();
+    await super.stopMotion();
   }
 
   /**
@@ -699,7 +699,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
-    super.goToLiftPercentage(request);
+    await super.goToLiftPercentage(request);
   }
 
   /**
@@ -718,7 +718,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
-    super.goToTiltPercentage(request);
+    await super.goToTiltPercentage(request);
   }
 
   /**
@@ -752,7 +752,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
-    super.lockDoor();
+    await super.lockDoor();
   }
 
   /**
@@ -769,7 +769,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
-    super.unlockDoor();
+    await super.unlockDoor();
   }
 }
 
@@ -809,7 +809,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     device.log.debug('Set percentCurrent to:', this.state.percentCurrent);
 
     // step is not implemented in matter.js
-    // super.step(request);
+    // await super.step(request);
   }
 }
 
@@ -1184,7 +1184,6 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     this.state.selectedAreas = request.newAreas;
     device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: ${request.newAreas.map((area) => area.toString()).join(', ')}`);
     return await super.selectAreas(request);
-    // return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
   }
 }
 
@@ -1208,7 +1207,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
-    super.changeToMode(request);
+    await super.changeToMode(request);
   }
 }
 
@@ -1232,6 +1231,8 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
+    // resetCondition is not implemented in matter.js
+    // await super.resetCondition();
   }
 }
 
@@ -1255,6 +1256,8 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
+    // resetCondition is not implemented in matter.js
+    // await super.resetCondition();
   }
 }
 
@@ -1283,7 +1286,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${request.power} duration ${request.duration} cause ${request.cause}`);
     // The implementation is responsible for setting the device accordingly with the powerAdjustRequest command
     // powerAdjustRequest is not implemented in matter.js
-    // return super.powerAdjustRequest();
+    // await super.powerAdjustRequest();
   }
   /**
    * Cancels an in-progress power adjustment.
@@ -1301,7 +1304,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
     // The implementation is responsible for setting the device accordingly with the cancelPowerAdjustRequest command
     // cancelPowerAdjustRequest is not implemented in matter.js
-    // return super.cancelPowerAdjustRequest();
+    // await super.cancelPowerAdjustRequest();
   }
 }
 
@@ -1344,7 +1347,6 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
         });
     }
     device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
-    return super.changeToMode(request);
-    // return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+    return await super.changeToMode(request);
   }
 }
