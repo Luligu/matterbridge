@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
 import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
@@ -33,6 +32,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { MatterbridgeOperationalStateServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Matterbridge endpoint representing a microwave oven device.
@@ -155,7 +155,13 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
   override async setCookingParameters(request: MicrowaveOvenControl.SetCookingParametersRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setCookingParameters', { request, cluster: MicrowaveOvenControl.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MicrowaveOvenControl.setCookingParameters', {
+      command: 'setCookingParameters',
+      request,
+      cluster: MicrowaveOvenControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     // 8.13.6.2.1. CookMode Field. Default to Normal mode if not present.
     if (request.cookMode !== undefined) {
@@ -199,10 +205,16 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
    *
    * @param {MicrowaveOvenControl.AddMoreTimeRequest} request - Additional time request payload.
    */
-  override addMoreTime(request: MicrowaveOvenControl.AddMoreTimeRequest): MaybePromise {
+  override async addMoreTime(request: MicrowaveOvenControl.AddMoreTimeRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMicrowaveOvenControlServer: addMoreTime (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('addMoreTime', { request, cluster: MicrowaveOvenControl.Cluster.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('MicrowaveOvenControl.addMoreTime', {
+      command: 'addMoreTime',
+      request,
+      cluster: MicrowaveOvenControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     if (request.timeToAdd !== undefined && request.timeToAdd > 0 && this.state.cookTime + request.timeToAdd <= this.state.maxCookTime) {
       device.log.info(`MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to ${this.state.cookTime + request.timeToAdd}`);
       this.state.cookTime += request.timeToAdd;

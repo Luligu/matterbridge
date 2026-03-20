@@ -117,6 +117,33 @@ describe('ThreadsManagerThreads', () => {
     expect(true).toBe(true);
   }, 10000);
 
+  test('Run ArchiveCommand as a worker thread', async () => {
+    await new Promise<void>((resolve) => {
+      broadcastserverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
+        if (broadcastserverMatterbridge.isWorkerResponse(msg) && msg.type === 'manager_run' && msg.result?.success) {
+          resolve();
+        }
+      });
+      broadcastserverMatterbridge.request({
+        type: 'manager_run',
+        src: 'matterbridge',
+        dst: 'manager',
+        params: {
+          name: 'ArchiveCommand',
+          pipedOutput: true,
+          workerData: {
+            threadName: 'ArchiveCommand',
+            command: 'zip',
+            archivePath: path.join(HOMEDIR, 'test.zip'),
+            sourcePaths: ['docker/Dockerfile.latest', 'docker/Dockerfile.dev', 'docker/rootfs/'],
+            destinationPath: '',
+          },
+        },
+      });
+    });
+    expect(true).toBe(true);
+  }, 10000);
+
   test('Pause', async () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 2000));
     expect(true).toBe(true);

@@ -41,7 +41,8 @@ These threads already run as workers:
 
 - ✅ check updates;
 - ✅ system check;
-- ✅ npm install;
+- ✅ spawn commands;
+- ✅ archive commands;
 - ✅ check the global node_modules directory;
 
 These classes will run as threads in the next releases:
@@ -50,6 +51,61 @@ These classes will run as threads in the next releases:
 - frontend;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+## [3.7.0] - 2026-03-19
+
+### Dev Breaking Changes
+
+- [getAttribute]: The overloads of `getAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [setAttribute]: The overloads of `setAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [updateAttribute]: The overloads of `updateAttribute()` method that take Behavior.Type or ClusterType are now typed.
+- [subscribeAttribute]: The overloads of `subscribeAttribute()` method that take Behavior.Type or ClusterType and the handler function are now typed.
+- [addCommandHandler]: The `addCommandHandler()` method and the handler function are now typed.
+  The command must be a string in the format "Cluster.command" (e.g. "OnOff.toggle"). The cluster name and command name should match the Matter specifications.
+  For backward compatibility, aliases for the most used cluster commands (e.g. "on" or "off") are also supported ("toggle" is treated as "OnOff.toggle").
+  When you require Matterbridge >= 3.7.0 (verifyMatterbridgeVersion('3.7.0')), prefer the fully qualified command name (e.g. "OnOff.toggle" instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name. The short form is deprecated and will be removed in the next releases.
+
+  > The attributes property of data (passed to the handler function) is writable inside the handler function.
+
+  > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION.
+
+At runtime none of these changes will create issues because this is a typing-only change (the runtime signatures didn't change).
+
+At build time (TypeScript compile time), you may see new type errors in plugins that call these overloads, because the types are now more strict/precise.
+
+If you hit build errors:
+
+- update your code to match the new typings (often it is just adjusting the generic/type argument or the inferred type);
+- change your verifyMatterbridgeVersion('3.7.0') to require Matterbridge >= 3.7.0.
+
+### Dev News
+
+- [DevContainer]: Change base image to `mcr.microsoft.com/devcontainers/javascript-node:24-trixie`.
+- [DevContainer]: Add postStartCommand.
+
+### Added
+
+- [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
+- [threads]: Add ArchiveCommand thread.
+- [endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.
+- [endpoint]: Add removeCommandHandler() method.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Update actions versions in workflows.
+- [frontend]: Bump `frontend` version to v. 3.4.8.
+- [frontend]: Refactor archives creation using threads.
+- [frontend]: Change basePath to pathName for BrowserRouter.
+- [archive]: Use `zipjs` package.
+- [archive]: Remove `archiver` and `glob` packages.
+
+### Fixed
+
+- [frontend]: Fix edge case when more then one device with mode = 'server' is in the same plugin. Thanks Ryan (https://github.com/Luligu/matterbridge/pull/528).
+- [thermostat]: Fix Thermostat preset implementation.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.6.1] - 2026-03-13
 
@@ -114,7 +170,7 @@ These classes will run as threads in the next releases:
 - [package]: Add `@eslint/json`.
 - [package]: Add `@eslint/markdown`.
 - [docker]: The base image `24-ubuntu-slim` is now built with the latest node 24 release.
-- [frontend]: Bumped `frontend` version to v. 3.4.7.
+- [frontend]: Bump `frontend` version to v. 3.4.7.
 - [frontend]: Update dependencies.
 
 ### Fixed

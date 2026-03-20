@@ -34,7 +34,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { castingVideoPlayer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { CastingVideoPlayer } from './castingVideoPlayer.js';
 
 // Setup the test environment
@@ -121,38 +120,38 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['contentLauncher'].generatedCommandList).toEqual([]);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'on', {});
+    await device.invokeBehaviorCommand('onOff', 'on', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'pause', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.pause', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${device.id}.${device.number})`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'stop', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.stop', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${device.id}.${device.number})`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'keypadInput', 'sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
+    await device.invokeBehaviorCommand('keypadInput', 'KeypadInput.sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'off', {});
+    await device.invokeBehaviorCommand('onOff', 'OnOff.off', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
 
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'play', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'pause', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.pause', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
-    await invokeBehaviorCommand(device, 'mediaPlayback', 'stop', {});
+    await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.stop', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);
   });
 

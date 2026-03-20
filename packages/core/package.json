@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.6.1",
+  "version": "3.7.0",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -112,7 +112,7 @@
     }
   },
   "engines": {
-    "node": ">=20.0.0 <21.0.0 || >=22.0.0 <23.0.0 || >=24.0.0 <25.0.0"
+    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0"
   },
   "files": [
     "bin",
@@ -125,13 +125,11 @@
   },
   "dependencies": {
     "@matter/main": "0.16.10",
-    "@matterbridge/dgram": "3.6.1",
-    "@matterbridge/thread": "3.6.1",
-    "@matterbridge/types": "3.6.1",
-    "@matterbridge/utils": "3.6.1",
-    "archiver": "7.0.1",
+    "@matterbridge/dgram": "3.7.0",
+    "@matterbridge/thread": "3.7.0",
+    "@matterbridge/types": "3.7.0",
+    "@matterbridge/utils": "3.7.0",
     "express": "5.2.1",
-    "glob": "13.0.6",
     "multer": "2.1.1",
     "node-ansi-logger": "3.2.0",
     "node-persist-manager": "2.0.1",

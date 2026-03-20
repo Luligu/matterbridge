@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+import { getErrorMessage } from './error.js';
+
 export type UpdateJson = {
   latest: string;
   latestDate: string;
@@ -71,7 +73,7 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
           const jsonData = JSON.parse(data);
           resolve(jsonData);
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${error instanceof Error ? error.message : error}`));
+          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
@@ -79,7 +81,7 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
       clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

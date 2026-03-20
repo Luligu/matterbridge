@@ -2,7 +2,7 @@
 import { useEffect, useState, useContext, useRef, memo } from 'react';
 
 // Backend
-import { WsMessageApiResponse, ApiPlugin, MatterbridgeInformation, SystemInformation } from '../utils/backendTypes';
+import { WsMessageApiResponse, ApiPlugin, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
 
 // Frontend
 import { UiContext } from './UiProvider';

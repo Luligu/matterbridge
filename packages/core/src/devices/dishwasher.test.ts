@@ -28,7 +28,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { dishwasher } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
@@ -109,13 +108,13 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['dishwasherMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['dishwasherMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'off', {}); // Dead Front state
+    await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with invalid mode 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'dishwasherMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `DishwasherModeServer: changeToMode called with mode 1 => Light`);
   });
@@ -161,10 +160,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 3 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 5000 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
   });
 

@@ -8,7 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 
 // Backend
-import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendTypes';
+import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
@@ -131,7 +131,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
 
-  // Selected device for clusters view
+  // Selected device for clusters view. handleDeviceClick sets these states based on the clicked device row, and if the same row is clicked again, it resets them to null to go back to the devices view.
   const [pluginName, setPluginName] = useState<string | null>(null);
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState<string | null>(null);
@@ -211,13 +211,14 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     }
   }, [online, sendMessage]);
 
-  // Send /api/clusters request when plugin and endpoint are set
+  // Send /api/clusters request when a device row is clicked
   useEffect(() => {
-    if (pluginName && endpoint) {
+    if (pluginName && endpoint && selectedDeviceUniqueId) {
       if (debug) console.log('DevicesTable sending /api/clusters');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint) } });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId } });
+      // console.log(`DevicesTable useEffect: selected device "${deviceName}" with uniqueId "${selectedDeviceUniqueId}", plugin "${pluginName}", endpoint "${endpoint}"`);
     }
-  }, [pluginName, endpoint, sendMessage]);
+  }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
 
   useEffect(() => {
     const normalizedPlugin = filterPlugins?.trim().toLowerCase();
@@ -243,6 +244,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       setDeviceName(null);
       return;
     }
+    if (debug) console.log(`DevicesTable handleDeviceClick: selected device "${row.name}" with uniqueId "${row.uniqueId}", plugin "${row.pluginName}", endpoint "${row.endpoint}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
     setPluginName(row.pluginName);
     setEndpoint(row.endpoint ? row.endpoint.toString() : null);

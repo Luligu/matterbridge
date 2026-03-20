@@ -243,22 +243,10 @@ if (hasAnyParameter('help', 'h')) help();
 
 if (hasAnyParameter('version', 'v')) await version();
 
-// if (hasAnyParameter('systemcheck', 's')) await systemCheck();
-
 main().catch((error) => {
   inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
   shutdown();
 });
-
-/**
- * Performs a system check and exits.
- */
-/*
-async function systemCheck(): Promise<void> {
-  manager.runThread('SystemCheck');
-  process.exit(0);
-}
-*/
 
 /**
  * Displays the version and exits.

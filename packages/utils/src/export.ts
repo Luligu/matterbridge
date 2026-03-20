@@ -11,7 +11,6 @@ export * from './colorUtils.js';
 export * from './commandLine.js';
 export * from './copyDirectory.js';
 export * from './createDirectory.js';
-export * from './createZip.js';
 export * from './deepCopy.js';
 export * from './deepEqual.js';
 export * from './error.js';

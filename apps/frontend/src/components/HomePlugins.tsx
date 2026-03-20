@@ -18,7 +18,7 @@ import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 // Backend
-import { ApiPlugin, MatterbridgeInformation, SystemInformation, WsMessageApiResponse } from '../utils/backendTypes';
+import { ApiPlugin, MatterbridgeInformation, SystemInformation, WsMessageApiResponse } from '../utils/backendShared';
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';

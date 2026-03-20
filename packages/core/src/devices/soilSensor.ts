@@ -132,9 +132,9 @@ export class SoilSensor extends MatterbridgeEndpoint {
   /**
    * Gets the SoilMeasurement `soilMoistureMeasuredValue` attribute.
    *
-   * @returns {number | null} Soil moisture in percent (0..100), or null when unknown.
+   * @returns {number | null | undefined} Soil moisture in percent (0..100), or null when unknown.
    */
-  getSoilMoistureMeasuredValue(): number | null {
-    return this.getAttribute(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue');
+  getSoilMoistureMeasuredValue(): number | null | undefined {
+    return this.getAttribute(SoilMeasurement.Cluster, 'soilMoistureMeasuredValue');
   }
 }

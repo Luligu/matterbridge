@@ -9,6 +9,13 @@ export interface ConditionalTooltipProps {
   children: ReactNode;
 }
 
+export function shouldTooltipOpen(el: HTMLSpanElement | null): boolean {
+  if (!el) {
+    return false;
+  }
+  return el.scrollWidth > el.clientWidth;
+}
+
 /**
  * Tooltip that only opens when its child content is visually clipped.
  *
@@ -19,12 +26,7 @@ export function ConditionalTooltip({ title, children }: ConditionalTooltipProps)
   const [open, setOpen] = useState(false);
 
   const handleMouseEnter = () => {
-    const el = spanRef.current;
-    if (!el) {
-      setOpen(false);
-      return;
-    }
-    setOpen(el.scrollWidth > el.clientWidth);
+    setOpen(shouldTooltipOpen(spanRef.current));
   };
 
   const handleMouseLeave = () => {

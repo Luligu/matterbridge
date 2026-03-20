@@ -29,7 +29,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { laundryWasher } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { LaundryWasher, MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from './temperatureControl.js';
 
@@ -117,13 +116,13 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['laundryWasherMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['laundryWasherMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'onOff', 'off', {}); // Dead Front state
+    await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'laundryWasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'laundryWasherMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate`);
   });
@@ -136,10 +135,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperatureLevel: 100 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 100 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel 100`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperatureLevel: 2 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to 2: Hot`);
   });
 
@@ -194,10 +193,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 3 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'temperatureControl', 'setTemperature', { targetTemperature: 5000 });
+    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
   });
 

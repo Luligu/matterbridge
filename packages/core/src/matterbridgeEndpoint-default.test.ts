@@ -83,6 +83,7 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
+import { deepCopy } from '@matterbridge/utils/deep-copy';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import {
@@ -93,6 +94,7 @@ import {
   flushAsync,
   loggerLogSpy,
   matterbridge,
+  setDebug,
   setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
@@ -609,7 +611,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoAutoMutableOccupancyOutdoor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 50, 0, 50, 18, 26, true, 20);
+    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 49, 1, 50, 18, 26, true, 20);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(true);
@@ -641,7 +643,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoAutoMutableOccupancy' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 50, 0, 50, 18, 26, true);
+    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 49, 1, 50, 18, 26, true);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(false);
@@ -673,7 +675,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoAutoMutableOutdoor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 50, 0, 50, undefined, undefined, undefined, 20);
+    device.createDefaultThermostatClusterServer(22, 20, 24, 1, 0, 49, 1, 50, undefined, undefined, undefined, 20);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(true);
@@ -852,12 +854,30 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
+    await flushAsync();
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
     const retrievedPresetTypes = device.getAttribute(Thermostat.Cluster.id, 'presetTypes');
     expect(retrievedPresetTypes).toHaveLength(0);
+    expect(device.getCluster(Thermostat.Complete)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 5000,
+      absMinCoolSetpointLimit: 0,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2500,
+      occupiedHeatingSetpoint: 2100,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 5000,
+      minCoolSetpointLimit: 0,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 0,
+      numberOfPresets: 10,
+      activePresetHandle: null,
+      presets: [],
+      presetTypes: [],
+    });
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -873,7 +893,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresets' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 50, 0, 50, undefined, undefined, undefined, undefined, 0, presetsList, presetTypes);
+    device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, Buffer.from([0]), presetsList, presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(false);
@@ -920,6 +940,51 @@ describe('Matterbridge ' + NAME, () => {
     expect(retrievedPresetTypes[0].numberOfPresets).toBe(2);
     expect(retrievedPresetTypes[1].presetScenario).toBe(Thermostat.PresetScenario.Unoccupied);
     expect(retrievedPresetTypes[1].numberOfPresets).toBe(2);
+    expect(device.getCluster(Thermostat.Complete)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 4800,
+      absMinCoolSetpointLimit: 200,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2500,
+      occupiedHeatingSetpoint: 2100,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 4800,
+      minCoolSetpointLimit: 200,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 20,
+      presetTypes: [
+        {
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          numberOfPresets: 2,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          numberOfPresets: 2,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+      ],
+      numberOfPresets: 10,
+      activePresetHandle: Buffer.from([0]),
+      presets: [
+        {
+          presetHandle: Buffer.from([0]),
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          name: 'Occupied',
+          coolingSetpoint: 2500,
+          heatingSetpoint: 2100,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([1]),
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          name: 'Unoccupied',
+          coolingSetpoint: 2700,
+          heatingSetpoint: 1900,
+          builtIn: true,
+        },
+      ],
+    });
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -935,7 +1000,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsOccupancy' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultPresetsThermostatClusterServer(22, 20, 24, 2, 0, 50, 0, 50, 18, 26, true, undefined, 0, presetsList, presetTypes);
+    device.createDefaultPresetsThermostatClusterServer(22, 20, 24, 2, 0, 48, 2, 50, 18, 26, true, undefined, Buffer.from([0]), presetsList, presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(true);
@@ -961,6 +1026,327 @@ describe('Matterbridge ' + NAME, () => {
     if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
     expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
+    expect(device.getCluster(Thermostat.Complete)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 4800,
+      absMinCoolSetpointLimit: 200,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2400,
+      occupiedHeatingSetpoint: 2000,
+      unoccupiedHeatingSetpoint: 1800,
+      unoccupiedCoolingSetpoint: 2600,
+      occupancy: { occupied: true },
+      externallyMeasuredOccupancy: true,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 4800,
+      minCoolSetpointLimit: 200,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 20,
+      numberOfPresets: 10,
+      activePresetHandle: Buffer.from([0]),
+      presets: [
+        {
+          presetHandle: Buffer.from([0]),
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          name: 'Occupied',
+          coolingSetpoint: 2500,
+          heatingSetpoint: 2100,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([1]),
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          name: 'Unoccupied',
+          coolingSetpoint: 2700,
+          heatingSetpoint: 1900,
+          builtIn: true,
+        },
+      ],
+      presetTypes: [
+        {
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          numberOfPresets: 2,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          numberOfPresets: 2,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+      ],
+    });
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultPresetsThermostatClusterServer with multiple preset scenarios', async () => {
+    const presetsList: Thermostat.Preset[] = [
+      {
+        presetHandle: new Uint8Array([0]),
+        presetScenario: Thermostat.PresetScenario.Occupied,
+        name: 'Home',
+        coolingSetpoint: 2300,
+        heatingSetpoint: 2200,
+        builtIn: true,
+      },
+      {
+        presetHandle: new Uint8Array([1]),
+        presetScenario: Thermostat.PresetScenario.Unoccupied,
+        name: 'Away',
+        coolingSetpoint: 2600,
+        heatingSetpoint: 1800,
+        builtIn: true,
+      },
+      {
+        presetHandle: new Uint8Array([2]),
+        presetScenario: Thermostat.PresetScenario.Sleep,
+        name: 'Sleep',
+        coolingSetpoint: 2100,
+        heatingSetpoint: 1800,
+        builtIn: true,
+      },
+      {
+        presetHandle: new Uint8Array([3]),
+        presetScenario: Thermostat.PresetScenario.Wake,
+        name: 'Wake',
+        coolingSetpoint: 2400,
+        heatingSetpoint: 1900,
+        builtIn: true,
+      },
+      {
+        presetHandle: new Uint8Array([4]),
+        presetScenario: Thermostat.PresetScenario.Vacation,
+        name: 'Vacation',
+        coolingSetpoint: 2700,
+        heatingSetpoint: 1600,
+        builtIn: true,
+      },
+      {
+        presetHandle: new Uint8Array([5]),
+        presetScenario: Thermostat.PresetScenario.GoingToSleep,
+        name: 'GoingToSleep',
+        coolingSetpoint: 2200,
+        heatingSetpoint: 1850,
+        builtIn: true,
+      },
+    ];
+
+    const presetTypeDefinitions: Thermostat.PresetType[] = [
+      {
+        presetScenario: Thermostat.PresetScenario.Occupied,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.Occupied).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+      {
+        presetScenario: Thermostat.PresetScenario.Unoccupied,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.Unoccupied).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+      {
+        presetScenario: Thermostat.PresetScenario.Sleep,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.Sleep).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+      {
+        presetScenario: Thermostat.PresetScenario.Wake,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.Wake).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+      {
+        presetScenario: Thermostat.PresetScenario.Vacation,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.Vacation).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+      {
+        presetScenario: Thermostat.PresetScenario.GoingToSleep,
+        numberOfPresets: presetsList.filter((preset) => preset.presetScenario === Thermostat.PresetScenario.GoingToSleep).length,
+        presetTypeFeatures: { automatic: false, supportsNames: true },
+      },
+    ];
+
+    const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsMultiScenario' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultPresetsThermostatClusterServer(20, 18, 22, 1, 0, 35, 15, 50, 10, 30, false, 20.5, undefined, presetsList, presetTypeDefinitions);
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupancy')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'numberOfPresets')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'activePresetHandle')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presets')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'presetTypes')).toBe(true);
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      autoMode: true,
+      cooling: true,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: true,
+      presets: true,
+      scheduleConfiguration: false,
+      setback: false,
+    });
+
+    if (matterbridge.aggregatorNode) await addDevice(matterbridge.aggregatorNode, device);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'outdoorTemperature')).toBe(2050);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'activePresetHandle')).toBeNull();
+    expect(device.getAttribute(Thermostat.Cluster.id, 'presets')).toHaveLength(6);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'presetTypes')).toHaveLength(6);
+    expect(device.getCluster(Thermostat.Complete)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 3500,
+      absMinCoolSetpointLimit: 1500,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2200,
+      occupiedHeatingSetpoint: 1800,
+      unoccupiedHeatingSetpoint: 1000,
+      unoccupiedCoolingSetpoint: 3000,
+      occupancy: { occupied: false },
+      externallyMeasuredOccupancy: true,
+      outdoorTemperature: 2050,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 3500,
+      minCoolSetpointLimit: 1500,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 10,
+      numberOfPresets: 10,
+      activePresetHandle: null,
+      presets: [
+        {
+          presetHandle: Buffer.from([0]),
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          name: 'Home',
+          coolingSetpoint: 2300,
+          heatingSetpoint: 2200,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([1]),
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          name: 'Away',
+          coolingSetpoint: 2600,
+          heatingSetpoint: 1800,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([2]),
+          presetScenario: Thermostat.PresetScenario.Sleep,
+          name: 'Sleep',
+          coolingSetpoint: 2100,
+          heatingSetpoint: 1800,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([3]),
+          presetScenario: Thermostat.PresetScenario.Wake,
+          name: 'Wake',
+          coolingSetpoint: 2400,
+          heatingSetpoint: 1900,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([4]),
+          presetScenario: Thermostat.PresetScenario.Vacation,
+          name: 'Vacation',
+          coolingSetpoint: 2700,
+          heatingSetpoint: 1600,
+          builtIn: true,
+        },
+        {
+          presetHandle: Buffer.from([5]),
+          presetScenario: Thermostat.PresetScenario.GoingToSleep,
+          name: 'GoingToSleep',
+          coolingSetpoint: 2200,
+          heatingSetpoint: 1850,
+          builtIn: true,
+        },
+      ],
+      presetTypes: [
+        {
+          presetScenario: Thermostat.PresetScenario.Occupied,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Unoccupied,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Sleep,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Wake,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.Vacation,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+        {
+          presetScenario: Thermostat.PresetScenario.GoingToSleep,
+          numberOfPresets: 1,
+          presetTypeFeatures: { automatic: false, supportsNames: true },
+        },
+      ],
+    });
+
+    await device.setAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit', 1300);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit')).toBe(1300);
+
+    await device.setAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit', 3400);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit')).toBe(3400);
+
+    await device.setAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit', 1800);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit')).toBe(1800);
+
+    await device.setAttribute(Thermostat.Cluster.id, 'maxCoolSetpointLimit', 3600);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(3600);
+
+    const expectHeatLimitsUnchanged = () => {
+      expect(device.getAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit')).toBe(1300);
+      expect(device.getAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit')).toBe(3400);
+    };
+
+    const expectStableThermostatLimits = () => {
+      expect(device.getCluster(Thermostat.Complete)).toMatchObject({
+        minHeatSetpointLimit: 1300,
+        maxHeatSetpointLimit: 3400,
+        minCoolSetpointLimit: 1800,
+        maxCoolSetpointLimit: 3600,
+      });
+    };
+
+    // These writes intentionally violate Matter auto-mode limit coupling:
+    // minHeat must stay <= minCool - deadBand, minCool must stay >= minHeat + deadBand,
+    // and maxHeat must stay <= absMaxHeat while also respecting the cool-side deadBand rule.
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit', 1800)).rejects.toThrow(/minHeatSetpointLimit/i);
+    expectHeatLimitsUnchanged();
+    expectStableThermostatLimits();
+
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit', 1200)).rejects.toThrow(/minCoolSetpointLimit/i);
+    expect(device.getAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit')).toBe(1800);
+    expectHeatLimitsUnchanged();
+    expectStableThermostatLimits();
+
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit', 3600)).rejects.toThrow(/maxHeatSetpointLimit/i);
+    expectHeatLimitsUnchanged();
+    expectStableThermostatLimits();
+
+    // Failed setpoint validation must not roll the configured user limits back to Matter defaults.
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint', 1200)).rejects.toThrow(/occupiedHeatingSetpoint|Constraint/i);
+    expectHeatLimitsUnchanged();
+    expectStableThermostatLimits();
+
+    await expect(device.setAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint', 3700)).rejects.toThrow(/occupiedCoolingSetpoint|Constraint/i);
+    expectHeatLimitsUnchanged();
+    expectStableThermostatLimits();
+
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

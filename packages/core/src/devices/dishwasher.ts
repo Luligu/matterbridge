@@ -22,7 +22,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
@@ -33,6 +32,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 /**
@@ -40,7 +40,7 @@ import { createLevelTemperatureControlClusterServer, createNumberTemperatureCont
  */
 export class Dishwasher extends MatterbridgeEndpoint {
   /**
-   * Creates an instance of the DishWasher class.
+   * Creates an instance of the Dishwasher class.
    *
    * @param {string} name - The name of the dish washer.
    * @param {string} serial - The serial number of the dish washer.
@@ -151,10 +151,16 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: DishwasherModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DishwasherMode.changeToMode', {
+      command: 'changeToMode',
+      request,
+      cluster: DishwasherModeServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DishwasherMode.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
     if (supportedMode) {
       device.log.info(`DishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);

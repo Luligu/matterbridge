@@ -25,7 +25,7 @@
 import type { LogLevel } from 'node-ansi-logger';
 
 /** Thread names used in the thread system */
-export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand';
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand';
 
 /** Base worker data for all workers */
 export type BaseWorkerData = { threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
@@ -43,8 +43,21 @@ export type SpawnWorkerData = {
   packageName: string;
 };
 
+/** Worker data for archive command worker */
+export type ArchiveWorkerData = {
+  threadName: ThreadNames;
+  logLevel?: LogLevel;
+  debug?: boolean;
+  verbose?: boolean;
+  tracker?: boolean;
+  command: 'zip' | 'verify' | 'unzip';
+  archivePath: string;
+  sourcePaths: string[];
+  destinationPath: string;
+};
+
 /** Worker data for all workers */
-export type WorkerData = BaseWorkerData | SpawnWorkerData;
+export type WorkerData = BaseWorkerData | SpawnWorkerData | ArchiveWorkerData;
 
 /**
  *  Type guard to check if the workerData is valid.
@@ -88,6 +101,28 @@ export function isSpawnWorkerData(data: unknown): data is SpawnWorkerData {
     (data.packageCommand === 'install' || data.packageCommand === 'uninstall') &&
     'packageName' in data &&
     typeof data.packageName === 'string'
+  );
+}
+
+/**
+ * Type guard to check if the workerData is for the archive command worker.
+ *
+ * @param {WorkerData} data - The worker data to check.
+ * @returns {data is ArchiveWorkerData} True if the data is for the archive command worker, false otherwise.
+ */
+export function isArchiveWorkerData(data: unknown): data is ArchiveWorkerData {
+  return (
+    isWorkerData(data) &&
+    typeof data === 'object' &&
+    data !== null &&
+    'command' in data &&
+    typeof data.command === 'string' &&
+    'archivePath' in data &&
+    typeof data.archivePath === 'string' &&
+    'sourcePaths' in data &&
+    Array.isArray(data.sourcePaths) &&
+    'destinationPath' in data &&
+    typeof data.destinationPath === 'string'
   );
 }
 

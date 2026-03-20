@@ -30,7 +30,7 @@
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
 
 // @matter/general
-import { AtLeastOne, Lifecycle, NamedHandler, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
 import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
@@ -114,8 +114,6 @@ import {
   MatterbridgeHepaFilterMonitoringServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
-  MatterbridgeLiftTiltWindowCoveringServer,
-  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -126,8 +124,10 @@ import {
   MatterbridgeSwitchServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviorsServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterServers,
   addFixedLabel,
@@ -169,10 +169,28 @@ import {
   triggerEvent,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import { CommandHandlerFunction, MatterbridgeEndpointCommands, MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
+
+type BehaviorCommandName<T extends Behavior.Type> = {
+  [K in keyof CommandsOfBehavior<T>]: K;
+}[keyof CommandsOfBehavior<T>] &
+  string;
+
+type CommandsOfBehavior<T extends Behavior.Type> = {
+  [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
+    ? (input: P[0], context?: ActionContext) => Promise<Awaited<R>>
+    : never;
+};
+
+type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandName<T>> = CommandsOfBehavior<T>[C] extends (
+  input: infer P,
+  context?: ActionContext,
+) => Promise<unknown>
+  ? P
+  : never;
 
 /**
  * Type guard to check whether a value is a MatterbridgeEndpoint instance.
@@ -263,7 +281,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   readonly deviceTypes = new Map<number, DeviceTypeDefinition>();
 
   /** Command handler for the MatterbridgeEndpoint commands */
-  readonly commandHandler = new NamedHandler<MatterbridgeEndpointCommands>();
+  readonly commandHandler = new CommandHandler();
 
   /**
    * Represents a MatterbridgeEndpoint.
@@ -453,6 +471,88 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the value of the provided attribute from the given cluster.
    *
+   * @param {Behavior.Type} cluster - The cluster to retrieve the attribute from.
+   * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute to retrieve.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @returns {Behavior.StateOf<T>[A] | undefined} The value of the attribute, or undefined if the attribute is not found.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOffBehavior, 'onOff')
+   * device.getAttribute(OnOffServer, 'onOff')
+   * device.getAttribute(OnOffCluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute('OnOff', 'onOff')
+   * ```
+   * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  getAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(cluster: T, attribute: A, log?: AnsiLogger): Behavior.StateOf<T>[A] | undefined;
+  /**
+   * Retrieves the value of the provided attribute from the given cluster.
+   *
+   * @param {ClusterType} cluster - The cluster to retrieve the attribute from.
+   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute to retrieve.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @returns {ClusterType.AttributeValues<T>[A] | undefined} The value of the attribute, or undefined if the attribute is not found.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOffBehavior, 'onOff')
+   * device.getAttribute(OnOffServer, 'onOff')
+   * device.getAttribute(OnOffCluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute('OnOff', 'onOff')
+   * ```
+   * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  getAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(cluster: T, attribute: A, log?: AnsiLogger): ClusterType.AttributeValues<T>[A] | undefined;
+  /**
+   * Retrieves the value of the provided attribute from the given cluster.
+   *
+   * @param {ClusterId | string} cluster - The cluster to retrieve the attribute from.
+   * @param {string} attribute - The name of the attribute to retrieve.
+   * @param {AnsiLogger} [log] - Optional logger for error and info messages.
+   * @returns {boolean | number | bigint | string | object | null | undefined} The value of the attribute, or undefined if the attribute is not found.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOffBehavior, 'onOff')
+   * device.getAttribute(OnOffServer, 'onOff')
+   * device.getAttribute(OnOffCluster, 'onOff')
+   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute('OnOff', 'onOff')
+   * ```
+   * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getAttribute(cluster: ClusterId | string, attribute: string, log?: AnsiLogger): any;
+  /**
+   * Retrieves the value of the provided attribute from the given cluster.
+   *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the attribute from.
    * @param {string} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
@@ -461,11 +561,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @example
    *
    * The following examples are all valid ways to retrieve the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
    * ```typescript
    * device.getAttribute(OnOffBehavior, 'onOff')
    * device.getAttribute(OnOffServer, 'onOff')
    * device.getAttribute(OnOffCluster, 'onOff')
    * device.getAttribute(OnOff.Cluster, 'onOff')
+   * ```
+   * Not typed overloads:
+   * ```typescript
    * device.getAttribute(OnOff.Cluster.id, 'onOff')
    * device.getAttribute('OnOff', 'onOff')
    * ```
@@ -476,6 +581,97 @@ export class MatterbridgeEndpoint extends Endpoint {
     return getAttribute(this, cluster, attribute, log);
   }
 
+  /* eslint-disable @typescript-eslint/unified-signatures */
+  /**
+   * Sets the value of an attribute on a cluster server.
+   *
+   * @param {Behavior.Type} clusterId - The ID of the cluster.
+   * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute.
+   * @param {Behavior.StateOf<T>[A]} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOffBehavior, 'onOff', true)
+   * await device.setAttribute(OnOffServer, 'onOff', true)
+   * await device.setAttribute(OnOffCluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async setAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(clusterId: T, attribute: A, value: Behavior.StateOf<T>[A], log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Sets the value of an attribute on a cluster server.
+   *
+   * @param {ClusterType} clusterId - The ID of the cluster.
+   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute.
+   * @param {ClusterType.AttributeValues<T>[A]} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOffBehavior, 'onOff', true)
+   * await device.setAttribute(OnOffServer, 'onOff', true)
+   * await device.setAttribute(OnOffCluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async setAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+    clusterId: T,
+    attribute: A,
+    value: ClusterType.AttributeValues<T>[A],
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Sets the value of an attribute on a cluster server.
+   *
+   * @param {ClusterId | string} clusterId - The ID of the cluster.
+   * @param {string} attribute - The name of the attribute.
+   * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOffBehavior, 'onOff', true)
+   * await device.setAttribute(OnOffServer, 'onOff', true)
+   * await device.setAttribute(OnOffCluster, 'onOff', true)
+   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async setAttribute(clusterId: ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean>;
+  /* eslint-enable @typescript-eslint/unified-signatures */
   /**
    * Sets the value of an attribute on a cluster server.
    *
@@ -488,11 +684,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @example
    *
    * The following examples are all valid ways to set the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
    * ```typescript
    * await device.setAttribute(OnOffBehavior, 'onOff', true)
    * await device.setAttribute(OnOffServer, 'onOff', true)
    * await device.setAttribute(OnOffCluster, 'onOff', true)
    * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
    * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
    * await device.setAttribute('OnOff', 'onOff', true)
    * ```
@@ -507,6 +708,97 @@ export class MatterbridgeEndpoint extends Endpoint {
     return await setAttribute(this, clusterId, attribute, value, log);
   }
 
+  /* eslint-disable @typescript-eslint/unified-signatures */
+  /**
+   * Update the value of an attribute on a cluster server only if the value is different.
+   *
+   * @param {Behavior.Type} cluster - The cluster to set the attribute on.
+   * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute.
+   * @param {Behavior.StateOf<T>[A]} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOffBehavior, 'onOff', true)
+   * await device.updateAttribute(OnOffServer, 'onOff', true)
+   * await device.updateAttribute(OnOffCluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async updateAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(cluster: T, attribute: A, value: Behavior.StateOf<T>[A], log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Update the value of an attribute on a cluster server only if the value is different.
+   *
+   * @param {ClusterType} cluster - The cluster to set the attribute on.
+   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute.
+   * @param {ClusterType.AttributeValues<T>[A]} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOffBehavior, 'onOff', true)
+   * await device.updateAttribute(OnOffServer, 'onOff', true)
+   * await device.updateAttribute(OnOffCluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async updateAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+    cluster: T,
+    attribute: A,
+    value: ClusterType.AttributeValues<T>[A],
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Update the value of an attribute on a cluster server only if the value is different.
+   *
+   * @param {ClusterId | string} cluster - The cluster to set the attribute on.
+   * @param {string} attribute - The name of the attribute.
+   * @param {boolean | number | bigint | string | object | null} value - The value to set for the attribute.
+   * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOffBehavior, 'onOff', true)
+   * await device.updateAttribute(OnOffServer, 'onOff', true)
+   * await device.updateAttribute(OnOffCluster, 'onOff', true)
+   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute('OnOff', 'onOff', true)
+   * ```
+   * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
+   */
+  async updateAttribute(cluster: ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean>;
+  /* eslint-enable @typescript-eslint/unified-signatures */
   /**
    * Update the value of an attribute on a cluster server only if the value is different.
    *
@@ -519,11 +811,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @example
    *
    * The following examples are all valid ways to update the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
    * ```typescript
    * await device.updateAttribute(OnOffBehavior, 'onOff', true)
    * await device.updateAttribute(OnOffServer, 'onOff', true)
    * await device.updateAttribute(OnOffCluster, 'onOff', true)
    * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * ```
+   * Not typed overloads:
+   * ```typescript
    * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
    * await device.updateAttribute('OnOff', 'onOff', true)
    * ```
@@ -538,20 +835,157 @@ export class MatterbridgeEndpoint extends Endpoint {
     return await updateAttribute(this, cluster, attribute, value, log);
   }
 
+  /* eslint-disable @typescript-eslint/unified-signatures */
   /**
    * Subscribes to the provided attribute on a cluster.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
-   * @param {string} attribute - The name of the attribute to subscribe to.
-   * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. When context.offline === true then the change is locally generated and not from the controller.
+   * @param {Behavior.Type} cluster - The cluster to subscribe the attribute to.
+   * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
    * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to subscribe to the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * ```
+   * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
    * @remarks
    * The listener function (cannot be async!) will receive three parameters:
    * - `newValue`: The new value of the attribute.
    * - `oldValue`: The old value of the attribute.
-   * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
+   * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   */
+  async subscribeAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(
+    cluster: T,
+    attribute: A,
+    listener: (newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void,
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Subscribes to the provided attribute on a cluster.
+   *
+   * @param {ClusterType} cluster - The cluster to subscribe the attribute to.
+   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to subscribe to the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * ```
+   * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
+   *
+   * @remarks
+   * The listener function (cannot be async!) will receive three parameters:
+   * - `newValue`: The new value of the attribute.
+   * - `oldValue`: The old value of the attribute.
+   * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   */
+  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+    cluster: T,
+    attribute: A,
+    listener: (newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void,
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Subscribes to the provided attribute on a cluster.
+   *
+   * @param {ClusterId | string} cluster - The cluster to subscribe the attribute to.
+   * @param {string} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to subscribe to the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * ```
+   * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
+   *
+   * @remarks
+   * The listener function (cannot be async!) will receive three parameters:
+   * - `newValue`: The new value of the attribute.
+   * - `oldValue`: The old value of the attribute.
+   * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   */
+  async subscribeAttribute(
+    cluster: ClusterId | string,
+    attribute: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    listener: (newValue: any, oldValue: any, context: ActionContext) => void,
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Subscribes to the provided attribute on a cluster.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
+   * @param {string} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to subscribe to the 'onOff' attribute of the 'OnOff' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * ```
+   * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
+   *
+   * @remarks
+   * The listener function (cannot be async!) will receive three parameters:
+   * - `newValue`: The new value of the attribute.
+   * - `oldValue`: The old value of the attribute.
+   * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
   async subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -562,6 +996,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): Promise<boolean> {
     return await subscribeAttribute(this, cluster, attribute, listener, log);
   }
+  /* eslint-enable @typescript-eslint/unified-signatures */
 
   /**
    * Sets the state of the provided cluster on a given endpoint.
@@ -574,6 +1009,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOffBehavior, { onOff: true })
+   * await device.setCluster(OnOffServer, { onOff: true })
+   * await device.setCluster(OnOffCluster, { onOff: true })
+   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster('OnOff', { onOff: true })
+   * ```
    */
   async setCluster<T extends Behavior.Type>(cluster: T, value: Behavior.StateOf<T>, log?: AnsiLogger): Promise<boolean>;
   /**
@@ -587,6 +1039,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOffBehavior, { onOff: true })
+   * await device.setCluster(OnOffServer, { onOff: true })
+   * await device.setCluster(OnOffCluster, { onOff: true })
+   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster('OnOff', { onOff: true })
+   * ```
    */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
   async setCluster<T extends ClusterType>(cluster: T, value: ClusterType.AttributeValues<T>, log?: AnsiLogger): Promise<boolean>;
@@ -601,6 +1070,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOffBehavior, { onOff: true })
+   * await device.setCluster(OnOffServer, { onOff: true })
+   * await device.setCluster(OnOffCluster, { onOff: true })
+   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster('OnOff', { onOff: true })
+   * ```
    */
   async setCluster(cluster: ClusterId | string, value: Record<string, boolean | number | bigint | string | object | undefined | null>, log?: AnsiLogger): Promise<boolean>;
   /**
@@ -614,6 +1100,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to set the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOffBehavior, { onOff: true })
+   * await device.setCluster(OnOffServer, { onOff: true })
+   * await device.setCluster(OnOffCluster, { onOff: true })
+   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster('OnOff', { onOff: true })
+   * ```
    */
   async setCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -633,6 +1136,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getCluster(OnOffBehavior)
+   * device.getCluster(OnOffServer)
+   * device.getCluster(OnOffCluster)
+   * device.getCluster(OnOff.Cluster)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster('OnOff')
+   * ```
    */
   getCluster<T extends Behavior.Type>(cluster: T, log?: AnsiLogger): Behavior.StateOf<T> | undefined;
   /**
@@ -645,6 +1165,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getCluster(OnOffBehavior)
+   * device.getCluster(OnOffServer)
+   * device.getCluster(OnOffCluster)
+   * device.getCluster(OnOff.Cluster)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster('OnOff')
+   * ```
    */
   getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterType.AttributeValues<T> | undefined;
   /**
@@ -657,6 +1194,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getCluster(OnOffBehavior)
+   * device.getCluster(OnOffServer)
+   * device.getCluster(OnOffCluster)
+   * device.getCluster(OnOff.Cluster)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster('OnOff')
+   * ```
    */
   getCluster(cluster: ClusterId | string, log?: AnsiLogger): Record<string, boolean | number | bigint | string | object | undefined | null> | undefined;
   /**
@@ -669,6 +1223,23 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
    * @remarks The overloads that take a Behavior.Type or a ClusterType are typed.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the 'OnOff' cluster server state:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getCluster(OnOffBehavior)
+   * device.getCluster(OnOffServer)
+   * device.getCluster(OnOffCluster)
+   * device.getCluster(OnOff.Cluster)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster('OnOff')
+   * ```
    */
   getCluster(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -733,75 +1304,88 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a command handler for the specified command.
    *
-   * @param {keyof MatterbridgeEndpointCommands} command - The command to add the handler for.
-   * @param {CommandHandlerFunction} handler - The handler function to execute when the command is received.
+   * The handler function will be called when the specified command is received on the endpoint before the default behavior is executed.
+   *
+   * The handler function is called with await and shall return immediately.
+   *
+   * @param {CommandHandlers} command - The command to add the handler for.
+   * @param {CommandHandlerFunction<C>} handler - The handler function to execute when the command is received.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
+   *
+   * The command shall be a string in the format of "Cluster.command" (e.g. "OnOff.toggle"). Requires matterbridge version 3.7.0 or higher.
+   *
+   * The cluster name and command name should be the same as those found in the Matter specifications.
+   *
+   * Aliases for the most used clusters command (e.g. "on" or "off") are also supported ("toggle" is the same as "OnOff.toggle").
+   *
+   * When you require Matterbridge version 3.7.0 or higher, you should update the command name (OnOff.toggle instead of just "toggle") to avoid conflicts with other clusters that have commands with the same name.
+   *
+   * @remarks
+   *
    * The handler function will receive an object with the following properties:
-   * - `request`: The request object sent with the command.
+   * - `command`: The command that was received (e.g. "toggle").
+   * - `request`: The typed request object sent with the command.
    * - `cluster`: The id of the cluster that received the command (i.e. "onOff").
-   * - `attributes`: The current attributes of the cluster that received the command (i.e. { onOff: true}).
+   * - `attributes`: The current writable attributes of the cluster that received the command (i.e. { onOff: true}).
+   * > Be aware that this is the actual cluster state but is typed as a complete instance of the cluster.
+   * > You can use this directly to access and change the current state of the cluster inside the handler function.
+   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implmentation shall update the current position).
+   * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
+   * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    */
-  addCommandHandler(command: keyof MatterbridgeEndpointCommands, handler: CommandHandlerFunction): this {
+  addCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
     this.commandHandler.addHandler(command, handler);
+    return this;
+  }
+
+  /**
+   * Removes a command handler for the specified command.
+   *
+   * @param {CommandHandlers} command - The command to remove the handler for.
+   * @param {CommandHandlerFunction<C>} handler - The handler function to remove.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  removeCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
+    this.commandHandler.removeHandler(command, handler);
     return this;
   }
 
   /**
    * Execute the command handler for the specified command. Used ONLY in Jest tests.
    *
-   * @param {keyof MatterbridgeEndpointCommands} command - The command to execute.
-   * @param {Record<string, boolean | number | bigint | string | object | null>} [request] - The optional request to pass to the handler function.
-   * @param {string} [cluster] - The optional cluster to pass to the handler function.
-   * @param {Record<string, boolean | number | bigint | string | object | null>} [attributes] - The optional attributes to pass to the handler function.
-   * @param {MatterbridgeEndpoint} [endpoint] - The optional MatterbridgeEndpoint instance to pass to the handler function
-   *
-   * @deprecated Used ONLY in Jest tests.
+   * @param {CommandHandlers} command - The command to execute.
+   * @param {CommandHandlerData<C>['request']} request - The request to pass to the handler function.
+   * @param {CommandHandlerData<C>['cluster']} cluster - The cluster to pass to the handler function.
+   * @param {CommandHandlerData<C>['attributes']} attributes - The attributes to pass to the handler function.
+   * @param {CommandHandlerData<C>['endpoint']} endpoint - The MatterbridgeEndpoint instance to pass to the handler function.
    */
-  async executeCommandHandler(
-    command: keyof MatterbridgeEndpointCommands,
-    request?: Record<string, boolean | number | bigint | string | object | null>,
-    cluster?: string,
-    attributes?: Record<string, boolean | number | bigint | string | object | null>,
-    endpoint?: MatterbridgeEndpoint,
+  async executeCommandHandler<C extends CommandHandlers>(
+    command: C,
+    request: CommandHandlerData<C>['request'],
+    cluster: CommandHandlerData<C>['cluster'],
+    attributes: CommandHandlerData<C>['attributes'],
+    endpoint: CommandHandlerData<C>['endpoint'],
   ): Promise<void> {
-    await this.commandHandler.executeHandler(command, { request, cluster, attributes, endpoint });
+    await this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
   }
 
-  /* eslint-disable @typescript-eslint/unified-signatures */
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {Behavior.Type} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
-   *
-   * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand<
-    T extends Behavior.Type,
-    C extends keyof {
-      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
-    },
-  >(
-    cluster: T,
-    command: C,
-    params?: {
-      [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: unknown[]) => unknown ? K : never]: InstanceType<T>[K];
-    }[C] extends (...args: infer P) => unknown
-      ? P[0]
-      : never,
-  ): Promise<void>;
+  async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(cluster: T, command: C, params?: BehaviorCommandParams<T, C>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {ClusterType} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
-   *
-   * @deprecated Used ONLY in Jest tests.
    */
   async invokeBehaviorCommand<T extends ClusterType, C extends keyof ClusterType.CommandsOf<T>>(
     cluster: T,
@@ -813,34 +1397,25 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
+   * @param {ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
-   *
-   * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand(
-    cluster: ClusterId | string,
-    command: keyof MatterbridgeEndpointCommands,
-    params?: Record<string, boolean | number | bigint | string | object | null>,
-  ): Promise<void>;
+  async invokeBehaviorCommand(cluster: ClusterId | string, command: CommandHandlers, params?: Record<string, boolean | number | bigint | string | object | null>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
-   *
-   * @deprecated Used ONLY in Jest tests.
    */
   async invokeBehaviorCommand(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
-    command: keyof MatterbridgeEndpointCommands,
+    command: CommandHandlers,
     params?: Record<string, boolean | number | bigint | string | object | null>,
   ) {
     await invokeBehaviorCommand(this, cluster, command, params);
   }
-  /* eslint-enable @typescript-eslint/unified-signatures */
 
   /**
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
@@ -2019,7 +2594,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
   ): this {
-    this.behaviors.require(MatterbridgeLiftWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type, // Must support feature Lift
       numberOfActuationsLift: 0,
       configStatus: {
@@ -2060,7 +2635,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
   ): this {
     this.behaviors.require(
-      MatterbridgeLiftTiltWindowCoveringServer.with(
+      MatterbridgeWindowCoveringServer.with(
         WindowCovering.Feature.Lift,
         WindowCovering.Feature.PositionAwareLift,
         WindowCovering.Feature.Tilt,
@@ -2201,7 +2776,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 1°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -2216,7 +2791,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     localTemperature: number = 23,
     occupiedHeatingSetpoint: number = 21,
     occupiedCoolingSetpoint: number = 25,
-    minSetpointDeadBand: number = 1,
+    minSetpointDeadBand: number = 0,
     minHeatSetpointLimit: number = 0,
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
@@ -2337,7 +2912,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
-   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 2°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
    * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
    * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
    * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
@@ -2346,7 +2921,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
-   * @param {number | undefined} [activePresetHandle] - The active preset handle. Defaults to undefined.
+   * @param {Uint8Array | null} [activePresetHandle] - The active preset handle. Defaults to null.
    * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
    * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -2355,7 +2930,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     localTemperature: number = 23,
     occupiedHeatingSetpoint: number = 21,
     occupiedCoolingSetpoint: number = 25,
-    minSetpointDeadBand: number = 2,
+    minSetpointDeadBand: number = 0,
     minHeatSetpointLimit: number = 0,
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
@@ -2364,7 +2939,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     unoccupiedCoolingSetpoint: number | undefined = undefined,
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
-    activePresetHandle: number | undefined = undefined,
+    activePresetHandle: Uint8Array | null = null,
     presetsList: Thermostat.Preset[] | null | undefined = undefined,
     presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
@@ -2404,10 +2979,10 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
-        activePresetHandle: activePresetHandle !== undefined ? Uint8Array.from([activePresetHandle]) : null,
+        activePresetHandle: activePresetHandle ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
         presets: (presetsList ?? []).map((p) => ({
-          presetHandle: Uint8Array.from(p.presetHandle || [0]),
+          presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,
           coolingSetpoint: p.coolingSetpoint,

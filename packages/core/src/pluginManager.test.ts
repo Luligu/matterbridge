@@ -227,8 +227,8 @@ describe('PluginManager', () => {
     ).toBeDefined();
 
     expect(
-      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
-    ).toBeDefined();
+      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.success,
+    ).toBeTruthy();
 
     // Try all operations on removed plugin
     expect((await testServer.fetch({ type: 'plugins_enable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeNull();
@@ -245,7 +245,9 @@ describe('PluginManager', () => {
     expect(
       (await testServer.fetch({ type: 'plugins_shutdown', src: testServer.name, dst: 'plugins', params: { plugin: 'matterbridge-mock1' } }, 5000)).result.plugin,
     ).toBeUndefined();
-    expect((await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin).toBeNull();
+    expect(
+      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.success,
+    ).toBeFalsy();
     // @ts-expect-error testing non-existing type
     testServer.request({ type: 'plugins_unknown', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } });
 
@@ -259,8 +261,8 @@ describe('PluginManager', () => {
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
     expect(
-      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
-    ).not.toBeNull();
+      (await testServer.fetch({ type: 'plugins_remove', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.success,
+    ).toBeTruthy();
     expect(plugins.has('matterbridge-mock1')).toBe(false);
 
     await expect(

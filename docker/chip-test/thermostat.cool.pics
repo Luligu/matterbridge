@@ -1,0 +1,13 @@
+# To run phyton tests on Thermostat --PICS is required
+TSTAT.S=1
+TSTAT.S.F00=0 # Heating
+TSTAT.S.F01=1 # Cooling
+TSTAT.S.F05=0 # Auto mode
+TSTAT.S.F08=0 # Presets
+TSTAT.S.F02=0 # Occupancy
+TSTAT.S.A0005=1 # AbsMinCoolSetpointLimit
+TSTAT.S.A0006=1 # AbsMaxCoolSetpointLimit
+TSTAT.S.A0011=1 # OccupiedCoolingSetpoint
+TSTAT.S.A0017=1 # MinCoolSetpointLimit
+TSTAT.S.A0018=1 # MaxCoolSetpointLimit
+TSTAT.S.A0019=1 # MinSetpointDeadBand

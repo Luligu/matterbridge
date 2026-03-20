@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 import { setupTest } from '@matterbridge/jest-utils';
 import { AnsiLogger } from 'node-ansi-logger';
 
-import { inspectError, logError } from './error.js';
+import { getErrorMessage, inspectError, logError } from './error.js';
 
 // Setup the test environment
 await setupTest('Error', false);
@@ -36,6 +36,19 @@ describe('Error logger', () => {
   afterAll(async () => {
     // Restore all mocks
     jest.restoreAllMocks();
+  });
+
+  describe('getErrorMessage', () => {
+    it('should return the message for Error instances', () => {
+      expect(getErrorMessage(new Error('Test error message'))).toBe('Test error message');
+    });
+
+    it('should stringify non-Error values', () => {
+      expect(getErrorMessage('Simple string error')).toBe('Simple string error');
+      expect(getErrorMessage(404)).toBe('404');
+      expect(getErrorMessage(null)).toBe('null');
+      expect(getErrorMessage(undefined)).toBe('undefined');
+    });
   });
 
   it('should log error message with Error instance including message and stack', () => {

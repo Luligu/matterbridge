@@ -1,5 +1,5 @@
 // Backend
-import { ApiMatter } from './backendTypes';
+import { ApiMatter } from './backendShared';
 
 // Frontend
 import { debug } from '../App';

@@ -28,7 +28,6 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { oven } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
 
 // Setup the test environment
@@ -178,6 +177,40 @@ describe('Matterbridge ' + NAME, () => {
     expect(attributes.length).toBe(47);
   });
 
+  test('createDefaultOvenCavityOperationalStateClusterServer normalizes different parameters', () => {
+    const requireSpy = jest.spyOn(cabinet1.behaviors as any, 'require').mockImplementation(() => undefined);
+
+    expect(device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1)).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(1, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: null,
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Stopped,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    expect(
+      device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1, OperationalState.OperationalStateEnum.Running, 1, ['pre-heating', 'pre-heated', 'cooling down']),
+    ).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(2, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: ['pre-heating', 'pre-heated', 'cooling down'],
+      currentPhase: 1,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    requireSpy.mockRestore();
+  });
+
   test('invoke MatterbridgeOvenModeServer commands', async () => {
     expect(cabinet1.behaviors.has(OvenModeServer)).toBeTruthy();
     expect(cabinet1.behaviors.has(MatterbridgeOvenModeServer)).toBeTruthy();
@@ -187,12 +220,12 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenMode', 'changeToMode', { newMode: 2 });
+    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with mode 2 = Convection`);
 
     // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenMode', 'changeToMode', { newMode: 15 });
+    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
   });
 
@@ -208,7 +241,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 2
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'start', { newMode: 2 });
+    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
@@ -216,7 +249,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 15
     jest.clearAllMocks();
-    await invokeBehaviorCommand(cabinet1, 'ovenCavityOperationalState', 'stop', { newMode: 15 });
+    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,

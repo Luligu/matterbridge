@@ -23,7 +23,6 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
@@ -35,6 +34,7 @@ import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Matterbridge endpoint representing a water heater device.
@@ -172,10 +172,16 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
    *
    * @param {WaterHeaterManagement.BoostRequest} request - Boost request payload.
    */
-  override boost(request: WaterHeaterManagement.BoostRequest): MaybePromise {
+  override async boost(request: WaterHeaterManagement.BoostRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('boost', { request, cluster: WaterHeaterManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('WaterHeaterManagement.boost', {
+      command: 'boost',
+      request,
+      cluster: WaterHeaterManagementServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(request)}`);
     this.state.boostState = WaterHeaterManagement.BoostState.Active;
     // The implementation is responsible for setting the device accordingly with the boostInfo of the boost command
@@ -186,10 +192,16 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   /**
    * Cancels an active boost.
    */
-  override cancelBoost(): MaybePromise {
+  override async cancelBoost(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('cancelBoost', { request: {}, cluster: WaterHeaterManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('WaterHeaterManagement.cancelBoost', {
+      command: 'cancelBoost',
+      request: {},
+      cluster: WaterHeaterManagementServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
     this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
     // The implementation is responsible for setting the device accordingly with the cancelBoost command
@@ -208,10 +220,16 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: WaterHeaterModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('WaterHeaterMode.changeToMode', {
+      command: 'changeToMode',
+      request,
+      cluster: WaterHeaterModeServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterMode.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: ${request.newMode}`);

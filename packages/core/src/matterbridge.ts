@@ -425,6 +425,36 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
           break;
+        case 'matterbridge_start_plugin_server':
+          {
+            const plugin = this.plugins.get(msg.params.pluginName);
+            if (plugin && plugin.serverNode) await this.startServerNode(plugin.serverNode);
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
+        case 'matterbridge_stop_plugin_server':
+          {
+            const plugin = this.plugins.get(msg.params.pluginName);
+            if (plugin && plugin.serverNode) await this.stopServerNode(plugin.serverNode);
+            if (plugin && plugin.serverNode) plugin.serverNode = undefined;
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
+        case 'matterbridge_start_device_server':
+          {
+            const device = this.devices.get(msg.params.deviceUniqueId);
+            if (device && device.serverNode) await this.startServerNode(device.serverNode);
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
+        case 'matterbridge_stop_device_server':
+          {
+            const device = this.devices.get(msg.params.deviceUniqueId);
+            if (device && device.serverNode) await this.stopServerNode(device.serverNode);
+            if (device && device.serverNode) device.serverNode = undefined;
+            this.server.respond({ ...msg, result: { success: true } });
+          }
+          break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
@@ -1684,8 +1714,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Ignore errors if the file does not exist
         }
       }
-      // Remove the resumption records and subscriptions. Till the matter.js team solves the issue of closing server node when resumption didn't work.
-      if (hasParameter('reset-sessions') || !hasParameter('no-reset-sessions')) {
+      // Remove the resumption records and subscriptions. It forces the clients to do a full re-commissioning and re-subscribe to the bridge after the restart. It solves some issues with stale sessions and subscriptions that can cause problems after a restart.
+      if (hasParameter('reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
         unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
@@ -2592,6 +2622,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         softwareVersionString: await storageContext.get<string>('softwareVersionString'),
         hardwareVersion: await storageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
+
+        // specificationVersion: 0x01050000, // Matter 1.5
 
         reachable: true,
       },

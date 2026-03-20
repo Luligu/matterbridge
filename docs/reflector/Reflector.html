@@ -215,15 +215,15 @@ docker run -dit --restart unless-stopped --network matterbridge --name matterbri
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
 docker logs --tail 1000 -f matterbridge-test
 </code></pre>
-<p>You will see that the frontend inside the container is listening on the conainer address</p>
+<p>You will see that the frontend inside the container is listening on the container address</p>
 <pre><code class="language-text">[09:02:10.140] [Frontend] The frontend http server is listening on http://172.17.0.2:8283
 [09:02:10.140] [Frontend] The frontend http server is listening on http://[fd3d:8954:ffe5::2]:8283
 </code></pre>
 <p>But since we mapped the port 8283:</p>
 <ul>
-<li><p>the frontend is available on the host with localhost:8283, <your_host_ip>:8283 or <your_hostname>:8283.</p>
+<li><p>the frontend is available on the host with localhost:8283, your_host_ip:8283 or your_hostname:8283.</p>
 </li>
-<li><p>the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.</p>
+<li><p>the frontend is available on the lan with your_host_ip:8283 or your_hostname:8283.</p>
 </li>
 </ul>
 <p>In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect Matterbridge.</p>

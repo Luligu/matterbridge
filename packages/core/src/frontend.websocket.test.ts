@@ -34,7 +34,7 @@ import { jest } from '@jest/globals';
 import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
-import type { WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
+import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -43,6 +43,7 @@ import WebSocket from 'ws';
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';
 import {
+  broadcastServerFetchSpy,
   broadcastServerRequestSpy,
   closeMdnsInstance,
   destroyInstance,
@@ -382,7 +383,73 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send /api/create-backup', async () => {
+    jest.spyOn(frontend, 'zip');
     const msg = await waitMessageId(++WS_ID, '/api/create-backup', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/create-backup', params: {} });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-matterbridge-storage-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-matterbridge-storage-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-matterbridge-storage-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-matter-storage-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-matter-storage-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-matter-storage-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-plugin-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-plugin-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-plugin-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    expect(msg.success).toBe(true);
+  });
+
+  test('Websocket API send /api/create-config-backup', async () => {
+    jest.spyOn(frontend, 'zip').mockImplementationOnce(() => {
+      // Simulate a successful backup creation
+    });
+    const msg = await waitMessageId(++WS_ID, '/api/create-config-backup', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/create-config-backup',
+      params: {},
+    });
+    expect(frontend.zip).toHaveBeenCalled();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(msg.success).toBe(true);
   });
@@ -884,6 +951,9 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/removeplugin', async () => {
+    (broadcastServerFetchSpy as any).mockImplementationOnce(async (msg: WorkerMessage, timeout: number) => {
+      return { result: { devices: [{ mode: 'server', uniqueId: '' }] } };
+    });
     const pluginName = 'matterbridge-mock4';
     const data = await waitMessageId(++WS_ID, '/api/removeplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/removeplugin', params: { pluginName } });
     expect(data.error).toBeUndefined();

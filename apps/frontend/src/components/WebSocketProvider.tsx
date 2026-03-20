@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
 
 // Backend
-import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } from '../utils/backendTypes';
+import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } from '../utils/backendShared';
 
 // Frontend modules
 import { UiContext } from './UiProvider';

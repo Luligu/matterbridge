@@ -27,15 +27,13 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge Robotic Vacuum Cleaner', () => {
-  let device: MatterbridgeEndpoint;
+  let device: RoboticVacuumCleaner;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -70,6 +68,43 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(device.hasClusterServer(RvcCleanMode.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(RvcOperationalState.Cluster.id)).toBeTruthy();
     expect(device.hasClusterServer(ServiceArea.Cluster.id)).toBeTruthy();
+  });
+
+  test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    device.createDefaultRvcOperationalStateClusterServer(
+      ['Phase1', 'Phase2'],
+      1,
+      [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+      RvcOperationalState.OperationalState.Running,
+      { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: ['Phase1', 'Phase2'],
+        currentPhase: 1,
+        operationalStateList: [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+        operationalState: RvcOperationalState.OperationalState.Running,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+      }),
+    );
+    // Call with defaults
+    device.createDefaultRvcOperationalStateClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: null,
+        currentPhase: null,
+        operationalStateList: expect.any(Array),
+        operationalState: RvcOperationalState.OperationalState.Docked,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultRvcOperationalStateClusterServer()).toBe(device);
+    requireSpy.mockRestore();
   });
 
   test('add an RVC device', async () => {
@@ -116,21 +151,21 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
-    await invokeBehaviorCommand(device, 'rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 3 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 4 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
   });
@@ -143,10 +178,10 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device as any).state['rvcCleanMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['rvcCleanMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcCleanMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
   });
@@ -160,18 +195,18 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
     expect((device.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcOperationalState', 'pause');
+    await device.invokeBehaviorCommand('rvcOperationalState', 'pause');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcOperationalState', 'resume');
+    await device.invokeBehaviorCommand('rvcOperationalState', 'resume');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
       `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`,
     );
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'rvcOperationalState', 'goHome');
+    await device.invokeBehaviorCommand('rvcOperationalState', 'goHome');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
   });
@@ -183,11 +218,11 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
     expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
+    await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'serviceArea', 'selectAreas', { newAreas: [0, 5] });
+    await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [0, 5] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
   });
 

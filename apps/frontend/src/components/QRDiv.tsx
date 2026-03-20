@@ -14,7 +14,7 @@ import Icon from '@mdi/react';
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
 
 // Backend
-import { ApiMatter, WsMessageApiResponse } from '../utils/backendTypes';
+import { ApiMatter, WsMessageApiResponse } from '../utils/backendShared';
 
 // Frontend
 import { UiContext } from './UiProvider';

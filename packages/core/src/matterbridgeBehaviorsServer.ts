@@ -27,7 +27,7 @@
 
 // AnsiLogger module
 // @matter
-import { Bytes, MaybePromise, NamedHandler } from '@matter/general';
+import { MaybePromise } from '@matter/general';
 import { Behavior } from '@matter/node';
 // @matter behaviors
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
@@ -49,18 +49,21 @@ import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
 import { SwitchServer } from '@matter/node/behaviors/switch';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
-import { MovementDirection, MovementType, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
-import { StatusResponse } from '@matter/types';
+import { MovementDirection, MovementType, WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 // @matter clusters
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FanControl } from '@matter/types/clusters/fan-control';
+import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { Identify } from '@matter/types/clusters/identify';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { ServiceArea } from '@matter/types/clusters/service-area';
@@ -71,8 +74,10 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { EndpointNumber } from '@matter/types/datatype';
 import { AnsiLogger } from 'node-ansi-logger';
 
-// MatterbridgeEndpoint
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
+// Matterbridge
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { ClusterAttributeValues } from './matterbridgeEndpointCommandHandler.js';
+import { CommandHandler } from './matterbridgeEndpointCommandHandler.js';
 
 /**
  * Base behavior providing a logger and command dispatch for Matterbridge endpoints.
@@ -97,7 +102,7 @@ export namespace MatterbridgeServer {
    */
   export class State {
     log!: AnsiLogger;
-    commandHandler!: NamedHandler<MatterbridgeEndpointCommands>;
+    commandHandler!: CommandHandler;
   }
 }
 
@@ -139,12 +144,18 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
    *
    * @param {Identify.IdentifyRequest} request - Identify request payload.
    */
-  override identify(request: Identify.IdentifyRequest): MaybePromise {
+  override async identify(request: Identify.IdentifyRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('identify', { request, cluster: IdentifyServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('Identify.identify', {
+      command: 'identify',
+      request,
+      cluster: IdentifyServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeIdentifyServer: identify called`);
-    super.identify(request);
+    await super.identify(request);
   }
 
   /**
@@ -152,12 +163,18 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
    *
    * @param {Identify.TriggerEffectRequest} request - Trigger-effect request payload.
    */
-  override triggerEffect(request: Identify.TriggerEffectRequest): MaybePromise {
+  override async triggerEffect(request: Identify.TriggerEffectRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('triggerEffect', { request, cluster: IdentifyServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('Identify.triggerEffect', {
+      command: 'triggerEffect',
+      request,
+      cluster: IdentifyServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
-    super.triggerEffect(request);
+    await super.triggerEffect(request);
   }
 }
 
@@ -168,34 +185,52 @@ export class MatterbridgeOnOffServer extends OnOffServer {
   /**
    * Handles the On command.
    */
-  override on(): MaybePromise {
+  override async on(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device on (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('on', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OnOff.on', {
+      command: 'on',
+      request: {},
+      cluster: OnOffServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeOnOffServer: on called`);
-    super.on();
+    await super.on();
   }
 
   /**
    * Handles the Off command.
    */
-  override off(): MaybePromise {
+  override async off(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Switching device off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('off', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OnOff.off', {
+      command: 'off',
+      request: {},
+      cluster: OnOffServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeOnOffServer: off called`);
-    super.off();
+    await super.off();
   }
 
   /**
    * Handles the Toggle command.
    */
-  override toggle(): MaybePromise {
+  override async toggle(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Toggle device on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('toggle', { request: {}, cluster: OnOffServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OnOff.toggle', {
+      command: 'toggle',
+      request: {},
+      cluster: OnOffServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
-    super.toggle();
+    await super.toggle();
   }
 }
 
@@ -208,12 +243,18 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    *
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
-  override moveToLevel(request: LevelControl.MoveToLevelRequest): MaybePromise {
+  override async moveToLevel(request: LevelControl.MoveToLevelRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToLevel', { request, cluster: LevelControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('LevelControl.moveToLevel', {
+      command: 'moveToLevel',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
-    super.moveToLevel(request);
+    await super.moveToLevel(request);
   }
 
   /**
@@ -221,12 +262,18 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    *
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
-  override moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): MaybePromise {
+  override async moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToLevelWithOnOff', { request, cluster: LevelControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('LevelControl.moveToLevelWithOnOff', {
+      command: 'moveToLevelWithOnOff',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
-    super.moveToLevelWithOnOff(request);
+    await super.moveToLevelWithOnOff(request);
   }
 }
 
@@ -239,12 +286,18 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
    *
    * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
    */
-  override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
+  override async moveToHue(request: ColorControl.MoveToHueRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToHue', {
+      command: 'moveToHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    super.moveToHue(request);
+    await super.moveToHue(request);
   }
 
   /**
@@ -252,12 +305,18 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
    *
    * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
    */
-  override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
+  override async moveToSaturation(request: ColorControl.MoveToSaturationRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
+      command: 'moveToSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    super.moveToSaturation(request);
+    await super.moveToSaturation(request);
   }
 
   /**
@@ -265,14 +324,20 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
    *
    * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
    */
-  override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
+  override async moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
+      command: 'moveToHueAndSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    super.moveToHueAndSaturation(request);
+    await super.moveToHueAndSaturation(request);
   }
 
   /**
@@ -280,14 +345,20 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
    *
    * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
    */
-  override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
+  override async moveToColor(request: ColorControl.MoveToColorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToColor', {
+      command: 'moveToColor',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    super.moveToColor(request);
+    await super.moveToColor(request);
   }
 
   /**
@@ -295,14 +366,20 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(Colo
    *
    * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
    */
-  override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
+  override async moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
+      command: 'moveToColorTemperature',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    super.moveToColorTemperature(request);
+    await super.moveToColorTemperature(request);
   }
 }
 
@@ -320,12 +397,18 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
    */
-  override moveToHue(request: ColorControl.MoveToHueRequest): MaybePromise {
+  override async moveToHue(request: ColorControl.MoveToHueRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToHue', {
+      command: 'moveToHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    super.moveToHue(request);
+    await super.moveToHue(request);
   }
 
   /**
@@ -333,14 +416,20 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.EnhancedMoveToHueRequest} request - Enhanced-move-to-hue request payload.
    */
-  override enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): MaybePromise {
+  override async enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('enhancedMoveToHue', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHue', {
+      command: 'enhancedMoveToHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
-    super.enhancedMoveToHue(request);
+    await super.enhancedMoveToHue(request);
   }
 
   /**
@@ -348,12 +437,18 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
    */
-  override moveToSaturation(request: ColorControl.MoveToSaturationRequest): MaybePromise {
+  override async moveToSaturation(request: ColorControl.MoveToSaturationRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('moveToSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
+      command: 'moveToSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    super.moveToSaturation(request);
+    await super.moveToSaturation(request);
   }
 
   /**
@@ -361,14 +456,20 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
    */
-  override moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): MaybePromise {
+  override async moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
+      command: 'moveToHueAndSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    super.moveToHueAndSaturation(request);
+    await super.moveToHueAndSaturation(request);
   }
 
   /**
@@ -376,14 +477,20 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.EnhancedMoveToHueAndSaturationRequest} request - Enhanced-move-to-hue-and-saturation request payload.
    */
-  override enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): MaybePromise {
+  override async enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('enhancedMoveToHueAndSaturation', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHueAndSaturation', {
+      command: 'enhancedMoveToHueAndSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
-    super.enhancedMoveToHueAndSaturation(request);
+    await super.enhancedMoveToHueAndSaturation(request);
   }
 
   /**
@@ -391,14 +498,20 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
    */
-  override moveToColor(request: ColorControl.MoveToColorRequest): MaybePromise {
+  override async moveToColor(request: ColorControl.MoveToColorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToColor', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToColor', {
+      command: 'moveToColor',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    super.moveToColor(request);
+    await super.moveToColor(request);
   }
 
   /**
@@ -406,146 +519,158 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
    *
    * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
    */
-  override moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): MaybePromise {
+  override async moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('moveToColorTemperature', { request, cluster: ColorControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
+      command: 'moveToColorTemperature',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    super.moveToColorTemperature(request);
-  }
-}
-
-/**
- * WindowCovering server (lift) that forwards covering commands to the Matterbridge command handler.
- */
-export class MatterbridgeLiftWindowCoveringServer extends WindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {
-  /**
-   * Handles UpOrOpen for lift-only window coverings.
-   */
-  override upOrOpen(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler(`upOrOpen`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
-    super.upOrOpen();
-  }
-
-  /**
-   * Handles DownOrClose for lift-only window coverings.
-   */
-  override downOrClose(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler(`downOrClose`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
-    super.downOrClose();
-  }
-
-  /**
-   * Handles StopMotion for lift-only window coverings.
-   */
-  override stopMotion(): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('stopMotion', { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
-    super.stopMotion();
-  }
-
-  /**
-   * Forwards GoToLiftPercentage requests to the Matterbridge command handler.
-   *
-   * @param {WindowCovering.GoToLiftPercentageRequest} request - Go-to-lift-percentage request payload.
-   */
-  override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('goToLiftPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
-    super.goToLiftPercentage(request);
-  }
-
-  /**
-   * No-op: movement is handled by the device implementation.
-   *
-   * @param {MovementType} type - Movement type.
-   * @param {boolean} reversed - Whether the direction is reversed.
-   * @param {MovementDirection} direction - Movement direction.
-   * @param {number} [targetPercent100ths] - Target position in hundredths of a percent.
-   */
-  override async handleMovement(type: MovementType, reversed: boolean, direction: MovementDirection, targetPercent100ths?: number) {
-    // Do nothing here, as the device will handle the movement
+    await super.moveToColorTemperature(request);
   }
 }
 
 /**
  * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
  */
-export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServer.with(
+export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   WindowCovering.Feature.Lift,
   WindowCovering.Feature.PositionAwareLift,
   WindowCovering.Feature.Tilt,
   WindowCovering.Feature.PositionAwareTilt,
 ) {
+  declare protected internal: WindowCoveringBaseServer.Internal;
+  lookupMovementStatus = ['Stopped', 'Opening', 'Closing', 'Unknown'];
+
+  /**
+   * Will set the initial movement status to Stopped and target = current, which is a safe default until we get the real status from the device.
+   * Disable automatic operational mode handling to let the device manage it.
+   */
+  override async initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Initializing MatterbridgeWindowCoveringServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.internal.disableOperationalModeHandling = true;
+    await super.initialize();
+  }
+
   /**
    * Handles UpOrOpen for lift/tilt window coverings.
+   * Will set target position to 0 and trigger event.
    */
-  override upOrOpen(): MaybePromise {
+  override async upOrOpen(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler(`upOrOpen`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: upOrOpen called`);
-    super.upOrOpen();
+    await device.commandHandler.executeHandler('WindowCovering.upOrOpen', {
+      command: 'upOrOpen',
+      request: {},
+      cluster: WindowCoveringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
+    await super.upOrOpen();
+    // istanbul ignore next - this is just debug logging to verify that the state updates correctly after the command
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: upOrOpen result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.lookupMovementStatus[this.state.operationalStatus.global ?? 3]} lift ${this.lookupMovementStatus[this.state.operationalStatus.lift ?? 3]} tilt ${this.lookupMovementStatus[this.state.operationalStatus.tilt ?? 3]}`,
+    );
   }
 
   /**
    * Handles DownOrClose for lift/tilt window coverings.
+   * Will set target position to 10000 and trigger event.
    */
-  override downOrClose(): MaybePromise {
+  override async downOrClose(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler(`downOrClose`, { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: downOrClose called`);
-    super.downOrClose();
+    await device.commandHandler.executeHandler('WindowCovering.downOrClose', {
+      command: 'downOrClose',
+      request: {},
+      cluster: WindowCoveringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
+    await super.downOrClose(); // Will set target position to 10000 and trigger event
+    // istanbul ignore next - this is just debug logging to verify that the state updates correctly after the command
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: downOrClose result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.lookupMovementStatus[this.state.operationalStatus.global ?? 3]} lift ${this.lookupMovementStatus[this.state.operationalStatus.lift ?? 3]} tilt ${this.lookupMovementStatus[this.state.operationalStatus.tilt ?? 3]}`,
+    );
   }
 
   /**
    * Handles StopMotion for lift/tilt window coverings.
+   * Will set target position to current position and trigger event.
    */
-  override stopMotion(): MaybePromise {
+  override async stopMotion(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('stopMotion', { request: {}, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: stopMotion called`);
-    super.stopMotion();
+    await device.commandHandler.executeHandler('WindowCovering.stopMotion', {
+      command: 'stopMotion',
+      request: {},
+      cluster: WindowCoveringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
+    await super.stopMotion();
+    // istanbul ignore next - this is just debug logging to verify that the state updates correctly after the command
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: stopMotion result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.lookupMovementStatus[this.state.operationalStatus.global ?? 3]} lift ${this.lookupMovementStatus[this.state.operationalStatus.lift ?? 3]} tilt ${this.lookupMovementStatus[this.state.operationalStatus.tilt ?? 3]}`,
+    );
   }
 
   /**
    * Forwards GoToLiftPercentage requests to the Matterbridge command handler.
+   * Will set target position to the requested value and trigger event.
    *
    * @param {WindowCovering.GoToLiftPercentageRequest} request - Go-to-lift-percentage request payload.
    */
-  override goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): MaybePromise {
+  override async goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('goToLiftPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
-    super.goToLiftPercentage(request);
+    await device.commandHandler.executeHandler('WindowCovering.goToLiftPercentage', {
+      command: 'goToLiftPercentage',
+      request,
+      cluster: WindowCoveringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
+    await super.goToLiftPercentage(request);
+    // istanbul ignore next - this is just debug logging to verify that the state updates correctly after the command
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: goToLiftPercentage result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.lookupMovementStatus[this.state.operationalStatus.global ?? 3]} lift ${this.lookupMovementStatus[this.state.operationalStatus.lift ?? 3]} tilt ${this.lookupMovementStatus[this.state.operationalStatus.tilt ?? 3]}`,
+    );
   }
 
   /**
    * Forwards GoToTiltPercentage requests to the Matterbridge command handler.
+   * Will set target position to the requested value and trigger event.
    *
    * @param {WindowCovering.GoToTiltPercentageRequest} request - Go-to-tilt-percentage request payload.
    */
-  override goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): MaybePromise {
+  override async goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('goToTiltPercentage', { request, cluster: WindowCoveringServer.id, attributes: this.state, endpoint: this.endpoint });
-    device.log.debug(`MatterbridgeLiftTiltWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
-    super.goToTiltPercentage(request);
+    await device.commandHandler.executeHandler('WindowCovering.goToTiltPercentage', {
+      command: 'goToTiltPercentage',
+      request,
+      cluster: WindowCoveringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
+    await super.goToTiltPercentage(request);
+    // istanbul ignore next - this is just debug logging to verify that the state updates correctly after the command
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.lookupMovementStatus[this.state.operationalStatus.global ?? 3]} lift ${this.lookupMovementStatus[this.state.operationalStatus.lift ?? 3]} tilt ${this.lookupMovementStatus[this.state.operationalStatus.tilt ?? 3]}`,
+    );
   }
 
   /**
@@ -560,6 +685,21 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends WindowCoveringServ
     // Do nothing here, as the device will handle the movement
   }
 }
+
+/**
+ * WindowCovering server (lift) that forwards covering commands to the Matterbridge command handler.
+ */
+export class MatterbridgeLiftWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {}
+
+/**
+ * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
+ */
+export class MatterbridgeLiftTiltWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(
+  WindowCovering.Feature.Lift,
+  WindowCovering.Feature.PositionAwareLift,
+  WindowCovering.Feature.Tilt,
+  WindowCovering.Feature.PositionAwareTilt,
+) {}
 
 /**
  * DoorLock server that forwards lock/unlock commands to the Matterbridge command handler.
@@ -568,23 +708,35 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
   /**
    * Handles the LockDoor command.
    */
-  override lockDoor(): MaybePromise {
+  override async lockDoor(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('lockDoor', { request: {}, cluster: DoorLockServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DoorLock.lockDoor', {
+      command: 'lockDoor',
+      request: {},
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
-    super.lockDoor();
+    await super.lockDoor();
   }
 
   /**
    * Handles the UnlockDoor command.
    */
-  override unlockDoor(): MaybePromise {
+  override async unlockDoor(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('unlockDoor', { request: {}, cluster: DoorLockServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DoorLock.unlockDoor', {
+      command: 'unlockDoor',
+      request: {},
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
-    super.unlockDoor();
+    await super.unlockDoor();
   }
 }
 
@@ -597,10 +749,16 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
    *
    * @param {FanControl.StepRequest} request - Step request payload.
    */
-  override step(request: FanControl.StepRequest): MaybePromise {
+  override async step(request: FanControl.StepRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stepping fan with direction ${request.direction} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('step', { request, cluster: FanControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('FanControl.step', {
+      command: 'step',
+      request,
+      cluster: FanControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof FanControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
 
     const lookupStepDirection = ['Increase', 'Decrease'];
     device.log.debug(`MatterbridgeFanControlServer: step called with direction: ${lookupStepDirection[request.direction]} wrap: ${request.wrap} lowestOff: ${request.lowestOff}`);
@@ -618,7 +776,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     device.log.debug('Set percentCurrent to:', this.state.percentCurrent);
 
     // step is not implemented in matter.js
-    // super.step(request);
+    // await super.step(request);
   }
 }
 
@@ -649,29 +807,19 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
    *
    * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
    */
-  override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
+  override async setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setpointRaiseLower', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
-
+    await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
+      command: 'setpointRaiseLower',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
     device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
-    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
-    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedHeatingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
-    }
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedCoolingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
-    }
-
-    // super.setpointRaiseLower(request);
+    await super.setpointRaiseLower(request);
   }
 }
 
@@ -690,29 +838,19 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
    *
    * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
    */
-  override setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): MaybePromise {
+  override async setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setpointRaiseLower', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
-
+    await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
+      command: 'setpointRaiseLower',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
-    if (this.state.occupiedHeatingSetpoint !== undefined) device.log.debug(`- current occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint / 100}`);
-    if (this.state.occupiedCoolingSetpoint !== undefined) device.log.debug(`- current occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint / 100}`);
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Heat || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedHeatingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedHeatingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedHeatingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedHeatingSetpoint to ${setpoint}`);
-    }
-
-    if ((request.mode === Thermostat.SetpointRaiseLowerMode.Cool || request.mode === Thermostat.SetpointRaiseLowerMode.Both) && this.state.occupiedCoolingSetpoint !== undefined) {
-      const setpoint = this.state.occupiedCoolingSetpoint / 100 + request.amount / 10;
-      this.state.occupiedCoolingSetpoint = setpoint * 100;
-      device.log.debug(`Set occupiedCoolingSetpoint to ${setpoint}`);
-    }
-
-    // super.setpointRaiseLower(request);
+    device.log.debug(`MatterbridgePresetThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
+    await super.setpointRaiseLower(request);
   }
 
   /**
@@ -720,19 +858,25 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
    *
    * @param {Thermostat.SetActivePresetRequest} request - Set-active-preset request payload.
    */
-  override setActivePresetRequest(request: Thermostat.SetActivePresetRequest): MaybePromise {
+  override async setActivePresetRequest(request: Thermostat.SetActivePresetRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting preset to ${request.presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('setActivePresetRequest', { request, cluster: ThermostatServer.id, attributes: this.state, endpoint: this.endpoint });
-
-    if (request.presetHandle !== null) {
-      const preset = this.state.persistedPresets?.find((storedPreset) => storedPreset.presetHandle !== null && Bytes.areEqual(storedPreset.presetHandle, request.presetHandle));
-      if (preset === undefined) throw new StatusResponse.InvalidCommandError('Requested PresetHandle not found');
-    }
-    this.state.activePresetHandle = request.presetHandle;
-    device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${request.presetHandle}`);
-
-    // super.setActivePresetRequest(request);
+    const presetHandle = request.presetHandle ? `0x${Buffer.from(request.presetHandle).toString('hex')}` : 'null';
+    device.log.info(`Setting preset to ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('Thermostat.setActivePresetRequest', {
+      command: 'setActivePresetRequest',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
+    await super.setActivePresetRequest(request);
+    const activePresetHandle = this.state.activePresetHandle ? `0x${Buffer.from(this.state.activePresetHandle).toString('hex')}` : 'null';
+    device.log.debug(
+      `MatterbridgePresetThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint}`,
+    );
+    // matter.js currently clears activePresetHandle again while applying preset-derived setpoint writes: that behavior appears questionable versus the Thermostat preset spec.
+    // 4.3.10.9.2. Effect on Receipt. The server SHALL set the ActivePresetHandle attribute to the value of the PresetHandle field.
   }
 }
 
@@ -745,12 +889,18 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
    *
    * @param {ValveConfigurationAndControl.OpenRequest} request - Open request payload.
    */
-  override open(request: ValveConfigurationAndControl.OpenRequest): MaybePromise {
+  override async open(request: ValveConfigurationAndControl.OpenRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `Opening valve to ${request.targetLevel ? request.targetLevel + '%' : 'fully opened'} ${request.openDuration ? 'for ' + request.openDuration + 's' : 'until closed'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.commandHandler.executeHandler('open', { request, cluster: ValveConfigurationAndControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ValveConfigurationAndControl.open', {
+      command: 'open',
+      request,
+      cluster: ValveConfigurationAndControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel}`);
     this.state.targetState = ValveConfigurationAndControl.ValveState.Open;
     this.state.currentState = ValveConfigurationAndControl.ValveState.Open;
@@ -766,10 +916,16 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
   /**
    * Handles the Close command.
    */
-  override close(): MaybePromise {
+  override async close(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Closing valve (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('close', { request: {}, cluster: ValveConfigurationAndControlServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ValveConfigurationAndControl.close', {
+      command: 'close',
+      request: {},
+      cluster: ValveConfigurationAndControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
     this.state.targetState = ValveConfigurationAndControl.ValveState.Closed;
     this.state.currentState = ValveConfigurationAndControl.ValveState.Closed;
@@ -790,10 +946,16 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
   /**
    * Handles the SelfTestRequest command.
    */
-  override selfTestRequest(): MaybePromise {
+  override async selfTestRequest(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Testing SmokeCOAlarm (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('selfTestRequest', { request: {}, cluster: SmokeCoAlarmServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('SmokeCoAlarm.selfTestRequest', {
+      command: 'selfTestRequest',
+      request: {},
+      cluster: SmokeCoAlarmServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof SmokeCoAlarm.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
 
     // selfTestRequest is not implemented in matter.js
@@ -814,10 +976,16 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    *
    * @param {BooleanStateConfiguration.EnableDisableAlarmRequest} request - Enable/disable-alarm request payload.
    */
-  override enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): MaybePromise {
+  override async enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('enableDisableAlarm', { request, cluster: BooleanStateConfigurationServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('BooleanStateConfiguration.enableDisableAlarm', {
+      command: 'enableDisableAlarm',
+      request,
+      cluster: BooleanStateConfigurationServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
 
     // enableDisableAlarm is not implemented in matter.js
@@ -857,10 +1025,16 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
    *
    * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
    */
-  override pause(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async pause(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('pause', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OperationalState.pause', {
+      command: 'pause',
+      request: {},
+      cluster: OperationalStateServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
@@ -876,10 +1050,16 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
    *
    * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
    */
-  override stop(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async stop(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('stop', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OperationalState.stop', {
+      command: 'stop',
+      request: {},
+      cluster: OperationalStateServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
@@ -895,10 +1075,16 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
    *
    * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
    */
-  override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async start(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('start', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OperationalState.start', {
+      command: 'start',
+      request: {},
+      cluster: OperationalStateServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
@@ -914,10 +1100,16 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
    *
    * @returns {MaybePromise<OperationalState.OperationalCommandResponse>} The operational command response.
    */
-  override resume(): MaybePromise<OperationalState.OperationalCommandResponse> {
+  override async resume(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('resume', { request: {}, cluster: OperationalStateServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('OperationalState.resume', {
+      command: 'resume',
+      request: {},
+      cluster: OperationalStateServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
@@ -939,10 +1131,16 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
    * @param {ServiceArea.SelectAreasRequest} request - Select-areas request payload.
    * @returns {MaybePromise<ServiceArea.SelectAreasResponse>} The select-areas response.
    */
-  override selectAreas(request: ServiceArea.SelectAreasRequest): MaybePromise<ServiceArea.SelectAreasResponse> {
+  override async selectAreas(request: ServiceArea.SelectAreasRequest): Promise<ServiceArea.SelectAreasResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('selectAreas', { request, cluster: ServiceAreaServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ServiceArea.selectAreas', {
+      command: 'selectAreas',
+      request,
+      cluster: ServiceAreaServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     for (const area of request.newAreas) {
       const supportedArea = this.state.supportedAreas.find((supportedArea) => supportedArea.areaId === area);
       if (!supportedArea) {
@@ -952,8 +1150,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
     }
     this.state.selectedAreas = request.newAreas;
     device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: ${request.newAreas.map((area) => area.toString()).join(', ')}`);
-    return super.selectAreas(request);
-    // return { status: ServiceArea.SelectAreasStatus.Success, statusText: 'Succesfully selected new areas' };
+    return await super.selectAreas(request);
   }
 }
 
@@ -966,12 +1163,18 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
    *
    * @param {ModeSelect.ChangeToModeRequest} request - Change-to-mode request payload.
    */
-  override changeToMode(request: ModeSelect.ChangeToModeRequest): MaybePromise {
+  override async changeToMode(request: ModeSelect.ChangeToModeRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: ModeSelectServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ModeSelect.changeToMode', {
+      command: 'changeToMode',
+      request,
+      cluster: ModeSelectServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ModeSelect.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
-    super.changeToMode(request);
+    await super.changeToMode(request);
   }
 }
 
@@ -982,13 +1185,21 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
   /**
    * Resets filter condition to 100%.
    */
-  override resetCondition(): MaybePromise {
+  override async resetCondition(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeHepaFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('HepaFilterMonitoring.resetCondition', {
+      command: 'resetCondition',
+      request: {},
+      cluster: MatterbridgeHepaFilterMonitoringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof HepaFilterMonitoring.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
+    // resetCondition is not implemented in matter.js
+    // await super.resetCondition();
   }
 }
 
@@ -999,13 +1210,21 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
   /**
    * Resets filter condition to 100%.
    */
-  override resetCondition(): MaybePromise {
+  override async resetCondition(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('resetCondition', { cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('ActivatedCarbonFilterMonitoring.resetCondition', {
+      command: 'resetCondition',
+      request: {},
+      cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
     device.log.debug(`MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
+    // resetCondition is not implemented in matter.js
+    // await super.resetCondition();
   }
 }
 
@@ -1021,26 +1240,38 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
    *
    * @param {DeviceEnergyManagement.PowerAdjustRequest} request - Power-adjust request payload.
    */
-  override powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): MaybePromise {
+  override async powerAdjustRequest(request: DeviceEnergyManagement.PowerAdjustRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Adjusting power to ${request.power} duration ${request.duration} cause ${request.cause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('powerAdjustRequest', { request, cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DeviceEnergyManagement.powerAdjustRequest', {
+      command: 'powerAdjustRequest',
+      request,
+      cluster: DeviceEnergyManagementServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${request.power} duration ${request.duration} cause ${request.cause}`);
     // The implementation is responsible for setting the device accordingly with the powerAdjustRequest command
     // powerAdjustRequest is not implemented in matter.js
-    // return super.powerAdjustRequest();
+    // await super.powerAdjustRequest();
   }
   /**
    * Cancels an in-progress power adjustment.
    */
-  override cancelPowerAdjustRequest(): MaybePromise {
+  override async cancelPowerAdjustRequest(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Cancelling power adjustment (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('cancelPowerAdjustRequest', { cluster: DeviceEnergyManagementServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DeviceEnergyManagement.cancelPowerAdjustRequest', {
+      command: 'cancelPowerAdjustRequest',
+      request: {},
+      cluster: DeviceEnergyManagementServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
     // The implementation is responsible for setting the device accordingly with the cancelPowerAdjustRequest command
     // cancelPowerAdjustRequest is not implemented in matter.js
-    // return super.cancelPowerAdjustRequest();
+    // await super.cancelPowerAdjustRequest();
   }
 }
 
@@ -1057,7 +1288,13 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.commandHandler.executeHandler('changeToMode', { request, cluster: DeviceEnergyManagementModeServer.id, attributes: this.state, endpoint: this.endpoint });
+    await device.commandHandler.executeHandler('DeviceEnergyManagementMode.changeToMode', {
+      command: 'changeToMode',
+      request,
+      cluster: DeviceEnergyManagementModeServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {
       device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
@@ -1077,7 +1314,6 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
         });
     }
     device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
-    return super.changeToMode(request);
-    // return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+    return await super.changeToMode(request);
   }
 }

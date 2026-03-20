@@ -280,6 +280,34 @@ export interface WsMessageApiCreateBackupResponse extends WsMessageSuccessApiRes
   method: '/api/create-backup';
 }
 
+export interface WsMessageApiCreateMatterbridgeStorageBackupRequest extends WsMessageBaseApiRequest {
+  method: '/api/create-matterbridge-storage-backup';
+}
+export interface WsMessageApiCreateMatterbridgeStorageBackupResponse extends WsMessageSuccessApiResponse {
+  method: '/api/create-matterbridge-storage-backup';
+}
+
+export interface WsMessageApiCreateMatterStorageBackupRequest extends WsMessageBaseApiRequest {
+  method: '/api/create-matter-storage-backup';
+}
+export interface WsMessageApiCreateMatterStorageBackupResponse extends WsMessageSuccessApiResponse {
+  method: '/api/create-matter-storage-backup';
+}
+
+export interface WsMessageApiCreatePluginBackupRequest extends WsMessageBaseApiRequest {
+  method: '/api/create-plugin-backup';
+}
+export interface WsMessageApiCreatePluginBackupResponse extends WsMessageSuccessApiResponse {
+  method: '/api/create-plugin-backup';
+}
+
+export interface WsMessageApiCreateConfigBackupRequest extends WsMessageBaseApiRequest {
+  method: '/api/create-config-backup';
+}
+export interface WsMessageApiCreateConfigBackupResponse extends WsMessageSuccessApiResponse {
+  method: '/api/create-config-backup';
+}
+
 export interface WsMessageApiUnregisterRequest extends WsMessageBaseApiRequest {
   method: '/api/unregister';
 }
@@ -365,6 +393,8 @@ export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   params: {
     plugin: string;
     endpoint: number;
+    serialNumber?: string;
+    uniqueId?: string;
   };
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {
@@ -554,6 +584,17 @@ export interface WsMessageApiShellyMainUpdate extends WsMessageSuccessApiRespons
   response: { available: boolean };
 }
 
+export interface WsMessageApiArchive extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'archive';
+  response: {
+    command: 'zip' | 'verify' | 'unzip';
+    archivePath: string;
+    sourcePaths: string[];
+    destinationPath: string;
+  };
+}
+
 // Union type for all specific WebSocket API request message types
 export type WsMessageApiRequest =
   | WsMessagePingRequest
@@ -577,6 +618,10 @@ export type WsMessageApiRequest =
   | WsMessageApiRestartRequest
   | WsMessageApiShutdownRequest
   | WsMessageApiCreateBackupRequest
+  | WsMessageApiCreateMatterbridgeStorageBackupRequest
+  | WsMessageApiCreateMatterStorageBackupRequest
+  | WsMessageApiCreatePluginBackupRequest
+  | WsMessageApiCreateConfigBackupRequest
   | WsMessageApiUnregisterRequest
   | WsMessageApiResetRequest
   | WsMessageApiFactoryResetRequest
@@ -616,6 +661,10 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartResponse
   | WsMessageApiShutdownResponse
   | WsMessageApiCreateBackupResponse
+  | WsMessageApiCreateMatterbridgeStorageBackupResponse
+  | WsMessageApiCreateMatterStorageBackupResponse
+  | WsMessageApiCreatePluginBackupResponse
+  | WsMessageApiCreateConfigBackupResponse
   | WsMessageApiUnregisterResponse
   | WsMessageApiResetResponse
   | WsMessageApiFactoryResetResponse
@@ -643,7 +692,8 @@ export type WsMessageApiResponse =
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
   | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate;
+  | WsMessageApiShellyMainUpdate
+  | WsMessageApiArchive;
 
 // Union type for all specific WebSocket broadcast message types
 export type WsMessageBroadcast =
@@ -659,7 +709,8 @@ export type WsMessageBroadcast =
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
   | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate;
+  | WsMessageApiShellyMainUpdate
+  | WsMessageApiArchive;
 
 /**
  * Type guard to check if a message is a WsMessageApiRequest.
@@ -674,6 +725,7 @@ export function isApiRequest(msg: WsMessage): msg is WsMessageApiRequest {
 
 /**
  * Type guard to check if a message is a WsMessageApiResponse.
+ * Intentionally duplicated in apps/frontend/src/utils/backendShared.ts.
  *
  * @param {WsMessage} msg - The message to check.
  *

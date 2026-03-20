@@ -18,7 +18,6 @@ import {
   ElectricalPowerMeasurement,
   Identify,
   PowerSource,
-  TemperatureMeasurement,
   Thermostat,
   WaterHeaterManagement,
 } from '@matter/types/clusters';
@@ -41,15 +40,13 @@ import {
 } from '../jestutils/jestHelpers.js';
 import { MatterbridgeThermostatServer } from '../matterbridgeBehaviorsServer.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { invokeBehaviorCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge Water Heater', () => {
-  let device: MatterbridgeEndpoint;
+  let device: WaterHeater;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -119,6 +116,40 @@ describe('Matterbridge Water Heater', () => {
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
   });
 
+  test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    device.createDefaultWaterHeaterManagementClusterServer(
+      { immersionElement1: true, immersionElement2: true },
+      { immersionElement1: false, immersionElement2: true },
+      77,
+      WaterHeaterManagement.BoostState.Active,
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true, immersionElement2: true },
+        heatDemand: { immersionElement1: false, immersionElement2: true },
+        tankPercentage: 77,
+        boostState: WaterHeaterManagement.BoostState.Active,
+      }),
+    );
+    // Call with defaults
+    device.createDefaultWaterHeaterManagementClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true },
+        heatDemand: {},
+        tankPercentage: 100,
+        boostState: WaterHeaterManagement.BoostState.Inactive,
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultWaterHeaterManagementClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
+
   test('add a water heater device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
@@ -155,9 +186,9 @@ describe('Matterbridge Water Heater', () => {
     const occupiedHeatingSetpoint = device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint;
     expect(occupiedHeatingSetpoint).toBeDefined();
     if (!occupiedHeatingSetpoint) return;
-    await invokeBehaviorCommand(device, 'thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 });
+    await device.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Heat} (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Set occupiedHeatingSetpoint to ${(occupiedHeatingSetpoint + 50) / 100}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeThermostatServer: setpointRaiseLower called with mode: Heat amount: 0.5');
     expect(device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint).toBe(occupiedHeatingSetpoint + 50);
   });
 
@@ -174,12 +205,12 @@ describe('Matterbridge Water Heater', () => {
     expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).generatedCommandList).toEqual([]);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
+    await device.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
     expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${device.id}.${device.number})`);
 
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterManagement', 'cancelBoost', {});
+    await device.invokeBehaviorCommand('waterHeaterManagement', 'cancelBoost', {});
     expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${device.id}.${device.number})`);
   });
@@ -192,10 +223,10 @@ describe('Matterbridge Water Heater', () => {
     expect((device as any).state['waterHeaterMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['waterHeaterMode'].generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
     jest.clearAllMocks();
-    await invokeBehaviorCommand(device, 'waterHeaterMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
   });

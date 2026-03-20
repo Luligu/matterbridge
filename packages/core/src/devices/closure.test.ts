@@ -81,7 +81,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke closure control commands', async () => {
-    await device.invokeBehaviorCommand('closureControl', 'moveTo', {
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
 
@@ -90,10 +90,10 @@ describe('Matterbridge ' + NAME, () => {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
 
-    await device.invokeBehaviorCommand('closureControl', 'stop');
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
 
-    await device.invokeBehaviorCommand('closureControl', 'moveTo', {
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: true,
       speed: 1,
@@ -105,7 +105,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     // Omit position to cover optional-field branches.
-    await device.invokeBehaviorCommand('closureControl', 'moveTo', {
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       latch: false,
     });
     expect(device.getAttribute(ClosureControl.Cluster.id, 'overallTargetState')).toMatchObject({

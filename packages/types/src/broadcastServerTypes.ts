@@ -173,6 +173,10 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { command: string; args: string[]; packageCommand: 'install' | 'uninstall'; packageName: string; success: boolean } };
   };
+  manager_archive_response: {
+    request: { params: undefined };
+    response: { result: { command: string; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
+  };
 
   // Matterbridge methods
   matterbridge_initialize: {
@@ -206,6 +210,22 @@ export type WorkerMessageTypes = {
   matterbridge_shared: {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
+  };
+  matterbridge_start_plugin_server: {
+    request: { params: { pluginName: string } };
+    response: { result: { success: boolean } };
+  };
+  matterbridge_stop_plugin_server: {
+    request: { params: { pluginName: string } };
+    response: { result: { success: boolean } };
+  };
+  matterbridge_start_device_server: {
+    request: { params: { deviceUniqueId: string } };
+    response: { result: { success: boolean } };
+  };
+  matterbridge_stop_device_server: {
+    request: { params: { deviceUniqueId: string } };
+    response: { result: { success: boolean } };
   };
 
   // Matter methods
@@ -334,7 +354,7 @@ export type WorkerMessageTypes = {
   };
   plugins_remove: {
     request: { params: { nameOrPath: string } };
-    response: { result: { plugin: ApiPlugin | null } };
+    response: { result: { success: boolean } };
   };
   plugins_add: {
     request: { params: { nameOrPath: string } };

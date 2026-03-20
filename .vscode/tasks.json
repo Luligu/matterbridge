@@ -92,6 +92,26 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Behavior",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "matterbridgeBehaviorsClient.test.ts",
+        "matterbridgeBehaviorsServer.test.ts"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Endpoint",
       "type": "shell",
       "command": "node",
@@ -102,9 +122,11 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "matterbridgeEndpoint.test.ts",
         "matterbridgeEndpoint-default.test.ts",
         "matterbridgeEndpoint-matterjs.test.ts",
+        "matterbridgeEndpoint.test.ts",
+        "matterbridgeEndpoint.typed.test.ts",
+        "matterbridgeEndpointCommandHandler.test.ts",
         "matterbridgeEndpointHelpers.test.ts"
       ],
       "group": {

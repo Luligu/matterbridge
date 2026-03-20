@@ -4,10 +4,10 @@
  * @file colorUtils.ts
  * @author Luca Liguori
  * @created 2023-10-05
- * @version 1.3.1
+ * @version 1.3.2
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import { assert } from 'node:console';
 
 export interface RGB {
   r: number;
@@ -53,9 +51,11 @@ export function hslColorToRgbColor(hue: number, saturation: number, luminance: n
   if (hue === 360) {
     hue = 0;
   }
+  /*
   assert(hue >= 0 && hue <= 359, 'hslColorToRgbColor Hue error');
   assert(saturation >= 0 && saturation <= 100, 'hslColorToRgbColor Saturation error');
   assert(luminance === 50, 'hslColorToRgbColor Luminance error');
+  */
 
   saturation /= 100;
   luminance /= 100;
@@ -155,6 +155,7 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   let blue = X * 0.051713 - Number(Y) * 0.121364 + Z * 1.01153;
 
   // If red, green or blue is larger than 1.0 set it back to the maximum of 1.0
+  // istanbul ignore else
   if (red > blue && red > green && red > 1.0) {
     green = green / red;
     blue = blue / red;
@@ -180,16 +181,16 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   blue = Math.round(blue * 255);
 
   // Normalize even if this code should never be reached...
+  // istanbul ignore next
   if (isNaN(red) || red < 0) {
-    /* istanbul ignore next */
     red = 0;
   }
+  // istanbul ignore next
   if (isNaN(green) || green < 0) {
-    /* istanbul ignore next */
     green = 0;
   }
+  // istanbul ignore next
   if (isNaN(blue) || blue < 0) {
-    /* istanbul ignore next */
     blue = 0;
   }
 

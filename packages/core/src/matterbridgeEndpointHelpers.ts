@@ -115,7 +115,6 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, VendorId } from '@matter/types/datatype';
 import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
-import { deepCopy } from '@matterbridge/utils/deep-copy';
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
@@ -131,7 +130,6 @@ import {
   MatterbridgeFanControlServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
-  MatterbridgeLiftWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -139,9 +137,10 @@ import {
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeThermostatServer,
   MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
 } from './matterbridgeBehaviorsServer.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgeEndpointCommands } from './matterbridgeEndpointTypes.js';
+import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 
 /**
  *  Capitalizes the first letter of a string.
@@ -163,6 +162,46 @@ export function capitalizeFirstLetter(name: string): string {
 export function lowercaseFirstLetter(name: string): string {
   if (!name) return name;
   return name.charAt(0).toLowerCase() + name.slice(1);
+}
+
+/**
+ * Converts a managed Matter cluster value into a plain detached snapshot.
+ *
+ * @template T
+ * @param {T} value - The value to snapshot.
+ * @returns {T} A plain recursively copied value without managed Matter prototypes.
+ */
+export function getSnapshot<T>(value: T): T {
+  if (typeof value !== 'object' || value === null) return value;
+
+  // Preserve binary payloads as detached copies so handles remain comparable in tests.
+  if (Buffer.isBuffer(value)) return Buffer.from(value) as T;
+  if (value instanceof Uint8Array) return Uint8Array.from(value) as T;
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => getSnapshot(entry)) as T;
+  }
+
+  // Keep built-in container/value types intact while recursively detaching their contents.
+  if (value instanceof Date) return new Date(value.getTime()) as T;
+  if (value instanceof RegExp) return new RegExp(value.source, value.flags) as T;
+  if (value instanceof Map) {
+    const mapCopy = new Map();
+    for (const [key, entry] of value.entries()) {
+      mapCopy.set(getSnapshot(key), getSnapshot(entry));
+    }
+    return mapCopy as T;
+  }
+  if (value instanceof Set) {
+    return new Set(Array.from(value, (entry) => getSnapshot(entry))) as T;
+  }
+
+  // Plain objects intentionally drop managed Matter prototypes and hidden accessors.
+  const plainObject: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    plainObject[key] = getSnapshot(entry);
+  }
+  return plainObject as T;
 }
 
 /**
@@ -306,7 +345,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
   if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
   if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeLiftWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
   if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
   if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
   if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
@@ -380,17 +419,15 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to invoke the command on.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
- * @param {keyof MatterbridgeEndpointCommands} command - The command to invoke.
+ * @param {CommandHandlers} command - The command to invoke.
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
- *
- * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
-  command: keyof MatterbridgeEndpointCommands,
+  command: CommandHandlers,
   params?: Record<string, boolean | number | bigint | string | object | null>,
 ): Promise<boolean> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
@@ -399,6 +436,7 @@ export async function invokeBehaviorCommand(
     return false;
   }
 
+  command = command.includes('.') ? (command.split('.')[1] as CommandHandlers) : command;
   let invoked = true;
   await endpoint.act(async (agent) => {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -459,8 +497,7 @@ export async function invokeSubscribeHandler(
     return false;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error - The events object is dynamically typed and may not have the expected structure, but we want to allow this for testing purposes.
   await endpoint.act((agent) => agent[behaviorId].events[event].emit(newValue, oldValue, { ...agent.context, offline: false, fabric: 1 }));
   return true;
 }
@@ -673,7 +710,7 @@ export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.T
   }
 
   let value = state[clusterName][attribute];
-  if (typeof value === 'object') value = deepCopy(value);
+  if (typeof value === 'object') value = getSnapshot(value);
   log?.info(
     `${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} value ${YELLOW}${value !== null && typeof value === 'object' ? debugStringify(value) : value}${db}`,
   );
@@ -719,7 +756,7 @@ export async function setAttribute(
     return false;
   }
   let oldValue = state[clusterName][attribute];
-  if (typeof oldValue === 'object') oldValue = deepCopy(oldValue);
+  if (typeof oldValue === 'object') oldValue = getSnapshot(oldValue);
   await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
   log?.info(
     `${db}Set endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db} ` +
@@ -770,7 +807,7 @@ export async function updateAttribute(
   let oldValue = state[clusterName][attribute];
   if (typeof oldValue === 'object') {
     if (deepEqual(oldValue, value)) return false;
-    oldValue = deepCopy(oldValue);
+    oldValue = getSnapshot(oldValue);
   } else if (oldValue === value) return false;
   await endpoint.setStateOf(endpoint.behaviors.supported[clusterName], { [attribute]: value });
   log?.info(
@@ -787,14 +824,14 @@ export async function updateAttribute(
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the attribute to.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the attribute to.
  * @param {string} attribute - The name of the attribute to subscribe to.
- * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. When context.offline === true then the change is locally generated and not from the controller.
+ * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
  * @returns {boolean} - A boolean indicating whether the subscription was successful.
  *
  * @remarks The listener function (cannot be async) will receive three parameters:
  * - `newValue`: The new value of the attribute.
  * - `oldValue`: The old value of the attribute.
- * - `context`: The action context, which includes information about the action that triggered the change. When context.offline === true then the change is locally generated and not from the controller.
+ * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  */
 export async function subscribeAttribute(
   endpoint: MatterbridgeEndpoint,
@@ -895,7 +932,7 @@ export function getCluster(
   }
 
   const state = endpoint.state as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>;
-  const value = deepCopy(state[clusterName]);
+  const value = getSnapshot(state[clusterName]);
   log?.info(`${db}Get endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} cluster ${hk}${capitalizeFirstLetter(clusterName)}${db} state ${debugStringify(value)}}`);
   return value;
 }

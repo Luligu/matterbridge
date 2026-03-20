@@ -73,7 +73,7 @@ docker run -dit --restart unless-stopped --network matterbridge --name matterbri
 docker logs --tail 1000 -f matterbridge-test
 ```
 
-You will see that the frontend inside the container is listening on the conainer address
+You will see that the frontend inside the container is listening on the container address
 
 ```text
 [09:02:10.140] [Frontend] The frontend http server is listening on http://172.17.0.2:8283
@@ -82,9 +82,9 @@ You will see that the frontend inside the container is listening on the conainer
 
 But since we mapped the port 8283:
 
-- the frontend is available on the host with localhost:8283, <your_host_ip>:8283 or <your_hostname>:8283.
+- the frontend is available on the host with localhost:8283, your_host_ip:8283 or your_hostname:8283.
 
-- the frontend is available on the lan with <your_host_ip>:8283 or <your_hostname>:8283.
+- the frontend is available on the lan with your_host_ip:8283 or your_hostname:8283.
 
 In the same way the Matter port range 5550-5559 is mapped outside the container to allow the controllers on the lan to discover and connect Matterbridge.
 
