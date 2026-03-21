@@ -1545,21 +1545,27 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       type: 'object',
       properties: {
         name: {
-          description: 'Plugin name',
-          type: 'string',
-          readOnly: true,
+          'title': 'Plugin Name',
+          'description': 'Plugin name',
+          'type': 'string',
+          'readOnly': true,
+          'ui:widget': 'hidden',
         },
         type: {
-          description: 'Plugin type',
-          type: 'string',
-          readOnly: true,
+          'title': 'Plugin Type',
+          'description': 'Plugin type',
+          'type': 'string',
+          'readOnly': true,
+          'ui:widget': 'hidden',
         },
         debug: {
+          title: 'Enable Debug',
           description: 'Enable the debug for the plugin (development only)',
           type: 'boolean',
           default: false,
         },
         unregisterOnShutdown: {
+          title: 'Unregister On Shutdown',
           description: 'Unregister all devices on shutdown (development only)',
           type: 'boolean',
           default: false,

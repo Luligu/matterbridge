@@ -154,10 +154,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log('ConfigPluginDialog added WebSocket listener id:', uniqueId.current);
 
-    if (rjsfDebug) console.log('ConfigPluginDialog mounting...');
-    if (rjsfDebug) console.log('ConfigPluginDialog mounting with form:', formData);
-    if (rjsfDebug) console.log('ConfigPluginDialog mounting with schema:', schema);
-    if (rjsfDebug) console.log('ConfigPluginDialog mounting with uiSchema:', uiSchema);
+    if (debug) console.log('ConfigPluginDialog mounting...');
+    if (debug) console.log('ConfigPluginDialog mounting with form:', formData);
+    if (debug) console.log('ConfigPluginDialog mounting with schema:', schema);
+    if (debug) console.log('ConfigPluginDialog mounting with uiSchema:', uiSchema);
 
     // Move the ui: properties from the schema to the uiSchema
     if (formData && schema && schema.properties) {

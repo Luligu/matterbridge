@@ -57,6 +57,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [package]: Add `CODE_OF_CONDUCT.md`.
+- [plugins]: Add `title` and `ui:widget` to default schema.
 
 ### Changed
 
@@ -68,7 +69,7 @@ These classes will run as threads in the next releases:
 
 ### Fixed
 
-- [frontend]: "Filter by" in the Devices page is case insensitive.
+- [frontend]: "Filter by" in the Devices page is now case insensitive.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
