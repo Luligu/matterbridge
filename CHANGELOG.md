@@ -54,6 +54,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.1] - Dev branch
 
+### Added
+
+- [package]: Add `CODE_OF_CONDUCT.md`.
+
 ### Changed
 
 - [package]: Update dependencies.
