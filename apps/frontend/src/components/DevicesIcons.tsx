@@ -516,7 +516,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         .filter((device) => {
           if (filterByPlugin && device.pluginName.toLowerCase() !== normalizedPlugin) return false;
           if (filterDevices === '') return true;
-          return device.name.toLowerCase().includes(filterDevices) || device.serial.toLowerCase().includes(filterDevices);
+          return device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase());
         })
         .map(
           (device) =>
