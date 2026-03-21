@@ -121,7 +121,7 @@ describe('Devices', () => {
       getUniqueId: () => 'uid-devices',
     };
 
-    render(
+    const { unmount } = render(
       <WebSocketContext.Provider value={ctx as any}>
         <Devices />
       </WebSocketContext.Provider>,
@@ -162,6 +162,25 @@ describe('Devices', () => {
     // MUI Select renders items in a listbox; in some setups MenuItem role is option, in others it's menuitem.
     const itemA = (await screen.findByRole('option', { name: 'PluginA' }).catch(() => screen.findByRole('menuitem', { name: 'PluginA' }))) as HTMLElement;
     expect(itemA).toBeInTheDocument();
+
+    act(() => {
+      listener!({
+        method: 'refresh_required',
+        response: { changed: 'plugins', lock: false },
+      });
+    });
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      id: 'uid-devices',
+      sender: 'Devices',
+      method: '/api/plugins',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: {},
+    });
+
+    unmount();
+    expect(removeListener).toHaveBeenCalled();
   });
 
   it('persists selected plugin and toggles view mode', async () => {
@@ -238,5 +257,78 @@ describe('Devices', () => {
     // Sanity: our mocks captured props at least once.
     expect(lastIconsProps).toBeDefined();
     expect(lastTableProps).toBeDefined();
+  });
+
+  it('restores saved filters and saved table view, then switches back to icon view', async () => {
+    localStorage.setItem(MbfLsk.devicesFilterPlugins, 'All plugins');
+    localStorage.setItem(MbfLsk.devicesFilterDevices, 'saved-filter');
+    localStorage.setItem(MbfLsk.devicesViewMode, 'table');
+
+    const sendMessage = vi.fn();
+    const removeListener = vi.fn();
+
+    let listener: ((msg: any) => void) | undefined;
+    const addListener = vi.fn((fn: (msg: any) => void) => {
+      listener = fn;
+    });
+
+    const ctx = {
+      online: true,
+      sendMessage,
+      addListener,
+      removeListener,
+      getUniqueId: () => 'uid-devices-restore',
+    };
+
+    render(
+      <WebSocketContext.Provider value={ctx as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+
+    expect(listener).toBeDefined();
+    act(() => {
+      listener!({
+        method: '/api/plugins',
+        id: 'uid-devices-restore',
+        response: [{ name: 'PluginA' }, { name: 'PluginB' }],
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('saved-filter')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('devices-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('devices-icons')).not.toBeInTheDocument();
+
+    const combobox = document.querySelector('[role="combobox"]') as HTMLInputElement | null;
+    expect(combobox?.textContent).toContain('All plugins');
+
+    act(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'Icon View' }));
+    });
+
+    expect(screen.getByTestId('devices-icons')).toBeInTheDocument();
+    expect(localStorage.getItem(MbfLsk.devicesViewMode)).toBe('icon');
+  });
+
+  it('renders Connecting when offline', () => {
+    const ctx = {
+      online: false,
+      sendMessage: vi.fn(),
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      getUniqueId: () => 'uid-devices-offline',
+    };
+
+    render(
+      <WebSocketContext.Provider value={ctx as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+
+    expect(screen.getByTestId('connecting')).toBeInTheDocument();
+    expect(screen.queryByTestId('mbf-page')).not.toBeInTheDocument();
   });
 });
