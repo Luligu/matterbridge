@@ -62,6 +62,11 @@ These classes will run as threads in the next releases:
 
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.1.0.
+- [frontend]: Bump `frontend` version to v. 3.4.9.
+
+### Fixed
+
+- [frontend]: "Filter by" in the Devices page is case insensitive.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

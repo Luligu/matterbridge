@@ -704,7 +704,7 @@ Check the matter.js readme.
 
 ## Code of Conduct
 
-We believe in a welcoming and respectful community for all. Please make sure to follow our [Code of Conduct](LINK_TO_CODE_OF_CONDUCT) in all your interactions with the project.
+We believe in a welcoming and respectful community for all. Please make sure to follow our [Code of Conduct](./CODE_OF_CONDUCT.md) in all your interactions with the project.
 
 ## Support
 
