@@ -63,6 +63,7 @@ These classes will run as threads in the next releases:
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.1.0.
 - [frontend]: Bump `frontend` version to v. 3.4.9.
+- [frontend]: Bump `vite` version to v. 8.0.1 and fix imports for rolldown.
 
 ### Fixed
 

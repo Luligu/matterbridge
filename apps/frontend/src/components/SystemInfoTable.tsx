@@ -6,7 +6,7 @@ import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 
 // @mdi/js
-import Icon from '@mdi/react';
+import { Icon } from '@mdi/react';
 import { mdiChartTimelineVariantShimmer } from '@mdi/js';
 
 // Backend

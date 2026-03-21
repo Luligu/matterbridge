@@ -38,7 +38,7 @@ import MicrowaveIcon from '@mui/icons-material/Microwave';
 import KitchenIcon from '@mui/icons-material/Kitchen';
 
 // @mdi/js use: <Icon path={mdiSortDescending} size='15px'/>
-import Icon from '@mdi/react';
+import { Icon } from '@mdi/react';
 import {
   mdiPowerSocketEu,
   mdiTransmissionTower,

@@ -10,7 +10,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 
 // @mdi/js
-import Icon from '@mdi/react';
+import { Icon } from '@mdi/react';
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
 
 // Backend
