@@ -171,9 +171,11 @@ export class ThreadsManager {
   }
 
   private intervalHandler() {
-    this.log.debug(
-      `Threads status:\n${this.threads.map((t) => `${t.name} running: ${t.worker ? 'yes' : 'no'}, lastSeen: ${t.lastSeen ? new Date(t.lastSeen).toISOString() : 'never'}, runs: ${t.runCount ?? 0}, errors: ${t.errorCount ?? 0}`).join('\n')}`,
-    );
+    for (const thread of this.threads) {
+      this.log.debug(
+        `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
+      );
+    }
     for (const thread of this.threads) {
       if (thread.worker && Date.now() - (thread.lastSeen || 0) > this.intervalMs) {
         const msg: ParentPortMessage = { type: 'ping', threadId: thread.worker.threadId, threadName: thread.name };
