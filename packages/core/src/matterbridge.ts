@@ -240,7 +240,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   // Instance properties
   public shutdown = false;
-  private readonly failCountLimit = hasParameter('shelly') ? 600 : 120;
+  private readonly failCountLimit = 300; // 5 minutes if check every second
   public hasCleanupStarted = false;
   private initialized = false;
   private startMatterInterval: NodeJS.Timeout | undefined;
