@@ -40,6 +40,7 @@ The project is evolving to a multi-threaded architecture with these advantages:
 These threads already run as workers:
 
 - ✅ check updates;
+- ✅ check docker updates;
 - ✅ system check;
 - ✅ spawn commands;
 - ✅ archive commands;
@@ -58,6 +59,7 @@ These classes will run as threads in the next releases:
 
 - [package]: Add `CODE_OF_CONDUCT.md`.
 - [plugins]: Add `title` and `ui:widget` to default schema.
+- [threads]: Add `DockerVersion` thread.
 
 ### Changed
 
@@ -107,10 +109,10 @@ If you hit build errors:
 
 ### Added
 
-- [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
-- [threads]: Add ArchiveCommand thread.
-- [endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.
-- [endpoint]: Add removeCommandHandler() method.
+- [frontend]: Add support for `Hass Ingress` project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
+- [threads]: Add `ArchiveCommand` thread.
+- [endpoint]: Add `getSnapshot()` to create a snapshot of matter cluster state.
+- [endpoint]: Add `removeCommandHandler()` method.
 
 ### Changed
 

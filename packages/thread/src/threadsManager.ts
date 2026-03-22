@@ -86,6 +86,7 @@ export class ThreadsManager {
     { name: 'GlobalPrefix', path: 'workerGlobalPrefix.js', type: 'worker' },
     { name: 'SpawnCommand', path: 'workerSpawnCommand.js', type: 'worker' },
     { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
+    { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
   ];
 
   /**

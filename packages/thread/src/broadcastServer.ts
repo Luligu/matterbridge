@@ -52,8 +52,9 @@ interface BroadcastServerEvents {
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
   private closed = false;
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
-  private readonly verbose = hasParameter('verbose');
+  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  private readonly debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
+  private readonly verbose = hasParameter('verbose') || hasParameter('verbose-threads');
 
   /**
    * Creates an instance of BroadcastServer.
@@ -68,8 +69,8 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     private readonly channel: string = 'broadcast-channel',
   ) {
     super();
+    // Create a BroadcastChannel for the specified channel name and set up message handlers. It must remain referenced to keep the process alive.
     this.broadcastChannel = new BroadcastChannel(this.channel);
-    // this.broadcastChannel.unref();
     this.broadcastChannel.onmessage = this.broadcastMessageHandler.bind(this);
     this.broadcastChannel.onmessageerror = this.broadcastMessageErrorHandler.bind(this);
   }
@@ -274,7 +275,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (message.timestamp === undefined) {
       message.timestamp = Date.now();
     }
-    if (message.dst === this.name /* || message.dst === 'all'*/) {
+    if (message.dst === this.name) {
       message.dst = message.src;
     }
     message.src = this.name;
@@ -298,7 +299,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerMessageRequest<K>} message - The typed request message to fetch.
    * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 250ms.
    * @returns {Promise<WorkerMessageResponseSuccess<K>>} A promise that resolves with the successful response from the worker or rejects on timeout.
-   * @throws {Error} If the fetch operation times out after 250ms or if an error response is received or if the response is malformed.
+   * @throws {Error} If the fetch operation times out after the specified timeout (default 250ms) or if an error response is received or if the response is malformed.
    */
   async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(
     message: T,

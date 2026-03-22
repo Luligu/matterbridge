@@ -138,6 +138,11 @@ interface MatterbridgeEvents {
  * Represents the Matterbridge application.
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
+  /** Debug flag */
+  private readonly debug = hasParameter('debug');
+  /** Verbose flag */
+  private readonly verbose = hasParameter('verbose');
+
   /** Matterbridge system information */
   public systemInformation: SystemInformation = {
     // Network properties
@@ -179,10 +184,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeCertDirectory = '';
   /** It indicates the global modules directory for npm. */
   public globalModulesDirectory = '';
+  /** It indicates the running version of matterbrdge. */
   public matterbridgeVersion = '';
+  /** It indicates the latest npm version of matterbrdge with tag latest. */
   public matterbridgeLatestVersion = '';
+  /** It indicates the latest npm version of matterbrdge with tag dev. */
   public matterbridgeDevVersion = '';
+  /** It indicates the running version of matterbrdge frontend. */
   public frontendVersion = '';
+  /** It indicates the current docker image version of matterbrdge. */
+  public dockerVersion: string | undefined;
+  /** It indicates the latest docker image version of matterbrdge with tag latest. */
+  public dockerLatestVersion: string | undefined;
+  /** It indicates the latest docker image version of matterbrdge with tag dev. */
+  public dockerDevVersion: string | undefined;
   /** It indicates the mode of the Matterbridge instance. It can be 'bridge', 'childbridge', 'controller' or ''. */
   public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
   /** It indicates the restart mode of the Matterbridge instance. It can be 'service', 'docker' or ''. */
@@ -197,7 +212,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     logName: 'Matterbridge',
     logNameColor: '\x1b[38;5;115m',
     logTimestampFormat: TimestampFormat.TIME_MILLIS,
-    logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO,
+    logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
   });
   /** Matterbridge logger level */
   public logLevel: LogLevel = this.log.logLevel;
@@ -205,7 +220,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public fileLogger = false;
 
   /** Matter logger */
-  public readonly matterLog = new AnsiLogger({ logName: 'Matter', logNameColor: '\x1b[34m', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  public readonly matterLog = new AnsiLogger({
+    logName: 'Matter',
+    logNameColor: '\x1b[34m',
+    logTimestampFormat: TimestampFormat.TIME_MILLIS,
+    logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
+  });
   /** Matter logger level */
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
@@ -264,6 +284,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   matterStorageManager: StorageManager | undefined;
   /** Matter matterbridge storage context created in the storage manager with name 'persist' */
   matterbridgeContext: StorageContext | undefined;
+  /** Matter controller storage context created in the storage manager with name 'persist' */
   controllerContext: StorageContext | undefined;
 
   /** Matter mdns interface e.g. 'eth0' or 'wlan0' or 'Wi-Fi' */
@@ -305,7 +326,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   /** Broadcast server */
   private readonly server: BroadcastServer;
-  private readonly verbose = hasParameter('verbose');
 
   /** We load asyncronously so is private */
   private constructor() {
@@ -365,6 +385,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       matterbridgeLatestVersion: this.matterbridgeLatestVersion,
       matterbridgeDevVersion: this.matterbridgeDevVersion,
       frontendVersion: this.frontendVersion,
+      dockerVersion: this.dockerVersion,
+      dockerLatestVersion: this.dockerLatestVersion,
+      dockerDevVersion: this.dockerDevVersion,
       bridgeMode: this.bridgeMode,
       restartMode: this.restartMode,
       virtualMode: this.virtualMode,

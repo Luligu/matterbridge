@@ -29,7 +29,7 @@ import {
 import { Matterbridge } from './matterbridge.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { assertMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
+import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
@@ -110,6 +110,59 @@ describe('Matterbridge platform', () => {
 
     expect(() => assertMatterbridgePlatform(platform)).not.toThrow();
     expect(() => assertMatterbridgePlatform({})).toThrow();
+  });
+
+  test('should validate and assert MatterbridgePlatform instances', async () => {
+    // @ts-expect-error access private constructor
+    const guardPlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform guard' }), {
+      name: 'guard',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
+    await guardPlatform.ready;
+
+    const brand = Object.getOwnPropertySymbols(guardPlatform).find((symbol) => symbol.description === 'MatterbridgePlatform.brand');
+
+    expect(isMatterbridgePlatform(guardPlatform)).toBe(true);
+    expect(isMatterbridgePlatform(undefined)).toBe(false);
+    expect(isMatterbridgePlatform(null)).toBe(false);
+    expect(isMatterbridgePlatform('string')).toBe(false);
+
+    const instanceWithoutBrand = Object.create(MatterbridgePlatform.prototype) as MatterbridgePlatform;
+    Object.assign(instanceWithoutBrand, { name: 'missing-brand', type: 'AnyPlatform', version: '1.0.0', config: {} });
+    expect(isMatterbridgePlatform(instanceWithoutBrand)).toBe(false);
+
+    expect(brand).toBeDefined();
+    if (!brand) throw new Error('MatterbridgePlatform brand symbol not found');
+
+    const brandedWithoutInstance = {
+      name: 'fake',
+      type: 'AnyPlatform',
+      version: '1.0.0',
+      config: {},
+      [brand]: true,
+    };
+    expect(isMatterbridgePlatform(brandedWithoutInstance)).toBe(false);
+
+    // @ts-expect-error access private constructor
+    const invalidShapePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform invalid shape' }), {
+      name: 'invalid-shape',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+    });
+    await invalidShapePlatform.ready;
+    Object.assign(invalidShapePlatform as unknown as { name: unknown }, { name: 123 });
+    expect(isMatterbridgePlatform(invalidShapePlatform)).toBe(false);
+
+    expect(() => assertMatterbridgePlatform(guardPlatform)).not.toThrow();
+    expect(() => assertMatterbridgePlatform(brandedWithoutInstance, 'guard test')).toThrow('Invalid MatterbridgePlatform received in guard test');
+
+    await invalidShapePlatform.onShutdown();
+    await guardPlatform.onShutdown();
   });
 
   test('onStart should throw an error if not overridden', async () => {

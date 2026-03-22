@@ -86,6 +86,9 @@ export type SharedMatterbridge = Readonly<{
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   frontendVersion: string;
+  dockerVersion: string | undefined;
+  dockerLatestVersion: string | undefined;
+  dockerDevVersion: string | undefined;
   bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
   restartMode: 'service' | 'docker' | '';
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
@@ -178,6 +181,9 @@ export interface MatterbridgeInformation {
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   frontendVersion: string;
+  dockerVersion: string | undefined;
+  dockerLatestVersion: string | undefined;
+  dockerDevVersion: string | undefined;
   bridgeMode: string;
   restartMode: string;
   virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
@@ -311,4 +317,16 @@ export interface Cluster {
   attributeId: string;
   attributeValue: string;
   attributeLocalValue: unknown;
+}
+
+/** Define an interface for the Docker build configuration, which is read from a JSON file generated during the Docker build process */
+export interface DockerBuildConfig {
+  version: string;
+  sha: string;
+  sha7: string;
+  event: string;
+  workflow: string;
+  type: string;
+  name: string;
+  dev: boolean;
 }
