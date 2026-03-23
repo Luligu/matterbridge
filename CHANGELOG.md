@@ -60,6 +60,7 @@ These classes will run as threads in the next releases:
 - [package]: Add `CODE_OF_CONDUCT.md`.
 - [plugins]: Add `title` and `ui:widget` to default schema.
 - [threads]: Add `DockerVersion` thread.
+- [reset]: The reset commissioning clears also plugin and device with mode = server.
 
 ### Changed
 
@@ -69,6 +70,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `vite` version to v. 8.0.1 and fix imports for the new RollDown.
 - [frontend]: Bump `@rjsf` version to v. 6.4.1 and refactor component ConfigPluginDialog.
 - [boot]: Change boot time limit from 120 to 300 seconds.
+- [frontend]: Remove `matterbridge-irobot` from ignore list. It has been published.
 
 ### Fixed
 

@@ -1693,11 +1693,32 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Matter commisioning reset
       if (message === 'shutting down with reset...') {
         this.log.info('Resetting Matterbridge commissioning information...');
-        await this.matterStorageManager?.createContext('events')?.clearAll();
-        await this.matterStorageManager?.createContext('fabrics')?.clearAll();
-        await this.matterStorageManager?.createContext('root')?.clearAll();
-        await this.matterStorageManager?.createContext('sessions')?.clearAll();
         await this.matterbridgeContext?.clearAll();
+        if (this.bridgeMode === 'bridge') {
+          await this.matterStorageManager?.createContext('events')?.clearAll();
+          await this.matterStorageManager?.createContext('fabrics')?.clearAll();
+          await this.matterStorageManager?.createContext('root')?.clearAll();
+          await this.matterStorageManager?.createContext('sessions')?.clearAll();
+        } else if (this.bridgeMode === 'childbridge') {
+          for (const plugin of this.plugins.array()) {
+            plugin.storageContext?.clearAll();
+            const storageManager = await this.matterStorageService?.open(plugin.name);
+            await storageManager?.createContext('events')?.clearAll();
+            await storageManager?.createContext('fabrics')?.clearAll();
+            await storageManager?.createContext('root')?.clearAll();
+            await storageManager?.createContext('sessions')?.clearAll();
+          }
+        }
+        for (const device of this.devices.array()) {
+          if (device.mode === 'server' && device.deviceName) {
+            const storageManager = await this.matterStorageService?.open(device.deviceName.replaceAll(' ', ''));
+            await storageManager?.createContext('persist')?.clearAll();
+            await storageManager?.createContext('events')?.clearAll();
+            await storageManager?.createContext('fabrics')?.clearAll();
+            await storageManager?.createContext('root')?.clearAll();
+            await storageManager?.createContext('sessions')?.clearAll();
+          }
+        }
         this.log.info('Matter storage reset done! Remove the bridge from the controller.');
       }
 

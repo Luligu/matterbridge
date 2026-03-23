@@ -107,6 +107,77 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     requireSpy.mockRestore();
   });
 
+  test('createDefaultServiceAreaClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    const supportedAreas: ServiceArea.Area[] = [];
+    const selectedAreas: number[] = [];
+    const currentArea: number | null = null;
+    const supportedMaps: ServiceArea.Map[] = [];
+    device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), { currentArea: null, estimatedEndTime: null, selectedAreas: [], supportedAreas: [], supportedMaps: [] });
+    // Call with defaults
+    jest.clearAllMocks();
+    device.createDefaultServiceAreaClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), {
+      currentArea: 1,
+      estimatedEndTime: null,
+      selectedAreas: [],
+      supportedAreas: [
+        {
+          areaId: 1,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 52,
+              floorNumber: 0,
+              locationName: 'Living',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 2,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 47,
+              floorNumber: 0,
+              locationName: 'Kitchen',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 3,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 7,
+              floorNumber: 1,
+              locationName: 'Bedroom',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 4,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 6,
+              floorNumber: 1,
+              locationName: 'Bathroom',
+            },
+          },
+          mapId: null,
+        },
+      ],
+      supportedMaps: [],
+    });
+    requireSpy.mockRestore();
+  });
+
   test('add an RVC device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });

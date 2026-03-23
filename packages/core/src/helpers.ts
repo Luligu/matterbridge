@@ -152,6 +152,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
       else await matterbridge.shutdownProcess();
     });
     await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {
+      // istanbul ignore if -- Shelly update code has been removed
       if (hasParameter('shelly')) {
         /*
         const { getShelly } = await import('./shelly.js');

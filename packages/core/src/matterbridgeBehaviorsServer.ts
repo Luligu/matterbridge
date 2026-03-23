@@ -707,6 +707,7 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends MatterbridgeWindow
 export class MatterbridgeDoorLockServer extends DoorLockServer {
   /**
    * Handles the LockDoor command.
+   * It will set lockState to Locked.
    */
   override async lockDoor(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -724,6 +725,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer {
 
   /**
    * Handles the UnlockDoor command.
+   * It will set lockState to Unlocked.
    */
   override async unlockDoor(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);

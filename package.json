@@ -267,8 +267,8 @@
     "@types/multer": "2.1.0",
     "@types/node": "25.5.0",
     "@types/ws": "8.18.1",
-    "@vitest/coverage-v8": "4.1.0",
-    "@vitest/eslint-plugin": "1.6.12",
+    "@vitest/coverage-v8": "4.1.1",
+    "@vitest/eslint-plugin": "1.6.13",
     "cross-env": "10.1.0",
     "eslint": "10.1.0",
     "eslint-config-prettier": "10.1.8",
@@ -286,7 +286,7 @@
     "ts-jest": "29.4.6",
     "typescript": "5.9.3",
     "typescript-eslint": "8.57.1",
-    "vitest": "4.1.0"
+    "vitest": "4.1.1"
   },
   "overrides": {
     "eslint": "10.1.0",

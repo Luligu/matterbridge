@@ -133,6 +133,6 @@
     "multer": "2.1.1",
     "node-ansi-logger": "3.2.0",
     "node-persist-manager": "2.0.1",
-    "ws": "8.19.0"
+    "ws": "8.20.0"
   }
 }
