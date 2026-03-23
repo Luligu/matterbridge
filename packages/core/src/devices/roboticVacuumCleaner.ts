@@ -60,7 +60,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {RvcOperationalState.OperationalStateStruct[]} [operationalStateList] - The list of operational states for the robotic vacuum cleaner. Defaults to a predefined set of states.
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
-   * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
+   * @param {number | null} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
    * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to empty list.
    */
   constructor(
@@ -77,7 +77,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     operationalStateList?: RvcOperationalState.OperationalStateStruct[],
     supportedAreas?: ServiceArea.Area[],
     selectedAreas?: number[],
-    currentArea?: number,
+    currentArea?: number | null,
     supportedMaps?: ServiceArea.Map[],
   ) {
     super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
