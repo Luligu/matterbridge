@@ -29,7 +29,6 @@ export const pluginIgnoreList = [
   'matterbridge-', // invalid name
   'matterbridge-plugin-template', // standard template repository - someone published on hist name!!!!!!!
   'matterbridge-dyson', // my package
-  'matterbridge-irobot', // my package
   'matterbridge-tuya', // my package
   'matterbridge-mqtt', // my package
   'matterbridge-matter', // my package
