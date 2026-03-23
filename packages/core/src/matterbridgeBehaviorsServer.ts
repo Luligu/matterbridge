@@ -280,117 +280,11 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
 /**
  * ColorControl server (hue/saturation/xy/color temperature) forwarding commands to the Matterbridge command handler.
  */
-export class MatterbridgeColorControlServer extends ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature) {
-  /**
-   * Forwards MoveToHue requests to the Matterbridge command handler.
-   *
-   * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
-   */
-  override async moveToHue(request: ColorControl.MoveToHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('ColorControl.moveToHue', {
-      command: 'moveToHue',
-      request,
-      cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
-    await super.moveToHue(request);
-  }
-
-  /**
-   * Forwards MoveToSaturation requests to the Matterbridge command handler.
-   *
-   * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
-   */
-  override async moveToSaturation(request: ColorControl.MoveToSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
-      command: 'moveToSaturation',
-      request,
-      cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
-    await super.moveToSaturation(request);
-  }
-
-  /**
-   * Forwards MoveToHueAndSaturation requests to the Matterbridge command handler.
-   *
-   * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
-   */
-  override async moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
-    await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
-      command: 'moveToHueAndSaturation',
-      request,
-      cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
-    await super.moveToHueAndSaturation(request);
-  }
-
-  /**
-   * Forwards MoveToColor requests to the Matterbridge command handler.
-   *
-   * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
-   */
-  override async moveToColor(request: ColorControl.MoveToColorRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
-    await device.commandHandler.executeHandler('ColorControl.moveToColor', {
-      command: 'moveToColor',
-      request,
-      cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
-    await super.moveToColor(request);
-  }
-
-  /**
-   * Forwards MoveToColorTemperature requests to the Matterbridge command handler.
-   *
-   * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
-   */
-  override async moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
-    await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
-      command: 'moveToColorTemperature',
-      request,
-      cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
-    await super.moveToColorTemperature(request);
-  }
-}
-
-/**
- * Enhanced ColorControl server forwarding enhanced hue commands to the Matterbridge command handler.
- */
-export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.with(
+export class MatterbridgeColorControlServer extends ColorControlServer.with(
   ColorControl.Feature.HueSaturation,
-  ColorControl.Feature.EnhancedHue,
   ColorControl.Feature.Xy,
   ColorControl.Feature.ColorTemperature,
+  ColorControl.Feature.EnhancedHue,
 ) {
   /**
    * Forwards MoveToHue requests to the Matterbridge command handler.
@@ -535,6 +429,17 @@ export class MatterbridgeEnhancedColorControlServer extends ColorControlServer.w
     await super.moveToColorTemperature(request);
   }
 }
+/**
+ * Enhanced ColorControl server forwarding enhanced hue commands to the Matterbridge command handler.
+ *
+ * @deprecated This server is deprecated in favor of using MatterbridgeColorControlServer with the EnhancedHue feature.
+ */
+export class MatterbridgeEnhancedColorControlServer extends MatterbridgeColorControlServer.with(
+  ColorControl.Feature.HueSaturation,
+  ColorControl.Feature.EnhancedHue,
+  ColorControl.Feature.Xy,
+  ColorControl.Feature.ColorTemperature,
+) {}
 
 /**
  * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
@@ -688,11 +593,15 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
 
 /**
  * WindowCovering server (lift) that forwards covering commands to the Matterbridge command handler.
+ *
+ * @deprecated This server is deprecated in favor of using MatterbridgeWindowCoveringServer with only the Lift and PositionAwareLift features.
  */
 export class MatterbridgeLiftWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {}
 
 /**
  * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
+ *
+ * @deprecated This server is deprecated in favor of using MatterbridgeWindowCoveringServer with the Lift, PositionAwareLift, Tilt and PositionAwareTilt features.
  */
 export class MatterbridgeLiftTiltWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(
   WindowCovering.Feature.Lift,
@@ -783,9 +692,14 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 }
 
 /**
- * Thermostat server (cooling/heating/auto) with Matterbridge-specific command handling.
+ * Thermostat server (cooling/heating/auto/presets) with Matterbridge-specific command handling.
  */
-export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode) {
+export class MatterbridgeThermostatServer extends ThermostatServer.with(
+  Thermostat.Feature.Cooling,
+  Thermostat.Feature.Heating,
+  Thermostat.Feature.AutoMode,
+  Thermostat.Feature.Presets,
+) {
   /**
    * Initializes thermostat behavior and adjusts command lists to avoid unsupported atomic commands.
    */
@@ -823,37 +737,6 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(Thermost
     device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
     await super.setpointRaiseLower(request);
   }
-}
-
-// istanbul ignore next
-/**
- * Thermostat server with Presets feature enabled and Matterbridge-specific command handling.
- */
-export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
-  Thermostat.Feature.Presets,
-  Thermostat.Feature.Cooling,
-  Thermostat.Feature.Heating,
-  Thermostat.Feature.AutoMode,
-) {
-  /**
-   * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
-   *
-   * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
-   */
-  override async setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
-      command: 'setpointRaiseLower',
-      request,
-      cluster: ThermostatServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`MatterbridgePresetThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
-    await super.setpointRaiseLower(request);
-  }
 
   /**
    * Forwards SetActivePresetRequest requests to the Matterbridge command handler.
@@ -871,16 +754,28 @@ export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    device.log.debug(`MatterbridgePresetThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
+    device.log.debug(`MatterbridgeThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
     await super.setActivePresetRequest(request);
     const activePresetHandle = this.state.activePresetHandle ? `0x${Buffer.from(this.state.activePresetHandle).toString('hex')}` : 'null';
     device.log.debug(
-      `MatterbridgePresetThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint}`,
+      `MatterbridgeThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint}`,
     );
     // matter.js currently clears activePresetHandle again while applying preset-derived setpoint writes: that behavior appears questionable versus the Thermostat preset spec.
     // 4.3.10.9.2. Effect on Receipt. The server SHALL set the ActivePresetHandle attribute to the value of the PresetHandle field.
   }
 }
+
+/**
+ * Thermostat server with Presets feature enabled and Matterbridge-specific command handling.
+ *
+ * @deprecated This server is deprecated in favor of using MatterbridgeThermostatServer with the Presets feature.
+ */
+export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
+  Thermostat.Feature.Presets,
+  Thermostat.Feature.Cooling,
+  Thermostat.Feature.Heating,
+  Thermostat.Feature.AutoMode,
+) {}
 
 /**
  * ValveConfigurationAndControl server that forwards valve commands to the Matterbridge command handler.
@@ -1135,7 +1030,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
    */
   override async selectAreas(request: ServiceArea.SelectAreasRequest): Promise<ServiceArea.SelectAreasResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Selecting areas ${request.newAreas} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`Selecting areas [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ServiceArea.selectAreas', {
       command: 'selectAreas',
       request,
@@ -1143,6 +1038,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
+    /*
     for (const area of request.newAreas) {
       const supportedArea = this.state.supportedAreas.find((supportedArea) => supportedArea.areaId === area);
       if (!supportedArea) {
@@ -1151,7 +1047,8 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       }
     }
     this.state.selectedAreas = request.newAreas;
-    device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: ${request.newAreas.map((area) => area.toString()).join(', ')}`);
+    */
+    device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: [${request.newAreas.join(', ')}]`);
     return await super.selectAreas(request);
   }
 }

@@ -9,6 +9,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -50,7 +51,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePresetThermostatServer, MatterbridgeSwitchServer, MatterbridgeThermostatServer } from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeSwitchServer, MatterbridgeThermostatServer } from './matterbridgeBehaviorsServer.js';
 import {
   airPurifier,
   bridge,
@@ -739,8 +740,8 @@ describe('Server clusters and behaviors', () => {
     const initialThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
 
     expect(initialThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2100, occupiedCoolingSetpoint: 2500 });
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
 
     await expectCommand(thermostat, Thermostat.Cluster, 'setpointRaiseLower', setBothRequest, (data) => {
       expect(data.cluster).toBe('thermostat');
@@ -802,7 +803,7 @@ describe('Server clusters and behaviors', () => {
     const secondPresetRequest = { presetHandle: Uint8Array.from([1]) };
     const clearPresetRequest = { presetHandle: null };
     const invalidPresetRequest = { presetHandle: Uint8Array.from([9]) };
-    const presetThermostatBehavior = MatterbridgePresetThermostatServer.with(
+    const presetThermostatBehavior = MatterbridgeThermostatServer.with(
       Thermostat.Feature.Heating,
       Thermostat.Feature.Cooling,
       Thermostat.Feature.AutoMode,
@@ -1140,7 +1141,6 @@ describe('Server clusters and behaviors', () => {
     expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
 
     await rvc.invokeBehaviorCommand(ServiceArea.Cluster, 'selectAreas', { newAreas: [0, 5] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0');
     expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
   });
 });

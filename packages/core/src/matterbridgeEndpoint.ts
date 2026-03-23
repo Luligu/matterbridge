@@ -109,7 +109,6 @@ import {
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
   MatterbridgeDoorLockServer,
-  MatterbridgeEnhancedColorControlServer,
   MatterbridgeFanControlServer,
   MatterbridgeHepaFilterMonitoringServer,
   MatterbridgeIdentifyServer,
@@ -118,7 +117,6 @@ import {
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
   MatterbridgePowerSourceServer,
-  MatterbridgePresetThermostatServer,
   MatterbridgeServer,
   MatterbridgeSmokeCoAlarmServer,
   MatterbridgeSwitchServer,
@@ -2392,12 +2390,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTempPhysicalMaxMireds: number = 500,
   ): this {
     this.behaviors.require(
-      MatterbridgeEnhancedColorControlServer.with(
-        ColorControl.Feature.Xy,
-        ColorControl.Feature.HueSaturation,
-        ColorControl.Feature.EnhancedHue,
-        ColorControl.Feature.ColorTemperature,
-      ),
+      MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.ColorTemperature),
       {
         colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
         enhancedColorMode: ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation,
@@ -2944,7 +2937,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
   ): this {
     this.behaviors.require(
-      MatterbridgePresetThermostatServer.with(
+      MatterbridgeThermostatServer.with(
         Thermostat.Feature.Heating,
         Thermostat.Feature.Cooling,
         Thermostat.Feature.AutoMode,

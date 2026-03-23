@@ -1008,17 +1008,33 @@ describe('Matterbridge', () => {
       '-reset',
     ];
     (matterbridge as any).initialized = true;
+
+    // Bridge mode
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
     await shutdownPromise;
     matterbridge.shutdown = false;
     matterbridge.removeAllListeners('shutdown');
+
+    // ChildBridge mode
+    matterbridge.bridgeMode = 'childbridge';
+    matterbridge.plugins.set({ name: 'test-plugin', storageContext: { clearAll: jest.fn() } } as any);
+    expect(matterbridge.plugins).toHaveLength(1);
+    matterbridge.devices.set({ uniqueId: 'test-device', mode: 'server', deviceName: 'test-device' } as any);
+    expect(matterbridge.devices).toHaveLength(1);
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
+    await shutdownPromise;
+    matterbridge.shutdown = false;
+    matterbridge.removeAllListeners('shutdown');
+
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
   });
 
   test('matterbridge -reset xxx', async () => {
+    await setDebug(false);
     expect((matterbridge as any).initialized).toBe(false);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);

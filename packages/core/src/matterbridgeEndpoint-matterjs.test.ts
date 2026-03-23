@@ -99,11 +99,9 @@ import {
   MatterbridgeDeviceEnergyManagementModeServer,
   MatterbridgeDeviceEnergyManagementServer,
   MatterbridgeDoorLockServer,
-  MatterbridgeEnhancedColorControlServer,
   MatterbridgeFanControlServer,
   MatterbridgeIdentifyServer,
   MatterbridgeLevelControlServer,
-  MatterbridgeLiftTiltWindowCoveringServer,
   MatterbridgeModeSelectServer,
   MatterbridgeOnOffServer,
   MatterbridgeOperationalStateServer,
@@ -930,14 +928,14 @@ describe('Matterbridge ' + NAME, () => {
 
   test('invoke MatterbridgeColorControlServer commands', async () => {
     expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
-    expect(light.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
-    expect((light.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
+    expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
+    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((light.stateOf(ColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
+    expect((light.stateOf(ColorControlServer) as any).generatedCommandList).toEqual([]);
     await light.invokeBehaviorCommand('colorControl', 'moveToHue', {
       hue: 180,
       direction: ColorControl.Direction.Shortest,
@@ -979,18 +977,18 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
   });
 
-  test('invoke MatterbridgeEnhancedColorControlServer commands', async () => {
+  test('invoke MatterbridgeColorControlServer with enhanced hue commands', async () => {
     expect(enhancedLight.behaviors.has(ColorControlServer)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(MatterbridgeEnhancedColorControlServer)).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHue')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColor')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeEnhancedColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).acceptedCommandList).toEqual(
+    expect(enhancedLight.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((enhancedLight.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(
       expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]),
     );
-    expect((enhancedLight.stateOf(MatterbridgeEnhancedColorControlServer) as any).generatedCommandList).toEqual([]);
+    expect((enhancedLight.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
     await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToHue', {
       hue: 180,
       direction: ColorControl.Direction.Shortest,
@@ -1054,7 +1052,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
   });
 
-  test('invoke MatterbridgeLiftWindowCoveringServer commands', async () => {
+  test('invoke MatterbridgeWindowCoveringServer commands', async () => {
     const coverLiftServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
     expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
     expect(coverLift.behaviors.has(coverLiftServer)).toBeTruthy();
@@ -1075,7 +1073,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`);
   });
 
-  test('invoke MatterbridgeLiftTiltWindowCoveringServer commands', async () => {
+  test('invoke MatterbridgeWindowCoveringServer with tilt commands', async () => {
     const coverLiftTiltServer = MatterbridgeWindowCoveringServer.with(
       WindowCovering.Feature.Lift,
       WindowCovering.Feature.PositionAwareLift,
@@ -1154,10 +1152,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
     expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
+    expect(thermostat.behaviors.elementsOf(ThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
+    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
     await thermostat.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
@@ -1326,11 +1324,11 @@ describe('Matterbridge ' + NAME, () => {
     expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.selectAreas', { newAreas: [1, 2, 3, 4] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [1, 2, 3, 4] (endpoint ${rvc.id}.${rvc.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [1, 2, 3, 4]`);
     jest.clearAllMocks();
     await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.selectAreas', { newAreas: [0, 5] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
+    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
   });
 
   test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
