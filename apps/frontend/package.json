@@ -84,8 +84,9 @@
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npm run reset"
   },
   "overrides": {
+    "@eslint/js": "10.0.1",
     "eslint": "10.1.0",
-    "@eslint/js": "10.0.1"
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -122,8 +123,8 @@
     "npm-check-updates": "19.6.5",
     "prettier": "3.8.1",
     "shx": "0.4.0",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.57.1",
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.57.2",
     "vite": "8.0.2",
     "vitest": "4.1.1"
   }
