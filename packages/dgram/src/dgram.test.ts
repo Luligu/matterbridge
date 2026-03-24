@@ -370,7 +370,7 @@ describe('Dgram', () => {
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
         ],
     });
-    expect(dgram.getIpv6InterfaceAddress()).toBe('fe80::5a71:b2f6:7bc8:d00b%eth0');
+    expect(dgram.getIpv6InterfaceAddress()).toBe(`fe80::5a71:b2f6:7bc8:d00b%` + (process.platform === 'win32' ? `2` : `eth0`));
 
     expect(dgram.getInterfacesNames()).toEqual(['lo', 'wireguard', 'eth0']);
 
@@ -448,6 +448,36 @@ describe('Dgram', () => {
     });
     if (originalPlatformDescriptor) {
       Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+    }
+  });
+
+  test('Get IPv6 interface address with link-local address on linux', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      /* prettier-ignore */
+      eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+              { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+              { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
+        ],
+    });
+
+    try {
+      expect(dgram.getIpv6InterfaceAddress('')).toBe('fe80::5a71:b2f6:7bc8:d00b%eth0');
+      expect(dgram.getIpv6ScopeId()).toBe('%eth0');
+      expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+
+      await new Promise<void>((resolve) => {
+        dgram.on('close', resolve);
+        dgram.socket.close();
+      });
+    } finally {
+      if (originalPlatformDescriptor) {
+        Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+      }
     }
   });
 

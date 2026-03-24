@@ -391,8 +391,8 @@ describe('Multicast', () => {
 
     mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
 
-    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `2001:db8::10%eth0`);
-    expect(mcast.joinedInterfaces).toContain('2001:db8::10%eth0');
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, process.platform === 'win32' ? `2001:db8::10%4` : `2001:db8::10%eth0`);
+    expect(mcast.joinedInterfaces).toContain(process.platform === 'win32' ? `2001:db8::10%4` : `2001:db8::10%eth0`);
   });
 
   test('onListening prefers a ULA IPv6 address over a generic IPv6 address', () => {
@@ -414,7 +414,7 @@ describe('Multicast', () => {
 
     mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
 
-    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fd12:3456:789a::20%eth0`);
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, process.platform === 'win32' ? `fd12:3456:789a::20%5` : `fd12:3456:789a::20%eth0`);
   });
 
   test('onListening prefers a /64 ULA IPv6 address over a generic ULA', () => {
@@ -436,7 +436,7 @@ describe('Multicast', () => {
 
     mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
 
-    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fd12:3456:789a::30%eth0`);
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, process.platform === 'win32' ? `fd12:3456:789a::30%6` : `fd12:3456:789a::30%eth0`);
   });
 
   test('onListening prefers a link-local IPv6 address when available', () => {
@@ -458,7 +458,7 @@ describe('Multicast', () => {
 
     mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
 
-    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fe80::40%eth0`);
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, process.platform === 'win32' ? `fe80::40%7` : `fe80::40%eth0`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('joined multicast group'));
   });
 
@@ -590,6 +590,52 @@ describe('Multicast', () => {
   ])('onListening joins multicast for %s with a Windows scope id suffix', (_label, interfaces, membershipInterface) => {
     const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({ eth0: interfaces as any });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    try {
+      mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+    } finally {
+      if (originalPlatformDescriptor) Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+    }
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, membershipInterface);
+  });
+
+  test.each([
+    [
+      'plain IPv6',
+      // prettier-ignore
+      [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
+      '2001:db8::10%eth0',
+    ],
+    [
+      'ULA IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 }],
+      'fd12:3456:789a::20%eth0',
+    ],
+    [
+      'ULA /64 IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 }],
+      'fd12:3456:789a::30%eth0',
+    ],
+    [
+      'link-local IPv6',
+      // prettier-ignore
+      [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
+      'fe80::40%eth0',
+    ],
+  ])('onListening joins multicast for %s with a Linux interface suffix', (_label, interfaces, membershipInterface) => {
+    const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({ eth0: interfaces as any });
     const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});

@@ -75,7 +75,7 @@
     },
     {
       "label": "Test: Behaviors",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -116,7 +116,7 @@
     },
     {
       "label": "Test: Endpoint Single Classes",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -134,7 +134,7 @@
     },
     {
       "label": "Test: Platform",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -157,7 +157,7 @@
     },
     {
       "label": "Test: PluginManager",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -175,7 +175,7 @@
     },
     {
       "label": "Test: DeviceManager",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -193,7 +193,7 @@
     },
     {
       "label": "Test: Dgram",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -211,7 +211,7 @@
     },
     {
       "label": "Test: Utils",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -271,7 +271,7 @@
     },
     {
       "label": "Test: Cli",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
@@ -293,7 +293,7 @@
     },
     {
       "label": "Test: Device Types",
-      "type": "shell",
+      "type": "process",
       "command": "node",
       "args": [
         "--no-warnings",
