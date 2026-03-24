@@ -71,7 +71,9 @@ These classes will run as threads in the next releases:
 
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.1.0.
+- [package]: Bump `typescript` to v.6.0.2.
 - [frontend]: Bump `frontend` version to v. 3.4.9.
+- [frontend]: Bump `typescript` to v.6.0.2.
 - [frontend]: Bump `vite` version to v. 8.0.1 and fix imports for the new RollDown.
 - [frontend]: Bump `@rjsf` version to v. 6.4.1 and refactor component ConfigPluginDialog.
 - [boot]: Change boot time limit from 120 to 300 seconds.

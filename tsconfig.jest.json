@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["node", "jest"],
+    "rootDir": ".",
     "noEmit": true,
     "composite": false,
     "incremental": false,
