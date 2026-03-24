@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "types": ["node", "jest"],
     "noEmit": true,
     "composite": false,
     "incremental": false,
