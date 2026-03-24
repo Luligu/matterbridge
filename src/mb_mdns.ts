@@ -54,6 +54,7 @@ Options:
   --ip-filter <string...>                   Filter strings to match in the mDNS sender ip address (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
+  --no-loopback                             Disable multicast loopback (default: enabled).
   --no-timeout                              Disable automatic timeout of 10 minutes.
   -d, --debug                               Enable debug logging (default: disabled).
   -v, --verbose                             Enable verbose logging (default: disabled).
@@ -246,7 +247,10 @@ Examples:
     // Start the IPv4 mDNS server
     mdnsIpv4.start();
     mdnsIpv4.on('ready', (address: AddressInfo) => {
-      mdnsIpv4?.socket.setMulticastLoopback(false);
+      if (hasParameter('no-loopback')) {
+        mdnsIpv4?.socket.setMulticastLoopback(false);
+        mdnsIpv4?.log.info('Multicast loopback disabled for mdnsIpv4');
+      }
       mdnsIpv4?.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv4 as Mdns);
@@ -288,7 +292,10 @@ Examples:
     // Start the IPv6 mDNS server
     mdnsIpv6.start();
     mdnsIpv6.on('ready', (address: AddressInfo) => {
-      mdnsIpv6?.socket.setMulticastLoopback(false);
+      if (hasParameter('no-loopback')) {
+        mdnsIpv6?.socket.setMulticastLoopback(false);
+        mdnsIpv6?.log.info('Multicast loopback disabled for mdnsIpv6');
+      }
       mdnsIpv6?.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
       if (hasParameter('advertise')) {
         advertise(mdnsIpv6 as Mdns);
