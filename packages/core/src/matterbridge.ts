@@ -566,7 +566,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.rootDirectory = currentFileDirectory.includes(path.join('packages', 'core')) ? path.resolve(currentFileDirectory, '../', '../', '../') : path.resolve(currentFileDirectory, '../', '../', '..', '../');
 
     // Setup the matter environment with default values
-    this.environment.vars.set('log.level', MatterLogLevel.INFO);
+    this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
     this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
     this.environment.vars.set('runtime.signals', false);
@@ -733,7 +733,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.logLevel = LogLevel.INFO;
       }
     } else {
-      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', this.shellyBoard ? LogLevel.NOTICE : LogLevel.INFO);
+      this.log.logLevel = await this.nodeContext.get<LogLevel>('matterbridgeLogLevel', LogLevel.INFO);
     }
     this.logLevel = this.log.logLevel;
     this.frontend.logLevel = this.log.logLevel;
@@ -772,7 +772,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         Logger.level = MatterLogLevel.INFO;
       }
     } else {
-      Logger.level = (await this.nodeContext.get<number>('matterLogLevel', this.shellyBoard ? MatterLogLevel.NOTICE : MatterLogLevel.INFO)) as MatterLogLevel;
+      Logger.level = (await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = MatterLogFormat.ANSI;
     this.matterLogLevel = MatterLogLevel.names[Logger.level] as LogLevel;
