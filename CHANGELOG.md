@@ -55,6 +55,11 @@ These classes will run as threads in the next releases:
 
 ## [3.7.1] - Dev branch
 
+### Dev news
+
+- [utils]: Add getEnumDescription() function to log cluster enums.
+- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper.
+
 ### Added
 
 - [package]: Add `CODE_OF_CONDUCT.md`.

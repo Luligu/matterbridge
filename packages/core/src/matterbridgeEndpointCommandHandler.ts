@@ -120,6 +120,16 @@ export interface MatterbridgeEndpointCommands {
   // Door Lock
   lockDoor: HandlerFunction;
   unlockDoor: HandlerFunction;
+  setPinCode: HandlerFunction;
+  getPinCode: HandlerFunction;
+  clearPinCode: HandlerFunction;
+  clearAllPinCodes: HandlerFunction;
+  setUser: HandlerFunction;
+  getUser: HandlerFunction;
+  clearUser: HandlerFunction;
+  setCredential: HandlerFunction;
+  getCredentialStatus: HandlerFunction;
+  clearCredential: HandlerFunction;
 
   // Thermostat
   setpointRaiseLower: HandlerFunction;
@@ -507,6 +517,16 @@ export type CommandHandlerDataMap = {
   // Door Lock
   'lockDoor': CommandHandlerData<'DoorLock.lockDoor'>;
   'unlockDoor': CommandHandlerData<'DoorLock.unlockDoor'>;
+  'setPinCode': CommandHandlerData<'DoorLock.setPinCode'>;
+  'getPinCode': CommandHandlerData<'DoorLock.getPinCode'>;
+  'clearPinCode': CommandHandlerData<'DoorLock.clearPinCode'>;
+  'clearAllPinCodes': CommandHandlerData<'DoorLock.clearAllPinCodes'>;
+  'setUser': CommandHandlerData<'DoorLock.setUser'>;
+  'getUser': CommandHandlerData<'DoorLock.getUser'>;
+  'clearUser': CommandHandlerData<'DoorLock.clearUser'>;
+  'setCredential': CommandHandlerData<'DoorLock.setCredential'>;
+  'getCredentialStatus': CommandHandlerData<'DoorLock.getCredentialStatus'>;
+  'clearCredential': CommandHandlerData<'DoorLock.clearCredential'>;
   'DoorLock.lockDoor': {
     command: 'lockDoor';
     request: DoorLock.LockDoorRequest;
@@ -517,6 +537,76 @@ export type CommandHandlerDataMap = {
   'DoorLock.unlockDoor': {
     command: 'unlockDoor';
     request: DoorLock.UnlockDoorRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setPinCode': {
+    command: 'setPinCode';
+    request: DoorLock.SetPinCodeRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getPinCode': {
+    command: 'getPinCode';
+    request: DoorLock.GetPinCodeRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearPinCode': {
+    command: 'clearPinCode';
+    request: DoorLock.ClearPinCodeRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearAllPinCodes': {
+    command: 'clearAllPinCodes';
+    request: {};
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setUser': {
+    command: 'setUser';
+    request: DoorLock.SetUserRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getUser': {
+    command: 'getUser';
+    request: DoorLock.GetUserRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearUser': {
+    command: 'clearUser';
+    request: DoorLock.ClearUserRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setCredential': {
+    command: 'setCredential';
+    request: DoorLock.SetCredentialRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getCredentialStatus': {
+    command: 'getCredentialStatus';
+    request: DoorLock.GetCredentialStatusRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearCredential': {
+    command: 'clearCredential';
+    request: DoorLock.ClearCredentialRequest;
     cluster: 'doorLock';
     attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
     endpoint: MatterbridgeEndpoint;

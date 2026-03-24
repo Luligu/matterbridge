@@ -72,6 +72,7 @@ import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { EndpointNumber } from '@matter/types/datatype';
+import { getEnumDescription } from '@matterbridge/utils';
 import { AnsiLogger } from 'node-ansi-logger';
 
 // Matterbridge
@@ -611,43 +612,131 @@ export class MatterbridgeLiftTiltWindowCoveringServer extends MatterbridgeWindow
 ) {}
 
 /**
- * DoorLock server that forwards lock/unlock commands to the Matterbridge command handler.
+ * DoorLock server that forwards lock, user, and credential commands to the Matterbridge command handler.
  */
-export class MatterbridgeDoorLockServer extends DoorLockServer {
+export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess) {
   /**
    * Handles the LockDoor command.
    * It will set lockState to Locked.
+   *
+   * @param {DoorLock.LockDoorRequest} request - Lock-door request payload.
    */
-  override async lockDoor(): Promise<void> {
+  override async lockDoor(request: DoorLock.LockDoorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Locking door with pincode ${request.pinCode ? '0x' + Buffer.from(request.pinCode).toString('hex') : 'N/A'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('DoorLock.lockDoor', {
       command: 'lockDoor',
-      request: {},
+      request,
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
-    await super.lockDoor();
+    await super.lockDoor(request);
   }
 
   /**
    * Handles the UnlockDoor command.
    * It will set lockState to Unlocked.
+   *
+   * @param {DoorLock.UnlockDoorRequest} request - Unlock-door request payload.
    */
-  override async unlockDoor(): Promise<void> {
+  override async unlockDoor(request: DoorLock.UnlockDoorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `Unlocking door with pincode ${request.pinCode ? '0x' + Buffer.from(request.pinCode).toString('hex') : 'N/A'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('DoorLock.unlockDoor', {
       command: 'unlockDoor',
-      request: {},
+      request,
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
-    await super.unlockDoor();
+    await super.unlockDoor(request);
+  }
+
+  /**
+   * Handles the SetPinCode command (feature PinCredential not User).
+   *
+   * @param {DoorLock.SetPinCodeRequest} request - Set-pin-code request payload.
+   */
+  override async setPinCode(request: DoorLock.SetPinCodeRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Setting pin code ${request.pin ? '0x' + Buffer.from(request.pin).toString('hex') : 'N/A'} for user ${request.userId} type ${getEnumDescription(DoorLock.UserType, request.userType)} status ${getEnumDescription(DoorLock.UserStatus, request.userStatus)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.setPinCode', {
+      command: 'setPinCode',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: setPinCode called for user ${request.userId}`);
+  }
+
+  /**
+   *  Handles the GetPinCode command (feature PinCredential not User).
+   *
+   * @param {DoorLock.GetPinCodeRequest} request - Get-pin-code request payload.
+   * @returns {Promise<DoorLock.GetPinCodeResponse>} - Get-pin-code response payload.
+   */
+  override async getPinCode(request: DoorLock.GetPinCodeRequest): Promise<DoorLock.GetPinCodeResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Getting pin code for user ${request.userId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('DoorLock.getPinCode', {
+      command: 'getPinCode',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    return {
+      userId: request.userId,
+      userStatus: DoorLock.UserStatus.Available,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      pinCode: Buffer.from('1234'), // Return a dummy pin code for testing purposes
+    };
+  }
+
+  /**
+   * Handles the ClearPinCode command (feature PinCredential not User).
+   *
+   * @param {DoorLock.ClearPinCodeRequest} request - Clear-pin-code request payload.
+   */
+  override async clearPinCode(request: DoorLock.ClearPinCodeRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Clearing pin code for ${request.pinSlotIndex === 0xfffe ? 'all slots' : 'slot ' + request.pinSlotIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.clearPinCode', {
+      command: 'clearPinCode',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: clearPinCode called for ${request.pinSlotIndex === 0xfffe ? 'all PIN slots' : 'PIN slot ' + request.pinSlotIndex}`);
+  }
+
+  /**
+   * Handles the ClearAllPinCodes command (feature PinCredential not User).
+   */
+  override async clearAllPinCodes(): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Clearing all pin codes (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('DoorLock.clearAllPinCodes', {
+      command: 'clearAllPinCodes',
+      request: {},
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug('MatterbridgeDoorLockServer: clearAllPinCodes called');
   }
 }
 

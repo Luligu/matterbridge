@@ -1103,15 +1103,15 @@ describe('Matterbridge ' + NAME, () => {
 
   test('invoke MatterbridgeDoorLockServer commands', async () => {
     expect(lock.behaviors.has(DoorLockServer)).toBeTruthy();
-    expect(lock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
-    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
-    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
-    expect((lock.stateOf(MatterbridgeDoorLockServer) as any).acceptedCommandList).toEqual([0, 1]);
-    expect((lock.stateOf(MatterbridgeDoorLockServer) as any).generatedCommandList).toEqual([]);
-    await lock.invokeBehaviorCommand('doorLock', 'lockDoor');
-    await lock.invokeBehaviorCommand('doorLock', 'unlockDoor');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door (endpoint ${lock.id}.${lock.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door (endpoint ${lock.id}.${lock.number})`);
+    expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('lockDoor')).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockDoor')).toBeTruthy();
+    expect((lock.stateOf(MatterbridgeDoorLockServer.with()) as any).acceptedCommandList).toEqual([0, 1]);
+    expect((lock.stateOf(MatterbridgeDoorLockServer.with()) as any).generatedCommandList).toEqual([]);
+    await lock.invokeBehaviorCommand('doorLock', 'lockDoor', {});
+    await lock.invokeBehaviorCommand('doorLock', 'unlockDoor', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door with pincode N/A (endpoint ${lock.id}.${lock.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door with pincode N/A (endpoint ${lock.id}.${lock.number})`);
   });
 
   test('invoke MatterbridgeModeSelectServer commands', async () => {

@@ -51,7 +51,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeSwitchServer, MatterbridgeThermostatServer } from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeDoorLockServer, MatterbridgeSwitchServer, MatterbridgeThermostatServer } from './matterbridgeBehaviorsServer.js';
 import {
   airPurifier,
   bridge,
@@ -670,16 +670,181 @@ describe('Server clusters and behaviors', () => {
 
   test('DoorLock server', async () => {
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockDoor')).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('lockDoor')).toBeTruthy();
 
-    await expectCommand(lock, DoorLock.Cluster, 'unlockDoor', undefined, (data) => {
+    await expectCommand(lock, DoorLock.Cluster, 'unlockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
 
-    await expectCommand(lock, DoorLock.Cluster, 'lockDoor', undefined, (data) => {
+    await expectCommand(lock, DoorLock.Cluster, 'lockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+  });
+
+  test('DoorLock server with PIN code', async () => {
+    const pinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockPin' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    pinLock.createPinDoorLockClusterServer();
+    pinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, pinLock)).toBeTruthy();
+
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(pinLock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('setPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('getPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('clearPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('clearAllPinCodes')).toBeTruthy();
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'unlockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'lockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+  });
+
+  test('DoorLock PIN commands', async () => {
+    const pinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockPinCommands' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    pinLock.createPinDoorLockClusterServer();
+    pinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, pinLock)).toBeTruthy();
+
+    expect(pinLock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('setPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('getPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('clearPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('clearAllPinCodes')).toBeTruthy();
+
+    const setPinCodeRequest = {
+      userId: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      pin: pinCode,
+    } satisfies DoorLock.SetPinCodeRequest;
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'setPinCode', setPinCodeRequest, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    let getPinCodeCalled = false;
+    pinLock.addCommandHandler('getPinCode', async (data) => {
+      getPinCodeCalled = true;
+      expect(data.cluster).toBe('doorLock');
+      expect(data.request).toEqual({ userId: 1 });
+      expect(data.endpoint).toBe(pinLock);
+    });
+
+    await pinLock.invokeBehaviorCommand('doorLock', 'getPinCode', { userId: 1 });
+    expect(getPinCodeCalled).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Getting pin code for user 1 (endpoint ${pinLock.id}.${pinLock.number})`);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'clearPinCode', { pinSlotIndex: 1 }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'clearAllPinCodes', undefined, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting pin code 0x${pinCode.toString('hex')} for user 1 type UnrestrictedUser status OccupiedEnabled (endpoint ${pinLock.id}.${pinLock.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Clearing pin code for slot 1 (endpoint ${pinLock.id}.${pinLock.number})`);
+  });
+
+  test('DoorLock PIN edge cases', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockPinMock',
+      maybeNumber: 99,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const behavior = {
+      endpoint,
+      state: {},
+    } as unknown as MatterbridgeDoorLockServer;
+
+    await MatterbridgeDoorLockServer.prototype.setPinCode.call(behavior, {
+      userId: 2,
+      userStatus: DoorLock.UserStatus.Available,
+      userType: DoorLock.UserType.NonAccessUser,
+      pin: null,
+    } as unknown as DoorLock.SetPinCodeRequest);
+
+    const getPinCodeResponse = await MatterbridgeDoorLockServer.prototype.getPinCode.call(behavior, { userId: 7 });
+
+    await MatterbridgeDoorLockServer.prototype.clearPinCode.call(behavior, { pinSlotIndex: 0xfffe });
+    await MatterbridgeDoorLockServer.prototype.clearAllPinCodes.call(behavior);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setPinCode',
+      expect.objectContaining({
+        command: 'setPinCode',
+        request: { userId: 2, userStatus: DoorLock.UserStatus.Available, userType: DoorLock.UserType.NonAccessUser, pin: null },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getPinCode',
+      expect.objectContaining({
+        command: 'getPinCode',
+        request: { userId: 7 },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearPinCode',
+      expect.objectContaining({
+        command: 'clearPinCode',
+        request: { pinSlotIndex: 0xfffe },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearAllPinCodes',
+      expect.objectContaining({
+        command: 'clearAllPinCodes',
+        request: {},
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith('Setting pin code N/A for user 2 type NonAccessUser status Available (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Getting pin code for user 7 (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Clearing pin code for all slots (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Clearing all pin codes (endpoint doorLockPinMock.99)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setPinCode called for user 2');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearPinCode called for all PIN slots');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearAllPinCodes called');
+
+    expect(getPinCodeResponse).toEqual({
+      userId: 7,
+      userStatus: DoorLock.UserStatus.Available,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      pinCode: Buffer.from('1234'),
+    });
   });
 
   test('FanControl server', async () => {
