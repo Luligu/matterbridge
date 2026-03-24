@@ -5,10 +5,7 @@
       "label": "Build",
       "type": "npm",
       "script": "build",
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
+      "group": { "kind": "build", "isDefault": true },
       "problemMatcher": [],
       "detail": "tsc"
     },
@@ -17,10 +14,7 @@
       "type": "shell",
       "command": "node",
       "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--maxWorkers=100%"],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      },
+      "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     },
     {
@@ -28,10 +22,7 @@
       "type": "shell",
       "command": "node",
       "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--maxWorkers=100%"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -39,10 +30,7 @@
       "type": "shell",
       "command": "node",
       "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -64,10 +52,7 @@
         "matterbridge.mocked.test.ts",
         "matterbridge.test.ts"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -85,14 +70,11 @@
         "frontend.express.test.ts",
         "frontend.websocket.test.ts"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
-      "label": "Test: Behavior",
+      "label": "Test: Behaviors",
       "type": "shell",
       "command": "node",
       "args": [
@@ -102,13 +84,13 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsClient.ts",
+        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsServer.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "matterbridgeBehaviorsClient.test.ts",
         "matterbridgeBehaviorsServer.test.ts"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -129,21 +111,25 @@
         "matterbridgeEndpointCommandHandler.test.ts",
         "matterbridgeEndpointHelpers.test.ts"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
       "label": "Test: Endpoint Single Classes",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "src/devices"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/devices/*.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "src/devices"
+      ],
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -157,37 +143,52 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/matterbridgePlatform.ts",
+        "--collectCoverageFrom=packages/core/src/matterbridgeAccessoryPlatform.ts",
+        "--collectCoverageFrom=packages/core/src/matterbridgeDynamicPlatform.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "matterbridgePlatform.test.ts",
         "matterbridgePlatform.initialized.test.ts",
         "matterbridgeAccessoryPlatform.test.ts",
         "matterbridgeDynamicPlatform.test.ts"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
       "label": "Test: PluginManager",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "pluginManager.test.ts"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/pluginManager.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "pluginManager.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
       "label": "Test: DeviceManager",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "deviceManager.test.ts"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/deviceManager.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "deviceManager.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
@@ -201,37 +202,47 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "dgram.test.ts",
-        "unicast.test.ts",
-        "multicast.test.ts",
-        "mdns.test.ts",
-        "mdns.real.test.ts",
-        "coap.test.ts",
-        "mdnsReflectorServer.test.ts",
-        "mdnsReflectorClient.test.ts"
+        "--collectCoverageFrom=packages/dgram/src/*.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "packages/dgram/src"
       ],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
       "label": "Test: Utils",
       "type": "shell",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "packages/utils/src"],
-      "group": {
-        "kind": "test",
-        "isDefault": false
-      },
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/utils/src/*.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "packages/utils/src"
+      ],
+      "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
     {
       "label": "Test: Workers",
-      "type": "shell",
+      "type": "process",
       "command": "node",
-      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%", "packages/thread/src"],
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/thread/src/*.ts",
+        "--collectCoverageFrom=!packages/thread/src/export.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
+        "packages/thread/src"
+      ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -246,11 +257,14 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "src/matterNode.test.ts",
-        "src/matterNode.bridge.test.ts",
-        "src/matterNode.accessory.test.ts",
-        "src/matterNode.dynamic.test.ts",
-        "src/matterNode.server.test.ts"
+        "--testPathIgnorePatterns=!matterNode",
+        "--coveragePathIgnorePatterns=!matterNode",
+        "--collectCoverageFrom=packages/core/src/matterNode.ts",
+        "packages/core/src/matterNode.test.ts",
+        "packages/core/src/matterNode.bridge.test.ts",
+        "packages/core/src/matterNode.accessory.test.ts",
+        "packages/core/src/matterNode.dynamic.test.ts",
+        "packages/core/src/matterNode.server.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -266,6 +280,8 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=src/cli.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "src/cli.test.ts",
         "src/cli.error.test.ts",
         "src/cli.error2.test.ts",
@@ -286,6 +302,8 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/matterbridgeDeviceTypes.ts",
+        "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "src/matterbridgeDeviceTypes.test.ts",
         "src/matterbridgeDeviceTypes.requirements.test.ts",
         "src/matterbridgeDeviceTypes.clusters.zcl.revision.test.ts",
