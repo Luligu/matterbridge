@@ -21,6 +21,13 @@ await setupTest('Dgram', false);
 
 describe('Dgram', () => {
   let dgram: Dgram;
+  const originalEnv = process.env;
+  const originalArgv = process.argv;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    process.argv = ['jest', 'dgram.test.ts'];
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -28,10 +35,16 @@ describe('Dgram', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
+    process.env = originalEnv;
+    process.argv = originalArgv;
   });
 
   test('Create the dgram with udp4', async () => {
+    process.argv.push('--debug');
     dgram = new Dgram('Dgram', 'udp4');
+    expect(dgram.debug).toBe(true);
+    expect(dgram.verbose).toBe(false);
+    expect(dgram.silent).toBe(false);
     expect(dgram).not.toBeUndefined();
     expect(dgram).toBeInstanceOf(Dgram);
     expect(dgram.socketType).toBe('udp4');
@@ -42,7 +55,11 @@ describe('Dgram', () => {
   });
 
   test('Create the dgram with udp6', async () => {
+    process.argv.push('--verbose');
     dgram = new Dgram('Dgram', 'udp6');
+    expect(dgram.debug).toBe(true);
+    expect(dgram.verbose).toBe(true);
+    expect(dgram.silent).toBe(false);
     expect(dgram).not.toBeUndefined();
     expect(dgram).toBeInstanceOf(Dgram);
     expect(dgram.socketType).toBe('udp6');
@@ -53,7 +70,11 @@ describe('Dgram', () => {
   });
 
   test('Send a message successfully', async () => {
+    process.argv.push('--silent');
     dgram = new Dgram('Dgram', 'udp4');
+    expect(dgram.debug).toBe(false);
+    expect(dgram.verbose).toBe(false);
+    expect(dgram.silent).toBe(true);
     const sendSpy = jest.spyOn(dgram.socket, 'send').mockImplementation((...args: any[]) => {
       const callback = args[args.length - 1];
       if (callback) callback(null, args[2]);
@@ -206,6 +227,8 @@ describe('Dgram', () => {
     const ipv4Address = dgram.getIpv4InterfaceAddress('eth0');
     expect(ipv4Address).toBe('192.168.1.120');
 
+    expect(dgram.getIpv4InterfaceAddress('')).toBe('192.168.1.120');
+
     expect(dgram.getInterfacesNames()).toEqual(['eth0']);
     expect(dgram.getIpv6ScopeId()).toEqual('');
 
@@ -278,6 +301,22 @@ describe('Dgram', () => {
     });
   });
 
+  test('Get IPv4 interface address with excluded pattern interface', async () => {
+    dgram = new Dgram('Dgram', 'udp4');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      wireguard: [{ address: '192.168.1.140', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null }],
+      eth0: [{ address: '192.168.1.120', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null }],
+    });
+    expect(dgram.getIpv4InterfaceAddress()).toBe('192.168.1.120');
+
+    expect(dgram.getInterfacesNames()).toEqual(['wireguard', 'eth0']);
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
   test('Get IPv6 interface address with no suitable interface', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({});
@@ -313,6 +352,34 @@ describe('Dgram', () => {
     });
   });
 
+  test('Get IPv6 interface address with excluded pattern interface', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      /* prettier-ignore */
+      lo: [{ address: '::1', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: true, scopeid: 0, mac: '00:00:00:00:00:00', cidr: '::1/128' }],
+      empty: undefined,
+      /* prettier-ignore */
+      wireguard: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
+        ],
+      /* prettier-ignore */
+      eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
+        ],
+    });
+    expect(dgram.getIpv6InterfaceAddress()).toBe('fe80::5a71:b2f6:7bc8:d00b%eth0');
+
+    expect(dgram.getInterfacesNames()).toEqual(['lo', 'wireguard', 'eth0']);
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
   test('Get IPv6 interface address with link-local address', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({
@@ -322,7 +389,7 @@ describe('Dgram', () => {
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
       ],
     });
-    const info = dgram.getIpv6InterfaceAddress();
+    const info = dgram.getIpv6InterfaceAddress('');
     expect(info).toBeDefined();
     expect(info).toBe(`fe80::5a71:b2f6:7bc8:d00b%` + (process.platform === 'win32' ? `2` : `eth0`));
 
@@ -332,6 +399,56 @@ describe('Dgram', () => {
       dgram.on('close', resolve);
       dgram.socket.close();
     });
+  });
+
+  test('Get IPv6 interface address with link-local address no scope id (possible?)', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      /* prettier-ignore */
+      eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+            { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null }
+      ],
+    });
+    const info = dgram.getIpv6InterfaceAddress('');
+    expect(info).toBeDefined();
+    expect(info).toBe(`fe80::5a71:b2f6:7bc8:d00b`);
+
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get IPv6 interface address with link-local address on windows', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      /* prettier-ignore */
+      eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+              { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+              { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
+        ],
+    });
+    const info = dgram.getIpv6InterfaceAddress('');
+    expect(info).toBeDefined();
+    expect(info).toBe(`fe80::5a71:b2f6:7bc8:d00b%` + (process.platform === 'win32' ? `2` : `eth0`));
+    expect(dgram.getIpv6ScopeId()).toBe('%2');
+
+    expect(dgram.getInterfacesNames()).toEqual(['eth0']);
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+    if (originalPlatformDescriptor) {
+      Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+    }
   });
 
   test('Get IPv6 interface address with global unique local address', async () => {
@@ -500,6 +617,141 @@ describe('Dgram', () => {
     expect(() => dgram.socket.bind()).toThrow('Bind failed');
     expect(bindSpy).toHaveBeenCalled();
     expect(errorSpy).not.toHaveBeenCalled(); // Error is not emitted in this case
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get IPv6 scope id skips excluded interfaces', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      wireguard: [{ address: 'fe80::7', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 7, mac: '00:00:00:00:00:00', cidr: null }],
+      eth0: [{ address: 'fe80::2', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getIpv6ScopeId()).toBe(`%` + (process.platform === 'win32' ? `2` : `eth0`));
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get IPv6 scope id for a specific interface', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      wlan0: [{ address: 'fe80::9', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 9, mac: '00:00:00:00:00:00', cidr: null }],
+      eth0: [{ address: 'fe80::2', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getIpv6ScopeId('eth0')).toBe(`%` + (process.platform === 'win32' ? `2` : `eth0`));
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get interface name from scope ID with undefined interfaces entry', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      empty: undefined,
+      eth0: [{ address: 'fe80::1', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getInterfaceNameFromScopeId(2)).toBe('eth0');
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get netmask for a zoned IPv6 interface address', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      eth0: [{ address: 'fe80::1', family: 'IPv6', internal: false, netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getNetmask('fe80::1%eth0')).toBe('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff');
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get netmask skips undefined interface entries', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      empty: undefined,
+      eth0: [{ address: 'fe80::1', family: 'IPv6', internal: false, netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getNetmask('fe80::1')).toBe('ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff');
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('List network interfaces skips empty entries and logs address without MAC or scope id', async () => {
+    dgram = new Dgram('Dgram', 'udp4');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      empty: undefined,
+      lo: [{ address: '127.0.0.1', family: 'IPv4', internal: true, netmask: '255.0.0.0', mac: '', cidr: '127.0.0.1/8' }],
+    });
+
+    dgram.listNetworkInterfaces();
+
+    expect(loggerDebugSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+    const detailLine = loggerDebugSpy.mock.calls.find(([message]) => typeof message === 'string' && message.includes('127.0.0.1'))?.[0] as string | undefined;
+    expect(detailLine).toBeDefined();
+    expect(detailLine).toContain('internal');
+    expect(detailLine).not.toContain('MAC:');
+    expect(detailLine).not.toContain('scopeid:');
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get IPv4 interface address scans past non-external entries before selecting an interface', async () => {
+    dgram = new Dgram('Dgram', 'udp4');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      lo: [
+        { address: '127.0.0.1', family: 'IPv4', internal: true, netmask: '255.0.0.0', mac: '00:00:00:00:00:00', cidr: '127.0.0.1/8' },
+        { address: '::1', family: 'IPv6', internal: true, netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', scopeid: 0, mac: '00:00:00:00:00:00', cidr: '::1/128' },
+      ],
+      eth0: [
+        { address: 'fe80::1', family: 'IPv6', internal: false, netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', scopeid: 2, mac: '00:00:00:00:00:00', cidr: null },
+        { address: '192.168.1.120', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null },
+      ],
+      eth1: [{ address: '192.168.1.121', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null }],
+    });
+
+    expect(dgram.getIpv4InterfaceAddress()).toBe('192.168.1.120');
+
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Get IPv6 interface address uses the provided existing interface without scanning others', async () => {
+    dgram = new Dgram('Dgram', 'udp6');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      wireguard: [{ address: 'fe80::7', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 7, mac: '00:00:00:00:00:00', cidr: null }],
+      eth0: [
+        { address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
+      ],
+    });
+
+    expect(dgram.getIpv6InterfaceAddress('eth0')).toBe('fd78:cbf8:4939:746:a58f:3de1:74fc:5db9');
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);

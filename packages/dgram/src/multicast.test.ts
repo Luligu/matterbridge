@@ -23,6 +23,13 @@ await setupTest('Multicast', false);
 
 describe('Multicast', () => {
   let mcast: Multicast;
+  const originalEnv = process.env;
+  const originalArgv = process.argv;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    process.argv = ['jest', 'multicast.test.ts'];
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -30,6 +37,8 @@ describe('Multicast', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
+    process.env = originalEnv;
+    process.argv = originalArgv;
   });
 
   test('Create the multicast with udp4 with no available interfaces', async () => {
@@ -345,5 +354,257 @@ describe('Multicast', () => {
 
     // Restore the mock
     networkInterfacesMock.mockRestore();
+  });
+
+  test('onListening skips undefined interface entries', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({ empty: undefined });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    const setBroadcastSpy = jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    const setTTLSpy = jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    const setMulticastTTLSpy = jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    const setMulticastLoopbackSpy = jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    const setMulticastInterfaceSpy = jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).not.toHaveBeenCalled();
+    expect(setBroadcastSpy).toHaveBeenCalledWith(true);
+    expect(setTTLSpy).toHaveBeenCalledWith(255);
+    expect(setMulticastTTLSpy).toHaveBeenCalledWith(255);
+    expect(setMulticastLoopbackSpy).toHaveBeenCalledWith(true);
+    expect(setMulticastInterfaceSpy).toHaveBeenCalledWith('::');
+  });
+
+  test('onListening joins multicast using the first IPv6 address', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      // prettier-ignore
+      eth0: [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
+    });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `2001:db8::10%eth0`);
+    expect(mcast.joinedInterfaces).toContain('2001:db8::10%eth0');
+  });
+
+  test('onListening prefers a ULA IPv6 address over a generic IPv6 address', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      eth0: [
+        // prettier-ignore
+        { address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 },
+        // prettier-ignore
+        { address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 },
+      ],
+    });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fd12:3456:789a::20%eth0`);
+  });
+
+  test('onListening prefers a /64 ULA IPv6 address over a generic ULA', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      eth0: [
+        // prettier-ignore
+        { address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 },
+        // prettier-ignore
+        { address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 },
+      ],
+    });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fd12:3456:789a::30%eth0`);
+  });
+
+  test('onListening prefers a link-local IPv6 address when available', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      eth0: [
+        // prettier-ignore
+        { address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 },
+        // prettier-ignore
+        { address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 },
+      ],
+    });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, `fe80::40%eth0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('joined multicast group'));
+  });
+
+  test('onListening logs a failed link-local multicast join', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      // prettier-ignore
+      eth0: [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
+    });
+    jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {
+      throw new Error('join failed');
+    });
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(mcast.joinedInterfaces).toEqual([]);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('failed to join multicast group'));
+  });
+
+  test('onListening logs a failed multicast join when addMembership throws a non-Error value', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      // prettier-ignore
+      eth0: [{ address: 'fe80::41', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:41', internal: false, cidr: 'fe80::41/64', scopeid: 8 }],
+    });
+    jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {
+      throw 'join failed string';
+    });
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('join failed string'));
+  });
+
+  test('onListening skips the join block when the selected membership interface is empty', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({
+      // prettier-ignore
+      eth0: [{ address: '', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:50', internal: false, cidr: null }],
+    });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '0.0.0.0', family: 'IPv4', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).not.toHaveBeenCalled();
+    expect(mcast.joinedInterfaces).toEqual([]);
+  });
+
+  test.each([
+    [
+      'plain IPv6',
+      // prettier-ignore
+      [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64' }],
+      '2001:db8::10',
+    ],
+    [
+      'ULA IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128' }],
+      'fd12:3456:789a::20',
+    ],
+    [
+      'ULA /64 IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64' }],
+      'fd12:3456:789a::30',
+    ],
+    [
+      'link-local IPv6',
+      // prettier-ignore
+      [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64' }],
+      'fe80::40',
+    ],
+  ])('onListening joins multicast for %s without scope id suffix', (_label, interfaces, membershipInterface) => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({ eth0: interfaces as any });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, membershipInterface);
+  });
+
+  test.each([
+    [
+      'plain IPv6',
+      // prettier-ignore
+      [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
+      '2001:db8::10%4',
+    ],
+    [
+      'ULA IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 }],
+      'fd12:3456:789a::20%5',
+    ],
+    [
+      'ULA /64 IPv6',
+      // prettier-ignore
+      [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 }],
+      'fd12:3456:789a::30%6',
+    ],
+    [
+      'link-local IPv6',
+      // prettier-ignore
+      [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
+      'fe80::40%7',
+    ],
+  ])('onListening joins multicast for %s with a Windows scope id suffix', (_label, interfaces, membershipInterface) => {
+    const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
+    jest.spyOn(os, 'networkInterfaces').mockReturnValue({ eth0: interfaces as any });
+    const addMembershipSpy = jest.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    jest.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    try {
+      mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+    } finally {
+      if (originalPlatformDescriptor) Object.defineProperty(process, 'platform', originalPlatformDescriptor);
+    }
+
+    expect(addMembershipSpy).toHaveBeenCalledWith(COAP_MULTICAST_IPV6_ADDRESS, membershipInterface);
   });
 });
