@@ -224,7 +224,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     logName: 'Matter',
     logNameColor: '\x1b[34m',
     logTimestampFormat: TimestampFormat.TIME_MILLIS,
-    logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
+    logLevel: LogLevel.DEBUG, // Matter log level is always debug since we control the log level with Logger.level
   });
   /** Matter logger level */
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
@@ -774,7 +774,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     } else {
       Logger.level = (await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO)) as MatterLogLevel;
     }
-    Logger.format = MatterLogFormat.ANSI;
+    Logger.format = hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI;
     this.matterLogLevel = MatterLogLevel.names[Logger.level] as LogLevel;
 
     // Create the logger for matter.js with file logging (context: matterFileLog)
