@@ -28,6 +28,7 @@ import os from 'node:os';
 // @matterbridge
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils/cli';
+import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 
 // istanbul ignore next
 {
@@ -48,11 +49,12 @@ Options:
   --outgoingIpv6InterfaceAddress <address>  Outgoing IPv6 address of the network interface (default first external address).
   --advertise <interval>                    Enable matterbridge mDNS advertisement each ms (default interval: 10000ms).
   --query <interval>                        Enable common mDNS services query each ms (default interval: 10000ms).
+  --unicast                                 Enable unicast responses for mDNS queries (default: disabled).
   --filter <string...>                      Filter strings to match in the mDNS record name (default: no filter).
   --ip-filter <string...>                   Filter strings to match in the mDNS sender ip address (default: no filter).
   --noIpv4                                  Disable IPv4 mDNS server (default: enabled).
   --noIpv6                                  Disable IPv6 mDNS server (default: enabled).
-  --no-timeout                              Disable automatic timeout of 10 minutes. Reflector mode disables timeout automatically.
+  --no-timeout                              Disable automatic timeout of 10 minutes.
   -d, --debug                               Enable debug logging (default: disabled).
   -v, --verbose                             Enable verbose logging (default: disabled).
   -s, --silent                              Enable silent mode, only log notices, warnings and errors.
@@ -114,31 +116,31 @@ Examples:
     await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
   }
 
-  const query = (mdns: Mdns) => {
+  const query = (mdns: Mdns, unicast: boolean = false) => {
     mdns.log.info('Sending mDNS query for common services...');
     try {
       mdns.sendQuery([
-        { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
-        { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true },
+        { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+        { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
       ]);
     } catch (error) {
       mdns.log.error(`Error sending mDNS query: ${(error as Error).message}`);
@@ -190,6 +192,7 @@ Examples:
     if (!interfaceInfos) {
       interfaceInfos = [];
       for (const name of Object.keys(interfaces)) {
+        if (excludedInterfaceNamePattern.test(name)) continue;
         const infos = interfaces[name];
         if (infos && infos.length > 0 && !infos[0].internal) {
           interfaceInfos.push(...infos);
@@ -250,8 +253,8 @@ Examples:
         mdnsIpv4AdvertiseInterval = setInterval(() => advertise(mdnsIpv4 as Mdns), getIntParameter('advertise') || 10000).unref();
       }
       if (hasParameter('query')) {
-        query(mdnsIpv4 as Mdns);
-        mdnsIpv4QueryInterval = setInterval(() => query(mdnsIpv4 as Mdns), getIntParameter('query') || 10000).unref();
+        query(mdnsIpv4 as Mdns, hasParameter('unicast'));
+        mdnsIpv4QueryInterval = setInterval(() => query(mdnsIpv4 as Mdns, hasParameter('unicast')), getIntParameter('query') || 10000).unref();
       }
     });
   }
@@ -292,8 +295,8 @@ Examples:
         mdnsIpv6AdvertiseInterval = setInterval(() => advertise(mdnsIpv6 as Mdns), getIntParameter('advertise') || 10000).unref();
       }
       if (hasParameter('query')) {
-        query(mdnsIpv6 as Mdns);
-        mdnsIpv6QueryInterval = setInterval(() => query(mdnsIpv6 as Mdns), getIntParameter('query') || 10000).unref();
+        query(mdnsIpv6 as Mdns, hasParameter('unicast'));
+        mdnsIpv6QueryInterval = setInterval(() => query(mdnsIpv6 as Mdns, hasParameter('unicast')), getIntParameter('query') || 10000).unref();
       }
     });
   }
