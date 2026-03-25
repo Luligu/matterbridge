@@ -280,13 +280,20 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "--collectCoverageFrom=src/cli.ts",
+        "--collectCoverageFrom=packages/core/src/cli.ts",
+        "--collectCoverageFrom=packages/core/src/cliHistory.ts",
+        "--collectCoverageFrom=src/mb_health.ts",
+        "--collectCoverageFrom=src/mb_coap.ts",
+        "--collectCoverageFrom=src/mb_mdns.ts",
         "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "src/cli.test.ts",
         "src/cli.error.test.ts",
         "src/cli.error2.test.ts",
         "src/cliEmitter.test.ts",
-        "src/cliHistory.test.ts"
+        "src/cliHistory.test.ts",
+        "src/mb_health.test.ts",
+        "src/mb_coap.test.ts",
+        "src/mb_mdns.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
