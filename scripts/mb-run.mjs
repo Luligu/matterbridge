@@ -47,7 +47,7 @@ Notes:
 - --lint-fix runs eslint with --fix
 - --format-check runs prettier with --check
 - --build prefers per-workspace tsconfig.build.json when present
-- --build-production prefers tsconfig.build.production.json, else tsconfig.production.build.json, else tsconfig.production.json
+- --build-production prefers tsconfig.build.production.json, else tsconfig.build.json, else tsconfig.json
 - --version updates versions for root and all configured workspaces
 `;
 
@@ -59,7 +59,7 @@ Notes:
  */
 function printVersionUsage() {
   const msg = [
-    'Usage: node scripts/mb-run.mjs  --version [dev|edge|git|local|next|alpha|beta]',
+    'Usage: mb-run --version [dev|edge|git|local|next|alpha|beta]',
     'Updates package.json + package-lock.json (root and workspaces) version to:',
     '  <baseVersion>-<dev|edge|git|local|next|alpha|beta>-<yyyymmdd>-<7charSha>',
     'Or with no tag, strips the suffix back to <baseVersion>.',
@@ -378,8 +378,7 @@ async function fileExists(filePath) {
  * @returns {Promise<string>} Absolute path to chosen tsconfig.
  */
 async function pickWorkspaceTsconfig(mode) {
-  const candidates =
-    mode === 'production' ? ['tsconfig.build.production.json', 'tsconfig.production.json', 'tsconfig.build.json', 'tsconfig.json'] : ['tsconfig.build.json', 'tsconfig.json'];
+  const candidates = mode === 'production' ? ['tsconfig.build.production.json', 'tsconfig.build.json', 'tsconfig.json'] : ['tsconfig.build.json', 'tsconfig.json'];
 
   for (const name of candidates) {
     const candidatePath = path.join(repoRoot, name);
