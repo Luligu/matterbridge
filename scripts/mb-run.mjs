@@ -47,7 +47,7 @@ Notes:
 - --lint-fix runs eslint with --fix
 - --format-check runs prettier with --check
 - --build prefers per-workspace tsconfig.build.json when present
-- --build-production prefers tsconfig.production.build.json, else tsconfig.production.json
+- --build-production prefers tsconfig.build.production.json, else tsconfig.production.build.json, else tsconfig.production.json
 - --version updates versions for root and all configured workspaces
 `;
 
@@ -379,7 +379,7 @@ async function fileExists(filePath) {
  */
 async function pickWorkspaceTsconfig(mode) {
   const candidates =
-    mode === 'production' ? ['tsconfig.production.build.json', 'tsconfig.production.json', 'tsconfig.build.json', 'tsconfig.json'] : ['tsconfig.build.json', 'tsconfig.json'];
+    mode === 'production' ? ['tsconfig.build.production.json', 'tsconfig.production.json', 'tsconfig.build.json', 'tsconfig.json'] : ['tsconfig.build.json', 'tsconfig.json'];
 
   for (const name of candidates) {
     const candidatePath = path.join(repoRoot, name);

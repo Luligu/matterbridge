@@ -148,7 +148,7 @@
     "start:nocolor": "cross-env NO_COLOR=1 node ./dist/cli.js",
     "start:noansi": "node ./dist/cli.js --no-ansi",
     "build": "tsc -b tsconfig.build.json --verbose",
-    "buildProduction": "tsc -b tsconfig.production.build.json --verbose",
+    "buildProduction": "tsc -b tsconfig.build.production.json --verbose",
     "watch": "tsc -b tsconfig.build.json --watch --verbose",
     "cleanBuild": "npm run clean && npm run build",
     "cleanBuildProduction": "npm run clean && npm run buildProduction",
