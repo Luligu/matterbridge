@@ -48,15 +48,8 @@ jest.unstable_mockModule('@matterbridge/dgram', async () => ({
   COAP_OPTION_URI_PATH: 11,
 }));
 
-const {
-  MB_COAP_DEFAULT_REQUEST_INTERVAL_MS,
-  MB_COAP_DEFAULT_TIMEOUT_MS,
-  getMbCoapHelpText,
-  getMbCoapOptions,
-  mbCoapMain,
-  printMbCoapHelp,
-  startMbCoap,
-} = await import('./mb_coap.js');
+const { MB_COAP_DEFAULT_REQUEST_INTERVAL_MS, MB_COAP_DEFAULT_TIMEOUT_MS, getMbCoapHelpText, getMbCoapOptions, mbCoapMain, printMbCoapHelp, startMbCoap } =
+  await import('./mb_coap.js');
 
 await setupTest('MbCoap', false);
 

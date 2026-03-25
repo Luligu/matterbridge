@@ -325,8 +325,12 @@ describe('mb_mdns', () => {
     expect(scheduledIntervals.every(({ unref }) => unref.mock.calls.length === 1)).toBe(true);
 
     const ipv4Answers = mockMdnsInstances[0].sendResponse.mock.calls[0][0] as Array<{ name: string; ttl: number; rtype: number; rdata: Buffer }>;
-    expect(ipv4Answers.some((answer) => answer.name === 'matterbridge.local' && answer.ttl === 120 && answer.rtype === 1 && answer.rdata.equals(Buffer.from('192.168.1.10')))).toBe(true);
-    expect(ipv4Answers.some((answer) => answer.name === 'matterbridge.local' && answer.ttl === 120 && answer.rtype === 28 && answer.rdata.equals(Buffer.from('fe80::1')))).toBe(true);
+    expect(ipv4Answers.some((answer) => answer.name === 'matterbridge.local' && answer.ttl === 120 && answer.rtype === 1 && answer.rdata.equals(Buffer.from('192.168.1.10')))).toBe(
+      true,
+    );
+    expect(ipv4Answers.some((answer) => answer.name === 'matterbridge.local' && answer.ttl === 120 && answer.rtype === 28 && answer.rdata.equals(Buffer.from('fe80::1')))).toBe(
+      true,
+    );
 
     scheduledIntervals[0].callback();
     scheduledIntervals[1].callback();
