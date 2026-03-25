@@ -274,7 +274,7 @@ Examples:
       getParameter('ipv6InterfaceAddress') || '::',
       getParameter('outgoingIpv6InterfaceAddress'),
     );
-    if (hasParameter('v') || hasParameter('verbose')) mdnsIpv6.listNetworkInterfaces();
+    if (hasParameter('noIpv4') && (hasParameter('v') || hasParameter('verbose'))) mdnsIpv6.listNetworkInterfaces();
 
     // Apply filters if any
     const filters = getStringArrayParameter('filter');
