@@ -128,8 +128,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     'ui:globalOptions': { orderable: true },
   });
 
-  const pendingAdditionalPropertyKeyRef = useRef(''); // For ObjectFieldTemplate select from device list
-  let currentFormData = {};
+  /** For ObjectFieldTemplate select from device list */
+  const pendingAdditionalPropertyKeyRef = useRef('');
+  let currentFormData = plugin.configJson;
 
   // WebSocket message handler effect
   useEffect(() => {

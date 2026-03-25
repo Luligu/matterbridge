@@ -55,6 +55,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.1] - Dev branch
 
+### Breaking Changes
+
+- [cli]: Change names to mb-mdns mb-coap mb-health. The old names (mb_mdns, mb_coap and mb_health) are still available but change your scripts and setups.
+
 ### Dev news
 
 - [utils]: Add getEnumDescription() function to log cluster enums.
@@ -66,8 +70,9 @@ These classes will run as threads in the next releases:
 - [plugins]: Add `title` and `ui:widget` to default schema.
 - [threads]: Add `DockerVersion` thread.
 - [reset]: The reset commissioning clears also plugin and device with mode = server.
-- [mb_mdns]: Add `mb_mdns` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
-- [mb_coap]: Add `mb_coap` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb-mdns]: Add `mb-mdns` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb-coap]: Add `mb-coap` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb-run]: Add `mb-run` bin.
 
 ### Changed
 
