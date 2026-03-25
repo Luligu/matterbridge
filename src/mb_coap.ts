@@ -3,7 +3,7 @@
  * @file src/dgram/mb_coap.ts
  * @author Luca Liguori
  * @created 2025-07-22
- * @version 1.0.0
+ * @version 2.0.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -28,13 +28,47 @@ import { AddressInfo } from 'node:net';
 import { Coap, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 
-// istanbul ignore next
-{
-  if (hasParameter('h') || hasParameter('help')) {
-    // eslint-disable-next-line no-console
-    console.log(`Copyright (c) Matterbridge. All rights reserved. Version 1.0.0.\n`);
-    // eslint-disable-next-line no-console
-    console.log(`Usage: mb_coap [options...]
+export const MB_COAP_DEFAULT_REQUEST_INTERVAL_MS = 10000;
+export const MB_COAP_DEFAULT_TIMEOUT_MS = 600000;
+
+export interface MbCoapOptions {
+  showHelp: boolean;
+  requestIntervalMs?: number;
+  interfaceName?: string;
+  ipv4InterfaceAddress: string;
+  ipv6InterfaceAddress: string;
+  disableLoopback: boolean;
+  disableIpv4: boolean;
+  disableIpv6: boolean;
+  disableTimeout: boolean;
+}
+
+export interface MbCoapRuntime {
+  coapIpv4?: Coap;
+  coapIpv6?: Coap;
+  cleanupAndLogAndExit: () => void;
+}
+
+/**
+ * Writes a message to the console.
+ *
+ * @param {string} message The message to print.
+ * @returns {void} Nothing.
+ */
+function defaultConsoleLog(message: string): void {
+  // eslint-disable-next-line no-console
+  console.log(message);
+}
+
+/**
+ * Returns the help text for the mb_coap command.
+ *
+ * @returns {string} The formatted help text.
+ */
+export function getMbCoapHelpText(): string {
+  return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
+
+Usage: mb_coap [options...]
 
 If no command line is provided, mb_coap starts IPv4 and IPv6 CoAP multicast listeners and waits for incoming traffic for up to 10 minutes.
 
@@ -70,35 +104,70 @@ Examples:
 
   # Start only the IPv4 listener and send multicast CoAP requests every 10 seconds
   mb_coap --request --noIpv6
-`);
-    // eslint-disable-next-line n/no-process-exit
-    process.exit(0);
-  }
 
+`;
+}
+
+/**
+ * Prints the help text for the mb_coap command.
+ *
+ * @param {(message: string) => void} log The output function used to print the help text.
+ * @returns {void} Nothing.
+ */
+export function printMbCoapHelp(log: (message: string) => void = defaultConsoleLog): void {
+  log(getMbCoapHelpText());
+}
+
+/**
+ * Reads the current process arguments and returns the parsed mb_coap options.
+ *
+ * @returns {MbCoapOptions} The parsed CLI options.
+ */
+export function getMbCoapOptions(): MbCoapOptions {
+  const requestIntervalMs = hasParameter('request') ? getIntParameter('request') || MB_COAP_DEFAULT_REQUEST_INTERVAL_MS : undefined;
+
+  return {
+    showHelp: hasParameter('h') || hasParameter('help'),
+    requestIntervalMs,
+    interfaceName: getParameter('interfaceName'),
+    ipv4InterfaceAddress: getParameter('ipv4InterfaceAddress') || '0.0.0.0',
+    ipv6InterfaceAddress: getParameter('ipv6InterfaceAddress') || '::',
+    disableLoopback: hasParameter('no-loopback'),
+    disableIpv4: hasParameter('noIpv4'),
+    disableIpv6: hasParameter('noIpv6'),
+    disableTimeout: hasParameter('no-timeout'),
+  };
+}
+
+/**
+ * Starts the mb_coap listeners using the provided options.
+ *
+ * @param {MbCoapOptions} options The parsed CLI options.
+ * @param {(code: number) => never | void} exitFn The exit function used during cleanup.
+ * @param {boolean} registerSignalHandlers Whether process signal handlers should be registered.
+ * @returns {MbCoapRuntime} The created runtime state and cleanup callback.
+ */
+export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => never | void = process.exit, registerSignalHandlers: boolean = true): MbCoapRuntime {
   let coapIpv4: Coap | undefined;
   let coapIpv6: Coap | undefined;
-  const interfaceName = getParameter('interfaceName');
-  const ipv4InterfaceAddress = getParameter('ipv4InterfaceAddress') || '0.0.0.0';
-  const ipv6InterfaceAddress = getParameter('ipv6InterfaceAddress') || '::';
 
-  if (!hasParameter('noIpv4')) {
-    coapIpv4 = new Coap('CoAP Server udp4', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, interfaceName, ipv4InterfaceAddress);
+  if (!options.disableIpv4) {
+    coapIpv4 = new Coap('CoAP Server udp4', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, options.interfaceName, options.ipv4InterfaceAddress);
     if (hasParameter('v') || hasParameter('verbose')) coapIpv4.listNetworkInterfaces();
   }
 
-  if (!hasParameter('noIpv6')) {
-    coapIpv6 = new Coap('CoAP Server udp6', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, interfaceName, ipv6InterfaceAddress);
-    if (hasParameter('noIpv4') && (hasParameter('v') || hasParameter('verbose'))) coapIpv6.listNetworkInterfaces();
+  if (!options.disableIpv6) {
+    coapIpv6 = new Coap('CoAP Server udp6', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, options.interfaceName, options.ipv6InterfaceAddress);
+    if (options.disableIpv4 && (hasParameter('v') || hasParameter('verbose'))) coapIpv6.listNetworkInterfaces();
   }
 
   /**
    * Cleanup and log device information before exiting.
    */
-  function cleanupAndLogAndExit() {
+  function cleanupAndLogAndExit(): void {
     coapIpv4?.stop();
     coapIpv6?.stop();
-    // eslint-disable-next-line n/no-process-exit
-    process.exit(0);
+    exitFn(0);
   }
 
   /**
@@ -106,8 +175,7 @@ Examples:
    *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
    */
   const requestUdp4 = () => {
-    if (!coapIpv4) return;
-    coapIpv4.sendRequest(
+    coapIpv4?.sendRequest(
       32000,
       [
         { number: COAP_OPTION_URI_PATH, value: Buffer.from('cit') },
@@ -125,8 +193,7 @@ Examples:
    *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
    */
   const requestUdp6 = () => {
-    if (!coapIpv6) return;
-    coapIpv6.sendRequest(
+    coapIpv6?.sendRequest(
       32000,
       [
         { number: COAP_OPTION_URI_PATH, value: Buffer.from('cit') },
@@ -139,52 +206,72 @@ Examples:
     );
   };
 
-  // Handle Ctrl+C (SIGINT) to stop and log devices
-  process.on('SIGINT', () => {
-    cleanupAndLogAndExit();
-  });
+  if (registerSignalHandlers) {
+    process.on('SIGINT', () => {
+      cleanupAndLogAndExit();
+    });
+  }
 
   if (coapIpv4) {
     coapIpv4.start();
     coapIpv4.on('ready', (address: AddressInfo) => {
-      if (hasParameter('no-loopback')) {
-        coapIpv4?.socket.setMulticastLoopback(false);
-        coapIpv4?.log.info('Multicast loopback disabled for coapIpv4');
+      if (options.disableLoopback) {
+        coapIpv4.socket.setMulticastLoopback(false);
+        coapIpv4.log.info('Multicast loopback disabled for coapIpv4');
       }
-      coapIpv4?.log.info(`coapIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (!hasParameter('request')) return; // Skip querying if --request is not specified
+      coapIpv4.log.info(`coapIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
+      if (options.requestIntervalMs === undefined) return;
       requestUdp4();
-      setInterval(
-        () => {
-          requestUdp4();
-        },
-        getIntParameter('request') || 10000,
-      ).unref();
+      setInterval(() => {
+        requestUdp4();
+      }, options.requestIntervalMs).unref();
     });
   }
 
   if (coapIpv6) {
     coapIpv6.start();
     coapIpv6.on('ready', (address: AddressInfo) => {
-      if (hasParameter('no-loopback')) {
-        coapIpv6?.socket.setMulticastLoopback(false);
-        coapIpv6?.log.info('Multicast loopback disabled for coapIpv6');
+      if (options.disableLoopback) {
+        coapIpv6.socket.setMulticastLoopback(false);
+        coapIpv6.log.info('Multicast loopback disabled for coapIpv6');
       }
-      coapIpv6?.log.info(`coapIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (!hasParameter('request')) return; // Skip querying if --request is not specified
+      coapIpv6.log.info(`coapIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
+      if (options.requestIntervalMs === undefined) return;
       requestUdp6();
-      setInterval(
-        () => {
-          requestUdp6();
-        },
-        getIntParameter('request') || 10000,
-      ).unref();
+      setInterval(() => {
+        requestUdp6();
+      }, options.requestIntervalMs).unref();
     });
   }
 
-  if (!hasParameter('no-timeout')) {
+  if (!options.disableTimeout) {
     setTimeout(() => {
       cleanupAndLogAndExit();
-    }, 600000); // 10 minutes timeout to exit if no activity
+    }, MB_COAP_DEFAULT_TIMEOUT_MS).unref(); // 10 minutes timeout to exit if no activity
   }
+
+  return {
+    coapIpv4,
+    coapIpv6,
+    cleanupAndLogAndExit,
+  };
+}
+
+/**
+ * Default CLI entrypoint for mb_coap.
+ *
+ * @param {(code: number) => never | void} exitFn The exit function used by the CLI.
+ * @param {(message: string) => void} log The output function used to print help text.
+ * @returns {MbCoapRuntime | undefined} The started runtime, or undefined when help is printed.
+ */
+export function mbCoapMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbCoapRuntime | undefined {
+  const options = getMbCoapOptions();
+
+  if (options.showHelp) {
+    printMbCoapHelp(log);
+    exitFn(0);
+    return;
+  }
+
+  return startMbCoap(options, exitFn);
 }

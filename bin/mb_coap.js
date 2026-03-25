@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-import('../dist/mb_coap.js');
+const { mbCoapMain } = await import('../dist/mb_coap.js');
+
+mbCoapMain();
