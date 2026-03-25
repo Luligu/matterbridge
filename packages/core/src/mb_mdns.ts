@@ -1,6 +1,6 @@
 /**
  * @description This file contains the bin mb_mdns for the class Mdns.
- * @file src/dgram/mb_mdns.ts
+ * @file packages/core/src/mb_mdns.ts
  * @author Luca Liguori
  * @created 2025-07-22
  * @version 2.0.0
@@ -21,11 +21,9 @@
  * limitations under the License.
  */
 
-// Node.js imports
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
-// @matterbridge
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils/cli';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
@@ -61,22 +59,11 @@ export interface MbMdnsRuntime {
   cleanupAndLogAndExit: () => Promise<void>;
 }
 
-/**
- * Writes a message to the console.
- *
- * @param {string} message The message to print.
- * @returns {void} Nothing.
- */
 function defaultConsoleLog(message: string): void {
   // eslint-disable-next-line no-console
   console.log(message);
 }
 
-/**
- * Returns the help text for the mb_mdns command.
- *
- * @returns {string} The formatted help text.
- */
 export function getMbMdnsHelpText(): string {
   return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
 
@@ -128,21 +115,10 @@ Examples:
 `;
 }
 
-/**
- * Prints the help text for the mb_mdns command.
- *
- * @param {(message: string) => void} log The output function used to print the help text.
- * @returns {void} Nothing.
- */
 export function printMbMdnsHelp(log: (message: string) => void = defaultConsoleLog): void {
   log(getMbMdnsHelpText());
 }
 
-/**
- * Reads the current process arguments and returns the parsed mb_mdns options.
- *
- * @returns {MbMdnsOptions} The parsed CLI options.
- */
 export function getMbMdnsOptions(): MbMdnsOptions {
   const advertiseIntervalMs = hasParameter('advertise') ? getIntParameter('advertise') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
   const queryIntervalMs = hasParameter('query') ? getIntParameter('query') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
@@ -167,13 +143,6 @@ export function getMbMdnsOptions(): MbMdnsOptions {
   };
 }
 
-/**
- * Sends the common mDNS discovery query.
- *
- * @param {Mdns} mdns The Mdns instance to use for the query.
- * @param {boolean} unicast Whether to request unicast responses.
- * @returns {void} Nothing.
- */
 export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
   mdns.log.info('Sending mDNS query for common services...');
   try {
@@ -205,13 +174,6 @@ export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
   }
 }
 
-/**
- * Sends an mDNS advertisement for the Matterbridge services.
- *
- * @param {Mdns} mdns The Mdns instance to use for the advertisement.
- * @param {number} ttl The time-to-live for the advertisement records. Use 0 for goodbye.
- * @returns {void} Nothing.
- */
 export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): void {
   mdns.log.info(`Sending mDNS advertisement for matterbridge service with TTL ${ttl ? ttl.toString() : 'goodbye'}...`);
   const httpServiceType = '_http._tcp.local';
@@ -268,13 +230,6 @@ export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): voi
   }
 }
 
-/**
- * Starts the mb_mdns listeners using the provided options.
- *
- * @param {MbMdnsOptions} options The parsed CLI options.
- * @param {boolean} registerSignalHandlers Whether process signal handlers should be registered.
- * @returns {MbMdnsRuntime} The created runtime state and cleanup callback.
- */
 export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: boolean = true): MbMdnsRuntime {
   let mdnsIpv4QueryInterval: ReturnType<typeof setInterval> | undefined;
   let mdnsIpv6QueryInterval: ReturnType<typeof setInterval> | undefined;
@@ -284,9 +239,6 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
   let mdnsIpv4: Mdns | undefined;
   let mdnsIpv6: Mdns | undefined;
 
-  /**
-   * Cleanup and log device information before exiting.
-   */
   async function cleanupAndLogAndExit(): Promise<void> {
     clearInterval(mdnsIpv4QueryInterval);
     clearInterval(mdnsIpv6QueryInterval);
@@ -396,13 +348,6 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
   };
 }
 
-/**
- * Default CLI entrypoint for mb_mdns.
- *
- * @param {(code: number) => never | void} exitFn The exit function used by the CLI help path.
- * @param {(message: string) => void} log The output function used to print help text.
- * @returns {MbMdnsRuntime | undefined} The started runtime, or undefined when help is printed.
- */
 export function mbMdnsMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbMdnsRuntime | undefined {
   const options = getMbMdnsOptions();
 

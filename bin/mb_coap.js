@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-const { mbCoapMain } = await import('../dist/mb_coap.js');
+const { mbCoapMain } = await import('@matterbridge/core/mb_coap');
 
 mbCoapMain();

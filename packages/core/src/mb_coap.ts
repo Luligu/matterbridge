@@ -1,6 +1,6 @@
 /**
  * @description This file contains the bin mb_coap for the class Coap.
- * @file src/dgram/mb_coap.ts
+ * @file packages/core/src/mb_coap.ts
  * @author Luca Liguori
  * @created 2025-07-22
  * @version 2.0.0
@@ -21,10 +21,8 @@
  * limitations under the License.
  */
 
-// Node.js imports
 import { AddressInfo } from 'node:net';
 
-// @matterbridge
 import { Coap, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 
@@ -49,22 +47,11 @@ export interface MbCoapRuntime {
   cleanupAndLogAndExit: () => void;
 }
 
-/**
- * Writes a message to the console.
- *
- * @param {string} message The message to print.
- * @returns {void} Nothing.
- */
 function defaultConsoleLog(message: string): void {
   // eslint-disable-next-line no-console
   console.log(message);
 }
 
-/**
- * Returns the help text for the mb_coap command.
- *
- * @returns {string} The formatted help text.
- */
 export function getMbCoapHelpText(): string {
   return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
 
@@ -108,21 +95,10 @@ Examples:
 `;
 }
 
-/**
- * Prints the help text for the mb_coap command.
- *
- * @param {(message: string) => void} log The output function used to print the help text.
- * @returns {void} Nothing.
- */
 export function printMbCoapHelp(log: (message: string) => void = defaultConsoleLog): void {
   log(getMbCoapHelpText());
 }
 
-/**
- * Reads the current process arguments and returns the parsed mb_coap options.
- *
- * @returns {MbCoapOptions} The parsed CLI options.
- */
 export function getMbCoapOptions(): MbCoapOptions {
   const requestIntervalMs = hasParameter('request') ? getIntParameter('request') || MB_COAP_DEFAULT_REQUEST_INTERVAL_MS : undefined;
 
@@ -139,14 +115,6 @@ export function getMbCoapOptions(): MbCoapOptions {
   };
 }
 
-/**
- * Starts the mb_coap listeners using the provided options.
- *
- * @param {MbCoapOptions} options The parsed CLI options.
- * @param {(code: number) => never | void} exitFn The exit function used during cleanup.
- * @param {boolean} registerSignalHandlers Whether process signal handlers should be registered.
- * @returns {MbCoapRuntime} The created runtime state and cleanup callback.
- */
 export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => never | void = process.exit, registerSignalHandlers: boolean = true): MbCoapRuntime {
   let coapIpv4: Coap | undefined;
   let coapIpv6: Coap | undefined;
@@ -161,19 +129,12 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
     if (options.disableIpv4 && (hasParameter('v') || hasParameter('verbose'))) coapIpv6.listNetworkInterfaces();
   }
 
-  /**
-   * Cleanup and log device information before exiting.
-   */
   function cleanupAndLogAndExit(): void {
     coapIpv4?.stop();
     coapIpv6?.stop();
     exitFn(0);
   }
 
-  /**
-   *  Queries mDNS services over UDP IPv4 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
   const requestUdp4 = () => {
     coapIpv4?.sendRequest(
       32000,
@@ -188,10 +149,6 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
     );
   };
 
-  /**
-   *  Queries mDNS services over UDP IPv4 and sends a response for a specific service instance.
-   *  This function sends a query for Shelly, HTTP, and services, and responds with the appropriate PTR records.
-   */
   const requestUdp6 = () => {
     coapIpv6?.sendRequest(
       32000,
@@ -247,7 +204,7 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
   if (!options.disableTimeout) {
     setTimeout(() => {
       cleanupAndLogAndExit();
-    }, MB_COAP_DEFAULT_TIMEOUT_MS).unref(); // 10 minutes timeout to exit if no activity
+    }, MB_COAP_DEFAULT_TIMEOUT_MS).unref();
   }
 
   return {
@@ -257,13 +214,6 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
   };
 }
 
-/**
- * Default CLI entrypoint for mb_coap.
- *
- * @param {(code: number) => never | void} exitFn The exit function used by the CLI.
- * @param {(message: string) => void} log The output function used to print help text.
- * @returns {MbCoapRuntime | undefined} The started runtime, or undefined when help is printed.
- */
 export function mbCoapMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbCoapRuntime | undefined {
   const options = getMbCoapOptions();
 

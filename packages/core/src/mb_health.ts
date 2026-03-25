@@ -1,6 +1,6 @@
 /**
  * @description This file contains the bin mb_health to check the Matterbridge health endpoint.
- * @file src/mb_health.ts
+ * @file packages/core/src/mb_health.ts
  * @author Luca Liguori
  * @created 2026-01-28
  * @version 1.0.0
@@ -65,7 +65,7 @@ export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boole
         ...(isHttps ? { rejectUnauthorized: false } : {}),
         headers: {
           'cache-control': 'no-store',
-          'accept': 'application/json',
+          accept: 'application/json',
         },
       },
       (response) => {

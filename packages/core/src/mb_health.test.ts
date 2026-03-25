@@ -258,6 +258,7 @@ describe('mb_health', () => {
 
   test('uses https module for https URLs', async () => {
     let capturedOptions: any;
+
     httpsRequestImpl.mockImplementation((options: any, callback: (res: any) => void) => {
       capturedOptions = options;
       const request = {
@@ -267,7 +268,7 @@ describe('mb_health', () => {
         end: jest.fn().mockReturnThis(),
       };
 
-      const response = createStreamingResponse(204, JSON.stringify({ ok: true }));
+      const response = createStreamingResponse(200, JSON.stringify({ ok: true }));
       queueMicrotask(() => {
         callback(response);
         response.start();
@@ -275,12 +276,20 @@ describe('mb_health', () => {
       return request;
     });
 
-    await expect(mbHealthExitCode('https://localhost:8283/health', 100)).resolves.toBe(0);
-    expect(httpsRequestImpl).toHaveBeenCalled();
-    expect(capturedOptions).toMatchObject({ rejectUnauthorized: false });
+    await expect(mbHealthExitCode('https://localhost:8443/health?full=1', 100)).resolves.toBe(0);
+    expect(capturedOptions).toEqual(
+      expect.objectContaining({
+        protocol: 'https:',
+        hostname: 'localhost',
+        port: '8443',
+        path: '/health?full=1',
+        method: 'GET',
+        rejectUnauthorized: false,
+      }),
+    );
   });
 
-  test('cli calls exit with correct code', async () => {
+  test('prints parsed json and exits 0 on success', async () => {
     httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
       const request = {
         on: jest.fn().mockReturnThis(),
@@ -289,7 +298,7 @@ describe('mb_health', () => {
         end: jest.fn().mockReturnThis(),
       };
 
-      const response = createStreamingResponse(200, JSON.stringify({ status: 'ok' }));
+      const response = createStreamingResponse(200, JSON.stringify({ ok: true, nested: { value: 1 } }));
       queueMicrotask(() => {
         callback(response);
         response.start();
@@ -297,15 +306,16 @@ describe('mb_health', () => {
       return request;
     });
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const exitFn = jest.fn();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
     await mbHealthCli('http://localhost:8283/health', 100, exitFn as any);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true, nested: { value: 1 } }, null, 2));
     expect(exitFn).toHaveBeenCalledWith(0);
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ status: 'ok' }, null, 2));
-    logSpy.mockRestore();
   });
 
-  test('cli exits with code 1 on non-2xx', async () => {
+  test('prints plain body when response is not json and exits 1 on failure', async () => {
     httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
       const request = {
         on: jest.fn().mockReturnThis(),
@@ -314,7 +324,7 @@ describe('mb_health', () => {
         end: jest.fn().mockReturnThis(),
       };
 
-      const response = createStreamingResponse(500, JSON.stringify({ ok: false }));
+      const response = createStreamingResponse(503, 'service unavailable', true);
       queueMicrotask(() => {
         callback(response);
         response.start();
@@ -322,72 +332,16 @@ describe('mb_health', () => {
       return request;
     });
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const exitFn = jest.fn();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
     await mbHealthCli('http://localhost:8283/health', 100, exitFn as any);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith('service unavailable');
     expect(exitFn).toHaveBeenCalledWith(1);
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ ok: false }, null, 2));
-    logSpy.mockRestore();
   });
 
-  test('cli uses default exitFn (process.exit)', async () => {
-    httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
-      const request = {
-        on: jest.fn().mockReturnThis(),
-        setTimeout: jest.fn().mockReturnThis(),
-        destroy: jest.fn().mockReturnThis(),
-        end: jest.fn().mockReturnThis(),
-      };
-
-      const response = createStreamingResponse(200, JSON.stringify({ status: 'ok' }));
-      queueMicrotask(() => {
-        callback(response);
-        response.start();
-      });
-      return request;
-    });
-
-    const originalExit = process.exit;
-    const exitSpy = jest.fn();
-    (process as any).exit = exitSpy;
-
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    try {
-      await mbHealthCli('http://localhost:8283/health', 100);
-      expect(exitSpy).toHaveBeenCalledWith(0);
-      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ status: 'ok' }, null, 2));
-    } finally {
-      (process as any).exit = originalExit;
-      logSpy.mockRestore();
-    }
-  });
-
-  test('cli prints raw body for invalid json', async () => {
-    httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
-      const request = {
-        on: jest.fn().mockReturnThis(),
-        setTimeout: jest.fn().mockReturnThis(),
-        destroy: jest.fn().mockReturnThis(),
-        end: jest.fn().mockReturnThis(),
-      };
-
-      const response = createStreamingResponse(200, 'NOT_JSON', true);
-      queueMicrotask(() => {
-        callback(response);
-        response.start();
-      });
-      return request;
-    });
-
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const exitFn = jest.fn();
-    await mbHealthCli('http://localhost:8283/health', 100, exitFn as any);
-    expect(exitFn).toHaveBeenCalledWith(0);
-    expect(logSpy).toHaveBeenCalledWith('NOT_JSON');
-    logSpy.mockRestore();
-  });
-
-  test('cli prints fallback json for empty body', async () => {
+  test('prints fallback payload when body is empty', async () => {
     httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
       const request = {
         on: jest.fn().mockReturnThis(),
@@ -404,15 +358,50 @@ describe('mb_health', () => {
       return request;
     });
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const exitFn = jest.fn();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
     await mbHealthCli('http://localhost:8283/health', 100, exitFn as any);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true, statusCode: 204 }, null, 2));
     expect(exitFn).toHaveBeenCalledWith(0);
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true, statusCode: 204 }, null, 2));
-    logSpy.mockRestore();
   });
 
-  test('main calls exit with correct code', async () => {
+  test('cli uses default process.exit when exitFn is omitted', async () => {
+    httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
+      const request = {
+        on: jest.fn().mockReturnThis(),
+        setTimeout: jest.fn().mockReturnThis(),
+        destroy: jest.fn().mockReturnThis(),
+        end: jest.fn().mockReturnThis(),
+      };
+
+      const response = createStreamingResponse(200, JSON.stringify({ status: 'ok' }));
+      queueMicrotask(() => {
+        callback(response);
+        response.start();
+      });
+      return request;
+    });
+
+    const originalExit = process.exit;
+    const exitSpy = jest.fn();
+    (process as any).exit = exitSpy;
+
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      await mbHealthCli('http://localhost:8283/health', 100);
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ status: 'ok' }, null, 2));
+      expect(exitSpy).toHaveBeenCalledWith(0);
+    } finally {
+      (process as any).exit = originalExit;
+      consoleLogSpy.mockRestore();
+    }
+  });
+
+  test('main uses default url when not provided', async () => {
     httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
       const request = {
         on: jest.fn().mockReturnThis(),
@@ -429,15 +418,16 @@ describe('mb_health', () => {
       return request;
     });
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     const exitFn = jest.fn();
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
     await mbHealthMain(exitFn as any);
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true }, null, 2));
     expect(exitFn).toHaveBeenCalledWith(0);
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true }, null, 2));
-    logSpy.mockRestore();
   });
 
-  test('main uses default exitFn (process.exit)', async () => {
+  test('main uses default process.exit when exitFn is omitted', async () => {
     httpRequestImpl.mockImplementation((_options: any, callback: (res: any) => void) => {
       const request = {
         on: jest.fn().mockReturnThis(),
@@ -458,50 +448,16 @@ describe('mb_health', () => {
     const exitSpy = jest.fn();
     (process as any).exit = exitSpy;
 
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+
     try {
       await mbHealthMain();
+
+      expect(consoleLogSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true }, null, 2));
       expect(exitSpy).toHaveBeenCalledWith(0);
-      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true }, null, 2));
     } finally {
       (process as any).exit = originalExit;
-      logSpy.mockRestore();
+      consoleLogSpy.mockRestore();
     }
-  });
-
-  test('main uses url override', async () => {
-    let capturedOptions: any;
-
-    httpRequestImpl.mockImplementation((options: any, callback: (res: any) => void) => {
-      capturedOptions = options;
-      const request = {
-        on: jest.fn().mockReturnThis(),
-        setTimeout: jest.fn().mockReturnThis(),
-        destroy: jest.fn().mockReturnThis(),
-        end: jest.fn().mockReturnThis(),
-      };
-
-      const response = createStreamingResponse(200, JSON.stringify({ ok: true }));
-      queueMicrotask(() => {
-        callback(response);
-        response.start();
-      });
-      return request;
-    });
-
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const exitFn = jest.fn();
-    await mbHealthMain(exitFn as any, 'http://127.0.0.1:1234/healthz?x=1');
-
-    expect(capturedOptions).toMatchObject({
-      protocol: 'http:',
-      hostname: '127.0.0.1',
-      port: '1234',
-      path: '/healthz?x=1',
-      method: 'GET',
-    });
-    expect(exitFn).toHaveBeenCalledWith(0);
-    expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ ok: true }, null, 2));
-    logSpy.mockRestore();
   });
 });
