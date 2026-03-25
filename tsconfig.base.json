@@ -4,7 +4,7 @@
     "composite": true,
     "target": "esnext",
     "lib": ["ESNext"],
-    "types": ["node", "jest", "vitest"],
+    "types": ["node", "jest", "vitest/globals"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "resolveJsonModule": true,

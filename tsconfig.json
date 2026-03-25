@@ -4,5 +4,5 @@
     "rootDir": "src",
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "package.json"]
+  "include": ["package.json", "src/**/*.ts", "test/**/*.ts", "vitest/**/*.ts"]
 }
