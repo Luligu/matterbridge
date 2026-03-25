@@ -3,7 +3,7 @@
  * @file src/dgram/mb_mdns.ts
  * @author Luca Liguori
  * @created 2025-07-22
- * @version 1.0.0
+ * @version 2.0.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -30,13 +30,57 @@ import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRES
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils/cli';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 
-// istanbul ignore next
-{
-  if (hasParameter('h') || hasParameter('help')) {
-    // eslint-disable-next-line no-console
-    console.log(`Copyright (c) Matterbridge. All rights reserved. Version 1.0.0.\n`);
-    // eslint-disable-next-line no-console
-    console.log(`Usage: mb_mdns [options...]
+import pkg from '../package.json' with { type: 'json' };
+
+export const MB_MDNS_DEFAULT_INTERVAL_MS = 10000;
+export const MB_MDNS_DEFAULT_TIMEOUT_MS = 600000;
+export const MB_MDNS_CLEANUP_DELAY_MS = 250;
+
+export interface MbMdnsOptions {
+  showHelp: boolean;
+  interfaceName?: string;
+  ipv4InterfaceAddress: string;
+  ipv6InterfaceAddress: string;
+  outgoingIpv4InterfaceAddress?: string;
+  outgoingIpv6InterfaceAddress?: string;
+  advertiseIntervalMs?: number;
+  queryIntervalMs?: number;
+  unicast: boolean;
+  filters: string[];
+  ipFilters: string[];
+  disableIpv4: boolean;
+  disableIpv6: boolean;
+  disableLoopback: boolean;
+  disableTimeout: boolean;
+  verbose: boolean;
+}
+
+export interface MbMdnsRuntime {
+  mdnsIpv4?: Mdns;
+  mdnsIpv6?: Mdns;
+  cleanupAndLogAndExit: () => Promise<void>;
+}
+
+/**
+ * Writes a message to the console.
+ *
+ * @param {string} message The message to print.
+ * @returns {void} Nothing.
+ */
+function defaultConsoleLog(message: string): void {
+  // eslint-disable-next-line no-console
+  console.log(message);
+}
+
+/**
+ * Returns the help text for the mb_mdns command.
+ *
+ * @returns {string} The formatted help text.
+ */
+export function getMbMdnsHelpText(): string {
+  return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
+
+Usage: mb_mdns [options...]
 
 If no command line is provided, mb_mdns shows all incoming mDNS records on all interfaces (0.0.0.0 and ::).
 
@@ -81,245 +125,292 @@ Examples:
 
   # Query each 5s and listen for _matterbridge._tcp.local service records
   mb_mdns --query 5000 --filter _matterbridge._tcp.local
-`);
-    // eslint-disable-next-line n/no-process-exit
-    process.exit(0);
+`;
+}
+
+/**
+ * Prints the help text for the mb_mdns command.
+ *
+ * @param {(message: string) => void} log The output function used to print the help text.
+ * @returns {void} Nothing.
+ */
+export function printMbMdnsHelp(log: (message: string) => void = defaultConsoleLog): void {
+  log(getMbMdnsHelpText());
+}
+
+/**
+ * Reads the current process arguments and returns the parsed mb_mdns options.
+ *
+ * @returns {MbMdnsOptions} The parsed CLI options.
+ */
+export function getMbMdnsOptions(): MbMdnsOptions {
+  const advertiseIntervalMs = hasParameter('advertise') ? getIntParameter('advertise') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
+  const queryIntervalMs = hasParameter('query') ? getIntParameter('query') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
+
+  return {
+    showHelp: hasParameter('h') || hasParameter('help'),
+    interfaceName: getParameter('interfaceName'),
+    ipv4InterfaceAddress: getParameter('ipv4InterfaceAddress') || '0.0.0.0',
+    ipv6InterfaceAddress: getParameter('ipv6InterfaceAddress') || '::',
+    outgoingIpv4InterfaceAddress: getParameter('outgoingIpv4InterfaceAddress'),
+    outgoingIpv6InterfaceAddress: getParameter('outgoingIpv6InterfaceAddress'),
+    advertiseIntervalMs,
+    queryIntervalMs,
+    unicast: hasParameter('unicast'),
+    filters: getStringArrayParameter('filter') ?? [],
+    ipFilters: getStringArrayParameter('ip-filter') ?? [],
+    disableIpv4: hasParameter('noIpv4'),
+    disableIpv6: hasParameter('noIpv6'),
+    disableLoopback: hasParameter('no-loopback'),
+    disableTimeout: hasParameter('no-timeout'),
+    verbose: hasParameter('v') || hasParameter('verbose'),
+  };
+}
+
+/**
+ * Sends the common mDNS discovery query.
+ *
+ * @param {Mdns} mdns The Mdns instance to use for the query.
+ * @param {boolean} unicast Whether to request unicast responses.
+ * @returns {void} Nothing.
+ */
+export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
+  mdns.log.info('Sending mDNS query for common services...');
+  try {
+    mdns.sendQuery([
+      { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+      { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
+    ]);
+  } catch (error) {
+    mdns.log.error(`Error sending mDNS query: ${(error as Error).message}`);
+  }
+}
+
+/**
+ * Sends an mDNS advertisement for the Matterbridge services.
+ *
+ * @param {Mdns} mdns The Mdns instance to use for the advertisement.
+ * @param {number} ttl The time-to-live for the advertisement records. Use 0 for goodbye.
+ * @returns {void} Nothing.
+ */
+export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): void {
+  mdns.log.info(`Sending mDNS advertisement for matterbridge service with TTL ${ttl ? ttl.toString() : 'goodbye'}...`);
+  const httpServiceType = '_http._tcp.local';
+  const matterbridgeServiceType = '_matterbridge._tcp.local';
+  const httpInstanceName = 'matterbridge._http._tcp.local';
+  const matterbridgeInstanceName = 'matterbridge._matterbridge._tcp.local';
+  const hostName = 'matterbridge.local';
+  const port = 8283;
+
+  const ptrHttpServiceTypeRdata = mdns.encodeDnsName(httpServiceType);
+  const ptrMatterbridgeServiceTypeRdata = mdns.encodeDnsName(matterbridgeServiceType);
+  const ptrHttpInstanceRdata = mdns.encodeDnsName(httpInstanceName);
+  const ptrMatterbridgeInstanceRdata = mdns.encodeDnsName(matterbridgeInstanceName);
+  const srvRdata = mdns.encodeSrvRdata(0, 0, port, hostName);
+  const txtRdata = mdns.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
+
+  const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
+    { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpServiceTypeRdata },
+    { name: httpServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpInstanceRdata },
+    { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeServiceTypeRdata },
+    { name: matterbridgeServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeInstanceRdata },
+    { name: httpInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+    { name: matterbridgeInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
+    { name: httpInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+    { name: matterbridgeInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
+  ];
+
+  const interfaces = os.networkInterfaces();
+  let interfaceInfos: os.NetworkInterfaceInfo[] = mdns.interfaceName ? (interfaces[mdns.interfaceName] ?? []) : [];
+
+  if (interfaceInfos.length === 0) {
+    for (const name of Object.keys(interfaces)) {
+      if (excludedInterfaceNamePattern.test(name)) continue;
+      const infos = interfaces[name];
+      if (infos && infos.length > 0 && !infos[0].internal) {
+        interfaceInfos = infos;
+        break;
+      }
+    }
   }
 
-  // Dynamic JSON import (Node >= 20) with import attributes
-  const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
+  for (const info of interfaceInfos) {
+    if (info.family === 'IPv4' && !info.internal) {
+      answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(info.address) });
+    } else if (info.family === 'IPv6' && !info.internal) {
+      answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(info.address) });
+    }
+  }
 
-  let mdnsIpv4QueryInterval: NodeJS.Timeout | undefined;
-  let mdnsIpv6QueryInterval: NodeJS.Timeout | undefined;
-  let mdnsIpv4AdvertiseInterval: NodeJS.Timeout | undefined;
-  let mdnsIpv6AdvertiseInterval: NodeJS.Timeout | undefined;
+  try {
+    mdns.sendResponse(answers);
+  } catch (error) {
+    mdns.log.error(`Error sending mDNS advertisement: ${(error as Error).message}`);
+  }
+}
 
-  let mdnsIpv4: Mdns | undefined = undefined;
-  let mdnsIpv6: Mdns | undefined = undefined;
+/**
+ * Starts the mb_mdns listeners using the provided options.
+ *
+ * @param {MbMdnsOptions} options The parsed CLI options.
+ * @param {boolean} registerSignalHandlers Whether process signal handlers should be registered.
+ * @returns {MbMdnsRuntime} The created runtime state and cleanup callback.
+ */
+export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: boolean = true): MbMdnsRuntime {
+  let mdnsIpv4QueryInterval: ReturnType<typeof setInterval> | undefined;
+  let mdnsIpv6QueryInterval: ReturnType<typeof setInterval> | undefined;
+  let mdnsIpv4AdvertiseInterval: ReturnType<typeof setInterval> | undefined;
+  let mdnsIpv6AdvertiseInterval: ReturnType<typeof setInterval> | undefined;
+
+  let mdnsIpv4: Mdns | undefined;
+  let mdnsIpv6: Mdns | undefined;
 
   /**
    * Cleanup and log device information before exiting.
    */
-  async function cleanupAndLogAndExit() {
+  async function cleanupAndLogAndExit(): Promise<void> {
     clearInterval(mdnsIpv4QueryInterval);
     clearInterval(mdnsIpv6QueryInterval);
     clearInterval(mdnsIpv4AdvertiseInterval);
     clearInterval(mdnsIpv6AdvertiseInterval);
-    if (hasParameter('advertise')) {
-      if (mdnsIpv4) advertise(mdnsIpv4, 0); // Send goodbye with TTL 0
-      if (mdnsIpv6) advertise(mdnsIpv6, 0); // Send goodbye with TTL 0
+    if (options.advertiseIntervalMs !== undefined) {
+      if (mdnsIpv4) advertiseMatterbridgeService(mdnsIpv4, 0);
+      if (mdnsIpv6) advertiseMatterbridgeService(mdnsIpv6, 0);
     }
-    await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow goodbye messages to be sent
+    await new Promise<void>((resolve) => setTimeout(resolve, MB_MDNS_CLEANUP_DELAY_MS));
     mdnsIpv4?.stop();
     mdnsIpv6?.stop();
     mdnsIpv4?.logDevices();
     mdnsIpv6?.logDevices();
-    await new Promise((resolve) => setTimeout(resolve, 250)); // Wait for 250ms to allow sockets to close
+    await new Promise<void>((resolve) => setTimeout(resolve, MB_MDNS_CLEANUP_DELAY_MS));
   }
 
-  const query = (mdns: Mdns, unicast: boolean = false) => {
-    mdns.log.info('Sending mDNS query for common services...');
-    try {
-      mdns.sendQuery([
-        { name: '_matterc._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_matterbridge._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_home-assistant._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_shelly._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_mqtt._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_googlecast._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_airplay._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_amzn-alexa._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_companion-link._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_hap._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_hap._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_ipp._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_ipps._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_meshcop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_printer._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_raop._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_sleep-proxy._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_ssh._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-        { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
-      ]);
-    } catch (error) {
-      mdns.log.error(`Error sending mDNS query: ${(error as Error).message}`);
-    }
-  };
-
-  /**
-   * Sends an mDNS advertisement for the HTTP service over UDP IPv4.
-   *
-   * @param {Mdns} mdns - The Mdns instance to use for sending the advertisement.
-   * @param {number} [ttl] - The time-to-live for the advertisement records. Defaults to 120 seconds. Send 0 for goodbye.
-   */
-  const advertise = (mdns: Mdns, ttl: number = 120) => {
-    mdns.log.info(`Sending mDNS advertisement for matterbridge service with TTL ${ttl ? ttl.toString() : 'goodbye'}...`);
-    const httpServiceType = '_http._tcp.local';
-    const matterbridgeServiceType = '_matterbridge._tcp.local';
-    const httpInstanceName = 'matterbridge._http._tcp.local';
-    const matterbridgeInstanceName = 'matterbridge._matterbridge._tcp.local';
-    const hostName = 'matterbridge.local';
-    const port = 8283;
-
-    const ptrHttpServiceTypeRdata = mdns.encodeDnsName(httpServiceType);
-    const ptrMatterbridgeServiceTypeRdata = mdns.encodeDnsName(matterbridgeServiceType);
-    const ptrHttpInstanceRdata = mdns.encodeDnsName(httpInstanceName);
-    const ptrMatterbridgeInstanceRdata = mdns.encodeDnsName(matterbridgeInstanceName);
-    const srvRdata = mdns.encodeSrvRdata(0, 0, port, hostName);
-    const txtRdata = mdns.encodeTxtRdata([`version=${pkg.version}`, 'path=/']);
-
-    const answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[] = [
-      // PTR records for service types and instances
-      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpServiceTypeRdata },
-      { name: httpServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrHttpInstanceRdata },
-      { name: '_services._dns-sd._udp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeServiceTypeRdata },
-      { name: matterbridgeServiceType, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl, rdata: ptrMatterbridgeInstanceRdata },
-      // SRV record for the HTTP instance
-      { name: httpInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
-      // SRV record for the matterbridge instance
-      { name: matterbridgeInstanceName, rtype: DnsRecordType.SRV, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: srvRdata },
-      // TXT record for the HTTP instance
-      { name: httpInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
-      // TXT record for the matterbridge instance
-      { name: matterbridgeInstanceName, rtype: DnsRecordType.TXT, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: txtRdata },
-    ];
-    // Always attempt to add both A and all AAAA records (best effort), regardless of the socket family.
-    const interfaces = os.networkInterfaces();
-    // Use specified interface name if provided
-    let interfaceInfos: os.NetworkInterfaceInfo[] | undefined = mdns.interfaceName ? interfaces[mdns.interfaceName] : undefined;
-    // Find the first non-internal IPv4 and IPv6 addresses if interface name is not provided or not found
-    if (!interfaceInfos) {
-      interfaceInfos = [];
-      for (const name of Object.keys(interfaces)) {
-        if (excludedInterfaceNamePattern.test(name)) continue;
-        const infos = interfaces[name];
-        if (infos && infos.length > 0 && !infos[0].internal) {
-          interfaceInfos.push(...infos);
-          break;
-        }
-      }
-    }
-    // Encode A and AAAA records for all non-internal addresses of the selected interface
-    for (const info of interfaceInfos) {
-      if (info.family === 'IPv4' && !info.internal) {
-        const ipv4 = info.address;
-        answers.push({ name: hostName, rtype: DnsRecordType.A, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeA(ipv4) });
-      } else if (info.family === 'IPv6' && !info.internal) {
-        const ipv6 = info.address;
-        answers.push({ name: hostName, rtype: DnsRecordType.AAAA, rclass: DnsClass.IN | DnsClassFlag.FLUSH, ttl, rdata: mdns.encodeAAAA(ipv6) });
-      }
-    }
-    try {
-      mdns.sendResponse(answers);
-    } catch (error) {
-      mdns.log.error(`Error sending mDNS advertisement: ${(error as Error).message}`);
-    }
-  };
-
-  if (!hasParameter('noIpv4')) {
+  if (!options.disableIpv4) {
     mdnsIpv4 = new Mdns(
       'mDNS Server udp4',
       MDNS_MULTICAST_IPV4_ADDRESS,
       MDNS_MULTICAST_PORT,
       'udp4',
       true,
-      getParameter('interfaceName'),
-      getParameter('ipv4InterfaceAddress') || '0.0.0.0',
-      getParameter('outgoingIpv4InterfaceAddress'),
+      options.interfaceName,
+      options.ipv4InterfaceAddress,
+      options.outgoingIpv4InterfaceAddress,
     );
-    if (hasParameter('v') || hasParameter('verbose')) mdnsIpv4.listNetworkInterfaces();
-
-    // Apply filters if any
-    const filters = getStringArrayParameter('filter');
-    if (filters) mdnsIpv4.filters.push(...filters);
-
-    // Apply ip filters if any
-    const ipFilters = getStringArrayParameter('ip-filter');
-    if (ipFilters) mdnsIpv4.ipFilters.push(...ipFilters);
-
-    // Handle errors
+    if (options.verbose) mdnsIpv4.listNetworkInterfaces();
+    if (options.filters.length > 0) mdnsIpv4.filters.push(...options.filters);
+    if (options.ipFilters.length > 0) mdnsIpv4.ipFilters.push(...options.ipFilters);
     mdnsIpv4.on('error', (err) => {
       mdnsIpv4?.log.error(`mDNS udp4 Server error: ${err.message}\n${err.stack}`);
     });
-
-    // Start the IPv4 mDNS server
     mdnsIpv4.start();
     mdnsIpv4.on('ready', (address: AddressInfo) => {
-      if (hasParameter('no-loopback')) {
+      if (options.disableLoopback) {
         mdnsIpv4?.socket.setMulticastLoopback(false);
         mdnsIpv4?.log.info('Multicast loopback disabled for mdnsIpv4');
       }
       mdnsIpv4?.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (hasParameter('advertise')) {
-        advertise(mdnsIpv4 as Mdns);
-        mdnsIpv4AdvertiseInterval = setInterval(() => advertise(mdnsIpv4 as Mdns), getIntParameter('advertise') || 10000).unref();
+      if (options.advertiseIntervalMs !== undefined) {
+        advertiseMatterbridgeService(mdnsIpv4 as Mdns);
+        mdnsIpv4AdvertiseInterval = setInterval(() => advertiseMatterbridgeService(mdnsIpv4 as Mdns), options.advertiseIntervalMs).unref();
       }
-      if (hasParameter('query')) {
-        query(mdnsIpv4 as Mdns, hasParameter('unicast'));
-        mdnsIpv4QueryInterval = setInterval(() => query(mdnsIpv4 as Mdns, hasParameter('unicast')), getIntParameter('query') || 10000).unref();
+      if (options.queryIntervalMs !== undefined) {
+        sendMdnsQuery(mdnsIpv4 as Mdns, options.unicast);
+        mdnsIpv4QueryInterval = setInterval(() => sendMdnsQuery(mdnsIpv4 as Mdns, options.unicast), options.queryIntervalMs).unref();
       }
     });
   }
 
-  if (!hasParameter('noIpv6')) {
+  if (!options.disableIpv6) {
     mdnsIpv6 = new Mdns(
       'mDNS Server udp6',
       MDNS_MULTICAST_IPV6_ADDRESS,
       MDNS_MULTICAST_PORT,
       'udp6',
       true,
-      getParameter('interfaceName'),
-      getParameter('ipv6InterfaceAddress') || '::',
-      getParameter('outgoingIpv6InterfaceAddress'),
+      options.interfaceName,
+      options.ipv6InterfaceAddress,
+      options.outgoingIpv6InterfaceAddress,
     );
-    if (hasParameter('noIpv4') && (hasParameter('v') || hasParameter('verbose'))) mdnsIpv6.listNetworkInterfaces();
-
-    // Apply filters if any
-    const filters = getStringArrayParameter('filter');
-    if (filters) mdnsIpv6.filters.push(...filters);
-
-    // Apply ip filters if any
-    const ipFilters = getStringArrayParameter('ip-filter');
-    if (ipFilters) mdnsIpv6.ipFilters.push(...ipFilters);
-
-    // Handle errors
+    if (options.disableIpv4 && options.verbose) mdnsIpv6.listNetworkInterfaces();
+    if (options.filters.length > 0) mdnsIpv6.filters.push(...options.filters);
+    if (options.ipFilters.length > 0) mdnsIpv6.ipFilters.push(...options.ipFilters);
     mdnsIpv6.on('error', (err) => {
       mdnsIpv6?.log.error(`mDNS udp6 Server error: ${err.message}\n${err.stack}`);
     });
-
-    // Start the IPv6 mDNS server
     mdnsIpv6.start();
     mdnsIpv6.on('ready', (address: AddressInfo) => {
-      if (hasParameter('no-loopback')) {
+      if (options.disableLoopback) {
         mdnsIpv6?.socket.setMulticastLoopback(false);
         mdnsIpv6?.log.info('Multicast loopback disabled for mdnsIpv6');
       }
       mdnsIpv6?.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (hasParameter('advertise')) {
-        advertise(mdnsIpv6 as Mdns);
-        mdnsIpv6AdvertiseInterval = setInterval(() => advertise(mdnsIpv6 as Mdns), getIntParameter('advertise') || 10000).unref();
+      if (options.advertiseIntervalMs !== undefined) {
+        advertiseMatterbridgeService(mdnsIpv6 as Mdns);
+        mdnsIpv6AdvertiseInterval = setInterval(() => advertiseMatterbridgeService(mdnsIpv6 as Mdns), options.advertiseIntervalMs).unref();
       }
-      if (hasParameter('query')) {
-        query(mdnsIpv6 as Mdns, hasParameter('unicast'));
-        mdnsIpv6QueryInterval = setInterval(() => query(mdnsIpv6 as Mdns, hasParameter('unicast')), getIntParameter('query') || 10000).unref();
+      if (options.queryIntervalMs !== undefined) {
+        sendMdnsQuery(mdnsIpv6 as Mdns, options.unicast);
+        mdnsIpv6QueryInterval = setInterval(() => sendMdnsQuery(mdnsIpv6 as Mdns, options.unicast), options.queryIntervalMs).unref();
       }
     });
   }
 
-  // Handle Ctrl+C (SIGINT) and SIGTERM to stop and log devices
-  process.on('SIGINT', async () => {
-    await cleanupAndLogAndExit();
-  });
-  process.on('SIGTERM', async () => {
-    await cleanupAndLogAndExit();
-  });
+  if (registerSignalHandlers) {
+    process.on('SIGINT', async () => {
+      await cleanupAndLogAndExit();
+    });
+    process.on('SIGTERM', async () => {
+      await cleanupAndLogAndExit();
+    });
+  }
 
-  // Exit after a timeout to avoid running indefinitely in test environments
-  if (!hasParameter('no-timeout')) {
+  if (!options.disableTimeout) {
     setTimeout(async () => {
       await cleanupAndLogAndExit();
-    }, 600000).unref(); // 10 minutes timeout to exit if no activity
+    }, MB_MDNS_DEFAULT_TIMEOUT_MS).unref();
   }
+
+  return {
+    mdnsIpv4,
+    mdnsIpv6,
+    cleanupAndLogAndExit,
+  };
+}
+
+/**
+ * Default CLI entrypoint for mb_mdns.
+ *
+ * @param {(code: number) => never | void} exitFn The exit function used by the CLI help path.
+ * @param {(message: string) => void} log The output function used to print help text.
+ * @returns {MbMdnsRuntime | undefined} The started runtime, or undefined when help is printed.
+ */
+export function mbMdnsMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbMdnsRuntime | undefined {
+  const options = getMbMdnsOptions();
+
+  if (options.showHelp) {
+    printMbMdnsHelp(log);
+    exitFn(0);
+    return;
+  }
+
+  return startMbMdns(options);
 }

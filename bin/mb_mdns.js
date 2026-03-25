@@ -1,2 +1,4 @@
 #!/usr/bin/env node
-import('../dist/mb_mdns.js');
+const { mbMdnsMain } = await import('../dist/mb_mdns.js');
+
+mbMdnsMain();

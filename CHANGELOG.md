@@ -66,16 +66,18 @@ These classes will run as threads in the next releases:
 - [plugins]: Add `title` and `ui:widget` to default schema.
 - [threads]: Add `DockerVersion` thread.
 - [reset]: The reset commissioning clears also plugin and device with mode = server.
+- [mb_mdns]: Add `mb_mdns` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb_coap]: Add `mb_coap` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
 
 ### Changed
 
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.1.0.
 - [package]: Bump `typescript` to v.6.0.2.
-- [frontend]: Bump `frontend` version to v. 3.4.9.
+- [frontend]: Bump `frontend` version to v.3.4.9.
 - [frontend]: Bump `typescript` to v.6.0.2.
-- [frontend]: Bump `vite` version to v. 8.0.1 and fix imports for the new RollDown.
-- [frontend]: Bump `@rjsf` version to v. 6.4.1 and refactor component ConfigPluginDialog.
+- [frontend]: Bump `vite` version to v.8.0.1 and fix imports for the new RollDown.
+- [frontend]: Bump `@rjsf` version to v.6.4.1 and refactor component ConfigPluginDialog.
 - [boot]: Change boot time limit from 120 to 300 seconds.
 - [frontend]: Remove `matterbridge-irobot` from ignore list. It has been published.
 
