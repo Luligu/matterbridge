@@ -65,7 +65,7 @@ export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boole
         ...(isHttps ? { rejectUnauthorized: false } : {}),
         headers: {
           'cache-control': 'no-store',
-          accept: 'application/json',
+          'accept': 'application/json',
         },
       },
       (response) => {

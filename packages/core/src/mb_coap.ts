@@ -47,11 +47,21 @@ export interface MbCoapRuntime {
   cleanupAndLogAndExit: () => void;
 }
 
+/**
+ * Logs CLI output with the default console logger.
+ *
+ * @param {string} message The message to print.
+ */
 function defaultConsoleLog(message: string): void {
   // eslint-disable-next-line no-console
   console.log(message);
 }
 
+/**
+ * Returns the help text for the `mb_coap` CLI.
+ *
+ * @returns {string} The full help text.
+ */
 export function getMbCoapHelpText(): string {
   return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
 
@@ -95,10 +105,20 @@ Examples:
 `;
 }
 
+/**
+ * Prints the `mb_coap` help text.
+ *
+ * @param {(message: string) => void} log The logger used to print the help text.
+ */
 export function printMbCoapHelp(log: (message: string) => void = defaultConsoleLog): void {
   log(getMbCoapHelpText());
 }
 
+/**
+ * Parses CLI arguments into `mb_coap` runtime options.
+ *
+ * @returns {MbCoapOptions} The parsed CLI options.
+ */
 export function getMbCoapOptions(): MbCoapOptions {
   const requestIntervalMs = hasParameter('request') ? getIntParameter('request') || MB_COAP_DEFAULT_REQUEST_INTERVAL_MS : undefined;
 
@@ -115,6 +135,14 @@ export function getMbCoapOptions(): MbCoapOptions {
   };
 }
 
+/**
+ * Starts the IPv4 and IPv6 CoAP listeners according to the provided options.
+ *
+ * @param {MbCoapOptions} options The CLI options.
+ * @param {(code: number) => never | void} exitFn Exit function used during cleanup.
+ * @param {boolean} registerSignalHandlers Whether to register process signal handlers.
+ * @returns {MbCoapRuntime} The running CoAP resources and cleanup function.
+ */
 export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => never | void = process.exit, registerSignalHandlers: boolean = true): MbCoapRuntime {
   let coapIpv4: Coap | undefined;
   let coapIpv6: Coap | undefined;
@@ -129,6 +157,9 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
     if (options.disableIpv4 && (hasParameter('v') || hasParameter('verbose'))) coapIpv6.listNetworkInterfaces();
   }
 
+  /**
+   * Stops active CoAP servers and exits the process.
+   */
   function cleanupAndLogAndExit(): void {
     coapIpv4?.stop();
     coapIpv6?.stop();
@@ -214,6 +245,13 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
   };
 }
 
+/**
+ * CLI entrypoint for `mb_coap`.
+ *
+ * @param {(code: number) => never | void} exitFn Exit function used when help is requested.
+ * @param {(message: string) => void} log The logger used to print help text.
+ * @returns {MbCoapRuntime | undefined} The running runtime, or `undefined` when exiting after help.
+ */
 export function mbCoapMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbCoapRuntime | undefined {
   const options = getMbCoapOptions();
 

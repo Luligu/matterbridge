@@ -59,11 +59,21 @@ export interface MbMdnsRuntime {
   cleanupAndLogAndExit: () => Promise<void>;
 }
 
+/**
+ * Logs CLI output with the default console logger.
+ *
+ * @param {string} message The message to print.
+ */
 function defaultConsoleLog(message: string): void {
   // eslint-disable-next-line no-console
   console.log(message);
 }
 
+/**
+ * Returns the help text for the `mb_mdns` CLI.
+ *
+ * @returns {string} The full help text.
+ */
 export function getMbMdnsHelpText(): string {
   return `Copyright (c) Matterbridge. All rights reserved. Version 2.0.0.
 
@@ -115,10 +125,20 @@ Examples:
 `;
 }
 
+/**
+ * Prints the `mb_mdns` help text.
+ *
+ * @param {(message: string) => void} log The logger used to print the help text.
+ */
 export function printMbMdnsHelp(log: (message: string) => void = defaultConsoleLog): void {
   log(getMbMdnsHelpText());
 }
 
+/**
+ * Parses CLI arguments into `mb_mdns` runtime options.
+ *
+ * @returns {MbMdnsOptions} The parsed CLI options.
+ */
 export function getMbMdnsOptions(): MbMdnsOptions {
   const advertiseIntervalMs = hasParameter('advertise') ? getIntParameter('advertise') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
   const queryIntervalMs = hasParameter('query') ? getIntParameter('query') || MB_MDNS_DEFAULT_INTERVAL_MS : undefined;
@@ -143,6 +163,12 @@ export function getMbMdnsOptions(): MbMdnsOptions {
   };
 }
 
+/**
+ * Sends a multicast mDNS query for a standard list of service types.
+ *
+ * @param {Mdns} mdns The mDNS client used to send the query.
+ * @param {boolean} unicast Whether the query should request unicast responses.
+ */
 export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
   mdns.log.info('Sending mDNS query for common services...');
   try {
@@ -174,6 +200,12 @@ export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
   }
 }
 
+/**
+ * Advertises the matterbridge HTTP and service records over mDNS.
+ *
+ * @param {Mdns} mdns The mDNS server used to send the advertisement.
+ * @param {number} ttl The TTL for the records, or `0` for goodbye packets.
+ */
 export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): void {
   mdns.log.info(`Sending mDNS advertisement for matterbridge service with TTL ${ttl ? ttl.toString() : 'goodbye'}...`);
   const httpServiceType = '_http._tcp.local';
@@ -230,6 +262,13 @@ export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): voi
   }
 }
 
+/**
+ * Starts the IPv4 and IPv6 mDNS listeners according to the provided options.
+ *
+ * @param {MbMdnsOptions} options The CLI options.
+ * @param {boolean} registerSignalHandlers Whether to register process signal handlers.
+ * @returns {MbMdnsRuntime} The running mDNS resources and cleanup function.
+ */
 export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: boolean = true): MbMdnsRuntime {
   let mdnsIpv4QueryInterval: ReturnType<typeof setInterval> | undefined;
   let mdnsIpv6QueryInterval: ReturnType<typeof setInterval> | undefined;
@@ -239,6 +278,11 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
   let mdnsIpv4: Mdns | undefined;
   let mdnsIpv6: Mdns | undefined;
 
+  /**
+   * Stops active mDNS resources and sends goodbye advertisements when needed.
+   *
+   * @returns {Promise<void>} Resolves when cleanup is complete.
+   */
   async function cleanupAndLogAndExit(): Promise<void> {
     clearInterval(mdnsIpv4QueryInterval);
     clearInterval(mdnsIpv6QueryInterval);
@@ -348,6 +392,13 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
   };
 }
 
+/**
+ * CLI entrypoint for `mb_mdns`.
+ *
+ * @param {(code: number) => never | void} exitFn Exit function used when help is requested.
+ * @param {(message: string) => void} log The logger used to print help text.
+ * @returns {MbMdnsRuntime | undefined} The running runtime, or `undefined` when exiting after help.
+ */
 export function mbMdnsMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbMdnsRuntime | undefined {
   const options = getMbMdnsOptions();
 
