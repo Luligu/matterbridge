@@ -73,7 +73,7 @@ describe('ConfigPluginDialog', () => {
     },
   });
 
-  const renderDialog = () => {
+  const renderDialog = (plugin: ApiPlugin = createPlugin()) => {
     const sendMessage = vi.fn();
     const addListener = vi.fn();
     const removeListener = vi.fn();
@@ -88,7 +88,7 @@ describe('ConfigPluginDialog', () => {
           getUniqueId: () => 1234,
         } as any}
       >
-        <ConfigPluginDialog open={true} onClose={onClose} plugin={createPlugin()} />
+        <ConfigPluginDialog open={true} onClose={onClose} plugin={plugin} />
       </WebSocketContext.Provider>,
     );
 
@@ -209,6 +209,40 @@ describe('ConfigPluginDialog', () => {
 
     await waitFor(() => {
       expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
+    });
+  });
+
+  it('adds a new object entry from the device list and renames the generated key', async () => {
+    const plugin = createPlugin();
+    const schemaProperties = plugin.schemaJson?.properties as Record<string, any>;
+    schemaProperties.mappings.selectFrom = 'name';
+
+    const { addListener } = renderDialog(plugin);
+
+    const listener = addListener.mock.calls[0]?.[0];
+    expect(listener).toBeTypeOf('function');
+
+    listener({
+      id: 1234,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/select/devices',
+      response: [{ serial: 'device-001', name: 'Kitchen Sensor', icon: 'wifi' }],
+    });
+
+    const mappingsTitle = screen.getByText('Mappings');
+    const mappingsSection = mappingsTitle.closest('div')?.parentElement;
+    expect(mappingsSection).not.toBeNull();
+
+    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+
+    expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
+
+    fireEvent.click(within(mappingsSection as HTMLElement).getAllByRole('button')[0]);
+    fireEvent.click(screen.getByText('Kitchen Sensor'));
+
+    await waitFor(() => {
+      expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1', 'Kitchen Sensor', '']);
     });
   });
 });

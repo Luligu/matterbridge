@@ -128,7 +128,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     'ui:globalOptions': { orderable: true },
   });
 
-  const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list
+  const pendingAdditionalPropertyKeyRef = useRef(''); // For ObjectFieldTemplate select from device list
   let currentFormData = {};
 
   // WebSocket message handler effect
@@ -255,6 +255,16 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { RemoveButton } = templates.ButtonTemplates;
     if (rjsfDebug) console.log('WrapIfAdditionalTemplate:', props);
     const additional = ADDITIONAL_PROPERTY_FLAG in schema;
+    const keyInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      const pendingAdditionalPropertyKey = pendingAdditionalPropertyKeyRef.current;
+      if (!additional || pendingAdditionalPropertyKey === '' || !/^newKey(?:-\d+)?$/.test(label) || !keyInputRef.current) return;
+      if (debug) console.log(`WrapIfAdditionalTemplate: renaming additional property "${label}" to "${pendingAdditionalPropertyKey}"`);
+      keyInputRef.current.value = pendingAdditionalPropertyKey;
+      onKeyRenameBlur({ target: keyInputRef.current } as React.FocusEvent<HTMLInputElement>);
+      pendingAdditionalPropertyKeyRef.current = '';
+    }, [additional, label, onKeyRenameBlur]);
 
     if (!additional) {
       return <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>{children}</Box>;
@@ -267,6 +277,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           required={required}
           disabled={disabled || readonly}
           defaultValue={label}
+          inputRef={keyInputRef}
           onBlur={!readonly ? onKeyRenameBlur : undefined}
           type='text'
           variant='outlined'
@@ -727,11 +738,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const handleSelectDeviceValue = (value: ApiSelectDevice) => {
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serial}" for schema "${schema.selectFrom}"`);
       setDialogDeviceOpen(false);
-      let newkey = '';
-      if (schema.selectFrom === 'serial') newkey = value.serial;
-      else if (schema.selectFrom === 'name') newkey = value.name;
-      setNewkey(newkey);
-      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue newkey "${newkey}"`);
+      let nextKey = '';
+      if (schema.selectFrom === 'serial') nextKey = value.serial;
+      else if (schema.selectFrom === 'name') nextKey = value.name;
+      pendingAdditionalPropertyKeyRef.current = nextKey;
+      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue pendingAdditionalPropertyKey "${nextKey}"`);
 
       // Trigger onAddClick returned function to add the selected new item
       onAddProperty();
@@ -741,25 +752,11 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       onAddProperty();
     };
 
-    // const rjsfDebug = true;
-
     // Check if this is the entire schema or an individual object
     const isRoot = !schema.additionalProperties;
     if (rjsfDebug) console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot, 'props', props);
 
-    // If this is not the root object and newkey is not empty, then set the new key with the selected value
-    if (debug) console.log(`ObjectFieldTemplate: isRoot ${isRoot} newkey "${newkey}"`);
-    if (!isRoot && newkey !== '') {
-      if (debug) console.log('ObjectFieldTemplate: newkey', newkey, 'properties', properties);
-      properties.forEach((p: any) => {
-        if (p.name === 'newKey' && p.content.key === 'newKey' && p.content.props.name === 'newKey' && p.content.props.onKeyChange && newkey !== '') {
-          if (debug) console.log('ObjectFieldTemplate: newkey onKeyChange', newkey);
-          const newName = newkey;
-          setNewkey(''); // No enter again...
-          p.content.props.onKeyChange(newName);
-        }
-      });
-    }
+    if (debug) console.log(`ObjectFieldTemplate: isRoot ${isRoot} pendingAdditionalPropertyKey "${pendingAdditionalPropertyKeyRef.current}"`);
 
     return (
       <Box sx={{ margin: '0px', padding: isRoot ? '10px' : '5px 10px 0px 10px', border: rjsfDebug ? '1px solid blue' : isRoot ? 'none' : '1px solid grey' }}>
