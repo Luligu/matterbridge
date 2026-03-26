@@ -62,7 +62,8 @@ These classes will run as threads in the next releases:
 ### Dev news
 
 - [utils]: Add getEnumDescription() function to log cluster enums.
-- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock deviec with PIN feature.
+- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock device with PIN and COTA feature.
+- [endpoint]: Add createUserPinDoorLockClusterServer() endpoint helper to create a DoorLock device with USR, PIN and COTA feature.
 
 ### Added
 
