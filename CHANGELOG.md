@@ -62,7 +62,7 @@ These classes will run as threads in the next releases:
 ### Dev news
 
 - [utils]: Add getEnumDescription() function to log cluster enums.
-- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper.
+- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock deviec with PIN feature.
 
 ### Added
 
@@ -88,8 +88,10 @@ These classes will run as threads in the next releases:
 
 ### Fixed
 
-- [frontend]: "Filter by" in the Devices page is now case insensitive.
-- [rvc]: Update currentArea parameter type to allow null in createDefaultServiceAreaClusterServer.
+- [frontend]: `Filter by` in the Devices page is now case insensitive.
+- [rvc]: Update `currentArea` parameter type to allow null in createDefaultServiceAreaClusterServer.
+- [config]: Fix config editor, to send formData consistently in onAction().
+- [config]: Fix config editor, to add the device name instead of newKey in properties dialog. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
