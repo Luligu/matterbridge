@@ -15,7 +15,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Checkbox from '@mui/material/Checkbox';
 
 // @mdi
-import Icon from '@mdi/react';
+import { Icon } from '@mdi/react';
 import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
 
 // frontend

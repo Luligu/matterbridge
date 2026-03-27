@@ -3,7 +3,7 @@
  * @file src/dgram/coap.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -24,6 +24,8 @@
 // Node.js imports
 import dgram from 'node:dgram';
 
+// @matterbridge
+import { getErrorMessage } from '@matterbridge/utils/error';
 // AnsiLogger imports
 import { BLUE, db, GREEN, MAGENTA, nf } from 'node-ansi-logger';
 
@@ -207,7 +209,7 @@ export class Coap extends Multicast {
       this.onCoapMessage(result, rinfo);
       this.logCoapMessage(result);
     } catch (error) {
-      this.log.error(`Error decoding CoAP message: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Error decoding CoAP message: ${getErrorMessage(error)}`);
     }
   }
 
@@ -511,7 +513,6 @@ export class Coap extends Multicast {
    * Logs a decoded CoAP message.
    *
    * @param {CoapMessage} msg - Parsed CoAP message.
-   * @returns {void} No return value.
    */
   logCoapMessage(msg: CoapMessage) {
     this.log.info(

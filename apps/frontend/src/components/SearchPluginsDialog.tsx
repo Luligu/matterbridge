@@ -884,7 +884,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           <h4 style={{ margin: 0 }}>Search Plugins</h4>
         </div>
       </DialogTitle>
-      <DialogContent dividers sx={{ padding: 0, flex: '1 1 auto', minHeight: 0 }}>
+      <DialogContent dividers sx={{ padding: '10px', flex: '1 1 auto', minHeight: 0 }}>
         <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {loading ? (
             <div style={{ padding: '20px' }}>Loading npm registry...</div>

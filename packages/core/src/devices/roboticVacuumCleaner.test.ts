@@ -21,6 +21,7 @@ import {
   destroyTestEnvironment,
   loggerLogSpy,
   server,
+  setDebug,
   setupTest,
   startServerNode,
   stopServerNode,
@@ -104,6 +105,77 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     );
     // Chaining
     expect(device.createDefaultRvcOperationalStateClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
+
+  test('createDefaultServiceAreaClusterServer argument normalization and chaining', () => {
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    // Call with all parameters
+    const supportedAreas: ServiceArea.Area[] = [];
+    const selectedAreas: number[] = [];
+    const currentArea: number | null = null;
+    const supportedMaps: ServiceArea.Map[] = [];
+    device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), { currentArea: null, estimatedEndTime: null, selectedAreas: [], supportedAreas: [], supportedMaps: [] });
+    // Call with defaults
+    jest.clearAllMocks();
+    device.createDefaultServiceAreaClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), {
+      currentArea: 1,
+      estimatedEndTime: null,
+      selectedAreas: [],
+      supportedAreas: [
+        {
+          areaId: 1,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 52,
+              floorNumber: 0,
+              locationName: 'Living',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 2,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 47,
+              floorNumber: 0,
+              locationName: 'Kitchen',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 3,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 7,
+              floorNumber: 1,
+              locationName: 'Bedroom',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 4,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 6,
+              floorNumber: 1,
+              locationName: 'Bathroom',
+            },
+          },
+          mapId: null,
+        },
+      ],
+      supportedMaps: [],
+    });
     requireSpy.mockRestore();
   });
 
@@ -219,11 +291,13 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
     jest.clearAllMocks();
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas 1,2,3,4 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: 1, 2, 3, 4`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [1, 2, 3, 4]`);
+
     jest.clearAllMocks();
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [0, 5] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [0, 5] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [0, 5]`);
   });
 
   test('close the server node', async () => {

@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
+    "types": ["vite/client"],
     "jsx": "react-jsx",
     "strict": true,
     "moduleResolution": "bundler",

@@ -21,6 +21,16 @@
 
 [Matterbridge](https://matterbridge.io) is a Matter plugin manager.
 
+It creates a [Matter device](https://csa-iot.org/all-solutions/matter/) (of type bridge) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
+
+You don't need a hub or a dedicated new machine.
+
+No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).
+
+Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.
+
+It is fully supported on Linux, macOS, and Windows.
+
 It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.
 
 Developers can focus solely on device development by extending the provided classes.
@@ -30,16 +40,6 @@ Simply pair Matterbridge once, and it will load all your registered plugins.
 This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything ([Development](README-DEV.md)).
 
 The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
-
-Matterbridge creates a [Matter device](https://csa-iot.org/all-solutions/matter/) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
-
-You don't need a hub or a dedicated new machine.
-
-No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).
-
-Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.
-
-It runs perfectly on Linux, macOS and Windows.
 
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
@@ -85,9 +85,9 @@ To verify which Node.js version is currently LTS (Active), check [Node.js Releas
 
 > **Nvm is a development tool and is not supported for production**.
 
-If you don't have Docker already installed, please use this method to install it on a Debian system: https://docs.docker.com/engine/install.
+If you don't have Docker already installed, please use this method to install Docker Engine on a Debian system: https://docs.docker.com/engine/install.
 
-If you don't have Docker already installed, please use this method to install it on Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
+If you don't have Docker already installed, please use this method to install Docker Desktop on Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
 
 After that, follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
@@ -223,7 +223,7 @@ or with user matterbridge and with private global node_modules and npm cache (no
 
 ### Other Home Assistant Community Add-ons
 
-The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.
+The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in any of the Matterbridge repositories.
 
 ## Development
 
@@ -266,7 +266,7 @@ Features:
   <img src="./screenshots/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
-Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.
+Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices, groups and scenes to Matter.
 
 No hub or dedicated hardware needed.
 
@@ -346,7 +346,7 @@ A Dynamic platform plugin exposes as many devices as you need (the limit for the
 
 The history works in both bridge and childbridge mode.
 
-The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).
+The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode or as a device with mode server (this means the plugin is paired directly).
 
 ## Third-party plugins
 
@@ -704,7 +704,7 @@ Check the matter.js readme.
 
 ## Code of Conduct
 
-We believe in a welcoming and respectful community for all. Please make sure to follow our [Code of Conduct](LINK_TO_CODE_OF_CONDUCT) in all your interactions with the project.
+We believe in a welcoming and respectful community for all. Please make sure to follow our [Code of Conduct](./CODE_OF_CONDUCT.md) in all your interactions with the project.
 
 ## Support
 

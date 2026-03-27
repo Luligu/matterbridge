@@ -3,7 +3,7 @@
  * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.3
+ * @version 1.0.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,7 +27,9 @@ import EventEmitter from 'node:events';
 import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+// @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
 // AnsiLogger imports
 import { AnsiLogger, BLUE, db, idn, LogLevel, nf, rs, TimestampFormat } from 'node-ansi-logger';
 
@@ -87,7 +89,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     );
 
     this.socket.on('error', (error) => {
-      this.log.debug(`Socket error: ${error instanceof Error ? error.message : error}`);
+      this.log.debug(`Socket error: ${getErrorMessage(error)}`);
       this.emit('error', error);
       this.onError(error);
     });
@@ -130,7 +132,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
   send(msg: Buffer, serverAddress: string, serverPort: number) {
     this.socket.send(msg, 0, msg.length, serverPort, serverAddress, (error: Error | null) => {
       if (error) {
-        this.log.error(`Socket failed to send a message: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Socket failed to send a message: ${getErrorMessage(error)}`);
         this.emit('error', error);
         this.onError(error);
       } else {
@@ -147,7 +149,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {Error} error - Error instance.
    */
   onError(error: Error) {
-    this.log.error(`Socket error: ${error instanceof Error ? error.message : error}`);
+    this.log.error(`Socket error: ${getErrorMessage(error)}`);
   }
 
   /** Handles socket close. */
@@ -298,7 +300,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     }
     this.log.debug('No IPv6 link-local address found');
 
-    // Try to find a unique local address
+    // Try to find a unique local unicast address
     const ulaAddress = addresses?.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.address.startsWith('fd') && addr.netmask === 'ffff:ffff:ffff:ffff::');
     if (ulaAddress) {
       this.log.debug('Found IPv6 Unique Local Addresses (ULA) unicast address');

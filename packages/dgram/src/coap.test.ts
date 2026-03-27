@@ -832,6 +832,39 @@ describe('Coap', () => {
       // Test passes if no exception is thrown
       expect(true).toBe(true);
     });
+
+    it('should log CoAP message with a non-empty token in the summary line', () => {
+      const message: CoapMessage = {
+        version: 1,
+        type: 0,
+        tokenLength: 2,
+        code: 1,
+        messageId: 1234,
+        token: Buffer.from([0xab, 0xcd]),
+        options: [],
+      };
+
+      coap.logCoapMessage(message);
+
+      expect(true).toBe(true);
+    });
+
+    it('should log CoAP message with a non-empty token and JSON payload', () => {
+      const message: CoapMessage = {
+        version: 1,
+        type: 0,
+        tokenLength: 4,
+        code: 1,
+        messageId: 1234,
+        token: Buffer.from([0x01, 0x02, 0x03, 0x04]),
+        options: [],
+        payload: Buffer.from(JSON.stringify({ hello: 'world' })),
+      };
+
+      coap.logCoapMessage(message);
+
+      expect(true).toBe(true);
+    });
   });
 
   describe('round-trip encoding/decoding', () => {

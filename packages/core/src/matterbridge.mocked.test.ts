@@ -184,7 +184,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.shutdown).toBe(false);
     expect((matterbridge as any).edge).toBe(undefined);
-    expect((matterbridge as any).failCountLimit).toBe(120);
+    expect((matterbridge as any).failCountLimit).toBe(300);
 
     expect(matterbridge.log).toBeDefined();
 
@@ -1494,7 +1494,7 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in bridge mode`));
 
     jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/120) in startMatterInterval interval`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/300) in startMatterInterval interval`));
     (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check
 
     jest.advanceTimersByTime(1000); // Simulate 1 second for the interval
@@ -1651,7 +1651,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).startChildbridge(0);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting start matter interval in childbridge mode...`));
     jest.advanceTimersByTime(1000); // Simulate 1 second for the start interval
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/120)`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/300)`));
 
     (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check. It will put the plugin in error state
     jest.advanceTimersByTime(1000); // Advance 1 second for the start interval

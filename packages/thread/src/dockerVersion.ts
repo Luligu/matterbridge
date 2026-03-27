@@ -164,6 +164,7 @@ export async function getDockerVersion(owner: string, repo: string, tag: string 
   try {
     const tokenUrl = `https://auth.docker.io/token?service=registry.docker.io&scope=repository:${owner}/${repo}:pull`;
     const tokenJson = await httpsGetJson<DockerRegistryTokenResponse>(tokenUrl, undefined, timeoutMs);
+    // console.log(`Token response: ${JSON.stringify(tokenJson, null, 2)}`);
     const token = tokenJson.token ?? tokenJson.access_token;
     if (!isValidString(token, 10)) return undefined;
 
@@ -178,12 +179,14 @@ export async function getDockerVersion(owner: string, repo: string, tag: string 
     ].join(', ');
 
     let manifest = await httpsGetJson<DockerManifestV2>(manifestUrl, { ...baseHeaders, Accept: accept }, timeoutMs);
+    // console.log(`Manifest response: ${JSON.stringify(manifest, null, 2)}`);
 
     if (manifest.config?.digest === undefined && manifest.manifests !== undefined) {
       const digest = pickPlatformManifestDigest(manifest);
       if (!digest) return undefined;
       const byDigestUrl = `https://registry-1.docker.io/v2/${owner}/${repo}/manifests/${digest}`;
       manifest = await httpsGetJson<DockerManifestV2>(byDigestUrl, { ...baseHeaders, Accept: accept }, timeoutMs);
+      // console.log(`Manifest by digest response: ${JSON.stringify(manifest, null, 2)}`);
     }
 
     const configDigest = manifest.config?.digest;
@@ -191,6 +194,7 @@ export async function getDockerVersion(owner: string, repo: string, tag: string 
 
     const configUrl = `https://registry-1.docker.io/v2/${owner}/${repo}/blobs/${configDigest}`;
     const config = await httpsGetJson<DockerConfigBlob>(configUrl, { ...baseHeaders, Accept: 'application/json' }, timeoutMs);
+    // console.log(`Config response: ${JSON.stringify(config, null, 2)}`);
 
     return getOciVersionLabel(config);
   } catch {

@@ -229,7 +229,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       next = next.filter((device) => device.pluginName.toLowerCase() === normalizedPlugin);
     }
     if (filterDevices !== '') {
-      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices) || device.serial.toLowerCase().includes(filterDevices));
+      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase()));
     }
 
     setFilteredDevices(next);

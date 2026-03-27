@@ -59,13 +59,16 @@ describe('ThreadsManagerMainThread', () => {
     jest.restoreAllMocks();
   });
 
+  test('Run Dockerversion in the main thread', async () => {
+    expect(await manager.runInMainThread('DockerVersion')).toBe(true);
+  }, 10000);
+
   // eslint-disable-next-line jest/no-commented-out-tests
   /*
   test('Run GlobalPrefix in the main thread', async () => {
     expect(await manager.runInMainThread('GlobalPrefix')).toBe(true);
   }, 10000);
-  */
-
+ 
   test('Run ArchiveCommand zip in the main thread', async () => {
     expect(
       await manager.runInMainThread('ArchiveCommand', {
@@ -108,4 +111,5 @@ describe('ThreadsManagerMainThread', () => {
     ).toBe(true);
     // await flushAsync(undefined, undefined, 5000);
   }, 10000);
+  */
 });

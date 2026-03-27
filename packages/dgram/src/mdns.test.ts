@@ -15,8 +15,6 @@ import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matte
 
 import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from './mdns.js';
 
-process.argv.push('--verbose');
-
 jest.mock('node:dgram');
 
 const mockRinfo: dgram.RemoteInfo = { family: 'IPv4', address: '1.2.3.4', port: 5353, size: 32 };
@@ -27,6 +25,7 @@ await setupTest('Mdns', false);
 describe('Mdns', () => {
   let mdns: Mdns;
   let mockSocket: any;
+  process.argv.push('--verbose');
 
   beforeEach(() => {
     mockSocket = {

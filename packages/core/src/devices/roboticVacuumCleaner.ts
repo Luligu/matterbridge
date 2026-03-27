@@ -60,7 +60,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {RvcOperationalState.OperationalStateStruct[]} [operationalStateList] - The list of operational states for the robotic vacuum cleaner. Defaults to a predefined set of states.
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
-   * @param {number} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
+   * @param {number | null} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
    * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to empty list.
    */
   constructor(
@@ -77,7 +77,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     operationalStateList?: RvcOperationalState.OperationalStateStruct[],
     supportedAreas?: ServiceArea.Area[],
     selectedAreas?: number[],
-    currentArea?: number,
+    currentArea?: number | null,
     supportedMaps?: ServiceArea.Map[],
   ) {
     super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
@@ -142,11 +142,11 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    *
    * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the ServiceArea cluster. Defaults to a predefined set of areas.
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
-   * @param {number} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
+   * @param {number | null} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
    * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults empty list.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number, supportedMaps?: ServiceArea.Map[]): this {
+  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number | null, supportedMaps?: ServiceArea.Map[]): this {
     this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps), {
       supportedAreas: supportedAreas ?? [
         {
@@ -171,7 +171,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         },
       ],
       selectedAreas: selectedAreas ?? [], // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.
-      currentArea: currentArea ?? 1, // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
+      currentArea: currentArea !== undefined ? currentArea : 1, // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
       supportedMaps: supportedMaps ?? [], // If empty, that indicates that the device is currently unable to provide this information
       /**
        * Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds. A value of 0 means that the operation has completed.

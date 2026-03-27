@@ -1,6 +1,6 @@
 /**
  * @description This file contains the bin mb_health to check the Matterbridge health endpoint.
- * @file src/mb_health.ts
+ * @file packages/core/src/mb_health.ts
  * @author Luca Liguori
  * @created 2026-01-28
  * @version 1.0.0
@@ -33,10 +33,13 @@ const DEFAULT_MB_HEALTH_URL = 'http://localhost:8283/health';
  * @param {number} timeoutMs The timeout in milliseconds.
  * @returns {Promise<boolean>} True if the endpoint responds with a 2xx status code.
  */
-export function checkHealth(url: string, timeoutMs: number): Promise<boolean> {
-  return fetchHealth(url, timeoutMs)
-    .then(({ ok }) => ok)
-    .catch(() => false);
+export async function checkHealth(url: string, timeoutMs: number): Promise<boolean> {
+  try {
+    const { ok } = await fetchHealth(url, timeoutMs);
+    return ok;
+  } catch {
+    return false;
+  }
 }
 
 /**

@@ -38,25 +38,38 @@ import { plg } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { LogLevel, nf } from 'node-ansi-logger';
 
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import {
+  broadcastMessageHandlerSpy,
+  broadcastServerFetchSpy,
+  broadcastServerIsWorkerRequestSpy,
+  broadcastServerIsWorkerResponseSpy,
+  broadcastServerRequestSpy,
+  broadcastServerRespondSpy,
+  closeMdnsInstance,
+  destroyInstance,
+  flushAsync,
+  loggerLogSpy,
+  setDebug,
+  setupTest,
+} from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-
-// Mock BroadcastServer methods
-const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
-const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
-const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
-const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
-const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
-const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
-  return Promise.resolve(undefined) as any;
-});
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
+
+  // Mock BroadcastServer methods
+  broadcastServerIsWorkerRequestSpy.mockImplementation(() => true);
+  broadcastServerIsWorkerResponseSpy.mockImplementation(() => true);
+  broadcastMessageHandlerSpy.mockImplementation(() => {});
+  broadcastServerRequestSpy.mockImplementation(() => {});
+  broadcastServerRespondSpy.mockImplementation(() => {});
+  broadcastServerFetchSpy.mockImplementation(async () => {
+    return Promise.resolve(undefined) as any;
+  });
 
   beforeEach(async () => {
     // Clear all mocks
@@ -245,6 +258,7 @@ describe('Matterbridge', () => {
   }, 30000);
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
+    await setDebug(false);
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest'];
 
     expect((Matterbridge as any).instance).toBeUndefined();
@@ -994,17 +1008,33 @@ describe('Matterbridge', () => {
       '-reset',
     ];
     (matterbridge as any).initialized = true;
+
+    // Bridge mode
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
     await shutdownPromise;
     matterbridge.shutdown = false;
     matterbridge.removeAllListeners('shutdown');
+
+    // ChildBridge mode
+    matterbridge.bridgeMode = 'childbridge';
+    matterbridge.plugins.set({ name: 'test-plugin', storageContext: { clearAll: jest.fn() } } as any);
+    expect(matterbridge.plugins).toHaveLength(1);
+    matterbridge.devices.set({ uniqueId: 'test-device', mode: 'server', deviceName: 'test-device' } as any);
+    expect(matterbridge.devices).toHaveLength(1);
+    await (matterbridge as any).parseCommandLine();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'Matter storage reset done! Remove the bridge from the controller.');
+    await shutdownPromise;
+    matterbridge.shutdown = false;
+    matterbridge.removeAllListeners('shutdown');
+
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
   });
 
   test('matterbridge -reset xxx', async () => {
+    await setDebug(false);
     expect((matterbridge as any).initialized).toBe(false);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);

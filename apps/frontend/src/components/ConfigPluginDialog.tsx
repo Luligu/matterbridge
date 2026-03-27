@@ -58,7 +58,7 @@ import {
   ArrayFieldTitleProps,
   ArrayFieldDescriptionProps,
   ArrayFieldTemplateProps,
-  ArrayFieldTemplateItemType,
+  ArrayFieldItemTemplateProps,
   ObjectFieldTemplateProps,
   WrapIfAdditionalTemplateProps,
   UiSchema,
@@ -128,8 +128,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     'ui:globalOptions': { orderable: true },
   });
 
-  const [newkey, setNewkey] = useState(''); // For ObjectFieldTemplate select from device list
-  let currentFormData = {};
+  /** For ObjectFieldTemplate select from device list */
+  const pendingAdditionalPropertyKeyRef = useRef('');
+  let currentFormData = plugin.configJson;
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -154,24 +155,17 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     addListener(handleWebSocketMessage, uniqueId.current);
     if (debug) console.log('ConfigPluginDialog added WebSocket listener id:', uniqueId.current);
 
+    if (debug) console.log('ConfigPluginDialog mounting...');
+    if (debug) console.log('ConfigPluginDialog mounting with form:', formData);
+    if (debug) console.log('ConfigPluginDialog mounting with schema:', schema);
+    if (debug) console.log('ConfigPluginDialog mounting with uiSchema:', uiSchema);
+
     // Move the ui: properties from the schema to the uiSchema
     if (formData && schema && schema.properties) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
 
-      /*
-      Object.keys(schema.properties).forEach((key) => {
-        Object.keys(schema.properties[key]).forEach((subkey) => {
-          if (subkey.startsWith('ui:')) {
-            if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', key, subkey, schema.properties[key][subkey]);
-            uiSchema[key] = {};
-            uiSchema[key][subkey] = schema.properties[key][subkey];
-            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-            delete schema.properties[key][subkey];
-          }
-        });
-      });
-      */
       const moveUiPropertiesToUiSchema = (schemaObj: RJSFSchema, uiSchemaObj: UiSchema, path: string[] = []) => {
+        if (rjsfDebug) console.log('ConfigPluginDialog moveUiPropertiesToUiSchema:', schemaObj, uiSchemaObj, path);
         if (!schemaObj || typeof schemaObj !== 'object') return;
 
         // Handle properties object
@@ -257,16 +251,25 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   };
 
   function WrapIfAdditionalTemplate(props: WrapIfAdditionalTemplateProps) {
-    const { id, label, onKeyChange, onDropPropertyClick, disabled, schema, children, registry, readonly, required } = props;
+    const { id, label, onKeyRenameBlur, onRemoveProperty, disabled, schema, children, registry, readonly, required } = props;
     const { templates } = registry;
     const { RemoveButton } = templates.ButtonTemplates;
     if (rjsfDebug) console.log('WrapIfAdditionalTemplate:', props);
     const additional = ADDITIONAL_PROPERTY_FLAG in schema;
+    const keyInputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+      const pendingAdditionalPropertyKey = pendingAdditionalPropertyKeyRef.current;
+      if (!additional || pendingAdditionalPropertyKey === '' || !/^newKey(?:-\d+)?$/.test(label) || !keyInputRef.current) return;
+      if (debug) console.log(`WrapIfAdditionalTemplate: renaming additional property "${label}" to "${pendingAdditionalPropertyKey}"`);
+      keyInputRef.current.value = pendingAdditionalPropertyKey;
+      onKeyRenameBlur({ target: keyInputRef.current } as React.FocusEvent<HTMLInputElement>);
+      pendingAdditionalPropertyKeyRef.current = '';
+    }, [additional, label, onKeyRenameBlur]);
 
     if (!additional) {
       return <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>{children}</Box>;
     }
-    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onKeyChange(target && target.value);
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
         <TextField
@@ -275,13 +278,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           required={required}
           disabled={disabled || readonly}
           defaultValue={label}
-          onBlur={!readonly ? handleBlur : undefined}
+          inputRef={keyInputRef}
+          onBlur={!readonly ? onKeyRenameBlur : undefined}
           type='text'
           variant='outlined'
           sx={{ width: '250px', minWidth: '250px', maxWidth: '250px', marginRight: '20px' }}
         />
         <Box sx={{ flex: 1 }}>{children}</Box>
-        <RemoveButton disabled={disabled || readonly} onClick={onDropPropertyClick(label)} registry={registry} />
+        <RemoveButton disabled={disabled || readonly} onClick={onRemoveProperty} registry={registry} />
       </Box>
     );
   }
@@ -426,9 +430,26 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     return null;
   }
 
-  function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
-    console.log('ArrayFieldItemTemplate:', props);
-    return null;
+  function ArrayFieldItemTemplate(props: ArrayFieldItemTemplateProps) {
+    const { buttonsProps, children } = props;
+    if (rjsfDebug) console.log('ArrayFieldItemTemplate:', props);
+
+    return (
+      <Box sx={{ margin: '2px 0px', padding: '0px', display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ flexGrow: 1, marginRight: '10px' }}>{children}</Box>
+        <IconButton disabled={!buttonsProps.hasMoveUp} onClick={buttonsProps.onMoveUpItem} size='small' color='primary' sx={iconButtonSx}>
+          <KeyboardDoubleArrowUpIcon />
+        </IconButton>
+        <IconButton disabled={!buttonsProps.hasMoveDown} onClick={buttonsProps.onMoveDownItem} size='small' color='primary' sx={iconButtonSx}>
+          <KeyboardDoubleArrowDownIcon />
+        </IconButton>
+        {buttonsProps.hasRemove && (
+          <IconButton onClick={buttonsProps.onRemoveItem} size='small' color='primary' sx={iconButtonSx}>
+            <DeleteForever />
+          </IconButton>
+        )}
+      </Box>
+    );
   }
 
   function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
@@ -526,20 +547,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           </Box>
         )}
         {schema.description && <Typography sx={descriptionSx}>{schema.description}</Typography>}
-        {props.items.map((element) => (
-          <Box key={element.index} sx={{ margin: '2px 0px', padding: '0px', display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ flexGrow: 1, marginRight: '10px' }}>{element.children}</Box>
-            <IconButton disabled={!element.hasMoveUp} onClick={element.onReorderClick(element.index, element.index - 1)} size='small' color='primary' sx={iconButtonSx}>
-              <KeyboardDoubleArrowUpIcon />
-            </IconButton>
-            <IconButton disabled={!element.hasMoveDown} onClick={element.onReorderClick(element.index, element.index + 1)} size='small' color='primary' sx={iconButtonSx}>
-              <KeyboardDoubleArrowDownIcon />
-            </IconButton>
-            <IconButton onClick={element.onDropIndexClick(element.index)} size='small' color='primary' sx={iconButtonSx}>
-              <DeleteForever />
-            </IconButton>
-          </Box>
-        ))}
+        {props.items}
 
         {/* Dialog for selecting a device */}
         <Dialog
@@ -715,7 +723,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   }
 
   function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
-    const { onAddClick, schema, properties, title, description } = props;
+    const { onAddProperty, schema, properties, title, description } = props;
 
     const [dialogDeviceOpen, setDialogDeviceOpen] = useState(false);
     const [filter, setFilter] = useState('');
@@ -731,42 +739,25 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const handleSelectDeviceValue = (value: ApiSelectDevice) => {
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serial}" for schema "${schema.selectFrom}"`);
       setDialogDeviceOpen(false);
-      let newkey = '';
-      if (schema.selectFrom === 'serial') newkey = value.serial;
-      else if (schema.selectFrom === 'name') newkey = value.name;
-      setNewkey(newkey);
-      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue newkey "${newkey}"`);
+      let nextKey = '';
+      if (schema.selectFrom === 'serial') nextKey = value.serial;
+      else if (schema.selectFrom === 'name') nextKey = value.name;
+      pendingAdditionalPropertyKeyRef.current = nextKey;
+      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue pendingAdditionalPropertyKey "${nextKey}"`);
 
       // Trigger onAddClick returned function to add the selected new item
-      const addProperty = onAddClick(schema);
-      addProperty();
+      onAddProperty();
     };
 
     const handleAddItem = () => {
-      // Trigger onAddClick returned function to add the selected new item
-      const addProperty = onAddClick(schema);
-      addProperty();
+      onAddProperty();
     };
-
-    // const rjsfDebug = true;
 
     // Check if this is the entire schema or an individual object
     const isRoot = !schema.additionalProperties;
     if (rjsfDebug) console.log('ObjectFieldTemplate: title', title, 'description', description, 'schema', schema, 'isRoot', isRoot, 'props', props);
 
-    // If this is not the root object and newkey is not empty, then set the new key with the selected value
-    if (debug) console.log(`ObjectFieldTemplate: isRoot ${isRoot} newkey "${newkey}"`);
-    if (!isRoot && newkey !== '') {
-      if (debug) console.log('ObjectFieldTemplate: newkey', newkey, 'properties', properties);
-      properties.forEach((p: any) => {
-        if (p.name === 'newKey' && p.content.key === 'newKey' && p.content.props.name === 'newKey' && p.content.props.onKeyChange && newkey !== '') {
-          if (debug) console.log('ObjectFieldTemplate: newkey onKeyChange', newkey);
-          const newName = newkey;
-          setNewkey(''); // No enter again...
-          p.content.props.onKeyChange(newName);
-        }
-      });
-    }
+    if (debug) console.log(`ObjectFieldTemplate: isRoot ${isRoot} pendingAdditionalPropertyKey "${pendingAdditionalPropertyKeyRef.current}"`);
 
     return (
       <Box sx={{ margin: '0px', padding: isRoot ? '10px' : '5px 10px 0px 10px', border: rjsfDebug ? '1px solid blue' : isRoot ? 'none' : '1px solid grey' }}>
@@ -1017,7 +1008,6 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     registry,
     uiSchema,
     hideError,
-    formContext,
     ...textFieldProps
   }: WidgetProps) {
     const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;

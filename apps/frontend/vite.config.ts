@@ -3,6 +3,8 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
+const debugBuild = process.env.MB_FRONTEND_DEBUG_BUILD === 'true';
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -11,13 +13,11 @@ export default defineConfig({
   },
   base: './', // or '' for relative paths
   build: {
-    // Uncomment the following line to enable source maps for debugging
-    // sourcemap: true,
-    // Uncomment the following line to disable minification for easier debugging
-    // minify: false,
+    sourcemap: debugBuild,
+    minify: debugBuild ? false : undefined,
     outDir: 'build',
     emptyOutDir: true,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         entryFileNames: 'assets/[name].js',
         chunkFileNames: 'assets/[name].js',
@@ -32,7 +32,7 @@ export default defineConfig({
           if (id.includes('@emotion')) {
             return 'vendor_emotion';
           }
-          if (id.includes('/@rjsf/') || id.includes('/ajv/') || id.includes('/ajv-formats/') || id.includes('/json-schema-compare/') || id.includes('/json-schema-traverse/') || id.includes('/json-schema-merge-allof/')) {
+          if (id.includes('/@rjsf/') || id.includes('/ajv/') || id.includes('/ajv-formats/') || id.includes('/json-schema-compare/') || id.includes('/json-schema-traverse/') || id.includes('/json-schema-merge/')) {
             return 'vendor_rjsf';
           }
           if (id.includes('notistack')) {

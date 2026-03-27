@@ -9,6 +9,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -28,6 +29,9 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { StatusResponse } from '@matter/types/common';
+import { FabricIndex } from '@matter/types/datatype';
+import { Status } from '@matter/types/globals';
 import { LogLevel } from 'node-ansi-logger';
 
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
@@ -50,7 +54,13 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePresetThermostatServer, MatterbridgeSwitchServer, MatterbridgeThermostatServer } from './matterbridgeBehaviorsServer.js';
+import {
+  MatterbridgeDoorLockServer,
+  MatterbridgePinDoorLockServer,
+  MatterbridgeSwitchServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeUserPinDoorLockServer,
+} from './matterbridgeBehaviorsServer.js';
 import {
   airPurifier,
   bridge,
@@ -669,16 +679,1087 @@ describe('Server clusters and behaviors', () => {
 
   test('DoorLock server', async () => {
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(lock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockWithTimeout')).toBeTruthy();
 
-    await expectCommand(lock, DoorLock.Cluster, 'unlockDoor', undefined, (data) => {
+    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.unlockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
 
-    await expectCommand(lock, DoorLock.Cluster, 'lockDoor', undefined, (data) => {
+    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.lockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
     expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.unlockWithTimeout', { timeout: 5 }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+  });
+
+  test('DoorLock server with PIN code', async () => {
+    const pinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockPin' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    pinLock.createPinDoorLockClusterServer();
+    pinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, pinLock)).toBeTruthy();
+
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(pinLock.behaviors.has(MatterbridgePinDoorLockServer)).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('unlockWithTimeout')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('setPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('getPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('clearPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('clearAllPinCodes')).toBeTruthy();
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'unlockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'lockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'DoorLock.unlockWithTimeout', { timeout: 5, pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+  });
+
+  test('DoorLock server with PIN code without PIN value', async () => {
+    const pinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockPinNoPin' });
+
+    pinLock.createPinDoorLockClusterServer();
+    pinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, pinLock)).toBeTruthy();
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'unlockDoor', {}, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'lockDoor', {}, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'DoorLock.unlockWithTimeout', { timeout: 7 }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(pinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door with pincode N/A (endpoint ${pinLock.id}.${pinLock.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door with pincode N/A (endpoint ${pinLock.id}.${pinLock.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door with pincode N/A timeout 7 seconds (endpoint ${pinLock.id}.${pinLock.number})`);
+  });
+
+  test('DoorLock server with USR and PIN code', async () => {
+    const userPinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockUsrPin' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    userPinLock.createUserPinDoorLockClusterServer();
+    userPinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, userPinLock)).toBeTruthy();
+
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(userPinLock.behaviors.has(MatterbridgeUserPinDoorLockServer)).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('lockDoor')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('unlockWithTimeout')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('setUser')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('getUser')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('clearUser')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('setCredential')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('getCredentialStatus')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('clearCredential')).toBeTruthy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('setPinCode')).toBeFalsy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('getPinCode')).toBeFalsy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('clearPinCode')).toBeFalsy();
+    expect(userPinLock.behaviors.elementsOf(MatterbridgeUserPinDoorLockServer).commands.has('clearAllPinCodes')).toBeFalsy();
+
+    await userPinLock.invokeBehaviorCommand('doorLock', 'DoorLock.setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await userPinLock.invokeBehaviorCommand('doorLock', 'DoorLock.setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+      credentialData: pinCode,
+      userIndex: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+    });
+
+    await expectCommand(userPinLock, DoorLock.Cluster, 'unlockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+    await expectCommand(userPinLock, DoorLock.Cluster, 'lockDoor', { pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expectCommand(userPinLock, DoorLock.Cluster, 'DoorLock.unlockWithTimeout', { timeout: 5, pinCode }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+  });
+
+  test('DoorLock server with USR and PIN code without PIN value', async () => {
+    const userPinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockUsrPinNoPin' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    userPinLock.createUserPinDoorLockClusterServer();
+    userPinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, userPinLock)).toBeTruthy();
+
+    await userPinLock.invokeBehaviorCommand('doorLock', 'DoorLock.setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await userPinLock.invokeBehaviorCommand('doorLock', 'DoorLock.setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+      credentialData: pinCode,
+      userIndex: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+    });
+
+    await expect(userPinLock.invokeBehaviorCommand('doorLock', 'unlockDoor', {})).rejects.toBeInstanceOf(StatusResponse.FailureError);
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expect(userPinLock.invokeBehaviorCommand('doorLock', 'lockDoor', {})).rejects.toBeInstanceOf(StatusResponse.FailureError);
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    await expect(userPinLock.invokeBehaviorCommand('doorLock', 'DoorLock.unlockWithTimeout', { timeout: 9 })).rejects.toBeInstanceOf(StatusResponse.FailureError);
+    expect(userPinLock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door with pincode N/A (endpoint ${userPinLock.id}.${userPinLock.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door with pincode N/A (endpoint ${userPinLock.id}.${userPinLock.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door with pincode N/A timeout 9 seconds (endpoint ${userPinLock.id}.${userPinLock.number})`);
+  });
+
+  test('DoorLock PIN commands', async () => {
+    const pinLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockPinCommands' });
+    const pinCode = Buffer.from([0x31, 0x32, 0x33, 0x34]);
+
+    pinLock.createPinDoorLockClusterServer();
+    pinLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, pinLock)).toBeTruthy();
+
+    expect(pinLock.behaviors.has(MatterbridgePinDoorLockServer)).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('setPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('getPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('clearPinCode')).toBeTruthy();
+    expect(pinLock.behaviors.elementsOf(MatterbridgePinDoorLockServer).commands.has('clearAllPinCodes')).toBeTruthy();
+
+    const setPinCodeRequest = {
+      userId: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      pin: pinCode,
+    } satisfies DoorLock.SetPinCodeRequest;
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'DoorLock.setPinCode', setPinCodeRequest, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    let getPinCodeCalled = false;
+    pinLock.addCommandHandler('DoorLock.getPinCode', async (data) => {
+      getPinCodeCalled = true;
+      expect(data.cluster).toBe('doorLock');
+      expect(data.request).toEqual({ userId: 1 });
+      expect(data.endpoint).toBe(pinLock);
+    });
+
+    await pinLock.invokeBehaviorCommand('doorLock', 'DoorLock.getPinCode', { userId: 1 });
+    expect(getPinCodeCalled).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Getting pin code for user 1 (endpoint ${pinLock.id}.${pinLock.number})`);
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'DoorLock.clearPinCode', { pinSlotIndex: 1 }, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    await expectCommand(pinLock, DoorLock.Cluster, 'DoorLock.clearAllPinCodes', undefined, (data) => {
+      expect(data.cluster).toBe('doorLock');
+    });
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting pin code 0x${pinCode.toString('hex')} for user 1 type UnrestrictedUser status OccupiedEnabled (endpoint ${pinLock.id}.${pinLock.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Clearing pin code for slot 1 (endpoint ${pinLock.id}.${pinLock.number})`);
+  });
+
+  test('DoorLock PIN edge cases', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockPinMock',
+      maybeNumber: 99,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const behavior = {
+      endpoint,
+      state: {},
+    } as unknown as MatterbridgePinDoorLockServer;
+
+    await MatterbridgePinDoorLockServer.prototype.setPinCode.call(behavior, {
+      userId: 2,
+      userStatus: DoorLock.UserStatus.Available,
+      userType: DoorLock.UserType.NonAccessUser,
+      pin: null,
+    } as unknown as DoorLock.SetPinCodeRequest);
+
+    const getPinCodeResponse = await MatterbridgePinDoorLockServer.prototype.getPinCode.call(behavior, { userId: 7 });
+
+    await MatterbridgePinDoorLockServer.prototype.clearPinCode.call(behavior, { pinSlotIndex: 0xfffe });
+    await MatterbridgePinDoorLockServer.prototype.clearAllPinCodes.call(behavior);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setPinCode',
+      expect.objectContaining({
+        command: 'setPinCode',
+        request: { userId: 2, userStatus: DoorLock.UserStatus.Available, userType: DoorLock.UserType.NonAccessUser, pin: null },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getPinCode',
+      expect.objectContaining({
+        command: 'getPinCode',
+        request: { userId: 7 },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearPinCode',
+      expect.objectContaining({
+        command: 'clearPinCode',
+        request: { pinSlotIndex: 0xfffe },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearAllPinCodes',
+      expect.objectContaining({
+        command: 'clearAllPinCodes',
+        request: {},
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith('Setting pin code N/A for user 2 type NonAccessUser status Available (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Getting pin code for user 7 (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Clearing pin code for all slots (endpoint doorLockPinMock.99)');
+    expect(info).toHaveBeenCalledWith('Clearing all pin codes (endpoint doorLockPinMock.99)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setPinCode called for user 2');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearPinCode called for all PIN slots');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearAllPinCodes called');
+
+    expect(getPinCodeResponse).toEqual({
+      userId: 7,
+      userStatus: DoorLock.UserStatus.Available,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      pinCode: Buffer.from('1234'),
+    });
+  });
+
+  test('DoorLock PIN user status and type edge cases', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockPinStatusMock',
+      maybeNumber: 100,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const behavior = {
+      endpoint,
+      state: {},
+    } as unknown as MatterbridgePinDoorLockServer;
+
+    await MatterbridgePinDoorLockServer.prototype.setUserStatus.call(behavior, {
+      userId: 3,
+      userStatus: DoorLock.UserStatus.OccupiedDisabled,
+    } as DoorLock.SetUserStatusRequest);
+
+    const getUserStatusResponse = await MatterbridgePinDoorLockServer.prototype.getUserStatus.call(behavior, { userId: 4 } as DoorLock.GetUserStatusRequest);
+
+    await MatterbridgePinDoorLockServer.prototype.setUserType.call(behavior, {
+      userId: 5,
+      userType: DoorLock.UserType.NonAccessUser,
+    } as DoorLock.SetUserTypeRequest);
+
+    const getUserTypeResponse = await MatterbridgePinDoorLockServer.prototype.getUserType.call(behavior, { userId: 6 } as DoorLock.GetUserTypeRequest);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setUserStatus',
+      expect.objectContaining({
+        command: 'setUserStatus',
+        request: { userId: 3, userStatus: DoorLock.UserStatus.OccupiedDisabled },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getUserStatus',
+      expect.objectContaining({
+        command: 'getUserStatus',
+        request: { userId: 4 },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setUserType',
+      expect.objectContaining({
+        command: 'setUserType',
+        request: { userId: 5, userType: DoorLock.UserType.NonAccessUser },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getUserType',
+      expect.objectContaining({
+        command: 'getUserType',
+        request: { userId: 6 },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith('Setting user status for user 3 to OccupiedDisabled (endpoint doorLockPinStatusMock.100)');
+    expect(info).toHaveBeenCalledWith('Getting user status for user 4 (endpoint doorLockPinStatusMock.100)');
+    expect(info).toHaveBeenCalledWith('Setting user type for user 5 to NonAccessUser (endpoint doorLockPinStatusMock.100)');
+    expect(info).toHaveBeenCalledWith('Getting user type for user 6 (endpoint doorLockPinStatusMock.100)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setUserStatus called for user 3');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: getUserStatus called for user 4');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setUserType called for user 5');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: getUserType called for user 6');
+
+    expect(getUserStatusResponse).toEqual({
+      userId: 4,
+      userStatus: DoorLock.UserStatus.Available,
+    });
+    expect(getUserTypeResponse).toEqual({
+      userId: 6,
+      userType: DoorLock.UserType.UnrestrictedUser,
+    });
+  });
+
+  test('DoorLock USR and credential edge cases', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinMock',
+      maybeNumber: 101,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [];
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+      context: { fabric: FabricIndex(2) },
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    const setUserRequest = {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    } satisfies DoorLock.SetUserRequest;
+
+    const setCredentialRequest = {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+      credentialData: Buffer.from('1234'),
+      userIndex: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+    } satisfies DoorLock.SetCredentialRequest;
+
+    const setCredentialRequest2 = {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 },
+      credentialData: Buffer.from('5678'),
+      userIndex: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+    } satisfies DoorLock.SetCredentialRequest;
+
+    await MatterbridgeUserPinDoorLockServer.prototype.setUser.call(behavior, setUserRequest);
+    const setCredentialResponse = await MatterbridgeUserPinDoorLockServer.prototype.setCredential.call(behavior, setCredentialRequest);
+    await MatterbridgeUserPinDoorLockServer.prototype.setCredential.call(behavior, setCredentialRequest2);
+    const getCredentialStatusResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+    } as DoorLock.GetCredentialStatusRequest);
+    const getCredentialStatusGapResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 3 },
+    } as DoorLock.GetCredentialStatusRequest);
+    await MatterbridgeUserPinDoorLockServer.prototype.clearCredential.call(behavior, { credential: null } as DoorLock.ClearCredentialRequest);
+    const getCredentialStatusClearedResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+    } as DoorLock.GetCredentialStatusRequest);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setUser',
+      expect.objectContaining({
+        command: 'setUser',
+        request: setUserRequest,
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setCredential',
+      expect.objectContaining({
+        command: 'setCredential',
+        request: setCredentialRequest,
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setCredential',
+      expect.objectContaining({
+        command: 'setCredential',
+        request: setCredentialRequest2,
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getCredentialStatus',
+      expect.objectContaining({
+        command: 'getCredentialStatus',
+        request: { credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 } },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearCredential',
+      expect.objectContaining({
+        command: 'clearCredential',
+        request: { credential: null },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith(
+      'Setting user operationType Add userIndex 1 userName Guest userUniqueId 1234 userStatus OccupiedEnabled userType UnrestrictedUser credentialRule Single (endpoint doorLockUsrPinMock.101)',
+    );
+    expect(info).toHaveBeenCalledWith(
+      'Setting credential operationType Add credentialType Pin credentialIndex 2 credentialData 0x31323334 userIndex 1 userStatus OccupiedEnabled userType UnrestrictedUser (endpoint doorLockUsrPinMock.101)',
+    );
+    expect(info).toHaveBeenCalledWith(
+      'Setting credential operationType Add credentialType Pin credentialIndex 4 credentialData 0x35363738 userIndex 1 userStatus OccupiedEnabled userType UnrestrictedUser (endpoint doorLockUsrPinMock.101)',
+    );
+    expect(info).toHaveBeenCalledWith('Getting credential status for credentialType Pin credentialIndex 2 (endpoint doorLockUsrPinMock.101)');
+    expect(info).toHaveBeenCalledWith('Getting credential status for credentialType Pin credentialIndex 3 (endpoint doorLockUsrPinMock.101)');
+    expect(info).toHaveBeenCalledWith('Clearing credentialType null credentialIndex null (all credentials) (endpoint doorLockUsrPinMock.101)');
+    expect(info).toHaveBeenCalledWith('Getting credential status for credentialType Pin credentialIndex 2 (endpoint doorLockUsrPinMock.101)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setCredential called for credentialIndex 2');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setCredential called for credentialIndex 4');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: getCredentialStatus called');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearCredential called');
+
+    expect(setCredentialResponse).toEqual({
+      status: Status.Success,
+      userIndex: 1,
+    });
+    expect(getCredentialStatusResponse).toEqual({
+      credentialExists: true,
+      userIndex: 1,
+      creatorFabricIndex: FabricIndex(2),
+      lastModifiedFabricIndex: FabricIndex(2),
+      nextCredentialIndex: 4,
+      credentialData: Buffer.from('1234'),
+    });
+    expect(getCredentialStatusGapResponse).toEqual({
+      credentialExists: false,
+      userIndex: null,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextCredentialIndex: 4,
+      credentialData: null,
+    });
+    expect(getCredentialStatusClearedResponse).toEqual({
+      credentialExists: false,
+      userIndex: null,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextCredentialIndex: null,
+      credentialData: null,
+    });
+    expect(internal.users[0]?.credentials).toBeNull();
+  });
+
+  test('DoorLock USR remote PIN validation', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinValidationMock',
+      maybeNumber: 103,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: 'Guest',
+        userUniqueId: 1234,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.UnrestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+        credentials: [{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1, credentialData: Buffer.from('1234') }],
+        creatorFabricIndex: FabricIndex(2),
+        lastModifiedFabricIndex: FabricIndex(2),
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: { lockState: DoorLock.LockState.Locked, requirePinForRemoteOperation: true },
+      internal,
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    await expect(MatterbridgeUserPinDoorLockServer.prototype.unlockDoor.call(behavior, { pinCode: Buffer.from('9999') } as DoorLock.UnlockDoorRequest)).rejects.toBeInstanceOf(
+      StatusResponse.FailureError,
+    );
+    expect(executeHandler).not.toHaveBeenCalled();
+    expect(behavior.state.lockState).toBe(DoorLock.LockState.Locked);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.unlockDoor.call(behavior, { pinCode: Buffer.from('1234') } as DoorLock.UnlockDoorRequest);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.unlockDoor',
+      expect.objectContaining({
+        command: 'unlockDoor',
+        request: { pinCode: Buffer.from('1234') },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(behavior.state.lockState).toBe(DoorLock.LockState.Unlocked);
+  });
+
+  test('DoorLock USR getUser mapping and remote PIN disabled flow', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinNoValidationMock',
+      maybeNumber: 104,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: 'Guest',
+        userUniqueId: 1234,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.UnrestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+        credentials: [{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1, credentialData: Buffer.from('1234') }],
+        creatorFabricIndex: FabricIndex(2),
+        lastModifiedFabricIndex: FabricIndex(2),
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: { lockState: DoorLock.LockState.Locked, requirePinForRemoteOperation: false },
+      internal,
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    const existingUser = await MatterbridgeUserPinDoorLockServer.prototype.getUser.call(behavior, { userIndex: 1 } as DoorLock.GetUserRequest);
+    const missingUser = await MatterbridgeUserPinDoorLockServer.prototype.getUser.call(behavior, { userIndex: 2 } as DoorLock.GetUserRequest);
+    const setCredentialResponse = await MatterbridgeUserPinDoorLockServer.prototype.setCredential.call(behavior, {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 3 },
+      credentialData: Buffer.from('9999'),
+      userIndex: 9,
+      userStatus: null,
+      userType: null,
+    } as DoorLock.SetCredentialRequest);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.unlockWithTimeout.call(behavior, { timeout: 1 } as DoorLock.UnlockWithTimeoutRequest);
+    await MatterbridgeUserPinDoorLockServer.prototype.lockDoor.call(behavior, {} as DoorLock.LockDoorRequest);
+
+    expect(existingUser).toEqual({
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+      credentials: [{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 }],
+      creatorFabricIndex: FabricIndex(2),
+      lastModifiedFabricIndex: FabricIndex(2),
+      nextUserIndex: null,
+    });
+    expect(missingUser).toEqual({
+      userIndex: 2,
+      userName: null,
+      userUniqueId: null,
+      userStatus: null,
+      userType: null,
+      credentialRule: null,
+      credentials: null,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextUserIndex: null,
+    });
+    expect(setCredentialResponse).toEqual({ status: Status.Success, userIndex: 9 });
+    expect(internal.users[0]?.credentials).toEqual([{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1, credentialData: Buffer.from('1234') }]);
+    expect(behavior.state.lockState).toBe(DoorLock.LockState.Locked);
+  });
+
+  test('DoorLock USR helper edge coverage', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    expect((MatterbridgeUserPinDoorLockServer.prototype as any).getStoredCredentialStateDebug.call({ internal: { users: [] } })).toBe('no users');
+    const endpoint = {
+      maybeId: 'doorLockUsrPinHelpersMock',
+      maybeNumber: 105,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: 'Guest',
+        userUniqueId: 1234,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.UnrestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+        credentials: [{ credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1, credentialData: Buffer.from('abcd') }],
+        creatorFabricIndex: FabricIndex(2),
+        lastModifiedFabricIndex: FabricIndex(2),
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    expect((MatterbridgeUserPinDoorLockServer.prototype as any).hasMatchingPinCredential.call(behavior, Buffer.from('1234'))).toBe(false);
+
+    (MatterbridgeUserPinDoorLockServer.prototype as any).upsertStoredCredential.call(
+      behavior,
+      null,
+      { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+      Buffer.from('1234'),
+    );
+    (MatterbridgeUserPinDoorLockServer.prototype as any).upsertStoredCredential.call(
+      behavior,
+      9,
+      { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+      Buffer.from('1234'),
+    );
+
+    await MatterbridgeUserPinDoorLockServer.prototype.clearUser.call(behavior, { userIndex: 0xfffe } as DoorLock.ClearUserRequest);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearUser',
+      expect.objectContaining({
+        command: 'clearUser',
+        request: { userIndex: 0xfffe },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(info).toHaveBeenCalledWith('Clearing userIndex 65534 (all users) (endpoint doorLockUsrPinHelpersMock.105)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearUser called for userIndex 65534');
+    expect(internal.users[0]?.credentials).toEqual([{ credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1, credentialData: Buffer.from('abcd') }]);
+  });
+
+  test('DoorLock USR remaining helper branch coverage', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinRemainingBranchesMock',
+      maybeNumber: 107,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: null,
+        userUniqueId: null,
+        userStatus: null,
+        userType: null,
+        credentialRule: null,
+        credentials: [
+          { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 5, credentialData: Buffer.from('5555') },
+          { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 7, credentialData: Buffer.from('7777') },
+        ],
+        creatorFabricIndex: FabricIndex(2),
+        lastModifiedFabricIndex: FabricIndex(2),
+        nextUserIndex: null,
+      },
+      {
+        userIndex: 2,
+        userName: 'Named User',
+        userUniqueId: 4321,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.ScheduleRestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Dual,
+        credentials: null,
+        creatorFabricIndex: FabricIndex(3),
+        lastModifiedFabricIndex: FabricIndex(3),
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+      context: { fabric: FabricIndex(4) },
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    expect((MatterbridgeUserPinDoorLockServer.prototype as any).hasMatchingPinCredential.call(behavior, Buffer.from('9999'))).toBe(false);
+    expect(
+      (MatterbridgeUserPinDoorLockServer.prototype as any).getNextOccupiedCredentialIndex.call(behavior, {
+        credentialType: DoorLock.CredentialType.Pin,
+        credentialIndex: 4,
+      }),
+    ).toBe(5);
+
+    const existingUserWithNullCredentials = await MatterbridgeUserPinDoorLockServer.prototype.getUser.call(behavior, {
+      userIndex: 2,
+    } as DoorLock.GetUserRequest);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.setUser.call(behavior, {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 2,
+      userName: 'Named User',
+      userUniqueId: 4321,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Dual,
+    } as DoorLock.SetUserRequest);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.clearCredential.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 5 },
+    } as DoorLock.ClearCredentialRequest);
+
+    expect(existingUserWithNullCredentials).toEqual({
+      userIndex: 2,
+      userName: 'Named User',
+      userUniqueId: 4321,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Dual,
+      credentials: null,
+      creatorFabricIndex: FabricIndex(3),
+      lastModifiedFabricIndex: FabricIndex(3),
+      nextUserIndex: null,
+    });
+    expect(internal.users[0]?.credentials).toEqual([{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 7, credentialData: Buffer.from('7777') }]);
+    expect(info).toHaveBeenCalledWith(
+      'Setting user operationType Add userIndex 2 userName Named User userUniqueId 4321 userStatus OccupiedEnabled userType ScheduleRestrictedUser credentialRule Dual (endpoint doorLockUsrPinRemainingBranchesMock.107)',
+    );
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeDoorLockServer: setUser accessingFabricIndex 4'));
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: remote PIN 0x39393939 did not match any stored PIN credential');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: cleared Pin credentialIndex 5 from internal state');
+    expect(debug).toHaveBeenCalledWith(
+      'MatterbridgeDoorLockServer: clearCredential completed for Pin credentialIndex 5; stored credentials: user 1 [Pin:7=0x37373737]; user 2 [none]',
+    );
+    expect(debug).toHaveBeenCalledWith(
+      'MatterbridgeDoorLockServer: setUser completed for userIndex 2 without adding a new internal user; stored credentials: user 1 [Pin:5=0x35353535, Pin:7=0x37373737]; user 2 [none]',
+    );
+  });
+
+  test('DoorLock USR setUser null logging branches', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinNullLoggingMock',
+      maybeNumber: 109,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+      context: {},
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.setUser.call(behavior, {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 9,
+      userName: null,
+      userUniqueId: null,
+      userStatus: null,
+      userType: null,
+      credentialRule: null,
+    } as unknown as DoorLock.SetUserRequest);
+
+    expect(info).toHaveBeenCalledWith(
+      'Setting user operationType Add userIndex 9 userName null userUniqueId null userStatus null userType null credentialRule null (endpoint doorLockUsrPinNullLoggingMock.109)',
+    );
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setUser accessingFabricIndex null');
+  });
+
+  test('DoorLock USR modify and single clear branches', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinModifyMock',
+      maybeNumber: 106,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: 'Guest',
+        userUniqueId: 1234,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.UnrestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+        credentials: [{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1, credentialData: Buffer.from('1111') }],
+        creatorFabricIndex: FabricIndex(2),
+        lastModifiedFabricIndex: FabricIndex(2),
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+      context: { fabric: FabricIndex(3) },
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    await MatterbridgeUserPinDoorLockServer.prototype.setUser.call(behavior, {
+      operationType: DoorLock.DataOperationType.Modify,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    } as DoorLock.SetUserRequest);
+    const setCredentialResponse = await MatterbridgeUserPinDoorLockServer.prototype.setCredential.call(behavior, {
+      operationType: DoorLock.DataOperationType.Modify,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+      credentialData: Buffer.from('2222'),
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    } as DoorLock.SetCredentialRequest);
+    await MatterbridgeUserPinDoorLockServer.prototype.clearUser.call(behavior, { userIndex: 1 } as DoorLock.ClearUserRequest);
+
+    expect(setCredentialResponse).toEqual({ status: Status.Success, userIndex: 1 });
+    expect(internal.users).toHaveLength(1);
+    expect(internal.users[0]?.credentials).toEqual([{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1, credentialData: Buffer.from('2222') }]);
+    expect(internal.users[0]?.lastModifiedFabricIndex).toBe(FabricIndex(3));
+    expect(info).toHaveBeenCalledWith('Clearing userIndex 1  (endpoint doorLockUsrPinModifyMock.106)');
+    expect(debug).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeDoorLockServer: setUser called for userIndex 1 (existing user'));
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearUser called for userIndex 1');
+  });
+
+  test('DoorLock USR and credential null and explicit branches', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const executeHandler = jest.fn(async () => undefined);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinNullMock',
+      maybeNumber: 102,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const internal = new MatterbridgeUserPinDoorLockServer.Internal();
+    internal.users = [
+      {
+        userIndex: 1,
+        userName: null,
+        userUniqueId: null,
+        userStatus: null,
+        userType: null,
+        credentialRule: null,
+        credentials: [
+          { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2, credentialData: Buffer.from('2222') },
+          { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4, credentialData: Buffer.from('4444') },
+          { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 6, credentialData: Buffer.from('6666') },
+        ],
+        creatorFabricIndex: null,
+        lastModifiedFabricIndex: null,
+        nextUserIndex: null,
+      },
+    ];
+    const behavior = {
+      endpoint,
+      state: {},
+      internal,
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    const setCredentialRequest = {
+      operationType: DoorLock.DataOperationType.Modify,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 },
+      credentialData: Buffer.alloc(0),
+      userIndex: null,
+      userStatus: null,
+      userType: null,
+    } satisfies DoorLock.SetCredentialRequest;
+
+    const setCredentialResponse = await MatterbridgeUserPinDoorLockServer.prototype.setCredential.call(behavior, setCredentialRequest);
+    const getCredentialStatusResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 },
+    } as DoorLock.GetCredentialStatusRequest);
+    await MatterbridgeUserPinDoorLockServer.prototype.clearCredential.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 },
+    } as DoorLock.ClearCredentialRequest);
+    const getCredentialStatusClearedResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 },
+    } as DoorLock.GetCredentialStatusRequest);
+    const getCredentialStatusPreviousResponse = await MatterbridgeUserPinDoorLockServer.prototype.getCredentialStatus.call(behavior, {
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+    } as DoorLock.GetCredentialStatusRequest);
+
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.setCredential',
+      expect.objectContaining({
+        command: 'setCredential',
+        request: setCredentialRequest,
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.clearCredential',
+      expect.objectContaining({
+        command: 'clearCredential',
+        request: { credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 4 } },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith(
+      'Setting credential operationType Modify credentialType Pin credentialIndex 4 credentialData 0x userIndex null userStatus null userType null (endpoint doorLockUsrPinNullMock.102)',
+    );
+    expect(info).toHaveBeenCalledWith('Getting credential status for credentialType Pin credentialIndex 4 (endpoint doorLockUsrPinNullMock.102)');
+    expect(info).toHaveBeenCalledWith('Clearing credentialType Pin credentialIndex 4  (endpoint doorLockUsrPinNullMock.102)');
+    expect(info).toHaveBeenCalledWith('Getting credential status for credentialType Pin credentialIndex 2 (endpoint doorLockUsrPinNullMock.102)');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: setCredential called for credentialIndex 4');
+    expect(debug).toHaveBeenCalledWith('MatterbridgeDoorLockServer: clearCredential called');
+
+    expect(setCredentialResponse).toEqual({
+      status: Status.Success,
+      userIndex: null,
+    });
+    expect(getCredentialStatusResponse).toEqual({
+      credentialExists: true,
+      userIndex: 1,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextCredentialIndex: 6,
+      credentialData: Buffer.from('4444'),
+    });
+    expect(getCredentialStatusClearedResponse).toEqual({
+      credentialExists: false,
+      userIndex: null,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextCredentialIndex: 6,
+      credentialData: null,
+    });
+    expect(getCredentialStatusPreviousResponse).toEqual({
+      credentialExists: true,
+      userIndex: 1,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextCredentialIndex: 6,
+      credentialData: Buffer.from('2222'),
+    });
+    expect(internal.users[0]?.credentials).toEqual([
+      { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2, credentialData: Buffer.from('2222') },
+      { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 6, credentialData: Buffer.from('6666') },
+    ]);
   });
 
   test('FanControl server', async () => {
@@ -739,8 +1820,8 @@ describe('Server clusters and behaviors', () => {
     const initialThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
 
     expect(initialThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2100, occupiedCoolingSetpoint: 2500 });
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
 
     await expectCommand(thermostat, Thermostat.Cluster, 'setpointRaiseLower', setBothRequest, (data) => {
       expect(data.cluster).toBe('thermostat');
@@ -802,7 +1883,7 @@ describe('Server clusters and behaviors', () => {
     const secondPresetRequest = { presetHandle: Uint8Array.from([1]) };
     const clearPresetRequest = { presetHandle: null };
     const invalidPresetRequest = { presetHandle: Uint8Array.from([9]) };
-    const presetThermostatBehavior = MatterbridgePresetThermostatServer.with(
+    const presetThermostatBehavior = MatterbridgeThermostatServer.with(
       Thermostat.Feature.Heating,
       Thermostat.Feature.Cooling,
       Thermostat.Feature.AutoMode,
@@ -1140,7 +2221,6 @@ describe('Server clusters and behaviors', () => {
     expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
 
     await rvc.invokeBehaviorCommand(ServiceArea.Cluster, 'selectAreas', { newAreas: [0, 5] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0');
     expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
   });
 });

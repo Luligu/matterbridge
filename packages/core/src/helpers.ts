@@ -45,6 +45,8 @@ import { hasParameter } from '@matterbridge/utils/cli';
 
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
+import { doorLockDevice } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,
@@ -90,7 +92,7 @@ export async function addVirtualDevice(
       vendorName: 'Matterbridge',
       productName: 'Matterbridge Virtual Device',
       nodeLabel: name.slice(0, 32),
-      softwareVersion: 2000,
+      softwareVersion: 20000,
       softwareVersionString: '2.0.0',
     },
     onOff: { onOff: false },
@@ -145,6 +147,36 @@ export async function addVirtualDevice(
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
+  // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
+  if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
+    const lockPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_pin' });
+    lockPin.createDefaultBridgedDeviceBasicInformationClusterServer(
+      'Matterbridge Pin Lock',
+      'sn_system_lock',
+      0xfff1,
+      'Matterbridge',
+      'Matterbridge Virtual Device',
+      20000,
+      '2.0.0',
+    );
+    lockPin.createPinDoorLockClusterServer();
+    lockPin.addRequiredClusterServers();
+    await aggregatorEndpoint.add(lockPin);
+
+    const lockUserPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_user_pin' });
+    lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
+      'Matterbridge User Pin Lock',
+      'sn_system_lock',
+      0xfff1,
+      'Matterbridge',
+      'Matterbridge Virtual Device',
+      20000,
+      '2.0.0',
+    );
+    lockUserPin.createUserPinDoorLockClusterServer();
+    lockUserPin.addRequiredClusterServers();
+    await aggregatorEndpoint.add(lockUserPin);
+  }
   if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
     await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
@@ -152,8 +184,9 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
       else await matterbridge.shutdownProcess();
     });
     await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {
+      await matterbridge.updateProcess();
+      /*
       if (hasParameter('shelly')) {
-        /*
         const { getShelly } = await import('./shelly.js');
         getShelly('/api/updates/sys/perform', 10 * 1000)
           .then(() => {
@@ -171,13 +204,13 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
           .catch((error) => {
             matterbridge.log.error(`Error updating shelly software: ${error}`);
           });
-        */
       } else {
         await matterbridge.updateProcess();
       }
+      */
     });
+    /*
     if (hasParameter('shelly')) {
-      /*
       await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.virtualMode, async () => {
         const { postShelly } = await import('./shelly.js');
         postShelly('/api/system/reboot', {}, 60 * 1000)
@@ -189,7 +222,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
             matterbridge.log.error(`Error rebooting shelly board: ${error}`);
           });
       });
-      */
     }
+    */
   }
 }

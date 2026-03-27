@@ -286,7 +286,7 @@ export class Mdns extends Multicast {
       }
     }
     if (this.filters.length === 0)
-      this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+      this.log.info(`Dgram mDNS server received a mDNS message (${msg.length} bytes) from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
     try {
       const result = this.decodeMdnsMessage(msg);
       if (result.qr === 0) {
@@ -311,7 +311,9 @@ export class Mdns extends Multicast {
           const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));
           const foundInAdditionals = result.additionals?.some((a) => a.name.includes(filter) || a.data.includes(filter));
           if (foundInQuestions || foundInAnswers || foundInAdditionals) {
-            this.log.info(`Dgram mDNS server received a mDNS message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+            this.log.info(
+              `Dgram mDNS server received a mDNS message (${msg.length} bytes) from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`,
+            );
             this.logMdnsMessage(result);
             return;
           }
@@ -741,7 +743,7 @@ export class Mdns extends Multicast {
     const query = Buffer.concat([header, ...questionBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(query);
-      this.logMdnsMessage(decoded, undefined, 'Sending query mDNS message');
+      this.logMdnsMessage(decoded, undefined, `Sending query mDNS message (${query.length} bytes)`);
     }
 
     this.socket.send(query, 0, query.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
@@ -803,7 +805,7 @@ export class Mdns extends Multicast {
     const response = Buffer.concat([header, ...answerBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(response);
-      this.logMdnsMessage(decoded, undefined, 'Sending response mDNS message');
+      this.logMdnsMessage(decoded, undefined, `Sending response mDNS message (${response.length} bytes)`);
     }
 
     // Send the response packet via the socket.

@@ -1,13 +1,13 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/types/tsconfig.json" },
-    { "path": "./packages/jest-utils/tsconfig.json" },
-    { "path": "./packages/vitest-utils/tsconfig.json" },
-    { "path": "./packages/utils/tsconfig.json" },
-    { "path": "./packages/thread/tsconfig.json" },
-    { "path": "./packages/dgram/tsconfig.json" },
-    { "path": "./packages/core/tsconfig.json" },
-    { "path": "./tsconfig.json" }
+    { "path": "./packages/types/tsconfig.build.json" },
+    { "path": "./packages/jest-utils/tsconfig.build.json" },
+    { "path": "./packages/vitest-utils/tsconfig.build.json" },
+    { "path": "./packages/utils/tsconfig.build.json" },
+    { "path": "./packages/thread/tsconfig.build.json" },
+    { "path": "./packages/dgram/tsconfig.build.json" },
+    { "path": "./packages/core/tsconfig.build.json" },
+    { "path": "./tsconfig.root.json" }
   ]
 }

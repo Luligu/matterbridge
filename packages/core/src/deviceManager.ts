@@ -102,6 +102,7 @@ export class DeviceManager {
 
   private async msgHandler(msg: WorkerMessage) {
     if (this.server.isWorkerRequest(msg)) {
+      // istanbul ignore next cause debug logs are not relevant for coverage
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -140,6 +141,7 @@ export class DeviceManager {
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
           break;
         default:
+          // istanbul ignore next cause debug logs are not relevant for coverage
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }

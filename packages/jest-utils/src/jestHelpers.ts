@@ -73,6 +73,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
   HOMEDIR = path.join('.cache', 'jest', name);
+  process.argv = ['jest', name];
 
   // Create the AnsiLogger instance
   log = new AnsiLogger({ logName: 'Jest', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });

@@ -116,16 +116,16 @@
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="powered by"></a></p>
 <hr>
 <p><a href="https://matterbridge.io">Matterbridge</a> is a Matter plugin manager.</p>
+<p>It creates a <a href="https://csa-iot.org/all-solutions/matter/">Matter device</a> (of type bridge) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.</p>
+<p>You don&#39;t need a hub or a dedicated new machine.</p>
+<p>No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).</p>
+<p>Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.</p>
+<p>It is fully supported on Linux, macOS, and Windows.</p>
 <p>It allows you to have all your Matter devices up and running in a couple of minutes without having to deal with the pairing process for each individual device.</p>
 <p>Developers can focus solely on device development by extending the provided classes.</p>
 <p>Simply pair Matterbridge once, and it will load all your registered plugins.</p>
 <p>This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything (<a href="README-DEV.html">Development</a>).</p>
 <p>The easiest way to start create a new plugin is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> which has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.</p>
-<p>Matterbridge creates a <a href="https://csa-iot.org/all-solutions/matter/">Matter device</a> that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.</p>
-<p>You don&#39;t need a hub or a dedicated new machine.</p>
-<p>No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).</p>
-<p>Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.</p>
-<p>It runs perfectly on Linux, macOS and Windows.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="acknowledgements">Acknowledgements</h2>
@@ -150,8 +150,8 @@
 <blockquote>
 <p><strong>Nvm is a development tool and is not supported for production</strong>.</p>
 </blockquote>
-<p>If you don&#39;t have Docker already installed, please use this method to install it on a Debian system: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
-<p>If you don&#39;t have Docker already installed, please use this method to install it on Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
+<p>If you don&#39;t have Docker already installed, please use this method to install Docker Engine on a Debian system: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
+<p>If you don&#39;t have Docker already installed, please use this method to install Docker Desktop on Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
 <p>After that, follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
 <p>I suggest using Docker for its simplicity.</p>
 <p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
@@ -219,7 +219,7 @@
 <h3 id="run-matterbridge-as-an-home-assistant-add-on-with-the-official-add-on">Run matterbridge as an home assistant add-on with the official add-on</h3>
 <p><a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Home assistant application (formerly known as add-on) configuration</a></p>
 <h3 id="other-home-assistant-community-add-ons">Other Home Assistant Community Add-ons</h3>
-<p>The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in the Matterbridge repository.</p>
+<p>The other Home Assistant Community Add-ons and plugins are not verified to work with Matterbridge. I strongly advise against using them. If you do use them and encounter an issue (which is likely because some do not meet the Matterbridge guidelines), please do not open an issue in any of the Matterbridge repositories.</p>
 <h2 id="development">Development</h2>
 <p><a href="README-DEV.html">Development</a></p>
 <h2 id="plugins">Plugins</h2>
@@ -255,7 +255,7 @@
   <img src="./screenshots/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
 </a>
 
-<p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices and groups to Matter.</p>
+<p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices, groups and scenes to Matter.</p>
 <p>No hub or dedicated hardware needed.</p>
 <h3 id="somfy-tahoma">Somfy tahoma</h3>
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
@@ -306,7 +306,7 @@
 <p><a href="https://github.com/Luligu/matterbridge-eve-weather">Weather plugin with history</a></p>
 <p><a href="https://github.com/Luligu/matterbridge-eve-room">Room plugin with history</a></p>
 <p>The history works in both bridge and childbridge mode.</p>
-<p>The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode (this means the plugin is paired directly).</p>
+<p>The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode or as a device with mode server (this means the plugin is paired directly).</p>
 <h2 id="third-party-plugins">Third-party plugins</h2>
 <h3 id="loxone"><a href="https://github.com/andrasg/matterbridge-loxone">Loxone</a></h3>
 <p>A matterbridge plugin that allows connecting Loxone devices to Matter.</p>
@@ -518,7 +518,7 @@ While Amazon has expanded support to include core categories like lighting, plug
 <h2 id="tuyasmart-life">Tuya/Smart Life</h2>
 <p>Check the matter.js readme.</p>
 <h2 id="code-of-conduct">Code of Conduct</h2>
-<p>We believe in a welcoming and respectful community for all. Please make sure to follow our <a href="LINK_TO_CODE_OF_CONDUCT">Code of Conduct</a> in all your interactions with the project.</p>
+<p>We believe in a welcoming and respectful community for all. Please make sure to follow our <a href="./CODE_OF_CONDUCT.html">Code of Conduct</a> in all your interactions with the project.</p>
 <h2 id="support">Support</h2>
 <p>If you find this project helpful and you wish to support the ongoing development, you can do so by buying me a coffee.</p>
 <p>On my side I sponsor the packages that I use in this project and single developers. It would be nice to have sponsors too.</p>

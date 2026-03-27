@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.4.8",
+  "version": "3.4.9",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -54,6 +54,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:debug": "cross-env MB_FRONTEND_DEBUG_BUILD=true vite build",
     "watch": "vite build --watch",
     "preview": "vite preview",
     "typecheck": "tsc --project ./tsconfig.json --noEmit",
@@ -83,8 +84,9 @@
     "npmPublishTagLatest": "npx shx cp package.json package.json.backup && npm run prepublishOnly && npm publish --tag latest && npx shx cp package.json.backup package.json && npm run reset"
   },
   "overrides": {
-    "eslint": "10.0.3",
-    "@eslint/js": "10.0.1"
+    "@eslint/js": "10.0.1",
+    "eslint": "10.1.0",
+    "typescript": "6.0.2"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -93,14 +95,14 @@
     "@mdi/react": "1.6.1",
     "@mui/icons-material": "7.3.9",
     "@mui/material": "7.3.9",
-    "@rjsf/core": "5.24.13",
-    "@rjsf/utils": "5.24.13",
-    "@rjsf/validator-ajv8": "5.24.13",
+    "@rjsf/core": "6.4.1",
+    "@rjsf/utils": "6.4.1",
+    "@rjsf/validator-ajv8": "6.4.1",
     "notistack": "3.0.2",
     "qrcode.react": "4.2.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-router": "7.13.1"
+    "react-router": "7.13.2"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -109,20 +111,21 @@
     "@types/node": "25.5.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "5.1.4",
-    "eslint": "10.0.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "cross-env": "10.1.0",
+    "eslint": "10.1.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "17.4.0",
-    "jsdom": "29.0.0",
-    "npm-check-updates": "19.6.3",
+    "jsdom": "29.0.1",
+    "npm-check-updates": "19.6.5",
     "prettier": "3.8.1",
     "shx": "0.4.0",
-    "typescript": "5.9.3",
-    "typescript-eslint": "8.57.1",
-    "vite": "7.3.1",
-    "vitest": "4.1.0"
+    "typescript": "6.0.2",
+    "typescript-eslint": "8.57.2",
+    "vite": "8.0.2",
+    "vitest": "4.1.1"
   }
 }

@@ -40,6 +40,7 @@ The project is evolving to a multi-threaded architecture with these advantages:
 These threads already run as workers:
 
 - ✅ check updates;
+- ✅ check docker updates;
 - ✅ system check;
 - ✅ spawn commands;
 - ✅ archive commands;
@@ -51,6 +52,49 @@ These classes will run as threads in the next releases:
 - frontend;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+## [3.7.1] - 2026-03-27
+
+### Breaking Changes
+
+- [cli]: Change names to mb-mdns mb-coap mb-health. The old names (mb_mdns, mb_coap and mb_health) are still available but change your scripts and setups.
+
+### Dev news
+
+- [utils]: Add getEnumDescription() function to log cluster enums.
+- [endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock device with PIN and COTA feature.
+- [endpoint]: Add createUserPinDoorLockClusterServer() endpoint helper to create a DoorLock device with USR, PIN and COTA feature.
+
+### Added
+
+- [package]: Add `CODE_OF_CONDUCT.md`.
+- [plugins]: Add `title` and `ui:widget` to default schema.
+- [threads]: Add `DockerVersion` thread.
+- [reset]: The reset commissioning clears also plugin and device with mode = server.
+- [mb-mdns]: Add `mb-mdns` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb-coap]: Add `mb-coap` v.2.0.0 and refactor both bins to exported CLI entrypoints with dedicated tests.
+- [mb-run]: Add `mb-run` bin.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.1.0.
+- [package]: Bump `typescript` to v.6.0.2.
+- [frontend]: Bump `frontend` version to v.3.4.9.
+- [frontend]: Bump `typescript` to v.6.0.2.
+- [frontend]: Bump `vite` version to v.8.0.1 and fix imports for the new RollDown.
+- [frontend]: Bump `@rjsf` version to v.6.4.1 and refactor component ConfigPluginDialog.
+- [boot]: Change boot time limit from 120 to 300 seconds.
+- [frontend]: Remove `matterbridge-irobot` from ignore list. It has been published.
+
+### Fixed
+
+- [frontend]: `Filter by` in the Devices page is now case insensitive.
+- [rvc]: Update `currentArea` parameter type to allow null in createDefaultServiceAreaClusterServer.
+- [config]: Fix config editor, to send formData consistently in onAction().
+- [config]: Fix config editor, to add the device name instead of newKey in properties dialog. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.0] - 2026-03-19
 
@@ -85,10 +129,10 @@ If you hit build errors:
 
 ### Added
 
-- [frontend]: Add support for Hass Ingress project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
-- [threads]: Add ArchiveCommand thread.
-- [endpoint]: Add getSnapshot() to create a snapshot of matter cluster state.
-- [endpoint]: Add removeCommandHandler() method.
+- [frontend]: Add support for `Hass Ingress` project (https://github.com/lovelylain/hass_ingress). Thanks kramttocs (https://github.com/Luligu/matterbridge/discussions/524).
+- [threads]: Add `ArchiveCommand` thread.
+- [endpoint]: Add `getSnapshot()` to create a snapshot of matter cluster state.
+- [endpoint]: Add `removeCommandHandler()` method.
 
 ### Changed
 
