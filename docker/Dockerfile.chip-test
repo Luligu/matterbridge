@@ -142,7 +142,7 @@ ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 
 # Allow overriding the cache version
-ARG CACHE_VERSION=3.6.X
+ARG CACHE_VERSION=3.7.X
 RUN echo "Release with cache version ${CACHE_VERSION}"
 
 # Matterbridge module (global install copied from builder)
