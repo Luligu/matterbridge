@@ -133,7 +133,7 @@
     "@matterbridge/utils": "3.7.2",
     "express": "5.2.1",
     "multer": "2.1.1",
-    "node-ansi-logger": "3.2.1-dev-20260326-4c53529",
+    "node-ansi-logger": "3.2.0",
     "node-persist-manager": "2.0.2-dev-20260327-af13e76",
     "ws": "8.20.0"
   }

@@ -139,6 +139,6 @@
   },
   "dependencies": {
     "@matterbridge/jest-utils": "3.7.2",
-    "node-ansi-logger": "3.2.1-dev-20260326-4c53529"
+    "node-ansi-logger": "3.2.0"
   }
 }
