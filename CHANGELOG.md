@@ -55,6 +55,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.2] - Dev branch
 
+### Dev Breaking Changes
+
+- [getAttribute]: The overloads of `triggerEvent()` method that take Behavior.Type or ClusterType are now typed.
+
 ### Changed
 
 - [package]: Update dependencies.

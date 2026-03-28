@@ -179,6 +179,20 @@ type BehaviorCommandName<T extends Behavior.Type> = {
 }[keyof CommandsOfBehavior<T>] &
   string;
 
+type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType.Unknown;
+
+type ClusterEventName<T extends ClusterType> = keyof ClusterType.EventsOf<T> & string;
+
+type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterType.EventsOf<T>
+  ? ClusterType.EventsOf<T>[E] extends { schema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
+    ? import('@matter/types/tlv').TypeFromSchema<S>
+    : never
+  : never;
+
+type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorCluster<T>>;
+
+type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
+
 type CommandsOfBehavior<T extends Behavior.Type> = {
   [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
     ? (input: P[0], context?: ActionContext) => Promise<Awaited<R>>
@@ -1251,11 +1265,111 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Triggers an event on the specified cluster.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The ID of the cluster.
+   * @param {Behavior.Type} cluster - The cluster to trigger the event on.
+   * @param {BehaviorEventName<T>} event - The name of the event to trigger.
+   * @param {BehaviorEventPayload<T, E>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  async triggerEvent<T extends Behavior.Type, E extends BehaviorEventName<T>>(cluster: T, event: E, payload: BehaviorEventPayload<T, E>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterType} cluster - The cluster to trigger the event on.
+   * @param {ClusterEventName<T>} event - The name of the event to trigger.
+   * @param {ClusterEventPayload<T, E>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async triggerEvent<T extends ClusterType, E extends ClusterEventName<T>>(cluster: T, event: E, payload: ClusterEventPayload<T, E>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterId | string} cluster - The cluster to trigger the event on.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
    * @param {AnsiLogger} [log] - Optional logger for logging information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  async triggerEvent(
+    cluster: ClusterId | string,
+    event: string,
+    payload: Record<string, boolean | number | bigint | string | object | undefined | null>,
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to trigger the event on.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
    */
   async triggerEvent(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
