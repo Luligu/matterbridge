@@ -92,9 +92,9 @@ export class ThreadsManager {
   /**
    * Initialize the ThreadsManager by setting up the check interval, broadcast server, and listeners.
    *
-   * @param {number} [intervalMs=10_000] - The delay in milliseconds for the interval handler. Defaults to 10 seconds (10000 ms).
+   * @param {number} [intervalMs=60_000] - The delay in milliseconds for the interval handler. Defaults to 60 seconds (60000 ms).
    */
-  constructor(intervalMs: number = 10_000) {
+  constructor(intervalMs: number = 60_000) {
     // istanbul ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
