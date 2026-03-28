@@ -31,6 +31,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // @matter
 import { HandlerFunction } from '@matter/general';
+import { ActionContext } from '@matter/main';
 import type { Attribute } from '@matter/types/cluster';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
@@ -227,9 +228,16 @@ export type CommandHandlers = keyof CommandHandlerDataMap;
 export type CommandHandlerData<T extends CommandHandlers = CommandHandlers> = CommandHandlerDataMap[T];
 
 /**
- * Type of the command handler function for MatterbridgeEndpoint. The function receives data related to the received command, including the command,request, cluster, attributes, and endpoint.
+ * Data passed to a command handler when a command is executed.
+ * This extends the static command payload with the Matter action context when one is available.
  */
-export type CommandHandlerFunction<T extends CommandHandlers = CommandHandlers> = (data: CommandHandlerData<T>) => void | Promise<void>;
+export type CommandHandlerPayload<T extends CommandHandlers = CommandHandlers> = CommandHandlerData<T> & { context?: ActionContext };
+
+/**
+ * Type of the command handler function for MatterbridgeEndpoint.
+ * The function receives data related to the received command, including the command, request, cluster, attributes, endpoint, and optional Matter action context.
+ */
+export type CommandHandlerFunction<T extends CommandHandlers = CommandHandlers> = (data: CommandHandlerPayload<T>) => void | Promise<void>;
 
 /**
  * Data passed to command handlers for each supported command. The keys are in the format 'ClusterName.commandName' and the values contain the command,request, cluster, attributes, and endpoint related to the command.

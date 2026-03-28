@@ -1270,6 +1270,7 @@ describe('Server clusters and behaviors', () => {
       endpoint,
       state: { lockState: DoorLock.LockState.Locked, requirePinForRemoteOperation: true },
       internal,
+      context: {},
     } as unknown as MatterbridgeUserPinDoorLockServer;
     Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
 
@@ -1324,6 +1325,7 @@ describe('Server clusters and behaviors', () => {
       endpoint,
       state: { lockState: DoorLock.LockState.Locked, requirePinForRemoteOperation: false },
       internal,
+      context: {},
     } as unknown as MatterbridgeUserPinDoorLockServer;
     Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
 
@@ -1375,6 +1377,7 @@ describe('Server clusters and behaviors', () => {
     const debug = jest.fn();
     const executeHandler = jest.fn(async () => undefined);
     expect((MatterbridgeUserPinDoorLockServer.prototype as any).getStoredCredentialStateDebug.call({ internal: { users: [] } })).toBe('no users');
+    expect((MatterbridgeUserPinDoorLockServer.prototype as any).getAccessingFabricIndex.call({})).toBeNull();
     const endpoint = {
       maybeId: 'doorLockUsrPinHelpersMock',
       maybeNumber: 105,
@@ -1402,6 +1405,7 @@ describe('Server clusters and behaviors', () => {
       endpoint,
       state: {},
       internal,
+      context: {},
     } as unknown as MatterbridgeUserPinDoorLockServer;
     Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
 
@@ -1674,6 +1678,7 @@ describe('Server clusters and behaviors', () => {
       endpoint,
       state: {},
       internal,
+      context: {},
     } as unknown as MatterbridgeUserPinDoorLockServer;
     Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
 

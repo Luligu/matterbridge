@@ -156,6 +156,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       cluster: IdentifyServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeIdentifyServer: identify called`);
     await super.identify(request);
@@ -175,6 +176,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       cluster: IdentifyServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
     await super.triggerEffect(request);
@@ -197,6 +199,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       cluster: OnOffServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: on called`);
     await super.on();
@@ -214,6 +217,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       cluster: OnOffServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: off called`);
     await super.off();
@@ -231,6 +235,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       cluster: OnOffServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
     await super.toggle();
@@ -255,6 +260,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
     await super.moveToLevel(request);
@@ -274,6 +280,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
     await super.moveToLevelWithOnOff(request);
@@ -303,6 +310,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
     await super.moveToHue(request);
@@ -324,6 +332,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
     await super.enhancedMoveToHue(request);
@@ -343,6 +352,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
     await super.moveToSaturation(request);
@@ -364,6 +374,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
     await super.moveToHueAndSaturation(request);
@@ -385,6 +396,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
     await super.enhancedMoveToHueAndSaturation(request);
@@ -406,6 +418,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
     await super.moveToColor(request);
@@ -427,6 +440,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       cluster: ColorControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
     await super.moveToColorTemperature(request);
@@ -480,6 +494,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
     await super.upOrOpen();
@@ -502,6 +517,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
     await super.downOrClose(); // Will set target position to 10000 and trigger event
@@ -524,6 +540,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
     await super.stopMotion();
@@ -548,6 +565,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
     await super.goToLiftPercentage(request);
@@ -572,6 +590,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
     await super.goToTiltPercentage(request);
@@ -635,6 +654,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     await super.lockDoor(request);
@@ -655,6 +675,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     await super.unlockDoor(request);
@@ -676,6 +697,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockWithTimeout called`);
     this.state.lockState = DoorLock.LockState.Unlocked;
@@ -710,6 +732,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     await super.lockDoor(request);
@@ -732,6 +755,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     await super.unlockDoor(request);
@@ -755,6 +779,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockWithTimeout called`);
     this.state.lockState = DoorLock.LockState.Unlocked;
@@ -778,6 +803,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setPinCode called for user ${request.userId}`);
   }
@@ -797,6 +823,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     return {
       userId: request.userId,
@@ -822,6 +849,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearPinCode called for ${request.pinSlotIndex === 0xfffe ? 'all PIN slots' : 'PIN slot ' + request.pinSlotIndex}`);
   }
@@ -838,6 +866,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug('MatterbridgeDoorLockServer: clearAllPinCodes called');
   }
@@ -860,6 +889,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setUserStatus called for user ${request.userId}`);
   }
@@ -880,6 +910,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: getUserStatus called for user ${request.userId}`);
     return {
@@ -905,6 +936,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setUserType called for user ${request.userId}`);
   }
@@ -925,6 +957,7 @@ export class MatterbridgePinDoorLockServer extends DoorLockServer.with(DoorLock.
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: getUserType called for user ${request.userId}`);
     return {
@@ -1143,6 +1176,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
     await super.lockDoor(request);
@@ -1167,6 +1201,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     await super.unlockDoor(request);
@@ -1192,6 +1227,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockWithTimeout called`);
     this.state.lockState = DoorLock.LockState.Unlocked;
@@ -1218,6 +1254,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const user = this.internal.users.find((user) => user.userIndex === request.userIndex);
     device.log.debug(`MatterbridgeDoorLockServer: setUser called for userIndex ${request.userIndex} (${user ? 'existing user ' + debugStringify(user) : 'new user'})`);
@@ -1260,6 +1297,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const user = this.internal.users.find((user) => user.userIndex === request.userIndex);
     device.log.debug(
@@ -1304,6 +1342,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearUser called for userIndex ${request.userIndex}`);
     this.logStoredCredentialState(`clearUser completed for userIndex ${request.userIndex}`);
@@ -1328,6 +1367,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const user = this.internal.users.find((user) => user.userIndex === request.userIndex);
     const existingCredential = this.findStoredCredential(request.credential);
@@ -1368,6 +1408,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const credentialRecord = this.findStoredCredential(request.credential);
     const nextCredentialIndex = this.getNextOccupiedCredentialIndex(request.credential);
@@ -1402,6 +1443,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       cluster: DoorLockServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     this.clearStoredCredential(request.credential);
     device.log.debug('MatterbridgeDoorLockServer: clearCredential called');
@@ -1462,6 +1504,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       cluster: FanControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof FanControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
 
     const lookupStepDirection = ['Increase', 'Decrease'];
@@ -1525,6 +1568,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
     device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
@@ -1546,6 +1590,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
     await super.setActivePresetRequest(request);
@@ -1590,6 +1635,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel}`);
     this.state.targetState = ValveConfigurationAndControl.ValveState.Open;
@@ -1615,6 +1661,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called`);
     this.state.targetState = ValveConfigurationAndControl.ValveState.Closed;
@@ -1645,6 +1692,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       cluster: SmokeCoAlarmServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof SmokeCoAlarm.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
 
@@ -1675,6 +1723,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       cluster: BooleanStateConfigurationServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
 
@@ -1724,6 +1773,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug('MatterbridgeOperationalStateServer: pause called setting operational state to Paused');
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
@@ -1749,6 +1799,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug('MatterbridgeOperationalStateServer: stop called setting operational state to Stopped');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
@@ -1774,6 +1825,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug('MatterbridgeOperationalStateServer: start called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
@@ -1799,6 +1851,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug('MatterbridgeOperationalStateServer: resume called setting operational state to Running');
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
@@ -1830,6 +1883,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       cluster: ServiceAreaServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     /*
     for (const area of request.newAreas) {
@@ -1864,6 +1918,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       cluster: ModeSelectServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ModeSelect.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
     await super.changeToMode(request);
@@ -1886,6 +1941,7 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
       cluster: MatterbridgeHepaFilterMonitoringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof HepaFilterMonitoring.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
@@ -1911,6 +1967,7 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
       cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     this.state.condition = 100; // Reset condition to 100%
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000); // TlvEpochS (seconds since Unix epoch)
@@ -1941,6 +1998,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${request.power} duration ${request.duration} cause ${request.cause}`);
     // The implementation is responsible for setting the device accordingly with the powerAdjustRequest command
@@ -1959,6 +2017,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
     // The implementation is responsible for setting the device accordingly with the cancelPowerAdjustRequest command
@@ -1986,6 +2045,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       cluster: DeviceEnergyManagementModeServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode.Complete)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     if (!supported) {

@@ -1335,6 +1335,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
    * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
+   * - `context`: The optional Matter action context for behavior-driven commands.
    */
   addCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
     this.commandHandler.addHandler(command, handler);
