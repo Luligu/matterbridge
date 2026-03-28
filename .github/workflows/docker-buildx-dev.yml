@@ -62,7 +62,7 @@ jobs:
             "event": "${GITHUB_EVENT_NAME}",
             "workflow": "${GITHUB_WORKFLOW}",
             "type": "${GITHUB_REF_TYPE}",
-            "name": "${GITHUB_REF_NAME}",
+            "name": "dev",
             "dev": true
           }
           EOF
