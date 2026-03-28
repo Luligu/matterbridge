@@ -45,6 +45,7 @@ const matterbridge: SharedMatterbridge = {
   matterbridgeLatestVersion: matterbridgePackageJson.version,
   matterbridgeDevVersion: matterbridgePackageJson.version,
   frontendVersion: frontendPackageJson.version,
+  dockerDev: undefined,
   dockerVersion: undefined,
   dockerLatestVersion: undefined,
   dockerDevVersion: undefined,

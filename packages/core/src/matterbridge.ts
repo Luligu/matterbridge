@@ -192,6 +192,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeDevVersion = '';
   /** It indicates the running version of matterbrdge frontend. */
   public frontendVersion = '';
+  /** It indicates whether the current docker image is a development version. */
+  public dockerDev: boolean | undefined;
   /** It indicates the current docker image version of matterbrdge. */
   public dockerVersion: string | undefined;
   /** It indicates the latest docker image version of matterbrdge with tag latest. */
@@ -385,6 +387,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       matterbridgeLatestVersion: this.matterbridgeLatestVersion,
       matterbridgeDevVersion: this.matterbridgeDevVersion,
       frontendVersion: this.frontendVersion,
+      dockerDev: this.dockerDev,
       dockerVersion: this.dockerVersion,
       dockerLatestVersion: this.dockerLatestVersion,
       dockerDevVersion: this.dockerDevVersion,
@@ -427,6 +430,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_dev_version':
           this.matterbridgeDevVersion = msg.params.version;
           await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'matterbridge_docker_version':
+          this.dockerVersion = msg.params.dockerVersion;
+          this.dockerDev = msg.params.dockerDev;
+          this.dockerDevVersion = msg.params.dockerDevVersion;
+          this.dockerLatestVersion = msg.params.dockerLatestVersion;
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_global_prefix':
@@ -1118,6 +1128,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(() => {
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
+      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
@@ -1125,6 +1136,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.checkUpdateInterval = setInterval(
       () => {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();

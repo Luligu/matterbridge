@@ -63,6 +63,7 @@ import {
   doorLockDevice,
   extendedColorLight,
   fanDevice,
+  genericSwitch,
   laundryWasher,
   lightSensor,
   modeSelect,
@@ -76,26 +77,10 @@ import {
 } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { type CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
-import {
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgePinDoorLockServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeSwitchServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeUserPinDoorLockServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
-} from './export.js';
+import { MatterbridgeDoorLockServer } from './doorLockServer.js';
+import { MatterbridgePinDoorLockServer } from './pinDoorLockServer.js';
+import { MatterbridgeThermostatServer } from './thermostatServer.js';
+import { MatterbridgeUserPinDoorLockServer } from './userPinDoorLockServer.js';
 
 jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementation(async () => {
   return Promise.resolve();
@@ -107,6 +92,7 @@ await setupTest(NAME, false);
 describe('Server clusters and behaviors', () => {
   let light: MatterbridgeEndpoint;
   let enhancedLight: MatterbridgeEndpoint;
+  let button: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
   let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
@@ -244,7 +230,10 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Switch server', async () => {
-    expect(() => MatterbridgeSwitchServer.prototype.initialize.call({} as MatterbridgeSwitchServer)).not.toThrow();
+    button = new MatterbridgeEndpoint([genericSwitch, powerSource], { id: 'genericSwitch' });
+    button.addRequiredClusterServers();
+    expect(button).toBeDefined();
+    expect(await addDevice(aggregator, button)).toBeTruthy();
   });
 
   test('Device type: enhancedLight', async () => {

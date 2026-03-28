@@ -24,6 +24,8 @@
 
 import { SwitchServer } from '@matter/node/behaviors/switch';
 
+import { MatterbridgeServer } from './matterbridgeServer.js';
+
 /**
  * Switch server placeholder; the device implementation drives switch logic.
  */
@@ -32,6 +34,7 @@ export class MatterbridgeSwitchServer extends SwitchServer {
    * Intentionally no-op: switch logic is handled by the device implementation.
    */
   override initialize() {
-    // Do nothing here, as the device will handle the switch logic: we need to convert something like "single" into the appropriate sequence of state changes and events
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Initializing MatterbridgeSwitchServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 }

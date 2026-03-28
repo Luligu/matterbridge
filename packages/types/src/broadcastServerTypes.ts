@@ -187,12 +187,16 @@ export type WorkerMessageTypes = {
     request: { params: { version: string } };
     response: { result: { success: true } };
   };
-  matterbridge_global_prefix: {
-    request: { params: { prefix: string } };
-    response: { result: { success: true } };
-  };
   matterbridge_dev_version: {
     request: { params: { version: string } };
+    response: { result: { success: true } };
+  };
+  matterbridge_docker_version: {
+    request: { params: { dockerVersion?: string; dockerDev?: boolean; dockerLatestVersion?: string; dockerDevVersion?: string } };
+    response: { result: { success: true } };
+  };
+  matterbridge_global_prefix: {
+    request: { params: { prefix: string } };
     response: { result: { success: true } };
   };
   matterbridge_shelly_sys_update: {

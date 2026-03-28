@@ -86,6 +86,7 @@ export type SharedMatterbridge = Readonly<{
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   frontendVersion: string;
+  dockerDev: boolean | undefined;
   dockerVersion: string | undefined;
   dockerLatestVersion: string | undefined;
   dockerDevVersion: string | undefined;
@@ -181,6 +182,7 @@ export interface MatterbridgeInformation {
   matterbridgeLatestVersion: string;
   matterbridgeDevVersion: string;
   frontendVersion: string;
+  dockerDev: boolean | undefined;
   dockerVersion: string | undefined;
   dockerLatestVersion: string | undefined;
   dockerDevVersion: string | undefined;

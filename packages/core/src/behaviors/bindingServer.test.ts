@@ -25,7 +25,8 @@ import {
 import { onOffSwitch } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';
-import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './export.js';
+import { MatterbridgeIdentifyServer } from './identifyServer.js';
+import { MatterbridgeOnOffServer } from './onOffServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

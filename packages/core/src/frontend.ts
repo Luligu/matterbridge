@@ -1216,6 +1216,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterbridgeLatestVersion: this.matterbridge.matterbridgeLatestVersion,
       matterbridgeDevVersion: this.matterbridge.matterbridgeDevVersion,
       frontendVersion: this.matterbridge.frontendVersion,
+      dockerDev: undefined,
       dockerVersion: undefined,
       dockerLatestVersion: undefined,
       dockerDevVersion: undefined,
@@ -1856,6 +1857,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
       } else if (data.method === '/api/checkupdates') {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         /*
