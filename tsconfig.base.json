@@ -22,5 +22,11 @@
     "alwaysStrict": true,
     "noImplicitOverride": true,
     "skipLibCheck": true
+  },
+  "watchOptions": {
+    "watchFile": "dynamicprioritypolling",
+    "watchDirectory": "dynamicprioritypolling",
+    "fallbackPolling": "dynamicpriority",
+    "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
   }
 }
