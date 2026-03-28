@@ -24,6 +24,7 @@ import {
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
+import { MatterbridgeThermostatServer } from '../behaviors/thermostatServer.js';
 import {
   addDevice,
   aggregator,
@@ -38,7 +39,6 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeThermostatServer } from '../matterbridgeBehaviorsServer.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 

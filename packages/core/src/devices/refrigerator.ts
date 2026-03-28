@@ -30,7 +30,7 @@ import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 
 // Matterbridge
-import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';

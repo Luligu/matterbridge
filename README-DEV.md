@@ -121,6 +121,10 @@ Matterbridge exports from:
 
 - All clusters not present in matter.js or modified. It can be empty.
 
+**"matterbridge/behaviors"**
+
+- All matterbridge behaviors.
+
 **"matterbridge/utils"**
 
 - All general utils and colorUtils functions.

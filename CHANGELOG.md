@@ -58,6 +58,7 @@ These classes will run as threads in the next releases:
 ### Dev Breaking Changes
 
 - [getAttribute]: The overloads of `triggerEvent()` method that take Behavior.Type or ClusterType are now typed.
+- [behaviors]: The matterbridge behaviors are exported from matterbridge/behaviors.
 
 ### Changed
 

@@ -33,6 +33,7 @@ import {
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
+import { MatterbridgeDeviceEnergyManagementModeServer } from '../behaviors/deviceEnergyManagementModeServer.js';
 import {
   addDevice,
   aggregator,
@@ -47,7 +48,6 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeDeviceEnergyManagementModeServer } from '../matterbridgeBehaviorsServer.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
 import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 

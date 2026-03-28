@@ -84,11 +84,11 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsClient.ts",
-        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsServer.ts",
+        "--collectCoverageFrom=packages/core/src/behaviors/*.ts",
+        "--collectCoverageFrom=!packages/core/src/behaviors/export.ts",
         "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
-        "matterbridgeBehaviorsClient.test.ts",
-        "matterbridgeBehaviorsServer.test.ts"
+        "behaviors/bindingServer.test.ts",
+        "behaviors/matterbridgeServer.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

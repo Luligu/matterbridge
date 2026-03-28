@@ -58,6 +58,10 @@
       "types": "./dist/clusters/export.d.ts",
       "import": "./dist/clusters/export.js"
     },
+    "./behaviors": {
+      "types": "./dist/behaviors/export.d.ts",
+      "import": "./dist/behaviors/export.js"
+    },
     "./utils": {
       "types": "./dist/utils/export.d.ts",
       "import": "./dist/utils/export.js"

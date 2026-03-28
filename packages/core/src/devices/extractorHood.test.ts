@@ -20,6 +20,8 @@ import { wait } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
+import { MatterbridgeActivatedCarbonFilterMonitoringServer } from '../behaviors/activatedCarbonFilterMonitoringServer.js';
+import { MatterbridgeHepaFilterMonitoringServer } from '../behaviors/hepaFilterMonitoringServer.js';
 import {
   addDevice,
   aggregator,
@@ -31,7 +33,6 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeActivatedCarbonFilterMonitoringServer, MatterbridgeHepaFilterMonitoringServer } from '../matterbridgeBehaviorsServer.js';
 import { extractorHood } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';

@@ -102,30 +102,28 @@ import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
-import {
-  MatterbridgeActivatedCarbonFilterMonitoringServer,
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeHepaFilterMonitoringServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgePinDoorLockServer,
-  MatterbridgePowerSourceServer,
-  MatterbridgeServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeSwitchServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeUserPinDoorLockServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
-} from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeActivatedCarbonFilterMonitoringServer } from './behaviors/activatedCarbonFilterMonitoringServer.js';
+import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
+import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
+import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
+import { MatterbridgeFanControlServer } from './behaviors/fanControlServer.js';
+import { MatterbridgeHepaFilterMonitoringServer } from './behaviors/hepaFilterMonitoringServer.js';
+import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
+import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
+import { MatterbridgeServer } from './behaviors/matterbridgeServer.js';
+import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
+import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
+import { MatterbridgePinDoorLockServer } from './behaviors/pinDoorLockServer.js';
+import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
+import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
+import { MatterbridgeUserPinDoorLockServer } from './behaviors/userPinDoorLockServer.js';
+import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {

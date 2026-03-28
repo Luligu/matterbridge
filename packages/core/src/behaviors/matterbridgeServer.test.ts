@@ -1,6 +1,6 @@
-// src\matterbridgeBehaviorsServer.test.ts
+// src\behaviors\matterbridgeServer.test.ts
 
-const NAME = 'MatterbridgeBehaviorsServer';
+const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
@@ -34,7 +34,7 @@ import { FabricIndex } from '@matter/types/datatype';
 import { Status } from '@matter/types/globals';
 import { LogLevel } from 'node-ansi-logger';
 
-import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
+import { RoboticVacuumCleaner } from '../devices/roboticVacuumCleaner.js';
 import {
   addDevice,
   aggregator,
@@ -52,15 +52,8 @@ import {
   setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
-import { Matterbridge } from './matterbridge.js';
-import {
-  MatterbridgeDoorLockServer,
-  MatterbridgePinDoorLockServer,
-  MatterbridgeSwitchServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeUserPinDoorLockServer,
-} from './matterbridgeBehaviorsServer.js';
+} from '../jestutils/jestHelpers.js';
+import { Matterbridge } from '../matterbridge.js';
 import {
   airPurifier,
   bridge,
@@ -80,9 +73,29 @@ import {
   temperatureSensor,
   thermostatDevice,
   waterValve,
-} from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { type CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+} from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
+import {
+  MatterbridgeBooleanStateConfigurationServer,
+  MatterbridgeColorControlServer,
+  MatterbridgeDeviceEnergyManagementModeServer,
+  MatterbridgeDeviceEnergyManagementServer,
+  MatterbridgeDoorLockServer,
+  MatterbridgeFanControlServer,
+  MatterbridgeIdentifyServer,
+  MatterbridgeLevelControlServer,
+  MatterbridgeModeSelectServer,
+  MatterbridgeOnOffServer,
+  MatterbridgeOperationalStateServer,
+  MatterbridgePinDoorLockServer,
+  MatterbridgeSmokeCoAlarmServer,
+  MatterbridgeSwitchServer,
+  MatterbridgeThermostatServer,
+  MatterbridgeUserPinDoorLockServer,
+  MatterbridgeValveConfigurationAndControlServer,
+  MatterbridgeWindowCoveringServer,
+} from './export.js';
 
 jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementation(async () => {
   return Promise.resolve();

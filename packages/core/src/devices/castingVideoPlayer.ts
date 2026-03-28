@@ -26,7 +26,7 @@ import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 
 // Matterbridge
-import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { castingVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeKeypadInputServer, MatterbridgeMediaPlaybackServer } from './basicVideoPlayer.js';

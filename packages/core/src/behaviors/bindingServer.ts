@@ -1,7 +1,7 @@
 /**
- * This file contains the client behavior classes of Matterbridge.
+ * This file contains the MatterbridgeBindingServer class of Matterbridge.
  *
- * @file matterbridgeBehaviorsClient.ts
+ * @file bindingServer.ts
  * @author Luca Liguori
  * @created 2026-02-25
  * @version 1.0.0
@@ -28,7 +28,7 @@ import { BindingBehavior } from '@matter/main/behaviors/binding';
 import { DescriptorServer } from '@matter/main/behaviors/descriptor';
 import { ClusterId } from '@matter/main/types';
 
-import { MatterbridgeServer } from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * Binding client behavior that mirrors bindings into the Descriptor clientList.
