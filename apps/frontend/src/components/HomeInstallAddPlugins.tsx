@@ -32,7 +32,6 @@ export const pluginIgnoreList = [
   'matterbridge-tuya', // my package
   'matterbridge-mqtt', // my package
   'matterbridge-matter', // my package
-  'matterbridge-security', // my package
   'matterbridge-automations', // my package
   'matterbridge-securitysystem', // empty place holder
   'matterbridge-adapter', // 5 years ago

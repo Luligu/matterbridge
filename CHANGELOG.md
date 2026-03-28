@@ -58,6 +58,8 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
+- [frontend]: Bump `frontend` version to v.3.4.10.
+- [frontend]: Remove `matterbridge-security` from ignore list. It has been published.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
