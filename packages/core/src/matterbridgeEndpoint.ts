@@ -1251,7 +1251,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Triggers an event on the specified cluster.
    *
-   * @param {ClusterId} cluster - The ID of the cluster.
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The ID of the cluster.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
    * @param {AnsiLogger} [log] - Optional logger for logging information.
