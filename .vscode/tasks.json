@@ -88,6 +88,7 @@
         "--collectCoverageFrom=!packages/core/src/behaviors/export.ts",
         "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
         "behaviors/bindingServer.test.ts",
+        "behaviors/doorLockServer.test.ts",
         "behaviors/matterbridgeServer.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },

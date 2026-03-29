@@ -36,6 +36,17 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
   events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
   commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
 }) {
+  declare protected internal: MatterbridgeDoorLockServer.Internal;
+
+  /**
+   * Initializes state and logs the initialization of the server.
+   */
+  override async initialize() {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Initializing MatterbridgeDoorLockServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await super.initialize(); // Does a check of supportedOperatingModes
+  }
+
   /**
    * Handles the LockDoor command.
    * It will set lockState to Locked.
@@ -44,6 +55,10 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
    */
   override async lockDoor(request: DoorLock.LockDoorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    if (!this.state.actuatorEnabled) {
+      device.log.warn(`Actuator disabled, cannot lock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      return;
+    }
     device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.lockDoor', {
       command: 'lockDoor',
@@ -54,7 +69,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called`);
-    await super.lockDoor(request);
+    await super.lockDoor(request); // Set lockState to Locked
   }
 
   /**
@@ -65,6 +80,10 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
    */
   override async unlockDoor(request: DoorLock.UnlockDoorRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    if (!this.state.actuatorEnabled) {
+      device.log.warn(`Actuator disabled, cannot unlock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      return;
+    }
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.unlockDoor', {
       command: 'unlockDoor',
@@ -75,7 +94,19 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
-    await super.unlockDoor(request);
+    await super.unlockDoor(request); // Set lockState to Unlocked
+    // Implements autoRelockTime
+    if (!this.internal.enableTimeout) return; // If enableTimeout is false, do not set a timeout to relock the door, leaving it to the device implementation
+    if (this.state.autoRelockTime) {
+      clearTimeout(this.internal.unlockTimeout);
+      this.internal.unlockTimeout = setTimeout(async () => {
+        this.internal.unlockTimeout = undefined;
+        const device = this.endpoint.stateOf(MatterbridgeServer);
+        const state = this.endpoint.stateOf(MatterbridgeDoorLockServer);
+        device.log.info(`Auto-relocking door after ${state.autoRelockTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+        await this.endpoint.act((agent) => agent.get(MatterbridgeDoorLockServer).lockDoor({ pinCode: request.pinCode }));
+      }, this.state.autoRelockTime * 1000).unref(); // unref to not keep the process alive if it's the only timeout left
+    }
   }
 
   /**
@@ -87,6 +118,10 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
    */
   override async unlockWithTimeout(request: DoorLock.UnlockWithTimeoutRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    if (!this.state.actuatorEnabled) {
+      device.log.warn(`Actuator disabled, cannot unlock door with timeout (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      return;
+    }
     device.log.info(`Unlocking door with timeout ${request.timeout} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.unlockWithTimeout', {
       command: 'unlockWithTimeout',
@@ -97,8 +132,29 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockWithTimeout called`);
+    // await super.unlockWithTimeout(request); // unlockWithTimeout is not implemented in DoorLockServer
     this.state.lockState = DoorLock.LockState.Unlocked;
-    // unlockWithTimeout is not implemented in the base DoorLockServer
-    // await super.unlockWithTimeout(request);
+    if (!this.internal.enableTimeout) return; // If enableTimeout is false, do not set a timeout to relock the door, leaving it to the device implementation
+    if (request.timeout) {
+      clearTimeout(this.internal.unlockTimeout);
+      this.internal.unlockTimeout = setTimeout(async () => {
+        this.internal.unlockTimeout = undefined;
+        const device = this.endpoint.stateOf(MatterbridgeServer);
+        device.log.info(`Locking door after ${request.timeout} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+        await this.endpoint.act((agent) => agent.get(MatterbridgeDoorLockServer).lockDoor({ pinCode: request.pinCode }));
+      }, request.timeout * 1000).unref(); // unref to not keep the process alive if it's the only timeout left
+    }
+  }
+}
+
+/* istanbul ignore next -- TypeScript namespace merging emits an unreachable binary-expression branch */
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace MatterbridgeDoorLockServer {
+  /**
+   * Internal state of the MatterbridgeDoorLockServer.
+   */
+  export class Internal {
+    enableTimeout: boolean = true;
+    unlockTimeout: NodeJS.Timeout | undefined;
   }
 }
