@@ -295,6 +295,33 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
 }
 
 /**
+ * Retrieves the internal state object for a specific behavior.
+ *
+ * @template T
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to retrieve the internal state from.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the internal state for.
+ * @returns {Promise<T | undefined>} The live internal state object for the specified behavior, or undefined if the cluster is not found.
+ *
+ * @remarks Use with:
+ * ```typescript
+ *     const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'doorLock');
+ *     internal?.enableTimeout = true;
+ * ```
+ */
+export async function internalFor<T extends object = Record<string, unknown>>(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+): Promise<T | undefined> {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
+    endpoint.log?.error(`internalFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return undefined;
+  }
+
+  return endpoint.act((agent) => (agent as unknown as Record<string, { internal?: T } | undefined>)[behaviorId]?.internal);
+}
+
+/**
  * Maps a list of ClusterId to Behavior.Type for server clusters.
  *
  * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.
