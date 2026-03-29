@@ -151,10 +151,10 @@ describe('Options helpers', () => {
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
 
-    expect(internal.enableTimeout).toBe(false);
-    internal.enableTimeout = true;
+    expect(internal.enableTimeout).toBe(true);
+    internal.enableTimeout = false;
 
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(true);
+    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
   });
 
   test('getSnapshot returns non-object values unchanged', () => {
