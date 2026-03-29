@@ -77,6 +77,7 @@ import {
 } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { type CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
+import { internalFor } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 import { MatterbridgePinDoorLockServer } from './pinDoorLockServer.js';
 import { MatterbridgeThermostatServer } from './thermostatServer.js';
@@ -267,6 +268,11 @@ describe('Server clusters and behaviors', () => {
     lock.addRequiredClusterServers();
     expect(lock).toBeDefined();
     expect(await addDevice(aggregator, lock)).toBeTruthy();
+    // Disable timeout for testing, to avoid flaky tests
+    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(lock, MatterbridgeDoorLockServer);
+    expect(internal).toBeDefined();
+    if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+    internal.enableTimeout = false;
   });
 
   test('Device type: fan', async () => {
