@@ -147,8 +147,12 @@
 <h2 id="372-dev-branch">[3.7.2] - Dev branch</h2>
 <h3 id="dev-breaking-changes">Dev Breaking Changes</h3>
 <ul>
-<li>[getAttribute]: The overloads of <code>triggerEvent()</code> method that take Behavior.Type or ClusterType are now typed.</li>
+<li>[triggerEvent]: The overloads of <code>triggerEvent()</code> method that take Behavior.Type or ClusterType are now typed.</li>
 <li>[behaviors]: The matterbridge behaviors are exported from matterbridge/behaviors.</li>
+</ul>
+<h3 id="dev-news">Dev news</h3>
+<ul>
+<li>[endpoint]: Add internalFor() helper.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -162,7 +166,7 @@
 <ul>
 <li>[cli]: Change names to mb-mdns mb-coap mb-health. The old names (mb_mdns, mb_coap and mb_health) are still available but change your scripts and setups.</li>
 </ul>
-<h3 id="dev-news">Dev news</h3>
+<h3 id="dev-news-1">Dev news</h3>
 <ul>
 <li>[utils]: Add getEnumDescription() function to log cluster enums.</li>
 <li>[endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock device with PIN and COTA feature.</li>
@@ -228,7 +232,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>update your code to match the new typings (often it is just adjusting the generic/type argument or the inferred type);</li>
 <li>change your verifyMatterbridgeVersion(&#39;3.7.0&#39;) to require Matterbridge &gt;= 3.7.0.</li>
 </ul>
-<h3 id="dev-news-1">Dev News</h3>
+<h3 id="dev-news-2">Dev News</h3>
 <ul>
 <li>[DevContainer]: Change base image to <code>mcr.microsoft.com/devcontainers/javascript-node:24-trixie</code>.</li>
 <li>[DevContainer]: Add postStartCommand.</li>
@@ -287,7 +291,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>[BatteryStorage]: Refactor <code>BatteryStorage</code> class as composed device.</li>
 <li>[HeatPump]: Refactor <code>HeatPump</code> class as composed device.</li>
 </ul>
-<h3 id="dev-news-2">Dev News</h3>
+<h3 id="dev-news-3">Dev News</h3>
 <ul>
 <li>[matter1.5.0]: Add SoilMeasurement cluster and corresponding test.</li>
 <li>[matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.</li>
@@ -336,7 +340,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">dev container setup</a>.</li>
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/Reflector.html">reflector dev container setup</a>.</li>
 </ul>
-<h3 id="dev-news-3">Dev News</h3>
+<h3 id="dev-news-4">Dev News</h3>
 <ul>
 <li>[binding]: Add for test only MatterbridgeBindingServer.</li>
 <li>[docker]: Add <strong>luligu/matterbridge:chip-test</strong> image (400MB): it is based on Ubuntu LTS, Node.Js 24 LTS and includes connectedhomeip repository with chip-tool, chip-cert and all packages requierd to run yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the yaml or phyton tests. Matterbridge frontend is bound on port 8283. No volumes or port mapping needed.</li>
