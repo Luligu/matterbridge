@@ -135,6 +135,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
     // await super.unlockWithTimeout(request); // unlockWithTimeout is not implemented in DoorLockServer
     this.state.lockState = DoorLock.LockState.Unlocked;
     if (!this.internal.enableTimeout) return; // If enableTimeout is false, do not set a timeout to relock the door, leaving it to the device implementation
+    // istanbul ignore else branch
     if (request.timeout) {
       clearTimeout(this.internal.unlockTimeout);
       this.internal.unlockTimeout = setTimeout(async () => {
