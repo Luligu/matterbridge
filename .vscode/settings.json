@@ -12,18 +12,25 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.watcherExclude": {
-    "**/.cache/**": true,
     "**/node_modules/**": true,
-    "**/coverage/**": true,
     "**/dist/**": true,
     "**/build/**": true,
-    "**/docs/**": true
+    "**/.cache/**": true,
+    "**/coverage/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.cache": true,
+    "**/coverage": true
   },
   "js/ts.tsdk.path": "node_modules/typescript/lib",
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "js/ts.tsserver.watchOptions": {
     "watchFile": "dynamicPriorityPolling",
     "watchDirectory": "dynamicPriorityPolling",
-    "fallbackPolling": "dynamicPriorityPolling"
+    "fallbackPolling": "dynamicPriorityPolling",
+    "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
   }
 }
