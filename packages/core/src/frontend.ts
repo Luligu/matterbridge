@@ -396,13 +396,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug(`WebSocketServer closed`);
     });
 
-    /* With { noServer: true } it never fires
-    this.webSocketServer.on('listening', () => {
-      this.log.info(`The WebSocketServer is listening`);
-      this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
-    });
-    */
-
     // istanbul ignore next
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
       this.log.error(`WebSocketServer error: ${error}`);
