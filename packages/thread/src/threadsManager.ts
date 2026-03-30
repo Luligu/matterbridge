@@ -106,6 +106,7 @@ export class ThreadsManager {
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
+      logWithColors: !hasParameter('no-ansi') && process.env.NO_ANSI !== 'true',
     });
     // Set the static log level property for use in static methods
     ThreadsManager.logLevel = this.log.logLevel;

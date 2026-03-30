@@ -467,9 +467,18 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     return (text: string, message: Diagnostic.Message) => {
-      // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
-      const logger = text.slice(44, 44 + 20).trim();
-      const msg = text.slice(65);
+      let logger: string;
+      let msg: string;
+      if (!hasParameter('no-ansi') && process.env.NO_ANSI !== 'true') {
+        // ANSI TEXT
+        logger = text.slice(44, 44 + 20).trim();
+        msg = text.slice(65);
+      } else {
+        // PLAIN TEXT
+        // 2026-03-30 22:01:36.815 DEBUG MdnsAdvertisement Broadcast kind: commissionable service: mdns:A167E79D4594054C._matterc._udp.local number: 3 next: 4.26s
+        logger = text.slice(30).trim().split(/\s+/, 1)[0];
+        msg = text.slice(30).trim().slice(logger.length).trimStart();
+      }
       this.matterLog.logName = logger;
       this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
     };

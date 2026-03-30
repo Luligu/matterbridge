@@ -72,6 +72,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `frontend` version to v.3.4.10.
 - [frontend]: Remove `matterbridge-security` from ignore list. It has been published.
 
+### Fixed
+
+- [ansi]: Fix --no-ansi and NO_COLOR=1 for threads and matter logger.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.1] - 2026-03-27

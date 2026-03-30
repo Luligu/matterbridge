@@ -942,7 +942,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger'];
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger', '-no-ansi'];
     const createDestinationMatterLoggerSpy = jest.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -969,6 +969,14 @@ describe('Matterbridge mocked', () => {
     Logger.get('Jest').warn('Test warn log message');
     Logger.get('Jest').error('Test error log message');
     Logger.get('Jest').fatal('Test fatal log message');
+
+    expect((matterbridge as any).matterLog.logName).toBe('Jest');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Test debug log message'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Test info log message'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Test notice log message'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('Test warn log message'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Test error log message'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.FATAL, expect.stringContaining('Test fatal log message'));
     /*
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test debug log message'));
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test info log message'));
