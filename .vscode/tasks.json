@@ -6,7 +6,15 @@
       "type": "npm",
       "script": "build",
       "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": [],
+      "problemMatcher": ["$tsc"],
+      "detail": "tsc"
+    },
+    {
+      "label": "Watch",
+      "type": "npm",
+      "script": "watch",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc-watch"],
       "detail": "tsc"
     },
     {
