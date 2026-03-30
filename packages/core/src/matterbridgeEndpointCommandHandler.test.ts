@@ -1,7 +1,13 @@
 import { NamedHandler } from '@matter/general';
 
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { CommandHandler, type CommandHandlerData, type CommandHandlerFunction, type CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import {
+  CommandHandler,
+  type CommandHandlerData,
+  type CommandHandlerExecutionResult,
+  type CommandHandlerFunction,
+  type CommandHandlers,
+} from './matterbridgeEndpointCommandHandler.js';
 
 type LocalHandlers = {
   'OnOff.on': CommandHandlerFunction<'OnOff.on'>;
@@ -18,6 +24,16 @@ function createOnOffCommandData<T extends keyof LocalHandlers>(command: T): Comm
     attributes: { onOff: command === 'OnOff.off' } as unknown as CommandHandlerData<T>['attributes'],
     endpoint: {} as MatterbridgeEndpoint,
   } as CommandHandlerData<T>;
+}
+
+function createDoorLockGetUserCommandData(): CommandHandlerData<'DoorLock.getUser'> {
+  return {
+    command: 'getUser',
+    request: { userIndex: 1 } as CommandHandlerData<'DoorLock.getUser'>['request'],
+    cluster: 'doorLock',
+    attributes: {} as unknown as CommandHandlerData<'DoorLock.getUser'>['attributes'],
+    endpoint: {} as MatterbridgeEndpoint,
+  } as CommandHandlerData<'DoorLock.getUser'>;
 }
 
 describe('CommandHandler', () => {
@@ -93,6 +109,30 @@ describe('CommandHandler', () => {
 
     await expect(commandHandler.executeHandler('OnOff.toggle', payload)).resolves.toBeUndefined();
     await expect(namedHandler.executeHandler('OnOff.toggle', payload)).resolves.toBeUndefined();
+  });
+
+  test('executeHandler returns the mapped command response when the handler provides one', async () => {
+    const commandHandler = new CommandHandler();
+    const payload = createDoorLockGetUserCommandData();
+    const expectedResponse = {
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: null,
+      userType: null,
+      credentialRule: null,
+      credentials: null,
+      creatorFabricIndex: null,
+      lastModifiedFabricIndex: null,
+      nextUserIndex: null,
+    } satisfies NonNullable<CommandHandlerExecutionResult<'DoorLock.getUser'>>;
+
+    commandHandler.addHandler('DoorLock.getUser', async (data) => {
+      expect(data).toBe(payload);
+      return expectedResponse;
+    });
+
+    await expect(commandHandler.executeHandler('DoorLock.getUser', payload)).resolves.toEqual(expectedResponse);
   });
 
   test('removeHandler matches NamedHandler semantics across command and handler combinations', async () => {

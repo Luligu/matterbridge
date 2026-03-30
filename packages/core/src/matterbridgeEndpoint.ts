@@ -125,7 +125,7 @@ import { MatterbridgeUserPinDoorLockServer } from './behaviors/userPinDoorLockSe
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterServers,
   addFixedLabel,
@@ -1474,6 +1474,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {CommandHandlerData<C>['cluster']} cluster - The cluster to pass to the handler function.
    * @param {CommandHandlerData<C>['attributes']} attributes - The attributes to pass to the handler function.
    * @param {CommandHandlerData<C>['endpoint']} endpoint - The MatterbridgeEndpoint instance to pass to the handler function.
+   * @returns {Promise<CommandHandlerExecutionResult<C>>} The result of the command handler execution.
+   *
+   * @remarks The command shall be a string in the format of "Cluster.command" (e.g. "OnOff.toggle"). Requires matterbridge version 3.7.2 or higher.
    */
   async executeCommandHandler<C extends CommandHandlers>(
     command: C,
@@ -1481,8 +1484,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     cluster: CommandHandlerData<C>['cluster'],
     attributes: CommandHandlerData<C>['attributes'],
     endpoint: CommandHandlerData<C>['endpoint'],
-  ): Promise<void> {
-    await this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
+  ): Promise<CommandHandlerExecutionResult<C>> {
+    return this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
   }
 
   /**

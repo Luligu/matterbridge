@@ -1380,6 +1380,55 @@ describe('Server clusters and behaviors', () => {
     expect(behavior.state.lockState).toBe(DoorLock.LockState.Locked);
   });
 
+  test('DoorLock USR getUser returns the command handler response when provided', async () => {
+    const info = jest.fn();
+    const debug = jest.fn();
+    const commandResponse: DoorLock.GetUserResponse = {
+      userIndex: 7,
+      userName: 'Remote Guest',
+      userUniqueId: 7007,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+      credentials: [{ credentialType: DoorLock.CredentialType.Pin, credentialIndex: 7 }],
+      creatorFabricIndex: FabricIndex(3),
+      lastModifiedFabricIndex: FabricIndex(3),
+      nextUserIndex: null,
+    };
+    const executeHandler = jest.fn(async () => commandResponse);
+    const endpoint = {
+      maybeId: 'doorLockUsrPinCommandResponseMock',
+      maybeNumber: 104,
+      stateOf: () => ({
+        log: { info, debug },
+        commandHandler: { executeHandler },
+      }),
+    };
+    const behavior = {
+      endpoint,
+      state: { lockState: DoorLock.LockState.Locked, requirePinForRemoteOperation: false },
+      internal: new MatterbridgeUserPinDoorLockServer.Internal(),
+      context: {},
+      logStoredCredentialState: jest.fn(),
+    } as unknown as MatterbridgeUserPinDoorLockServer;
+    Object.setPrototypeOf(behavior, MatterbridgeUserPinDoorLockServer.prototype);
+
+    const response = await MatterbridgeUserPinDoorLockServer.prototype.getUser.call(behavior, { userIndex: 7 } as DoorLock.GetUserRequest);
+
+    expect(response).toEqual(commandResponse);
+    expect(executeHandler).toHaveBeenCalledWith(
+      'DoorLock.getUser',
+      expect.objectContaining({
+        command: 'getUser',
+        request: { userIndex: 7 },
+        cluster: 'doorLock',
+        endpoint,
+      }),
+    );
+    expect(debug).not.toHaveBeenCalled();
+    expect((behavior as any).logStoredCredentialState).not.toHaveBeenCalled();
+  });
+
   test('DoorLock USR helper edge coverage', async () => {
     const info = jest.fn();
     const debug = jest.fn();

@@ -95,8 +95,9 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.enable({
     });
     device.log.debug(`MatterbridgeDoorLockServer: unlockDoor called`);
     await super.unlockDoor(request); // Set lockState to Unlocked
-    // Implements autoRelockTime
     if (!this.internal.enableTimeout) return; // If enableTimeout is false, do not set a timeout to relock the door, leaving it to the device implementation
+    // Implements autoRelockTime
+    // istanbul ignore else branch
     if (this.state.autoRelockTime) {
       clearTimeout(this.internal.unlockTimeout);
       this.internal.unlockTimeout = setTimeout(async () => {

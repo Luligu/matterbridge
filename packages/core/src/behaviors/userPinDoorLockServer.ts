@@ -325,7 +325,7 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
   override async getUser(request: DoorLock.GetUserRequest): Promise<DoorLock.GetUserResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Getting userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('DoorLock.getUser', {
+    const response = await device.commandHandler.executeHandler('DoorLock.getUser', {
       command: 'getUser',
       request,
       cluster: DoorLockServer.id,
@@ -333,6 +333,9 @@ export class MatterbridgeUserPinDoorLockServer extends DoorLockServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
+    if (response !== undefined) {
+      return response;
+    }
     const user = this.internal.users.find((storedUser) => storedUser.userIndex === request.userIndex);
     device.log.debug(
       `MatterbridgeDoorLockServer: getUser called for userIndex ${request.userIndex} (total users: ${this.internal.users.length}) (${user ? 'existing user: ' + debugStringify(user) : 'new user'})`,
