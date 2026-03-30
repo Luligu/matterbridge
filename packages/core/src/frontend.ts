@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.0
+ * @version 1.4.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -295,7 +295,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {number} [port] - TCP port to listen on. Defaults to 8283.
    * @returns {Promise<void>} Resolves when startup completes.
    */
-  async start(port = 8283) {
+  async start(port: number = 8283): Promise<void> {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
 
@@ -720,7 +720,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide settings (debug only reasons - not used in production)
-    this.expressApp.get('/api/settings', express.json(), async (req, res) => {
+    this.expressApp.get('/api/settings', async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
       res.json(await this.getApiSettings());
@@ -1216,10 +1216,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterbridgeLatestVersion: this.matterbridge.matterbridgeLatestVersion,
       matterbridgeDevVersion: this.matterbridge.matterbridgeDevVersion,
       frontendVersion: this.matterbridge.frontendVersion,
-      dockerDev: undefined,
-      dockerVersion: undefined,
-      dockerLatestVersion: undefined,
-      dockerDevVersion: undefined,
+      dockerDev: this.matterbridge.dockerDev,
+      dockerVersion: this.matterbridge.dockerVersion,
+      dockerLatestVersion: this.matterbridge.dockerLatestVersion,
+      dockerDevVersion: this.matterbridge.dockerDevVersion,
       bridgeMode: this.matterbridge.bridgeMode,
       restartMode: this.matterbridge.restartMode,
       virtualMode: this.matterbridge.virtualMode,
@@ -1526,7 +1526,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       );
       return;
     }
-    // this.log.debug(`***getClusters: getting clusters for device ${endpoint.deviceName} plugin ${pluginName} endpoint number ${endpointNumber}`);
 
     // Get the device types from the main endpoint
     const deviceTypes: number[] = [];
@@ -2661,7 +2660,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
-    if (msg.method !== 'log') this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
+    if (!['log', 'cpu_update', 'memory_update', 'uptime_update'].includes(msg.method)) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
       // istanbul ignore else
       if (client.readyState === client.OPEN) {
@@ -2693,6 +2692,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       },
     });
   }
+
   /**
    * Sends a zip or verify command to the manager to create or verify an archive of the source paths at the destination path.
    *
