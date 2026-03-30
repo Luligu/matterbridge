@@ -37,7 +37,6 @@ export * from './matterbridgeServer.js';
 export * from './modeSelectServer.js';
 export * from './onOffServer.js';
 export * from './operationalStateServer.js';
-export * from './pinDoorLockServer.js';
 export * from './powerSourceServer.js';
 export * from './serviceAreaServer.js';
 export * from './smokeCoAlarmServer.js';
