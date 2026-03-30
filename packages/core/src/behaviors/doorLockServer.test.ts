@@ -136,7 +136,7 @@ describe('Client clusters and behaviors', () => {
     userPinDoorLock.addRequiredClusterServers();
     expect(await addDevice(aggregator, userPinDoorLock)).toBeDefined();
     expect(userPinDoorLock.behaviors.has(MatterbridgeDoorLockServer)).toBe(true);
-    expect(userPinDoorLock.getAttribute(DoorLock.Complete, 'requirePinForRemoteOperation')).toBe(true);
+    expect(userPinDoorLock.getAttribute(DoorLock.Complete, 'requirePinForRemoteOperation')).toBe(undefined);
     expect(userPinDoorLock.getAttribute(DoorLock.Complete, 'numberOfTotalUsersSupported')).toBe(10);
   });
 

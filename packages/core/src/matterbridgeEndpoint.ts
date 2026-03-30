@@ -3545,12 +3545,14 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a door lock cluster server with feature User (USR), PinCredential (PIN), and CredentialOverTheAirAccess (COTA).
+   * Creates a door lock cluster server with feature User (USR) and PinCredential (PIN).
    * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands, and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
    * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
+   * @param {number} [minPinCodeLength] - The minimum length of the PIN code (default: 4).
+   * @param {number} [maxPinCodeLength] - The maximum length of the PIN code (default: 10).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3563,9 +3565,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     lockState: DoorLock.LockState = DoorLock.LockState.Locked,
     lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
     autoRelockTime: number = 0,
+    minPinCodeLength: number = 4,
+    maxPinCodeLength: number = 10,
   ): this {
     this.behaviors.require(
-      MatterbridgeDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
+      MatterbridgeDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -3595,13 +3599,14 @@ export class MatterbridgeEndpoint extends Endpoint {
         autoRelockTime, // 0=disabled
         // PinCredential feature attributes
         numberOfPinUsersSupported: 10,
-        maxPinCodeLength: 10,
-        minPinCodeLength: 4,
+        minPinCodeLength,
+        maxPinCodeLength,
         // PinCredential or RfidCredential feature attributes
         wrongCodeEntryLimit: 5,
         userCodeTemporaryDisableTime: 60,
         // PinCredential and CredentialOverTheAirAccess features attributes
-        requirePinForRemoteOperation: true,
+        /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+        requirePinForRemoteOperation: true,*/
         // User feature attributes
         numberOfTotalUsersSupported: 10,
         credentialRulesSupport: { single: true },

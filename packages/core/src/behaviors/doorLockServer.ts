@@ -38,7 +38,10 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 /**
  * DoorLock server that forwards lock, user, and credential commands to the Matterbridge command handler.
  */
-export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
+export class MatterbridgeDoorLockServer extends DoorLockServer.with(
+  DoorLock.Feature.User,
+  DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/,
+).enable({
   events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
   commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
 }) {
@@ -65,6 +68,13 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Fea
       device.log.warn(`Actuator disabled, cannot lock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
+    /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+    if (this.features.pinCredential && this.features.credentialOverTheAirAccess && this.state.requirePinForRemoteOperation && !this.validatePinCode(request.pinCode)) {
+      device.log.warn(`PIN code required but not provided or invalid, cannot lock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      this.state.wrongCodeEntryLimit++;
+      throw new StatusResponse.FailureError('PIN code required but not provided or invalid');
+    }
+    */
     device.log.info(`Locking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.lockDoor', {
       command: 'lockDoor',
@@ -90,6 +100,13 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Fea
       device.log.warn(`Actuator disabled, cannot unlock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
+    /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+    if (this.features.pinCredential && this.features.credentialOverTheAirAccess && this.state.requirePinForRemoteOperation && !this.validatePinCode(request.pinCode)) {
+      device.log.warn(`PIN code required but not provided or invalid, cannot unlock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      this.state.wrongCodeEntryLimit++;
+      throw new StatusResponse.FailureError('PIN code required but not provided or invalid');
+    }
+    */
     device.log.info(`Unlocking door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.unlockDoor', {
       command: 'unlockDoor',
@@ -131,6 +148,13 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Fea
       device.log.warn(`Actuator disabled, cannot unlock door with timeout (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
+    /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+    if (this.features.pinCredential && this.features.credentialOverTheAirAccess && this.state.requirePinForRemoteOperation && !this.validatePinCode(request.pinCode)) {
+      device.log.warn(`PIN code required but not provided or invalid, cannot unlock door with timeout (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      this.state.wrongCodeEntryLimit++;
+      throw new StatusResponse.FailureError('PIN code required but not provided or invalid');
+    }
+    */
     device.log.info(`Unlocking door with timeout ${request.timeout} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DoorLock.unlockWithTimeout', {
       command: 'unlockWithTimeout',
@@ -577,6 +601,22 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(DoorLock.Fea
     }
     return null;
   }
+
+  /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+  private validatePinCode(pinCode: Uint8Array | undefined): boolean {
+    if (pinCode === undefined || pinCode.length < this.state.minPinCodeLength || pinCode.length > this.state.maxPinCodeLength) {
+      return false;
+    }
+    for (const user of this.internal.users) {
+      for (const storedCredential of user.credentials ?? []) {
+        if (storedCredential.credentialType === DoorLock.CredentialType.Pin && Buffer.from(storedCredential.credentialData).equals(Buffer.from(pinCode))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  */
 
   private getNextOccupiedCredentialIndex(credential: DoorLock.Credential): number | null {
     for (const user of this.internal.users) {
