@@ -93,7 +93,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "eslint.format.enable": true,
         "eslint.useFlatConfig": true,
-        "diffEditor.ignoreTrimWhitespace": false,
+        "diffEditor.ignoreTrimWhitespace": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,

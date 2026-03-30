@@ -6,7 +6,7 @@
   },
   "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
-  "diffEditor.ignoreTrimWhitespace": false,
+  "diffEditor.ignoreTrimWhitespace": true,
   "git.autofetch": true,
   "files.eol": "\n",
   "files.insertFinalNewline": true,
@@ -27,10 +27,5 @@
   },
   "js/ts.tsdk.path": "node_modules/typescript/lib",
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-  "js/ts.tsserver.watchOptions": {
-    "watchFile": "dynamicPriorityPolling",
-    "watchDirectory": "dynamicPriorityPolling",
-    "fallbackPolling": "dynamicPriorityPolling",
-    "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
-  }
+  "chat.useCustomizationsInParentRepositories": true
 }
