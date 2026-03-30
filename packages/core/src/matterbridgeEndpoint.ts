@@ -120,7 +120,6 @@ import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js'
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
-import { MatterbridgeUserPinDoorLockServer } from './behaviors/userPinDoorLockServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
@@ -3496,17 +3495,23 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default door lock cluster server with no additional features.
+   * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
+   * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * All operating modes NOT supported by a lock SHALL be set to one. The value of the OperatingMode enumeration defines the related bit to be set.
    */
-  createDefaultDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
+  createDefaultDoorLockClusterServer(
+    lockState: DoorLock.LockState = DoorLock.LockState.Locked,
+    lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
+    autoRelockTime: number = 0,
+  ): this {
     this.behaviors.require(
-      MatterbridgeDoorLockServer.enable({
+      MatterbridgeDoorLockServer.with().enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -3533,7 +3538,7 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
          */
         supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
-        autoRelockTime: 0, // 0=disabled
+        autoRelockTime, // 0=disabled
       },
     );
     return this;
@@ -3541,9 +3546,11 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a door lock cluster server with feature User (USR), PinCredential (PIN), and CredentialOverTheAirAccess (COTA).
+   * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands, and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
+   * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3552,9 +3559,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The Apple Home works with this.
    */
-  createUserPinDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
+  createUserPinDoorLockClusterServer(
+    lockState: DoorLock.LockState = DoorLock.LockState.Locked,
+    lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
+    autoRelockTime: number = 0,
+  ): this {
     this.behaviors.require(
-      MatterbridgeUserPinDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
+      MatterbridgeDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -3581,7 +3592,7 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
          */
         supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
-        autoRelockTime: 0, // 0=disabled
+        autoRelockTime, // 0=disabled
         // PinCredential feature attributes
         numberOfPinUsersSupported: 10,
         maxPinCodeLength: 10,

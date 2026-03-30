@@ -128,7 +128,7 @@ describe('Options helpers', () => {
   test('internalFor returns the live behavior internal state', async () => {
     device = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLockHelper' });
     device.behaviors.require(
-      MatterbridgeDoorLockServer.enable({
+      MatterbridgeDoorLockServer.with().enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),

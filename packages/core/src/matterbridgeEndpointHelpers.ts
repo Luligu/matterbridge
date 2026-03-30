@@ -317,7 +317,6 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     endpoint.log?.error(`internalFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return undefined;
   }
-
   return endpoint.act((agent) => (agent as unknown as Record<string, { internal?: T } | undefined>)[behaviorId]?.internal);
 }
 

@@ -90,6 +90,10 @@
       "types": "./dist/network.d.ts",
       "import": "./dist/network.js"
     },
+    "./enum": {
+      "types": "./dist/enumDescription.d.ts",
+      "import": "./dist/enumDescription.js"
+    },
     "./hex": {
       "types": "./dist/hex.d.ts",
       "import": "./dist/hex.js"

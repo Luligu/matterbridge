@@ -44,7 +44,6 @@ export * from './behaviors/serviceAreaServer.js';
 export * from './behaviors/smokeCoAlarmServer.js';
 export * from './behaviors/switchServer.js';
 export * from './behaviors/thermostatServer.js';
-export * from './behaviors/userPinDoorLockServer.js';
 export * from './behaviors/valveConfigurationAndControlServer.js';
 export * from './behaviors/windowCoveringServer.js';
 export { addVirtualDevice } from './helpers.js';
