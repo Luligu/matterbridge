@@ -29,6 +29,8 @@ import { BackendExpress } from './backendExpress.js';
 import type { Frontend } from './frontend.js';
 import { setupTest } from './jestutils/jestHelpers.js';
 
+const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
+
 const mockedSharedMatterbridge = {
   matterbridgeDirectory: HOMEDIR,
   rootDirectory: HOMEDIR,
@@ -663,11 +665,7 @@ describe('BackendExpress', () => {
       path.join(tmp, 'matterbridge.pluginconfig.zip'),
     ];
     for (const filePath of zipPaths) {
-      try {
-        await fs.access(filePath);
-      } catch {
-        await fs.writeFile(filePath, 'ZIP_PLACEHOLDER', 'utf8');
-      }
+      await fs.copyFile(TEST_ZIP_FIXTURE, filePath);
     }
 
     const endpoints = ['/api/download-backup', '/api/download-mbstorage', '/api/download-mjstorage', '/api/download-pluginstorage', '/api/download-pluginconfig'];

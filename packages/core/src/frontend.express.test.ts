@@ -42,6 +42,8 @@ import type { Frontend as FrontendType } from './frontend.js';
 import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 
+const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
+
 // Mock BroadcastServer methods
 const broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest').mockImplementation(() => true);
 const broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse').mockImplementation(() => true);
@@ -187,6 +189,10 @@ describe('Matterbridge frontend express with http', () => {
         (done as (error: Error) => void)(new Error('Test download error'));
       }
     }) as typeof expressResponse.download);
+
+  const seedTempZip = async (filename: string) => {
+    await fs.copyFile(TEST_ZIP_FIXTURE, path.join(os.tmpdir(), filename));
+  };
 
   test('Matterbridge.loadInstance(true) -bridge mode', async () => {
     matterbridge = await Matterbridge.loadInstance(true);
@@ -579,11 +585,7 @@ describe('Matterbridge frontend express with http', () => {
   */
 
   test('GET /api/download-mbstorage', async () => {
-    try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), fs.constants.F_OK);
-    } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`));
-    }
+    await seedTempZip(`matterbridge.${NODE_STORAGE_DIR}.zip`);
     const response = await makeRequest('/api/download-mbstorage', 'GET');
 
     expect(response.status).toBe(200);
@@ -605,11 +607,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/download-mjstorage', async () => {
-    try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), fs.constants.F_OK);
-    } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`));
-    }
+    await seedTempZip(`matterbridge.${MATTER_STORAGE_DIR}.zip`);
     const response = await makeRequest('/api/download-mjstorage', 'GET');
 
     expect(response.status).toBe(200);
@@ -631,11 +629,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/download-pluginstorage', async () => {
-    try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), fs.constants.F_OK);
-    } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`));
-    }
+    await seedTempZip('matterbridge.pluginstorage.zip');
     const response = await makeRequest('/api/download-pluginstorage', 'GET');
 
     expect(response.status).toBe(200);
@@ -657,11 +651,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/download-pluginconfig', async () => {
-    try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), fs.constants.F_OK);
-    } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`));
-    }
+    await seedTempZip('matterbridge.pluginconfig.zip');
     const response = await makeRequest('/api/download-pluginconfig', 'GET');
 
     expect(response.status).toBe(200);
@@ -683,11 +673,7 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/download-backup', async () => {
-    try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.backup.zip`), fs.constants.F_OK);
-    } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.backup.zip`));
-    }
+    await seedTempZip('matterbridge.backup.zip');
 
     const response = await makeRequest('/api/download-backup', 'GET');
 
