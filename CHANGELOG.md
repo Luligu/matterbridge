@@ -60,7 +60,7 @@ These classes will run as threads in the next releases:
 - [triggerEvent]: The overloads of `triggerEvent()` method that take Behavior.Type or ClusterType are now typed.
 - [behaviors]: The matterbridge behaviors are exported from matterbridge/behaviors.
 - [endpoint]: Remove createPinDoorLockClusterServer() endpoint helper because of the doorLock device type requirements (8.1.6).
-- [endpoint]: Refactor MatterbridgeDoorLockServer beahavior with autoRelockTime attribute and unlockWithTimeout command.
+- [endpoint]: Refactor MatterbridgeDoorLockServer beahavior with autoRelockTime attribute and unlockWithTimeout, setUser, getUser, clearUser, setCredential, getCredentialStatus and clearCredential commands.
 
 ### Dev news
 
