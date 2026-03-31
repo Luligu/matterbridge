@@ -122,9 +122,9 @@ export class FrontendsWsServer {
   /**
    * Start the WebSocket server and set up event listeners for incoming connections and messages.
    *
-   * @returns {Promise<void>} A promise that resolves when the WebSocket server is successfully started.
+   * @returns {Promise<WebSocketServer | undefined>} A promise that resolves when the WebSocket server is successfully started.
    */
-  async start(): Promise<void> {
+  async start(): Promise<WebSocketServer | undefined> {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer({ noServer: true });
@@ -185,14 +185,16 @@ export class FrontendsWsServer {
     this.webSocketServer.on('error', (ws: WebSocket, error: Error) => {
       inspectError(this.log, `WebSocketServer error`, error);
     });
+
+    return this.webSocketServer;
   }
 
   /**
    * Stop the WebSocket server and close all active connections.
    *
-   * @returns {Promise<void>} A promise that resolves when the WebSocket server is successfully stopped.
+   * @returns {Promise<WebSocketServer | undefined>} A promise that resolves when the WebSocket server is successfully stopped.
    */
-  async stop(): Promise<void> {
+  async stop(): Promise<WebSocketServer | undefined> {
     // Close the WebSocket server
     if (this.webSocketServer) {
       this.log.debug('Closing WebSocket server...');
@@ -223,6 +225,8 @@ export class FrontendsWsServer {
     } else {
       this.log.debug('WebSocket server is not running');
     }
+
+    return this.webSocketServer;
   }
 
   /**
