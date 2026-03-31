@@ -136,46 +136,47 @@ describe('Matterbridge frontend', () => {
     startSpy.mockImplementationOnce(() => Promise.resolve());
     stopSpy.mockImplementationOnce(() => Promise.resolve());
     broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
-    await (frontend as any).msgHandler({} as any);
+    await (frontend as any).broadcastMsgHandler({} as any);
     broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
-    await (frontend as any).msgHandler({} as any);
+    await (frontend as any).broadcastMsgHandler({} as any);
 
     expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
 
-    await (frontend as any).msgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
-    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
-    await (frontend as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
-    await (frontend as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend', params: {} } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_stop', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
-    await (frontend as any).msgHandler({ id: 123456, type: 'frontend_updaterequired', src: 'manager', dst: 'frontend', params: { devVersion: true } } as any);
-    await (frontend as any).msgHandler({
+    await (frontend as any).broadcastMsgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend', params: {} } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_stop', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
+    // prettier-ignore
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_updaterequired', src: 'manager', dst: 'frontend', params: { devVersion: true } } as any);
+    await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_snackbarmessage',
       src: 'manager',
       dst: 'frontend',
       params: { message: 'message', timeout: 5, severity: 'info' },
     } as any);
-    await (frontend as any).msgHandler({
+    await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_broadcast_message',
       src: 'manager',
       dst: 'frontend',
       params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
     } as any);
-    await (frontend as any).msgHandler({
+    await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_attributechanged',
       src: 'manager',
       dst: 'frontend',
       params: { plugin: 'test', serialNumber: '1234', uniqueId: 'uniqueId', number: 123, id: 'id', cluster: 'cluster', attribute: 'attribute', value: 'value' },
     } as any);
-    await (frontend as any).msgHandler({
+    await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_logmessage',
       src: 'manager',
@@ -184,12 +185,12 @@ describe('Matterbridge frontend', () => {
     } as any);
     // prettier-ignore
     {
-      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'install', packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'install', packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
-      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
+      await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'install', packageName: 'testPlugin' } } as any);
+      await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
+      await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'uninstall', packageName: 'testPlugin' } } as any);
 
-      await (frontend as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
+      await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
     }
   });
 
@@ -352,23 +353,23 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend getPlugins', () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect((frontend as any).getPlugins()).toEqual([]);
+    expect(frontend.getApiPlugins()).toEqual([]);
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect((frontend as any).getPlugins()).toEqual([]);
+    expect(frontend.getApiPlugins()).toEqual([]);
   });
 
   test('Frontend getDevices', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(await (frontend as any).getDevices()).toEqual([]);
+    expect(frontend.getApiDevices()).toEqual([]);
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(await (frontend as any).getDevices()).toEqual([]);
+    expect(frontend.getApiDevices()).toEqual([]);
   });
 
   test('Frontend getClusters', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(await (frontend as any).getClusters()).toBeUndefined();
+    expect(await frontend.getClusters('', 1)).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(await (frontend as any).getClusters()).toBeUndefined();
+    expect(await frontend.getClusters('', 1)).toBeUndefined();
   });
 
   test('Frontend getClusterTextFromDevice', () => {
@@ -641,7 +642,6 @@ describe('Matterbridge frontend', () => {
   });
 
   test('WebSocketServer connection and message with no password', async () => {
-    // @ts-expect-error accessing private variable
     frontend.storedPassword = 'testpassword';
     const client = new WebSocket(`ws://localhost:${FRONTEND_PORT}`);
     await new Promise<void>((resolve, reject) => {
@@ -655,7 +655,6 @@ describe('Matterbridge frontend', () => {
   });
 
   test('WebSocketServer connection and message with correct password', async () => {
-    // @ts-expect-error accessing private variable
     frontend.storedPassword = 'testpassword';
     const client = new WebSocket(`ws://localhost:${FRONTEND_PORT}?password=testpassword`);
     await new Promise<void>((resolve, reject) => {
@@ -905,7 +904,6 @@ describe('Matterbridge frontend', () => {
     client.close();
     client.removeAllListeners();
 
-    // @ts-expect-error accessing private variable
     frontend.storedPassword = 'testpassword';
     const client2 = new WebSocket(`wss://localhost:${FRONTEND_PORT}`, {
       ca: readFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'), // Provide CA certificate for validation
@@ -920,7 +918,6 @@ describe('Matterbridge frontend', () => {
       });
     });
 
-    // @ts-expect-error accessing private variable
     frontend.storedPassword = 'testpassword';
     const client3 = new WebSocket(`wss://localhost:${FRONTEND_PORT}?password=testpassword`, {
       ca: readFileSync(path.join(matterbridge.matterbridgeDirectory, 'certs/ca.pem'), 'utf8'), // Provide CA certificate for validation
@@ -938,7 +935,6 @@ describe('Matterbridge frontend', () => {
         reject(error);
       });
     });
-    // @ts-expect-error accessing private variable
     frontend.storedPassword = '';
 
     // Test httpsServer on error
