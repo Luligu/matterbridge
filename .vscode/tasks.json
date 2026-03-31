@@ -207,9 +207,12 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/frontend.ts",
+        "--collectCoverageFrom=packages/core/src/backendWsServer.ts",
         "frontend.test.ts",
         "frontend.express.test.ts",
-        "frontend.websocket.test.ts"
+        "frontend.websocket.test.ts",
+        "backendWsServer.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
