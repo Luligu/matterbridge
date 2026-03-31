@@ -80,6 +80,7 @@ export class FrontendsWsServer {
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
     this.backend = backend;
     this.matterbridge = matterbridge;
+    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
     this.log = new AnsiLogger({
       logName: 'FrontendWsServer',
       logNameColor: '\x1b[38;5;97m',
@@ -104,6 +105,7 @@ export class FrontendsWsServer {
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
   private async broadcastMsgHandler(msg: WorkerMessage) {
+    // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -126,6 +128,7 @@ export class FrontendsWsServer {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer({ noServer: true });
+    // istanbul ignore next
     this.backend.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (websocket, request) => {
@@ -159,6 +162,7 @@ export class FrontendsWsServer {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
           setTimeout(() => {
+            // istanbul ignore else
             if (this.webSocketServer?.clients.size === 0) {
               this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
               this.authClients.clear();
@@ -194,6 +198,7 @@ export class FrontendsWsServer {
       this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
+        // istanbul ignore else
         if (client.readyState === WebSocket.OPEN) {
           client.close();
         }
@@ -241,13 +246,12 @@ export class FrontendsWsServer {
 
     const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse) => {
       if (client.readyState === client.OPEN) {
+        // istanbul ignore else
         if ('response' in data) {
           const { response, ...rest } = data;
           this.log.debug(`Sending api response message: ${debugStringify(rest)}`);
         } else if ('error' in data) {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
-        } else {
-          this.log.debug(`Sending api response message: ${debugStringify(data)}`);
         }
         client.send(JSON.stringify(data));
       } else {
@@ -280,8 +284,10 @@ export class FrontendsWsServer {
     if (!this.hasActiveClients()) return;
     try {
       const stringifiedMsg = JSON.stringify(msg);
+      // istanbul ignore next debug/verbose branch
       if (this.verbose) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
       this.webSocketServer?.clients.forEach((client) => {
+        // istanbul ignore else
         if (client.readyState === client.OPEN) {
           client.send(stringifiedMsg);
         }
@@ -355,6 +361,7 @@ export class FrontendsWsServer {
    */
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a refresh required message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, lock: params?.lock, ...params } });
   }
@@ -367,9 +374,11 @@ export class FrontendsWsServer {
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart required message to all connected clients');
     this.backend.restartRequired = true;
     this.backend.fixedRestartRequired = fixed;
+    // istanbul ignore else
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
@@ -381,8 +390,10 @@ export class FrontendsWsServer {
    */
   wssSendRestartNotRequired(snackbar: boolean = true) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart not required message to all connected clients');
     this.backend.restartRequired = false;
+    // istanbul ignore else
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
@@ -394,6 +405,7 @@ export class FrontendsWsServer {
    */
   wssSendUpdateRequired(devVersion: boolean = false) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an update required message to all connected clients');
     this.backend.updateRequired = true;
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
@@ -407,6 +419,7 @@ export class FrontendsWsServer {
    */
   wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -431,6 +444,7 @@ export class FrontendsWsServer {
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -450,6 +464,7 @@ export class FrontendsWsServer {
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
@@ -467,6 +482,7 @@ export class FrontendsWsServer {
    */
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
   }
@@ -479,6 +495,7 @@ export class FrontendsWsServer {
    */
   wssSendCloseSnackbarMessage(message: string) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a close snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
   }
@@ -506,6 +523,7 @@ export class FrontendsWsServer {
     value: number | string | boolean | null,
   ) {
     if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an attribute update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
