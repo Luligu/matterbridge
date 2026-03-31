@@ -209,10 +209,12 @@
         "--maxWorkers=100%",
         "--collectCoverageFrom=packages/core/src/frontend.ts",
         "--collectCoverageFrom=packages/core/src/backendWsServer.ts",
+        "--collectCoverageFrom=packages/core/src/backendExpress.ts",
         "frontend.test.ts",
         "frontend.express.test.ts",
         "frontend.websocket.test.ts",
-        "backendWsServer.test.ts"
+        "backendWsServer.test.ts",
+        "backendExpress.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
