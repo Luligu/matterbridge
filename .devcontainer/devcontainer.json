@@ -99,7 +99,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "files.trimFinalNewlines": true,
         "files.watcherExclude": {
           "**/node_modules/**": true,
-          "**/dist/**": true,
           "**/build/**": true,
           "**/.cache/**": true,
           "**/coverage/**": true
