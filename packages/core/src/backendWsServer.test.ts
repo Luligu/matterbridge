@@ -15,7 +15,7 @@ import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
-import { FrontendsWsServer } from './backendWsServer.js';
+import { BackendsWsServer } from './backendWsServer.js';
 import type { Frontend } from './frontend.js';
 import { broadcastServerIsWorkerRequestSpy, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestHelpers.js';
 
@@ -25,6 +25,7 @@ const mockedSharedMatterbridge = {
 
 const mockedBackend = {
   emit: jest.fn(),
+  authClients: new Set<string>(),
   restartRequired: false,
   fixedRestartRequired: false,
   updateRequired: false,
@@ -36,7 +37,7 @@ await setupTest(NAME, false);
 // No isolation needed or allowed since we're testing a single module and want to preserve module state across tests
 
 describe('BackendWsServer', () => {
-  let wsServer: FrontendsWsServer;
+  let wsServer: BackendsWsServer;
 
   beforeEach(() => {
     // Clear all mocks
@@ -49,8 +50,8 @@ describe('BackendWsServer', () => {
   });
 
   test('Constructor', () => {
-    wsServer = new FrontendsWsServer(mockedSharedMatterbridge, mockedBackend);
-    expect(wsServer).toBeInstanceOf(FrontendsWsServer);
+    wsServer = new BackendsWsServer(mockedSharedMatterbridge, mockedBackend);
+    expect(wsServer).toBeInstanceOf(BackendsWsServer);
   });
 
   test('BroadcastServer handler', async () => {

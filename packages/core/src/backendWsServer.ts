@@ -1,7 +1,7 @@
 /**
  * This file contains the class FrontendsWsServer.
  *
- * @file frontendWsServer.ts
+ * @file backendWsServer.ts
  * @author Luca Liguori
  * @created 2026-03-30
  * @version 1.0.0
@@ -46,11 +46,12 @@ import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 
 // WebSocket
 import WebSocket, { WebSocketServer } from 'ws';
 
+// matterbridge
 import type { Frontend } from './frontend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32mBackendWsServer loaded.\u001B[40;0m');
+if (hasParameter('loader')) console.log('\u001B[32mBackendWsServer loaded.\u001B[40;0m');
 
 /**
  * Class representing a WebSocket server for frontend connections.
@@ -58,14 +59,13 @@ if (process.argv.includes('--loader')) console.log('\u001B[32mBackendWsServer lo
  * This class manages the WebSocket server that allows communication between the backend and the frontend.
  * It provides methods to send messages to the frontend and handle incoming messages from the frontend.
  */
-export class FrontendsWsServer {
+export class BackendsWsServer {
   private debug: boolean;
   private verbose: boolean;
   private webSocketServer: WebSocketServer | undefined;
   private log: AnsiLogger;
   private backend: Frontend;
   private matterbridge: SharedMatterbridge;
-  private authClients = new Set<string>();
   private readonly server: BroadcastServer;
 
   /**
@@ -82,7 +82,7 @@ export class FrontendsWsServer {
     this.matterbridge = matterbridge;
     // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
     this.log = new AnsiLogger({
-      logName: 'FrontendWsServer',
+      logName: 'BackendWsServer',
       logNameColor: '\x1b[38;5;97m',
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
@@ -165,7 +165,7 @@ export class FrontendsWsServer {
             // istanbul ignore else
             if (this.webSocketServer?.clients.size === 0) {
               this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
-              this.authClients.clear();
+              this.backend.authClients.clear();
             }
           }, 1000).unref();
         } else {
