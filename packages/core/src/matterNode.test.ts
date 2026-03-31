@@ -15,7 +15,7 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { jest } from '@jest/globals';
-import { Logger } from '@matter/general';
+import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
@@ -68,8 +68,6 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  shellySysUpdate: false,
-  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',
@@ -177,6 +175,16 @@ describe('MatterNode', () => {
     expect(matter.server.name).toBe('matter');
     // @ts-expect-error access private property
     expect(matter.server.listenerCount('broadcast_message')).toBe(1);
+
+    Logger.format = MatterLogFormat.PLAIN;
+    let destinationLogger = matter.createDestinationMatterLogger();
+    expect(destinationLogger).toBeDefined();
+    destinationLogger('Test', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
+
+    Logger.format = MatterLogFormat.ANSI;
+    destinationLogger = matter.createDestinationMatterLogger();
+    expect(destinationLogger).toBeDefined();
+    destinationLogger('Test', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
   test('PluginManager instance', async () => {

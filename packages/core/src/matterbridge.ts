@@ -1464,13 +1464,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     return (text: string, message: Diagnostic.Message) => {
       let logger: string;
       let msg: string;
-      if (!hasParameter('no-ansi') && process.env.NO_ANSI !== 'true') {
-        // ANSI TEXT
+      if (Logger.format === MatterLogFormat.ANSI) {
         logger = text.slice(44, 44 + 20).trim();
         msg = text.slice(65);
       } else {
-        // PLAIN TEXT
-        // 2026-03-30 22:01:36.815 DEBUG MdnsAdvertisement Broadcast kind: commissionable service: mdns:A167E79D4594054C._matterc._udp.local number: 3 next: 4.26s
         logger = text.slice(30).trim().split(/\s+/, 1)[0];
         msg = text.slice(30).trim().slice(logger.length).trimStart();
       }
