@@ -179,12 +179,12 @@ describe('MatterNode', () => {
     Logger.format = MatterLogFormat.PLAIN;
     let destinationLogger = matter.createDestinationMatterLogger();
     expect(destinationLogger).toBeDefined();
-    destinationLogger('Test', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
+    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
 
     Logger.format = MatterLogFormat.ANSI;
     destinationLogger = matter.createDestinationMatterLogger();
     expect(destinationLogger).toBeDefined();
-    destinationLogger('Test', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
+    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
   test('PluginManager instance', async () => {

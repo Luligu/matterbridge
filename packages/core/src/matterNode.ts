@@ -468,17 +468,19 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     return (text: string, message: Diagnostic.Message) => {
-      let logger: string;
-      let msg: string;
-      if (Logger.format === MatterLogFormat.ANSI) {
-        logger = text.slice(44, 44 + 20).trim();
-        msg = text.slice(65);
-      } else {
-        logger = text.slice(30).trim().split(/\s+/, 1)[0];
-        msg = text.slice(30).trim().slice(logger.length).trimStart();
+      try {
+        let msg: string;
+        if (Logger.format === MatterLogFormat.ANSI) {
+          msg = text.slice(65);
+        } else {
+          msg = text.split(message.facility)[1]?.trim();
+        }
+        this.matterLog.logName = message.facility;
+        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+      } catch (_error) {
+        // istanbul ignore next
+        this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
-      this.matterLog.logName = logger;
-      this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
     };
   }
 

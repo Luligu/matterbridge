@@ -1462,35 +1462,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     return (text: string, message: Diagnostic.Message) => {
-      let logger: string;
-      let msg: string;
-      if (Logger.format === MatterLogFormat.ANSI) {
-        logger = text.slice(44, 44 + 20).trim();
-        msg = text.slice(65);
-      } else {
-        logger = text.slice(30).trim().split(/\s+/, 1)[0];
-        msg = text.slice(30).trim().slice(logger.length).trimStart();
-      }
-      this.matterLog.logName = logger;
-      switch (message.level) {
-        case MatterLogLevel.DEBUG:
-          this.matterLog.log(LogLevel.DEBUG, msg);
-          break;
-        case MatterLogLevel.INFO:
-          this.matterLog.log(LogLevel.INFO, msg);
-          break;
-        case MatterLogLevel.NOTICE:
-          this.matterLog.log(LogLevel.NOTICE, msg);
-          break;
-        case MatterLogLevel.WARN:
-          this.matterLog.log(LogLevel.WARN, msg);
-          break;
-        case MatterLogLevel.ERROR:
-          this.matterLog.log(LogLevel.ERROR, msg);
-          break;
-        case MatterLogLevel.FATAL:
-          this.matterLog.log(LogLevel.FATAL, msg);
-          break;
+      try {
+        let msg: string;
+        if (Logger.format === MatterLogFormat.ANSI) {
+          msg = text.slice(65);
+        } else {
+          msg = text.split(message.facility)[1]?.trim();
+        }
+        this.matterLog.logName = message.facility;
+        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+      } catch (_error) {
+        // istanbul ignore next
+        this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
     };
   }
