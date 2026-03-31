@@ -42,9 +42,12 @@ export const MATTER_LOGGER_FILE = 'matter.log';
 // Intentionally duplicated in apps/frontend/src/utils/backendShared.ts.
 export const NODE_STORAGE_DIR = 'storage';
 // Intentionally duplicated in apps/frontend/src/utils/backendShared.ts.
-export const MATTER_STORAGE_NAME = 'matterstorage';
+export const MATTER_STORAGE_DIR = 'matterstorage';
 export const MATTERBRIDGE_DIAGNOSTIC_FILE = 'diagnostic.log';
 export const MATTERBRIDGE_HISTORY_FILE = 'history.html';
+export const MATTERBRIDGE_BACKUP_FILE = 'matterbridge.backup.zip';
+export const MATTERBRIDGE_PLUGIN_STORAGE_FILE = 'matterbridge.pluginstorage.zip';
+export const MATTERBRIDGE_PLUGIN_CONFIG_FILE = 'matterbridge.pluginconfig.zip';
 
 export type MaybePromise<T> = T | Promise<T>;
 
@@ -196,7 +199,7 @@ export interface MatterbridgeInformation {
   shellyMainUpdate: boolean;
   loggerLevel: LogLevel;
   fileLogger: boolean;
-  matterLoggerLevel: number;
+  matterLoggerLevel: LogLevel;
   matterFileLogger: boolean;
   matterMdnsInterface: string | undefined;
   matterIpv4Address: string | undefined;

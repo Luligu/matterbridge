@@ -68,7 +68,7 @@ import type {
   SystemInformation,
   WorkerMessage,
 } from '@matterbridge/types';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
@@ -556,7 +556,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
     this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
+    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
@@ -1740,20 +1740,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Remove the resumption records and subscriptions. It forces the clients to do a full re-commissioning and re-subscribe to the bridge after the restart. It solves some issues with stale sessions and subscriptions that can cause problems after a restart.
       if (hasParameter('reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
         for (const plugin of this.plugins.array()) {
           // Remove the resumption records for the plugins (childbridge mode)
           this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, plugin.name, 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, plugin.name, 'root.subscriptions.subscriptions'), this.log);
         }
         for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
           if (!device.deviceName) continue;
           // Remove the resumption records for the server mode devices
           this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
         }
       }
 
@@ -1808,10 +1808,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (message === 'shutting down with factory reset...') {
         try {
           // Delete matter storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME);
+          const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR);
           this.log.info(`Removing matter storage directory: ${dir}`);
           await fs.promises.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup');
+          const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup');
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
@@ -2458,7 +2458,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Matter node storage started');
 
     // Backup matter storage since it is created/opened correctly
-    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME), path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'));
+    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR), path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup'));
   }
 
   /**

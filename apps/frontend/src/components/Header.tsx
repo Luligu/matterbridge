@@ -31,7 +31,7 @@ import { UiContext } from './UiProvider';
 import { WebSocketContext } from './WebSocketProvider';
 import { viewportHeight, viewportWidth } from './MbfScreen';
 import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
-import { ApiSettings, MATTER_STORAGE_NAME, NODE_STORAGE_DIR, WsMessageApiResponse } from '../utils/backendShared';
+import { ApiSettings, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, WsMessageApiResponse } from '../utils/backendShared';
 import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
 // const debug = true;
 
@@ -348,7 +348,7 @@ function Header() {
         if (debug) console.log('Header received archive success response for zip command', msg.response);
         if (msg.response.archivePath.endsWith('matterbridge.backup.zip')) window.location.href = `./api/download-backup`;
         else if (msg.response.archivePath.endsWith(`matterbridge.${NODE_STORAGE_DIR}.zip`)) window.location.href = `./api/download-mbstorage`;
-        else if (msg.response.archivePath.endsWith(`matterbridge.${MATTER_STORAGE_NAME}.zip`)) window.location.href = `./api/download-mjstorage`;
+        else if (msg.response.archivePath.endsWith(`matterbridge.${MATTER_STORAGE_DIR}.zip`)) window.location.href = `./api/download-mjstorage`;
         else if (msg.response.archivePath.endsWith('matterbridge.pluginstorage.zip')) window.location.href = `./api/download-pluginstorage`;
         else if (msg.response.archivePath.endsWith('matterbridge.pluginconfig.zip')) window.location.href = `./api/download-pluginconfig`;
       }

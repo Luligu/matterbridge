@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { isApiResponse, MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '../src/utils/backendShared';
+import { isApiResponse, MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '../src/utils/backendShared';
 
 describe('backendShared', () => {
   it('exports the frontend runtime constants', () => {
     expect(NODE_STORAGE_DIR).toBe('storage');
-    expect(MATTER_STORAGE_NAME).toBe('matterstorage');
+    expect(MATTER_STORAGE_DIR).toBe('matterstorage');
   });
 
   it('returns true only for messages from Matterbridge to Frontend with a non-zero id', () => {

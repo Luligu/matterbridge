@@ -52,7 +52,7 @@ import { DeviceTypeId, VendorId } from '@matter/types';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { inspectError } from '@matterbridge/utils/error';
@@ -186,7 +186,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // Setup the matter environment
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
     this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+    this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
@@ -497,8 +497,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Backup matter storage since it is created/opened correctly
     await this.backupMatterStorage(
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME),
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'),
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR),
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup'),
     );
   }
 

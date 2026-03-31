@@ -22,7 +22,7 @@ import { Identify, PressureMeasurement, RelativeHumidityMeasurement, Temperature
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
-import { dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
@@ -275,7 +275,7 @@ describe('MatterNode', () => {
   test('Copy fabrics for server node for Matterbridge', async () => {
     const result = await copyDirectory(
       path.join('./packages/core/src/mock/matterstorage/Matterbridge'),
-      path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge'),
+      path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge'),
     );
     expect(result).toBeTruthy();
   });

@@ -33,7 +33,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { BroadcastServer } from '@matterbridge/thread';
-import { MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
+import { MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils/wait';
 import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -235,7 +235,6 @@ describe('Matterbridge frontend express with http', () => {
   test('POST /api/login with valid password', async () => {
     // Set the password in the nodeContext
     await matterbridge.nodeContext?.set('password', 'testpassword');
-    // @ts-expect-error accessing frontend property
     matterbridge.frontend.storedPassword = 'testpassword';
 
     const response = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
@@ -247,7 +246,6 @@ describe('Matterbridge frontend express with http', () => {
   test('POST /api/login with invalid password', async () => {
     // Set the password in the nodeContext
     await matterbridge.nodeContext?.set('password', 'testpassword');
-    // @ts-expect-error accessing frontend property
     matterbridge.frontend.storedPassword = 'testpassword';
 
     const response = await makeRequest('/api/login', 'POST', { password: 'wrongpassword' });
@@ -276,13 +274,10 @@ describe('Matterbridge frontend express with http', () => {
   });
 
   test('GET /api/settings', async () => {
-    // @ts-expect-error accessing private property
-    const savedAuthClients = frontend.authClients;
-    // @ts-expect-error accessing private property
-    frontend.authClients = [];
+    const savedAuthClients = Array.from(frontend.authClients)[0];
+    frontend.authClients.clear();
     await makeRequest('/api/settings', 'GET');
-    // @ts-expect-error accessing private property
-    frontend.authClients = savedAuthClients;
+    frontend.authClients.add(savedAuthClients);
 
     const response = await makeRequest('/api/settings', 'GET');
 
@@ -611,9 +606,9 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-mjstorage', async () => {
     try {
-      await fs.access(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`), fs.constants.F_OK);
+      await fs.access(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), fs.constants.F_OK);
     } catch (error) {
-      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_NAME}.zip`));
+      await fs.copyFile('./packages/core/src/mock/test.zip', path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`));
     }
     const response = await makeRequest('/api/download-mjstorage', 'GET');
 

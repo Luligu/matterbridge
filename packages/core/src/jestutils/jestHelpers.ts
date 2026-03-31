@@ -72,7 +72,7 @@ import { ColorControl } from '@matter/types/clusters/color-control';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { MATTER_STORAGE_NAME, NODE_STORAGE_DIR } from '@matterbridge/types';
+import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -398,7 +398,7 @@ export async function startMatterbridge(
   expect(matterbridge.nodeStorage).toBeDefined();
   expect(matterbridge.nodeContext).toBeDefined();
 
-  expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+  expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
 
   expect(matterbridge.matterStorageService).toBeDefined();
   expect(matterbridge.matterStorageManager).toBeDefined();
@@ -776,7 +776,7 @@ export function createTestEnvironment(name: string, createOnly: boolean = false)
   environment = Environment.default;
   environment.vars.set('log.level', MatterLogLevel.DEBUG);
   environment.vars.set('log.format', MatterLogFormat.ANSI);
-  environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_NAME));
+  environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
 
