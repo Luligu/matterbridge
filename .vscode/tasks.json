@@ -127,6 +127,22 @@
       "detail": "Build the project for production using tsc."
     },
     {
+      "label": "Clean Build",
+      "type": "npm",
+      "script": "cleanBuild",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$tsc"],
+      "detail": "Clean and build the project using tsc."
+    },
+    {
+      "label": "Clean Build Production",
+      "type": "npm",
+      "script": "cleanBuildProduction",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc"],
+      "detail": "Clean and build the project for production using tsc."
+    },
+    {
       "label": "Watch",
       "type": "npm",
       "script": "watch",

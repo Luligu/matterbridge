@@ -104,8 +104,8 @@ export type SharedMatterbridge = Readonly<{
   port: number | undefined;
   discriminator: number | undefined;
   passcode: number | undefined;
-  shellySysUpdate: boolean;
-  shellyMainUpdate: boolean;
+  // shellySysUpdate: boolean;
+  // shellyMainUpdate: boolean;
 }>;
 
 /** Define an interface for the frontend */

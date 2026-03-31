@@ -67,7 +67,6 @@ interface ThreadInfo {
  * ThreadsManager is responsible for managing and running different threads in the application.
  */
 export class ThreadsManager {
-  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
   private debug: boolean;
   private verbose: boolean;
   private tracker: boolean;

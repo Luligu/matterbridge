@@ -233,18 +233,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Whether to log Matter to a file */
   public matterFileLogger = false;
 
-  // Frontend settings
-  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
-  public readonly shellyBoard = hasParameter('shelly');
-  public shellySysUpdate = false;
-  public shellyMainUpdate = false;
-  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
-  public restartRequired = false;
-  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
-  public fixedRestartRequired = false;
-  /** It indicates whether an update is available. */
-  public updateRequired = false;
-
   // Managers
   public readonly plugins = new PluginManager(this);
   public readonly devices = new DeviceManager();
@@ -405,8 +393,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       port: this.port,
       discriminator: this.discriminator,
       passcode: this.passcode,
-      shellySysUpdate: this.shellySysUpdate,
-      shellyMainUpdate: this.shellyMainUpdate,
+      // shellySysUpdate: this.shellySysUpdate,
+      // shellyMainUpdate: this.shellyMainUpdate,
     };
   }
 
@@ -442,14 +430,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_global_prefix':
           this.globalModulesDirectory = msg.params.prefix;
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
-          this.server.respond({ ...msg, result: { success: true } });
-          break;
-        case 'matterbridge_shelly_sys_update':
-          this.shellySysUpdate = true;
-          this.server.respond({ ...msg, result: { success: true } });
-          break;
-        case 'matterbridge_shelly_main_update':
-          this.shellyMainUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_platform':
@@ -499,8 +479,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'manager_spawn_response':
           // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
           if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
-            this.restartRequired = true;
-            this.fixedRestartRequired = true;
             const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
             if (packageName === 'matterbridge') {
               this.log.info('Matterbridge has been updated. Full restart required.');

@@ -10,18 +10,18 @@ const HOMEDIR = path.join('.cache', 'jest', NAME);
 process.argv = [
   'node',
   'frontend.test.js',
-  '-novirtual',
-  '-test',
-  '-homedir',
+  '--novirtual',
+  '--test',
+  '--homedir',
   HOMEDIR,
-  '-frontend',
+  '--frontend',
   FRONTEND_PORT.toString(),
-  '-port',
+  '--port',
   MATTER_PORT.toString(),
-  '-logger',
+  '--logger',
   'debug',
-  '-debug',
-  '-verbose',
+  '--debug',
+  '--verbose',
 ];
 
 import { copyFileSync, readFileSync } from 'node:fs';

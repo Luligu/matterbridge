@@ -118,6 +118,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
 
+  // Frontend settings
+  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
+  public readonly shellyBoard = hasParameter('shelly');
+  public shellySysUpdate = false;
+  public shellyMainUpdate = false;
+  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
+  public restartRequired = false;
+  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
+  public fixedRestartRequired = false;
+  /** It indicates whether an update is available. */
+  public updateRequired = false;
+
   /**
    * Creates a frontend server controller.
    *
@@ -219,6 +231,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
             if (msg.result.success) {
+              this.restartRequired = true;
+              this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
             } else {
@@ -229,6 +243,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
             if (msg.result.success) {
+              this.restartRequired = true;
+              this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
             } else {
@@ -1217,10 +1233,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       restartMode: this.matterbridge.restartMode,
       virtualMode: this.matterbridge.virtualMode,
       profile: this.matterbridge.profile,
-      readOnly: this.matterbridge.readOnly,
-      shellyBoard: this.matterbridge.shellyBoard,
-      shellySysUpdate: this.matterbridge.shellySysUpdate,
-      shellyMainUpdate: this.matterbridge.shellyMainUpdate,
       loggerLevel: await this.matterbridge.getLogLevel(),
       fileLogger: this.matterbridge.fileLogger,
       matterLoggerLevel: Logger.level as MatterLogLevel,
@@ -1231,9 +1243,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterPort: (await this.matterbridge.nodeContext?.get<number>('matterport', 5540)) ?? 5540,
       matterDiscriminator: await this.matterbridge.nodeContext?.get<number>('matterdiscriminator'),
       matterPasscode: await this.matterbridge.nodeContext?.get<number>('matterpasscode'),
-      restartRequired: this.matterbridge.restartRequired,
-      fixedRestartRequired: this.matterbridge.fixedRestartRequired,
-      updateRequired: this.matterbridge.updateRequired,
+      readOnly: this.readOnly,
+      shellyBoard: this.shellyBoard,
+      shellySysUpdate: this.shellySysUpdate,
+      shellyMainUpdate: this.shellyMainUpdate,
+      restartRequired: this.restartRequired,
+      fixedRestartRequired: this.fixedRestartRequired,
+      updateRequired: this.updateRequired,
     };
 
     return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: info };
@@ -2478,8 +2494,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart required message to all connected clients');
-    this.matterbridge.restartRequired = true;
-    this.matterbridge.fixedRestartRequired = fixed;
+    this.restartRequired = true;
+    this.fixedRestartRequired = fixed;
     if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
@@ -2493,7 +2509,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRestartNotRequired(snackbar: boolean = true) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart not required message to all connected clients');
-    this.matterbridge.restartRequired = false;
+    this.restartRequired = false;
     if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
@@ -2507,7 +2523,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendUpdateRequired(devVersion: boolean = false) {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an update required message to all connected clients');
-    this.matterbridge.updateRequired = true;
+    this.updateRequired = true;
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
   }
