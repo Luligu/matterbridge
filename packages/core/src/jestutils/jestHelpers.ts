@@ -877,15 +877,30 @@ export function logKeepAlives(log?: AnsiLogger): number {
  *  (setImmediate) and then await close() multiple rounds.
  *
  * @param {ServerNode} targetServer  The server whose endpoint numbering persistence should be flushed.
- * @param {number} rounds Number of macrotask + close cycles to run (2 is usually sufficient; 1 often works).
+ * @param {number} rounds Number of macrotask + close cycles to run (3 is usually sufficient).
+ * @param {number} pause Duration in ms to wait between cycles (default 10ms) to allow any follow-up work scheduled by close() to run.
  * @returns {Promise<void>}          Resolves when pending number persistence batches have completed.
  */
-export async function flushAllEndpointNumberPersistence(targetServer: ServerNode, rounds: number = 2): Promise<void> {
+export async function flushAllEndpointNumberPersistence(targetServer: ServerNode, rounds: number = 3, pause: number = 10): Promise<void> {
   const nodeStore = targetServer.env.get(ServerNodeStore);
   for (let i = 0; i < rounds; i++) {
-    await new Promise((resolve) => setImmediate(resolve));
+    await flushAsync(undefined, undefined, pause);
     await nodeStore.endpointStores.close();
   }
+}
+
+/**
+ * Get the owning ServerNode for a given Endpoint by traversing up the owner chain until the root endpoint is reached.
+ *
+ * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint} owner The endpoint or server node to find the owning server for.
+ * @returns {ServerNode<ServerNode.RootEndpoint>} The owning ServerNode of the given endpoint.
+ */
+function getOwningServerNode(owner: ServerNode<ServerNode.RootEndpoint> | Endpoint): ServerNode<ServerNode.RootEndpoint> {
+  let current = owner as Endpoint;
+  while (current.owner) {
+    current = current.owner as Endpoint;
+  }
+  return current as ServerNode<ServerNode.RootEndpoint>;
 }
 
 /**
@@ -1100,7 +1115,8 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
-  await flushAsync(undefined, undefined, pause);
+  const targetServer = getOwningServerNode(owner);
+  await flushAllEndpointNumberPersistence(targetServer, 3, pause);
 
   // istanbul ignore next
   try {
@@ -1119,7 +1135,7 @@ export async function addDevice(owner: ServerNode<ServerNode.RootEndpoint> | End
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Active);
-  await flushAsync(undefined, undefined, pause);
+  await flushAllEndpointNumberPersistence(targetServer, 3, pause);
   return true;
 }
 
@@ -1137,6 +1153,8 @@ export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | 
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
+  const targetServer = getOwningServerNode(owner);
+  await flushAllEndpointNumberPersistence(targetServer, 3, pause);
 
   // istanbul ignore next
   try {
@@ -1154,7 +1172,7 @@ export async function deleteDevice(owner: ServerNode<ServerNode.RootEndpoint> | 
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
-  await flushAsync(undefined, undefined, pause);
+  await flushAllEndpointNumberPersistence(targetServer, 3, pause);
   return true;
 }
 
