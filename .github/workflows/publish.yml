@@ -81,12 +81,14 @@ jobs:
 
       - name: Stamp build metadata into package.json
         run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm pkg set build.version="$VERSION"
           npm pkg set build.sha="${GITHUB_SHA}"
           npm pkg set build.sha7="${GITHUB_SHA::7}"
           npm pkg set build.event="${GITHUB_EVENT_NAME}"
           npm pkg set build.workflow="${GITHUB_WORKFLOW}"
-          npm pkg set build.type="${GITHUB_REF_TYPE}"
-          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.type="branch"
+          npm pkg set build.name="main"
           npm pkg set build.dev="false"
 
       - name: Publish to npm under tag latest with trusted publishing / OIDC
@@ -236,12 +238,14 @@ jobs:
 
       - name: Stamp build metadata into package.json
         run: |
+          VERSION=$(node -p "require('./package.json').version")
+          npm pkg set build.version="$VERSION"
           npm pkg set build.sha="${GITHUB_SHA}"
           npm pkg set build.sha7="${GITHUB_SHA::7}"
           npm pkg set build.event="${GITHUB_EVENT_NAME}"
           npm pkg set build.workflow="${GITHUB_WORKFLOW}"
-          npm pkg set build.type="${GITHUB_REF_TYPE}"
-          npm pkg set build.name="${GITHUB_REF_NAME}"
+          npm pkg set build.type="branch"
+          npm pkg set build.name="dev"
           npm pkg set build.dev="true"
 
       - name: Extract version and set tag

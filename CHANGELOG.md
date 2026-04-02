@@ -53,6 +53,20 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.3] - Dev branch
+
+### Added
+
+- [security]: Escape user-controlled strings in backend responses (e.g. upload `filename`) before sending them to the browser to reduce XSS risk.
+- [security]: Apply rate limiting to backend file-transfer endpoints (upload/download) to reduce brute-force/abuse and accidental DoS.
+
+### Changed
+
+- [package]: Update dependencies.
+- [terminal]: Ignore process.stdout.isTTY that was too restrictive.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.2] - 2026-04-02
 
 ### Dev Breaking Changes

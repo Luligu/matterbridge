@@ -23,6 +23,7 @@ import {
   type SharedMatterbridge,
 } from '@matterbridge/types';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
 import { BackendExpress } from './backendExpress.js';
@@ -310,6 +311,11 @@ describe('BackendExpress', () => {
     await fs.mkdir(path.join(HOMEDIR, 'apps', 'frontend', 'build'), { recursive: true });
     await fs.writeFile(path.join(HOMEDIR, 'apps', 'frontend', 'build', 'index.html'), '<html>BackendExpress</html>', 'utf8');
 
+    // 1) Trigger limiter once (low limit) to verify it's wired
+    // Use a delegating middleware so we can swap limits later without restarting.
+    let currentLimiter = rateLimit({ windowMs: 1000, max: 2 });
+    (backendExpress as any).fileLimiter = (req: any, res: any, next: any) => currentLimiter(req, res, next);
+
     expressApp = await backendExpress.start();
 
     expect(expressApp).toBeDefined();
@@ -321,6 +327,15 @@ describe('BackendExpress', () => {
     httpPort = typeof address === 'string' ? Number.parseInt(address.split(':').pop() ?? '0', 10) : (address?.port ?? 0);
     expect(httpPort).toBeGreaterThan(0);
     baseUrl = `http://127.0.0.1:${httpPort}`;
+
+    // Hit a limited endpoint 3x quickly -> 3rd should be 429
+    const r1 = await makeRequest('/api/download-backup', 'GET');
+    const r2 = await makeRequest('/api/download-backup', 'GET');
+    const r3 = await makeRequest('/api/download-backup', 'GET');
+    expect(r3.status).toBe(429);
+
+    // 2) Raise limit so the rest of the suite doesn't trip it
+    currentLimiter = rateLimit({ windowMs: 1000, max: 60 });
   });
 
   test('validateReq returns true when req.ip is missing', () => {

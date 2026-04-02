@@ -46,7 +46,9 @@ import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
 // Express
+import escapeHtml from 'escape-html';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 // Multer
 import multer from 'multer';
 // AnsiLogger
@@ -72,6 +74,10 @@ export class BackendExpress {
   private backend: Frontend;
   private matterbridge: SharedMatterbridge;
   private readonly server: BroadcastServer;
+  private fileLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 20, // max 20 requests per windowMs
+  });
 
   /**
    * Create a new BackendExpress instance.
@@ -279,7 +285,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge log
-    this.expressApp.get('/api/download-mblog', async (req, res) => {
+    this.expressApp.get('/api/download-mblog', this.fileLimiter, async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mblog ${path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE)}`);
       if (!this.validateReq(req, res)) return;
       const fs = await import('node:fs');
@@ -322,7 +328,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matter log
-    this.expressApp.get('/api/download-mjlog', async (req, res) => {
+    this.expressApp.get('/api/download-mjlog', this.fileLimiter, async (req, res) => {
       this.log.debug(`The frontend sent /api/download-mjlog ${path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE)}`);
       if (!this.validateReq(req, res)) return;
       const fs = await import('node:fs');
@@ -362,7 +368,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the diagnostic.log
-    this.expressApp.get('/api/download-diagnostic', async (req, res) => {
+    this.expressApp.get('/api/download-diagnostic', this.fileLimiter, async (req, res) => {
       this.log.debug(`The frontend sent /api/download-diagnostic`);
       if (!this.validateReq(req, res)) return;
       await this.backend.generateDiagnostic();
@@ -402,7 +408,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the history.html
-    this.expressApp.get('/api/downloadhistory', async (req, res) => {
+    this.expressApp.get('/api/downloadhistory', this.fileLimiter, async (req, res) => {
       this.log.debug(`The frontend sent /api/downloadhistory`);
       if (!this.validateReq(req, res)) return;
       try {
@@ -426,7 +432,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge backup (created with the backup command)
-    this.expressApp.get('/api/download-backup', async (req, res) => {
+    this.expressApp.get('/api/download-backup', this.fileLimiter, async (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_BACKUP_FILE), MATTERBRIDGE_BACKUP_FILE, (error) => {
@@ -441,7 +447,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge storage directory
-    this.expressApp.get('/api/download-mbstorage', async (req, res) => {
+    this.expressApp.get('/api/download-mbstorage', this.fileLimiter, async (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
@@ -456,7 +462,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matter storage directory
-    this.expressApp.get('/api/download-mjstorage', async (req, res) => {
+    this.expressApp.get('/api/download-mjstorage', this.fileLimiter, async (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), `matterbridge.${MATTER_STORAGE_DIR}.zip`, (error) => {
@@ -471,7 +477,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge plugin directory
-    this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
+    this.expressApp.get('/api/download-pluginstorage', this.fileLimiter, async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_STORAGE_FILE), MATTERBRIDGE_PLUGIN_STORAGE_FILE, (error) => {
@@ -486,7 +492,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge plugin config files
-    this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
+    this.expressApp.get('/api/download-pluginconfig', this.fileLimiter, async (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_CONFIG_FILE), MATTERBRIDGE_PLUGIN_CONFIG_FILE, (error) => {
@@ -501,7 +507,7 @@ export class BackendExpress {
     });
 
     // Endpoint to upload a package
-    this.expressApp.post('/api/uploadpackage', upload.single('file'), async (req, res) => {
+    this.expressApp.post('/api/uploadpackage', this.fileLimiter, upload.single('file'), async (req, res) => {
       this.log.debug('The frontend sent /api/uploadpackage');
       if (!this.validateReq(req, res)) return;
       const { filename } = req.body;
@@ -541,12 +547,12 @@ export class BackendExpress {
             },
           });
         }
-        res.send(`File ${filename} uploaded successfully`);
+        res.send(`File ${escapeHtml(filename)} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
         this.backend.wssSendCloseSnackbarMessage(`Installing package ${filename}...`);
         this.backend.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
-        res.status(500).send(`Error uploading or installing plugin package ${filename}`);
+        res.status(500).send(`Error uploading or installing plugin package ${escapeHtml(filename)}`);
       }
     });
 

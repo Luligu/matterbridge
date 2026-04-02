@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.7.2",
+  "version": "3.7.3",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -255,13 +255,13 @@
     "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.7.2",
-    "@matterbridge/dgram": "3.7.2",
-    "@matterbridge/jest-utils": "3.7.2",
-    "@matterbridge/thread": "3.7.2",
-    "@matterbridge/types": "3.7.2",
-    "@matterbridge/utils": "3.7.2",
-    "@matterbridge/vitest-utils": "3.7.2"
+    "@matterbridge/core": "3.7.3",
+    "@matterbridge/dgram": "3.7.3",
+    "@matterbridge/jest-utils": "3.7.3",
+    "@matterbridge/thread": "3.7.3",
+    "@matterbridge/types": "3.7.3",
+    "@matterbridge/utils": "3.7.3",
+    "@matterbridge/vitest-utils": "3.7.3"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
