@@ -53,6 +53,31 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.2] - 2026-04-02
+
+### Dev Breaking Changes
+
+- [triggerEvent]: The overloads of `triggerEvent()` method that take Behavior.Type or ClusterType are now typed.
+- [behaviors]: The matterbridge behaviors are exported from matterbridge/behaviors.
+- [endpoint]: Remove createPinDoorLockClusterServer() endpoint helper because of the doorLock device type requirements (8.1.6).
+- [endpoint]: Refactor MatterbridgeDoorLockServer beahavior with autoRelockTime attribute and unlockWithTimeout, setUser, getUser, clearUser, setCredential, getCredentialStatus and clearCredential commands.
+
+### Dev news
+
+- [endpoint]: Add internalFor() helper.
+
+### Changed
+
+- [package]: Update dependencies.
+- [frontend]: Bump `frontend` version to v.3.4.10.
+- [frontend]: Remove `matterbridge-security` from ignore list. It has been published.
+
+### Fixed
+
+- [ansi]: Fix --no-ansi and NO_COLOR=1 for threads and matter logger.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.1] - 2026-03-27
 
 ### Breaking Changes

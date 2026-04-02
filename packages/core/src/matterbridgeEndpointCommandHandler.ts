@@ -31,6 +31,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // @matter
 import { HandlerFunction } from '@matter/general';
+import { ActionContext } from '@matter/main';
 import type { Attribute } from '@matter/types/cluster';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
@@ -227,9 +228,33 @@ export type CommandHandlers = keyof CommandHandlerDataMap;
 export type CommandHandlerData<T extends CommandHandlers = CommandHandlers> = CommandHandlerDataMap[T];
 
 /**
- * Type of the command handler function for MatterbridgeEndpoint. The function receives data related to the received command, including the command,request, cluster, attributes, and endpoint.
+ * Data passed to a command handler when a command is executed.
+ * This extends the static command payload with the Matter action context when one is available.
  */
-export type CommandHandlerFunction<T extends CommandHandlers = CommandHandlers> = (data: CommandHandlerData<T>) => void | Promise<void>;
+export type CommandHandlerPayload<T extends CommandHandlers = CommandHandlers> = CommandHandlerData<T> & { context?: ActionContext };
+
+type VoidReturn = ReturnType<() => void>;
+
+/**
+ * Response returned by a command handler for a specific command.
+ */
+export type CommandHandlerResponse<T extends CommandHandlers = CommandHandlers> = T extends keyof CommandHandlerResponseMap ? CommandHandlerResponseMap[T] : VoidReturn;
+
+/**
+ * Value returned when executing a command handler.
+ * Commands with a mapped response return that response when handled and undefined when no handler is registered.
+ */
+export type CommandHandlerExecutionResult<T extends CommandHandlers = CommandHandlers> = T extends keyof CommandHandlerResponseMap
+  ? CommandHandlerResponseMap[T] | undefined
+  : VoidReturn;
+
+/**
+ * Type of the command handler function for MatterbridgeEndpoint.
+ * The function receives data related to the received command, including the command, request, cluster, attributes, endpoint, and optional Matter action context.
+ */
+export type CommandHandlerFunction<T extends CommandHandlers = CommandHandlers> = (
+  data: CommandHandlerPayload<T>,
+) => CommandHandlerResponse<T> | Promise<CommandHandlerResponse<T>>;
 
 /**
  * Data passed to command handlers for each supported command. The keys are in the format 'ClusterName.commandName' and the values contain the command,request, cluster, attributes, and endpoint related to the command.
@@ -1095,6 +1120,14 @@ export type CommandHandlerDataMap = {
   };
 };
 
+/**
+ * Data returned by command handlers.
+ * AI generated note: The CommandHandlerResponseMap type is generated based on the commands defined in the clusters used by MatterbridgeEndpoint.
+ */
+export type CommandHandlerResponseMap = {
+  'DoorLock.getUser': DoorLock.GetUserResponse;
+};
+
 type CommandHandlerEntry = {
   [K in CommandHandlers]: {
     command: K;
@@ -1136,9 +1169,9 @@ export class CommandHandler {
    *
    * @param {CommandHandlers} command - The command to execute the handler for.
    * @param {...any} args - The arguments to pass to the handler function.
-   * @returns {Promise<void>} - A promise that resolves when the handler has been executed.
+   * @returns {Promise<CommandHandlerExecutionResult<K>>} - A promise that resolves to the command response when defined for the command.
    */
-  async executeHandler<K extends CommandHandlers>(command: K, ...args: Parameters<CommandHandlerFunction<K>>): Promise<void> {
+  async executeHandler<K extends CommandHandlers>(command: K, ...args: Parameters<CommandHandlerFunction<K>>): Promise<CommandHandlerExecutionResult<K>> {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === command) {
         return await (handler as CommandHandlerFunction<K>)(...args);
@@ -1146,13 +1179,15 @@ export class CommandHandler {
     }
 
     const fallbackCommand = command.includes('.') ? command.split('.').pop() : undefined;
-    if (fallbackCommand === undefined) return;
+    if (fallbackCommand === undefined) return undefined as CommandHandlerExecutionResult<K>;
 
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === fallbackCommand) {
-        return await (handler as (...handlerArgs: Parameters<CommandHandlerFunction<K>>) => void | Promise<void>)(...args);
+        return await (handler as CommandHandlerFunction<K>)(...args);
       }
     }
+
+    return undefined as CommandHandlerExecutionResult<K>;
   }
 
   /**

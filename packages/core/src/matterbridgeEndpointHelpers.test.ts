@@ -11,9 +11,11 @@ import { jest } from '@jest/globals';
 import { NumberTag, PowerSourceTag } from '@matter/node';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { VendorId } from '@matter/types';
-import { TemperatureMeasurement, TemperatureMeasurementCluster } from '@matter/types/clusters/temperature-measurement';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { db, er, hk, or } from 'node-ansi-logger';
 
+import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
 import {
   addDevice,
   aggregator,
@@ -24,7 +26,7 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
-import { temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { doorLockDevice, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -45,6 +47,7 @@ import {
   getDefaultTemperatureMeasurementClusterServer,
   getSemtag,
   getSnapshot,
+  internalFor,
   setCluster,
 } from './matterbridgeEndpointHelpers.js';
 
@@ -120,6 +123,38 @@ describe('Options helpers', () => {
     expect(getDefaultIlluminanceMeasurementClusterServer()).toBeDefined();
     expect(getDefaultFlowMeasurementClusterServer()).toBeDefined();
     expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
+  });
+
+  test('internalFor returns the live behavior internal state', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLockHelper' });
+    device.behaviors.require(
+      MatterbridgeDoorLockServer.with().enable({
+        events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
+        commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
+      }),
+      {
+        lockState: DoorLock.LockState.Locked,
+        lockType: DoorLock.LockType.DeadBolt,
+        actuatorEnabled: true,
+        operatingMode: DoorLock.OperatingMode.Normal,
+        supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
+        autoRelockTime: 0,
+      },
+    );
+    device.addRequiredClusterServers();
+
+    expect(await addDevice(aggregator, device)).toBeDefined();
+
+    expect(await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'UnknownBehavior')).toBeUndefined();
+
+    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer);
+    expect(internal).toBeDefined();
+    if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+
+    expect(internal.enableTimeout).toBe(true);
+    internal.enableTimeout = false;
+
+    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
   });
 
   test('getSnapshot returns non-object values unchanged', () => {

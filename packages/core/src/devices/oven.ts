@@ -31,7 +31,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
 
 // Matterbridge
-import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { oven, powerSource, temperatureControlledCabinetHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';

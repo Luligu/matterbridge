@@ -8,12 +8,13 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 // @matter
+import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/types/clusters';
 import { er, hk, LogLevel } from 'node-ansi-logger';
 
 // Matterbridge
+import { MatterbridgeServiceAreaServer } from '../behaviors/serviceAreaServer.js';
 import {
   addDevice,
   aggregator,
@@ -26,7 +27,6 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestHelpers.js';
-import { MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 

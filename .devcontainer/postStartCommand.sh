@@ -7,6 +7,7 @@
 set -euo pipefail
 
 echo "Welcome to Matterbridge Dev Container"
+WORKSPACE_FS_TYPE=$(stat -f -c %T "$PWD" 2>/dev/null || echo unknown)
 DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
 CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release)
 echo "Distro: $DISTRO ($CODENAME)"
@@ -15,6 +16,7 @@ echo "Hostname: $(hostname)"
 echo "Architecture: $(uname -m)"
 echo "Kernel Version: $(uname -r)"
 echo "Uptime: $(uptime -p || echo 'unavailable')"
+echo "Workspace filesystem: $WORKSPACE_FS_TYPE"
 echo "Date: $(date)"
 echo "Node.js version: $(node -v)"
 echo "Npm version: $(npm -v)"

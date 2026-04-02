@@ -121,6 +121,10 @@ Matterbridge exports from:
 
 - All clusters not present in matter.js or modified. It can be empty.
 
+**"matterbridge/behaviors"**
+
+- All matterbridge behaviors.
+
 **"matterbridge/utils"**
 
 - All general utils and colorUtils functions.
@@ -478,21 +482,34 @@ Each plugin has a minimal default schema file injected by Matterbridge when it i
   type: 'object',
   properties: {
     name: {
-      description: 'Plugin name',
-      type: 'string',
-      readOnly: true,
+      'title': 'Plugin Name',
+      'description': 'Plugin name',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
     },
     type: {
-      description: 'Plugin type',
-      type: 'string',
-      readOnly: true,
+      'title': 'Plugin Type',
+      'description': 'Plugin type',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
+    },
+    version: {
+      'title': 'Plugin Version',
+      'description': 'Plugin version',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
     },
     debug: {
+      title: 'Enable Debug',
       description: 'Enable the debug for the plugin (development only)',
       type: 'boolean',
       default: false,
     },
     unregisterOnShutdown: {
+      title: 'Unregister On Shutdown',
       description: 'Unregister all devices on shutdown (development only)',
       type: 'boolean',
       default: false,

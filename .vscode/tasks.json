@@ -2,12 +2,153 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Run: Default",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge (default mode)."
+    },
+    {
+      "label": "Run: Bridge",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--bridge", "--port", "5540"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge in bridge mode on port 5540."
+    },
+    {
+      "label": "Run: Childbridge",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--childbridge", "--port", "5540"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge in childbridge mode on port 5540."
+    },
+    {
+      "label": "Run: Controller",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--controller", "--frontend", "0", "--port", "6000"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge in controller mode on port 6000 with frontend disabled."
+    },
+    {
+      "label": "Run: Controller Pair",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--controller", "--frontend", "0", "--port", "6000", "--pair", "--pairingcode", "32902218933"],
+      "problemMatcher": [],
+      "detail": "Start controller mode and run pairing using pairing code 32902218933."
+    },
+    {
+      "label": "Run: Controller Discover",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--controller", "--frontend", "0", "--port", "6000", "--discover"],
+      "problemMatcher": [],
+      "detail": "Start controller mode and run device discovery."
+    },
+    {
+      "label": "Run: Controller Unpair All",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--controller", "--frontend", "0", "--port", "6000", "--unpairall"],
+      "problemMatcher": [],
+      "detail": "Start controller mode and unpair all paired devices."
+    },
+    {
+      "label": "Run: Inspect",
+      "type": "process",
+      "command": "node",
+      "args": ["--inspect=0.0.0.0:9229", "./bin/matterbridge.js", "--debug", "--trace", "--loader"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with Node inspector on 0.0.0.0:9229 (debug/trace/loader)."
+    },
+    {
+      "label": "Run: Expose GC",
+      "type": "process",
+      "command": "node",
+      "args": ["--expose-gc", "./bin/matterbridge.js", "--debug", "--trace", "--loader"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with --expose-gc (debug/trace/loader)."
+    },
+    {
+      "label": "Run: Trace GC",
+      "type": "process",
+      "command": "node",
+      "args": ["--trace_gc", "./bin/matterbridge.js", "--debug", "--trace", "--loader"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with --trace_gc (debug/trace/loader)."
+    },
+    {
+      "label": "Run: Trace GC Verbose",
+      "type": "process",
+      "command": "node",
+      "args": ["--trace_gc_verbose", "./bin/matterbridge.js", "--debug", "--trace", "--loader"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with --trace_gc_verbose (debug/trace/loader)."
+    },
+    {
+      "label": "Run: No Color",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js"],
+      "options": {
+        "env": {
+          "NO_COLOR": "1"
+        }
+      },
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with env NO_COLOR=1 to disable ANSI colors."
+    },
+    {
+      "label": "Run: No ANSI",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--no-ansi"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with --no-ansi to disable ANSI escapes."
+    },
+    {
       "label": "Build",
       "type": "npm",
       "script": "build",
       "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": [],
-      "detail": "tsc"
+      "problemMatcher": ["$tsc"],
+      "detail": "Build the project using tsc."
+    },
+    {
+      "label": "Build Production",
+      "type": "npm",
+      "script": "buildProduction",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc"],
+      "detail": "Build the project for production using tsc."
+    },
+    {
+      "label": "Clean Build",
+      "type": "npm",
+      "script": "cleanBuild",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$tsc"],
+      "detail": "Clean and build the project using tsc."
+    },
+    {
+      "label": "Clean Build Production",
+      "type": "npm",
+      "script": "cleanBuildProduction",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc"],
+      "detail": "Clean and build the project for production using tsc."
+    },
+    {
+      "label": "Watch",
+      "type": "npm",
+      "script": "watch",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc-watch"],
+      "detail": "Watch the project using tsc."
     },
     {
       "label": "Test: All",
@@ -66,9 +207,14 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/frontend.ts",
+        "--collectCoverageFrom=packages/core/src/backendWsServer.ts",
+        "--collectCoverageFrom=packages/core/src/backendExpress.ts",
         "frontend.test.ts",
         "frontend.express.test.ts",
-        "frontend.websocket.test.ts"
+        "frontend.websocket.test.ts",
+        "backendWsServer.test.ts",
+        "backendExpress.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -84,11 +230,12 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsClient.ts",
-        "--collectCoverageFrom=packages/core/src/matterbridgeBehaviorsServer.ts",
+        "--collectCoverageFrom=packages/core/src/behaviors/*.ts",
+        "--collectCoverageFrom=!packages/core/src/behaviors/export.ts",
         "--coverageThreshold={ \"global\": { \"statements\": 100, \"branches\": 100, \"functions\": 100, \"lines\": 100 } }",
-        "matterbridgeBehaviorsClient.test.ts",
-        "matterbridgeBehaviorsServer.test.ts"
+        "behaviors/bindingServer.test.ts",
+        "behaviors/doorLockServer.test.ts",
+        "behaviors/matterbridgeServer.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

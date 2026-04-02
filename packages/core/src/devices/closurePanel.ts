@@ -28,8 +28,8 @@ import { ClusterBehavior } from '@matter/node';
 import { ClusterType } from '@matter/types';
 
 // Matterbridge
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { ClosureDimension } from '../clusters/closure-dimension.js';
-import { MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

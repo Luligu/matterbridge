@@ -277,11 +277,13 @@ describe('PluginManager', () => {
       // await setDebug(true);
       execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1.tgz' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       expect(plugins.has('matterbridge-mock1')).toBe(true); 
       expect(await plugins.shutdown('matterbridge-mock1', 'Closing', false, true)).toBeDefined();
 
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1', plugin: { loaded: true} } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       // await setDebug(false);
       expect(plugins.has('matterbridge-mock1')).toBe(false); 
@@ -664,8 +666,6 @@ describe('PluginManager', () => {
     plugins.uninstall('matterbridge-websocket');
     expect(plugins.length).toBe(3);
     matterbridge.restartMode = '';
-    matterbridge.restartRequired = false;
-    matterbridge.fixedRestartRequired = false;
   });
 
   test('parse plugin', async () => {
@@ -741,7 +741,7 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
     await fs.writeFile(
       packageFilePath,
-      JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', notauthor: 'To update' }),
+      JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', notauthor: 'To update', homepage: 'https://example.com' }),
       'utf8',
     );
     expect(await plugins.parse(plugin)).not.toBeNull();
@@ -929,6 +929,12 @@ describe('PluginManager', () => {
     expect(plugins.getAuthor({ author: undefined } as any)).toBe('Unknown author');
     expect(plugins.getAuthor({ author: 'String name' })).toBe('String name');
     expect(plugins.getAuthor({ author: { name: 'Object name' } })).toBe('Object name');
+  });
+
+  test('parse description', async () => {
+    expect(plugins.getDescription({})).toBe('No description');
+    expect(plugins.getDescription({ description: undefined } as any)).toBe('No description');
+    expect(plugins.getDescription({ description: 'String description' })).toBe('String description');
   });
 
   test('parse homepage', async () => {

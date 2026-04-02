@@ -48,7 +48,11 @@ export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
 const manager = new ThreadsManager();
 
-if (process.argv.includes('--no-ansi') || process.argv.includes('-no-ansi')) process.env.NO_COLOR = '1';
+/** Minimal ANSI styling with auto-disable in non-TTY or when NO_COLOR is set. */
+// istanbul ignore next cause colorEnabled is not relevant for coverage
+const colorEnabled = Boolean(process.stdout.isTTY && !process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi'));
+// istanbul ignore else
+if (!colorEnabled) process.env.NO_COLOR = '1';
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
 

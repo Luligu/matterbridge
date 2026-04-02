@@ -29,7 +29,8 @@ import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
+import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

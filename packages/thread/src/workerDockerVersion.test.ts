@@ -13,10 +13,12 @@ async function runWorkerDockerVersion(options: RunOptions) {
   jest.resetModules();
 
   const loggerMock = jest.fn();
+  const requestMock = jest.fn();
 
   const worker = {
     logger: loggerMock,
     log: { debug: jest.fn() },
+    server: { request: requestMock },
   } as any;
 
   let wrapperName: string | undefined;
@@ -55,7 +57,7 @@ async function runWorkerDockerVersion(options: RunOptions) {
   await import('./workerDockerVersion.js');
   const success = await runPromise;
 
-  return { wrapperName, success, loggerMock, getDockerVersion, inspectError, readFileSync };
+  return { wrapperName, success, loggerMock, requestMock, getDockerVersion, inspectError, readFileSync };
 }
 
 describe('workerDockerVersion', () => {
@@ -64,7 +66,7 @@ describe('workerDockerVersion', () => {
   });
 
   test('success: gets latest + dev docker versions and logs success with current docker build version', async () => {
-    const { wrapperName, success, loggerMock, getDockerVersion, readFileSync } = await runWorkerDockerVersion({
+    const { wrapperName, success, loggerMock, requestMock, getDockerVersion, readFileSync } = await runWorkerDockerVersion({
       dockerVersionLatest: '3.5.5',
       dockerVersionDev: '3.5.6-dev',
       dockerBuildConfigJson: '{"version":"3.5.4","dev":false}',
@@ -79,10 +81,21 @@ describe('workerDockerVersion', () => {
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Starting docker version check...');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Docker build config: version=3.5.4 dev=false');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Docker version check succeeded: latest=3.5.5, dev=3.5.6-dev, current=3.5.4');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: '3.5.4',
+        dockerDev: false,
+        dockerLatestVersion: '3.5.5',
+        dockerDevVersion: '3.5.6-dev',
+      },
+    });
   });
 
   test('success: missing docker build config logs unknown current version', async () => {
-    const { success, loggerMock, readFileSync } = await runWorkerDockerVersion({
+    const { success, loggerMock, requestMock, readFileSync } = await runWorkerDockerVersion({
       readDockerBuildConfigThrows: true,
     });
 
@@ -90,14 +103,58 @@ describe('workerDockerVersion', () => {
     expect(readFileSync).toHaveBeenCalledWith('/matterbridge/.dockerbuild.json', 'utf-8');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.DEBUG, 'Failed to read docker build config');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Docker version check succeeded: latest=3.5.5, dev=3.5.6-dev, current=unknown');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: undefined,
+        dockerDev: undefined,
+        dockerLatestVersion: '3.5.5',
+        dockerDevVersion: '3.5.6-dev',
+      },
+    });
+  });
+
+  test('success: warns when dev docker image is outdated', async () => {
+    const { success, loggerMock, requestMock } = await runWorkerDockerVersion({
+      dockerVersionLatest: '3.5.5',
+      dockerVersionDev: '3.5.6-dev',
+      dockerBuildConfigJson: '{"version":"3.5.4-dev","dev":true}',
+    });
+
+    expect(success).toBe(true);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, 'You are using the v.3.5.4-dev dev Docker image. Please pull the dev Docker image v.3.5.6-dev.');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: '3.5.4-dev',
+        dockerDev: true,
+        dockerLatestVersion: '3.5.5',
+        dockerDevVersion: '3.5.6-dev',
+      },
+    });
   });
 
   test('error: getDockerVersion throws -> logs inspected error and returns false', async () => {
-    const { success, loggerMock, inspectError, getDockerVersion } = await runWorkerDockerVersion({ getDockerVersionThrows: true });
+    const { success, loggerMock, requestMock, inspectError, getDockerVersion } = await runWorkerDockerVersion({ getDockerVersionThrows: true });
 
     expect(success).toBe(false);
     expect(getDockerVersion).toHaveBeenCalledWith('luligu', 'matterbridge', 'latest');
     expect(inspectError).toHaveBeenCalledWith(expect.anything(), 'Failed to check docker version', expect.any(Error));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, 'inspected error');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: '3.5.4',
+        dockerDev: false,
+        dockerLatestVersion: undefined,
+        dockerDevVersion: undefined,
+      },
+    });
   });
 });

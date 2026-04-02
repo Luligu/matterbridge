@@ -52,7 +52,7 @@ import { DeviceTypeId, VendorId } from '@matter/types';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { inspectError } from '@matterbridge/utils/error';
@@ -185,10 +185,11 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Setup the matter environment
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
-    this.environment.vars.set('log.format', MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+    this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
+    this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
+
     if (this.verbose) this.log.debug(`Matter Environment is ready`);
 
     // Ensure MdnsService is registered in the default environment
@@ -467,11 +468,19 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     return (text: string, message: Diagnostic.Message) => {
-      // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
-      const logger = text.slice(44, 44 + 20).trim();
-      const msg = text.slice(65);
-      this.matterLog.logName = logger;
-      this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+      try {
+        let msg: string;
+        if (Logger.format === MatterLogFormat.ANSI) {
+          msg = text.slice(65);
+        } else {
+          msg = text.split(message.facility)[1]?.trim();
+        }
+        this.matterLog.logName = message.facility;
+        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+      } catch (_error) {
+        // istanbul ignore next
+        this.log.debug(`Error parsing matter log message facility ${message.facility}`);
+      }
     };
   }
 
@@ -488,8 +497,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Backup matter storage since it is created/opened correctly
     await this.backupMatterStorage(
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME),
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'),
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR),
+      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup'),
     );
   }
 

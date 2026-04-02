@@ -19,7 +19,7 @@ export type { ApiPlugin, ApiDevice, ApiClusters, ApiMatter, MatterbridgeInformat
 
 // Duplicated locally on purpose: these values are used at runtime by the frontend.
 export const NODE_STORAGE_DIR = 'storage';
-export const MATTER_STORAGE_NAME = 'matterstorage';
+export const MATTER_STORAGE_DIR = 'matterstorage';
 
 // Duplicated locally on purpose: this is only a frontend type guard.
 export function isApiResponse(msg: WsMessage): msg is WsMessageApiResponse {

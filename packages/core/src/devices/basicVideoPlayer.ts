@@ -28,7 +28,8 @@ import { KeypadInput } from '@matter/types/clusters/keypad-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 
 // Matterbridge
-import { MatterbridgeOnOffServer, MatterbridgeServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
+import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { basicVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

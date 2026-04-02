@@ -121,24 +121,22 @@ import { isValidArray } from '@matterbridge/utils/validate';
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
-import {
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgePowerSourceServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
-} from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
+import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
+import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
+import { MatterbridgeFanControlServer } from './behaviors/fanControlServer.js';
+import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
+import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
+import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
+import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
+import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
+import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 
@@ -294,6 +292,32 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behaviorId)]['cluster']['supportedFeatures'];
+}
+
+/**
+ * Retrieves the internal state object for a specific behavior.
+ *
+ * @template T
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to retrieve the internal state from.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the internal state for.
+ * @returns {Promise<T | undefined>} The live internal state object for the specified behavior, or undefined if the cluster is not found.
+ *
+ * @remarks Use with:
+ * ```typescript
+ *     const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'doorLock');
+ *     internal?.enableTimeout = true;
+ * ```
+ */
+export async function internalFor<T extends object = Record<string, unknown>>(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+): Promise<T | undefined> {
+  const behaviorId = getBehavior(endpoint, cluster)?.id;
+  if (!behaviorId) {
+    endpoint.log?.error(`internalFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return undefined;
+  }
+  return endpoint.act((agent) => (agent as unknown as Record<string, { internal?: T } | undefined>)[behaviorId]?.internal);
 }
 
 /**

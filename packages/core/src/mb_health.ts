@@ -21,6 +21,16 @@
  * limitations under the License.
  */
 
+/**
+ * Docker HEALTHCHECK usage:
+ *
+ * ```dockerfile
+ * # After installing the matterbridge package globally (so the `mb_health` bin is on PATH)
+ * HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+ *   CMD mb_health <http://localhost:8283/health> || exit 1
+ * ```
+ */
+
 import http from 'node:http';
 import https from 'node:https';
 
@@ -153,13 +163,3 @@ export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code:
 export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit, url: string = DEFAULT_MB_HEALTH_URL): Promise<void> {
   await mbHealthCli(url, 5000, exitFn);
 }
-
-/**
- * Docker HEALTHCHECK usage:
- *
- * ```dockerfile
- * # After installing the matterbridge package globally (so the `mb_health` bin is on PATH)
- * HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
- *   CMD mb_health <http://localhost:8283/health> || exit 1
- * ```
- */

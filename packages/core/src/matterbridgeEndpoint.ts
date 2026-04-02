@@ -102,32 +102,28 @@ import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
-import {
-  MatterbridgeActivatedCarbonFilterMonitoringServer,
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeHepaFilterMonitoringServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgePinDoorLockServer,
-  MatterbridgePowerSourceServer,
-  MatterbridgeServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeSwitchServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeUserPinDoorLockServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
-} from './matterbridgeBehaviorsServer.js';
+import { MatterbridgeActivatedCarbonFilterMonitoringServer } from './behaviors/activatedCarbonFilterMonitoringServer.js';
+import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
+import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
+import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
+import { MatterbridgeFanControlServer } from './behaviors/fanControlServer.js';
+import { MatterbridgeHepaFilterMonitoringServer } from './behaviors/hepaFilterMonitoringServer.js';
+import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
+import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
+import { MatterbridgeServer } from './behaviors/matterbridgeServer.js';
+import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
+import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
+import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
+import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
+import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-import { CommandHandler, CommandHandlerData, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterServers,
   addFixedLabel,
@@ -178,6 +174,20 @@ type BehaviorCommandName<T extends Behavior.Type> = {
   [K in keyof CommandsOfBehavior<T>]: K;
 }[keyof CommandsOfBehavior<T>] &
   string;
+
+type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType.Unknown;
+
+type ClusterEventName<T extends ClusterType> = keyof ClusterType.EventsOf<T> & string;
+
+type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterType.EventsOf<T>
+  ? ClusterType.EventsOf<T>[E] extends { schema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
+    ? import('@matter/types/tlv').TypeFromSchema<S>
+    : never
+  : never;
+
+type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorCluster<T>>;
+
+type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
 
 type CommandsOfBehavior<T extends Behavior.Type> = {
   [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
@@ -1251,11 +1261,111 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Triggers an event on the specified cluster.
    *
-   * @param {ClusterId} cluster - The ID of the cluster.
+   * @param {Behavior.Type} cluster - The cluster to trigger the event on.
+   * @param {BehaviorEventName<T>} event - The name of the event to trigger.
+   * @param {BehaviorEventPayload<T, E>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  async triggerEvent<T extends Behavior.Type, E extends BehaviorEventName<T>>(cluster: T, event: E, payload: BehaviorEventPayload<T, E>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterType} cluster - The cluster to trigger the event on.
+   * @param {ClusterEventName<T>} event - The name of the event to trigger.
+   * @param {ClusterEventPayload<T, E>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async triggerEvent<T extends ClusterType, E extends ClusterEventName<T>>(cluster: T, event: E, payload: ClusterEventPayload<T, E>, log?: AnsiLogger): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {ClusterId | string} cluster - The cluster to trigger the event on.
    * @param {string} event - The name of the event to trigger.
    * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
    * @param {AnsiLogger} [log] - Optional logger for logging information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
+   */
+  async triggerEvent(
+    cluster: ClusterId | string,
+    event: string,
+    payload: Record<string, boolean | number | bigint | string | object | undefined | null>,
+    log?: AnsiLogger,
+  ): Promise<boolean>;
+  /**
+   * Triggers an event on the specified cluster.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to trigger the event on.
+   * @param {string} event - The name of the event to trigger.
+   * @param {Record<string, boolean | number | bigint | string | object | undefined | null>} payload - The payload to pass to the event.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the event was successfully triggered.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to trigger the 'initialPress' event of the 'Switch' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
+   * ```
+   * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
    */
   async triggerEvent(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -1335,6 +1445,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
    * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
+   * - `context`: The optional Matter action context for behavior-driven commands.
    */
   addCommandHandler<C extends CommandHandlers>(command: C, handler: CommandHandlerFunction<C>): this {
     this.commandHandler.addHandler(command, handler);
@@ -1361,6 +1472,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {CommandHandlerData<C>['cluster']} cluster - The cluster to pass to the handler function.
    * @param {CommandHandlerData<C>['attributes']} attributes - The attributes to pass to the handler function.
    * @param {CommandHandlerData<C>['endpoint']} endpoint - The MatterbridgeEndpoint instance to pass to the handler function.
+   * @returns {Promise<CommandHandlerExecutionResult<C>>} The result of the command handler execution.
+   *
+   * @remarks The command shall be a string in the format of "Cluster.command" (e.g. "OnOff.toggle"). Requires matterbridge version 3.7.2 or higher.
    */
   async executeCommandHandler<C extends CommandHandlers>(
     command: C,
@@ -1368,8 +1482,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     cluster: CommandHandlerData<C>['cluster'],
     attributes: CommandHandlerData<C>['attributes'],
     endpoint: CommandHandlerData<C>['endpoint'],
-  ): Promise<void> {
-    await this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
+  ): Promise<CommandHandlerExecutionResult<C>> {
+    return this.commandHandler.executeHandler(command, { command, request, cluster, attributes, endpoint } as CommandHandlerData<C>);
   }
 
   /**
@@ -3381,17 +3495,23 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default door lock cluster server with no additional features.
+   * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
+   * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * All operating modes NOT supported by a lock SHALL be set to one. The value of the OperatingMode enumeration defines the related bit to be set.
    */
-  createDefaultDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
+  createDefaultDoorLockClusterServer(
+    lockState: DoorLock.LockState = DoorLock.LockState.Locked,
+    lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
+    autoRelockTime: number = 0,
+  ): this {
     this.behaviors.require(
-      MatterbridgeDoorLockServer.enable({
+      MatterbridgeDoorLockServer.with().enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -3418,76 +3538,21 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
          */
         supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
-        autoRelockTime: 0, // 0=disabled
+        autoRelockTime, // 0=disabled
       },
     );
     return this;
   }
 
   /**
-   * Creates a door lock cluster server with feature PinCredential (PIN) and CredentialOverTheAirAccess (COTA).
+   * Creates a door lock cluster server with feature User (USR) and PinCredential (PIN).
+   * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands, and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   *
-   * @remarks
-   * All operating modes NOT supported by a lock SHALL be set to one. The value of the OperatingMode enumeration defines the related bit to be set.
-   *
-   * @remarks
-   * The Apple Home doesn't pair with this!
-   */
-  createPinDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
-    this.behaviors.require(
-      MatterbridgePinDoorLockServer.with(DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
-        events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
-        commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true, setUserStatus: true, getUserStatus: true, setUserType: true, getUserType: true },
-      }),
-      {
-        // Base attributes
-        lockState,
-        lockType,
-        /** This attribute SHALL indicate if the lock is currently able to (Enabled) or not able to (Disabled) process remote Lock, Unlock, or Unlock with Timeout commands. */
-        actuatorEnabled: true,
-        /** This attribute SHALL indicate the current operating mode of the lock as defined in OperatingModeEnum */
-        operatingMode: DoorLock.OperatingMode.Normal,
-        /**
-         * This attribute SHALL contain a bitmap with all operating bits of the OperatingMode attribute supported
-         * by the lock. All operating modes NOT supported by a lock SHALL be set to one. The value of
-         * the OperatingMode enumeration defines the related bit to be set.
-         * OperatingModesBitmap.Normal and OperatingModesBitmap.noRemoteLockUnlock are mandatory and SHALL always be supported.
-         * Default value 0xFFF6 (1111 1111 1111 0110) means:
-         * - normal: false (bit 0)
-         * - vacation: true (bit 1)
-         * - privacy: true (bit 2)
-         * - noRemoteLockUnlock: false (bit 3)
-         * - passage: true (bit 4)
-         * Special case of inverted bitmap: add also alwaysSet = 2047 (0000 0111 1111 1111) to have all bits set except the unsupported ones.
-         * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
-         */
-        supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
-        autoRelockTime: 0, // 0=disabled
-        // PinCredential feature attributes
-        numberOfPinUsersSupported: 10,
-        maxPinCodeLength: 10,
-        minPinCodeLength: 4,
-        // PinCredential or RfidCredential feature attributes
-        wrongCodeEntryLimit: 5,
-        userCodeTemporaryDisableTime: 60,
-        // PinCredential feature attributes (Not with User feature)
-        sendPinOverTheAir: true,
-        // PinCredential and CredentialOverTheAirAccess features attributes
-        requirePinForRemoteOperation: true,
-      },
-    );
-    return this;
-  }
-
-  /**
-   * Creates a door lock cluster server with feature User (USR), PinCredential (PIN), and CredentialOverTheAirAccess (COTA).
-   *
-   * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
-   * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
+   * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
+   * @param {number} [minPinCodeLength] - The minimum length of the PIN code (default: 4).
+   * @param {number} [maxPinCodeLength] - The maximum length of the PIN code (default: 10).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3496,9 +3561,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks
    * The Apple Home works with this.
    */
-  createUserPinDoorLockClusterServer(lockState: DoorLock.LockState = DoorLock.LockState.Locked, lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt): this {
+  createUserPinDoorLockClusterServer(
+    lockState: DoorLock.LockState = DoorLock.LockState.Locked,
+    lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
+    autoRelockTime: number = 0,
+    minPinCodeLength: number = 4,
+    maxPinCodeLength: number = 10,
+  ): this {
     this.behaviors.require(
-      MatterbridgeUserPinDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential, DoorLock.Feature.CredentialOverTheAirAccess).enable({
+      MatterbridgeDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -3525,16 +3596,17 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
          */
         supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
-        autoRelockTime: 0, // 0=disabled
+        autoRelockTime, // 0=disabled
         // PinCredential feature attributes
         numberOfPinUsersSupported: 10,
-        maxPinCodeLength: 10,
-        minPinCodeLength: 4,
+        minPinCodeLength,
+        maxPinCodeLength,
         // PinCredential or RfidCredential feature attributes
         wrongCodeEntryLimit: 5,
         userCodeTemporaryDisableTime: 60,
         // PinCredential and CredentialOverTheAirAccess features attributes
-        requirePinForRemoteOperation: true,
+        /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+        requirePinForRemoteOperation: true,*/
         // User feature attributes
         numberOfTotalUsersSupported: 10,
         credentialRulesSupport: { single: true },

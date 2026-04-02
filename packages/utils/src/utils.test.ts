@@ -6,33 +6,14 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { setupTest } from '@matterbridge/jest-utils';
 
-import {
-  copyDirectory,
-  deepCopy,
-  deepEqual,
-  getIntArrayParameter,
-  getIntParameter,
-  getIpv4InterfaceAddress,
-  getIpv6InterfaceAddress,
-  getMacAddress,
-  getParameter,
-  getStringArrayParameter,
-  hasParameter,
-  isValidArray,
-  isValidBoolean,
-  isValidIpv4Address,
-  isValidNull,
-  isValidNumber,
-  isValidObject,
-  isValidString,
-  isValidUndefined,
-  logInterfaces,
-  parseVersionString,
-  resolveHostname,
-  wait,
-  waiter,
-} from './export.js';
+import { getIntArrayParameter, getIntParameter, getParameter, getStringArrayParameter, hasParameter } from './commandLine.js';
+import { copyDirectory } from './copyDirectory.js';
+import { deepCopy } from './deepCopy.js';
+import { deepEqual } from './deepEqual.js';
+import { getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname } from './network.js';
 import { getNpmPackageVersion } from './npmVersion.js';
+import { isValidArray, isValidBoolean, isValidIpv4Address, isValidNull, isValidNumber, isValidObject, isValidString, isValidUndefined, parseVersionString } from './validate.js';
+import { wait, waiter } from './wait.js';
 
 // Setup the test environment
 await setupTest('Utils', false);

@@ -46,6 +46,7 @@ const matterbridge: SharedMatterbridge = {
   matterbridgeLatestVersion: matterbridgePackageJson.version,
   matterbridgeDevVersion: matterbridgePackageJson.version,
   frontendVersion: frontendPackageJson.version,
+  dockerDev: undefined,
   dockerVersion: undefined,
   dockerLatestVersion: undefined,
   dockerDevVersion: undefined,
@@ -63,8 +64,6 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  shellySysUpdate: false,
-  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',

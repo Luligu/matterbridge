@@ -149,20 +149,6 @@ export async function addVirtualDevice(
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
   // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
   if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
-    const lockPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_pin' });
-    lockPin.createDefaultBridgedDeviceBasicInformationClusterServer(
-      'Matterbridge Pin Lock',
-      'sn_system_lock',
-      0xfff1,
-      'Matterbridge',
-      'Matterbridge Virtual Device',
-      20000,
-      '2.0.0',
-    );
-    lockPin.createPinDoorLockClusterServer();
-    lockPin.addRequiredClusterServers();
-    await aggregatorEndpoint.add(lockPin);
-
     const lockUserPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_user_pin' });
     lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
       'Matterbridge User Pin Lock',

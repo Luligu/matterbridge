@@ -768,6 +768,17 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   /**
+   * Get the description of a plugin from its package.json.
+   *
+   * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
+   * @returns {string} The description of the plugin, or 'No description available' if not found.
+   */
+  getDescription(packageJson: Record<string, string | number | Record<string, string | number | object>>): string {
+    if (packageJson.description && typeof packageJson.description === 'string') return packageJson.description;
+    return 'No description';
+  }
+
+  /**
    * Get the homepage of a plugin from its package.json.
    *
    * @param {Record<string, string | number | Record<string, string | number | object>>} packageJson - The package.json object of the plugin.
@@ -1146,7 +1157,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
         // Preset the plugin properties here in case the plugin throws an error during loading. In this case the user can change the config and restart the plugin.
         plugin.name = packageJson.name;
-        plugin.description = packageJson.description ?? 'No description';
+        plugin.description = this.getDescription(packageJson);
         plugin.version = packageJson.version;
         plugin.author = this.getAuthor(packageJson);
         plugin.configJson = config;
@@ -1179,7 +1190,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           this.matterbridge.addVirtualEndpoint.bind(this.matterbridge),
         );
         plugin.name = packageJson.name;
-        plugin.description = packageJson.description ?? 'No description';
+        plugin.description = this.getDescription(packageJson);
         plugin.version = packageJson.version;
         plugin.author = this.getAuthor(packageJson);
         plugin.homepage = this.getHomepage(packageJson);
@@ -1554,6 +1565,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         type: {
           'title': 'Plugin Type',
           'description': 'Plugin type',
+          'type': 'string',
+          'readOnly': true,
+          'ui:widget': 'hidden',
+        },
+        version: {
+          'title': 'Plugin Version',
+          'description': 'Plugin version',
           'type': 'string',
           'readOnly': true,
           'ui:widget': 'hidden',

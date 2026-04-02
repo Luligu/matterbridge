@@ -180,6 +180,13 @@ const defSchemaAccessory = {
       'type': 'string',
       'ui:widget': 'hidden',
     },
+    version: {
+      'title': 'Plugin Version',
+      'description': 'Plugin version',
+      'readOnly': true,
+      'type': 'string',
+      'ui:widget': 'hidden',
+    },
     debug: {
       title: 'Enable Debug',
       default: false,
@@ -210,6 +217,13 @@ const defSchemaDynamic = {
     type: {
       'title': 'Plugin Type',
       'description': 'Plugin type',
+      'readOnly': true,
+      'type': 'string',
+      'ui:widget': 'hidden',
+    },
+    version: {
+      'title': 'Plugin Version',
+      'description': 'Plugin version',
       'readOnly': true,
       'type': 'string',
       'ui:widget': 'hidden',

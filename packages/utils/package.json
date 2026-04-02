@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.7.1",
+  "version": "3.7.2",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -90,6 +90,10 @@
       "types": "./dist/network.d.ts",
       "import": "./dist/network.js"
     },
+    "./enum": {
+      "types": "./dist/enumDescription.d.ts",
+      "import": "./dist/enumDescription.js"
+    },
     "./hex": {
       "types": "./dist/hex.d.ts",
       "import": "./dist/hex.js"
@@ -133,10 +137,12 @@
     "CHANGELOG.md"
   ],
   "scripts": {
+    "test:typecheck": "tsc --project tsconfig.jest.json --isolatedModules false --noEmit",
+    "test:vitest:typecheck": "tsc --project tsconfig.vitest.json --isolatedModules false --noEmit",
     "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "3.7.1",
-    "node-ansi-logger": "3.2.0"
+    "@matterbridge/jest-utils": "3.7.2",
+    "node-ansi-logger": "3.2.1-dev-20260327-7069fd7"
   }
 }

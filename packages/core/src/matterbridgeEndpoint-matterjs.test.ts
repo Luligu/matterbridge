@@ -18,7 +18,6 @@ import {
   DescriptorBehavior,
   DescriptorServer,
   DeviceEnergyManagementModeServer,
-  DoorLockServer,
   EnergyEvseModeServer,
   EnergyEvseServer,
   FanControlServer,
@@ -78,6 +77,20 @@ import {
 } from '@matter/types/clusters';
 import { AnsiLogger, er, hk, LogLevel } from 'node-ansi-logger';
 
+import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
+import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
+import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
+import { MatterbridgeFanControlServer } from './behaviors/fanControlServer.js';
+import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
+import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
+import { MatterbridgeServer } from './behaviors/matterbridgeServer.js';
+import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
+import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
@@ -93,24 +106,6 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from './jestutils/jestHelpers.js';
-import {
-  MatterbridgeBooleanStateConfigurationServer,
-  MatterbridgeColorControlServer,
-  MatterbridgeDeviceEnergyManagementModeServer,
-  MatterbridgeDeviceEnergyManagementServer,
-  MatterbridgeDoorLockServer,
-  MatterbridgeFanControlServer,
-  MatterbridgeIdentifyServer,
-  MatterbridgeLevelControlServer,
-  MatterbridgeModeSelectServer,
-  MatterbridgeOnOffServer,
-  MatterbridgeOperationalStateServer,
-  MatterbridgeServer,
-  MatterbridgeSmokeCoAlarmServer,
-  MatterbridgeThermostatServer,
-  MatterbridgeValveConfigurationAndControlServer,
-  MatterbridgeWindowCoveringServer,
-} from './matterbridgeBehaviorsServer.js';
 import {
   coverDevice,
   doorLockDevice,
@@ -1099,19 +1094,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-  });
-
-  test('invoke MatterbridgeDoorLockServer commands', async () => {
-    expect(lock.behaviors.has(DoorLockServer)).toBeTruthy();
-    expect(lock.behaviors.has(MatterbridgeDoorLockServer)).toBeTruthy();
-    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('lockDoor')).toBeTruthy();
-    expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer).commands.has('unlockDoor')).toBeTruthy();
-    expect((lock.stateOf(MatterbridgeDoorLockServer) as any).acceptedCommandList).toEqual([0, 1, 3]);
-    expect((lock.stateOf(MatterbridgeDoorLockServer) as any).generatedCommandList).toEqual([]);
-    await lock.invokeBehaviorCommand('doorLock', 'lockDoor', {});
-    await lock.invokeBehaviorCommand('doorLock', 'unlockDoor', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Locking door (endpoint ${lock.id}.${lock.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Unlocking door (endpoint ${lock.id}.${lock.number})`);
   });
 
   test('invoke MatterbridgeModeSelectServer commands', async () => {

@@ -67,7 +67,6 @@ interface ThreadInfo {
  * ThreadsManager is responsible for managing and running different threads in the application.
  */
 export class ThreadsManager {
-  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
   private debug: boolean;
   private verbose: boolean;
   private tracker: boolean;
@@ -92,9 +91,9 @@ export class ThreadsManager {
   /**
    * Initialize the ThreadsManager by setting up the check interval, broadcast server, and listeners.
    *
-   * @param {number} [intervalMs=10_000] - The delay in milliseconds for the interval handler. Defaults to 10 seconds (10000 ms).
+   * @param {number} [intervalMs=60_000] - The delay in milliseconds for the interval handler. Defaults to 60 seconds (60000 ms).
    */
-  constructor(intervalMs: number = 10_000) {
+  constructor(intervalMs: number = 60_000) {
     // istanbul ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
@@ -106,6 +105,7 @@ export class ThreadsManager {
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
+      logWithColors: !hasParameter('no-ansi') && process.env.NO_COLOR !== '1',
     });
     // Set the static log level property for use in static methods
     ThreadsManager.logLevel = this.log.logLevel;

@@ -5,13 +5,13 @@
  *
  * It supports environment variables to customize the version and output paths.
  *
- * MATTER_DATA_MODEL_VERSION - The default version is 1.4.2.
+ * MATTER_DATA_MODEL_VERSION - The default version is 1.5.0.
  * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: chip/<version>/xml).
  */
 
 /* eslint-disable no-console */
 
-const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.4.2';
+const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.5.0';
 const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
 const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
@@ -43,6 +43,8 @@ const escapeSingleQuotedTsStringLiteral = (value) => String(value).replace(/\\/g
 
 const formatTsStringLiteralKey = (key) => `'${escapeSingleQuotedTsStringLiteral(key)}'`;
 
+const formatTsStringLiteralValue = (value) => `'${escapeSingleQuotedTsStringLiteral(value)}'`;
+
 const toLowerCamelCase = (value) => {
   if (!value) {
     return value;
@@ -61,24 +63,194 @@ const toLowerCamelCase = (value) => {
     .join('');
 };
 
+const lowerFirstCharacter = (value) => {
+  if (!value) {
+    return value;
+  }
+
+  return `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
+};
+
+const isDoNotUseEntryKey = (value) => typeof value === 'string' && value.trim().toLowerCase() === 'donotuse';
+
 const formatTsPropertyKey = (key) => (isValidTsIdentifier(key) ? key : formatTsStringLiteralKey(key));
+
+const TS_LITERAL_INDENT = '  ';
+
+const serializeToTsLiteralLines = (value, indentLevel = 0) => {
+  const indent = TS_LITERAL_INDENT.repeat(indentLevel);
+
+  if (value === null) {
+    return [`${indent}null`];
+  }
+
+  if (value === undefined) {
+    return [`${indent}undefined`];
+  }
+
+  if (typeof value === 'string') {
+    return [`${indent}${formatTsStringLiteralValue(value)}`];
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return [`${indent}${String(value)}`];
+  }
+
+  if (typeof value === 'bigint') {
+    return [`${indent}${String(value)}n`];
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [`${indent}[]`];
+    }
+
+    const lines = [`${indent}[`];
+    for (const element of value) {
+      const elementLines = serializeToTsLiteralLines(element, indentLevel + 1);
+      if (elementLines.length === 1) {
+        lines.push(`${elementLines[0]},`);
+      } else {
+        lines.push(...elementLines.slice(0, -1));
+        lines.push(`${elementLines[elementLines.length - 1]},`);
+      }
+    }
+
+    lines.push(`${indent}]`);
+    return lines;
+  }
+
+  if (typeof value === 'object') {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      return [`${indent}{}`];
+    }
+
+    const lines = [`${indent}{`];
+    const childIndentLevel = indentLevel + 1;
+    const childIndent = TS_LITERAL_INDENT.repeat(childIndentLevel);
+
+    for (const key of keys) {
+      const propertyKey = formatTsPropertyKey(key);
+      const propertyValue = value[key];
+      const valueLines = serializeToTsLiteralLines(propertyValue, childIndentLevel);
+      const prefix = childIndent;
+
+      if (valueLines.length === 1) {
+        const singleLine = valueLines[0].startsWith(prefix) ? valueLines[0].slice(prefix.length) : valueLines[0];
+        lines.push(`${childIndent}${propertyKey}: ${singleLine},`);
+        continue;
+      }
+
+      const firstValueLine = valueLines[0].startsWith(prefix) ? valueLines[0].slice(prefix.length) : valueLines[0];
+      lines.push(`${childIndent}${propertyKey}: ${firstValueLine}`);
+      lines.push(...valueLines.slice(1, -1));
+      lines.push(`${valueLines[valueLines.length - 1]},`);
+    }
+
+    lines.push(`${indent}}`);
+    return lines;
+  }
+
+  return [`${indent}${String(value)}`];
+};
 
 const wrapNullableType = (tsType) => (tsType.includes('|') ? `(${tsType}) | null` : `${tsType} | null`);
 
+const formatEntryXmlType = (entry) => {
+  const rawType = typeof entry?.type === 'string' ? entry.type.trim() : '';
+
+  if (!rawType) {
+    return undefined;
+  }
+
+  if (rawType.toLowerCase() !== 'list') {
+    return rawType;
+  }
+
+  const elementTypeName = typeof entry?.entries?.[0]?.type === 'string' ? entry.entries[0].type.trim() : '';
+  return elementTypeName ? `list<${elementTypeName}>` : 'list';
+};
+
+const getConverterTypeSortSubject = (xmlType) => {
+  if (typeof xmlType !== 'string') {
+    return '';
+  }
+
+  const trimmed = xmlType.trim();
+  const listMatch = /^list<(.+)>$/i.exec(trimmed);
+  return listMatch ? listMatch[1].trim() : trimmed;
+};
+
+const normalizeConverterXmlType = (xmlType) => {
+  const sortSubject = getConverterTypeSortSubject(xmlType);
+  return sortSubject || undefined;
+};
+
+const getConverterTypeCaseSortRank = (xmlType) => {
+  const normalizedXmlType = normalizeConverterXmlType(xmlType);
+
+  if (!normalizedXmlType) {
+    return 1;
+  }
+
+  return /^[a-z]/.test(normalizedXmlType) ? 0 : 1;
+};
+
+const normalizeConverterTsType = (tsType) => {
+  if (typeof tsType !== 'string') {
+    return undefined;
+  }
+
+  let normalized = tsType
+    .trim()
+    .replace(/\s*\|\s*null/g, '')
+    .trim();
+
+  while (normalized.startsWith('(') && normalized.endsWith(')')) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  while (normalized.endsWith('[]')) {
+    normalized = normalized.slice(0, -2).trim();
+  }
+
+  while (normalized.startsWith('(') && normalized.endsWith(')')) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  return normalized || undefined;
+};
+
 const MATTER_DATATYPE_TS_MAP = {
   // Matter "seed" datatypes (Core spec §7.19)
+  'status': 'Status',
   'vendor-id': 'VendorId',
   'fabric-idx': 'FabricIndex',
   'endpoint-no': 'EndpointNumber',
   'cluster-id': 'ClusterId',
+  'zoneid': 'ZoneId',
+  'group-id': 'GroupId',
   'node-id': 'NodeId',
+  'subject-id': 'SubjectId',
+  'tlsendpointid': 'TLSEndpointId',
+  'tlscaid': 'TLSCAId',
+  'tlsccdid': 'TLSCCDId',
+  'webrtcsessionid': 'WebRTCSessionId',
+  'pushtransportconnectionid': 'PushTransportConnectionId',
+  'audiostreamid': 'AudioStreamId',
+  'videostreamid': 'VideoStreamId',
+  'snapshotstreamid': 'SnapshotStreamId',
+  'message-id': 'Bytes',
+  'ipv6adr': 'Bytes',
+  'ipv6pre': 'Bytes',
   'octstr': 'Bytes',
   'elapsed-s': 'ElapsedS',
   'epoch-us': 'EpochUs',
 
   // Compact temperature aliases (0.1°C resolution, value = °C × 10)
-  'signedtemperature': 'SignedTemperatureX10',
-  'unsignedtemperature': 'UnsignedTemperatureX10',
+  'signedtemperature': 'SignedTemperature10Ths',
+  'unsignedtemperature': 'UnsignedTemperature10Ths',
 
   // Matter global structs referenced as list element types
   'semantictagstruct': 'Semtag',
@@ -87,9 +259,11 @@ const MATTER_DATATYPE_TS_MAP = {
   'labelstruct': 'LabelStruct',
 
   // Common unit/bitmap datatypes used by clusters
-  'map16': 'Map16',
+  'map16': 'MatterBitmap',
   'amperage-ma': 'Int64',
   'voltage-mv': 'Int64',
+  'power-mw': 'Int64',
+  'energy-mwh': 'Int64',
   'power-mva': 'Int64',
   'power-mvar': 'Int64',
 };
@@ -106,19 +280,20 @@ const resolvePrimitiveOrSeedTypeToTs = (typeName) => {
     return 'boolean';
   }
 
-  if (
-    normalized === 'single' ||
-    normalized === 'double' ||
-    normalized === 'percent' ||
-    normalized === 'percent100ths' ||
-    normalized === 'power-mw' ||
-    normalized === 'energy-mwh'
-  ) {
+  if (normalized === 'single' || normalized === 'double') {
     return 'number';
   }
 
+  if (normalized === 'percent') {
+    return 'Percent';
+  }
+
+  if (normalized === 'percent100ths') {
+    return 'Percent100Ths';
+  }
+
   if (normalized === 'temperature') {
-    return 'TemperatureX100';
+    return 'Temperature100Ths';
   }
 
   if (normalized === 'epoch-s' || normalized === 'epoch_s') {
@@ -141,8 +316,12 @@ const resolvePrimitiveOrSeedTypeToTs = (typeName) => {
     return 'number';
   }
 
-  if (/^(enum|bitmap)\d*$/i.test(trimmed)) {
-    return 'number';
+  if (/^enum\d*$/i.test(trimmed)) {
+    return 'MatterEnum';
+  }
+
+  if (/^bitmap\d*$/i.test(trimmed)) {
+    return 'MatterBitmap';
   }
 
   if (normalized.endsWith('char_string') || normalized.endsWith('string')) {
@@ -163,11 +342,36 @@ const resolveClusterDataTypeToTs = (typeName, clusterEntry) => {
   }
 
   const kind = (dataType.type || '').toLowerCase();
-  if (kind === 'enum' || kind === 'bitmap') {
-    return 'number';
+  if (kind === 'enum') {
+    return 'MatterEnum';
+  }
+  if (kind === 'bitmap') {
+    return 'MatterBitmap';
   }
   if (kind === 'struct') {
-    return 'Record<string, unknown>';
+    return 'MatterStruct';
+  }
+
+  return undefined;
+};
+
+const resolveNamedMatterTypeToTs = (typeName) => {
+  if (!typeName || typeof typeName !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = typeName.trim();
+
+  if (/Enum$/i.test(trimmed)) {
+    return 'MatterEnum';
+  }
+
+  if (/Bitmap$/i.test(trimmed)) {
+    return 'MatterBitmap';
+  }
+
+  if (/Struct$/i.test(trimmed)) {
+    return 'MatterStruct';
   }
 
   return undefined;
@@ -178,15 +382,66 @@ const resolveTypeNameToTs = (typeName, clusterEntry) => {
   if (primitive) {
     return primitive;
   }
-  return resolveClusterDataTypeToTs(typeName, clusterEntry);
+
+  const clusterType = resolveClusterDataTypeToTs(typeName, clusterEntry);
+  if (clusterType) {
+    return clusterType;
+  }
+
+  return resolveNamedMatterTypeToTs(typeName);
 };
 
-const attributeToTsTypeDiagnostic = (attributeEntry, clusterEntry, clusterKey, attributeKey) => {
-  const rawType = attributeEntry?.type;
+const typedEntryToTsTypeDiagnostic = (entry, clusterEntry) => {
+  const rawType = entry?.type;
 
   /** @type {{ tsType: string, baseTsType: string, rawType?: string, reason?: string, details?: Record<string, unknown> }} */
   const diagnostic = { tsType: 'unknown', baseTsType: 'unknown' };
 
+  if (!rawType || typeof rawType !== 'string') {
+    diagnostic.reason = 'missing-type';
+    return diagnostic;
+  }
+
+  const typeName = rawType.trim();
+  const normalized = typeName.toLowerCase();
+
+  diagnostic.rawType = typeName;
+
+  let baseTsType;
+
+  if (normalized === 'list') {
+    const elementTypeName = entry?.entries?.[0]?.type;
+    if (typeof elementTypeName === 'string' && elementTypeName.trim()) {
+      const resolved = resolveTypeNameToTs(elementTypeName.trim(), clusterEntry);
+      baseTsType = `${resolved || 'unknown'}[]`;
+      if (!resolved) {
+        diagnostic.reason = 'list-element-unresolved';
+        diagnostic.details = { elementType: elementTypeName.trim() };
+      }
+    } else {
+      baseTsType = 'unknown[]';
+      diagnostic.reason = 'list-missing-element-type';
+    }
+  } else {
+    const resolved = resolveTypeNameToTs(typeName, clusterEntry);
+    baseTsType = resolved || 'unknown';
+    if (!resolved) {
+      diagnostic.reason = 'unresolved-type';
+    }
+  }
+
+  if (entry?.qualityNullable === true) {
+    diagnostic.baseTsType = baseTsType;
+    diagnostic.tsType = wrapNullableType(baseTsType);
+    return diagnostic;
+  }
+
+  diagnostic.baseTsType = baseTsType;
+  diagnostic.tsType = baseTsType;
+  return diagnostic;
+};
+
+const applyAttributeTypeOverrides = (diagnostic, clusterEntry, clusterKey, attributeKey) => {
   if (typeof attributeKey === 'string') {
     const normalizedAttributeKey = attributeKey.trim().toLowerCase();
     const baseCluster = typeof clusterEntry?.classification?.baseCluster === 'string' ? clusterEntry.classification.baseCluster : '';
@@ -218,59 +473,78 @@ const attributeToTsTypeDiagnostic = (attributeEntry, clusterEntry, clusterKey, a
         return diagnostic;
       }
     }
-  }
 
-  if (!rawType || typeof rawType !== 'string') {
-    diagnostic.reason = 'missing-type';
-    return diagnostic;
-  }
-
-  const typeName = rawType.trim();
-  const normalized = typeName.toLowerCase();
-
-  diagnostic.rawType = typeName;
-
-  let baseTsType;
-
-  if (normalized === 'list') {
-    const elementTypeName = attributeEntry?.entries?.[0]?.type;
-    if (typeof elementTypeName === 'string' && elementTypeName.trim()) {
-      const resolved = resolveTypeNameToTs(elementTypeName.trim(), clusterEntry);
-      baseTsType = `${resolved || 'unknown'}[]`;
-      if (!resolved) {
-        diagnostic.reason = 'list-element-unresolved';
-        diagnostic.details = { elementType: elementTypeName.trim() };
-      }
-    } else {
-      baseTsType = 'unknown[]';
-      diagnostic.reason = 'list-missing-element-type';
+    if (clusterKey === 'DoorLock' && normalizedAttributeKey === 'securitylevel') {
+      diagnostic.reason = 'override';
+      diagnostic.baseTsType = 'number';
+      diagnostic.tsType = 'number';
+      return diagnostic;
     }
-  } else {
-    const resolved = resolveTypeNameToTs(typeName, clusterEntry);
-    baseTsType = resolved || 'unknown';
-    if (!resolved) {
-      diagnostic.reason = 'unresolved-type';
+
+    if (clusterKey === 'PumpConfigurationandControl' && normalizedAttributeKey === 'alarmmask') {
+      diagnostic.reason = 'override';
+      diagnostic.baseTsType = 'MatterBitmap';
+      diagnostic.tsType = 'MatterBitmap';
+      return diagnostic;
+    }
+
+    if (normalizedAttributeKey === 'donotuse') {
+      diagnostic.reason = 'override';
+      diagnostic.baseTsType = 'never';
+      diagnostic.tsType = 'never';
+      return diagnostic;
     }
   }
 
-  if (attributeEntry?.qualityNullable === true) {
-    diagnostic.baseTsType = baseTsType;
-    diagnostic.tsType = wrapNullableType(baseTsType);
-    return diagnostic;
-  }
-
-  diagnostic.baseTsType = baseTsType;
-  diagnostic.tsType = baseTsType;
   return diagnostic;
 };
 
-const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) => {
+const entryToTsTypeDiagnostic = (entry, clusterEntry, options = {}) => {
+  const diagnostic = typedEntryToTsTypeDiagnostic(entry, clusterEntry);
+
+  if (options.entryKind === 'attribute') {
+    return applyAttributeTypeOverrides(diagnostic, clusterEntry, options.clusterKey, options.entryKey);
+  }
+
+  return diagnostic;
+};
+
+const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, converterTypeUsages) => {
   const clusterKeys = Object.keys(clustersByKey).sort((left, right) => left.localeCompare(right));
   const clusterLines = [];
   const matterDatatypeImports = new Set();
+  const matterGlobalImports = new Set();
   const matterRootImports = new Set();
   const matterClusterImports = new Set();
+  const converterTypeMappings = new Map();
   let usesMatterBytes = false;
+
+  const recordUnknownTypeUsage = (entry) => {
+    if (!Array.isArray(unknownTypeUsages) || typeof entry?.baseTsType !== 'string' || !entry.baseTsType.startsWith('unknown')) {
+      return;
+    }
+
+    const rest = { ...entry };
+    delete rest.baseTsType;
+    unknownTypeUsages.push(rest);
+  };
+
+  const recordConverterTypeMapping = (entry, tsType) => {
+    if (!Array.isArray(converterTypeUsages) || typeof tsType !== 'string') {
+      return;
+    }
+
+    const xmlType = normalizeConverterXmlType(formatEntryXmlType(entry));
+    const pureTsType = normalizeConverterTsType(tsType);
+    if (!xmlType || !pureTsType) {
+      return;
+    }
+
+    const existing = converterTypeMappings.get(xmlType) || { xmlType, tsTypes: new Set(), occurrences: 0 };
+    existing.tsTypes.add(pureTsType);
+    existing.occurrences += 1;
+    converterTypeMappings.set(xmlType, existing);
+  };
 
   const trackImportsForType = (tsType) => {
     if (typeof tsType !== 'string') {
@@ -280,60 +554,267 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) 
     if (/\bFabricIndex\b/.test(tsType)) matterDatatypeImports.add('FabricIndex');
     if (/\bEndpointNumber\b/.test(tsType)) matterDatatypeImports.add('EndpointNumber');
     if (/\bClusterId\b/.test(tsType)) matterDatatypeImports.add('ClusterId');
+    if (/\bGroupId\b/.test(tsType)) matterDatatypeImports.add('GroupId');
     if (/\bNodeId\b/.test(tsType)) matterDatatypeImports.add('NodeId');
+    if (/\bSubjectId\b/.test(tsType)) matterDatatypeImports.add('SubjectId');
+    if (/\bStatus\b/.test(tsType)) matterGlobalImports.add('Status');
     if (/\bBytes\b/.test(tsType)) usesMatterBytes = true;
     if (/\bSemtag\b/.test(tsType)) matterRootImports.add('Semtag');
     if (/\bModeSelect\b/.test(tsType)) matterClusterImports.add('ModeSelect');
   };
 
-  clusterLines.push('export type ClusterTypes = {');
+  clusterLines.push('export type MatterClusterTypes = {');
 
   for (const clusterKey of clusterKeys) {
     const clusterEntry = clustersByKey[clusterKey];
+    const features = clusterEntry?.features && typeof clusterEntry.features === 'object' ? clusterEntry.features : {};
+    const featureKeys = Object.keys(features);
+    const commands = clusterEntry?.commands && typeof clusterEntry.commands === 'object' ? clusterEntry.commands : {};
+    const commandKeys = Object.keys(commands);
+    const events = clusterEntry?.events && typeof clusterEntry.events === 'object' ? clusterEntry.events : {};
+    const eventKeys = Object.keys(events);
     const attributes = clusterEntry?.attributes && typeof clusterEntry.attributes === 'object' ? clusterEntry.attributes : {};
     const attributeKeys = Object.keys(attributes);
     const clusterTypeKey = formatTsStringLiteralKey(clusterKey);
 
-    if (attributeKeys.length === 0) {
-      clusterLines.push(`  ${clusterTypeKey}: {};`);
-      continue;
-    }
-
     clusterLines.push(`  ${clusterTypeKey}: {`);
 
-    const usedKeys = new Set();
-    const sortedAttributeKeys = attributeKeys.sort((left, right) => left.localeCompare(right));
+    if (featureKeys.length === 0) {
+      clusterLines.push('    features: {};');
+    } else {
+      clusterLines.push('    features: {');
+      const sortedFeatureKeys = featureKeys.sort((left, right) => left.localeCompare(right));
 
-    for (const attributeKey of sortedAttributeKeys) {
-      const attributeEntry = attributes[attributeKey];
-      let propKey = toLowerCamelCase(attributeKey);
+      for (const featureKey of sortedFeatureKeys) {
+        const featureEntry = features[featureKey];
+        const featureCode = typeof featureEntry?.code === 'string' && featureEntry.code.trim() ? featureEntry.code.trim() : featureKey;
+        const featureName = typeof featureEntry?.name === 'string' && featureEntry.name.trim() ? featureEntry.name.trim() : featureKey;
+        const featureSummary = typeof featureEntry?.summary === 'string' ? featureEntry.summary.replace(/\s+/g, ' ').trim() : '';
+        const tsFeatureKey = formatTsPropertyKey(featureCode);
+        const tsFeatureValue = formatTsStringLiteralKey(featureName);
 
-      if (usedKeys.has(propKey)) {
-        const suffix = typeof attributeEntry?.id === 'number' ? attributeEntry.id : usedKeys.size + 1;
-        propKey = `${propKey}_${suffix}`;
+        clusterLines.push(featureSummary ? `      ${tsFeatureKey}: ${tsFeatureValue}; // ${featureSummary}` : `      ${tsFeatureKey}: ${tsFeatureValue};`);
       }
 
-      usedKeys.add(propKey);
+      clusterLines.push('    };');
+    }
 
-      const tsPropertyKey = formatTsPropertyKey(propKey);
-      const { tsType, baseTsType, rawType, reason, details } = attributeToTsTypeDiagnostic(attributeEntry, clusterEntry, clusterKey, attributeKey);
+    if (attributeKeys.length === 0) {
+      clusterLines.push('    attributes: {};');
+    } else {
+      clusterLines.push('    attributes: {');
 
-      trackImportsForType(tsType);
+      const usedKeys = new Set();
+      const sortedAttributeKeys = attributeKeys.sort((left, right) => left.localeCompare(right));
 
-      if (Array.isArray(unknownTypeUsages) && typeof baseTsType === 'string' && baseTsType.startsWith('unknown')) {
-        unknownTypeUsages.push({
+      for (const attributeKey of sortedAttributeKeys) {
+        const attributeEntry = attributes[attributeKey];
+        let propKey = toLowerCamelCase(attributeKey);
+
+        if (usedKeys.has(propKey)) {
+          const suffix = typeof attributeEntry?.id === 'number' ? attributeEntry.id : usedKeys.size + 1;
+          propKey = `${propKey}_${suffix}`;
+        }
+
+        usedKeys.add(propKey);
+
+        const tsPropertyKey = formatTsPropertyKey(propKey);
+        const { tsType, baseTsType, rawType, reason, details } = entryToTsTypeDiagnostic(attributeEntry, clusterEntry, {
+          entryKind: 'attribute',
+          clusterKey,
+          entryKey: attributeKey,
+        });
+
+        trackImportsForType(tsType);
+        recordConverterTypeMapping(attributeEntry, tsType);
+
+        recordUnknownTypeUsage({
+          kind: 'attribute',
           cluster: clusterKey,
           clusterId: clusterEntry?.id,
           attribute: attributeKey,
           property: propKey,
-          type: rawType,
+          xmlType: rawType,
           tsType,
+          baseTsType,
           reason,
           details,
         });
+
+        clusterLines.push(`      ${tsPropertyKey}: ${tsType};`);
       }
 
-      clusterLines.push(`    ${tsPropertyKey}: ${tsType};`);
+      clusterLines.push('    };');
+    }
+
+    const requestCommands = commandKeys.map((commandKey) => commands[commandKey]).filter((commandEntry) => commandEntry && commandEntry.direction === 'commandToServer');
+
+    if (requestCommands.length === 0) {
+      clusterLines.push('    commands: {};');
+    } else {
+      clusterLines.push('    commands: {');
+
+      const usedCommandKeys = new Set();
+      const sortedCommands = requestCommands.sort((left, right) => (left.name || '').localeCompare(right.name || ''));
+
+      for (const commandEntry of sortedCommands) {
+        let commandPropertyKey = lowerFirstCharacter(commandEntry.name || '');
+
+        if (usedCommandKeys.has(commandPropertyKey)) {
+          const suffix = typeof commandEntry?.id === 'number' ? commandEntry.id : usedCommandKeys.size + 1;
+          commandPropertyKey = `${commandPropertyKey}_${suffix}`;
+        }
+
+        usedCommandKeys.add(commandPropertyKey);
+
+        const tsCommandKey = formatTsPropertyKey(commandPropertyKey);
+        const commandArguments =
+          commandEntry?.arguments && typeof commandEntry.arguments === 'object'
+            ? Object.entries(commandEntry.arguments).filter(([argumentKey]) => !isDoNotUseEntryKey(argumentKey))
+            : [];
+
+        if (commandArguments.length === 0) {
+          clusterLines.push(`      ${tsCommandKey}: undefined;`);
+          continue;
+        }
+
+        clusterLines.push(`      ${tsCommandKey}: {`);
+
+        const usedArgumentKeys = new Set();
+        const sortedArguments = [...commandArguments].sort((left, right) => {
+          const leftId = typeof left[1]?.id === 'number' ? left[1].id : Number.POSITIVE_INFINITY;
+          const rightId = typeof right[1]?.id === 'number' ? right[1].id : Number.POSITIVE_INFINITY;
+          if (leftId !== rightId) {
+            return leftId - rightId;
+          }
+          return left[0].localeCompare(right[0]);
+        });
+
+        for (const [argumentKey, argumentEntry] of sortedArguments) {
+          let argumentPropertyKey = toLowerCamelCase(argumentKey);
+
+          if (usedArgumentKeys.has(argumentPropertyKey)) {
+            const suffix = typeof argumentEntry?.id === 'number' ? argumentEntry.id : usedArgumentKeys.size + 1;
+            argumentPropertyKey = `${argumentPropertyKey}_${suffix}`;
+          }
+
+          usedArgumentKeys.add(argumentPropertyKey);
+
+          const tsArgumentKey = formatTsPropertyKey(argumentPropertyKey);
+          const { tsType, baseTsType, rawType, reason, details } = entryToTsTypeDiagnostic(argumentEntry, clusterEntry, {
+            entryKind: 'commandRequest',
+            clusterKey,
+            entryKey: argumentKey,
+          });
+          trackImportsForType(tsType);
+          recordConverterTypeMapping(argumentEntry, tsType);
+          recordUnknownTypeUsage({
+            kind: 'commandRequest',
+            cluster: clusterKey,
+            clusterId: clusterEntry?.id,
+            command: commandEntry?.name || commandPropertyKey,
+            field: argumentKey,
+            property: argumentPropertyKey,
+            xmlType: rawType,
+            tsType,
+            baseTsType,
+            reason,
+            details,
+          });
+          clusterLines.push(`        ${tsArgumentKey}: ${tsType};`);
+        }
+
+        clusterLines.push('      };');
+      }
+
+      clusterLines.push('    };');
+    }
+
+    if (eventKeys.length === 0) {
+      clusterLines.push('    events: {};');
+    } else {
+      clusterLines.push('    events: {');
+
+      const sortedEventKeys = eventKeys.sort((left, right) => {
+        const leftId = typeof events[left]?.id === 'number' ? events[left].id : Number.POSITIVE_INFINITY;
+        const rightId = typeof events[right]?.id === 'number' ? events[right].id : Number.POSITIVE_INFINITY;
+        if (leftId !== rightId) {
+          return leftId - rightId;
+        }
+        return left.localeCompare(right);
+      });
+
+      const usedEventKeys = new Set();
+
+      for (const eventKey of sortedEventKeys) {
+        const eventEntry = events[eventKey];
+        let eventPropertyKey = toLowerCamelCase(eventEntry?.name || eventKey);
+
+        if (usedEventKeys.has(eventPropertyKey)) {
+          const suffix = typeof eventEntry?.id === 'number' ? eventEntry.id : usedEventKeys.size + 1;
+          eventPropertyKey = `${eventPropertyKey}_${suffix}`;
+        }
+
+        usedEventKeys.add(eventPropertyKey);
+
+        const tsEventKey = formatTsPropertyKey(eventPropertyKey);
+        const eventFields = eventEntry?.fields && typeof eventEntry.fields === 'object' ? Object.entries(eventEntry.fields) : [];
+
+        if (eventFields.length === 0) {
+          clusterLines.push(`      ${tsEventKey}: undefined;`);
+          continue;
+        }
+
+        clusterLines.push(`      ${tsEventKey}: {`);
+
+        const usedFieldKeys = new Set();
+        const sortedFields = [...eventFields].sort((left, right) => {
+          const leftId = typeof left[1]?.id === 'number' ? left[1].id : Number.POSITIVE_INFINITY;
+          const rightId = typeof right[1]?.id === 'number' ? right[1].id : Number.POSITIVE_INFINITY;
+          if (leftId !== rightId) {
+            return leftId - rightId;
+          }
+          return left[0].localeCompare(right[0]);
+        });
+
+        for (const [fieldKey, fieldEntry] of sortedFields) {
+          let fieldPropertyKey = toLowerCamelCase(fieldKey);
+
+          if (usedFieldKeys.has(fieldPropertyKey)) {
+            const suffix = typeof fieldEntry?.id === 'number' ? fieldEntry.id : usedFieldKeys.size + 1;
+            fieldPropertyKey = `${fieldPropertyKey}_${suffix}`;
+          }
+
+          usedFieldKeys.add(fieldPropertyKey);
+
+          const tsFieldKey = formatTsPropertyKey(fieldPropertyKey);
+          const { tsType, baseTsType, rawType, reason, details } = entryToTsTypeDiagnostic(fieldEntry, clusterEntry, {
+            entryKind: 'eventPayload',
+            clusterKey,
+            entryKey: fieldKey,
+          });
+          trackImportsForType(tsType);
+          recordConverterTypeMapping(fieldEntry, tsType);
+          recordUnknownTypeUsage({
+            kind: 'eventPayload',
+            cluster: clusterKey,
+            clusterId: clusterEntry?.id,
+            event: eventEntry?.name || eventKey,
+            field: fieldKey,
+            property: fieldPropertyKey,
+            xmlType: rawType,
+            tsType,
+            baseTsType,
+            reason,
+            details,
+          });
+          clusterLines.push(`        ${tsFieldKey}: ${tsType};`);
+        }
+
+        clusterLines.push('      };');
+      }
+
+      clusterLines.push('    };');
     }
 
     clusterLines.push('  };');
@@ -346,9 +827,10 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) 
   lines.push('/**');
   lines.push(' * Generated by scripts/data-model.mjs. Do not edit.');
   lines.push(' *');
-  lines.push(' * @file clusterTypes.ts');
+  lines.push(' * @file matterClusterTypes.ts');
   lines.push(` * @remarks Matter data model version: ${versionLabel}`);
   lines.push(' */');
+  lines.push('');
   lines.push('/* eslint-disable @typescript-eslint/no-empty-object-type */');
 
   // Keep import order compatible with simple-import-sort.
@@ -367,6 +849,10 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) 
     const sorted = [...matterDatatypeImports].sort((left, right) => left.localeCompare(right));
     lines.push(`import type { ${sorted.join(', ')} } from '@matter/types/datatype';`);
   }
+  if (matterGlobalImports.size > 0) {
+    const sorted = [...matterGlobalImports].sort((left, right) => left.localeCompare(right));
+    lines.push(`import type { ${sorted.join(', ')} } from '@matter/types/globals';`);
+  }
 
   lines.push('');
   lines.push('/** Epoch time in seconds since the Matter epoch (2000-01-01 00:00:00 UTC). */');
@@ -381,17 +867,56 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) 
   lines.push('/** 64-bit signed/unsigned integer (commonly represented as number or bigint). */');
   lines.push('export type Int64 = number | bigint;');
   lines.push('');
-  lines.push('/** 16-bit bitmap. */');
-  lines.push('export type Map16 = number;');
+  lines.push('/** Generic enum representation used for Matter enums. */');
+  lines.push('export type MatterEnum = number;');
+  lines.push('');
+  lines.push('/** Generic bitmap representation used for Matter bitmaps. */');
+  lines.push('export type MatterBitmap = number;');
+  lines.push('');
+  lines.push('/** Generic struct representation used when Matter struct fields are not expanded. */');
+  lines.push('export type MatterStruct = Record<string, unknown>;');
+  lines.push('');
+  lines.push('/** Percentage value in whole percent units. */');
+  lines.push('export type Percent = number;');
+  lines.push('');
+  lines.push('/** Percentage value in hundredths of a percent. */');
+  lines.push('export type Percent100Ths = number;');
   lines.push('');
   lines.push('/** Temperature in hundredths of a degree Celsius (0.01°C), value = °C × 100. */');
-  lines.push('export type TemperatureX100 = number;');
+  lines.push('export type Temperature100Ths = number;');
   lines.push('');
   lines.push('/** SignedTemperature (spec): temperature in tenths of a degree Celsius (0.1°C), value = °C × 10. */');
-  lines.push('export type SignedTemperatureX10 = number;');
+  lines.push('export type SignedTemperature10Ths = number;');
   lines.push('');
   lines.push('/** UnsignedTemperature (spec): temperature in tenths of a degree Celsius (0.1°C), value = °C × 10. */');
-  lines.push('export type UnsignedTemperatureX10 = number;');
+  lines.push('export type UnsignedTemperature10Ths = number;');
+  lines.push('');
+  lines.push('/** Zone identifier used by Zone Management cluster datatypes. */');
+  lines.push('export type ZoneId = number;');
+  lines.push('');
+  lines.push('/** TLS endpoint identifier used by TLS Client Management cluster datatypes. */');
+  lines.push('export type TLSEndpointId = number;');
+  lines.push('');
+  lines.push('/** TLS certificate authority identifier used by TLS certificate-management cluster datatypes. */');
+  lines.push('export type TLSCAId = number;');
+  lines.push('');
+  lines.push('/** TLS client certificate descriptor identifier used by TLS certificate-management cluster datatypes. */');
+  lines.push('export type TLSCCDId = number;');
+  lines.push('');
+  lines.push('/** WebRTC session identifier used by WebRTC transport cluster datatypes. */');
+  lines.push('export type WebRTCSessionId = number;');
+  lines.push('');
+  lines.push('/** Push transport connection identifier used by AV stream transport cluster datatypes. */');
+  lines.push('export type PushTransportConnectionId = number;');
+  lines.push('');
+  lines.push('/** Audio stream identifier used by camera AV stream-management cluster datatypes. */');
+  lines.push('export type AudioStreamId = number;');
+  lines.push('');
+  lines.push('/** Video stream identifier used by camera and WebRTC stream-management cluster datatypes. */');
+  lines.push('export type VideoStreamId = number;');
+  lines.push('');
+  lines.push('/** Snapshot stream identifier used by camera AV stream-management cluster datatypes. */');
+  lines.push('export type SnapshotStreamId = number;');
   lines.push('');
   lines.push('/** Mode identifier used by mode-related clusters. */');
   lines.push('export type ModeId = number;');
@@ -411,10 +936,36 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages) 
   lines.push('};');
   lines.push('');
 
-  lines.push(...clusterLines);
+  lines.push('export type ClusterName = keyof MatterClusterTypes;');
+  lines.push("export type ClusterFeatures<C extends ClusterName> = MatterClusterTypes[C]['features'];");
+  lines.push('export type FeatureCode<C extends ClusterName> = keyof ClusterFeatures<C>;');
+  lines.push('export type FeatureName<C extends ClusterName> = ClusterFeatures<C>[keyof ClusterFeatures<C>];');
+  lines.push("export type ClusterAttributes<C extends ClusterName> = MatterClusterTypes[C]['attributes'];");
+  lines.push('export type AttributeName<C extends ClusterName> = keyof ClusterAttributes<C>;');
+  lines.push("export type ClusterCommands<C extends ClusterName> = MatterClusterTypes[C]['commands'];");
+  lines.push('export type CommandName<C extends ClusterName> = keyof ClusterCommands<C>;');
+  lines.push("export type ClusterEvents<C extends ClusterName> = MatterClusterTypes[C]['events'];");
+  lines.push('export type EventName<C extends ClusterName> = keyof ClusterEvents<C>;');
+
   lines.push('');
-  lines.push('export type ClusterName = keyof ClusterTypes;');
-  lines.push('export type AttributeName<C extends ClusterName> = keyof ClusterTypes[C];');
+  lines.push(...clusterLines);
+
+  if (Array.isArray(converterTypeUsages)) {
+    for (const mapping of [...converterTypeMappings.values()].sort((left, right) => {
+      const rankDifference = getConverterTypeCaseSortRank(left.xmlType) - getConverterTypeCaseSortRank(right.xmlType);
+      if (rankDifference !== 0) {
+        return rankDifference;
+      }
+
+      return left.xmlType.localeCompare(right.xmlType);
+    })) {
+      converterTypeUsages.push({
+        xmlType: mapping.xmlType,
+        tsTypes: [...mapping.tsTypes].sort((left, right) => left.localeCompare(right)),
+        occurrences: mapping.occurrences,
+      });
+    }
+  }
 
   return `${lines.join('\n')}\n`;
 };
@@ -430,7 +981,44 @@ const cloneDeep = (value) => {
   return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value));
 };
 
-import { mkdir, writeFile } from 'node:fs/promises';
+const mergeClusterSection = (baseSection, derivedSection) => {
+  if (baseSection === undefined) {
+    return cloneDeep(derivedSection);
+  }
+
+  if (derivedSection === undefined) {
+    return cloneDeep(baseSection);
+  }
+
+  if (!baseSection || !derivedSection || typeof baseSection !== 'object' || typeof derivedSection !== 'object' || Array.isArray(baseSection) || Array.isArray(derivedSection)) {
+    return cloneDeep(derivedSection);
+  }
+
+  const merged = cloneDeep(baseSection);
+
+  for (const [key, value] of Object.entries(derivedSection)) {
+    merged[key] = Object.prototype.hasOwnProperty.call(merged, key) ? mergeClusterSection(merged[key], value) : cloneDeep(value);
+  }
+
+  return merged;
+};
+
+const resolveClusterTemplateKey = (clustersByKey, clusterName) => {
+  if (!clusterName || typeof clusterName !== 'string') {
+    return undefined;
+  }
+
+  for (const candidate of [clusterName, `${clusterName} Cluster`]) {
+    const key = sanitizeKey(candidate);
+    if (clustersByKey[key]) {
+      return key;
+    }
+  }
+
+  return undefined;
+};
+
+import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import { request } from 'node:https';
 import { join } from 'node:path';
 
@@ -691,6 +1279,57 @@ const extractDirectiveList = (fragment, tagName) => {
   }
 
   return directives;
+};
+
+const extractTopLevelTagFragments = (source, tagName) => {
+  if (!source) {
+    return [];
+  }
+
+  const fragments = [];
+  const regex = new RegExp(`<\\/${tagName}\\s*>|<${tagName}\\b[^>]*?(?:\\/\\s*>|>)`, 'gi');
+  let depth = 0;
+  let start = -1;
+  let match;
+
+  while ((match = regex.exec(source)) !== null) {
+    const fragment = match[0];
+    const isClosing = fragment.startsWith(`</${tagName}`);
+
+    if (isClosing) {
+      if (depth === 0) {
+        continue;
+      }
+
+      depth -= 1;
+
+      if (depth === 0 && start !== -1) {
+        fragments.push(source.slice(start, regex.lastIndex));
+        start = -1;
+      }
+
+      continue;
+    }
+
+    const isSelfClosing = /\/\s*>$/.test(fragment);
+
+    if (depth === 0) {
+      start = match.index;
+    }
+
+    if (isSelfClosing) {
+      if (depth === 0 && start !== -1) {
+        fragments.push(source.slice(start, regex.lastIndex));
+        start = -1;
+      }
+
+      continue;
+    }
+
+    depth += 1;
+  }
+
+  return fragments;
 };
 
 const extractAccessDirectives = (fragment) => extractDirectiveList(fragment, 'access');
@@ -1019,7 +1658,7 @@ const parseDataTypesBlock = (xmlContent, clusterName, contextLabel) => {
 
   const [, body] = match;
   const dataTypes = {};
-  const regex = /<(enum|bitmap|struct)\b[^>]*>[\s\S]*?<\/\1>/gi;
+  const regex = /<(enum|bitmap|struct)\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/\1>)/gi;
   let typeMatch;
 
   while ((typeMatch = regex.exec(body)) !== null) {
@@ -1038,7 +1677,7 @@ const parseDataTypesBlock = (xmlContent, clusterName, contextLabel) => {
       throw new Error(`Data type (${rawType}) without a name encountered in cluster ${clusterName} (${contextLabel}).`);
     }
 
-    const typeBody = fullMatch.slice(openingMatch[0].length, fullMatch.length - `</${rawType}>`.length);
+    const typeBody = fullMatch.trimEnd().endsWith('/>') ? '' : fullMatch.slice(openingMatch[0].length, fullMatch.length - `</${rawType}>`.length);
 
     const definition = {
       type: rawType.toLowerCase(),
@@ -1121,11 +1760,9 @@ const parseAttributesBlock = (xmlContent, clusterName, contextLabel) => {
 
   const [, body] = match;
   const attributes = {};
-  const attributeRegex = /<attribute\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/attribute>)/gi;
-  let attrMatch;
+  const attributeFragments = extractTopLevelTagFragments(body, 'attribute');
 
-  while ((attrMatch = attributeRegex.exec(body)) !== null) {
-    const fullMatch = attrMatch[0];
+  for (const fullMatch of attributeFragments) {
     const openingMatch = fullMatch.match(/<attribute\b[^>]*>/i);
 
     if (!openingMatch) {
@@ -1276,6 +1913,17 @@ const parseCommandArguments = (commandBody, commandName, clusterName, contextLab
         parameterBody = fragment.slice(openingMatch[0].length, fragment.length - `</${tagName}>`.length);
       }
 
+      const qualityRegex = /<quality\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/quality>)/gi;
+      let qualityMatch;
+      while ((qualityMatch = qualityRegex.exec(parameterBody)) !== null) {
+        const qualityAttributes = parseAttributes(qualityMatch[0]);
+
+        for (const [key, value] of Object.entries(qualityAttributes)) {
+          const propertyKey = prefixDirectiveKey('quality', key);
+          parameterEntry[propertyKey] = parseScalarValue(value);
+        }
+      }
+
       const parameterConformance = parseConformanceEntries(parameterBody);
       if (parameterConformance.length > 0) {
         parameterEntry.conformance = parameterConformance;
@@ -1289,6 +1937,11 @@ const parseCommandArguments = (commandBody, commandName, clusterName, contextLab
       const parameterFeatures = extractFeatureRefs(parameterBody);
       if (parameterFeatures.length > 0) {
         parameterEntry.features = parameterFeatures;
+      }
+
+      const parameterEntries = extractEntryDirectives(parameterBody);
+      if (parameterEntries.length > 0) {
+        parameterEntry.entries = parameterEntries;
       }
 
       const parameterConstraints = extractConstraintSnippets(parameterBody);
@@ -1551,6 +2204,22 @@ const parseEventsBlock = (xmlContent, clusterName, contextLabel) => {
         fieldEntry.features = fieldFeatures;
       }
 
+      const qualityRegex = /<quality\b[^>]*?(?:\/\s*>|>[\s\S]*?<\/quality>)/gi;
+      let qualityMatch;
+      while ((qualityMatch = qualityRegex.exec(fieldBody)) !== null) {
+        const qualityAttributes = parseAttributes(qualityMatch[0]);
+
+        for (const [key, value] of Object.entries(qualityAttributes)) {
+          const propertyKey = prefixDirectiveKey('quality', key);
+          fieldEntry[propertyKey] = parseScalarValue(value);
+        }
+      }
+
+      const fieldEntries = extractEntryDirectives(fieldBody);
+      if (fieldEntries.length > 0) {
+        fieldEntry.entries = fieldEntries;
+      }
+
       const fieldConstraints = extractConstraintSnippets(fieldBody);
       if (fieldConstraints.length > 0) {
         fieldEntry.constraints = fieldConstraints;
@@ -1748,7 +2417,35 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
       clusterBody = fullCluster.slice(openingTagMatch[0].length, fullCluster.length - '</cluster>'.length);
     }
 
-    const isMandatory = /^\s*(?:<!--[\s\S]*?-->\s*)*<mandatoryConform\b/i.test(clusterBody);
+    const leadingMandatoryMatch = /^\s*(?:<!--[\s\S]*?-->\s*)*<mandatoryConform\b([^>]*)>/i.exec(clusterBody);
+    const isOptional = /^\s*(?:<!--[\s\S]*?-->\s*)*<optionalConform\b/i.test(clusterBody);
+    const isDisallow = /^\s*(?:<!--[\s\S]*?-->\s*)*<disallowConform\b/i.test(clusterBody);
+
+    let isMandatory = false;
+    /** @type {string[] | undefined} */
+    let mandatoryIf;
+
+    if (leadingMandatoryMatch) {
+      const [, rawSuffix] = leadingMandatoryMatch;
+      const isSelfClosing = /\/\s*$/.test(rawSuffix);
+
+      if (isSelfClosing) {
+        isMandatory = true;
+      } else {
+        const openTagLength = leadingMandatoryMatch[0].length;
+        const closeTagIndex = clusterBody.indexOf('</mandatoryConform>', openTagLength);
+        const mandatoryBody = closeTagIndex >= 0 ? clusterBody.slice(openTagLength, closeTagIndex) : '';
+        const conditionNames = [...mandatoryBody.matchAll(/<condition\b[^>]*\bname\s*=\s*"([^"]+)"/gi)].map((match) => match[1]);
+        const uniqueNames = [...new Set(conditionNames.map((value) => value.trim()).filter(Boolean))];
+
+        if (uniqueNames.length > 0) {
+          mandatoryIf = uniqueNames;
+        } else {
+          // No explicit conditions found; treat as unconditional mandatory.
+          isMandatory = true;
+        }
+      }
+    }
 
     const features = {};
     const featuresMatch = clusterBody.match(/<features\b[^>]*>([\s\S]*?)<\/features>/i);
@@ -1863,7 +2560,7 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
       id: parseHexId(clusterId, `cluster ${clusterName} in device type ${name}`),
       name: normalizeDisplayName(clusterName),
       side,
-      mandatory: isMandatory,
+      ...(isDisallow ? { disallow: true } : isOptional ? { optional: true } : mandatoryIf ? { mandatoryIf } : { mandatory: isMandatory }),
       ...(Object.keys(features).length > 0 ? { features } : {}),
     };
   });
@@ -2185,6 +2882,32 @@ const sortedNamespaces = Object.fromEntries(Object.entries(namespacesOutput).sor
 const serializedNamespaces = `${JSON.stringify(sortedNamespaces, null, 2)}\n`;
 await writeFile(outputPath, serializedNamespaces);
 console.log(greenText(`Namespaces JSON written to ${outputPath} (${Object.keys(namespacesOutput).length} entries).`));
+
+const namespacesTypesOutputDir = join('packages', 'types', 'src');
+await mkdir(namespacesTypesOutputDir, { recursive: true });
+const namespacesTypesOutputPath = join(namespacesTypesOutputDir, 'matterNamespaces.ts');
+const namespacesTsLines = [];
+
+namespacesTsLines.push('/**');
+namespacesTsLines.push(' * Generated by scripts/data-model.mjs. Do not edit.');
+namespacesTsLines.push(' *');
+namespacesTsLines.push(' * @file matterNamespaces.ts');
+namespacesTsLines.push(` * @remarks Matter data model version: ${MATTER_DATA_MODEL_VERSION}`);
+namespacesTsLines.push(' */');
+namespacesTsLines.push('');
+namespacesTsLines.push('export type MatterNamespaceTag = { id: number; name: string };');
+namespacesTsLines.push('export type MatterNamespace = { id: number; name: string; tags: MatterNamespaceTag[] };');
+namespacesTsLines.push('export type MatterNameSpaces = Record<string, MatterNamespace>;');
+namespacesTsLines.push('export type MatterNamespaces = MatterNameSpaces;');
+namespacesTsLines.push('');
+
+const namespacesLiteralLines = serializeToTsLiteralLines(sortedNamespaces, 0);
+namespacesLiteralLines[0] = `export const MatterNamespaces = ${namespacesLiteralLines[0]}`;
+namespacesLiteralLines[namespacesLiteralLines.length - 1] = `${namespacesLiteralLines[namespacesLiteralLines.length - 1]} satisfies MatterNameSpaces;`;
+namespacesTsLines.push(...namespacesLiteralLines);
+
+await writeFile(namespacesTypesOutputPath, `${namespacesTsLines.join('\n')}\n`);
+console.log(greenText(`Namespaces TS written to ${namespacesTypesOutputPath} (${Object.keys(sortedNamespaces).length} namespaces).`));
 
 /** Fetch all device types */
 
@@ -2541,6 +3264,43 @@ for (const { target, template } of clusterFallbackTemplates) {
   clustersOutput[targetKey] = updatedEntry;
 }
 
+for (const [clusterKey, clusterEntry] of Object.entries(clustersOutput)) {
+  const baseClusterName = clusterEntry?.classification?.baseCluster;
+
+  if (!baseClusterName || typeof baseClusterName !== 'string') {
+    continue;
+  }
+
+  const baseClusterKey = resolveClusterTemplateKey(clustersOutput, baseClusterName);
+
+  if (!baseClusterKey) {
+    console.log(`Warning: Unable to resolve base cluster "${baseClusterName}" for cluster "${clusterEntry.name || clusterKey}".`);
+    continue;
+  }
+
+  if (baseClusterKey === clusterKey) {
+    continue;
+  }
+
+  const baseClusterEntry = clustersOutput[baseClusterKey];
+  const updatedEntry = { ...clusterEntry };
+  let inheritedSections = 0;
+
+  for (const section of ['features', 'dataTypes', 'attributes', 'commands', 'events']) {
+    if (!baseClusterEntry?.[section]) {
+      continue;
+    }
+
+    updatedEntry[section] = mergeClusterSection(baseClusterEntry[section], clusterEntry[section]);
+    inheritedSections += 1;
+  }
+
+  if (inheritedSections > 0) {
+    console.log(`Applying base cluster metadata for cluster "${clusterEntry.name || clusterKey}" using base cluster "${baseClusterName}".`);
+    clustersOutput[clusterKey] = updatedEntry;
+  }
+}
+
 const clustersOutputPath = join(DST_PATH, OUTPUT_CLUSTERS);
 const sortedClusters = Object.fromEntries(Object.entries(clustersOutput).sort(([left], [right]) => left.localeCompare(right)));
 const serializedClusters = `${JSON.stringify(sortedClusters, null, 2)}\n`;
@@ -2549,26 +3309,82 @@ console.log(greenText(`Cluster identifiers JSON written to ${clustersOutputPath}
 
 const clusterTypesOutputDir = join('packages', 'types', 'src');
 await mkdir(clusterTypesOutputDir, { recursive: true });
-const clusterTypesOutputPath = join(clusterTypesOutputDir, 'clusterTypes.ts');
+const legacyClusterTypesOutputPath = join(clusterTypesOutputDir, 'clusterTypes.ts');
+const legacyMatterDataModeOutputPath = join(clusterTypesOutputDir, 'matterDataMode.ts');
+const legacyMatterDataModelOutputPath = join(clusterTypesOutputDir, 'matterDataModel.ts');
+const legacyMatterClusterTypesTypoOutputPath = join(clusterTypesOutputDir, 'matterClusterTypesl.ts');
+const clusterTypesOutputPath = join(clusterTypesOutputDir, 'matterClusterTypes.ts');
 const unknownTypeUsages = [];
-const clusterTypesTs = generateClusterTypesTs(sortedClusters, MATTER_DATA_MODEL_VERSION, unknownTypeUsages);
+const converterTypeUsages = [];
+const clusterTypesTs = generateClusterTypesTs(sortedClusters, MATTER_DATA_MODEL_VERSION, unknownTypeUsages, converterTypeUsages);
 await writeFile(clusterTypesOutputPath, clusterTypesTs);
+await unlink(legacyClusterTypesOutputPath).catch((error) => {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
+});
+await unlink(legacyMatterDataModeOutputPath).catch((error) => {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
+});
+await unlink(legacyMatterDataModelOutputPath).catch((error) => {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
+});
+await unlink(legacyMatterClusterTypesTypoOutputPath).catch((error) => {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
+});
 console.log(greenText(`Cluster types TS written to ${clusterTypesOutputPath} (${Object.keys(sortedClusters).length} clusters).`));
 
+const affectedClusters = new Set(unknownTypeUsages.map((entry) => entry.cluster));
+const unknownTypeCounts = unknownTypeUsages.reduce(
+  (counts, entry) => {
+    if (entry?.kind === 'attribute') counts.attributes += 1;
+    if (entry?.kind === 'commandRequest') counts.commandRequests += 1;
+    if (entry?.kind === 'eventPayload') counts.eventPayloads += 1;
+    return counts;
+  },
+  { attributes: 0, commandRequests: 0, eventPayloads: 0 },
+);
+const generatedAt = new Date().toISOString();
+const legacyUnknownTypesReportPath = join(DST_PATH, 'clusterTypes.unknown.json');
+const unknownTypesReportPath = join(DST_PATH, 'converterUnknown.json');
+const converterTypesReportPath = join(DST_PATH, 'converterTypes.json');
+const report = {
+  version: MATTER_DATA_MODEL_VERSION,
+  generatedAt,
+  unknownTypes: unknownTypeUsages.length,
+  unknownAttributes: unknownTypeCounts.attributes,
+  unknownCommandRequests: unknownTypeCounts.commandRequests,
+  unknownEventPayloads: unknownTypeCounts.eventPayloads,
+  affectedClusters: affectedClusters.size,
+  items: unknownTypeUsages,
+};
+await writeFile(unknownTypesReportPath, `${JSON.stringify(report, null, 2)}\n`);
+await unlink(legacyUnknownTypesReportPath).catch((error) => {
+  if (error?.code !== 'ENOENT') {
+    throw error;
+  }
+});
+
+const converterTypesReport = {
+  version: MATTER_DATA_MODEL_VERSION,
+  generatedAt,
+  mappingCount: converterTypeUsages.length,
+  items: converterTypeUsages,
+};
+await writeFile(converterTypesReportPath, `${JSON.stringify(converterTypesReport, null, 2)}\n`);
+
 if (unknownTypeUsages.length > 0) {
-  const affectedClusters = new Set(unknownTypeUsages.map((entry) => entry.cluster));
-  const unknownTypesReportPath = join(DST_PATH, 'clusterTypes.unknown.json');
-  const report = {
-    version: MATTER_DATA_MODEL_VERSION,
-    generatedAt: new Date().toISOString(),
-    unknownAttributes: unknownTypeUsages.length,
-    affectedClusters: affectedClusters.size,
-    items: unknownTypeUsages,
-  };
-  await writeFile(unknownTypesReportPath, `${JSON.stringify(report, null, 2)}\n`);
   console.warn(
     yellowText(
-      `Cluster types TS contains ${unknownTypeUsages.length} unknown attribute type(s) across ${affectedClusters.size} cluster(s). Details written to ${unknownTypesReportPath}.`,
+      `Cluster types TS contains ${unknownTypeUsages.length} unknown type(s) across ${affectedClusters.size} cluster(s): ${unknownTypeCounts.attributes} attribute(s), ${unknownTypeCounts.commandRequests} command request field(s), ${unknownTypeCounts.eventPayloads} event payload field(s). Details written to ${unknownTypesReportPath}.`,
     ),
   );
+} else {
+  console.log(greenText(`Cluster types TS contains no unknown types. Details written to ${unknownTypesReportPath}.`));
 }

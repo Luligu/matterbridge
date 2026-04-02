@@ -15,14 +15,14 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { jest } from '@jest/globals';
-import { Logger } from '@matter/general';
+import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { SessionsBehavior } from '@matter/node';
 import { ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
-import { dev, MATTER_STORAGE_NAME, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
@@ -50,6 +50,7 @@ const matterbridge: SharedMatterbridge = {
   matterbridgeLatestVersion: matterbridgePackageJson.version,
   matterbridgeDevVersion: matterbridgePackageJson.version,
   frontendVersion: frontendPackageJson.version,
+  dockerDev: undefined,
   dockerVersion: undefined,
   dockerLatestVersion: undefined,
   dockerDevVersion: undefined,
@@ -67,8 +68,6 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  shellySysUpdate: false,
-  shellyMainUpdate: false,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',
@@ -176,6 +175,16 @@ describe('MatterNode', () => {
     expect(matter.server.name).toBe('matter');
     // @ts-expect-error access private property
     expect(matter.server.listenerCount('broadcast_message')).toBe(1);
+
+    Logger.format = MatterLogFormat.PLAIN;
+    let destinationLogger = matter.createDestinationMatterLogger();
+    expect(destinationLogger).toBeDefined();
+    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
+
+    Logger.format = MatterLogFormat.ANSI;
+    destinationLogger = matter.createDestinationMatterLogger();
+    expect(destinationLogger).toBeDefined();
+    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
   test('PluginManager instance', async () => {
@@ -266,7 +275,7 @@ describe('MatterNode', () => {
   test('Copy fabrics for server node for Matterbridge', async () => {
     const result = await copyDirectory(
       path.join('./packages/core/src/mock/matterstorage/Matterbridge'),
-      path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge'),
+      path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge'),
     );
     expect(result).toBeTruthy();
   });

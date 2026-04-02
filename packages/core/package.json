@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.7.1",
+  "version": "3.7.2",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -57,6 +57,10 @@
     "./clusters": {
       "types": "./dist/clusters/export.d.ts",
       "import": "./dist/clusters/export.js"
+    },
+    "./behaviors": {
+      "types": "./dist/behaviors/export.d.ts",
+      "import": "./dist/behaviors/export.js"
     },
     "./utils": {
       "types": "./dist/utils/export.d.ts",
@@ -121,18 +125,20 @@
     "CHANGELOG.md"
   ],
   "scripts": {
+    "test:typecheck": "tsc --project tsconfig.jest.json --isolatedModules false --noEmit",
+    "test:vitest:typecheck": "tsc --project tsconfig.vitest.json --isolatedModules false --noEmit",
     "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matter/main": "0.16.10",
-    "@matterbridge/dgram": "3.7.1",
-    "@matterbridge/thread": "3.7.1",
-    "@matterbridge/types": "3.7.1",
-    "@matterbridge/utils": "3.7.1",
+    "@matterbridge/dgram": "3.7.2",
+    "@matterbridge/thread": "3.7.2",
+    "@matterbridge/types": "3.7.2",
+    "@matterbridge/utils": "3.7.2",
     "express": "5.2.1",
     "multer": "2.1.1",
-    "node-ansi-logger": "3.2.0",
-    "node-persist-manager": "2.0.1",
+    "node-ansi-logger": "3.2.1-dev-20260327-7069fd7",
+    "node-persist-manager": "2.0.2-dev-20260327-af13e76",
     "ws": "8.20.0"
   }
 }

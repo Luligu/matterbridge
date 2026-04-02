@@ -1,6 +1,6 @@
-// src\matterbridgeBehaviorsClient.test.ts
+// src\behaviors\bindingServer.test.ts
 
-const NAME = 'MatterbridgeBehaviorsClient';
+const NAME = 'BindingServer';
 const MATTER_PORT = 11400;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
@@ -21,11 +21,12 @@ import {
   setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
-import { MatterbridgeBindingServer } from './matterbridgeBehaviorsClient.js';
-import { MatterbridgeIdentifyServer, MatterbridgeOnOffServer } from './matterbridgeBehaviorsServer.js';
-import { onOffSwitch } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+} from '../jestutils/jestHelpers.js';
+import { onOffSwitch } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { MatterbridgeBindingServer } from './bindingServer.js';
+import { MatterbridgeIdentifyServer } from './identifyServer.js';
+import { MatterbridgeOnOffServer } from './onOffServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

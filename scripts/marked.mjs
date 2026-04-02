@@ -71,6 +71,7 @@ const FILES_TO_RENDER = [
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
   { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },
   { source: 'STYLEGUIDE.md', target: 'STYLEGUIDE.html' },
+  { source: 'CODE_OF_CONDUCT.md', target: 'CODE_OF_CONDUCT.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },
 ];

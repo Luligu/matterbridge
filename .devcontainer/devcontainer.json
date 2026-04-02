@@ -93,11 +93,34 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "eslint.format.enable": true,
         "eslint.useFlatConfig": true,
-        "diffEditor.ignoreTrimWhitespace": false,
-        "git.autofetch": true,
+        "diffEditor.ignoreTrimWhitespace": true,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true
+        "files.trimFinalNewlines": true,
+        "files.watcherExclude": {
+          "**/node_modules/**": true,
+          "**/build/**": true,
+          "**/.cache/**": true,
+          "**/coverage/**": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/.cache": true,
+          "**/coverage": true
+        },
+        "git.autofetch": true,
+        "git.autoRepositoryDetection": false,
+        "git.ignoredRepositories": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.cache/**", "**/coverage/**", "**/docs/**"],
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+        "js/ts.tsserver.watchOptions": {
+          "watchFile": "dynamicPriorityPolling",
+          "watchDirectory": "dynamicPriorityPolling",
+          "fallbackPolling": "dynamicPriorityPolling",
+          "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
+        }
       }
     }
   }

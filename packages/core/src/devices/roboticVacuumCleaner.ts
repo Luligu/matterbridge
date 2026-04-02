@@ -35,7 +35,8 @@ import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 
 // Matterbridge
-import { MatterbridgeServer, MatterbridgeServiceAreaServer } from '../matterbridgeBehaviorsServer.js';
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
+import { MatterbridgeServiceAreaServer } from '../behaviors/serviceAreaServer.js';
 import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

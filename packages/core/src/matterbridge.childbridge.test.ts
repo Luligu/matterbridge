@@ -50,7 +50,7 @@ import { jest } from '@jest/globals';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { dev, MATTER_STORAGE_NAME, plg } from '@matterbridge/types';
+import { dev, MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
@@ -85,7 +85,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('JestChildbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
-    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_NAME));
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
 
     // Clear the timeouts and intervals set by initialize to prevent them from running during tests
     expect((matterbridge as any).systemCheckTimeout).toBeDefined();

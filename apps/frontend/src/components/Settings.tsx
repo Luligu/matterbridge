@@ -307,7 +307,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
 
   useEffect(() => {
     if (!matterbridgeInfo) return;
-    setSelectedMjLoggerLevel(['Debug', 'Info', 'Notice', 'Warn', 'Error', 'Fatal'][matterbridgeInfo.matterLoggerLevel]);
+    setSelectedMjLoggerLevel(matterbridgeInfo.matterLoggerLevel.charAt(0).toUpperCase() + matterbridgeInfo.matterLoggerLevel.slice(1));
     setLogOnFileMj(matterbridgeInfo.matterFileLogger);
     setmdnsInterface(matterbridgeInfo.matterMdnsInterface || '');
     setIpv4Address(matterbridgeInfo.matterIpv4Address || '');

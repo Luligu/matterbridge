@@ -68,7 +68,7 @@ import type {
   SystemInformation,
   WorkerMessage,
 } from '@matterbridge/types';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_NAME, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
@@ -192,6 +192,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterbridgeDevVersion = '';
   /** It indicates the running version of matterbrdge frontend. */
   public frontendVersion = '';
+  /** It indicates whether the current docker image is a development version. */
+  public dockerDev: boolean | undefined;
   /** It indicates the current docker image version of matterbrdge. */
   public dockerVersion: string | undefined;
   /** It indicates the latest docker image version of matterbrdge with tag latest. */
@@ -230,18 +232,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public matterLogLevel: LogLevel = this.matterLog.logLevel;
   /** Whether to log Matter to a file */
   public matterFileLogger = false;
-
-  // Frontend settings
-  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
-  public readonly shellyBoard = hasParameter('shelly');
-  public shellySysUpdate = false;
-  public shellyMainUpdate = false;
-  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
-  public restartRequired = false;
-  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
-  public fixedRestartRequired = false;
-  /** It indicates whether an update is available. */
-  public updateRequired = false;
 
   // Managers
   public readonly plugins = new PluginManager(this);
@@ -385,6 +375,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       matterbridgeLatestVersion: this.matterbridgeLatestVersion,
       matterbridgeDevVersion: this.matterbridgeDevVersion,
       frontendVersion: this.frontendVersion,
+      dockerDev: this.dockerDev,
       dockerVersion: this.dockerVersion,
       dockerLatestVersion: this.dockerLatestVersion,
       dockerDevVersion: this.dockerDevVersion,
@@ -402,8 +393,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       port: this.port,
       discriminator: this.discriminator,
       passcode: this.passcode,
-      shellySysUpdate: this.shellySysUpdate,
-      shellyMainUpdate: this.shellyMainUpdate,
+      // shellySysUpdate: this.shellySysUpdate,
+      // shellyMainUpdate: this.shellyMainUpdate,
     };
   }
 
@@ -429,17 +420,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('matterbridgeDevVersion', msg.params.version);
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'matterbridge_docker_version':
+          this.dockerVersion = msg.params.dockerVersion;
+          this.dockerDev = msg.params.dockerDev;
+          this.dockerDevVersion = msg.params.dockerDevVersion;
+          this.dockerLatestVersion = msg.params.dockerLatestVersion;
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
         case 'matterbridge_global_prefix':
           this.globalModulesDirectory = msg.params.prefix;
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
-          this.server.respond({ ...msg, result: { success: true } });
-          break;
-        case 'matterbridge_shelly_sys_update':
-          this.shellySysUpdate = true;
-          this.server.respond({ ...msg, result: { success: true } });
-          break;
-        case 'matterbridge_shelly_main_update':
-          this.shellyMainUpdate = true;
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'matterbridge_platform':
@@ -489,8 +479,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'manager_spawn_response':
           // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
           if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
-            this.restartRequired = true;
-            this.fixedRestartRequired = true;
             const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
             if (packageName === 'matterbridge') {
               this.log.info('Matterbridge has been updated. Full restart required.');
@@ -568,7 +556,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
     this.environment.vars.set('log.format', hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI);
-    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME));
+    this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
 
@@ -1118,6 +1106,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(() => {
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
+      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
@@ -1125,6 +1114,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.checkUpdateInterval = setInterval(
       () => {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();
@@ -1472,29 +1462,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     return (text: string, message: Diagnostic.Message) => {
-      // 2024-08-21 08:55:19.488 DEBUG InteractionMessenger Sending DataReport chunk with 28 attributes and 0 events: 1004 bytes
-      const logger = text.slice(44, 44 + 20).trim();
-      const msg = text.slice(65);
-      this.matterLog.logName = logger;
-      switch (message.level) {
-        case MatterLogLevel.DEBUG:
-          this.matterLog.log(LogLevel.DEBUG, msg);
-          break;
-        case MatterLogLevel.INFO:
-          this.matterLog.log(LogLevel.INFO, msg);
-          break;
-        case MatterLogLevel.NOTICE:
-          this.matterLog.log(LogLevel.NOTICE, msg);
-          break;
-        case MatterLogLevel.WARN:
-          this.matterLog.log(LogLevel.WARN, msg);
-          break;
-        case MatterLogLevel.ERROR:
-          this.matterLog.log(LogLevel.ERROR, msg);
-          break;
-        case MatterLogLevel.FATAL:
-          this.matterLog.log(LogLevel.FATAL, msg);
-          break;
+      try {
+        let msg: string;
+        if (Logger.format === MatterLogFormat.ANSI) {
+          msg = text.slice(65);
+        } else {
+          msg = text.split(message.facility)[1]?.trim();
+        }
+        this.matterLog.logName = message.facility;
+        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+      } catch (_error) {
+        // istanbul ignore next
+        this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
     };
   }
@@ -1761,20 +1740,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Remove the resumption records and subscriptions. It forces the clients to do a full re-commissioning and re-subscribe to the bridge after the restart. It solves some issues with stale sessions and subscriptions that can cause problems after a restart.
       if (hasParameter('reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
-        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge', 'sessions.resumptionRecords'), this.log);
+        unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge', 'root.subscriptions.subscriptions'), this.log);
         for (const plugin of this.plugins.array()) {
           // Remove the resumption records for the plugins (childbridge mode)
           this.log.debug(`Cleaning matter storage context for plugin ${plg}${plugin.name}${db}...`);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'sessions.resumptionRecords'), this.log);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, plugin.name, 'root.subscriptions.subscriptions'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, plugin.name, 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, plugin.name, 'root.subscriptions.subscriptions'), this.log);
         }
         for (const device of this.devices.array().filter((d) => d.mode === 'server')) {
           if (!device.deviceName) continue;
           // Remove the resumption records for the server mode devices
           this.log.debug(`Cleaning matter storage context for server node device ${dev}${device.deviceName}${db}...`);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
-          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, device.deviceName.replace(/[ .]/g, ''), 'sessions.resumptionRecords'), this.log);
+          unlinkSafe(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, device.deviceName.replace(/[ .]/g, ''), 'root.subscriptions.subscriptions'), this.log);
         }
       }
 
@@ -1829,10 +1808,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (message === 'shutting down with factory reset...') {
         try {
           // Delete matter storage directory with its subdirectories and backup
-          const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME);
+          const dir = path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR);
           this.log.info(`Removing matter storage directory: ${dir}`);
           await fs.promises.rm(dir, { recursive: true });
-          const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup');
+          const backup = path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup');
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
@@ -2479,7 +2458,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info('Matter node storage started');
 
     // Backup matter storage since it is created/opened correctly
-    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME), path.join(this.matterbridgeDirectory, MATTER_STORAGE_NAME + '.backup'));
+    await this.backupMatterStorage(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR), path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup'));
   }
 
   /**
