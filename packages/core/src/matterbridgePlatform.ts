@@ -950,7 +950,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
+   * Validates if an entity is allowed based on the entity blacklist, the entity whitelist and device entity blacklist configurations.
    *
    * @param {string} device - The device to which the entity belongs.
    * @param {string} entity - The entity to validate.

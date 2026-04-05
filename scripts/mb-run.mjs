@@ -3,10 +3,10 @@ import { execFileSync, spawn } from 'node:child_process';
 import { access, mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
-const scriptDir = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(scriptDir, '..');
+// IMPORTANT: This script operates on the package.json in the current working directory.
+// It may be executed from other repos/packages, so do not assume the script's own path.
+const repoRoot = process.cwd();
 const isWindows = process.platform === 'win32';
 
 const BIN_ENTRYPOINTS = {
@@ -37,7 +37,7 @@ function printUsage() {
   const msg = `\
 Usage: mb-run [--reset] [--clean] [--build|--build-production] [--watch] [--test] [--lint|--lint-fix] [--format|--format-check] [--version [dev|edge|git|local|next|alpha|beta]]
 
-Runs the same operations as the root package.json scripts, but executes the local
+Runs the same operations as the package.json scripts in the current working directory, but executes the local
 binaries in node_modules/.bin directly (does not call npm scripts).
 
 Notes:
@@ -48,7 +48,7 @@ Notes:
 - --format-check runs prettier with --check
 - --build prefers per-workspace tsconfig.build.json when present
 - --build-production prefers tsconfig.build.production.json, else tsconfig.build.json, else tsconfig.json
-- --version updates versions for root and all configured workspaces
+- --version updates versions for the current package and all configured workspaces
 `;
 
   console.log(msg);
@@ -60,7 +60,7 @@ Notes:
 function printVersionUsage() {
   const msg = [
     'Usage: mb-run --version [dev|edge|git|local|next|alpha|beta]',
-    'Updates package.json + package-lock.json (root and workspaces) version to:',
+    'Updates package.json + package-lock.json (current package and workspaces) version to:',
     '  <baseVersion>-<dev|edge|git|local|next|alpha|beta>-<yyyymmdd>-<7charSha>',
     'Or with no tag, strips the suffix back to <baseVersion>.',
   ].join('\n');
@@ -163,15 +163,16 @@ async function updateRootVersion(tag) {
   const baseVersion = extractBaseSemver(currentVersion);
   const nextVersion = tag ? `${baseVersion}-${tag}-${formatYyyymmdd(new Date())}-${getShortSha7(repoRoot)}` : baseVersion;
 
-  // Use npm so package-lock.json is updated too, and update only the packages declared in the root workspaces.
+  /** @type {unknown} */
+  const workspacesConfig = pkg?.workspaces;
+  const hasWorkspaces = Array.isArray(workspacesConfig) || (workspacesConfig && typeof workspacesConfig === 'object' && Array.isArray(workspacesConfig.packages));
+
+  // Use npm so package-lock.json is updated too.
   // Allow same version so re-running can resync package-lock.json or out-of-sync workspace versions.
-  await runCommand(
-    'npm',
-    ['version', nextVersion, '--workspaces', '--include-workspace-root', '--no-workspaces-update', '--no-git-tag-version', '--ignore-scripts', '--allow-same-version'],
-    {
-      cwd: repoRoot,
-    },
-  );
+  const args = hasWorkspaces
+    ? ['version', nextVersion, '--workspaces', '--include-workspace-root', '--no-workspaces-update', '--no-git-tag-version', '--ignore-scripts', '--allow-same-version']
+    : ['version', nextVersion, '--no-git-tag-version', '--ignore-scripts', '--allow-same-version'];
+  await runCommand('npm', args, { cwd: repoRoot });
 
   return nextVersion;
 }
@@ -671,6 +672,13 @@ async function runCommand(command, args, options = {}) {
  */
 async function main() {
   const rawArgs = process.argv.slice(2);
+
+  // Validate that the current working directory is a package root.
+  if (!(await fileExists(path.join(repoRoot, 'package.json')))) {
+    printUsage();
+    throw new ExitError(1, `No package.json found in current working directory: ${repoRoot}`);
+  }
+
   if (rawArgs.length === 0) {
     printUsage();
     throw new ExitError(1, 'No arguments provided');
