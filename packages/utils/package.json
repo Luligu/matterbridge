@@ -137,8 +137,6 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "test:typecheck": "tsc --project tsconfig.jest.json --isolatedModules false --noEmit",
-    "test:vitest:typecheck": "tsc --project tsconfig.vitest.json --isolatedModules false --noEmit",
     "automator": "node scripts/runAutomator.mjs --monorepo-package"
   },
   "dependencies": {

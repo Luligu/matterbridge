@@ -8,5 +8,5 @@
     "isolatedModules": true
   },
   "include": ["**/vitest/**/*.spec.ts", "**/vitest/**/*.test.ts"],
-  "exclude": []
+  "exclude": ["apps"]
 }
