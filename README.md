@@ -61,6 +61,8 @@ https://www.youtube.com/watch?v=goNB9Cgh_Fk
 
 https://www.youtube.com/watch?v=06zzl7o_IqQ
 
+https://www.youtube.com/watch?v=JFp3cJ_cPEw
+
 ## Reviews
 
 https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home
@@ -204,6 +206,10 @@ or with user matterbridge and with private global node_modules and npm cache (no
 ### Run matterbridge as a system service with launchctl (macOS only)
 
 [Launchctl configuration](README-MACOS-PLIST.md)
+
+### Run matterbridge as a scheduled task with Task Scheduler (Windows only)
+
+[Task Scheduler configuration](README-WINDOWS.md)
 
 ### Run matterbridge with docker and docker compose
 

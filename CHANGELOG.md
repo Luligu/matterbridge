@@ -57,8 +57,8 @@ These classes will run as threads in the next releases:
 
 ### Added
 
-- [security]: Escape user-controlled strings in backend responses (e.g. upload `filename`) before sending them to the browser to reduce XSS risk.
-- [security]: Apply rate limiting to backend file-transfer endpoints (upload/download) to reduce brute-force/abuse and accidental DoS.
+- [security]: Escape user-controlled strings in backend responses (e.g. upload `filename`) before sending them to the browser to reduce XSS risk (CodeQL).
+- [security]: Apply rate limiting to backend file-transfer endpoints (upload/download) to reduce brute-force/abuse and accidental DoS (CodeQL).
 
 ### Changed
 

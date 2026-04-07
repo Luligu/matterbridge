@@ -67,6 +67,7 @@ const FILES_TO_RENDER = [
   { source: 'README-SERVICE-LOCAL.md', target: 'README-SERVICE-LOCAL.html' },
   { source: 'README-SERVICE-OPT.md', target: 'README-SERVICE-OPT.html' },
   { source: 'README-SERVICE.md', target: 'README-SERVICE.html' },
+  { source: 'README-WINDOWS.md', target: 'README-WINDOWS.html' },
   { source: 'README.md', target: 'README.html' },
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
   { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },

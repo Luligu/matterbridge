@@ -43,7 +43,7 @@ The image (tag **chip-test** 400MB) includes Ubuntu LTS, Node.Js 24 LTS, connect
 
 ### Matterbridge docker base images
 
-The image (tag **24-ubuntu-slim** 83 MB) includes only `ubuntu:latest`: Ubuntu 24.04.3 LTS (noble) with Node.js 24. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
+The image (tag **24-ubuntu-slim** 83 MB) includes only `ubuntu:latest`: Ubuntu 24.04.4 LTS (noble) with Node.js 24. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
 
 ### Docker health check
 
