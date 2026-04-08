@@ -125,7 +125,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package"
+    "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matter/main": "0.16.10",
@@ -142,6 +142,9 @@
     "ws": "8.20.0"
   },
   "devDependencies": {
-    "@types/escape-html": "1.0.4"
+    "@types/escape-html": "1.0.4",
+    "@types/express": "5.0.6",
+    "@types/multer": "2.1.0",
+    "@types/ws": "8.18.1"
   }
 }

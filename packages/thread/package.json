@@ -69,7 +69,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "automator": "node scripts/runAutomator.mjs --monorepo-package"
+    "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
     "@matterbridge/types": "3.7.3",

@@ -24,6 +24,10 @@ import { fileURLToPath } from 'node:url';
  */
 
 /**
+ * @typedef {{ start: string, end: string, package: string, downloads: number }} NpmDownloadsPointResponse
+ */
+
+/**
  * Read and parse a JSON file.
  *
  * @param {string} path - File path.
@@ -53,6 +57,31 @@ async function fetchLastMonthDownloads(pkgName) {
 
   const data = await res.json();
   if (!data || !Array.isArray(data.downloads)) {
+    throw new Error(`Unexpected response shape from ${url}`);
+  }
+  return data;
+}
+
+/**
+ * Fetch npm download stats for the current day.
+ *
+ * @param {string} pkgName - NPM package name.
+ * @returns {Promise<NpmDownloadsPointResponse>} Point response.
+ */
+async function fetchCurrentDayDownloads(pkgName) {
+  const today = new Date().toISOString().slice(0, 10);
+  const url = `https://api.npmjs.org/downloads/point/${today}:${today}/${encodeURIComponent(pkgName)}`;
+  const res = await fetch(url, {
+    headers: { accept: 'application/json' },
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
+  }
+
+  const data = await res.json();
+  if (!data || typeof data.downloads !== 'number') {
     throw new Error(`Unexpected response shape from ${url}`);
   }
   return data;
@@ -188,23 +217,32 @@ async function main() {
     throw new Error(`Missing/invalid "name" in ${pkgPath}`);
   }
 
-  const data = await fetchLastMonthDownloads(name);
+  const [lastMonthData, currentDayData] = await Promise.all([fetchLastMonthDownloads(name), fetchCurrentDayDownloads(name)]);
 
-  const rows = data.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 })).sort((a, b) => a.day.localeCompare(b.day));
+  const rows = lastMonthData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
+  const currentDayRow = { day: String(currentDayData.end), downloads: Number(currentDayData.downloads) || 0 };
+  const currentDayPending = currentDayRow.day > lastMonthData.end && currentDayRow.downloads === 0;
+  if (!rows.some((r) => r.day === currentDayRow.day)) {
+    rows.push(currentDayRow);
+  }
+  rows.sort((a, b) => a.day.localeCompare(b.day));
 
-  const total = sumDownloads(rows);
-  const days = rows.length || 1;
+  const summaryRows = currentDayPending ? rows.filter((r) => r.day !== currentDayRow.day) : rows;
+  const total = sumDownloads(summaryRows);
+  const days = summaryRows.length || 1;
   const avg = Math.round(total / days);
-  const minRow = rows.reduce((m, r) => (r.downloads < m.downloads ? r : m), rows[0] ?? { day: '-', downloads: 0 });
-  const maxRow = rows.reduce((m, r) => (r.downloads > m.downloads ? r : m), rows[0] ?? { day: '-', downloads: 0 });
+  const minRow = summaryRows.reduce((m, r) => (r.downloads < m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
+  const maxRow = summaryRows.reduce((m, r) => (r.downloads > m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
 
   const dayWidth = Math.max(3, ...rows.map((r) => String(r.day).length));
   const downloadStrings = rows.map((r) => formatNumber(r.downloads));
   const downloadsWidth = Math.max('DOWNLOADS'.length, ...downloadStrings.map((s) => s.length));
+  const rangeStart = rows[0]?.day ?? lastMonthData.start;
+  const rangeEnd = rows[rows.length - 1]?.day ?? currentDayData.end;
 
-  console.log(style.bold(style.cyan('npm downloads (last-month)')));
-  console.log(`${style.dim('Package:')} ${data.package}`);
-  console.log(`${style.dim('Range:  ')} ${data.start} .. ${data.end}`);
+  console.log(style.bold(style.cyan('npm downloads (last-month + today)')));
+  console.log(`${style.dim('Package:')} ${lastMonthData.package}`);
+  console.log(`${style.dim('Range:  ')} ${rangeStart} .. ${rangeEnd}`);
   console.log('');
 
   console.log(`${style.dim(padRight('DAY', dayWidth))} ${style.dim(padLeft('DOWNLOADS', downloadsWidth))}`);
@@ -213,11 +251,15 @@ async function main() {
   for (let i = 0; i < rows.length; i += 1) {
     const r = rows[i];
     const downloads = downloadStrings[i];
-    console.log(`${padRight(r.day, dayWidth)} ${padLeft(downloads, downloadsWidth)}`);
+    const renderedDownloads = currentDayPending && r.day === currentDayRow.day ? style.dim(padLeft('pending', downloadsWidth)) : padLeft(downloads, downloadsWidth);
+    console.log(`${padRight(r.day, dayWidth)} ${renderedDownloads}`);
   }
 
   console.log('');
   console.log(style.dim('Summary'));
+  if (currentDayPending) {
+    console.log(style.dim("Today:    npm has not published today's count yet"));
+  }
   console.log(`${style.dim('Total:   ')} ${style.bold(style.green(formatNumber(total)))}`);
   console.log(`${style.dim('Avg/day: ')} ${style.yellow(formatNumber(avg))}`);
   console.log(`${style.dim('Min:     ')} ${formatNumber(minRow.downloads)} (${minRow.day})`);
