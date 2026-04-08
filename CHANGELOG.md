@@ -55,6 +55,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.3] - Dev branch
 
+### Dev news
+
+- [frontend]: Implement rendering in config editor of array-items-enum-uniqueItems rjsf path.
+
 ### Added
 
 - [security]: Escape user-controlled strings in backend responses (e.g. upload `filename`) before sending them to the browser to reduce XSS risk (CodeQL).
@@ -63,6 +67,8 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `frontend` version to v.3.4.11.
 - [terminal]: Ignore process.stdout.isTTY that was too restrictive.
 
 ### Fixed
