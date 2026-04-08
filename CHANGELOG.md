@@ -65,6 +65,10 @@ These classes will run as threads in the next releases:
 - [package]: Update dependencies.
 - [terminal]: Ignore process.stdout.isTTY that was too restrictive.
 
+### Fixed
+
+- [ansi]: Fix typo in getDefaultDeviceEnergyManagementModeClusterServer(). Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/542).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.2] - 2026-04-02
