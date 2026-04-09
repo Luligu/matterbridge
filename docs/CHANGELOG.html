@@ -137,10 +137,10 @@
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://nodejs.org"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
@@ -176,6 +176,10 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="373-dev-branch">[3.7.3] - Dev branch</h2>
+<h3 id="dev-news">Dev news</h3>
+<ul>
+<li>[frontend]: Implement rendering in config editor of array-items-enum-uniqueItems rjsf path.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[security]: Escape user-controlled strings in backend responses (e.g. upload <code>filename</code>) before sending them to the browser to reduce XSS risk (CodeQL).</li>
@@ -184,6 +188,8 @@
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[package]: Update dependencies.</li>
+<li>[frontend]: Update dependencies.</li>
+<li>[frontend]: Bump <code>frontend</code> version to v.3.4.11.</li>
 <li>[terminal]: Ignore process.stdout.isTTY that was too restrictive.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
@@ -199,7 +205,7 @@
 <li>[endpoint]: Remove createPinDoorLockClusterServer() endpoint helper because of the doorLock device type requirements (8.1.6).</li>
 <li>[endpoint]: Refactor MatterbridgeDoorLockServer beahavior with autoRelockTime attribute and unlockWithTimeout, setUser, getUser, clearUser, setCredential, getCredentialStatus and clearCredential commands.</li>
 </ul>
-<h3 id="dev-news">Dev news</h3>
+<h3 id="dev-news-1">Dev news</h3>
 <ul>
 <li>[endpoint]: Add internalFor() helper.</li>
 </ul>
@@ -219,7 +225,7 @@
 <ul>
 <li>[cli]: Change names to mb-mdns mb-coap mb-health. The old names (mb_mdns, mb_coap and mb_health) are still available but change your scripts and setups.</li>
 </ul>
-<h3 id="dev-news-1">Dev news</h3>
+<h3 id="dev-news-2">Dev news</h3>
 <ul>
 <li>[utils]: Add getEnumDescription() function to log cluster enums.</li>
 <li>[endpoint]: Add createPinDoorLockClusterServer() endpoint helper to create a DoorLock device with PIN and COTA feature.</li>
@@ -285,7 +291,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>update your code to match the new typings (often it is just adjusting the generic/type argument or the inferred type);</li>
 <li>change your verifyMatterbridgeVersion(&#39;3.7.0&#39;) to require Matterbridge &gt;= 3.7.0.</li>
 </ul>
-<h3 id="dev-news-2">Dev News</h3>
+<h3 id="dev-news-3">Dev News</h3>
 <ul>
 <li>[DevContainer]: Change base image to <code>mcr.microsoft.com/devcontainers/javascript-node:24-trixie</code>.</li>
 <li>[DevContainer]: Add postStartCommand.</li>
@@ -344,7 +350,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>[BatteryStorage]: Refactor <code>BatteryStorage</code> class as composed device.</li>
 <li>[HeatPump]: Refactor <code>HeatPump</code> class as composed device.</li>
 </ul>
-<h3 id="dev-news-3">Dev News</h3>
+<h3 id="dev-news-4">Dev News</h3>
 <ul>
 <li>[matter1.5.0]: Add SoilMeasurement cluster and corresponding test.</li>
 <li>[matter1.5.0]: Add ClosureControl and ClosureDimension clusters with corresponding tests.</li>
@@ -393,7 +399,7 @@ When you require Matterbridge &gt;= 3.7.0 (verifyMatterbridgeVersion(&#39;3.7.0&
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/MatterbridgeDevContainer.html">dev container setup</a>.</li>
 <li>[devContainer]: Add the new <a href="https://matterbridge.io/reflector/Reflector.html">reflector dev container setup</a>.</li>
 </ul>
-<h3 id="dev-news-4">Dev News</h3>
+<h3 id="dev-news-5">Dev News</h3>
 <ul>
 <li>[binding]: Add for test only MatterbridgeBindingServer.</li>
 <li>[docker]: Add <strong>luligu/matterbridge:chip-test</strong> image (400MB): it is based on Ubuntu LTS, Node.Js 24 LTS and includes connectedhomeip repository with chip-tool, chip-cert and all packages requierd to run yaml and phyton tests. The matterbridge instance inside the container is already paired for yaml and python test. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the yaml or phyton tests. Matterbridge frontend is bound on port 8283. No volumes or port mapping needed.</li>
