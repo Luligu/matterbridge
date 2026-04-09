@@ -51,7 +51,7 @@ import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
 
-export type { PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
+export type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.

@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 ### Dev news
 
 - [frontend]: Implement rendering in config editor of array-items-enum-uniqueItems rjsf path (see the schema of Hass Plugin).
+- [platform]: Add BasePlatformConfig to strictly type the platform config (see the matterbridge-irobot module.ts).
 
 ### Added
 

@@ -32,7 +32,10 @@ import type { SystemInformation } from './matterbridgeTypes.js';
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
 
 /** Platform configuration type. */
-export type PlatformConfig = { name: string; type: string; version: string; debug: boolean; unregisterOnShutdown: boolean } & Record<string, PlatformConfigValue>;
+export type BasePlatformConfig = { name: string; type: string; version: string; debug: boolean; unregisterOnShutdown: boolean };
+
+/** Platform configuration type. */
+export type PlatformConfig = BasePlatformConfig & Record<string, PlatformConfigValue>;
 
 /** Platform schema value type. */
 export type PlatformSchemaValue = string | number | boolean | bigint | object | undefined | null;
