@@ -196,6 +196,7 @@ export class MatterbridgePlatform {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
+    this.name = config.name;
     this.#server = new BroadcastServer('platform', this.log);
 
     // Set the brand
