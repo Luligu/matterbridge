@@ -316,6 +316,21 @@ Features:
 - The discovered BTHome devices are stored with all attributes to easily restart the plugin.
 - The plugin has also a command line to test and verify the bluetooth adapter and the ble network.
 
+### Security
+
+<a href="https://github.com/Luligu/matterbridge-security">
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge Security plugin allows you to create a security system.
+
+Features:
+
+- Five preconfigured modes: Home, Away, Night, Vacation, Off.
+- Five preconfigured setters: Home, Away, Night, Vacation, Off.
+- Four preconfigured triggers: Home, Away, Night, Off.
+- Five preconfigured alerts: Home, Away, Night, Off, Master.
+
 ### Accessory platform example
 
 This is an example of an accessory platform plugin.
@@ -330,7 +345,7 @@ An Accessory platform plugin only exposes one device.
 
 This is an example of a dynamic platform plugin.
 
-It exposes 57 virtual devices.
+It exposes 70 virtual devices.
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
@@ -354,7 +369,7 @@ The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode or as a device with mode server (this means the plugin is paired directly).
 
-## Third-party plugins
+## Community plugins
 
 ### [Loxone](https://github.com/andrasg/matterbridge-loxone)
 

@@ -55,6 +55,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.3] - Dev branch
 
+### New plugins
+
+- [security]: Add [Security Plugin](https://www.npmjs.com/package/matterbridge-security).
+
 ### Dev news
 
 - [frontend]: Implement rendering in config editor of array-items-enum-uniqueItems rjsf path.
