@@ -187,14 +187,25 @@ Group=&lt;USER&gt;
 [Install]
 WantedBy=multi-user.target
 </code></pre>
-<p>If you use the frontend with --ssl --frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
-add this:</p>
-<pre><code>[Service]
-AmbientCapabilities=CAP_NET_BIND_SERVICE
+<p>On some systems, npm install may fail with errors like <code>ENETUNREACH</code>:</p>
+<p>This happens when:</p>
+<p>The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route</p>
+<p>In this situation:</p>
+<p>Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.</p>
+<p>This often indicates a misconfigured IPv6 route / DNS preference.</p>
+<p>One possible fix, add this line to the existing [Service] section:</p>
+<pre><code class="language-text">Environment=&quot;NODE_OPTIONS=--dns-result-order=ipv4first&quot;
 </code></pre>
-<p>If you use the matterbridge-bthome plugin add this:</p>
-<pre><code>[Service]
-AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
+<p>If you use the frontend with --ssl --frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
+add this line to the existing [Service] section:</p>
+<pre><code class="language-text">AmbientCapabilities=CAP_NET_BIND_SERVICE
+</code></pre>
+<p>If you use the matterbridge-bthome plugin add this line to the existing [Service] section:</p>
+<pre><code class="language-text">AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 </code></pre>
 <p>If you modify matterbridge.service after, then run:</p>
 <pre><code class="language-bash">sudo systemctl daemon-reload

@@ -97,6 +97,28 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
+On some systems, npm install may fail with errors like `ENETUNREACH`:
+
+This happens when:
+
+The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route
+
+In this situation:
+
+Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.
+
+This often indicates a misconfigured IPv6 route / DNS preference.
+
+One possible fix, add this line to the existing [Service] section:
+
+```text
+Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
+```
+
 If you use the frontend with **-ssl** --frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 

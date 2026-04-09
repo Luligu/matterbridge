@@ -217,7 +217,7 @@ Wants=network.target
 
 [Service]
 Type=simple
-Environment=NODE_ENV=production
+Environment=&quot;NODE_ENV=production&quot;
 Environment=&quot;NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global&quot;
 Environment=&quot;NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache&quot;
 ExecStart=matterbridge --service --nosudo
@@ -235,6 +235,19 @@ ReadWritePaths=/opt/matterbridge
 
 [Install]
 WantedBy=multi-user.target
+</code></pre>
+<p>On some systems, npm install may fail with errors like <code>ENETUNREACH</code>:</p>
+<p>This happens when:</p>
+<p>The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route</p>
+<p>In this situation:</p>
+<p>Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.</p>
+<p>This often indicates a misconfigured IPv6 route / DNS preference.</p>
+<p>One possible fix, add this line to the existing [Service] section:</p>
+<pre><code class="language-text">Environment=&quot;NODE_OPTIONS=--dns-result-order=ipv4first&quot;
 </code></pre>
 <p>If you use the frontend with <strong>-ssl</strong> -frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
 add this:</p>

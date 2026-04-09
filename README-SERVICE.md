@@ -74,18 +74,38 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
-add this:
+On some systems, npm install may fail with errors like `ENETUNREACH`:
 
+This happens when:
+
+The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route
+
+In this situation:
+
+Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.
+
+This often indicates a misconfigured IPv6 route / DNS preference.
+
+One possible fix, add this line to the existing [Service] section:
+
+```text
+Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 ```
-[Service]
+
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this line to the existing [Service] section:
+
+```text
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the matterbridge-bthome plugin add this:
+If you use the matterbridge-bthome plugin add this line to the existing [Service] section:
 
-```
-[Service]
+```text
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 
