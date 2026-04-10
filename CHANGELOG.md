@@ -53,6 +53,20 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.4] - Dev branch
+
+### New plugins
+
+- [security]: Add [iRobot Plugin](https://www.npmjs.com/package/matterbridge-irobot) v.1.0.0.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `matter.js` to v.0.16.11.
+- [frontend]: Bump `frontend` version to v.3.4.12.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.3] - 2026-04-10
 
 ### New plugins

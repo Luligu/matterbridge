@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.7.3",
+  "version": "3.7.4",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -128,11 +128,11 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matter/main": "0.16.10",
-    "@matterbridge/dgram": "3.7.3",
-    "@matterbridge/thread": "3.7.3",
-    "@matterbridge/types": "3.7.3",
-    "@matterbridge/utils": "3.7.3",
+    "@matter/main": "0.16.11",
+    "@matterbridge/dgram": "3.7.4",
+    "@matterbridge/thread": "3.7.4",
+    "@matterbridge/types": "3.7.4",
+    "@matterbridge/utils": "3.7.4",
     "escape-html": "1.0.3",
     "express": "5.2.1",
     "express-rate-limit": "8.3.2",
