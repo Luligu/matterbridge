@@ -77,7 +77,7 @@ jobs:
             -f docker/Dockerfile.s6-rc \
             -t luligu/matterbridge:s6-rc \
             -t luligu/matterbridge:s6-rc-${{ steps.meta.outputs.VERSION }} \
-            -t luligu/matterbridge:2026.4.1 \
+            -t luligu/matterbridge:2026.4.2 \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
