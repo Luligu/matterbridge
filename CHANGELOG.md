@@ -53,11 +53,11 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.7.3] - Dev branch
+## [3.7.3] - 2026-04-10
 
 ### New plugins
 
-- [security]: Add [Security Plugin](https://www.npmjs.com/package/matterbridge-security).
+- [security]: Add [Security Plugin](https://www.npmjs.com/package/matterbridge-security) v.1.0.0.
 
 ### Dev news
 

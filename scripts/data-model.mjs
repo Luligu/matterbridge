@@ -11,7 +11,7 @@
 
 /* eslint-disable no-console */
 
-const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.5.0';
+const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.5.1';
 const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
 const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
