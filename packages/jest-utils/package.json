@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/jest-utils",
-  "version": "3.7.2",
+  "version": "3.7.3",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -61,9 +61,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "test:typecheck": "tsc --project tsconfig.jest.json --isolatedModules false --noEmit",
-    "test:vitest:typecheck": "tsc --project tsconfig.vitest.json --isolatedModules false --noEmit",
-    "automator": "node scripts/runAutomator.mjs --monorepo-package"
+    "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
     "node-ansi-logger": "3.2.1-dev-20260327-7069fd7"

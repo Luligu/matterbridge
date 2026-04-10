@@ -2,13 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matterbridge</title>
   <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
   <style>
     body {
       font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
       line-height: 1.6;
-      margin: 40px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
     }
     h1, h2, h3 {
       font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
@@ -47,6 +51,12 @@
       font-size: 0.875rem;
       margin: 10px 20px 10px 0px;
       position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
     }
     p code,
     li code,
@@ -87,6 +97,9 @@
     table {
       border-collapse: collapse;
       margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
     }
     th,
     td {
@@ -94,6 +107,24 @@
       padding: 0.4rem 0.6rem;
       text-align: left;
       vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
     }
   </style>
 </head>
@@ -106,10 +137,10 @@
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
@@ -186,7 +217,7 @@ Wants=network.target
 
 [Service]
 Type=simple
-Environment=NODE_ENV=production
+Environment=&quot;NODE_ENV=production&quot;
 Environment=&quot;NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global&quot;
 Environment=&quot;NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache&quot;
 ExecStart=matterbridge --service --nosudo
@@ -204,6 +235,19 @@ ReadWritePaths=/opt/matterbridge
 
 [Install]
 WantedBy=multi-user.target
+</code></pre>
+<p>On some systems, npm install may fail with errors like <code>ENETUNREACH</code>:</p>
+<p>This happens when:</p>
+<p>The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route</p>
+<p>In this situation:</p>
+<p>Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.</p>
+<p>This often indicates a misconfigured IPv6 route / DNS preference.</p>
+<p>One possible fix, add this line to the existing [Service] section:</p>
+<pre><code class="language-text">Environment=&quot;NODE_OPTIONS=--dns-result-order=ipv4first&quot;
 </code></pre>
 <p>If you use the frontend with <strong>-ssl</strong> -frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
 add this:</p>

@@ -1,6 +1,8 @@
 /**
  * Launcher script for a developer "automator".
  *
+ * The automator is a tool that automates package updates for internal projects.
+ *
  * - Locates `automator.mjs` either via `AUTOMATOR_PATH` or common OneDrive roots.
  * - Invokes it with the current Node executable, forwarding CLI args and stdio.
  * - Exits with the same status code (or 1 on failure).

@@ -17,7 +17,7 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import TextField, { TextFieldProps } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 import ListItemButton from '@mui/material/ListItemButton';
 import DialogActions from '@mui/material/DialogActions';
 
@@ -101,6 +101,28 @@ function hasSchemaPropertyWithStringType(schema: RJSFSchema, name: string): sche
 function hasSchemaItemsWithDefault(schema: RJSFSchema): schema is RJSFSchema & { items: RJSFSchema & { default: unknown } } {
   const items = schema.items;
   return items !== undefined && typeof items === 'object' && !Array.isArray(items);
+}
+
+function hasSchemaPropertyArrayMultiSelect(
+  schema: RJSFSchema,
+  name: string,
+): schema is RJSFSchema & {
+  properties: Record<
+    string,
+    RJSFSchema & {
+      type: 'array';
+      uniqueItems: true;
+      items: RJSFSchema & { enum: unknown[] };
+    }
+  >;
+} {
+  const properties: unknown = schema?.properties;
+  if (!properties || typeof properties !== 'object') return false;
+  const property: unknown = (properties as Record<string, unknown>)[name];
+  if (!property || typeof property !== 'object') return false;
+  if ((property as { type?: unknown }).type !== 'array' || (property as { uniqueItems?: unknown }).uniqueItems !== true) return false;
+  const items = (property as { items?: unknown }).items;
+  return items !== undefined && typeof items === 'object' && !Array.isArray(items) && Array.isArray((items as { enum?: unknown[] }).enum);
 }
 
 export interface ConfigPluginDialogProps {
@@ -794,23 +816,29 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           </Box>
         )}
         {/* Iterate over each property in the object */}
-        {properties.map(
-          ({ content, name, hidden }) =>
-            !hidden && (
-              <Box
-                key={name}
-                sx={{
-                  margin: '0px',
-                  marginBottom: '10px',
-                  padding: hasSchemaPropertyWithStringType(schema, name) && ['object', 'array'].includes(schema.properties[name].type) ? '0px' : boxPadding,
-                  border: hasSchemaPropertyWithStringType(schema, name) && ['object', 'array'].includes(schema.properties[name].type) ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
-                }}
-              >
-                {hasSchemaPropertyWithStringType(schema, name) && !['object', 'array', 'boolean'].includes(schema.properties[name].type) && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
-                <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
-              </Box>
-            ),
-        )}
+        {properties.map(({ content, name, hidden }) => {
+          if (hidden) return null;
+
+          const hasStringTypeProperty = hasSchemaPropertyWithStringType(schema, name);
+          const isArrayMultiSelectProperty = hasSchemaPropertyArrayMultiSelect(schema, name);
+          const isObjectOrArrayProperty = hasStringTypeProperty && ['object', 'array'].includes(schema.properties[name].type);
+
+          return (
+            <Box
+              key={name}
+              sx={{
+                margin: '0px',
+                marginBottom: '10px',
+                padding: isObjectOrArrayProperty && !isArrayMultiSelectProperty ? '0px' : boxPadding,
+                border: isObjectOrArrayProperty && !isArrayMultiSelectProperty ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
+              }}
+            >
+              {hasStringTypeProperty && !['object', 'array', 'boolean'].includes(schema.properties[name].type) && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
+              {isArrayMultiSelectProperty && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
+              <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
+            </Box>
+          );
+        })}
 
         {/* Dialog for selecting a device */}
         <Dialog
@@ -989,7 +1017,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   function SelectWidget({
     schema,
     id,
-    name, // remove this from textFieldProps
+    name,
     options,
     label,
     hideLabel,
@@ -1011,6 +1039,27 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     ...textFieldProps
   }: WidgetProps) {
     const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+    if (rjsfDebug)
+      console.log(`SelectWidget ${name}:`, {
+        schema,
+        id,
+        options,
+        label,
+        hideLabel,
+        required,
+        disabled,
+        placeholder,
+        readonly,
+        value,
+        multiple,
+        autofocus,
+        errorSchema,
+        rawErrors,
+        registry,
+        uiSchema,
+        hideError,
+        textFieldProps,
+      });
 
     multiple = typeof multiple === 'undefined' ? false : !!multiple;
 
@@ -1021,42 +1070,48 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
-    const { InputLabelProps, SelectProps, autocomplete, ...textFieldRemainingProps } = textFieldProps;
-    const showPlaceholderOption = !multiple && schema.default === undefined;
+    const renderSelectedValues = (selected: unknown) => {
+      if (!Array.isArray(selected) || !Array.isArray(enumOptions)) return '';
+      return selected
+        .map((index) => enumOptions[Number(index)]?.label)
+        .filter((optionLabel): optionLabel is string => typeof optionLabel === 'string')
+        .join(', ');
+    };
 
     return (
       <TextField
         id={id}
-        name={id}
-        // label={labelValue(label || undefined, hideLabel, undefined)}
+        name={name}
+        // label={label} is not used cause we have the name, title and description
         value={!isEmpty && typeof selectedIndexes !== 'undefined' ? selectedIndexes : emptyValue}
         required={required}
         disabled={disabled || readonly}
         autoFocus={autofocus}
-        autoComplete={autocomplete}
-        placeholder={placeholder}
+        // placeholder={placeholder} is not used cause we have the name, title and description
         error={rawErrors.length > 0}
         onChange={_onChange}
         onBlur={_onBlur}
         onFocus={_onFocus}
-        {...(textFieldRemainingProps as TextFieldProps)}
-        select // Apply this and the following props after the potential overrides defined in textFieldProps
-        InputLabelProps={{
-          ...InputLabelProps,
-          shrink: !isEmpty,
-        }}
-        SelectProps={{
-          ...SelectProps,
-          multiple,
+        select
+        slotProps={{
+          select: {
+            multiple,
+            ...(multiple ? { renderValue: renderSelectedValues } : {}),
+          },
         }}
         aria-describedby={ariaDescribedByIds(id)}
       >
-        {showPlaceholderOption && <MenuItem value=''>{placeholder}</MenuItem>}
         {Array.isArray(enumOptions) &&
           enumOptions.map(({ value, label }, i) => {
             const disabled = Array.isArray(enumDisabled) && enumDisabled.indexOf(value) !== -1;
+            const isSelected = Array.isArray(selectedIndexes) && selectedIndexes.includes(String(i));
             return (
               <MenuItem key={i} value={String(i)} disabled={disabled}>
+                {multiple && (
+                  <ListItemIcon sx={{ minWidth: '32px' }}>
+                    <Checkbox checked={isSelected} disableRipple tabIndex={-1} sx={{ padding: '0px', margin: '0px' }} />
+                  </ListItemIcon>
+                )}
                 {label}
               </MenuItem>
             );

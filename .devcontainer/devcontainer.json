@@ -48,8 +48,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
   ],
-  // Create the matterbridge Docker network if it doesn't exist and pull the base image (runs on the HOST before the container starts).
-  "initializeCommand": "docker network inspect matterbridge || docker network create matterbridge && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
+  // Create the matterbridge Docker network if it doesn't exist, then pull the base image (runs on the HOST before the container starts).
+  "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
   // On create, build matterbridge and link it globally (runs inside the container after the first start)
   "postCreateCommand": "bash .devcontainer/postCreateCommand.sh",
   // On start, run the plugin in watch mode (runs inside the container after every start)

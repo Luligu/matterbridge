@@ -7,10 +7,10 @@
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://github.com/prettier/prettier)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
+[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
+[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/api/esm.html)
+[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -60,6 +60,8 @@ Join us in the Matterbridge [Discord group](https://discord.gg/QX58CDe6hd) creat
 https://www.youtube.com/watch?v=goNB9Cgh_Fk
 
 https://www.youtube.com/watch?v=06zzl7o_IqQ
+
+https://www.youtube.com/watch?v=JFp3cJ_cPEw
 
 ## Reviews
 
@@ -205,6 +207,10 @@ or with user matterbridge and with private global node_modules and npm cache (no
 
 [Launchctl configuration](README-MACOS-PLIST.md)
 
+### Run matterbridge as a scheduled task with Task Scheduler (Windows only)
+
+[Task Scheduler configuration](README-WINDOWS.md)
+
 ### Run matterbridge with docker and docker compose
 
 [Docker configuration](README-DOCKER.md)
@@ -310,6 +316,21 @@ Features:
 - The discovered BTHome devices are stored with all attributes to easily restart the plugin.
 - The plugin has also a command line to test and verify the bluetooth adapter and the ble network.
 
+### Security
+
+<a href="https://github.com/Luligu/matterbridge-security">
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a>
+
+Matterbridge Security plugin allows you to create a security system.
+
+Features:
+
+- Five preconfigured modes: Home, Away, Night, Vacation, Off.
+- Five preconfigured setters: Home, Away, Night, Vacation, Off.
+- Four preconfigured triggers: Home, Away, Night, Off.
+- Five preconfigured alerts: Home, Away, Night, Off, Master.
+
 ### Accessory platform example
 
 This is an example of an accessory platform plugin.
@@ -324,7 +345,7 @@ An Accessory platform plugin only exposes one device.
 
 This is an example of a dynamic platform plugin.
 
-It exposes 57 virtual devices.
+It exposes 70 virtual devices.
 
 All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).
 
@@ -348,7 +369,7 @@ The history works in both bridge and childbridge mode.
 
 The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode or as a device with mode server (this means the plugin is paired directly).
 
-## Third-party plugins
+## Community plugins
 
 ### [Loxone](https://github.com/andrasg/matterbridge-loxone)
 

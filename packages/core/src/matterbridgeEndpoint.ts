@@ -259,27 +259,38 @@ export class MatterbridgeEndpoint extends Endpoint {
   mode: 'server' | 'matter' | undefined = undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
-
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
   /** The plugin name this MatterbridgeEndpoint belongs to */
   plugin: string | undefined = undefined;
   /** The configuration URL of the device, if available */
   configUrl: string | undefined = undefined;
+  /** The display name of the device (32 chars). */
   deviceName: string | undefined = undefined;
+  /** The serial number of the device (32 chars). */
   serialNumber: string | undefined = undefined;
+  /** The unique identifier of the device (32 chars). */
   uniqueId: string | undefined = undefined;
+  /** The vendor identifier of the device. */
   vendorId: number | undefined = undefined;
+  /** The vendor name of the device (32 chars). */
   vendorName: string | undefined = undefined;
+  /** The product identifier of the device. */
   productId: number | undefined = undefined;
+  /** The product name of the device (32 chars). */
   productName: string | undefined = undefined;
+  /** The software version of the device. */
   softwareVersion: number | undefined = undefined;
+  /** The software version string of the device (64 chars). */
   softwareVersionString: string | undefined = undefined;
+  /** The hardware version of the device. */
   hardwareVersion: number | undefined = undefined;
+  /** The hardware version string of the device (64 chars). */
   hardwareVersionString: string | undefined = undefined;
+  /** The product URL of the device (256 chars). */
   productUrl = 'https://www.npmjs.com/package/matterbridge';
   /** The tagList of the descriptor cluster of the MatterbridgeEndpoint */
-  tagList?: Semtag[] = undefined;
+  tagList: Semtag[] | undefined = undefined;
   /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
   originalId: string | undefined = undefined;
   /** The name of the first device type of the MatterbridgeEndpoint */
@@ -347,6 +358,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     // Convert the options to an Endpoint.Options
     const optionsV8 = {
+      // Matter.js doesn't allow spaces and . in the endpoint id, so we remove them. We store the original id in originalId for logging and other purposes.
       id: options.id?.replace(/[ .]/g, ''),
       number: options.number,
       descriptor: options.tagList ? { tagList: options.tagList, deviceTypeList } : { deviceTypeList },
@@ -475,7 +487,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
-    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    return this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
   }
 
   /**

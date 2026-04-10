@@ -1362,7 +1362,7 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
         mode: 3,
         modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }, { value: DeviceEnergyManagementMode.ModeTag.LocalOptimization }],
       },
-      { label: 'Grid Energy Managemen', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
+      { label: 'Grid Energy Management', mode: 4, modeTags: [{ value: DeviceEnergyManagementMode.ModeTag.GridOptimization }] },
       {
         label: 'Full Energy Management',
         mode: 5,

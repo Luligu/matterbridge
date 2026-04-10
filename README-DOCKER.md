@@ -7,10 +7,10 @@
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://github.com/prettier/prettier)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
+[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
+[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/api/esm.html)
+[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -39,11 +39,11 @@ The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the lat
 
 ### Matterbridge chip-tool docker image
 
-The image (tag **chip-test** 400MB) includes Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.
+The image (tag **chip-test** 400MB) is based on `ubuntu:latest` with Node.js 24 LTS from NodeSource and includes the connectedhomeip repository with chip-tool, chip-cert and all components required for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.
 
 ### Matterbridge docker base images
 
-The image (tag **24-ubuntu-slim** 83 MB) includes only `ubuntu:latest`: Ubuntu 24.04.3 LTS (noble) with Node.js 24. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
+The image (tag **24-ubuntu-slim** 83 MB) is based on `ubuntu:latest` with Node.js 24 LTS from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
 
 ### Docker health check
 

@@ -112,43 +112,142 @@
     },
     {
       "label": "Build",
+      "detail": "npm run build",
       "type": "npm",
       "script": "build",
       "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$tsc"],
-      "detail": "Build the project using tsc."
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Clean and Build",
+      "detail": "npm run cleanBuild",
+      "type": "npm",
+      "script": "cleanBuild",
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": ["$tsc"]
     },
     {
       "label": "Build Production",
+      "detail": "npm run buildProduction",
       "type": "npm",
       "script": "buildProduction",
       "group": { "kind": "build", "isDefault": false },
-      "problemMatcher": ["$tsc"],
-      "detail": "Build the project for production using tsc."
+      "problemMatcher": ["$tsc"]
     },
     {
-      "label": "Clean Build",
-      "type": "npm",
-      "script": "cleanBuild",
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": ["$tsc"],
-      "detail": "Clean and build the project using tsc."
-    },
-    {
-      "label": "Clean Build Production",
+      "label": "Clean and Build Production",
+      "detail": "npm run cleanBuildProduction",
       "type": "npm",
       "script": "cleanBuildProduction",
       "group": { "kind": "build", "isDefault": false },
-      "problemMatcher": ["$tsc"],
-      "detail": "Clean and build the project for production using tsc."
+      "problemMatcher": ["$tsc"]
     },
     {
       "label": "Watch",
+      "detail": "npm run watch",
       "type": "npm",
       "script": "watch",
+      "isBackground": true,
       "group": { "kind": "build", "isDefault": false },
-      "problemMatcher": ["$tsc-watch"],
-      "detail": "Watch the project using tsc."
+      "problemMatcher": ["$tsc-watch"]
+    },
+    {
+      "label": "Lint",
+      "detail": "Run ESLint",
+      "type": "npm",
+      "script": "lint",
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "Format",
+      "detail": "Run Prettier",
+      "type": "npm",
+      "script": "format",
+      "problemMatcher": []
+    },
+    {
+      "label": "Test",
+      "detail": "Run Jest with coverage and verbose",
+      "type": "shell",
+      "command": "node",
+      "args": ["--no-warnings", "--experimental-vm-modules", "node_modules/jest/bin/jest.js", "--verbose", "--coverage", "--maxWorkers=100%"],
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run me before publish",
+      "detail": "Clean build, lint, format, typecheck, test coverage, and build",
+      "type": "npm",
+      "script": "runMeBeforePublish",
+      "problemMatcher": []
+    },
+    {
+      "label": "Check Dependencies",
+      "detail": "Check for outdated dependencies",
+      "type": "npm",
+      "script": "checkDependencies",
+      "problemMatcher": []
+    },
+    {
+      "label": "Update Dependencies",
+      "detail": "Update outdated dependencies",
+      "type": "npm",
+      "script": "updateDependencies",
+      "problemMatcher": []
+    },
+    {
+      "label": "Reset",
+      "detail": "Deep clean, install, link matterbridge, and build",
+      "type": "npm",
+      "script": "reset",
+      "problemMatcher": []
+    },
+    {
+      "label": "Soft Reset",
+      "detail": "Install, link matterbridge, and build",
+      "type": "npm",
+      "script": "softReset",
+      "problemMatcher": []
+    },
+    {
+      "label": "Git Status",
+      "detail": "Run Git Status Script",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/git-status.mjs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Create Release",
+      "detail": "Run Create Release Script",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/create-release.mjs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Npm Downloads",
+      "detail": "Run Npm Downloads Script",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/downloads.mjs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Remove Workflows",
+      "detail": "Run Remove Workflows Script",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/remove-workflows.mjs"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker Downloads",
+      "detail": "Run Docker Downloads Script",
+      "type": "shell",
+      "command": "node",
+      "args": ["scripts/docker-downloads.mjs"],
+      "problemMatcher": []
     },
     {
       "label": "Test: All",
@@ -465,12 +564,6 @@
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
-    },
-    {
-      "type": "npm",
-      "script": "lint",
-      "problemMatcher": ["$eslint-stylish"],
-      "label": "npm: lint"
     }
   ]
 }

@@ -7,10 +7,10 @@
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://github.com/prettier/prettier)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
+[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
+[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/api/esm.html)
+[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -52,6 +52,35 @@ These classes will run as threads in the next releases:
 - frontend;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+## [3.7.3] - 2026-04-10
+
+### New plugins
+
+- [security]: Add [Security Plugin](https://www.npmjs.com/package/matterbridge-security) v.1.0.0.
+
+### Dev news
+
+- [frontend]: Implement rendering in config editor of array-items-enum-uniqueItems rjsf path (see the schema of Hass Plugin).
+- [platform]: Add BasePlatformConfig to strictly type the platform config (see the matterbridge-irobot module.ts).
+
+### Added
+
+- [security]: Escape user-controlled strings in backend responses (e.g. upload `filename`) before sending them to the browser to reduce XSS risk (CodeQL).
+- [security]: Apply rate limiting to backend file-transfer endpoints (upload/download) to reduce brute-force/abuse and accidental DoS (CodeQL).
+
+### Changed
+
+- [package]: Update dependencies.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `frontend` version to v.3.4.11.
+- [terminal]: Ignore process.stdout.isTTY that was too restrictive.
+
+### Fixed
+
+- [ansi]: Fix typo in getDefaultDeviceEnergyManagementModeClusterServer(). Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/pull/542).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.2] - 2026-04-02
 

@@ -51,7 +51,7 @@ import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
 
-export type { PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
+export type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.
@@ -196,6 +196,7 @@ export class MatterbridgePlatform {
     this.matterbridge = matterbridge;
     this.log = log;
     this.config = config;
+    this.name = config.name;
     this.#server = new BroadcastServer('platform', this.log);
 
     // Set the brand
@@ -950,7 +951,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Validates if an entity is allowed based on the entity blacklist and device-entity blacklist configurations.
+   * Validates if an entity is allowed based on the entity blacklist, the entity whitelist and device entity blacklist configurations.
    *
    * @param {string} device - The device to which the entity belongs.
    * @param {string} entity - The entity to validate.

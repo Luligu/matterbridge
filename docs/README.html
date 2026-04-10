@@ -2,13 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matterbridge</title>
   <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
   <style>
     body {
       font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
       line-height: 1.6;
-      margin: 40px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
     }
     h1, h2, h3 {
       font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
@@ -47,6 +51,12 @@
       font-size: 0.875rem;
       margin: 10px 20px 10px 0px;
       position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
     }
     p code,
     li code,
@@ -87,6 +97,9 @@
     table {
       border-collapse: collapse;
       margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
     }
     th,
     td {
@@ -94,6 +107,24 @@
       padding: 0.4rem 0.6rem;
       text-align: left;
       vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
     }
   </style>
 </head>
@@ -106,10 +137,10 @@
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
@@ -136,6 +167,7 @@
 <h2 id="videos">Videos</h2>
 <p><a href="https://www.youtube.com/watch?v=goNB9Cgh_Fk">https://www.youtube.com/watch?v=goNB9Cgh_Fk</a></p>
 <p><a href="https://www.youtube.com/watch?v=06zzl7o_IqQ">https://www.youtube.com/watch?v=06zzl7o_IqQ</a></p>
+<p><a href="https://www.youtube.com/watch?v=JFp3cJ_cPEw">https://www.youtube.com/watch?v=JFp3cJ_cPEw</a></p>
 <h2 id="reviews">Reviews</h2>
 <p><a href="https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home">https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home</a></p>
 <h2 id="press">Press</h2>
@@ -210,6 +242,8 @@
 <p>or with user matterbridge and with private global node_modules and npm cache (no sudo required): <a href="README-SERVICE-OPT.html">configuration</a></p>
 <h3 id="run-matterbridge-as-a-system-service-with-launchctl-macos-only">Run matterbridge as a system service with launchctl (macOS only)</h3>
 <p><a href="README-MACOS-PLIST.html">Launchctl configuration</a></p>
+<h3 id="run-matterbridge-as-a-scheduled-task-with-task-scheduler-windows-only">Run matterbridge as a scheduled task with Task Scheduler (Windows only)</h3>
+<p><a href="README-WINDOWS.html">Task Scheduler configuration</a></p>
 <h3 id="run-matterbridge-with-docker-and-docker-compose">Run matterbridge with docker and docker compose</h3>
 <p><a href="README-DOCKER.html">Docker configuration</a></p>
 <h3 id="run-matterbridge-with-podman">Run matterbridge with podman</h3>
@@ -226,9 +260,7 @@
 <h3 id="shelly">Shelly</h3>
 <a href="https://github.com/Luligu/matterbridge-shelly">
   <img src="./screenshots/Shelly.svg" alt="Shelly plugin logo" width="100" />
-</a>
-
-<p>Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.</p>
+</a><p>Matterbridge shelly plugin allows you to expose all Shelly Gen 1, Gen 2, Gen 3 and Gen 4 and BLU devices to Matter.</p>
 <p>Features:</p>
 <ul>
 <li>Shellies are automatically discovered using mDNS.</li>
@@ -253,40 +285,41 @@
 <h3 id="zigbee2mqtt">Zigbee2MQTT</h3>
 <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt">
   <img src="./screenshots/Zigbee2MQTT.svg" alt="Zigbee2MQTT plugin logo" width="100" />
-</a>
-
-<p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices, groups and scenes to Matter.</p>
+</a><p>Matterbridge zigbee2mqtt is a matterbridge production-level plugin that expose all zigbee2mqtt devices, groups and scenes to Matter.</p>
 <p>No hub or dedicated hardware needed.</p>
 <h3 id="somfy-tahoma">Somfy tahoma</h3>
 <a href="https://github.com/Luligu/matterbridge-somfy-tahoma">
   <img src="./screenshots/Somfy.svg" alt="Somfy plugin logo" width="100" />
-</a>
-
-<p>Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.</p>
+</a><p>Matterbridge Somfy Tahoma is a matterbridge production-level plugin that expose the Somfy Tahoma screen devices to Matter.</p>
 <h3 id="home-assistant">Home Assistant</h3>
 <a href="https://github.com/Luligu/matterbridge-hass">
   <img src="./screenshots/HomeAssistant.svg" alt="Hass logo" width="100" />
-</a>
-
-<p>Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.</p>
+</a><p>Matterbridge Home Assistant plugin allows you to expose the Home Assistant devices and entities to Matter.</p>
 <p>It is the ideal companion of the official <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Matterbridge Home Assistant Add-on</a>.</p>
 <h3 id="webhooks">Webhooks</h3>
 <a href="https://github.com/Luligu/matterbridge-webhooks">
   <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
-</a>
-
-<p>Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.</p>
+</a><p>Matterbridge Webhooks plugin allows you to expose any webhooks to Matter.</p>
 <h3 id="bthome">BTHome</h3>
 <a href="https://github.com/Luligu/matterbridge-webhooks">
   <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
-</a>
-
-<p>Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.</p>
+</a><p>Matterbridge BTHome allows you to expose any BTHome device to Matter using the native bluetooth of the host machine.</p>
 <p>Features:</p>
 <ul>
 <li>The bluetooth works correctly on all platforms and is based on the @stoprocent fork of noble.</li>
 <li>The discovered BTHome devices are stored with all attributes to easily restart the plugin.</li>
 <li>The plugin has also a command line to test and verify the bluetooth adapter and the ble network.</li>
+</ul>
+<h3 id="security">Security</h3>
+<a href="https://github.com/Luligu/matterbridge-security">
+  <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge logo" width="100" />
+</a><p>Matterbridge Security plugin allows you to create a security system.</p>
+<p>Features:</p>
+<ul>
+<li>Five preconfigured modes: Home, Away, Night, Vacation, Off.</li>
+<li>Five preconfigured setters: Home, Away, Night, Vacation, Off.</li>
+<li>Four preconfigured triggers: Home, Away, Night, Off.</li>
+<li>Five preconfigured alerts: Home, Away, Night, Off, Master.</li>
 </ul>
 <h3 id="accessory-platform-example">Accessory platform example</h3>
 <p>This is an example of an accessory platform plugin.</p>
@@ -295,7 +328,7 @@
 <p><a href="https://github.com/Luligu/matterbridge-example-accessory-platform">See the plugin homepage here</a></p>
 <h3 id="dynamic-platform-example">Dynamic platform example</h3>
 <p>This is an example of a dynamic platform plugin.</p>
-<p>It exposes 57 virtual devices.</p>
+<p>It exposes 70 virtual devices.</p>
 <p>All these virtual devices continuously change state and position. The plugin also shows how to use all the command handlers (you can control all the devices).</p>
 <p>A Dynamic platform plugin exposes as many devices as you need (the limit for the Home app is 150 accessories for bridge).</p>
 <p><a href="https://github.com/Luligu/matterbridge-example-dynamic-platform">See the plugin homepage here</a></p>
@@ -307,7 +340,7 @@
 <p><a href="https://github.com/Luligu/matterbridge-eve-room">Room plugin with history</a></p>
 <p>The history works in both bridge and childbridge mode.</p>
 <p>The Eve app only shows the history when the plugins run like an AccessoryPlatform in childbridge mode or as a device with mode server (this means the plugin is paired directly).</p>
-<h2 id="third-party-plugins">Third-party plugins</h2>
+<h2 id="community-plugins">Community plugins</h2>
 <h3 id="loxone"><a href="https://github.com/andrasg/matterbridge-loxone">Loxone</a></h3>
 <p>A matterbridge plugin that allows connecting Loxone devices to Matter.</p>
 <h3 id="dyson-robot"><a href="https://github.com/thoukydides/matterbridge-dyson-robot">Dyson robot</a></h3>
@@ -525,9 +558,7 @@ While Amazon has expanded support to include core categories like lighting, plug
 <p>Click on the badge below to get started:</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120">
-</a>
-
-<p>Thank you for your support!</p>
+</a><p>Thank you for your support!</p>
 <h1 id="licensing">Licensing</h1>
 <p>Matterbridge is licensed under the <a href="./LICENSE">Apache License 2.0</a>.</p>
   <script>

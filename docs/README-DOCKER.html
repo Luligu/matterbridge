@@ -2,13 +2,17 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matterbridge</title>
   <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
   <style>
     body {
       font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
       line-height: 1.6;
-      margin: 40px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
     }
     h1, h2, h3 {
       font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
@@ -47,6 +51,12 @@
       font-size: 0.875rem;
       margin: 10px 20px 10px 0px;
       position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
     }
     p code,
     li code,
@@ -87,6 +97,9 @@
     table {
       border-collapse: collapse;
       margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
     }
     th,
     td {
@@ -94,6 +107,24 @@
       padding: 0.4rem 0.6rem;
       text-align: left;
       vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
     }
   </style>
 </head>
@@ -106,10 +137,10 @@
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://github.com/prettier/prettier"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://github.com/eslint/eslint"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
+<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
-<a href="https://nodejs.org/api/esm.html"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
 <a href="https://www.npmjs.com/package/node-ansi-logger"><img src="https://img.shields.io/badge/powered%20by-node--ansi--logger-blue" alt="powered by"></a>
@@ -125,9 +156,9 @@
 <p>The image (tag <strong>s6-rc</strong> 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:24-trixie-slim</code>, supports <code>arm64</code>, <code>amd64</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It is only used for the <a href="https://github.com/Luligu/matterbridge-home-assistant-addon">Matterbridge Home Assistant Application</a>.</p>
 <p>The image (tag <strong>s6-rc-legacy</strong> 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>node:22-bullseye-slim</code>, supports <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> and integrates the <code>s6-rc overlay</code> system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy <a href="https://github.com/Luligu/matterbridge-home-assistant-addon-legacy">Matterbridge Home Assistant Application (Legacy)</a>.</p>
 <h3 id="matterbridge-chip-tool-docker-image">Matterbridge chip-tool docker image</h3>
-<p>The image (tag <strong>chip-test</strong> 400MB) includes Ubuntu LTS, Node.Js 24 LTS, connectedhomeip repository with chip-tool, chip-cert and all needed for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.</p>
+<p>The image (tag <strong>chip-test</strong> 400MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource and includes the connectedhomeip repository with chip-tool, chip-cert and all components required for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.</p>
 <h3 id="matterbridge-docker-base-images">Matterbridge docker base images</h3>
-<p>The image (tag <strong>24-ubuntu-slim</strong> 83 MB) includes only <code>ubuntu:latest</code>: Ubuntu 24.04.3 LTS (noble) with Node.js 24. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
+<p>The image (tag <strong>24-ubuntu-slim</strong> 83 MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
 <h3 id="docker-health-check">Docker health check</h3>
 <p>All images include a health check.</p>
 <p>How health checks work in different scenarios:</p>

@@ -7,10 +7,10 @@
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://github.com/prettier/prettier)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://github.com/eslint/eslint)
+[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
+[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/api/esm.html)
+[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -74,18 +74,38 @@ Group=<USER>
 WantedBy=multi-user.target
 ```
 
-If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
-add this:
+On some systems, npm install may fail with errors like `ENETUNREACH`:
 
+This happens when:
+
+The system has IPv6 enabled
+DNS returns IPv6 (AAAA) records
+But the host does not have a working IPv6 default route
+
+In this situation:
+
+Node.js may try IPv6 first.
+The connection fails with ENETUNREACH.
+Npm retries may randomly succeed or fail depending on resolution order.
+
+This often indicates a misconfigured IPv6 route / DNS preference.
+
+One possible fix, add this line to the existing [Service] section:
+
+```text
+Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 ```
-[Service]
+
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this line to the existing [Service] section:
+
+```text
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the matterbridge-bthome plugin add this:
+If you use the matterbridge-bthome plugin add this line to the existing [Service] section:
 
-```
-[Service]
+```text
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 
