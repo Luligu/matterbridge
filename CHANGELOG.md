@@ -59,6 +59,10 @@ These classes will run as threads in the next releases:
 
 - [irobot]: Add [iRobot Plugin](https://www.npmjs.com/package/matterbridge-irobot) v.0.1.0.
 
+### Added
+
+- [agent]: Add agent custom instructions for copilot and claude.
+
 ### Changed
 
 - [package]: Update dependencies.
