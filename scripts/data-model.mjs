@@ -34,8 +34,9 @@ const GITHUB_API_HEADERS = {
   'Accept': 'application/vnd.github.v3+json',
 };
 
-const sanitizeKey = (value) => value.replace(/[\s/]+/g, '');
-const normalizeDisplayName = (value) => (typeof value === 'string' ? value.replace(/\s*\/\s*/g, '') : value);
+const sanitizeKey = (value) => value.replace(/[\s/-]+/g, '');
+const normalizeDisplayName = (value) => (typeof value === 'string' ? value.replace(/\s*[/-]\s*/g, '') : value);
+const normalizeConditionName = (value) => (typeof value === 'string' ? sanitizeKey(value) : value);
 
 const isValidTsIdentifier = (value) => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(value);
 
@@ -69,6 +70,16 @@ const lowerFirstCharacter = (value) => {
   }
 
   return `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
+};
+
+const formatGeneratedTs = async (source, filePath) => {
+  const prettier = await import('prettier');
+  const prettierOptions = (await prettier.resolveConfig(filePath)) ?? {};
+
+  return prettier.format(source, {
+    ...prettierOptions,
+    filepath: filePath,
+  });
 };
 
 const isDoNotUseEntryKey = (value) => typeof value === 'string' && value.trim().toLowerCase() === 'donotuse';
@@ -146,6 +157,84 @@ const serializeToTsLiteralLines = (value, indentLevel = 0) => {
       lines.push(`${childIndent}${propertyKey}: ${firstValueLine}`);
       lines.push(...valueLines.slice(1, -1));
       lines.push(`${valueLines[valueLines.length - 1]},`);
+    }
+
+    lines.push(`${indent}}`);
+    return lines;
+  }
+
+  return [`${indent}${String(value)}`];
+};
+
+const serializeToTsTypeLiteralLines = (value, indentLevel = 0) => {
+  const indent = TS_LITERAL_INDENT.repeat(indentLevel);
+
+  if (value === null) {
+    return [`${indent}null`];
+  }
+
+  if (value === undefined) {
+    return [`${indent}undefined`];
+  }
+
+  if (typeof value === 'string') {
+    return [`${indent}${formatTsStringLiteralValue(value)}`];
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return [`${indent}${String(value)}`];
+  }
+
+  if (typeof value === 'bigint') {
+    return [`${indent}${String(value)}n`];
+  }
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return [`${indent}[]`];
+    }
+
+    const lines = [`${indent}[`];
+    for (const element of value) {
+      const elementLines = serializeToTsTypeLiteralLines(element, indentLevel + 1);
+      if (elementLines.length === 1) {
+        lines.push(`${elementLines[0]},`);
+      } else {
+        lines.push(...elementLines.slice(0, -1));
+        lines.push(`${elementLines[elementLines.length - 1]},`);
+      }
+    }
+
+    lines.push(`${indent}]`);
+    return lines;
+  }
+
+  if (typeof value === 'object') {
+    const keys = Object.keys(value);
+    if (keys.length === 0) {
+      return [`${indent}{}`];
+    }
+
+    const lines = [`${indent}{`];
+    const childIndentLevel = indentLevel + 1;
+    const childIndent = TS_LITERAL_INDENT.repeat(childIndentLevel);
+
+    for (const key of keys) {
+      const propertyKey = formatTsStringLiteralKey(key);
+      const propertyValue = value[key];
+      const valueLines = serializeToTsTypeLiteralLines(propertyValue, childIndentLevel);
+      const prefix = childIndent;
+
+      if (valueLines.length === 1) {
+        const singleLine = valueLines[0].startsWith(prefix) ? valueLines[0].slice(prefix.length) : valueLines[0];
+        lines.push(`${childIndent}${propertyKey}: ${singleLine};`);
+        continue;
+      }
+
+      const firstValueLine = valueLines[0].startsWith(prefix) ? valueLines[0].slice(prefix.length) : valueLines[0];
+      lines.push(`${childIndent}${propertyKey}: ${firstValueLine}`);
+      lines.push(...valueLines.slice(1, -1));
+      lines.push(`${valueLines[valueLines.length - 1]};`);
     }
 
     lines.push(`${indent}}`);
@@ -441,6 +530,22 @@ const typedEntryToTsTypeDiagnostic = (entry, clusterEntry) => {
   return diagnostic;
 };
 
+const hasConformanceStatus = (entry, status) => {
+  if (!Array.isArray(entry?.conformance) || typeof status !== 'string' || !status.trim()) {
+    return false;
+  }
+
+  const normalizedStatus = status.trim().toLowerCase();
+
+  return entry.conformance.some((item) => {
+    if (typeof item === 'string') {
+      return item.trim().toLowerCase() === normalizedStatus;
+    }
+
+    return typeof item?.status === 'string' && item.status.trim().toLowerCase() === normalizedStatus;
+  });
+};
+
 const applyAttributeTypeOverrides = (diagnostic, clusterEntry, clusterKey, attributeKey) => {
   if (typeof attributeKey === 'string') {
     const normalizedAttributeKey = attributeKey.trim().toLowerCase();
@@ -496,6 +601,13 @@ const applyAttributeTypeOverrides = (diagnostic, clusterEntry, clusterKey, attri
     }
   }
 
+  if (diagnostic.reason === 'missing-type' && hasConformanceStatus(clusterEntry?.attributes?.[attributeKey], 'deprecate')) {
+    diagnostic.reason = 'deprecated-without-type';
+    diagnostic.baseTsType = 'never';
+    diagnostic.tsType = 'never';
+    return diagnostic;
+  }
+
   return diagnostic;
 };
 
@@ -507,6 +619,76 @@ const entryToTsTypeDiagnostic = (entry, clusterEntry, options = {}) => {
   }
 
   return diagnostic;
+};
+
+const generateDeviceTypesTs = (deviceTypesByKey, versionLabel) => {
+  const deviceTypesTsLines = [];
+
+  deviceTypesTsLines.push('/**');
+  deviceTypesTsLines.push(' * Generated by scripts/data-model.mjs. Do not edit.');
+  deviceTypesTsLines.push(' *');
+  deviceTypesTsLines.push(' * @file matterDeviceTypes.ts');
+  deviceTypesTsLines.push(` * @remarks Matter data model version: ${versionLabel}`);
+  deviceTypesTsLines.push(' */');
+  deviceTypesTsLines.push('');
+  deviceTypesTsLines.push('export type MatterDeviceTypeCondition = Record<string, string> & { name: string; summary: string };');
+  deviceTypesTsLines.push('export type MatterDeviceTypeRevision = { revision: number; summary: string };');
+  deviceTypesTsLines.push("export type MatterDeviceTypeFeatureConformance = 'mandatory' | 'optional' | 'disallow' | 'provisional' | 'deprecate' | 'otherwise';");
+  deviceTypesTsLines.push('export type MatterDeviceTypeFeatureCondition = { name: string; summary?: string; attributes?: Record<string, string> };');
+  deviceTypesTsLines.push('export type MatterDeviceTypeFeature = {');
+  deviceTypesTsLines.push('  name: string;');
+  deviceTypesTsLines.push('  code: string;');
+  deviceTypesTsLines.push('  summary?: string;');
+  deviceTypesTsLines.push('  attributes?: Record<string, string>;');
+  deviceTypesTsLines.push('  conformance?: MatterDeviceTypeFeatureConformance[];');
+  deviceTypesTsLines.push('  conditions?: MatterDeviceTypeFeatureCondition[];');
+  deviceTypesTsLines.push('};');
+  deviceTypesTsLines.push('export type MatterDeviceTypeCluster = {');
+  deviceTypesTsLines.push('  id: number;');
+  deviceTypesTsLines.push('  name: string;');
+  deviceTypesTsLines.push('  side: string;');
+  deviceTypesTsLines.push('  mandatory?: boolean;');
+  deviceTypesTsLines.push('  optional?: boolean;');
+  deviceTypesTsLines.push('  disallow?: boolean;');
+  deviceTypesTsLines.push('  mandatoryIf?: string[];');
+  deviceTypesTsLines.push('  features?: Record<string, MatterDeviceTypeFeature>;');
+  deviceTypesTsLines.push('};');
+  deviceTypesTsLines.push('export type MatterDeviceType = {');
+  deviceTypesTsLines.push('  name: string;');
+  deviceTypesTsLines.push('  id: number;');
+  deviceTypesTsLines.push('  revision: number;');
+  deviceTypesTsLines.push('  revisionHistory: MatterDeviceTypeRevision[];');
+  deviceTypesTsLines.push('  conditions: MatterDeviceTypeCondition[];');
+  deviceTypesTsLines.push('  class?: string;');
+  deviceTypesTsLines.push('  scope?: string;');
+  deviceTypesTsLines.push('  clusters: MatterDeviceTypeCluster[];');
+  deviceTypesTsLines.push('};');
+  deviceTypesTsLines.push('');
+
+  const deviceTypeKeys = Object.keys(deviceTypesByKey).sort((left, right) => left.localeCompare(right));
+  deviceTypesTsLines.push('export type MatterDeviceTypes = {');
+
+  for (const deviceTypeKey of deviceTypeKeys) {
+    const deviceTypeEntry = deviceTypesByKey[deviceTypeKey];
+    const deviceTypeKeyLiteral = formatTsStringLiteralKey(deviceTypeKey);
+    const entryLines = serializeToTsTypeLiteralLines(deviceTypeEntry, 1);
+
+    if (entryLines.length === 1) {
+      const singleLine = entryLines[0].trimStart();
+      deviceTypesTsLines.push(`  ${deviceTypeKeyLiteral}: ${singleLine};`);
+      continue;
+    }
+
+    const firstLine = entryLines[0].trimStart();
+    deviceTypesTsLines.push(`  ${deviceTypeKeyLiteral}: ${firstLine}`);
+    deviceTypesTsLines.push(...entryLines.slice(1, -1));
+    deviceTypesTsLines.push(`${entryLines[entryLines.length - 1]};`);
+  }
+
+  deviceTypesTsLines.push('};');
+  deviceTypesTsLines.push('');
+
+  return `${deviceTypesTsLines.join('\n')}\n`;
 };
 
 const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, converterTypeUsages) => {
@@ -1217,12 +1399,13 @@ const extractConditions = (fragment) => {
   while ((match = regex.exec(fragment)) !== null) {
     const attributes = parseAttributes(match[0]);
     const { name, summary = '', ...rest } = attributes;
+    const normalizedName = normalizeConditionName(name);
 
-    if (!name) {
+    if (!normalizedName) {
       continue;
     }
 
-    const condition = { name };
+    const condition = { name: normalizedName };
 
     if (summary) {
       condition.summary = summary;
@@ -2384,12 +2567,13 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     for (const match of conditionTagMatches) {
       const conditionAttributes = parseAttributes(match[0]);
       const { name: conditionName, summary = '', ...rest } = conditionAttributes;
+      const normalizedConditionName = normalizeConditionName(conditionName);
 
-      if (!conditionName) {
+      if (!normalizedConditionName) {
         throw new Error(`Condition without name encountered in device type ${name}.`);
       }
 
-      conditions.push({ name: conditionName, summary, ...rest });
+      conditions.push({ name: normalizedConditionName, summary, ...rest });
     }
   }
 
@@ -2435,7 +2619,7 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
         const openTagLength = leadingMandatoryMatch[0].length;
         const closeTagIndex = clusterBody.indexOf('</mandatoryConform>', openTagLength);
         const mandatoryBody = closeTagIndex >= 0 ? clusterBody.slice(openTagLength, closeTagIndex) : '';
-        const conditionNames = [...mandatoryBody.matchAll(/<condition\b[^>]*\bname\s*=\s*"([^"]+)"/gi)].map((match) => match[1]);
+        const conditionNames = [...mandatoryBody.matchAll(/<condition\b[^>]*\bname\s*=\s*"([^"]+)"/gi)].map((match) => normalizeConditionName(match[1]));
         const uniqueNames = [...new Set(conditionNames.map((value) => value.trim()).filter(Boolean))];
 
         if (uniqueNames.length > 0) {
@@ -2505,12 +2689,13 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
         for (const conditionMatch of featureConditionMatches) {
           const conditionAttributes = parseAttributes(conditionMatch[0]);
           const { name: conditionName, summary = '', ...conditionRest } = conditionAttributes;
+          const normalizedConditionName = normalizeConditionName(conditionName);
 
-          if (!conditionName) {
+          if (!normalizedConditionName) {
             throw new Error(`Condition without a name referenced in feature ${featureName} of cluster ${clusterName} for device type ${name}.`);
           }
 
-          const conditionOutput = { name: conditionName };
+          const conditionOutput = { name: normalizedConditionName };
 
           if (summary) {
             conditionOutput.summary = summary;
@@ -2558,7 +2743,7 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
 
     return {
       id: parseHexId(clusterId, `cluster ${clusterName} in device type ${name}`),
-      name: normalizeDisplayName(clusterName),
+      name: sanitizeKey(clusterName),
       side,
       ...(isDisallow ? { disallow: true } : isOptional ? { optional: true } : mandatoryIf ? { mandatoryIf } : { mandatory: isMandatory }),
       ...(Object.keys(features).length > 0 ? { features } : {}),
@@ -2709,12 +2894,13 @@ const parseClusterXml = (xmlContent, contextLabel) => {
       for (const conditionMatch of featureConditionMatches) {
         const conditionAttributes = parseAttributes(conditionMatch[0]);
         const { name: conditionName, summary: conditionSummary = '', ...conditionRest } = conditionAttributes;
+        const normalizedConditionName = normalizeConditionName(conditionName);
 
-        if (!conditionName) {
+        if (!normalizedConditionName) {
           throw new Error(`Condition without a name referenced in feature ${featureName} of cluster ${name} (${contextLabel}).`);
         }
 
-        const conditionOutput = { name: conditionName };
+        const conditionOutput = { name: normalizedConditionName };
 
         if (conditionSummary) {
           conditionOutput.summary = conditionSummary;
@@ -3026,6 +3212,14 @@ const sortedDeviceTypes = Object.fromEntries(Object.entries(deviceTypesOutput).s
 const serializedDeviceTypes = `${JSON.stringify(sortedDeviceTypes, null, 2)}\n`;
 await writeFile(deviceTypesOutputPath, serializedDeviceTypes);
 console.log(greenText(`Device types JSON written to ${deviceTypesOutputPath} (${Object.keys(deviceTypesOutput).length} entries).`));
+
+const deviceTypesTypesOutputDir = join('packages', 'types', 'src');
+await mkdir(deviceTypesTypesOutputDir, { recursive: true });
+const deviceTypesTypesOutputPath = join(deviceTypesTypesOutputDir, 'matterDeviceTypes.ts');
+const deviceTypesTs = generateDeviceTypesTs(sortedDeviceTypes, MATTER_DATA_MODEL_VERSION);
+const formattedDeviceTypesTs = await formatGeneratedTs(deviceTypesTs, deviceTypesTypesOutputPath);
+await writeFile(deviceTypesTypesOutputPath, formattedDeviceTypesTs);
+console.log(greenText(`Device types TS written to ${deviceTypesTypesOutputPath} (${Object.keys(sortedDeviceTypes).length} device types).`));
 
 /** Fetch all clusters */
 
