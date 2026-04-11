@@ -62,6 +62,8 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [agent]: Add agent custom instructions for copilot and claude.
+- [agent]: Add agent prompt files.
+- [matter]: Add [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 
 ### Changed
 

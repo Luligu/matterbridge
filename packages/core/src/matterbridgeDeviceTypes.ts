@@ -1431,7 +1431,9 @@ export const heatPump = DeviceTypeDefinition({
   optionalServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
 });
 
-/** Matter 1.5.0 device types */
+/**
+ * See Matter-1.5.1.md in the repository root for the Matter 1.5.1 changes summary tables.
+ */
 
 /**
  * 7.14. Soil Sensor Device Type
