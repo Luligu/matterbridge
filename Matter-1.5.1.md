@@ -84,7 +84,7 @@ The official HTML specs under `chip/1.5.1/specs/` remain the primary reference.
 
 ### Remarks
 
-Quality P is the old persistence marker for attribute data. This means that is even more important to set the correct value in onConfigure() if it is available from the real device.
+Quality P = Reportable: means the attribute is intended to support interval or change reporting for interactions that care specifically about reportable attributes.
 
 ## New Cluster Types
 
