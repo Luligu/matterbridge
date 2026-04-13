@@ -116,6 +116,10 @@
       "import": "./dist/matter/endpoints.js",
       "types": "./dist/matter/endpoints.d.ts"
     },
+    "./matter/model": {
+      "import": "./dist/matter/model.js",
+      "types": "./dist/matter/model.d.ts"
+    },
     "./matter/types": {
       "import": "./dist/matter/types.js",
       "types": "./dist/matter/types.d.ts"

@@ -55,9 +55,9 @@ These classes will run as threads in the next releases:
 
 ## [3.7.4] - Dev branch
 
-### New plugins
+### Dev news
 
-- [irobot]: Add [iRobot Plugin](https://www.npmjs.com/package/matterbridge-irobot) v.0.1.0.
+- [matter]: Add matterbridge/matter/model export to allow to create custom cluster with the newer matter.js decorator-based system.
 
 ### Added
 

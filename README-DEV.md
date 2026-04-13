@@ -157,6 +157,10 @@ Matterbridge exports from:
 
 - All matter.js endpoints.
 
+**"matterbridge/matter/model"**
+
+- All matter.js model package.
+
 **"matterbridge/matter/types"**
 
 - All matter.js types.
