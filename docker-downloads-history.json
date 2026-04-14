@@ -1,10 +1,5 @@
 [
   {
-    "ts": "2026-02-21T19:07:08.971Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 242768
-  },
-  {
     "ts": "2026-02-21T19:11:59.432Z",
     "repo": "luligu/matterbridge",
     "pull_count": 242790
@@ -15,19 +10,9 @@
     "pull_count": 249484
   },
   {
-    "ts": "2026-02-25T08:23:10.357Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 254744
-  },
-  {
     "ts": "2026-02-25T20:24:06.032Z",
     "repo": "luligu/matterbridge",
     "pull_count": 255628
-  },
-  {
-    "ts": "2026-02-26T18:19:30.110Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 256961
   },
   {
     "ts": "2026-02-26T23:21:03.687Z",
@@ -60,19 +45,9 @@
     "pull_count": 346354
   },
   {
-    "ts": "2026-03-23T06:08:29.204Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 355162
-  },
-  {
     "ts": "2026-03-23T18:54:52.162Z",
     "repo": "luligu/matterbridge",
     "pull_count": 357271
-  },
-  {
-    "ts": "2026-03-24T07:59:27.787Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 358882
   },
   {
     "ts": "2026-03-24T23:20:59.234Z",
@@ -100,16 +75,6 @@
     "pull_count": 388497
   },
   {
-    "ts": "2026-04-03T04:56:03.979Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 408660
-  },
-  {
-    "ts": "2026-04-03T04:59:45.188Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 408706
-  },
-  {
     "ts": "2026-04-03T06:12:11.141Z",
     "repo": "luligu/matterbridge",
     "pull_count": 410160
@@ -120,39 +85,9 @@
     "pull_count": 488240
   },
   {
-    "ts": "2026-04-06T08:01:11.432Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 522645
-  },
-  {
     "ts": "2026-04-06T08:01:30.620Z",
     "repo": "luligu/matterbridge",
     "pull_count": 522645
-  },
-  {
-    "ts": "2026-04-07T06:53:57.760Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 558148
-  },
-  {
-    "ts": "2026-04-07T07:25:54.701Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 559297
-  },
-  {
-    "ts": "2026-04-07T10:48:19.254Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 565376
-  },
-  {
-    "ts": "2026-04-07T10:48:29.266Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 565397
-  },
-  {
-    "ts": "2026-04-07T10:53:42.799Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 565490
   },
   {
     "ts": "2026-04-07T20:29:11.442Z",
@@ -160,79 +95,14 @@
     "pull_count": 583642
   },
   {
-    "ts": "2026-04-08T13:16:45.667Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 611269
-  },
-  {
-    "ts": "2026-04-08T20:51:30.202Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 626956
-  },
-  {
     "ts": "2026-04-08T21:00:35.023Z",
     "repo": "luligu/matterbridge",
     "pull_count": 627321
   },
   {
-    "ts": "2026-04-09T07:17:50.005Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 643229
-  },
-  {
-    "ts": "2026-04-09T11:52:54.891Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 650896
-  },
-  {
     "ts": "2026-04-09T18:27:18.200Z",
     "repo": "luligu/matterbridge",
     "pull_count": 661796
-  },
-  {
-    "ts": "2026-04-10T06:18:49.916Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 680956
-  },
-  {
-    "ts": "2026-04-10T10:28:17.788Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 688626
-  },
-  {
-    "ts": "2026-04-10T14:11:20.056Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 694954
-  },
-  {
-    "ts": "2026-04-10T17:37:33.861Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 702075
-  },
-  {
-    "ts": "2026-04-10T17:41:34.771Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 702306
-  },
-  {
-    "ts": "2026-04-10T17:46:53.785Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 702582
-  },
-  {
-    "ts": "2026-04-10T18:08:12.544Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 703646
-  },
-  {
-    "ts": "2026-04-10T18:23:05.089Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 704538
-  },
-  {
-    "ts": "2026-04-10T18:25:31.147Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 704672
   },
   {
     "ts": "2026-04-10T21:21:11.577Z",
@@ -243,11 +113,6 @@
     "ts": "2026-04-11T00:00:02.443Z",
     "repo": "luligu/matterbridge",
     "pull_count": 720368
-  },
-  {
-    "ts": "2026-04-11T06:29:57.154Z",
-    "repo": "luligu/matterbridge",
-    "pull_count": 731819
   },
   {
     "ts": "2026-04-12T17:40:48.010Z",
