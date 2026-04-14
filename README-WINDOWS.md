@@ -93,6 +93,8 @@ This will start Matterbridge 30 seconds after the current user logs in.
 
 This setup starts Matterbridge once at logon. If Matterbridge exits, it stays stopped until the next logon or until you start it again manually.
 
+You can configure and adapt the task on the Task Scheduler.
+
 ### Start Matterbridge
 
 ```cmd

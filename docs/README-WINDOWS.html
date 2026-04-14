@@ -193,6 +193,7 @@ schtasks /create /f /tn &quot;Matterbridge&quot; /sc onlogon /delay 0000:30 /tr 
 </code></pre>
 <p>This will start Matterbridge 30 seconds after the current user logs in.</p>
 <p>This setup starts Matterbridge once at logon. If Matterbridge exits, it stays stopped until the next logon or until you start it again manually.</p>
+<p>You can configure and adapt the task on the Task Scheduler.</p>
 <h3 id="start-matterbridge">Start Matterbridge</h3>
 <pre><code class="language-cmd">schtasks /run /tn &quot;Matterbridge&quot;
 </code></pre>
