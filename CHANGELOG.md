@@ -65,7 +65,7 @@ These classes will run as threads in the next releases:
 - [agent]: Add agent prompt files.
 - [matter]: Add [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 - [storage]: Create storage directories on start.
-- [config]: The dialog to blacklist an entity now shows only not already added entities. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [config]: The dialog to blacklist an entity now shows only the entities not already blacklisted. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Changed
 
