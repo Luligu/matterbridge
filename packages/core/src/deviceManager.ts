@@ -1,7 +1,7 @@
 /**
  * This file contains the DeviceManager class.
  *
- * @file devices.ts
+ * @file deviceManager.ts
  * @author Luca Liguori
  * @created 2024-07-26
  * @version 1.1.2

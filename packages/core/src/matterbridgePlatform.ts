@@ -101,7 +101,7 @@ export class MatterbridgePlatform {
   readonly log: AnsiLogger;
   /** The configuration for this platform. Set by the PluginManager.load() method using the stored config file. */
   config: PlatformConfig;
-  /** The name of the platform. Set by the PluginManager.load() method using the package.json name value. */
+  /** The name of the platform. Set first in the constructor and then by the PluginManager.load() method using the package.json name value. */
   name = '';
   /** The type of the platform. Set by the extending classes: MatterbridgeDynamicPlatform and MatterbridgeAccessoryPlatform */
   type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform' = 'AnyPlatform';
@@ -113,7 +113,7 @@ export class MatterbridgePlatform {
   /** Platform context in the storage of matterbridgeDirectory. Use await platform.ready to access it early. */
   context?: NodeStorage;
 
-  /** Indicates whether the platform is is fully initialized (including context and selects). */
+  /** Indicates whether the platform is fully initialized (including context and selects). */
   isReady = false;
   /** Indicates whether the platform has been loaded. */
   isLoaded = false;
@@ -428,7 +428,7 @@ export class MatterbridgePlatform {
   }
 
   /**
-   * Sends an open snackbar message to all connected clients.
+   * Sends an open snackbar message to the frontend.
    *
    * @param {string} message - The message to send.
    * @param {number} timeout - The timeout in seconds for the snackbar message. Default is 5 seconds.

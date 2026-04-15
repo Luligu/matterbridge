@@ -1,7 +1,7 @@
 /**
- * This file contains the Plugins class.
+ * This file contains the PluginManager class.
  *
- * @file plugins.ts
+ * @file pluginManager.ts
  * @author Luca Liguori
  * @created 2024-07-14
  * @version 1.4.0
