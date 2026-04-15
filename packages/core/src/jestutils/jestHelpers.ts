@@ -46,6 +46,8 @@
  *  beforeAll(async () => {
  *    // Setup the Matter test environment
  *    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+ *    // Create the server node and aggregator
+ *    await createServerNode(NAME, MATTER_PORT);
  *    // Start the server node and aggregator
  *    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
  *  });
@@ -968,14 +970,18 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
  * @param {DeviceTypeId} deviceType Device type identifier for the server node. Defaults to the bridge device type.
- * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after starting the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 100ms).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
-export async function startServerNode(
+export async function createServerNode(
   name: string,
   port: number,
   deviceType: DeviceTypeId = bridge.code,
-  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
 ): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
@@ -1039,10 +1045,40 @@ export async function startServerNode(
   // Run the server
   expect(server.lifecycle.isOnline).toBeFalsy();
 
+  // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
+  await flushAsync(ticks, microTurns, pause);
+
+  return [server, aggregator];
+}
+
+/**
+ * Start a matter server node for testing.
+ *
+ * @param {string} name Name of the server (used for logging and product description).
+ * @param {number} port TCP port to listen on.
+ * @param {DeviceTypeId} deviceType Device type identifier for the server node. Defaults to the bridge device type.
+ * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after starting the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 100ms).
+ * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
+ */
+export async function startServerNode(
+  name: string,
+  port: number,
+  deviceType: DeviceTypeId = bridge.code,
+  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
+): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  // Create the server node
+  if (!server || !aggregator) {
+    await createServerNode(name, port, deviceType);
+  }
+
   // Return early if createOnly is true
   if (createOnly) {
-    // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-    await flushAsync(3, 3, 100);
     return [server, aggregator];
   }
 
@@ -1068,7 +1104,7 @@ export async function startServerNode(
   expect(aggregator.lifecycle.hasNumber).toBeTruthy();
 
   // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-  await flushAsync(3, 3, 100);
+  await flushAsync(ticks, microTurns, pause);
 
   return [server, aggregator];
 }
@@ -1078,9 +1114,18 @@ export async function startServerNode(
  *
  * @param {ServerNode<ServerNode.RootEndpoint>} server The server to stop.
  * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after stopping the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 100ms).
  * @returns {Promise<void>} Resolves when the server has stopped.
  */
-export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>, createOnly: boolean = false): Promise<void> {
+export async function stopServerNode(
+  server: ServerNode<ServerNode.RootEndpoint>,
+  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
+): Promise<void> {
   // Flush any pending endpoint number persistence
   await flushAllEndpointNumberPersistence(server);
 
@@ -1098,7 +1143,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-  await flushAsync(3, 3, 100);
+  await flushAsync(ticks, microTurns, pause);
 }
 
 /**

@@ -15,6 +15,7 @@ import {
   consoleInfoSpy,
   consoleLogSpy,
   consoleWarnSpy,
+  createServerNode,
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
@@ -69,6 +70,12 @@ describe('Matter.js test environment', () => {
   test('should create a matter.js environment', async () => {
     createTestEnvironment(NAME);
     expect(environment).toBeDefined();
+  });
+
+  test('should create a matter.js server node', async () => {
+    await createServerNode(NAME, MATTER_PORT, bridge.code);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
   });
 
   test('should start a matter.js server node', async () => {
