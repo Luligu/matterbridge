@@ -27,11 +27,11 @@ Since the mDNS are shared between reflector clients, you can pair Matterbridge r
 
 # Prerequisites
 
-- Docker Desktop
+- [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/mac-install/) or [Docker Desktop for macOS](https://docs.docker.com/desktop/setup/install/windows-install/).
 
 ## Docker Desktop requirements for Windows and macOS
 
-See Docker Desktop docs.
+See Docker Desktop System Requirements.
 
 ## Dual Stack IPv4/IPv6 mDNS enabled and No filtering
 
@@ -163,7 +163,7 @@ You need the Matterbridge reflector server tray app running on the host from the
 ## Run Home Assitant and Matter Server in Docker Compose with Docker Desktop
 
 To test the sharing feature (it shares mDNS between all reflector clients),
-use this [docker-compose.yml](https://matterbridge.io/reflector/reflector-docker-compose.yml).
+use this [reflector-docker-compose.yml](https://matterbridge.io/reflector/reflector-docker-compose.yml).
 
 With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
 

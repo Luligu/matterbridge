@@ -608,10 +608,10 @@
 
         <section id="installation" class="installation">
             <div class="container">
-                <h2>Quick Installation</h2>
+                <h2>Quick Install</h2>
                 <p>Get Matterbridge running in minutes with these simple commands.</p>
                 
-                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">NPM Installation</h3>
+                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Node.js Install</h3>
                 <div class="code-block" id="copy-npm" style="position:relative;">
                   npm install -g matterbridge --omit=dev
                   <button class="copy-btn" onclick="copyToClipboard('copy-npm')" aria-label="Copy">
@@ -640,7 +640,7 @@
                     For more installation options, including running as a system service, see the <a href="https://matterbridge.io/README.html#advanced-configurations" target="_blank">Advanced Configurations</a> section.
                 </p>
                 
-                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Installation</h3>
+                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Install</h3>
                 <div class="code-block" id="copy-docker" style="position:relative;">
                   docker pull luligu/matterbridge:latest && docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always -d luligu/matterbridge:latest
                   <button class="copy-btn" onclick="copyToClipboard('copy-docker')" aria-label="Copy">
@@ -648,7 +648,7 @@
                   </button>
                 </div>
                 <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
-                    The Docker container starts Matterbridge automatically.
+                    The Docker container starts Matterbridge automatically. See the <a href="https://matterbridge.io/README-DOCKER.html" target="_blank">Docker Guide</a> for more details.
                 </p>
                 <h3 style="text-align: center; margin: 3rem 0 1rem; color: var(--primary-color);">Access the Frontend</h3>
                 <p style="text-align:center; font-size:1rem; color: var(--text-secondary); max-width:800px; margin:0 auto 1.25rem;">
@@ -791,9 +791,9 @@
                 
                 <div class="footer-section">
                     <h3>Connect</h3>
-                    <a href="https://www.youtube.com/watch?v=goNB9Cgh_Fk">YouTube Demo</a>
-                    <a href="https://matter-smarthome.de/en/interview/an-alternative-to-the-official-matter-sdk/">Press Coverage</a>
-                    <a href="https://www.matteralpha.com/how-to/how-to-configure-an-open-source-matter-bridge-at-home">Reviews</a>
+                    <a href="https://matterbridge.io/README.html#videos">YouTube</a>
+                    <a href="https://matterbridge.io/README.html#reviews">Reviews</a>
+                    <a href="https://matterbridge.io/README.html#press">Press Coverage</a>
                 </div>
             </div>
             

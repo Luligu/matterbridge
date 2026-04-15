@@ -89,8 +89,12 @@ After adding your user to the `docker` group, log out and log back in so your cu
 
 The container must have full access to the host network (needed for mDNS and the Matter protocol).
 
+Linux (bash):
+
 ```bash
 sudo docker pull luligu/matterbridge:latest
+sudo docker stop matterbridge 2>/dev/null
+sudo docker rm matterbridge 2>/dev/null
 sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
@@ -104,6 +108,8 @@ You may need to adapt the paths to your setup.
 
 ```bash
 sudo docker pull luligu/matterbridge:latest
+sudo docker stop matterbridge 2>/dev/null
+sudo docker rm matterbridge 2>/dev/null
 sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
@@ -180,6 +186,14 @@ This pulls the new Matterbridge image and restarts only the Matterbridge contain
 ```bash
 docker compose pull matterbridge
 docker compose up -d --no-deps --force-recreate matterbridge
+```
+
+This pulls all images and restarts all containers:
+
+```bash
+docker compose pull
+docker compose down
+docker compose up -d
 ```
 
 ### Inspect the container
@@ -261,3 +275,49 @@ sudo systemctl restart docker
 ```
 
 **Note**: This configuration applies to new containers. Existing containers must be recreated to use the new logging settings.
+
+## Run with Docker Desktop and mDNS Reflector on Windows
+
+Windows (PowerShell) with Docker Desktop (use the [**Matterbridge mDNS Reflector**](https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network):
+
+```powershell
+docker pull luligu/matterbridge:latest
+docker stop matterbridge 2>$null
+docker rm matterbridge 2>$null
+docker run --name matterbridge `
+  -p 8283:8283 -p 5540-5559:5540-5559/udp `
+  -v ${env:USERPROFILE}/Matterbridge:/root/Matterbridge `
+  -v ${env:USERPROFILE}/.matterbridge:/root/.matterbridge `
+  -v ${env:USERPROFILE}/.mattercert:/root/.mattercert `
+  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+```
+
+Windows (Command Prompt) with Docker Desktop (use the [**Matterbridge mDNS Reflector**](https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network):
+
+```cmd
+docker pull luligu/matterbridge:latest
+docker stop matterbridge 2>nul
+docker rm matterbridge 2>nul
+docker run --name matterbridge ^
+  -p 8283:8283 -p 5540-5559:5540-5559/udp ^
+  -v %USERPROFILE%/Matterbridge:/root/Matterbridge ^
+  -v %USERPROFILE%/.matterbridge:/root/.matterbridge ^
+  -v %USERPROFILE%/.mattercert:/root/.mattercert ^
+  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+```
+
+## Run with Docker Desktop and mDNS Reflector on macOS
+
+macOS (bash/zsh) with Docker Desktop (use the [**Matterbridge mDNS Reflector**](https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network):
+
+```zsh
+sudo docker pull luligu/matterbridge:latest
+sudo docker stop matterbridge 2>/dev/null
+sudo docker rm matterbridge 2>/dev/null
+sudo docker run --name matterbridge \
+  -p 8283:8283 -p 5540-5559:5540-5559/udp \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+```
