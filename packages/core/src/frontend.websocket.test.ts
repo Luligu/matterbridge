@@ -42,23 +42,15 @@ import WebSocket from 'ws';
 
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';
+import { fetchBroadcastServerSpy, requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
 import {
-  broadcastServerFetchSpy,
-  broadcastServerRequestSpy,
-  closeMdnsInstance,
-  destroyInstance,
-  flushAsync,
-  installPluginSpy,
-  loggerLogSpy,
-  logKeepAlives,
-  setDebug,
-  setupTest,
-  uninstallPluginSpy,
-  wssSendCloseSnackbarMessageSpy,
-  wssSendRefreshRequiredSpy,
-  wssSendRestartNotRequiredSpy,
-  wssSendSnackbarMessageSpy,
-} from './jestutils/jestHelpers.js';
+  wssSendCloseSnackbarMessageFrontendSpy,
+  wssSendRefreshRequiredFrontendSpy,
+  wssSendRestartNotRequiredFrontendSpy,
+  wssSendSnackbarMessageFrontendSpy,
+} from './jestutils/jestFrontendSpy.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, logKeepAlives, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { installPluginSpy, uninstallPluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import { Matterbridge } from './matterbridge.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -515,7 +507,7 @@ describe('Matterbridge frontend', () => {
   test('Websocket API send /api/checkupdates', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/checkupdates', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/checkupdates', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
-    expect(broadcastServerRequestSpy).toHaveBeenCalled();
+    expect(requestBroadcastServerSpy).toHaveBeenCalled();
   });
 
   // eslint-disable-next-line jest/no-commented-out-tests
@@ -750,7 +742,7 @@ describe('Matterbridge frontend', () => {
     await flushAsync(undefined, undefined, 100);
     expect(msg.success).toBe(true);
     expect(msg.error).not.toBeDefined();
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith(`Installing package matterbridge-test...`, 0);
     expect((matterbridge as any).plugins.size).toBe(3);
   });
 
@@ -818,11 +810,11 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.success).toBe(true);
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(expect.stringMatching(/^Restarted plugin/), 5, 'success');
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins');
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('devices');
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith(expect.stringMatching(/^Restarted plugin/), 5, 'success');
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('plugins');
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('devices');
     expect(plugin.restartRequired).toBe(false);
-    expect(wssSendRestartNotRequiredSpy).toHaveBeenCalled();
+    expect(wssSendRestartNotRequiredFrontendSpy).toHaveBeenCalled();
 
     // Wrong parameters
     await waitMessageId(++WS_ID, '/api/restartplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/restartplugin', params: { pluginName: '' } });
@@ -842,11 +834,11 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.success).toBe(true);
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith(expect.stringMatching(/^Restarted plugin/), 5, 'success');
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins');
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('devices');
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith(expect.stringMatching(/^Restarted plugin/), 5, 'success');
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('plugins');
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('devices');
     expect(plugin.restartRequired).toBe(false);
-    expect(wssSendRestartNotRequiredSpy).toHaveBeenCalled();
+    expect(wssSendRestartNotRequiredFrontendSpy).toHaveBeenCalled();
 
     // Wrong parameters
     await waitMessageId(++WS_ID, '/api/restartplugin', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/restartplugin', params: { pluginName: '' } });
@@ -951,7 +943,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/removeplugin', async () => {
-    (broadcastServerFetchSpy as any).mockImplementationOnce(async (msg: WorkerMessage, timeout: number) => {
+    (fetchBroadcastServerSpy as any).mockImplementationOnce(async (msg: WorkerMessage, timeout: number) => {
       return { result: { devices: [{ mode: 'server', uniqueId: '' }] } };
     });
     const pluginName = 'matterbridge-mock4';
@@ -1453,7 +1445,7 @@ describe('Matterbridge frontend', () => {
     expect(data.method).toBe('restart_required');
     expect(data.response).toEqual({ fixed: false });
     expect(data.error).toBeUndefined();
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Restart required', 0);
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith('Restart required', 0);
   });
 
   test('Websocket SendRestartNotRequired', async () => {
@@ -1481,7 +1473,7 @@ describe('Matterbridge frontend', () => {
     expect(data.params).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.error).toBeUndefined();
-    expect(wssSendCloseSnackbarMessageSpy).toHaveBeenCalledWith('Restart required');
+    expect(wssSendCloseSnackbarMessageFrontendSpy).toHaveBeenCalledWith('Restart required');
   });
 
   test('Websocket SendUpdateRequired', async () => {

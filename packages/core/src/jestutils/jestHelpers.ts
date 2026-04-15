@@ -66,6 +66,7 @@ import path from 'node:path';
 import { inspect } from 'node:util';
 
 import type { jest } from '@jest/globals';
+// @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
@@ -73,18 +74,17 @@ import { MdnsService } from '@matter/protocol';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread/server';
+// @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { DeviceManager } from '../deviceManager.js';
-import { Frontend } from '../frontend.js';
+import type { DeviceManager } from '../deviceManager.js';
+import type { Frontend } from '../frontend.js';
 import { Matterbridge } from '../matterbridge.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { PluginManager } from '../pluginManager.js';
+import type { MatterbridgePlatform } from '../matterbridgePlatform.js';
+import type { PluginManager } from '../pluginManager.js';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
@@ -105,47 +105,6 @@ export let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
 export let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
 export let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
 export let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-
-// Spy on Matterbridge methods
-export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint>;
-export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
-export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
-export let addVirtualEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addVirtualEndpoint>;
-
-// Spy on MatterbridgeEndpoint methods
-export let setAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute>;
-export let updateAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.updateAttribute>;
-export let triggerEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerEvent>;
-export let triggerSwitchEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerSwitchEvent>;
-
-// Spy on PluginManager methods
-export let installPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.install>;
-export let uninstallPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.uninstall>;
-export let addPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.add>;
-export let loadPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.load>;
-export let startPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.start>;
-export let configurePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.configure>;
-export let shutdownPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.shutdown>;
-export let removePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.remove>;
-export let enablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.enable>;
-export let disablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.disable>;
-
-// Spy on Frontend methods
-export let wssSendSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendSnackbarMessage>;
-export let wssSendCloseSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendCloseSnackbarMessage>;
-export let wssSendUpdateRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendUpdateRequired>;
-export let wssSendRefreshRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRefreshRequired>;
-export let wssSendRestartRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartRequired>;
-export let wssSendRestartNotRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartNotRequired>;
-
-// Spy on BroadcastServer methods
-export let broadcastServerIsWorkerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequest>;
-export let broadcastServerIsWorkerResponseSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponse>;
-export let broadcastServerBroadcastSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcast>;
-export let broadcastServerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request>;
-export let broadcastServerRespondSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond>;
-export let broadcastServerFetchSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch>;
-export let broadcastMessageHandlerSpy: jest.SpiedFunction<(this: BroadcastServer, event: MessageEvent) => void>;
 
 export let NAME: string;
 export let HOMEDIR: string;
@@ -207,43 +166,6 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   }
-
-  addBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
-  removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
-  removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
-  addVirtualEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');
-
-  setAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
-  updateAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
-  triggerEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
-  triggerSwitchEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');
-
-  installPluginSpy = jest.spyOn(PluginManager.prototype, 'install');
-  uninstallPluginSpy = jest.spyOn(PluginManager.prototype, 'uninstall');
-  addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
-  loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
-  startPluginSpy = jest.spyOn(PluginManager.prototype, 'start');
-  configurePluginSpy = jest.spyOn(PluginManager.prototype, 'configure');
-  shutdownPluginSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
-  removePluginSpy = jest.spyOn(PluginManager.prototype, 'remove');
-  enablePluginSpy = jest.spyOn(PluginManager.prototype, 'enable');
-  disablePluginSpy = jest.spyOn(PluginManager.prototype, 'disable');
-
-  wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
-  wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
-  wssSendUpdateRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendUpdateRequired');
-  wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
-  wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
-  wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
-
-  broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
-  broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
-  broadcastServerBroadcastSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
-  broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
-  broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
-  broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
-  // @ts-expect-error - access to private member for testing
-  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 }
 
 /**

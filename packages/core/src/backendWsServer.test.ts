@@ -17,7 +17,8 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { BackendsWsServer } from './backendWsServer.js';
 import type { Frontend } from './frontend.js';
-import { broadcastServerIsWorkerRequestSpy, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestHelpers.js';
+import { isWorkerRequestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestHelpers.js';
 
 const mockedSharedMatterbridge = {
   //
@@ -55,7 +56,7 @@ describe('BackendWsServer', () => {
   });
 
   test('BroadcastServer handler', async () => {
-    broadcastServerIsWorkerRequestSpy.mockReturnValue(true);
+    isWorkerRequestBroadcastServerSpy.mockReturnValue(true);
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend' });
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } });
     expect((wsServer as any).log.logLevel).toBe(LogLevel.DEBUG);

@@ -39,19 +39,14 @@ import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { LogLevel, nf } from 'node-ansi-logger';
 
 import {
-  broadcastMessageHandlerSpy,
-  broadcastServerFetchSpy,
-  broadcastServerIsWorkerRequestSpy,
-  broadcastServerIsWorkerResponseSpy,
-  broadcastServerRequestSpy,
-  broadcastServerRespondSpy,
-  closeMdnsInstance,
-  destroyInstance,
-  flushAsync,
-  loggerLogSpy,
-  setDebug,
-  setupTest,
-} from './jestutils/jestHelpers.js';
+  broadcastMessageHandlerBroadcastServerSpy,
+  fetchBroadcastServerSpy,
+  isWorkerRequestBroadcastServerSpy,
+  isWorkerResponseBroadcastServerSpy,
+  requestBroadcastServerSpy,
+  respondBroadcastServerSpy,
+} from './jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
@@ -62,12 +57,12 @@ describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
 
   // Mock BroadcastServer methods
-  broadcastServerIsWorkerRequestSpy.mockImplementation(() => true);
-  broadcastServerIsWorkerResponseSpy.mockImplementation(() => true);
-  broadcastMessageHandlerSpy.mockImplementation(() => {});
-  broadcastServerRequestSpy.mockImplementation(() => {});
-  broadcastServerRespondSpy.mockImplementation(() => {});
-  broadcastServerFetchSpy.mockImplementation(async () => {
+  isWorkerRequestBroadcastServerSpy.mockImplementation(() => true);
+  isWorkerResponseBroadcastServerSpy.mockImplementation(() => true);
+  (broadcastMessageHandlerBroadcastServerSpy as unknown as jest.MockedFunction<(event: unknown) => void>).mockImplementation(() => {});
+  requestBroadcastServerSpy.mockImplementation(() => {});
+  respondBroadcastServerSpy.mockImplementation(() => {});
+  fetchBroadcastServerSpy.mockImplementation(async () => {
     return Promise.resolve(undefined) as any;
   });
 
@@ -124,9 +119,9 @@ describe('Matterbridge', () => {
   });
 
   test('broadcast handler', async () => {
-    broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
+    isWorkerRequestBroadcastServerSpy.mockImplementationOnce(() => false);
     await (matterbridge as any).msgHandler({} as any);
-    broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
+    isWorkerResponseBroadcastServerSpy.mockImplementationOnce(() => false);
     await (matterbridge as any).msgHandler({} as any);
 
     expect((matterbridge as any).server).toBeInstanceOf(BroadcastServer);

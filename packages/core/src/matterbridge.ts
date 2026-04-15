@@ -56,6 +56,7 @@ import { BasicInformationClient, BasicInformationServer } from '@matter/node/beh
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -106,7 +107,6 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { DeviceManager } from './deviceManager.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
-import { ManualPairingCodeCodec } from './matter/types.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Plugin, PluginManager } from './pluginManager.js';
