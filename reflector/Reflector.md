@@ -27,7 +27,7 @@ Since the mDNS are shared between reflector clients, you can pair Matterbridge r
 
 # Prerequisites
 
-- [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/mac-install/) or [Docker Desktop for macOS](https://docs.docker.com/desktop/setup/install/windows-install/).
+- [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/) or [Docker Desktop for macOS](https://docs.docker.com/desktop/setup/install/mac-install/).
 
 ## Docker Desktop requirements for Windows and macOS
 
