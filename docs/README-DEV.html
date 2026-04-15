@@ -206,6 +206,48 @@
 <li><p>✅ Matterbridge frontend works normally</p>
 </li>
 </ul>
+<h2 id="copilot-instructions">Copilot instructions</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.github/copilot-instructions.html</code></td>
+<td>Main project instructions — always loaded</td>
+</tr>
+<tr>
+<td><code>.github/instructions/matterbridge/matterbridge.instructions.html</code></td>
+<td>Matterbridge endpoint guide — dedicated Copilot instruction file</td>
+</tr>
+<tr>
+<td><code>.github/instructions/testing/unit-tests.instructions.html</code></td>
+<td>Testing standards — scoped to <code>packages/**/*.test.ts</code></td>
+</tr>
+</tbody></table>
+<h2 id="claude-instructions">Claude instructions</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>.claude/CLAUDE.html</code></td>
+<td>Main project instructions — always loaded</td>
+</tr>
+<tr>
+<td><code>.claude/rules/matterbridge/matterbridge.instructions.html</code></td>
+<td>Matterbridge endpoint guide — loaded for all contexts</td>
+</tr>
+<tr>
+<td><code>.claude/rules/testing/unit-tests.instructions.html</code></td>
+<td>Testing standards — scoped to <code>packages/**/*.test.ts</code></td>
+</tr>
+</tbody></table>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>
 <p>Matterbridge exports from:</p>
 <p><strong>&quot;matterbridge&quot;</strong></p>

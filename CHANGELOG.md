@@ -57,14 +57,14 @@ These classes will run as threads in the next releases:
 
 ### Dev news
 
-- [matter]: Add matterbridge/matter/model export to allow to create custom cluster with the newer matter.js decorator-based system.
+- [matter]: Add matterbridge/matter/model export to allow to create custom cluster with the matter.js decorator-based system.
 
 ### Added
 
-- [agent]: Add `.github\copilot-instructions.md` for copilot.
-- [agent]: Add `.claude\CLAUDE.md` for claude.
-- [agent]: Add agent custom instructions (testing) for copilot and claude.
-- [agent]: Add agent custom instructions (matterbridge) for copilot and claude.
+- [agent]: Add `.github\copilot-instructions.md` for Copilot.
+- [agent]: Add `.claude\CLAUDE.md` for Claude.
+- [agent]: Add agent custom instructions (testing) for Copilot and Claude.
+- [agent]: Add agent custom instructions (matterbridge) for Copilot and Claude.
 - [agent]: Add agent prompt files.
 - [matter]: Add [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 - [storage]: Create storage directories on start.
