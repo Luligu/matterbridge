@@ -102,7 +102,7 @@
     "qrcode.react": "4.2.0",
     "react": "19.2.5",
     "react-dom": "19.2.5",
-    "react-router": "7.14.0"
+    "react-router": "7.14.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -118,13 +118,13 @@
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
-    "globals": "17.4.0",
+    "globals": "17.5.0",
     "jsdom": "29.0.2",
-    "npm-check-updates": "20.0.1",
-    "prettier": "3.8.2",
+    "npm-check-updates": "21.0.0",
+    "prettier": "3.8.3",
     "shx": "0.4.0",
     "typescript": "6.0.2",
-    "typescript-eslint": "8.58.1",
+    "typescript-eslint": "8.58.2",
     "vite": "8.0.8",
     "vitest": "4.1.4"
   }
