@@ -65,6 +65,7 @@ These classes will run as threads in the next releases:
 - [agent]: Add agent prompt files.
 - [matter]: Add [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 - [storage]: Create storage directories on start.
+- [config]: The dialog to blacklist an entity now shows only not already added entities. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 ### Changed
 
@@ -72,6 +73,7 @@ These classes will run as threads in the next releases:
 - [package]: Bump `matter.js` to v.0.16.11.
 - [package]: Bump `node-ansi-logger` to v.3.2.1.
 - [package]: Bump `node-persist-manager` to v.2.0.2.
+- [frontend]: Update dependencies.
 - [frontend]: Bump `frontend` version to v.3.4.12.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
