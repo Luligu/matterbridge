@@ -26,7 +26,8 @@ import { jest } from '@jest/globals';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 // Spy on MatterbridgeEndpoint methods
-export let setAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute>;
-export let updateAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.updateAttribute>;
-export let triggerEventMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerEvent>;
-export let triggerSwitchEventMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerSwitchEvent>;
+export const setClusterMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
+export const setAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
+export const updateAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
+export const triggerEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
+export const triggerSwitchEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');
