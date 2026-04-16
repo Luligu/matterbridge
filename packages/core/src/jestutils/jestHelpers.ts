@@ -803,7 +803,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
  * @param {ServerNode} targetServer  The server whose endpoint numbering persistence should be flushed.
  * @param {number} rounds Number of macrotask + close cycles to run (3 is usually sufficient).
  * @param {number} pause Duration in ms to wait between cycles (default 10ms) to allow any follow-up work scheduled by close() to run.
- * @returns {Promise<void>}          Resolves when pending number persistence batches have completed.
+ * @returns {Promise<void>} Resolves when pending number persistence batches have completed.
  */
 export async function flushAllEndpointNumberPersistence(targetServer: ServerNode, rounds: number = 3, pause: number = 10): Promise<void> {
   const nodeStore = targetServer.env.get(ServerNodeStore);
