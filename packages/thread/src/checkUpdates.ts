@@ -104,7 +104,6 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
           severity: branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity,
         },
       });
-      // matterbridge.frontend.wssSendSnackbarMessage(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 0, branch === 'main' ? updateJson.latestMessageSeverity : updateJson.devMessageSeverity);
     }
   } catch (error) {
     log.debug(`Error checking GitHub ${branch} updates: ${error instanceof Error ? error.message : error}`);

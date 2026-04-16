@@ -2306,7 +2306,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff: boolean = false): this {
-    this.behaviors.require(MatterbridgeOnOffServer, {
+    this.behaviors.require(MatterbridgeOnOffServer.with(), {
       onOff,
     });
     return this;
