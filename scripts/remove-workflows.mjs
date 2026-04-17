@@ -1,11 +1,28 @@
+/**
+ * remove-workflows.mjs
+ * Version: 1.0.0
+ *
+ * Removes GitHub Actions workflow runs that are older than one week, plus all
+ * cancelled workflow runs regardless of age.
+ *
+ * Usage:
+ *   node scripts/remove-workflows.mjs [--dry-run]
+ *
+ * Requirements:
+ *   gh CLI installed and authenticated
+ *   git remote.origin.url configured, or package.json repository.url set
+ */
+
 /* eslint-disable no-console */
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
+const SCRIPT_VERSION = '1.0.0';
 const PAGE_SIZE = 100;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
+const CANCELLED_CONCLUSION = 'cancelled';
 
 /**
  * Print command usage.
@@ -13,13 +30,14 @@ const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 
  * @returns {void}
  */
 function printHelp() {
-  console.log(`Remove GitHub Actions workflow runs older than one week.
+  console.log(`Remove GitHub Actions workflow runs older than one week, plus all cancelled runs.
 
 Usage:
   node scripts/remove-workflows.mjs [--dry-run]
 
 Options:
   --dry-run  Show which workflow runs would be deleted without deleting them
+  --version  Show the script version
   --help     Show this help message
 
 Requirements:
@@ -28,18 +46,33 @@ Requirements:
 }
 
 /**
+ * Print the script version.
+ *
+ * @returns {void}
+ */
+function printVersion() {
+  console.log(SCRIPT_VERSION);
+}
+
+/**
  * Parse CLI arguments.
  *
  * @param {string[]} argv - CLI arguments.
- * @returns {{ dryRun: boolean, showHelp: boolean }} Parsed flags.
+ * @returns {{ dryRun: boolean, showHelp: boolean, showVersion: boolean }} Parsed flags.
  */
 function parseArgs(argv) {
   let dryRun = false;
   let showHelp = false;
+  let showVersion = false;
 
   for (const arg of argv) {
     if (arg === '--dry-run') {
       dryRun = true;
+      continue;
+    }
+
+    if (arg === '--version' || arg === '-v') {
+      showVersion = true;
       continue;
     }
 
@@ -51,7 +84,7 @@ function parseArgs(argv) {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  return { dryRun, showHelp };
+  return { dryRun, showHelp, showVersion };
 }
 
 /**
@@ -212,6 +245,7 @@ async function ghApiDelete(pathname) {
  *   head_branch?: string,
  *   created_at?: string,
  *   status?: string,
+ *   conclusion?: string,
  * }} run - Workflow run.
  * @returns {string} Formatted description.
  */
@@ -221,7 +255,29 @@ function formatRun(run) {
   const branch = run.head_branch ? ` branch=${run.head_branch}` : '';
   const createdAt = run.created_at || 'unknown-date';
   const status = run.status || 'unknown-status';
-  return `${name} ${number}${branch} created=${createdAt} status=${status}`;
+  const conclusion = run.conclusion ? ` conclusion=${run.conclusion}` : '';
+  return `${name} ${number}${branch} created=${createdAt} status=${status}${conclusion}`;
+}
+
+/**
+ * Decide whether a workflow run should be deleted.
+ *
+ * Deletes runs older than the cutoff, plus all cancelled runs regardless of age.
+ *
+ * @param {{ created_at?: string, conclusion?: string }} run - Workflow run.
+ * @param {number} cutoffTime - Cutoff timestamp in milliseconds.
+ * @returns {{ isOlderThanCutoff: boolean, isCancelled: boolean, shouldDelete: boolean }} Deletion flags.
+ */
+function getDeletionFlags(run, cutoffTime) {
+  const createdTime = Date.parse(run.created_at || '');
+  const isOlderThanCutoff = !Number.isNaN(createdTime) && createdTime < cutoffTime;
+  const isCancelled = run.conclusion === CANCELLED_CONCLUSION;
+
+  return {
+    isOlderThanCutoff,
+    isCancelled,
+    shouldDelete: isOlderThanCutoff || isCancelled,
+  };
 }
 
 /**
@@ -254,9 +310,14 @@ async function deleteWorkflowRun(owner, repo, runId) {
  * @returns {Promise<void>}
  */
 async function main() {
-  const { dryRun, showHelp } = parseArgs(process.argv.slice(2));
+  const { dryRun, showHelp, showVersion } = parseArgs(process.argv.slice(2));
   if (showHelp) {
     printHelp();
+    return;
+  }
+
+  if (showVersion) {
+    printVersion();
     return;
   }
 
@@ -277,6 +338,8 @@ async function main() {
   let page = 1;
   let scanned = 0;
   let matched = 0;
+  let matchedOlderThanCutoff = 0;
+  let matchedCancelled = 0;
   let deleted = 0;
   let skippedActive = 0;
   let failed = 0;
@@ -291,28 +354,37 @@ async function main() {
     for (const run of runs) {
       scanned += 1;
 
-      const createdTime = Date.parse(run.created_at || '');
-      if (Number.isNaN(createdTime) || createdTime >= cutoffTime) {
-        continue;
-      }
-
       if (ACTIVE_STATUSES.has(run.status)) {
         skippedActive += 1;
         console.log(`[skip] ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
         continue;
       }
 
+      const deletionFlags = getDeletionFlags(run, cutoffTime);
+      if (!deletionFlags.shouldDelete) {
+        continue;
+      }
+
       matched += 1;
+      if (deletionFlags.isOlderThanCutoff) {
+        matchedOlderThanCutoff += 1;
+      }
+      if (deletionFlags.isCancelled) {
+        matchedCancelled += 1;
+      }
+
+      const reason =
+        deletionFlags.isOlderThanCutoff && deletionFlags.isCancelled ? 'older-than-one-week,cancelled' : deletionFlags.isCancelled ? 'cancelled' : 'older-than-one-week';
 
       if (dryRun) {
-        console.log(`[dry-run] Would delete ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
+        console.log(`[dry-run] Would delete (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
         continue;
       }
 
       try {
         await deleteWorkflowRun(owner, repo, run.id);
         deleted += 1;
-        console.log(`[delete] Deleted ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
+        console.log(`[delete] Deleted (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
       } catch (error) {
         failed += 1;
         console.error(`[error] Failed to delete ${formatRun(run)}: ${error?.message || error}`);
@@ -329,7 +401,9 @@ async function main() {
   console.log('');
   console.log('Summary');
   console.log(`Scanned: ${scanned}`);
-  console.log(`Older than one week: ${matched}`);
+  console.log(`Older than one week: ${matchedOlderThanCutoff}`);
+  console.log(`Cancelled: ${matchedCancelled}`);
+  console.log(`Matched for deletion: ${matched}`);
   console.log(`Skipped active: ${skippedActive}`);
   console.log(`${dryRun ? 'Would delete' : 'Deleted'}: ${dryRun ? matched : deleted}`);
   console.log(`Failed: ${failed}`);

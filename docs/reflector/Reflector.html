@@ -214,10 +214,10 @@
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h1 id="prerequisites">Prerequisites</h1>
 <ul>
-<li>Docker Desktop</li>
+<li><a href="https://docs.docker.com/desktop/setup/install/windows-install/">Docker Desktop for Windows</a> or <a href="https://docs.docker.com/desktop/setup/install/mac-install/">Docker Desktop for macOS</a>.</li>
 </ul>
 <h2 id="docker-desktop-requirements-for-windows-and-macos">Docker Desktop requirements for Windows and macOS</h2>
-<p>See Docker Desktop docs.</p>
+<p>See Docker Desktop System Requirements.</p>
 <h2 id="dual-stack-ipv4ipv6-mdns-enabled-and-no-filtering">Dual Stack IPv4/IPv6 mDNS enabled and No filtering</h2>
 <p><img src="DockerDesktopSetup.png" alt="alt text"></p>
 <h1 id="run-matterbridge-in-a-docker-desktop-container">Run Matterbridge in a Docker Desktop container</h1>
@@ -348,7 +348,7 @@ docker logs --tail 1000 -f matterbridge-reflector
 <p>You need the Matterbridge reflector server tray app running on the host from the tutorial above.</p>
 <h2 id="run-home-assitant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assitant and Matter Server in Docker Compose with Docker Desktop</h2>
 <p>To test the sharing feature (it shares mDNS between all reflector clients),
-use this <a href="https://matterbridge.io/reflector/reflector-docker-compose.yml">docker-compose.yml</a>.</p>
+use this <a href="https://matterbridge.io/reflector/reflector-docker-compose.yml">reflector-docker-compose.yml</a>.</p>
 <p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml down

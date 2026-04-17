@@ -40,19 +40,9 @@ import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
-import {
-  addPluginSpy,
-  broadcastServerRequestSpy,
-  closeMdnsInstance,
-  destroyInstance,
-  loggerErrorSpy,
-  loggerLogSpy,
-  logKeepAlives,
-  removePluginSpy,
-  setDebug,
-  setupTest,
-  shutdownPluginSpy,
-} from './jestutils/jestHelpers.js';
+import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerLogSpy, logKeepAlives, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { addPluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -177,7 +167,7 @@ describe('PluginManager', () => {
       expect.stringContaining(`Found invalid packages "@matterbridge/example, @matter/main" in plugin ${plg}test-plugin${er} bundledDependencies.`),
     );
     expect(loggerErrorSpy).toHaveBeenCalledWith('Please open an issue on the plugin repository to remove them.');
-    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         type: 'frontend_snackbarmessage',
         src: 'plugins',

@@ -1,4 +1,5 @@
 // src\checkUpdates.test.ts
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 
 const MATTER_PORT = 13000;
 const FRONTEND_PORT = 8810;
@@ -14,6 +15,8 @@ import type { ApiPlugin } from '@matterbridge/types';
 import { plg } from '@matterbridge/types';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
+// @ts-ignore
+import { wssSendRefreshRequiredFrontendSpy, wssSendSnackbarMessageFrontendSpy, wssSendUpdateRequiredFrontendSpy } from '../../../packages/core/src/jestutils/jestFrontendSpy.js';
 import {
   flushAsync,
   loggerDebugSpy,
@@ -23,9 +26,7 @@ import {
   setupTest,
   startMatterbridge,
   stopMatterbridge,
-  wssSendRefreshRequiredSpy,
-  wssSendSnackbarMessageSpy,
-  wssSendUpdateRequiredSpy,
+  // @ts-ignore
 } from '../../../packages/core/src/jestutils/jestHelpers.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from './checkUpdates.js';
@@ -113,8 +114,8 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(matterbridge.matterbridgeLatestVersion).toBe('1.1.0');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: 1.1.0.`);
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Matterbridge latest update available', 0, 'info');
-    expect(wssSendUpdateRequiredSpy).toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith('Matterbridge latest update available', 0, 'info');
+    expect(wssSendUpdateRequiredFrontendSpy).toHaveBeenCalled();
   });
 
   it('should log a debug message if the current version is up to date', async () => {
@@ -131,9 +132,9 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(loggerDebugSpy).toHaveBeenCalledWith(
       `Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${matterbridge.matterbridgeVersion}.`,
     );
-    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
-    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the latest version', async () => {
@@ -175,8 +176,8 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(matterbridge.matterbridgeDevVersion).toBe('1.1.0-dev-1');
     expect(loggerNoticeSpy).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-dev-1. Latest dev version: 1.1.0-dev-1.');
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
-    expect(wssSendUpdateRequiredSpy).toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
+    expect(wssSendUpdateRequiredFrontendSpy).toHaveBeenCalled();
   });
 
   it('should log a debug message if the dev version is up to date', async () => {
@@ -193,9 +194,9 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(matterbridge.matterbridgeDevVersion).toBe('1.0.0-dev-1');
     expect(loggerDebugSpy).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-dev-1. Latest dev version: 1.0.0-dev-1.');
-    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
-    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the dev version', async () => {
@@ -234,8 +235,8 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(loggerNoticeSpy).toHaveBeenCalledWith('Matterbridge@dev is out of date. Current version: 1.0.0-git-1. Latest dev version: 1.1.0-dev-1.');
-    expect(wssSendSnackbarMessageSpy).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
-    expect(wssSendUpdateRequiredSpy).toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledWith('Matterbridge dev update available', 0, 'info');
+    expect(wssSendUpdateRequiredFrontendSpy).toHaveBeenCalled();
   });
 
   it('should log a debug message if the git version is up to date', async () => {
@@ -249,9 +250,9 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(loggerDebugSpy).toHaveBeenCalledWith('Matterbridge@dev is up to date. Current version: 1.0.0-git-1. Latest dev version: 1.0.0-git-1.');
-    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
-    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should update to the plugin latest version if versions differ', async () => {
@@ -267,7 +268,7 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: 1.1.0.`);
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins', undefined);
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('plugins', undefined);
   });
 
   it('should log a debug message if the plugin current version is up to date', async () => {
@@ -283,7 +284,7 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: 1.0.1.`);
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the plugin latest version', async () => {
@@ -331,7 +332,7 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
     expect(plugin.devVersion).toBe('1.1.0-dev-123456');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: 1.0.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins', undefined);
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('plugins', undefined);
   });
 
   it('should update to the plugin dev version and log if the plugin current version is up to date', async () => {
@@ -350,7 +351,7 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
     expect(plugin.devVersion).toBe('1.1.0-dev-123456');
     expect(loggerDebugSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: 1.1.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should log a warning on error fetching the plugin dev version', async () => {
@@ -396,7 +397,7 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: 1.0.0-git-123456. Latest dev version: 1.1.0-dev-123456.`);
-    expect(wssSendRefreshRequiredSpy).toHaveBeenCalledWith('plugins', undefined);
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('plugins', undefined);
   });
 
   it('should not log plugin dev update status when plugin git version is already up to date', async () => {
@@ -415,7 +416,7 @@ describe('getMatterbridgeLatestVersion', () => {
     const pluginDevDebugs = (loggerDebugSpy as jest.Mock).mock.calls.filter((c) => String(c[0]).includes('latest dev version'));
     expect(pluginDevNotices).toHaveLength(0);
     expect(pluginDevDebugs).toHaveLength(0);
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should check GitHub for updates and log', async () => {
@@ -462,7 +463,7 @@ describe('getMatterbridgeLatestVersion', () => {
 
     expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
     // Other tests may still emit snackbars asynchronously; assert this specific invalid payload does not.
-    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalledWith('Hello', 0, expect.any(String));
+    expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalledWith('Hello', 0, expect.any(String));
   });
 
   it('should not log dev update status when running a non-dev version', async () => {
@@ -481,8 +482,8 @@ describe('getMatterbridgeLatestVersion', () => {
     expect(devNotices).toHaveLength(0);
     expect(devDebugs).toHaveLength(0);
 
-    expect(wssSendSnackbarMessageSpy).not.toHaveBeenCalled();
-    expect(wssSendUpdateRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalled();
+    expect(wssSendUpdateRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should not log plugin dev update status when plugin is not a dev/git version', async () => {
@@ -501,7 +502,7 @@ describe('getMatterbridgeLatestVersion', () => {
     const pluginDevDebugs = (loggerDebugSpy as jest.Mock).mock.calls.filter((c) => String(c[0]).includes('latest dev version'));
     expect(pluginDevNotices).toHaveLength(0);
     expect(pluginDevDebugs).toHaveLength(0);
-    expect(wssSendRefreshRequiredSpy).not.toHaveBeenCalled();
+    expect(wssSendRefreshRequiredFrontendSpy).not.toHaveBeenCalled();
   });
 
   it('should check GitHub and fail', async () => {

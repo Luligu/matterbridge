@@ -6,8 +6,7 @@
   },
   "eslint.format.enable": true,
   "eslint.useFlatConfig": true,
-  "diffEditor.ignoreTrimWhitespace": true,
-  "git.autofetch": true,
+  "diffEditor.ignoreTrimWhitespace": false,
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
@@ -24,7 +23,17 @@
     "**/.cache": true,
     "**/coverage": true
   },
+  "git.autofetch": true,
+  "git.autoRepositoryDetection": false,
+  "git.ignoredRepositories": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.cache/**", "**/coverage/**", "**/docs/**"],
   "js/ts.tsdk.path": "node_modules/typescript/lib",
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-  "chat.useCustomizationsInParentRepositories": true
+  "chat.useCustomizationsInParentRepositories": false,
+  "chat.useClaudeMdFile": true,
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    ".claude/rules": true,
+    "~/.copilot/instructions": false,
+    "~/.claude/rules": false
+  }
 }

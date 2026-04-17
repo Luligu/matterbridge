@@ -44,6 +44,8 @@ describe('ConfigPluginDialog debug paths', () => {
       'Kitchen Sensor': [],
       serialMappings: {},
       debugAction: false,
+      debug: false,
+      unregisterOnShutdown: false,
     },
     schemaJson: {
       type: 'object',

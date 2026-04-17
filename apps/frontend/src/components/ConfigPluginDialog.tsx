@@ -703,36 +703,38 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                 .map((value) => {
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
-                  return value.entities?.map((entity, index) => (
-                    <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
-                      {entity.icon === 'wifi' && (
-                        <ListItemIcon>
-                          <WifiIcon style={listItemIconStyle} />
-                        </ListItemIcon>
-                      )}
-                      {entity.icon === 'ble' && (
-                        <ListItemIcon>
-                          <BluetoothIcon style={listItemIconStyle} />
-                        </ListItemIcon>
-                      )}
-                      {entity.icon === 'hub' && (
-                        <ListItemIcon>
-                          <HubIcon style={listItemIconStyle} />
-                        </ListItemIcon>
-                      )}
-                      {entity.icon === 'component' && (
-                        <ListItemIcon>
-                          <ViewInArIcon style={listItemIconStyle} />
-                        </ListItemIcon>
-                      )}
-                      {entity.icon === 'matter' && (
-                        <ListItemIcon>
-                          <DeviceHubIcon style={listItemIconStyle} />
-                        </ListItemIcon>
-                      )}
-                      <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
-                    </ListItemButton>
-                  ));
+                  return value.entities
+                    ?.filter((entity) => !schema.uniqueItems || !Array.isArray(formData) || !formData.includes(schema.selectDeviceEntityFrom === 'name' ? entity.name : entity.description))
+                    .map((entity, index) => (
+                      <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
+                        {entity.icon === 'wifi' && (
+                          <ListItemIcon>
+                            <WifiIcon style={listItemIconStyle} />
+                          </ListItemIcon>
+                        )}
+                        {entity.icon === 'ble' && (
+                          <ListItemIcon>
+                            <BluetoothIcon style={listItemIconStyle} />
+                          </ListItemIcon>
+                        )}
+                        {entity.icon === 'hub' && (
+                          <ListItemIcon>
+                            <HubIcon style={listItemIconStyle} />
+                          </ListItemIcon>
+                        )}
+                        {entity.icon === 'component' && (
+                          <ListItemIcon>
+                            <ViewInArIcon style={listItemIconStyle} />
+                          </ListItemIcon>
+                        )}
+                        {entity.icon === 'matter' && (
+                          <ListItemIcon>
+                            <DeviceHubIcon style={listItemIconStyle} />
+                          </ListItemIcon>
+                        )}
+                        <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                      </ListItemButton>
+                    ));
                 })}
             </List>
           </DialogContent>

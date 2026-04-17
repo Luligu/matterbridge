@@ -56,6 +56,7 @@ import { BasicInformationClient, BasicInformationServer } from '@matter/node/beh
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -106,7 +107,6 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { DeviceManager } from './deviceManager.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
-import { ManualPairingCodeCodec } from './matter/types.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { Plugin, PluginManager } from './pluginManager.js';
@@ -538,6 +538,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await createDirectory(this.matterbridgeDirectory, 'Matterbridge Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'certs'), 'Matterbridge Frontend Certificate Directory', this.log);
     await createDirectory(path.join(this.matterbridgeDirectory, 'uploads'), 'Matterbridge Frontend Uploads Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR), 'Matterbridge Matter Storage Directory', this.log);
+    await createDirectory(path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR), 'Matterbridge Node Storage Directory', this.log);
 
     // Set the matterbridge plugin directory
     this.matterbridgePluginDirectory = this.profile ? path.join(this.homeDirectory, 'Matterbridge', 'profiles', this.profile) : path.join(this.homeDirectory, 'Matterbridge');
@@ -2131,6 +2133,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.cleanup('No storage service initialized');
       return;
     }
+    await createDirectory(
+      path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'MatterbridgeController'),
+      `Matter node storage directory for MatterbridgeController`,
+      this.log,
+    );
     this.matterStorageManager = await this.matterStorageService.open('MatterbridgeController');
     this.log.info('Matter node storage manager "MatterbridgeController" created');
 
@@ -2440,6 +2447,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.matterStorageService = this.environment.get(StorageService);
     this.log.info(`Matter node storage service created: ${this.matterStorageService.location}`);
 
+    await createDirectory(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'Matterbridge'), `Matter node storage directory for Matterbridge`, this.log);
+
     this.matterStorageManager = await this.matterStorageService.open('Matterbridge');
     this.log.info('Matter node storage manager "Matterbridge" created');
 
@@ -2523,6 +2532,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (!this.matterStorageService) throw new Error('No storage service initialized');
 
     this.log.info(`Creating server node storage context "${storeId}.persist" for ${storeId}...`);
+    await createDirectory(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, storeId), `Matter node storage directory for ${storeId}`, this.log);
     const storageManager = await this.matterStorageService.open(storeId);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');

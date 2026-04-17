@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/dgram",
-  "version": "3.7.3",
+  "version": "3.7.4",
   "description": "Matterbridge dgram library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -64,8 +64,8 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "3.7.3",
-    "@matterbridge/utils": "3.7.3",
-    "node-ansi-logger": "3.2.1-dev-20260327-7069fd7"
+    "@matterbridge/jest-utils": "3.7.4",
+    "@matterbridge/utils": "3.7.4",
+    "node-ansi-logger": "3.2.1"
   }
 }

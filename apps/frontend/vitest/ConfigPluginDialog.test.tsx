@@ -395,6 +395,113 @@ describe('ConfigPluginDialog', () => {
     });
   });
 
+  it('hides already-selected uniqueItems from device, entity, and device-entity selector lists', async () => {
+    const plugin = createPlugin();
+    plugin.configJson = extendConfig(plugin, {
+      deviceSerials: ['wifi-001'],
+      entityDescriptions: ['WiFi Desc'],
+      'Kitchen Sensor': ['Matter Desc'],
+    });
+
+    const schemaProperties = plugin.schemaJson?.properties as Record<string, any>;
+    schemaProperties.deviceSerials = {
+      type: 'array',
+      title: 'Device Serials',
+      items: {
+        type: 'string',
+        default: '',
+      },
+      selectFrom: 'serial',
+      uniqueItems: true,
+    };
+    schemaProperties.entityDescriptions = {
+      type: 'array',
+      title: 'Entity Descriptions',
+      items: {
+        type: 'string',
+        default: '',
+      },
+      selectEntityFrom: 'description',
+      uniqueItems: true,
+    };
+    schemaProperties['Kitchen Sensor'] = {
+      type: 'array',
+      title: 'Kitchen Sensor',
+      items: {
+        type: 'string',
+        default: '',
+      },
+      selectDeviceEntityFrom: 'description',
+      uniqueItems: true,
+    };
+
+    const { addListener } = renderDialog(plugin);
+    const listener = getListener(addListener);
+
+    listener({
+      id: 1234,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/select/devices',
+      response: [
+        {
+          serial: 'wifi-001',
+          name: 'Kitchen Sensor',
+          icon: 'wifi',
+          entities: [
+            { name: 'WiFi Entity', description: 'WiFi Desc', icon: 'wifi' },
+            { name: 'Ble Entity', description: 'Ble Desc', icon: 'ble' },
+            { name: 'Matter Entity', description: 'Matter Desc', icon: 'matter' },
+          ],
+        },
+        { serial: 'ble-001', name: 'Hall Sensor', icon: 'ble' },
+      ],
+    });
+    listener({
+      id: 1234,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/select/entities',
+      response: [
+        { name: 'Entity Wifi', description: 'WiFi Desc', icon: 'wifi' },
+        { name: 'Entity Ble', description: 'Ble Desc', icon: 'ble' },
+      ],
+    });
+
+    const getNewestDialog = () => screen.getAllByTestId('dialog').at(-1) as HTMLElement;
+
+    const deviceSerialsSection = screen.getByText('Device Serials').closest('div')?.parentElement;
+    expect(deviceSerialsSection).not.toBeNull();
+    fireEvent.click(within(deviceSerialsSection as HTMLElement).getAllByRole('button')[0]);
+
+    await waitFor(() => {
+      expect(within(getNewestDialog()).queryByText('Kitchen Sensor')).not.toBeInTheDocument();
+      expect(within(getNewestDialog()).getByText('Hall Sensor')).toBeInTheDocument();
+    });
+
+    fireEvent.click(within(getNewestDialog()).getByText('Close'));
+
+    const entityDescriptionsSection = screen.getByText('Entity Descriptions').closest('div')?.parentElement;
+    expect(entityDescriptionsSection).not.toBeNull();
+    fireEvent.click(within(entityDescriptionsSection as HTMLElement).getAllByRole('button')[0]);
+
+    await waitFor(() => {
+      expect(within(getNewestDialog()).queryByText('Entity Wifi')).not.toBeInTheDocument();
+      expect(within(getNewestDialog()).getByText('Entity Ble')).toBeInTheDocument();
+    });
+
+    fireEvent.click(within(getNewestDialog()).getByText('Close'));
+
+    const deviceEntitySection = screen.getByText('Kitchen Sensor').closest('div')?.parentElement;
+    expect(deviceEntitySection).not.toBeNull();
+    fireEvent.click(within(deviceEntitySection as HTMLElement).getAllByRole('button')[0]);
+
+    await waitFor(() => {
+      expect(within(getNewestDialog()).queryByText('Matter Desc')).not.toBeInTheDocument();
+      expect(within(getNewestDialog()).getByText('Ble Desc')).toBeInTheDocument();
+    });
+  });
+
   it('renders object sections with root title and selects additional keys by serial', async () => {
     const plugin = createPlugin();
     plugin.configJson = extendConfig(plugin, {

@@ -105,6 +105,22 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 - ✅ Matterbridge frontend works normally
 
+## Copilot instructions
+
+| File                                                             | Notes                                                            |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `.github/copilot-instructions.md`                                | Main project instructions — always loaded                        |
+| `.github/instructions/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — dedicated Copilot instruction file |
+| `.github/instructions/testing/unit-tests.instructions.md`        | Testing standards — scoped to `packages/**/*.test.ts`            |
+
+## Claude instructions
+
+| File                                                      | Notes                                                 |
+| --------------------------------------------------------- | ----------------------------------------------------- |
+| `.claude/CLAUDE.md`                                       | Main project instructions — always loaded             |
+| `.claude/rules/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — loaded for all contexts |
+| `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `packages/**/*.test.ts` |
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
@@ -156,6 +172,10 @@ Matterbridge exports from:
 **"matterbridge/matter/endpoints"**
 
 - All matter.js endpoints.
+
+**"matterbridge/matter/model"**
+
+- All matter.js model package.
 
 **"matterbridge/matter/types"**
 

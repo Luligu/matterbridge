@@ -259,6 +259,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   mode: 'server' | 'matter' | undefined = undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
   /** The plugin name this MatterbridgeEndpoint belongs to */
@@ -2305,7 +2306,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createOnOffClusterServer(onOff: boolean = false): this {
-    this.behaviors.require(MatterbridgeOnOffServer, {
+    this.behaviors.require(MatterbridgeOnOffServer.with(), {
       onOff,
     });
     return this;

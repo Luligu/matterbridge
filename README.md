@@ -21,11 +21,11 @@
 
 [Matterbridge](https://matterbridge.io) is a Matter plugin manager.
 
-It creates a [Matter device](https://csa-iot.org/all-solutions/matter/) (of type bridge) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, Home Assistant, or any other platform supporting Matter.
+It creates a [Matter device](https://csa-iot.org/all-solutions/matter/) (of type bridge) that can be paired with any ecosystem, such as Apple Home, Google Home, Amazon Alexa, SmartThings, [Home Assistant](https://www.home-assistant.io/), [Gladys Assistant](https://gladysassistant.com/) or any other platform supporting Matter.
 
 You don't need a hub or a dedicated new machine.
 
-No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl and macOS launchctl).
+No complex setup: just copy paste the installation scripts (available for Docker, Nginx, Linux systemctl, Windows Task Scheduler and macOS launchctl).
 
 Matterbridge is lightweight and also runs on slow Linux machines with as little as 512MB of memory.
 

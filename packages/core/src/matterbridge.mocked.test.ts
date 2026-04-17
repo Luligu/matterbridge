@@ -1,10 +1,13 @@
 // src\matterbridge.test.ts
 
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+
 const NAME = 'MatterbridgeMocked';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 // Matterbridge now uses tree-shaken subpath imports from @matterbridge/utils.
 // Mock the exact specifiers that Matterbridge imports (including dynamic imports).
+// @ts-ignore
 const originalWaitModule = await import('../../utils/src/wait.js');
 jest.unstable_mockModule('@matterbridge/utils/wait', async () => {
   return {
@@ -25,6 +28,7 @@ const wait = waitModule.wait as jest.MockedFunction<typeof waitModule.wait>;
 const waiter = waitModule.waiter as jest.MockedFunction<typeof waitModule.waiter>;
 const withTimeout = waitModule.withTimeout as jest.MockedFunction<typeof waitModule.withTimeout>;
 
+// @ts-ignore
 const originalNpmPrefixModule = await import('../../utils/src/npmPrefix.js');
 jest.unstable_mockModule('@matterbridge/utils/npm-prefix', async () => {
   return {
@@ -35,6 +39,7 @@ jest.unstable_mockModule('@matterbridge/utils/npm-prefix', async () => {
 const npmPrefixModule = await import('@matterbridge/utils/npm-prefix');
 const getGlobalNodeModulesMock = npmPrefixModule.getGlobalNodeModules as jest.MockedFunction<typeof npmPrefixModule.getGlobalNodeModules>;
 
+// @ts-ignore
 const originalNetworkModule = await import('../../utils/src/network.js');
 jest.unstable_mockModule('@matterbridge/utils/network', async () => {
   return {
@@ -81,18 +86,9 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
-import {
-  broadcastServerRequestSpy,
-  broadcastServerRespondSpy,
-  closeMdnsInstance,
-  configurePluginSpy,
-  destroyInstance,
-  loggerErrorSpy,
-  loggerInfoSpy,
-  loggerLogSpy,
-  setDebug,
-  setupTest,
-} from './jestutils/jestHelpers.js';
+import { requestBroadcastServerSpy, respondBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { configurePluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 
@@ -931,7 +927,7 @@ describe('Matterbridge mocked', () => {
     jest.advanceTimersByTime(12 * 60 * 60 * 1000); // Simulate 12 hours
     jest.useRealTimers();
     await new Promise((resolve) => setTimeout(resolve, 10)); // Wait for the next tick
-    expect(broadcastServerRequestSpy).toHaveBeenCalled();
+    expect(requestBroadcastServerSpy).toHaveBeenCalled();
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
@@ -1319,7 +1315,7 @@ describe('Matterbridge mocked', () => {
     jest.clearAllMocks();
 
     await matterbridge.updateProcess();
-    expect(broadcastServerRequestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'manager_run', src: 'matterbridge', dst: 'manager' }));
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'manager_run', src: 'matterbridge', dst: 'manager' }));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Updating matterbridge...'));
     jest.clearAllMocks();
 

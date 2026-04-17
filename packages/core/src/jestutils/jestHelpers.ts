@@ -46,6 +46,8 @@
  *  beforeAll(async () => {
  *    // Setup the Matter test environment
  *    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+ *    // Create the server node and aggregator
+ *    await createServerNode(NAME, MATTER_PORT);
  *    // Start the server node and aggregator
  *    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
  *  });
@@ -64,6 +66,7 @@ import path from 'node:path';
 import { inspect } from 'node:util';
 
 import type { jest } from '@jest/globals';
+// @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
@@ -71,18 +74,17 @@ import { MdnsService } from '@matter/protocol';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread/server';
+// @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { DeviceManager } from '../deviceManager.js';
-import { Frontend } from '../frontend.js';
+import type { DeviceManager } from '../deviceManager.js';
+import type { Frontend } from '../frontend.js';
 import { Matterbridge } from '../matterbridge.js';
 import { bridge } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgePlatform } from '../matterbridgePlatform.js';
-import { PluginManager } from '../pluginManager.js';
+import type { MatterbridgePlatform } from '../matterbridgePlatform.js';
+import type { PluginManager } from '../pluginManager.js';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
@@ -103,47 +105,6 @@ export let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
 export let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
 export let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
 export let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
-
-// Spy on Matterbridge methods
-export let addBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint>;
-export let removeBridgedEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint>;
-export let removeAllBridgedEndpointsSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints>;
-export let addVirtualEndpointSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addVirtualEndpoint>;
-
-// Spy on MatterbridgeEndpoint methods
-export let setAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute>;
-export let updateAttributeSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.updateAttribute>;
-export let triggerEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerEvent>;
-export let triggerSwitchEventSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerSwitchEvent>;
-
-// Spy on PluginManager methods
-export let installPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.install>;
-export let uninstallPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.uninstall>;
-export let addPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.add>;
-export let loadPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.load>;
-export let startPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.start>;
-export let configurePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.configure>;
-export let shutdownPluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.shutdown>;
-export let removePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.remove>;
-export let enablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.enable>;
-export let disablePluginSpy: jest.SpiedFunction<typeof PluginManager.prototype.disable>;
-
-// Spy on Frontend methods
-export let wssSendSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendSnackbarMessage>;
-export let wssSendCloseSnackbarMessageSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendCloseSnackbarMessage>;
-export let wssSendUpdateRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendUpdateRequired>;
-export let wssSendRefreshRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRefreshRequired>;
-export let wssSendRestartRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartRequired>;
-export let wssSendRestartNotRequiredSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartNotRequired>;
-
-// Spy on BroadcastServer methods
-export let broadcastServerIsWorkerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequest>;
-export let broadcastServerIsWorkerResponseSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponse>;
-export let broadcastServerBroadcastSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcast>;
-export let broadcastServerRequestSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request>;
-export let broadcastServerRespondSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond>;
-export let broadcastServerFetchSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch>;
-export let broadcastMessageHandlerSpy: jest.SpiedFunction<(this: BroadcastServer, event: MessageEvent) => void>;
 
 export let NAME: string;
 export let HOMEDIR: string;
@@ -205,43 +166,6 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   }
-
-  addBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
-  removeBridgedEndpointSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
-  removeAllBridgedEndpointsSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
-  addVirtualEndpointSpy = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');
-
-  setAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
-  updateAttributeSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
-  triggerEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
-  triggerSwitchEventSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');
-
-  installPluginSpy = jest.spyOn(PluginManager.prototype, 'install');
-  uninstallPluginSpy = jest.spyOn(PluginManager.prototype, 'uninstall');
-  addPluginSpy = jest.spyOn(PluginManager.prototype, 'add');
-  loadPluginSpy = jest.spyOn(PluginManager.prototype, 'load');
-  startPluginSpy = jest.spyOn(PluginManager.prototype, 'start');
-  configurePluginSpy = jest.spyOn(PluginManager.prototype, 'configure');
-  shutdownPluginSpy = jest.spyOn(PluginManager.prototype, 'shutdown');
-  removePluginSpy = jest.spyOn(PluginManager.prototype, 'remove');
-  enablePluginSpy = jest.spyOn(PluginManager.prototype, 'enable');
-  disablePluginSpy = jest.spyOn(PluginManager.prototype, 'disable');
-
-  wssSendSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
-  wssSendCloseSnackbarMessageSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
-  wssSendUpdateRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendUpdateRequired');
-  wssSendRefreshRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
-  wssSendRestartRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
-  wssSendRestartNotRequiredSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
-
-  broadcastServerIsWorkerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
-  broadcastServerIsWorkerResponseSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
-  broadcastServerBroadcastSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
-  broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request');
-  broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
-  broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
-  // @ts-expect-error - access to private member for testing
-  broadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 }
 
 /**
@@ -493,7 +417,7 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.7.3';
+  matterbridge.matterbridgeVersion = '3.7.4';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join(HOMEDIR);
   matterbridge.homeDirectory = path.join(HOMEDIR);
@@ -879,7 +803,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
  * @param {ServerNode} targetServer  The server whose endpoint numbering persistence should be flushed.
  * @param {number} rounds Number of macrotask + close cycles to run (3 is usually sufficient).
  * @param {number} pause Duration in ms to wait between cycles (default 10ms) to allow any follow-up work scheduled by close() to run.
- * @returns {Promise<void>}          Resolves when pending number persistence batches have completed.
+ * @returns {Promise<void>} Resolves when pending number persistence batches have completed.
  */
 export async function flushAllEndpointNumberPersistence(targetServer: ServerNode, rounds: number = 3, pause: number = 10): Promise<void> {
   const nodeStore = targetServer.env.get(ServerNodeStore);
@@ -968,14 +892,18 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  * @param {string} name Name of the server (used for logging and product description).
  * @param {number} port TCP port to listen on.
  * @param {DeviceTypeId} deviceType Device type identifier for the server node. Defaults to the bridge device type.
- * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after starting the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 100ms).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
  */
-export async function startServerNode(
+export async function createServerNode(
   name: string,
   port: number,
   deviceType: DeviceTypeId = bridge.code,
-  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
 ): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
@@ -1039,10 +967,40 @@ export async function startServerNode(
   // Run the server
   expect(server.lifecycle.isOnline).toBeFalsy();
 
+  // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
+  await flushAsync(ticks, microTurns, pause);
+
+  return [server, aggregator];
+}
+
+/**
+ * Start a matter server node for testing.
+ *
+ * @param {string} name Name of the server (used for logging and product description).
+ * @param {number} port TCP port to listen on.
+ * @param {DeviceTypeId} deviceType Device type identifier for the server node. Defaults to the bridge device type.
+ * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after starting the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 100ms).
+ * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
+ */
+export async function startServerNode(
+  name: string,
+  port: number,
+  deviceType: DeviceTypeId = bridge.code,
+  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
+): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+  // Create the server node
+  if (!server || !aggregator) {
+    await createServerNode(name, port, deviceType);
+  }
+
   // Return early if createOnly is true
   if (createOnly) {
-    // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-    await flushAsync(3, 3, 100);
     return [server, aggregator];
   }
 
@@ -1068,7 +1026,7 @@ export async function startServerNode(
   expect(aggregator.lifecycle.hasNumber).toBeTruthy();
 
   // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-  await flushAsync(3, 3, 100);
+  await flushAsync(ticks, microTurns, pause);
 
   return [server, aggregator];
 }
@@ -1078,9 +1036,18 @@ export async function startServerNode(
  *
  * @param {ServerNode<ServerNode.RootEndpoint>} server The server to stop.
  * @param {boolean} createOnly If true, only creates the server and aggregator nodes without starting the server (default false).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield after stopping the server to allow asynchronous work to complete before returning (default 3).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 10).
+ * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 100ms).
  * @returns {Promise<void>} Resolves when the server has stopped.
  */
-export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>, createOnly: boolean = false): Promise<void> {
+export async function stopServerNode(
+  server: ServerNode<ServerNode.RootEndpoint>,
+  createOnly: boolean = false,
+  ticks: number = 3,
+  microTurns: number = 10,
+  pause: number = 100,
+): Promise<void> {
   // Flush any pending endpoint number persistence
   await flushAllEndpointNumberPersistence(server);
 
@@ -1098,7 +1065,7 @@ export async function stopServerNode(server: ServerNode<ServerNode.RootEndpoint>
   expect(server.lifecycle.isOnline).toBeFalsy();
 
   // Ensure the queue is empty and pause 100ms to allow any pending work to complete before returning the server and aggregator
-  await flushAsync(3, 3, 100);
+  await flushAsync(ticks, microTurns, pause);
 }
 
 /**
