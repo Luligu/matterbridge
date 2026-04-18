@@ -290,8 +290,9 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return {};
   }
-  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)] as ClusterBehavior.Type | undefined;
-  return supportedBehavior?.cluster.supportedFeatures ?? {};
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
+  if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
+  return supportedBehavior.features ?? {};
 }
 
 /**
@@ -727,8 +728,9 @@ export function getClusterId(endpoint: Endpoint, cluster: string): number | unde
  * @returns {number | undefined} The ID of the attribute, or undefined if not found.
  */
 export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: string): number | undefined {
-  const clusterBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)] as ClusterBehavior.Type | undefined;
-  return clusterBehavior?.cluster?.attributes[lowercaseFirstLetter(attribute)]?.id;
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
+  if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return undefined;
+  return supportedBehavior.schema.attributes(lowercaseFirstLetter(attribute))?.id;
 }
 
 /**
