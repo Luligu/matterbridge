@@ -277,14 +277,14 @@ export function getSemtag(semtag: Semtag, label: string | null | undefined = und
  * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the features for.
  *
- * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
+ * @returns {Partial<Record<string, boolean>>} The features for the specified behavior.
  *
  * @remarks Use with:
  * ```typescript
  *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
  * ```
  */
-export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | undefined> {
+export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Partial<Record<string, boolean>> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
     endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
