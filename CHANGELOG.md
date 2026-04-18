@@ -57,7 +57,7 @@ These classes will run as threads in the next releases:
 
 ### Development changes
 
-- [endpoint]: Filter out undefined attributes from MatterbridgeEndpoint.forEachAttribute().
+- [endpoint]: Remove undefined attributes from MatterbridgeEndpoint.forEachAttribute().
 
 ### Changed
 

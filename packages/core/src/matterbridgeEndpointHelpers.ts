@@ -290,8 +290,8 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return {};
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behaviorId)]['cluster']['supportedFeatures'];
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)] as ClusterBehavior.Type | undefined;
+  return supportedBehavior?.cluster.supportedFeatures ?? {};
 }
 
 /**
