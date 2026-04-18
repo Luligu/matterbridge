@@ -112,7 +112,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/t
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId, VendorId } from '@matter/types/datatype';
+import { ClusterId, NodeId, VendorId } from '@matter/types/datatype';
 import { MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
@@ -517,9 +517,21 @@ export async function invokeBehaviorCommand(
       return;
     }
 
-    // Preserve `this` binding for behavior command handlers.
-    const result = params === undefined ? handler.call(behavior) : handler.call(behavior, params);
-    await Promise.resolve(result);
+    // Pre-warm the lazy state cache with the real context so datasource.sessions keeps a stable Map key.
+    // Without this, overriding behavior.context with a Proxy causes the reactor to create a duplicate RootReference.
+    void behavior?.['state'];
+
+    // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
+    const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
+    const patchedContext = new Proxy(agent.context, { get: (t, k) => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
+    Object.defineProperty(behavior, 'context', { configurable: true, value: patchedContext });
+    try {
+      // Preserve `this` binding for behavior command handlers.
+      const result = params === undefined ? handler.call(behavior) : handler.call(behavior, params);
+      await Promise.resolve(result);
+    } finally {
+      delete (behavior as unknown as Record<string, unknown>).context;
+    }
   });
   return invoked;
 }
