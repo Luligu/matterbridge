@@ -533,6 +533,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       expect(triggerFromString).toBe(true);
 
       if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // @ts-expect-error intentional type-check error case with no features
+        device.eventsOf(SwitchServer).initialPress.emit({ newPosition: 1 }, {} as ActionContext);
         // @ts-expect-error intentional type-check guard for Behavior.Type event overload
         device.triggerEvent(SwitchServer, 'identify', { identifyTime: 5 }, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type payload overload
