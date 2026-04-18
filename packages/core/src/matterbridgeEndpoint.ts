@@ -64,7 +64,7 @@ import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 // @matter/types
-import { ClusterType, getClusterNameById } from '@matter/types/cluster';
+import { ClusterType, type ClusterTyping, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
@@ -185,9 +185,13 @@ type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandNam
   ? FirstCommandParam<P>
   : never;
 
-type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorCluster<T>>;
+type BehaviorInterface<T extends Behavior.Type> = T extends { Interface: infer N extends ClusterTyping } ? N : ClusterTyping;
 
-type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
+type BehaviorEvents<T extends Behavior.Type> = NonNullable<BehaviorInterface<T>['Events']>;
+
+type BehaviorEventName<T extends Behavior.Type> = keyof BehaviorEvents<T> & string;
+
+type BehaviorEventPayload<T extends Behavior.Type, E extends string> = E extends BehaviorEventName<T> ? BehaviorEvents<T>[E] : never;
 
 /** ClusterType utilities */
 
