@@ -87,7 +87,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Auto relock', async () => {
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(doorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(doorLock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
     internal.enableTimeout = true;
@@ -107,7 +107,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Unlock commands without timeout scheduling', async () => {
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(doorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(doorLock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
 
@@ -165,7 +165,7 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
     const modifiedUser = await userPinDoorLock.act((agent) => agent.get(MatterbridgeDoorLockServer).getUser({ userIndex: 1 }));
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     expect(createdUser).toMatchObject({
       userIndex: 1,
@@ -235,7 +235,7 @@ describe('Client clusters and behaviors', () => {
       userStatus: null,
       userType: null,
     });
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearCredential', { credential: null });
     const clearedCredential = await userPinDoorLock.act((agent) =>
@@ -280,7 +280,7 @@ describe('Client clusters and behaviors', () => {
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearUser', { userIndex: 1 });
     const clearedUser = await userPinDoorLock.act((agent) => agent.get(MatterbridgeDoorLockServer).getUser({ userIndex: 1 }));
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     expect(clearedUser).toMatchObject({
       userIndex: 1,
