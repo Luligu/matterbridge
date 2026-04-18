@@ -3714,9 +3714,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm).enable({
         events: {
           smokeAlarm: true,
-          interconnectSmokeAlarm: false,
           coAlarm: true,
-          interconnectCoAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,
@@ -3751,7 +3749,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
         events: {
           smokeAlarm: true,
-          interconnectSmokeAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,
@@ -3785,7 +3782,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
         events: {
           coAlarm: true,
-          interconnectCoAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,
