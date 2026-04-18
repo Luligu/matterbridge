@@ -58,6 +58,7 @@ These classes will run as threads in the next releases:
 ### Development changes
 
 - [endpoint]: Remove undefined attributes from MatterbridgeEndpoint.forEachAttribute().
+- [devcontainer]: Add `Claude Code for VS Code extension` to Dev Container.
 
 ### Changed
 

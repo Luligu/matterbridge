@@ -1,6 +1,6 @@
 // src\matterbridgeEndpoint.typed.test.ts
 
-const MATTER_PORT = 11100;
+const MATTER_PORT = 11700;
 const NAME = 'EndpointTypeChecks';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 const CREATE_ONLY = true;
