@@ -139,13 +139,7 @@ describe('Server clusters and behaviors', () => {
     return endpoint;
   }
 
-  async function expectCommand(
-    endpoint: MatterbridgeEndpoint,
-    cluster: any,
-    command: CommandHandlers,
-    expectedRequest?: Record<string, boolean | number | bigint | string | object | null>,
-    check?: (data: any) => void,
-  ) {
+  async function expectCommand(endpoint: MatterbridgeEndpoint, cluster: any, command: CommandHandlers, expectedRequest?: object, check?: (data: any) => void) {
     let invoke: Promise<void>;
 
     await new Promise((resolve, reject) => {
@@ -270,7 +264,7 @@ describe('Server clusters and behaviors', () => {
     const internal = await internalFor(lock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
-    internal.enableTimeout = false;
+    if ((internal as any).enableTimeout !== undefined) (internal as any).enableTimeout = false;
   });
 
   test('Device type: fan', async () => {
@@ -707,7 +701,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('FanControl server', async () => {
-    const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     fan.addCommandHandler('step', async (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
@@ -834,7 +828,7 @@ describe('Server clusters and behaviors', () => {
       Thermostat.Feature.AutoMode,
       Thermostat.Feature.Presets,
     );
-    const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
 
     thermostatPreset.addCommandHandler('setActivePresetRequest', async (data) => {
       presetCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -1078,7 +1072,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('DeviceEnergyManagementMode server', async () => {
-    const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     energyManagement.addCommandHandler('changeToMode', async (data) => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });

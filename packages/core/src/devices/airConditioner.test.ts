@@ -168,7 +168,7 @@ describe('Matterbridge ' + NAME, () => {
   test('thermostat attributes check', async () => {
     // Presence
     expect(device.hasClusterServer(Thermostat.Cluster.id)).toBe(true);
-    expect(device.hasClusterServer(ThermostatCluster.with(Thermostat.Feature.AutoMode, Thermostat.Feature.Cooling, Thermostat.Feature.Heating))).toBe(true);
+    expect(device.hasClusterServer(Thermostat.Cluster.with(Thermostat.Feature.AutoMode, Thermostat.Feature.Cooling, Thermostat.Feature.Heating))).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(true);
     expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedCoolingSetpoint')).toBe(true);
