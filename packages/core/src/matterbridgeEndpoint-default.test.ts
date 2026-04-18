@@ -43,6 +43,7 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -1379,6 +1380,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
+    expect(featuresFor(device, FanControlServer)).toEqual({});
+    expect(featuresFor(device, FanControl.Complete)).toEqual({});
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
     expect(featuresFor(device, 'FanControl')).toEqual({});
 
     await add(device);
@@ -1400,6 +1404,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(true);
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
     expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
 
     await add(device);
@@ -1422,6 +1429,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
     expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
 
     await add(device);
@@ -1448,6 +1458,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(false);
+    expect(featuresFor(device, FanControlServer)).toEqual({});
+    expect(featuresFor(device, FanControl.Complete)).toEqual({});
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
     expect(featuresFor(device, 'FanControl')).toEqual({});
 
     await add(device);
