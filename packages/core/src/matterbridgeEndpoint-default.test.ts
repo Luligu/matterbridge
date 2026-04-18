@@ -1382,10 +1382,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
-    expect(featuresFor(device, FanControlServer)).toEqual({});
-    expect(featuresFor(device, FanControl.Complete)).toEqual({});
-    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
-    expect(featuresFor(device, 'FanControl')).toEqual({});
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
@@ -1460,10 +1460,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(false);
-    expect(featuresFor(device, FanControlServer)).toEqual({});
-    expect(featuresFor(device, FanControl.Complete)).toEqual({});
-    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
-    expect(featuresFor(device, 'FanControl')).toEqual({});
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
