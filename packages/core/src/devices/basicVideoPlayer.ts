@@ -282,7 +282,7 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
       command: 'sendKey',
       request,
       cluster: KeypadInputServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof KeypadInput.Complete)['attributes']>,
+      attributes: {},
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { status: KeypadInput.Status.Success };
