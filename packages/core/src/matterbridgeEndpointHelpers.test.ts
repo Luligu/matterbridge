@@ -125,7 +125,7 @@ describe('Options helpers', () => {
     expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
   });
 
-  test('internalFor returns the live behavior internal state', async () => {
+  test('internalFor returns the live behavior internal state for every overload shape', async () => {
     device = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLockHelper' });
     device.behaviors.require(
       MatterbridgeDoorLockServer.with().enable({
@@ -147,14 +147,26 @@ describe('Options helpers', () => {
 
     expect(await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'UnknownBehavior')).toBeUndefined();
 
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer);
-    expect(internal).toBeDefined();
-    if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+    const internalFromBehavior = await internalFor(device, MatterbridgeDoorLockServer);
+    expect(internalFromBehavior).toBeDefined();
+    if (!internalFromBehavior) throw new Error('MatterbridgeDoorLockServer internal state not found');
 
-    expect(internal.enableTimeout).toBe(true);
-    internal.enableTimeout = false;
+    expect(internalFromBehavior.enableTimeout).toBe(true);
 
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
+    const internalFromCluster = await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster);
+    const internalFromClusterId = await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster.id);
+    const internalFromString = await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'DoorLock');
+
+    expect(internalFromCluster).toBe(internalFromBehavior);
+    expect(internalFromClusterId).toBe(internalFromBehavior);
+    expect(internalFromString).toBe(internalFromBehavior);
+
+    internalFromBehavior.enableTimeout = false;
+
+    expect((await internalFor(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
+    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster))?.enableTimeout).toBe(false);
+    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster.id))?.enableTimeout).toBe(false);
+    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'DoorLock'))?.enableTimeout).toBe(false);
   });
 
   test('getSnapshot returns non-object values unchanged', () => {

@@ -267,7 +267,7 @@ describe('Server clusters and behaviors', () => {
     expect(lock).toBeDefined();
     expect(await addDevice(aggregator, lock)).toBeTruthy();
     // Disable timeout for testing, to avoid flaky tests
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(lock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(lock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
     internal.enableTimeout = false;

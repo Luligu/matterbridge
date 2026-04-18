@@ -28,12 +28,14 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { ActionContext } from '@matter/node';
 import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { EndpointNumber } from '@matter/types';
-import { BooleanState, Identify, PowerSource, Switch } from '@matter/types/clusters';
+import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 
 import { addDevice, aggregator, createTestEnvironment, deleteDevice, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from './jestutils/jestHelpers.js';
-import { genericSwitch, rainSensor } from './matterbridgeDeviceTypes.js';
+import { genericSwitch, rainSensor, thermostatDevice } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { internalFor } from './matterbridgeEndpointHelpers.js';
 
 await setupTest(NAME, false);
 
@@ -397,8 +399,52 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     }
   });
 
+  test('internalFor type checks', async () => {
+    const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermostatInternalTypeCheck', number: EndpointNumber(906) }, true);
+    expect(device).toBeDefined();
+    device.createDefaultThermostatClusterServer();
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBe(true);
+    try {
+      type ThermostatInternal = InstanceType<(typeof ThermostatServer)['Internal']>;
+
+      const internalFromBehavior = await internalFor(device, ThermostatServer);
+      const internalFromCluster: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat.Complete);
+      const internalFromClusterId: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat.Cluster.id);
+      const internalFromString: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, 'Thermostat');
+
+      expect(internalFromBehavior).toBeDefined();
+      expect(internalFromCluster).toBeDefined();
+      expect(internalFromClusterId).toBeDefined();
+      expect(internalFromString).toBeDefined();
+
+      const minSetpointDeadBand: number | undefined = internalFromBehavior?.minSetpointDeadBand;
+      expect(minSetpointDeadBand).toBeGreaterThanOrEqual(0);
+      expect(internalFromCluster?.minSetpointDeadBand).toBe(minSetpointDeadBand);
+      expect(internalFromClusterId?.minSetpointDeadBand).toBe(minSetpointDeadBand);
+      expect(internalFromString?.minSetpointDeadBand).toBe(minSetpointDeadBand);
+
+      expect(internalFromCluster).toBe(internalFromBehavior);
+      expect(internalFromClusterId).toBe(internalFromBehavior);
+      expect(internalFromString).toBe(internalFromBehavior);
+
+      if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // @ts-expect-error intentional type-check guard for Behavior.Type overload generic parameter
+        internalFor<ThermostatInternal>(device, ThermostatServer);
+        // @ts-expect-error intentional type-check guard for inferred Behavior.Type return value
+        const invalidBehaviorInternal: { missing: true } | undefined = await internalFor(device, ThermostatServer);
+        // @ts-expect-error intentional type-check guard for string overload return value
+        const invalidStringInternal: { missing: true } | undefined = await internalFor<ThermostatInternal>(device, 'Thermostat');
+        void invalidBehaviorInternal;
+        void invalidStringInternal;
+      }
+    } finally {
+      await deleteDevice(aggregator, device);
+    }
+  });
+
   test('invokeBehaviorCommand type checks', async () => {
-    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorInvokeTypeCheck', number: EndpointNumber(906) }, true);
+    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorInvokeTypeCheck', number: EndpointNumber(907) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     expect(await addDevice(aggregator, device)).toBe(true);
