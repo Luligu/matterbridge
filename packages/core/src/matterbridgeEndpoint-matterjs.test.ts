@@ -1207,16 +1207,15 @@ describe('Matterbridge ' + NAME, () => {
 
   test('rvc forEachAttribute', async () => {
     let count = 0;
-    // consoleWarnSpy.mockRestore();
     rvc.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-      // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
       expect(clusterName).toBeDefined();
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(75);
+    expect(count).toBe(69);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

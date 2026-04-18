@@ -993,14 +993,14 @@ describe('Matterbridge ' + NAME, () => {
 
     let count = 0;
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-      // console.warn('forEachAttribute', clusterName, clusterId, attributeName, attributeId, attributeValue);
       expect(clusterName).toBeDefined();
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(60);
+    expect(count).toBe(37);
   });
 
   test('forEachAttribute DishWasher', async () => {
@@ -1019,9 +1019,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(21);
+    expect(count).toBe(20);
   });
 
   test('forEachAttribute LaundryWasher', async () => {
@@ -1043,9 +1044,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(27);
+    expect(count).toBe(26);
   });
 
   test('forEachAttribute ExtractorHood', async () => {
@@ -1074,9 +1076,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(45);
+    expect(count).toBe(39);
   });
 
   test('forEachAttribute AirQuality', async () => {
@@ -1114,9 +1117,10 @@ describe('Matterbridge ' + NAME, () => {
       expect(clusterId).toBeDefined();
       expect(attributeName).toBeDefined();
       expect(attributeId).toBeDefined();
+      expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(151);
+    expect(count).toBe(149);
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();

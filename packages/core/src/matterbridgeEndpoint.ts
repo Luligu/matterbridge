@@ -1607,13 +1607,15 @@ export class MatterbridgeEndpoint extends Endpoint {
         // Skip if the behavior has no associated cluster (i.e. matterbridge server)
         const clusterId = getClusterId(this, clusterName);
         if (clusterId === undefined) {
-          // this.log.debug(`***forEachAttribute: cluster ${clusterName} not found`);
           continue;
         }
         // Skip if the attribute is not present in the ClusterBehavior.Type. Also skip if the attribute it is an internal state.
         const attributeId = getAttributeId(this, clusterName, attributeName);
         if (attributeId === undefined) {
-          // this.log.debug(`***forEachAttribute: attribute ${clusterName}.${attributeName} not found`);
+          continue;
+        }
+        // Skip if the attribute value is undefined, cause it means that the attribute is not present in the device state.
+        if (attributeValue === undefined) {
           continue;
         }
         callback(clusterName, clusterId, attributeName, attributeId, attributeValue);

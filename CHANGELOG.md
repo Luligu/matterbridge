@@ -53,10 +53,15 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.7.5] - 2026-04-18
+## [3.7.5] - Dev branch
+
+### Development changes
+
+- [endpoint]: Filter out undefined attributes from MatterbridgeEndpoint.forEachAttribute().
 
 ### Changed
 
+- [package]: Update dependencies.
 - [test]: Strengthen single-class device attribute assertions by aligning `forEachAttribute` checks with the base test model.
 
 ## [3.7.4] - 2026-04-17

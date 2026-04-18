@@ -32,7 +32,7 @@ import { EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch } from '@matter/types/clusters';
 
 import { addDevice, aggregator, createTestEnvironment, deleteDevice, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from './jestutils/jestHelpers.js';
-import { rainSensor } from './matterbridgeDeviceTypes.js';
+import { genericSwitch, rainSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 await setupTest(NAME, false);
@@ -453,22 +453,32 @@ describe('Matterbridge Endpoint Typed Checks', () => {
   });
 
   test('triggerEvent type checks', async () => {
-    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorTriggerEventTypeCheck', number: EndpointNumber(907) }, true);
+    const device = new MatterbridgeEndpoint(genericSwitch, { id: 'GenericSwitchTriggerEventTypeCheck', number: EndpointNumber(907) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultSwitchClusterServer();
     expect(await addDevice(aggregator, device)).toBe(true);
     try {
-      await device.act((agent) => {
-        device.eventsOf(SwitchServer.with('MomentarySwitch')).initialPress.emit({ newPosition: 1 }, agent.context);
-      });
-      /*
-      const triggerFromBehavior: boolean = await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 }, device.log);
+      const triggerFromBehavior: boolean = await device.triggerEvent(
+        SwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress),
+        'initialPress',
+        { newPosition: 1 },
+        device.log,
+      );
       expect(triggerFromBehavior).toBe(true);
 
-      const triggerFromCluster: boolean = await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 }, device.log);
+      const triggerFromCluster: boolean = await device.triggerEvent(
+        Switch.Cluster.with(
+          Switch.Feature.MomentarySwitch,
+          Switch.Feature.MomentarySwitchRelease,
+          Switch.Feature.MomentarySwitchLongPress,
+          Switch.Feature.MomentarySwitchMultiPress,
+        ),
+        'initialPress',
+        { newPosition: 1 },
+        device.log,
+      );
       expect(triggerFromCluster).toBe(true);
-      */
 
       const triggerFromClusterId: boolean = await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, device.log);
       expect(triggerFromClusterId).toBe(true);
