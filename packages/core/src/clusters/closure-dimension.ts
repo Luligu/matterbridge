@@ -24,300 +24,313 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { Identity } from '@matter/general';
-import { Attribute, ClusterRegistry, Command, FixedAttribute, MutableCluster, TlvNoResponse } from '@matter/types/cluster';
-import { ThreeLevelAuto } from '@matter/types/globals';
-import { BitFlag } from '@matter/types/schema';
-import {
-  TlvBitmap,
-  TlvBoolean,
-  TlvEnum,
-  TlvField,
-  TlvInt16,
-  TlvNullable,
-  TlvObject,
-  TlvOptionalField,
-  TlvPercent100ths,
-  TlvUInt8,
-  TlvUInt16,
-  TypeFromSchema,
-} from '@matter/types/tlv';
+import { type MaybePromise } from '@matter/general';
+import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
+import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
+import { type ClusterId } from '@matter/types/datatype';
+import { type ThreeLevelAuto } from '@matter/types/globals';
 
-export namespace ClosureDimension {
-  /**
-   * These are optional features supported by ClosureDimensionCluster.
-   */
-  export enum Feature {
-    Positioning = 'Positioning',
-    MotionLatching = 'MotionLatching',
-    Unit = 'Unit',
-    Limitation = 'Limitation',
-    Speed = 'Speed',
-    Translation = 'Translation',
-    Rotation = 'Rotation',
-    Modulation = 'Modulation',
-  }
-
-  export enum ClosureUnit {
-    Millimeter = 0,
-    Degree = 1,
-  }
-
-  export enum ModulationType {
-    SlatsOrientation = 0,
-    SlatsOpenwork = 1,
-    StripesAlignment = 2,
-    Opacity = 3,
-    Ventilation = 4,
-  }
-
-  export enum Overflow {
-    NoOverflow = 0,
-    Inside = 1,
-    Outside = 2,
-    TopInside = 3,
-    TopOutside = 4,
-    BottomInside = 5,
-    BottomOutside = 6,
-    LeftInside = 7,
-    LeftOutside = 8,
-    RightInside = 9,
-    RightOutside = 10,
-  }
-
-  export enum RotationAxis {
-    Left = 0,
-    CenteredVertical = 1,
-    LeftAndRight = 2,
-    Right = 3,
-    Top = 4,
-    CenteredHorizontal = 5,
-    TopAndBottom = 6,
-    Bottom = 7,
-    LeftBarrier = 8,
-    LeftAndRightBarriers = 9,
-    RightBarrier = 10,
-  }
-
-  export enum StepDirection {
-    Decrease = 0,
-    Increase = 1,
-  }
-
-  export enum TranslationDirection {
-    Downward = 0,
-    Upward = 1,
-    VerticalMask = 2,
-    VerticalSymmetry = 3,
-    Leftward = 4,
-    Rightward = 5,
-    HorizontalMask = 6,
-    HorizontalSymmetry = 7,
-    Forward = 8,
-    Backward = 9,
-    DepthMask = 10,
-    DepthSymmetry = 11,
-  }
-
-  export const LatchControlModes = {
-    remoteLatching: BitFlag(0),
-    remoteUnlatching: BitFlag(1),
-  };
-
-  export const TlvDimensionState = TlvObject({
-    position: TlvOptionalField(0, TlvNullable(TlvPercent100ths)),
-    latch: TlvOptionalField(1, TlvNullable(TlvBoolean)),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-  });
-
-  export interface DimensionState extends TypeFromSchema<typeof TlvDimensionState> {}
-
-  export const TlvRangePercent100ths = TlvObject({
-    min: TlvField(0, TlvPercent100ths),
-    max: TlvField(1, TlvPercent100ths),
-  });
-
-  export const TlvUnitRange = TlvObject({
-    min: TlvField(0, TlvInt16),
-    max: TlvField(1, TlvInt16),
-  });
-
-  export const TlvSetTargetRequest = TlvObject({
-    position: TlvOptionalField(0, TlvPercent100ths),
-    latch: TlvOptionalField(1, TlvBoolean),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-  });
-
-  export interface SetTargetRequest extends TypeFromSchema<typeof TlvSetTargetRequest> {}
-
-  export const TlvStepRequest = TlvObject({
-    direction: TlvField(0, TlvEnum<StepDirection>()),
-    numberOfSteps: TlvField(1, TlvUInt16.bound({ min: 1 })),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-  });
-
-  export interface StepRequest extends TypeFromSchema<typeof TlvStepRequest> {}
-
-  export const PositioningComponent = MutableCluster.Component({
-    attributes: {
-      resolution: FixedAttribute(0x2, TlvPercent100ths, { default: 1 }),
-      stepValue: FixedAttribute(0x3, TlvPercent100ths, { default: 1 }),
-    },
-
-    commands: {
-      step: Command(0x1, TlvStepRequest, 0x1, TlvNoResponse, { timed: true }),
-    },
-  });
-
-  export const MotionLatchingComponent = MutableCluster.Component({
-    attributes: {
-      latchControlModes: FixedAttribute(0xb, TlvBitmap(TlvUInt8, LatchControlModes)),
-    },
-  });
-
-  export const UnitComponent = MutableCluster.Component({
-    attributes: {
-      unit: FixedAttribute(0x4, TlvEnum<ClosureUnit>()),
-      unitRange: Attribute(0x5, TlvNullable(TlvUnitRange), { default: null }),
-    },
-  });
-
-  export const LimitationComponent = MutableCluster.Component({
-    attributes: {
-      limitRange: Attribute(0x6, TlvRangePercent100ths),
-    },
-  });
-
-  export const TranslationComponent = MutableCluster.Component({
-    attributes: {
-      translationDirection: FixedAttribute(0x7, TlvEnum<TranslationDirection>()),
-    },
-  });
-
-  export const RotationComponent = MutableCluster.Component({
-    attributes: {
-      rotationAxis: FixedAttribute(0x8, TlvEnum<RotationAxis>()),
-      overflow: FixedAttribute(0x9, TlvEnum<Overflow>()),
-    },
-  });
-
-  export const ModulationComponent = MutableCluster.Component({
-    attributes: {
-      modulationType: FixedAttribute(0xa, TlvEnum<ModulationType>()),
-    },
-  });
-
-  /**
-   * These elements and properties are present in all ClosureDimension clusters.
-   */
-  export const Base = MutableCluster.Component({
-    id: 0x0105,
+// Create the cluster definition and model for the ClosureDimension cluster.
+export const ClosureDimensionDefinition = ClusterElement(
+  {
     name: 'ClosureDimension',
-    revision: 1,
+    id: 0x0105,
+    classification: 'application',
+  },
+  AttributeElement({ name: 'ClusterRevision', id: 0xfffd, type: 'ClusterRevision', default: 1 }),
+  AttributeElement(
+    { name: 'FeatureMap', id: 0xfffc, type: 'FeatureMap' },
+    FieldElement({ name: 'POS', conformance: 'O', constraint: '0', title: 'Positioning' }),
+    FieldElement({ name: 'ML', conformance: 'O', constraint: '1', title: 'MotionLatching' }),
+    FieldElement({ name: 'UNI', conformance: '[POS]', constraint: '2', title: 'Unit' }),
+    FieldElement({ name: 'LIM', conformance: '[POS]', constraint: '3', title: 'Limitation' }),
+    FieldElement({ name: 'SPD', conformance: '[POS]', constraint: '4', title: 'Speed' }),
+    FieldElement({ name: 'TRN', conformance: '[POS]', constraint: '5', title: 'Translation' }),
+    FieldElement({ name: 'ROT', conformance: '[POS]', constraint: '6', title: 'Rotation' }),
+    FieldElement({ name: 'MOD', conformance: '[POS]', constraint: '7', title: 'Modulation' }),
+  ),
+  AttributeElement({ name: 'CurrentState', id: 0x0000, type: 'DimensionStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
+  AttributeElement({ name: 'TargetState', id: 0x0001, type: 'DimensionStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
+  AttributeElement({ name: 'Resolution', id: 0x0002, type: 'percent100ths', access: 'R V', conformance: 'POS', default: 1, quality: 'F' }),
+  AttributeElement({ name: 'StepValue', id: 0x0003, type: 'percent100ths', access: 'R V', conformance: 'POS', default: 1, quality: 'F' }),
+  AttributeElement({ name: 'Unit', id: 0x0004, type: 'ClosureUnitEnum', access: 'R V', conformance: 'UNI', quality: 'F' }),
+  AttributeElement({ name: 'UnitRange', id: 0x0005, type: 'UnitRangeStruct', access: 'R V', conformance: 'UNI', default: null, quality: 'X' }),
+  AttributeElement({ name: 'LimitRange', id: 0x0006, type: 'RangePercent100thsStruct', access: 'R V', conformance: 'LIM' }),
+  AttributeElement({ name: 'TranslationDirection', id: 0x0007, type: 'TranslationDirectionEnum', access: 'R V', conformance: 'TRN', quality: 'F' }),
+  AttributeElement({ name: 'RotationAxis', id: 0x0008, type: 'RotationAxisEnum', access: 'R V', conformance: 'ROT', quality: 'F' }),
+  AttributeElement({ name: 'Overflow', id: 0x0009, type: 'OverflowEnum', access: 'R V', conformance: 'ROT', quality: 'F' }),
+  AttributeElement({ name: 'ModulationType', id: 0x000a, type: 'ModulationTypeEnum', access: 'R V', conformance: 'MOD', quality: 'F' }),
+  AttributeElement({ name: 'LatchControlModes', id: 0x000b, type: 'LatchControlModesAttribute', access: 'R V', conformance: 'ML', quality: 'F' }),
+  CommandElement(
+    { name: 'SetTarget', id: 0x0000, access: 'O T', conformance: 'M', direction: 'request', response: 'status' },
+    FieldElement({ name: 'Position', id: 0x0, type: 'percent100ths', conformance: 'O' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+  ),
+  CommandElement(
+    { name: 'Step', id: 0x0001, access: 'O T', conformance: 'POS', direction: 'request', response: 'status' },
+    FieldElement({ name: 'Direction', id: 0x0, type: 'StepDirectionEnum', conformance: 'M' }),
+    FieldElement({ name: 'NumberOfSteps', id: 0x1, type: 'uint16', conformance: 'M', constraint: 'min 1' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+  ),
+  DatatypeElement(
+    { name: 'ClosureUnitEnum', type: 'enum8' },
+    FieldElement({ name: 'Millimeter', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'Degree', id: 0x1, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'ModulationTypeEnum', type: 'enum8' },
+    FieldElement({ name: 'SlatsOrientation', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'SlatsOpenwork', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'StripesAlignment', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'Opacity', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'Ventilation', id: 0x4, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'OverflowEnum', type: 'enum8' },
+    FieldElement({ name: 'NoOverflow', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'Inside', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'Outside', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'TopInside', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'TopOutside', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'BottomInside', id: 0x5, conformance: 'M' }),
+    FieldElement({ name: 'BottomOutside', id: 0x6, conformance: 'M' }),
+    FieldElement({ name: 'LeftInside', id: 0x7, conformance: 'M' }),
+    FieldElement({ name: 'LeftOutside', id: 0x8, conformance: 'M' }),
+    FieldElement({ name: 'RightInside', id: 0x9, conformance: 'M' }),
+    FieldElement({ name: 'RightOutside', id: 0x0a, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'RotationAxisEnum', type: 'enum8' },
+    FieldElement({ name: 'Left', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'CenteredVertical', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'LeftAndRight', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'Right', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'Top', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'CenteredHorizontal', id: 0x5, conformance: 'M' }),
+    FieldElement({ name: 'TopAndBottom', id: 0x6, conformance: 'M' }),
+    FieldElement({ name: 'Bottom', id: 0x7, conformance: 'M' }),
+    FieldElement({ name: 'LeftBarrier', id: 0x8, conformance: 'M' }),
+    FieldElement({ name: 'LeftAndRightBarriers', id: 0x9, conformance: 'M' }),
+    FieldElement({ name: 'RightBarrier', id: 0x0a, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'StepDirectionEnum', type: 'enum8' },
+    FieldElement({ name: 'Decrease', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'Increase', id: 0x1, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'TranslationDirectionEnum', type: 'enum8' },
+    FieldElement({ name: 'Downward', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'Upward', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'VerticalMask', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'VerticalSymmetry', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'Leftward', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'Rightward', id: 0x5, conformance: 'M' }),
+    FieldElement({ name: 'HorizontalMask', id: 0x6, conformance: 'M' }),
+    FieldElement({ name: 'HorizontalSymmetry', id: 0x7, conformance: 'M' }),
+    FieldElement({ name: 'Forward', id: 0x8, conformance: 'M' }),
+    FieldElement({ name: 'Backward', id: 0x9, conformance: 'M' }),
+    FieldElement({ name: 'DepthMask', id: 0x0a, conformance: 'M' }),
+    FieldElement({ name: 'DepthSymmetry', id: 0x0b, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'LatchControlModesAttribute', type: 'map8' },
+    FieldElement({ name: 'RemoteLatching', constraint: '0' }),
+    FieldElement({ name: 'RemoteUnlatching', constraint: '1' }),
+  ),
+  DatatypeElement(
+    { name: 'DimensionStateStruct', type: 'struct' },
+    FieldElement({ name: 'Position', id: 0x0, type: 'percent100ths', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+  ),
+  DatatypeElement(
+    { name: 'RangePercent100thsStruct', type: 'struct' },
+    FieldElement({ name: 'Min', id: 0x0, type: 'percent100ths', conformance: 'M' }),
+    FieldElement({ name: 'Max', id: 0x1, type: 'percent100ths', conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'UnitRangeStruct', type: 'struct' },
+    FieldElement({ name: 'Min', id: 0x0, type: 'int16', conformance: 'M' }),
+    FieldElement({ name: 'Max', id: 0x1, type: 'int16', conformance: 'M' }),
+  ),
+);
 
-    features: {
-      positioning: BitFlag(0),
-      motionLatching: BitFlag(1),
-      unit: BitFlag(2),
-      limitation: BitFlag(3),
-      speed: BitFlag(4),
-      translation: BitFlag(5),
-      rotation: BitFlag(6),
-      modulation: BitFlag(7),
-    },
+export const ClosureDimensionModel = new ClusterModel(ClosureDimensionDefinition);
 
-    attributes: {
-      currentState: Attribute(0x0, TlvNullable(TlvDimensionState), { default: null }),
-      targetState: Attribute(0x1, TlvNullable(TlvDimensionState), { default: null }),
-    },
+// Register the cluster definition with the Matter definition so it can be referenced by devices and endpoints.
+MatterDefinition.children.push(ClosureDimensionDefinition);
 
-    commands: {
-      setTarget: Command(0x0, TlvSetTargetRequest, 0x0, TlvNoResponse, { timed: true }),
-    },
-
-    /**
-     * This metadata controls which ClosureDimensionCluster elements matter.js activates for specific feature
-     * combinations.
-     */
-    extensions: MutableCluster.Extensions(
-      { flags: { positioning: true }, component: PositioningComponent },
-      { flags: { motionLatching: true }, component: MotionLatchingComponent },
-      { flags: { unit: true }, component: UnitComponent },
-      { flags: { limitation: true }, component: LimitationComponent },
-      { flags: { translation: true }, component: TranslationComponent },
-      { flags: { rotation: true }, component: RotationComponent },
-      { flags: { modulation: true }, component: ModulationComponent },
-
-      // Feature legality constraints from conformance rules
-      { flags: { positioning: false, motionLatching: false }, component: false },
-      { flags: { unit: true, positioning: false }, component: false },
-      { flags: { limitation: true, positioning: false }, component: false },
-      { flags: { speed: true, positioning: false }, component: false },
-      { flags: { translation: true, positioning: false }, component: false },
-      { flags: { rotation: true, positioning: false }, component: false },
-      { flags: { modulation: true, positioning: false }, component: false },
-
-      // Choice group "b": Translation/Rotation/Modulation are mutually exclusive.
-      { flags: { translation: true, rotation: true }, component: false },
-      { flags: { translation: true, modulation: true }, component: false },
-      { flags: { rotation: true, modulation: true }, component: false },
-    ),
-  });
-
-  /**
-   * @see {@link Cluster}
-   */
-  export const Cluster = MutableCluster.ExtensibleOnly(Base);
-
-  export interface Cluster extends Identity<typeof Cluster> {}
-
-  const PS = { positioning: true };
-  const LT = { motionLatching: true };
-  const UT = { unit: true };
-  const LM = { limitation: true };
-  const TR = { translation: true };
-  const RO = { rotation: true };
-  const MD = { modulation: true };
-
-  /**
-   * @see {@link Complete}
-   */
-  export const Complete = MutableCluster({
-    id: Base.id,
-    name: Base.name,
-    revision: Base.revision,
-    features: Base.features,
-
-    attributes: {
-      ...Base.attributes,
-      resolution: MutableCluster.AsConditional(PositioningComponent.attributes.resolution, { mandatoryIf: [PS] }),
-      stepValue: MutableCluster.AsConditional(PositioningComponent.attributes.stepValue, { mandatoryIf: [PS] }),
-      unit: MutableCluster.AsConditional(UnitComponent.attributes.unit, { mandatoryIf: [UT] }),
-      unitRange: MutableCluster.AsConditional(UnitComponent.attributes.unitRange, { mandatoryIf: [UT] }),
-      limitRange: MutableCluster.AsConditional(LimitationComponent.attributes.limitRange, { mandatoryIf: [LM] }),
-      translationDirection: MutableCluster.AsConditional(TranslationComponent.attributes.translationDirection, { mandatoryIf: [TR] }),
-      rotationAxis: MutableCluster.AsConditional(RotationComponent.attributes.rotationAxis, { mandatoryIf: [RO] }),
-      overflow: MutableCluster.AsConditional(RotationComponent.attributes.overflow, { mandatoryIf: [RO] }),
-      modulationType: MutableCluster.AsConditional(ModulationComponent.attributes.modulationType, { mandatoryIf: [MD] }),
-      latchControlModes: MutableCluster.AsConditional(MotionLatchingComponent.attributes.latchControlModes, { mandatoryIf: [LT] }),
-    },
-
-    commands: {
-      ...Base.commands,
-      step: MutableCluster.AsConditional(PositioningComponent.commands.step, { mandatoryIf: [PS] }),
-    },
-  });
-
-  /**
-   * This cluster supports all ClosureDimension features. It may support illegal feature combinations.
-   *
-   * If you use this cluster you must manually specify which features are active and ensure the set of active features
-   * is legal per the Matter specification.
-   */
-  export interface Complete extends Identity<typeof Complete> {}
+// Register the cluster model with the canonical Matter model so helper utilities like `getClusterNameById()` can resolve the name for this custom cluster ID.
+if (Matter.clusters(ClosureDimensionModel.id) === undefined) {
+  Matter.children.push(ClosureDimensionModel);
 }
 
-export type ClosureDimensionCluster = ClosureDimension.Cluster;
-export const ClosureDimensionCluster = ClosureDimension.Cluster;
+export declare namespace ClosureDimension {
+  interface FeatureEnum {
+    readonly Positioning: 'Positioning';
+    readonly MotionLatching: 'MotionLatching';
+    readonly Unit: 'Unit';
+    readonly Limitation: 'Limitation';
+    readonly Speed: 'Speed';
+    readonly Translation: 'Translation';
+    readonly Rotation: 'Rotation';
+    readonly Modulation: 'Modulation';
+  }
 
-ClusterRegistry.register(ClosureDimension.Complete);
+  interface ClosureUnitEnum {
+    readonly Millimeter: 0;
+    readonly Degree: 1;
+  }
+
+  interface ModulationTypeEnum {
+    readonly SlatsOrientation: 0;
+    readonly SlatsOpenwork: 1;
+    readonly StripesAlignment: 2;
+    readonly Opacity: 3;
+    readonly Ventilation: 4;
+  }
+
+  interface OverflowEnum {
+    readonly NoOverflow: 0;
+    readonly Inside: 1;
+    readonly Outside: 2;
+    readonly TopInside: 3;
+    readonly TopOutside: 4;
+    readonly BottomInside: 5;
+    readonly BottomOutside: 6;
+    readonly LeftInside: 7;
+    readonly LeftOutside: 8;
+    readonly RightInside: 9;
+    readonly RightOutside: 10;
+  }
+
+  interface RotationAxisEnum {
+    readonly Left: 0;
+    readonly CenteredVertical: 1;
+    readonly LeftAndRight: 2;
+    readonly Right: 3;
+    readonly Top: 4;
+    readonly CenteredHorizontal: 5;
+    readonly TopAndBottom: 6;
+    readonly Bottom: 7;
+    readonly LeftBarrier: 8;
+    readonly LeftAndRightBarriers: 9;
+    readonly RightBarrier: 10;
+  }
+
+  interface StepDirectionEnum {
+    readonly Decrease: 0;
+    readonly Increase: 1;
+  }
+
+  interface TranslationDirectionEnum {
+    readonly Downward: 0;
+    readonly Upward: 1;
+    readonly VerticalMask: 2;
+    readonly VerticalSymmetry: 3;
+    readonly Leftward: 4;
+    readonly Rightward: 5;
+    readonly HorizontalMask: 6;
+    readonly HorizontalSymmetry: 7;
+    readonly Forward: 8;
+    readonly Backward: 9;
+    readonly DepthMask: 10;
+    readonly DepthSymmetry: 11;
+  }
+
+  type Feature = FeatureEnum[keyof FeatureEnum];
+  type Features = Feature;
+  type ClosureUnit = ClosureUnitEnum[keyof ClosureUnitEnum];
+  type ModulationType = ModulationTypeEnum[keyof ModulationTypeEnum];
+  type Overflow = OverflowEnum[keyof OverflowEnum];
+  type RotationAxis = RotationAxisEnum[keyof RotationAxisEnum];
+  type StepDirection = StepDirectionEnum[keyof StepDirectionEnum];
+  type TranslationDirection = TranslationDirectionEnum[keyof TranslationDirectionEnum];
+
+  interface LatchControlModesAttribute {
+    remoteLatching?: boolean;
+    remoteUnlatching?: boolean;
+  }
+
+  interface DimensionState {
+    position?: number | null;
+    latch?: boolean | null;
+    speed?: ThreeLevelAuto;
+  }
+
+  interface RangePercent100ths {
+    min: number;
+    max: number;
+  }
+
+  interface UnitRange {
+    min: number;
+    max: number;
+  }
+
+  interface SetTargetRequest {
+    position?: number;
+    latch?: boolean;
+    speed?: ThreeLevelAuto;
+  }
+
+  interface StepRequest {
+    direction: StepDirection;
+    numberOfSteps: number;
+    speed?: ThreeLevelAuto;
+  }
+
+  interface Attributes {
+    currentState: DimensionState | null;
+    targetState: DimensionState | null;
+    resolution?: number;
+    stepValue?: number;
+    unit?: ClosureUnit;
+    unitRange?: UnitRange | null;
+    limitRange?: RangePercent100ths;
+    translationDirection?: TranslationDirection;
+    rotationAxis?: RotationAxis;
+    overflow?: Overflow;
+    modulationType?: ModulationType;
+    latchControlModes?: LatchControlModesAttribute;
+  }
+
+  interface Commands {
+    setTarget(request: SetTargetRequest): MaybePromise;
+    step?(request: StepRequest): MaybePromise;
+  }
+
+  type Components = [{ flags: {}; attributes: Attributes; commands: Commands }];
+
+  interface Typing extends ClusterTyping {
+    Attributes: ClosureDimension.Attributes;
+    Commands: ClosureDimension.Commands;
+    Features: ClosureDimension.Features;
+    Components: ClosureDimension.Components;
+  }
+}
+
+export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterType.Concrete & {
+  readonly id: ClusterId & 0x0105;
+  readonly name: 'ClosureDimension';
+  readonly revision: 1;
+  readonly schema: ClusterModel;
+  readonly attributes: ClusterType.AttributeObjects<ClosureDimension.Attributes>;
+  readonly commands: ClusterType.CommandObjects<ClosureDimension.Commands>;
+  readonly Feature: ClosureDimension.FeatureEnum;
+  readonly ClosureUnit: ClosureDimension.ClosureUnitEnum;
+  readonly ModulationType: ClosureDimension.ModulationTypeEnum;
+  readonly Overflow: ClosureDimension.OverflowEnum;
+  readonly RotationAxis: ClosureDimension.RotationAxisEnum;
+  readonly StepDirection: ClosureDimension.StepDirectionEnum;
+  readonly TranslationDirection: ClosureDimension.TranslationDirectionEnum;
+  readonly Typing: ClosureDimension.Typing;
+  /** @deprecated Use {@link ClosureDimension}. */
+  readonly Cluster: typeof ClosureDimension;
+  /** @deprecated Use {@link ClosureDimension}. */
+  readonly Complete: typeof ClosureDimension;
+  /** @deprecated */
+  with(...features: ClosureDimension.Feature[]): typeof ClosureDimension;
+};

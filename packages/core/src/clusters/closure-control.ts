@@ -24,260 +24,271 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { Identity } from '@matter/general';
-import { Attribute, ClusterRegistry, Command, Event, EventPriority, FixedAttribute, MutableCluster, TlvNoResponse } from '@matter/types/cluster';
-import { ThreeLevelAuto } from '@matter/types/globals';
-import { BitFlag } from '@matter/types/schema';
-import {
-  TlvArray,
-  TlvBitmap,
-  TlvBoolean,
-  TlvEnum,
-  TlvField,
-  TlvNoArguments,
-  TlvNullable,
-  TlvObject,
-  TlvOptionalField,
-  TlvUInt8,
-  TlvUInt32,
-  TypeFromSchema,
-} from '@matter/types/tlv';
+import { type MaybePromise } from '@matter/general';
+import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, EventElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
+import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
+import { type ClusterId } from '@matter/types/datatype';
+import { type ThreeLevelAuto } from '@matter/types/globals';
 
-export namespace ClosureControl {
-  /**
-   * These are optional features supported by ClosureControlCluster.
-   */
-  export enum Feature {
-    Positioning = 'Positioning',
-    MotionLatching = 'MotionLatching',
-    Instantaneous = 'Instantaneous',
-    Speed = 'Speed',
-    Ventilation = 'Ventilation',
-    Pedestrian = 'Pedestrian',
-    Calibration = 'Calibration',
-    Protection = 'Protection',
-    ManuallyOperable = 'ManuallyOperable',
-  }
-
-  export enum ClosureError {
-    PhysicallyBlocked = 0,
-    BlockedBySensor = 1,
-    TemperatureLimited = 2,
-    MaintenanceRequired = 3,
-    InternalInterference = 4,
-  }
-
-  export enum CurrentPosition {
-    FullyClosed = 0,
-    FullyOpened = 1,
-    PartiallyOpened = 2,
-    OpenedForPedestrian = 3,
-    OpenedForVentilation = 4,
-    OpenedAtSignature = 5,
-  }
-
-  export enum MainState {
-    Stopped = 0,
-    Moving = 1,
-    WaitingForMotion = 2,
-    Error = 3,
-    Calibrating = 4,
-    Protected = 5,
-    Disengaged = 6,
-    SetupRequired = 7,
-  }
-
-  export enum TargetPosition {
-    MoveToFullyClosed = 0,
-    MoveToFullyOpen = 1,
-    MoveToPedestrianPosition = 2,
-    MoveToVentilationPosition = 3,
-    MoveToSignaturePosition = 4,
-  }
-
-  export const LatchControlModes = {
-    remoteLatching: BitFlag(0),
-    remoteUnlatching: BitFlag(1),
-  };
-
-  export const TlvOverallCurrentState = TlvObject({
-    position: TlvOptionalField(0, TlvNullable(TlvEnum<CurrentPosition>())),
-    latch: TlvOptionalField(1, TlvNullable(TlvBoolean)),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-    secureState: TlvOptionalField(3, TlvNullable(TlvBoolean)),
-  });
-
-  export interface OverallCurrentState extends TypeFromSchema<typeof TlvOverallCurrentState> {}
-
-  export const TlvOverallTargetState = TlvObject({
-    position: TlvOptionalField(0, TlvNullable(TlvEnum<TargetPosition>())),
-    latch: TlvOptionalField(1, TlvNullable(TlvBoolean)),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-  });
-
-  export interface OverallTargetState extends TypeFromSchema<typeof TlvOverallTargetState> {}
-
-  export const TlvMoveToRequest = TlvObject({
-    position: TlvOptionalField(0, TlvEnum<TargetPosition>()),
-    latch: TlvOptionalField(1, TlvBoolean),
-    speed: TlvOptionalField(2, TlvEnum<ThreeLevelAuto>()),
-  });
-
-  export interface MoveToRequest extends TypeFromSchema<typeof TlvMoveToRequest> {}
-
-  export const TlvOperationalErrorEvent = TlvObject({
-    errorState: TlvField(0, TlvArray(TlvEnum<ClosureError>(), { minLength: 1, maxLength: 10 })),
-  });
-
-  export const TlvEngageStateChangedEvent = TlvObject({
-    engageValue: TlvField(0, TlvBoolean),
-  });
-
-  export const TlvSecureStateChangedEvent = TlvObject({
-    secureValue: TlvField(0, TlvBoolean),
-  });
-
-  export const CountdownTimeComponent = MutableCluster.Component({
-    attributes: {
-      countdownTime: Attribute(0x0, TlvNullable(TlvUInt32.bound({ max: 259200 })), { default: null }),
-    },
-  });
-
-  export const MotionLatchingComponent = MutableCluster.Component({
-    attributes: {
-      latchControlModes: FixedAttribute(0x5, TlvBitmap(TlvUInt8, LatchControlModes)),
-    },
-  });
-
-  export const CalibrationComponent = MutableCluster.Component({
-    commands: {
-      calibrate: Command(0x2, TlvNoArguments, 0x2, TlvNoResponse, { timed: true }),
-    },
-  });
-
-  export const ManuallyOperableComponent = MutableCluster.Component({
-    events: {
-      engageStateChanged: Event(0x2, EventPriority.Info, TlvEngageStateChangedEvent),
-    },
-  });
-
-  export const NonInstantaneousComponent = MutableCluster.Component({
-    commands: {
-      stop: Command(0x0, TlvNoArguments, 0x0, TlvNoResponse),
-    },
-
-    events: {
-      movementCompleted: Event(0x1, EventPriority.Info, TlvNoArguments),
-    },
-  });
-
-  /**
-   * These elements and properties are present in all ClosureControl clusters.
-   */
-  export const Base = MutableCluster.Component({
-    id: 0x0104,
+// Create the cluster definition and model for the ClosureControl cluster.
+export const ClosureControlDefinition = ClusterElement(
+  {
     name: 'ClosureControl',
-    revision: 1,
+    id: 0x0104,
+    classification: 'application',
+  },
+  AttributeElement({ name: 'ClusterRevision', id: 0xfffd, type: 'ClusterRevision', default: 1 }),
+  AttributeElement(
+    { name: 'FeatureMap', id: 0xfffc, type: 'FeatureMap' },
+    FieldElement({ name: 'POS', conformance: 'O', constraint: '0', title: 'Positioning' }),
+    FieldElement({ name: 'ML', conformance: 'O', constraint: '1', title: 'MotionLatching' }),
+    FieldElement({ name: 'INS', conformance: 'O', constraint: '2', title: 'Instantaneous' }),
+    FieldElement({ name: 'SPD', conformance: '[POS & !INS]', constraint: '3', title: 'Speed' }),
+    FieldElement({ name: 'VNT', conformance: '[POS]', constraint: '4', title: 'Ventilation' }),
+    FieldElement({ name: 'PED', conformance: '[POS]', constraint: '5', title: 'Pedestrian' }),
+    FieldElement({ name: 'CAL', conformance: '[POS]', constraint: '6', title: 'Calibration' }),
+    FieldElement({ name: 'PRT', conformance: 'O', constraint: '7', title: 'Protection' }),
+    FieldElement({ name: 'MAN', conformance: 'O', constraint: '8', title: 'ManuallyOperable' }),
+  ),
+  AttributeElement({ name: 'CountdownTime', id: 0x0000, type: 'uint32', access: 'R V', conformance: '[POS & !INS]', constraint: 'max 259200', default: null, quality: 'X' }),
+  AttributeElement({ name: 'MainState', id: 0x0001, type: 'MainStateEnum', access: 'R V', conformance: 'M', constraint: 'desc' }),
+  AttributeElement(
+    { name: 'CurrentErrorList', id: 0x0002, type: 'list', access: 'R V', conformance: 'M', constraint: 'max 10', default: [] },
+    FieldElement({ name: 'entry', type: 'ClosureErrorEnum' }),
+  ),
+  AttributeElement({ name: 'OverallCurrentState', id: 0x0003, type: 'OverallCurrentStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
+  AttributeElement({ name: 'OverallTargetState', id: 0x0004, type: 'OverallTargetStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
+  AttributeElement({ name: 'LatchControlModes', id: 0x0005, type: 'LatchControlModesAttribute', access: 'R V', conformance: 'ML', quality: 'F' }),
+  CommandElement({ name: 'Stop', id: 0x0000, access: 'O', conformance: '!INS', direction: 'request', response: 'status' }),
+  CommandElement(
+    { name: 'MoveTo', id: 0x0001, access: 'O T', conformance: 'M', direction: 'request', response: 'status' },
+    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'O' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+  ),
+  CommandElement({ name: 'Calibrate', id: 0x0002, access: 'O T', conformance: 'CAL', direction: 'request', response: 'status' }),
+  EventElement(
+    { name: 'OperationalError', id: 0x0000, access: 'V', conformance: 'M', priority: 'critical' },
+    FieldElement({ name: 'ErrorState', id: 0x0, type: 'list', conformance: 'M', constraint: 'max 10' }, FieldElement({ name: 'entry', type: 'ClosureErrorEnum' })),
+  ),
+  EventElement({ name: 'MovementCompleted', id: 0x0001, access: 'V', conformance: '!INS', priority: 'info' }),
+  EventElement(
+    { name: 'EngageStateChanged', id: 0x0002, access: 'V', conformance: 'MAN', priority: 'info' },
+    FieldElement({ name: 'EngageValue', id: 0x0, type: 'bool', conformance: 'M' }),
+  ),
+  EventElement(
+    { name: 'SecureStateChanged', id: 0x0003, access: 'V', conformance: 'M', priority: 'info' },
+    FieldElement({ name: 'SecureValue', id: 0x0, type: 'bool', conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'ClosureErrorEnum', type: 'enum8' },
+    FieldElement({ name: 'PhysicallyBlocked', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'BlockedBySensor', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'TemperatureLimited', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'MaintenanceRequired', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'InternalInterference', id: 0x4, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'CurrentPositionEnum', type: 'enum8' },
+    FieldElement({ name: 'FullyClosed', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'FullyOpened', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'PartiallyOpened', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'OpenedForPedestrian', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'OpenedForVentilation', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'OpenedAtSignature', id: 0x5, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'MainStateEnum', type: 'enum8' },
+    FieldElement({ name: 'Stopped', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'Moving', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'WaitingForMotion', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'Error', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'Calibrating', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'Protected', id: 0x5, conformance: 'M' }),
+    FieldElement({ name: 'Disengaged', id: 0x6, conformance: 'M' }),
+    FieldElement({ name: 'SetupRequired', id: 0x7, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'TargetPositionEnum', type: 'enum8' },
+    FieldElement({ name: 'MoveToFullyClosed', id: 0x0, conformance: 'M' }),
+    FieldElement({ name: 'MoveToFullyOpen', id: 0x1, conformance: 'M' }),
+    FieldElement({ name: 'MoveToPedestrianPosition', id: 0x2, conformance: 'M' }),
+    FieldElement({ name: 'MoveToVentilationPosition', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'MoveToSignaturePosition', id: 0x4, conformance: 'M' }),
+  ),
+  DatatypeElement(
+    { name: 'LatchControlModesAttribute', type: 'map8' },
+    FieldElement({ name: 'RemoteLatching', constraint: '0' }),
+    FieldElement({ name: 'RemoteUnlatching', constraint: '1' }),
+  ),
+  DatatypeElement(
+    { name: 'OverallCurrentStateStruct', type: 'struct' },
+    FieldElement({ name: 'Position', id: 0x0, type: 'CurrentPositionEnum', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+    FieldElement({ name: 'SecureState', id: 0x3, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
+  ),
+  DatatypeElement(
+    { name: 'OverallTargetStateStruct', type: 'struct' },
+    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+  ),
+);
 
-    features: {
-      positioning: BitFlag(0),
-      motionLatching: BitFlag(1),
-      instantaneous: BitFlag(2),
-      speed: BitFlag(3),
-      ventilation: BitFlag(4),
-      pedestrian: BitFlag(5),
-      calibration: BitFlag(6),
-      protection: BitFlag(7),
-      manuallyOperable: BitFlag(8),
-    },
+export const ClosureControlModel = new ClusterModel(ClosureControlDefinition);
 
-    attributes: {
-      mainState: Attribute(0x1, TlvEnum<MainState>()),
-      currentErrorList: Attribute(0x2, TlvArray(TlvEnum<ClosureError>(), { maxLength: 10 }), { default: [] }),
-      overallCurrentState: Attribute(0x3, TlvNullable(TlvOverallCurrentState), { default: null }),
-      overallTargetState: Attribute(0x4, TlvNullable(TlvOverallTargetState), { default: null }),
-    },
+// Register the cluster definition with the Matter definition so it can be referenced by devices and endpoints.
+MatterDefinition.children.push(ClosureControlDefinition);
 
-    commands: {
-      moveTo: Command(0x1, TlvMoveToRequest, 0x1, TlvNoResponse, { timed: true }),
-    },
-
-    events: {
-      operationalError: Event(0x0, EventPriority.Critical, TlvOperationalErrorEvent),
-      secureStateChanged: Event(0x3, EventPriority.Info, TlvSecureStateChangedEvent),
-    },
-
-    /**
-     * This metadata controls which ClosureControlCluster elements matter.js activates for specific feature
-     * combinations.
-     */
-    extensions: MutableCluster.Extensions(
-      { flags: { instantaneous: false }, component: NonInstantaneousComponent },
-      { flags: { motionLatching: true }, component: MotionLatchingComponent },
-      { flags: { calibration: true }, component: CalibrationComponent },
-      { flags: { manuallyOperable: true }, component: ManuallyOperableComponent },
-      { flags: { positioning: true, instantaneous: false }, component: CountdownTimeComponent },
-
-      // Feature legality constraints from conformance rules
-      { flags: { positioning: false, motionLatching: false }, component: false },
-      { flags: { speed: true, positioning: false }, component: false },
-      { flags: { speed: true, instantaneous: true }, component: false },
-      { flags: { ventilation: true, positioning: false }, component: false },
-      { flags: { pedestrian: true, positioning: false }, component: false },
-      { flags: { calibration: true, positioning: false }, component: false },
-    ),
-  });
-
-  /**
-   * @see {@link Cluster}
-   */
-  export const Cluster = MutableCluster.ExtensibleOnly(Base);
-
-  export interface Cluster extends Identity<typeof Cluster> {}
-  const LT = { motionLatching: true };
-  const CL = { calibration: true };
-  const MO = { manuallyOperable: true };
-  const PS_NOT_IS = { positioning: true, instantaneous: false };
-  const NOT_IS = { instantaneous: false };
-
-  /**
-   * @see {@link Complete}
-   */
-  export const Complete = MutableCluster({
-    id: Base.id,
-    name: Base.name,
-    revision: Base.revision,
-    features: Base.features,
-
-    attributes: {
-      ...Base.attributes,
-      countdownTime: MutableCluster.AsConditional(CountdownTimeComponent.attributes.countdownTime, { optionalIf: [PS_NOT_IS] }),
-      latchControlModes: MutableCluster.AsConditional(MotionLatchingComponent.attributes.latchControlModes, { mandatoryIf: [LT] }),
-    },
-
-    commands: {
-      ...Base.commands,
-      stop: MutableCluster.AsConditional(NonInstantaneousComponent.commands.stop, { mandatoryIf: [NOT_IS] }),
-      calibrate: MutableCluster.AsConditional(CalibrationComponent.commands.calibrate, { mandatoryIf: [CL] }),
-    },
-
-    events: {
-      ...Base.events,
-      movementCompleted: MutableCluster.AsConditional(NonInstantaneousComponent.events.movementCompleted, { mandatoryIf: [NOT_IS] }),
-      engageStateChanged: MutableCluster.AsConditional(ManuallyOperableComponent.events.engageStateChanged, { mandatoryIf: [MO] }),
-    },
-  });
-
-  /**
-   * This cluster supports all ClosureControl features. It may support illegal feature combinations.
-   *
-   * If you use this cluster you must manually specify which features are active and ensure the set of active features
-   * is legal per the Matter specification.
-   */
-  export interface Complete extends Identity<typeof Complete> {}
+// Register the cluster model with the canonical Matter model so helper utilities like `getClusterNameById()` can resolve the name for this custom cluster ID.
+if (Matter.clusters(ClosureControlModel.id) === undefined) {
+  Matter.children.push(ClosureControlModel);
 }
 
-export type ClosureControlCluster = ClosureControl.Cluster;
-export const ClosureControlCluster = ClosureControl.Cluster;
+export declare namespace ClosureControl {
+  interface FeatureEnum {
+    readonly Positioning: 'Positioning';
+    readonly MotionLatching: 'MotionLatching';
+    readonly Instantaneous: 'Instantaneous';
+    readonly Speed: 'Speed';
+    readonly Ventilation: 'Ventilation';
+    readonly Pedestrian: 'Pedestrian';
+    readonly Calibration: 'Calibration';
+    readonly Protection: 'Protection';
+    readonly ManuallyOperable: 'ManuallyOperable';
+  }
 
-ClusterRegistry.register(ClosureControl.Complete);
+  interface ClosureErrorEnum {
+    readonly PhysicallyBlocked: 0;
+    readonly BlockedBySensor: 1;
+    readonly TemperatureLimited: 2;
+    readonly MaintenanceRequired: 3;
+    readonly InternalInterference: 4;
+  }
+
+  interface CurrentPositionEnum {
+    readonly FullyClosed: 0;
+    readonly FullyOpened: 1;
+    readonly PartiallyOpened: 2;
+    readonly OpenedForPedestrian: 3;
+    readonly OpenedForVentilation: 4;
+    readonly OpenedAtSignature: 5;
+  }
+
+  interface MainStateEnum {
+    readonly Stopped: 0;
+    readonly Moving: 1;
+    readonly WaitingForMotion: 2;
+    readonly Error: 3;
+    readonly Calibrating: 4;
+    readonly Protected: 5;
+    readonly Disengaged: 6;
+    readonly SetupRequired: 7;
+  }
+
+  interface TargetPositionEnum {
+    readonly MoveToFullyClosed: 0;
+    readonly MoveToFullyOpen: 1;
+    readonly MoveToPedestrianPosition: 2;
+    readonly MoveToVentilationPosition: 3;
+    readonly MoveToSignaturePosition: 4;
+  }
+
+  type Feature = FeatureEnum[keyof FeatureEnum];
+  type Features = Feature;
+  type ClosureError = ClosureErrorEnum[keyof ClosureErrorEnum];
+  type CurrentPosition = CurrentPositionEnum[keyof CurrentPositionEnum];
+  type MainState = MainStateEnum[keyof MainStateEnum];
+  type TargetPosition = TargetPositionEnum[keyof TargetPositionEnum];
+
+  interface LatchControlModesAttribute {
+    remoteLatching?: boolean;
+    remoteUnlatching?: boolean;
+  }
+
+  interface OverallCurrentState {
+    position?: CurrentPosition | null;
+    latch?: boolean | null;
+    speed?: ThreeLevelAuto;
+    secureState?: boolean | null;
+  }
+
+  interface OverallTargetState {
+    position?: TargetPosition | null;
+    latch?: boolean | null;
+    speed?: ThreeLevelAuto;
+  }
+
+  interface MoveToRequest {
+    position?: TargetPosition;
+    latch?: boolean;
+    speed?: ThreeLevelAuto;
+  }
+
+  interface OperationalErrorEvent {
+    errorState: ClosureError[];
+  }
+
+  interface EngageStateChangedEvent {
+    engageValue: boolean;
+  }
+
+  interface SecureStateChangedEvent {
+    secureValue: boolean;
+  }
+
+  interface Attributes {
+    countdownTime?: number | null;
+    mainState: MainState;
+    currentErrorList: ClosureError[];
+    overallCurrentState: OverallCurrentState | null;
+    overallTargetState: OverallTargetState | null;
+    latchControlModes?: LatchControlModesAttribute;
+  }
+
+  interface Commands {
+    moveTo(request: MoveToRequest): MaybePromise;
+    stop?(): MaybePromise;
+    calibrate?(): MaybePromise;
+  }
+
+  interface Events {
+    operationalError: OperationalErrorEvent;
+    movementCompleted?: Record<string, never>;
+    engageStateChanged?: EngageStateChangedEvent;
+    secureStateChanged: SecureStateChangedEvent;
+  }
+
+  type Components = [{ flags: {}; attributes: Attributes; commands: Commands; events: Events }];
+
+  interface Typing extends ClusterTyping {
+    Attributes: ClosureControl.Attributes;
+    Commands: ClosureControl.Commands;
+    Events: ClosureControl.Events;
+    Features: ClosureControl.Features;
+    Components: ClosureControl.Components;
+  }
+}
+
+export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Concrete & {
+  readonly id: ClusterId & 0x0104;
+  readonly name: 'ClosureControl';
+  readonly revision: 1;
+  readonly schema: ClusterModel;
+  readonly attributes: ClusterType.AttributeObjects<ClosureControl.Attributes>;
+  readonly commands: ClusterType.CommandObjects<ClosureControl.Commands>;
+  readonly events: ClusterType.EventObjects<ClosureControl.Events>;
+  readonly Feature: ClosureControl.FeatureEnum;
+  readonly ClosureError: ClosureControl.ClosureErrorEnum;
+  readonly CurrentPosition: ClosureControl.CurrentPositionEnum;
+  readonly MainState: ClosureControl.MainStateEnum;
+  readonly TargetPosition: ClosureControl.TargetPositionEnum;
+  readonly Typing: ClosureControl.Typing;
+  /** @deprecated Use {@link ClosureControl}. */
+  readonly Cluster: typeof ClosureControl;
+  /** @deprecated Use {@link ClosureControl}. */
+  readonly Complete: typeof ClosureControl;
+  /** @deprecated */
+  with(...features: ClosureControl.Feature[]): typeof ClosureControl;
+};
