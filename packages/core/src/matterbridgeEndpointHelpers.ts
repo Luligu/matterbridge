@@ -308,6 +308,8 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  *     internal?.enableTimeout = true;
  * ```
  */
+export async function internalFor<T extends Behavior.Type>(endpoint: MatterbridgeEndpoint, cluster: T): Promise<InstanceType<T['Internal']> | undefined>;
+export async function internalFor<T extends object = Record<string, unknown>>(endpoint: MatterbridgeEndpoint, cluster: ClusterType | ClusterId | string): Promise<T | undefined>;
 export async function internalFor<T extends object = Record<string, unknown>>(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -317,7 +319,11 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     endpoint.log?.error(`internalFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return undefined;
   }
-  return endpoint.act((agent) => (agent as unknown as Record<string, { internal?: T } | undefined>)[behaviorId]?.internal);
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
+  if (!supportedBehavior) {
+    return undefined;
+  }
+  return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;
 }
 
 /**
