@@ -1165,10 +1165,11 @@ describe('Matterbridge ' + NAME, () => {
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
     // expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
+    const thermostatServer = MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode);
+    expect(thermostat.behaviors.has(thermostatServer)).toBeTruthy();
+    expect(thermostat.behaviors.elementsOf(thermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
+    expect((thermostat.stateOf(thermostatServer) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(thermostatServer) as any).generatedCommandList).toEqual([]);
     await thermostat.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
