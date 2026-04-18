@@ -592,19 +592,35 @@ describe('Matterbridge ' + NAME, () => {
     expect(light).toBeDefined();
     expect(getClusterId(light, 'onOff')).toBe(0x6);
     expect(getClusterId(light, 'OnOff')).toBe(0x6);
+    expect(getClusterId(light, 'onOffWrong')).toBeUndefined();
+    expect(getClusterId(light, 'OnOffWrong')).toBeUndefined();
 
     expect(getClusterId(light, 'levelControl')).toBe(0x8);
     expect(getClusterId(light, 'LevelControl')).toBe(0x8);
+    expect(getClusterId(light, 'levelControlWrong')).toBeUndefined();
+    expect(getClusterId(light, 'LevelControlWrong')).toBeUndefined();
 
     expect(getAttributeId(light, 'onOff', 'OnOff')).toBe(0);
     expect(getAttributeId(light, 'OnOff', 'OnOff')).toBe(0);
     expect(getAttributeId(light, 'onOff', 'onOff')).toBe(0);
     expect(getAttributeId(light, 'OnOff', 'onOff')).toBe(0);
+    expect(getAttributeId(light, 'onOffWrong', 'OnOff')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOffWrong', 'OnOff')).toBeUndefined();
+    expect(getAttributeId(light, 'onOff', 'OnOffWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOff', 'OnOffWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'onOff', 'onOffWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOff', 'onOffWrong')).toBeUndefined();
 
     expect(getAttributeId(light, 'onOff', 'OnTime')).toBe(0x4001);
     expect(getAttributeId(light, 'OnOff', 'OnTime')).toBe(0x4001);
     expect(getAttributeId(light, 'onOff', 'onTime')).toBe(0x4001);
     expect(getAttributeId(light, 'OnOff', 'onTime')).toBe(0x4001);
+    expect(getAttributeId(light, 'onOffWrong', 'OnTime')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOffWrong', 'OnTime')).toBeUndefined();
+    expect(getAttributeId(light, 'onOff', 'OnTimeWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOff', 'OnTimeWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'onOff', 'onTimeWrong')).toBeUndefined();
+    expect(getAttributeId(light, 'OnOff', 'onTimeWrong')).toBeUndefined();
   });
 
   test('add deviceType to onOffPlugin without tagList', async () => {

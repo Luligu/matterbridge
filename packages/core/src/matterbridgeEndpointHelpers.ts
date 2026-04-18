@@ -327,6 +327,17 @@ export async function internalFor<T extends object = Record<string, unknown>>(
 }
 
 /**
+ * Returns the options for a given behavior type.
+ *
+ * @param {T} type - The behavior type.
+ * @param {Behavior.Options<T>} options - The options for the behavior type.
+ * @returns {Behavior.Options<T>} The options for the behavior type.
+ */
+export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>): Behavior.Options<T> {
+  return options;
+}
+
+/**
  * Maps a list of ClusterId to Behavior.Type for server clusters.
  *
  * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.
@@ -669,17 +680,6 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
-}
-
-/**
- * Returns the options for a given behavior type.
- *
- * @param {T} type - The behavior type.
- * @param {Behavior.Options<T>} options - The options for the behavior type.
- * @returns {Behavior.Options<T>} The options for the behavior type.
- */
-export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>): Behavior.Options<T> {
-  return options;
 }
 
 /**
