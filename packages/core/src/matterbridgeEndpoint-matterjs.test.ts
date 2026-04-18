@@ -89,6 +89,7 @@ import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
@@ -947,13 +948,13 @@ describe('Matterbridge ' + NAME, () => {
       ),
     ).toBeTruthy();
     expect(extendedLight.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
-    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToHue')).toBeTruthy();
-    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
-    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
-    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToColor')).toBeTruthy();
-    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((extendedLight.stateOf(ColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
-    expect((extendedLight.stateOf(ColorControlServer) as any).generatedCommandList).toEqual([]);
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((extendedLight.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
+    expect((extendedLight.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
     await extendedLight.invokeBehaviorCommand('colorControl', 'moveToHue', {
       hue: 180,
       direction: ColorControl.Direction.Shortest,
@@ -1163,11 +1164,11 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
-    expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
-    expect(thermostat.behaviors.elementsOf(ThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
-    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
+    // expect(thermostat.behaviors.has(ThermostatServer)).toBeTruthy();
+    expect(thermostat.behaviors.has(MatterbridgeThermostatServer)).toBeTruthy();
+    expect(thermostat.behaviors.elementsOf(MatterbridgeThermostatServer).commands.has('setpointRaiseLower')).toBeTruthy();
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(MatterbridgeThermostatServer) as any).generatedCommandList).toEqual([]);
     await thermostat.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
