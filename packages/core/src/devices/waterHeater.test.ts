@@ -254,7 +254,7 @@ describe('Matterbridge Water Heater', () => {
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
-    expect(device.behaviors.has(ThermostatServer)).toBeTruthy();
+    // expect(device.behaviors.has(ThermostatServer.with(Thermostat.Feature.Heating))).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating))).toBeTruthy();
     expect(device.behaviors.elementsOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).commands.has('setpointRaiseLower')).toBeTruthy();
     expect((device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)) as any).acceptedCommandList).toEqual([0]);

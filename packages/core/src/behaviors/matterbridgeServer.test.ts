@@ -764,8 +764,9 @@ describe('Server clusters and behaviors', () => {
     const initialThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
 
     expect(initialThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2100, occupiedCoolingSetpoint: 2500 });
-    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
+    const thermostatBehavior = MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode);
+    expect((thermostat.stateOf(thermostatBehavior) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(thermostatBehavior) as any).generatedCommandList).toEqual([]);
 
     await expectCommand(thermostat, Thermostat.Cluster, 'setpointRaiseLower', setBothRequest, (data) => {
       expect(data.cluster).toBe('thermostat');

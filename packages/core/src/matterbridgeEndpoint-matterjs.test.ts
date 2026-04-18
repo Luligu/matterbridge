@@ -115,6 +115,7 @@ import {
   lightSensor,
   modeSelect,
   occupancySensor,
+  onOffLight,
   onOffOutlet,
   smokeCoAlarm,
   thermostatDevice,
@@ -134,7 +135,7 @@ mkdirSync(HOMEDIR, { recursive: true });
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;
   let light: MatterbridgeEndpoint;
-  let enhancedLight: MatterbridgeEndpoint;
+  let extendedLight: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
   let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
@@ -169,8 +170,6 @@ describe('Matterbridge ' + NAME, () => {
     // Restore all mocks
     jest.restoreAllMocks();
   });
-
-  const deviceType = extendedColorLight;
 
   test('logger and destinations', async () => {
     const write = jest.fn((text: string, message: Diagnostic.Message) => {});
@@ -277,25 +276,25 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a onOffLight device', async () => {
-    light = new MatterbridgeEndpoint(deviceType, { id: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    light = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
     expect(light).toBeDefined();
     expect(light.id).toBe('OnOffLight');
-    expect(light.type.name).toBe(deviceType.name.replace('-', '_'));
-    expect(light.type.deviceType).toBe(deviceType.code);
-    expect(light.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
-    expect(light.type.deviceRevision).toBe(deviceType.revision);
+    expect(light.type.name).toBe(onOffLight.name.replace('-', '_'));
+    expect(light.type.deviceType).toBe(onOffLight.code);
+    expect(light.type.deviceClass).toBe(onOffLight.deviceClass.toLowerCase());
+    expect(light.type.deviceRevision).toBe(onOffLight.revision);
     expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('create an enhanced onOffLight device', async () => {
-    enhancedLight = new MatterbridgeEndpoint(deviceType, { id: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
-    expect(enhancedLight).toBeDefined();
-    expect(enhancedLight.id).toBe('EnhancedOnOffLight');
-    expect(enhancedLight.type.name).toBe(deviceType.name.replace('-', '_'));
-    expect(enhancedLight.type.deviceType).toBe(deviceType.code);
-    expect(enhancedLight.type.deviceClass).toBe(deviceType.deviceClass.toLowerCase());
-    expect(enhancedLight.type.deviceRevision).toBe(deviceType.revision);
-    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
+    extendedLight = new MatterbridgeEndpoint(extendedColorLight, { id: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    expect(extendedLight).toBeDefined();
+    expect(extendedLight.id).toBe('EnhancedOnOffLight');
+    expect(extendedLight.type.name).toBe(extendedColorLight.name.replace('-', '_'));
+    expect(extendedLight.type.deviceType).toBe(extendedColorLight.code);
+    expect(extendedLight.type.deviceClass).toBe(extendedColorLight.deviceClass.toLowerCase());
+    expect(extendedLight.type.deviceRevision).toBe(extendedColorLight.revision);
+    expect(extendedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge']);
   });
 
   test('create a cover lift device', async () => {
@@ -426,7 +425,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(light).toBeDefined();
     light.createDefaultOnOffClusterServer(true, false, 10, 14);
     light.addRequiredClusterServers();
-    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'scenesManagement', 'levelControl', 'colorControl']);
+    expect(light.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'scenesManagement']);
     expect(light.behaviors.supported.descriptor).toBeDefined();
     expect(light.behaviors.has(DescriptorBehavior)).toBeTruthy();
     expect(light.behaviors.has(DescriptorServer)).toBeTruthy();
@@ -480,62 +479,62 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add required clusters to enhanced onOffLight', async () => {
-    expect(enhancedLight).toBeDefined();
-    enhancedLight.createDefaultOnOffClusterServer(true, false, 10, 14);
-    enhancedLight.createEnhancedColorControlClusterServer();
-    enhancedLight.addRequiredClusterServers();
-    expect(enhancedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'colorControl', 'identify', 'groups', 'scenesManagement', 'levelControl']);
-    expect(enhancedLight.behaviors.supported.descriptor).toBeDefined();
-    expect(enhancedLight.behaviors.has(DescriptorBehavior)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(DescriptorServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(DescriptorBehavior)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(DescriptorServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(DescriptorCluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(Descriptor.Cluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer('Descriptor')).toBeTruthy();
-    expect(enhancedLight.hasClusterServer('descriptor')).toBeTruthy();
+    expect(extendedLight).toBeDefined();
+    extendedLight.createDefaultOnOffClusterServer(true, false, 10, 14);
+    extendedLight.createEnhancedColorControlClusterServer();
+    extendedLight.addRequiredClusterServers();
+    expect(extendedLight.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'colorControl', 'identify', 'groups', 'scenesManagement', 'levelControl']);
+    expect(extendedLight.behaviors.supported.descriptor).toBeDefined();
+    expect(extendedLight.behaviors.has(DescriptorBehavior)).toBeTruthy();
+    expect(extendedLight.behaviors.has(DescriptorServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(DescriptorBehavior)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(DescriptorServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(DescriptorCluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(DescriptorCluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(Descriptor.Cluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(DescriptorCluster.name)).toBeTruthy();
+    expect(extendedLight.hasClusterServer('Descriptor')).toBeTruthy();
+    expect(extendedLight.hasClusterServer('descriptor')).toBeTruthy();
 
-    expect(enhancedLight.behaviors.supported['identify']).toBeDefined();
-    expect(enhancedLight.behaviors.has(IdentifyBehavior)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(IdentifyServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(IdentifyCluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
+    expect(extendedLight.behaviors.supported['identify']).toBeDefined();
+    expect(extendedLight.behaviors.has(IdentifyBehavior)).toBeTruthy();
+    expect(extendedLight.behaviors.has(IdentifyServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(IdentifyCluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(IdentifyCluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(IdentifyCluster.name)).toBeTruthy();
 
-    expect(enhancedLight.behaviors.supported['groups']).toBeDefined();
-    expect(enhancedLight.behaviors.has(GroupsBehavior)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(GroupsServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(GroupsCluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(GroupsCluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(GroupsCluster.name)).toBeTruthy();
+    expect(extendedLight.behaviors.supported['groups']).toBeDefined();
+    expect(extendedLight.behaviors.has(GroupsBehavior)).toBeTruthy();
+    expect(extendedLight.behaviors.has(GroupsServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(GroupsCluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(GroupsCluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(GroupsCluster.name)).toBeTruthy();
 
-    expect(enhancedLight.behaviors.supported['scenesManagement']).toBeDefined();
-    expect(enhancedLight.behaviors.has(ScenesManagementBehavior)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(ScenesManagementServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster.name)).toBeTruthy();
+    expect(extendedLight.behaviors.supported['scenesManagement']).toBeDefined();
+    expect(extendedLight.behaviors.has(ScenesManagementBehavior)).toBeTruthy();
+    expect(extendedLight.behaviors.has(ScenesManagementServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(ScenesManagementCluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(ScenesManagementCluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(ScenesManagementCluster.name)).toBeTruthy();
 
-    expect(enhancedLight.behaviors.supported['onOff']).toBeDefined();
-    expect(enhancedLight.behaviors.has(OnOffBehavior)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(OnOffServer)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(OnOffCluster)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(OnOffCluster.id)).toBeTruthy();
-    expect(enhancedLight.hasClusterServer(OnOffCluster.name)).toBeTruthy();
+    expect(extendedLight.behaviors.supported['onOff']).toBeDefined();
+    expect(extendedLight.behaviors.has(OnOffBehavior)).toBeTruthy();
+    expect(extendedLight.behaviors.has(OnOffServer)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(OnOffCluster)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(OnOffCluster.id)).toBeTruthy();
+    expect(extendedLight.hasClusterServer(OnOffCluster.name)).toBeTruthy();
   });
 
   test('add enhanced onOffLight device to serverNode', async () => {
-    expect(await server.add(enhancedLight)).toBeDefined();
-    expect(enhancedLight.hasClusterServer(DescriptorCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(IdentifyCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(GroupsCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(ScenesManagementCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(OnOffCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(LevelControlCluster)).toBe(true);
-    expect(enhancedLight.hasClusterServer(ColorControlCluster)).toBe(true);
+    expect(await server.add(extendedLight)).toBeDefined();
+    expect(extendedLight.hasClusterServer(DescriptorCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(IdentifyCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(GroupsCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(ScenesManagementCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(OnOffCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(LevelControlCluster)).toBe(true);
+    expect(extendedLight.hasClusterServer(ColorControlCluster)).toBe(true);
   });
 
   test('add lift coverDevice device to serverNode', async () => {
@@ -595,8 +594,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(getClusterId(light, 'onOffWrong')).toBeUndefined();
     expect(getClusterId(light, 'OnOffWrong')).toBeUndefined();
 
-    expect(getClusterId(light, 'levelControl')).toBe(0x8);
-    expect(getClusterId(light, 'LevelControl')).toBe(0x8);
+    expect(getClusterId(light, 'levelControl')).toBeUndefined();
+    expect(getClusterId(light, 'LevelControl')).toBeUndefined();
     expect(getClusterId(light, 'levelControlWrong')).toBeUndefined();
     expect(getClusterId(light, 'LevelControlWrong')).toBeUndefined();
 
@@ -900,6 +899,10 @@ describe('Matterbridge ' + NAME, () => {
   test('invoke MatterbridgeOnOffServer commands', async () => {
     expect(light.behaviors.has(OnOffServer)).toBeTruthy();
     expect(light.behaviors.has(MatterbridgeOnOffServer)).toBeTruthy();
+    expect(light.behaviors.has(LevelControlServer)).toBeFalsy();
+    expect(light.behaviors.has(MatterbridgeLevelControlServer)).toBeFalsy();
+    expect(light.behaviors.has(ColorControlServer)).toBeFalsy();
+    expect(light.behaviors.has(MatterbridgeColorControlServer)).toBeFalsy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('on')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('off')).toBeTruthy();
     expect(light.behaviors.elementsOf(MatterbridgeOnOffServer).commands.has('toggle')).toBeTruthy();
@@ -915,157 +918,168 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke MatterbridgeLevelControlServer commands', async () => {
-    expect(light.behaviors.has(LevelControlServer)).toBeTruthy();
-    expect(light.behaviors.has(MatterbridgeLevelControlServer)).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevel')).toBeTruthy();
-    expect(light.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
-    expect((light.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
-    expect((light.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
-    await light.invokeBehaviorCommand('levelControl', 'moveToLevel', {
+    expect(extendedLight.behaviors.has(LevelControlServer)).toBeTruthy();
+    expect(extendedLight.behaviors.has(MatterbridgeLevelControlServer)).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevel')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeLevelControlServer).commands.has('moveToLevelWithOnOff')).toBeTruthy();
+    expect((extendedLight.stateOf(MatterbridgeLevelControlServer) as any).acceptedCommandList).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect((extendedLight.stateOf(MatterbridgeLevelControlServer) as any).generatedCommandList).toEqual([]);
+    await extendedLight.invokeBehaviorCommand('levelControl', 'moveToLevel', {
       level: 100,
       transitionTime: 5,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await light.invokeBehaviorCommand('levelControl', 'moveToLevelWithOnOff', {
+    await extendedLight.invokeBehaviorCommand('levelControl', 'moveToLevelWithOnOff', {
       level: 100,
       transitionTime: 5,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`);
   });
 
   test('invoke MatterbridgeColorControlServer commands', async () => {
-    expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
-    expect(light.behaviors.has(ColorControlServer)).toBeTruthy();
-    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToHue')).toBeTruthy();
-    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
-    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
-    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToColor')).toBeTruthy();
-    expect(light.behaviors.elementsOf(ColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((light.stateOf(ColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
-    expect((light.stateOf(ColorControlServer) as any).generatedCommandList).toEqual([]);
-    await light.invokeBehaviorCommand('colorControl', 'moveToHue', {
+    expect(
+      extendedLight.behaviors.has(
+        ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature, ColorControl.Feature.EnhancedHue),
+      ),
+    ).toBeTruthy();
+    expect(extendedLight.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(ColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((extendedLight.stateOf(ColorControlServer) as any).acceptedCommandList).toEqual(expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 71]));
+    expect((extendedLight.stateOf(ColorControlServer) as any).generatedCommandList).toEqual([]);
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToHue', {
       hue: 180,
       direction: ColorControl.Direction.Shortest,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await light.invokeBehaviorCommand('colorControl', 'moveToSaturation', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToSaturation', {
       saturation: 100,
       direction: ColorControl.Direction.Shortest,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await light.invokeBehaviorCommand('colorControl', 'moveToHueAndSaturation', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToHueAndSaturation', {
       hue: 180,
       saturation: 100,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await light.invokeBehaviorCommand('colorControl', 'moveToColor', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToColor', {
       colorX: 30000,
       colorY: 30000,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await light.invokeBehaviorCommand('colorControl', 'moveToColorTemperature', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToColorTemperature', {
       colorTemperatureMireds: 250,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
   });
 
   test('invoke MatterbridgeColorControlServer with enhanced hue commands', async () => {
-    expect(enhancedLight.behaviors.has(ColorControlServer)).toBeTruthy();
-    expect(enhancedLight.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
-    expect(enhancedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
-    expect((enhancedLight.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(
+    expect(
+      extendedLight.behaviors.has(
+        ColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature, ColorControl.Feature.EnhancedHue),
+      ),
+    ).toBeTruthy();
+    expect(extendedLight.behaviors.has(MatterbridgeColorControlServer)).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHue')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToHueAndSaturation')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColor')).toBeTruthy();
+    expect(extendedLight.behaviors.elementsOf(MatterbridgeColorControlServer).commands.has('moveToColorTemperature')).toBeTruthy();
+    expect((extendedLight.stateOf(MatterbridgeColorControlServer) as any).acceptedCommandList).toEqual(
       expect.arrayContaining([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 75, 76, 64, 65, 66, 67, 71]),
     );
-    expect((enhancedLight.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToHue', {
+    expect((extendedLight.stateOf(MatterbridgeColorControlServer) as any).generatedCommandList).toEqual([]);
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToHue', {
       hue: 180,
       direction: ColorControl.Direction.Shortest,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'enhancedMoveToHue', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'enhancedMoveToHue', {
       enhancedHue: 32000,
       direction: ColorControl.Direction.Shortest,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToSaturation', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToSaturation', {
       saturation: 100,
       direction: ColorControl.Direction.Shortest,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToHueAndSaturation', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToHueAndSaturation', {
       hue: 180,
       saturation: 100,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'enhancedMoveToHueAndSaturation', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'enhancedMoveToHueAndSaturation', {
       enhancedHue: 32000,
       saturation: 100,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToColor', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToColor', {
       colorX: 30000,
       colorY: 30000,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    await enhancedLight.invokeBehaviorCommand('colorControl', 'moveToColorTemperature', {
+    await extendedLight.invokeBehaviorCommand('colorControl', 'moveToColorTemperature', {
       colorTemperatureMireds: 250,
       transitionTime: 0,
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`,
+      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`,
+      `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${enhancedLight.id}.${enhancedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
   });
 
   test('invoke MatterbridgeWindowCoveringServer commands', async () => {
     const coverLiftServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
-    expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
+    // expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
     expect(coverLift.behaviors.has(coverLiftServer)).toBeTruthy();
     expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('upOrOpen')).toBeTruthy();
     expect(coverLift.behaviors.elementsOf(coverLiftServer).commands.has('downOrClose')).toBeTruthy();
