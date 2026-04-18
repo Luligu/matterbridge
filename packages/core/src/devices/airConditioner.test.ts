@@ -10,9 +10,10 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { FanControl, Identify, OnOff, PowerSource, Thermostat, ThermostatCluster, ThermostatUserInterfaceConfiguration } from '@matter/types/clusters';
+import { stringify } from 'node-ansi-logger';
 
 // Matterbridge helpers
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setDebug, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
 import { airConditioner } from '../matterbridgeDeviceTypes.js';
 import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { AirConditioner } from './airConditioner.js';
@@ -214,10 +215,19 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
 
       expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
@@ -225,13 +235,100 @@ describe('Matterbridge ' + NAME, () => {
 
       expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
 
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(100);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 114, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 6, 29, 47, 513, 514, 516 ]',
+        'fanControl(0x202).acceptedCommandList(0xfff9)=[ 0 ]',
+        'fanControl(0x202).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'fanControl(0x202).clusterRevision(0xfffd)=5',
+        'fanControl(0x202).fanMode(0x0)=0',
+        'fanControl(0x202).fanModeSequence(0x1)=2',
+        'fanControl(0x202).featureMap(0xfffc)={ multiSpeed: false, auto: true, rocking: false, wind: false, step: true, airflowDirection: false }',
+        'fanControl(0x202).generatedCommandList(0xfff8)=[  ]',
+        'fanControl(0x202).percentCurrent(0x3)=0',
+        'fanControl(0x202).percentSetting(0x2)=0',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).clusterRevision(0xfffd)=6',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: true, offOnly: false }',
+        'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
+        'onOff(0x6).onOff(0x0)=true',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+        'thermostat(0x201).absMaxCoolSetpointLimit(0x6)=5000',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=5000',
+        'thermostat(0x201).absMinCoolSetpointLimit(0x5)=0',
+        'thermostat(0x201).absMinHeatSetpointLimit(0x3)=0',
+        'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
+        'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 5, 6, 17, 18, 21, 22, 23, 24, 25, 27, 28, 30, 41, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostat(0x201).clusterRevision(0xfffd)=9',
+        'thermostat(0x201).controlSequenceOfOperation(0x1b)=4',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: true, occupancy: false, scheduleConfiguration: false, setback: false, autoMode: true, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false }',
+        'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
+        'thermostat(0x201).localTemperature(0x0)=2300',
+        'thermostat(0x201).maxCoolSetpointLimit(0x18)=5000',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=5000',
+        'thermostat(0x201).minCoolSetpointLimit(0x17)=0',
+        'thermostat(0x201).minHeatSetpointLimit(0x15)=0',
+        'thermostat(0x201).minSetpointDeadBand(0x19)=10',
+        'thermostat(0x201).occupiedCoolingSetpoint(0x11)=2500',
+        'thermostat(0x201).occupiedHeatingSetpoint(0x12)=2100',
+        'thermostat(0x201).systemMode(0x1c)=1',
+        'thermostat(0x201).thermostatRunningMode(0x1e)=0',
+        'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
+        'thermostatUserInterfaceConfiguration(0x204).acceptedCommandList(0xfff9)=[  ]',
+        'thermostatUserInterfaceConfiguration(0x204).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostatUserInterfaceConfiguration(0x204).clusterRevision(0xfffd)=2',
+        'thermostatUserInterfaceConfiguration(0x204).featureMap(0xfffc)={  }',
+        'thermostatUserInterfaceConfiguration(0x204).generatedCommandList(0xfff8)=[  ]',
+        'thermostatUserInterfaceConfiguration(0x204).keypadLockout(0x1)=0',
+        'thermostatUserInterfaceConfiguration(0x204).scheduleProgrammingVisibility(0x2)=0',
+        'thermostatUserInterfaceConfiguration(0x204).temperatureDisplayMode(0x0)=0',
+      ].sort(),
+    );
   });
 
   test('close the server node', async () => {

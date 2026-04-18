@@ -17,7 +17,7 @@ import { KeypadInput } from '@matter/types/clusters/keypad-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { LogLevel } from 'node-ansi-logger';
+import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import {
@@ -84,10 +84,19 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
 
       expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
@@ -95,13 +104,71 @@ describe('Matterbridge ' + NAME, () => {
 
       expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
 
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(49);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'contentLauncher(0x50a).acceptedCommandList(0xfff9)=[  ]',
+        'contentLauncher(0x50a).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'contentLauncher(0x50a).clusterRevision(0xfffd)=2',
+        'contentLauncher(0x50a).featureMap(0xfffc)={ contentSearch: false, urlPlayback: false, advancedSeek: false, textTracks: false, audioTracks: false }',
+        'contentLauncher(0x50a).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 35, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 6, 29, 47, 1286, 1289, 1290 ]',
+        'keypadInput(0x509).acceptedCommandList(0xfff9)=[ 0 ]',
+        'keypadInput(0x509).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'keypadInput(0x509).clusterRevision(0xfffd)=1',
+        'keypadInput(0x509).featureMap(0xfffc)={ navigationKeyCodes: false, locationKeys: false, numberKeys: false }',
+        'keypadInput(0x509).generatedCommandList(0xfff8)=[ 1 ]',
+        'mediaPlayback(0x506).acceptedCommandList(0xfff9)=[ 0, 1, 2, 4, 5, 8, 9 ]',
+        'mediaPlayback(0x506).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'mediaPlayback(0x506).clusterRevision(0xfffd)=2',
+        'mediaPlayback(0x506).currentState(0x0)=2',
+        'mediaPlayback(0x506).featureMap(0xfffc)={ advancedSeek: false, variableSpeed: false, textTracks: false, audioTracks: false, audioAdvance: false }',
+        'mediaPlayback(0x506).generatedCommandList(0xfff8)=[ 10 ]',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).clusterRevision(0xfffd)=6',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
+        'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
+        'onOff(0x6).onOff(0x0)=false',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].sort(),
+    );
   });
 
   test('invoke commands', async () => {

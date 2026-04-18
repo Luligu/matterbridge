@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 // @matter
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
 import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/types/clusters';
-import { er, hk, LogLevel } from 'node-ansi-logger';
+import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeServiceAreaServer } from '../behaviors/serviceAreaServer.js';
@@ -184,10 +184,19 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
 
       expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
@@ -195,13 +204,99 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
       expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
 
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(75);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 116, revision: 4 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 84, 85, 97, 336 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).activeBatFaults(0x12)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 11, 12, 13, 14, 15, 16, 17, 18, 26, 28, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).batChargeLevel(0xe)=0',
+        'powerSource(0x2f).batChargeState(0x1a)=3',
+        'powerSource(0x2f).batFunctionalWhileCharging(0x1c)=true',
+        'powerSource(0x2f).batPercentRemaining(0xc)=160',
+        'powerSource(0x2f).batPresent(0x11)=true',
+        'powerSource(0x2f).batReplaceability(0x10)=0',
+        'powerSource(0x2f).batReplacementNeeded(0xf)=false',
+        'powerSource(0x2f).batTimeRemaining(0xd)=null',
+        'powerSource(0x2f).batVoltage(0xb)=5900',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='Primary battery'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: false, battery: true, rechargeable: true, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'rvcCleanMode(0x55).acceptedCommandList(0xfff9)=[ 0 ]',
+        'rvcCleanMode(0x55).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcCleanMode(0x55).clusterRevision(0xfffd)=4',
+        'rvcCleanMode(0x55).currentMode(0x1)=1',
+        'rvcCleanMode(0x55).featureMap(0xfffc)={ onOff: false }',
+        'rvcCleanMode(0x55).generatedCommandList(0xfff8)=[ 1 ]',
+        "rvcCleanMode(0x55).supportedModes(0x0)=[ { label: 'Vacuum', mode: 1, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Mop', mode: 2, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'DeepClean', mode: 3, modeTags: [ { mfgCode: undefined, value: 16384 } ] } ]",
+        'rvcOperationalState(0x61).acceptedCommandList(0xfff9)=[ 0, 3, 128 ]',
+        'rvcOperationalState(0x61).attributeList(0xfffb)=[ 0, 1, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcOperationalState(0x61).clusterRevision(0xfffd)=3',
+        'rvcOperationalState(0x61).currentPhase(0x1)=null',
+        'rvcOperationalState(0x61).featureMap(0xfffc)={  }',
+        'rvcOperationalState(0x61).generatedCommandList(0xfff8)=[ 4 ]',
+        "rvcOperationalState(0x61).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
+        'rvcOperationalState(0x61).operationalState(0x4)=66',
+        'rvcOperationalState(0x61).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined }, { operationalStateId: 64, operationalStateLabel: undefined }, { operationalStateId: 65, operationalStateLabel: undefined }, { operationalStateId: 66, operationalStateLabel: undefined } ]',
+        'rvcOperationalState(0x61).phaseList(0x0)=null',
+        'rvcRunMode(0x54).acceptedCommandList(0xfff9)=[ 0 ]',
+        'rvcRunMode(0x54).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcRunMode(0x54).clusterRevision(0xfffd)=3',
+        'rvcRunMode(0x54).currentMode(0x1)=1',
+        'rvcRunMode(0x54).featureMap(0xfffc)={ onOff: false }',
+        'rvcRunMode(0x54).generatedCommandList(0xfff8)=[ 1 ]',
+        "rvcRunMode(0x54).supportedModes(0x0)=[ { label: 'Idle', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Cleaning', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Mapping', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'SpotCleaning', mode: 4, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 7 } ] } ]",
+        'serviceArea(0x150).acceptedCommandList(0xfff9)=[ 0 ]',
+        'serviceArea(0x150).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'serviceArea(0x150).clusterRevision(0xfffd)=2',
+        'serviceArea(0x150).currentArea(0x3)=1',
+        'serviceArea(0x150).estimatedEndTime(0x4)=null',
+        'serviceArea(0x150).featureMap(0xfffc)={ selectWhileRunning: false, progressReporting: false, maps: true }',
+        'serviceArea(0x150).generatedCommandList(0xfff8)=[ 1 ]',
+        'serviceArea(0x150).selectedAreas(0x2)=[  ]',
+        "serviceArea(0x150).supportedAreas(0x0)=[ { areaId: 1, mapId: null, areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: 52 }, landmarkInfo: null } }, { areaId: 2, mapId: null, areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: 47 }, landmarkInfo: null } }, { areaId: 3, mapId: null, areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: 7 }, landmarkInfo: null } }, { areaId: 4, mapId: null, areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: 6 }, landmarkInfo: null } } ]",
+        'serviceArea(0x150).supportedMaps(0x1)=[  ]',
+      ].sort(),
+    );
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {

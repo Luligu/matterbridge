@@ -86,49 +86,60 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
     expect(
-      attributes.map(
-        ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
-          `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
-      ),
-    ).toEqual([
-      'descriptor(0x1d).clusterRevision(0xfffd)=3',
-      'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
-      'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
-      'descriptor(0x1d).serverList(0x1)=[ 29, 3, 6, 4, 98 ]',
-      'descriptor(0x1d).clientList(0x2)=[  ]',
-      'descriptor(0x1d).partsList(0x3)=[  ]',
-      'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65533, 65532, 65531, 65529, 65528 ]',
-      'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
-      'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
-      'identify(0x3).clusterRevision(0xfffd)=6',
-      'identify(0x3).identifyTime(0x0)=0',
-      'identify(0x3).identifyType(0x1)=0',
-      'identify(0x3).featureMap(0xfffc)={  }',
-      'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65533, 65532, 65531, 65529, 65528 ]',
-      'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
-      'identify(0x3).generatedCommandList(0xfff8)=[  ]',
-      'onOff(0x6).clusterRevision(0xfffd)=6',
-      'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
-      'onOff(0x6).onOff(0x0)=false',
-      'onOff(0x6).attributeList(0xfffb)=[ 0, 65533, 65532, 65531, 65529, 65528 ]',
-      'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
-      'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
-      'groups(0x4).clusterRevision(0xfffd)=4',
-      'groups(0x4).featureMap(0xfffc)={ groupNames: true }',
-      'groups(0x4).nameSupport(0x0)={ groupNames: true }',
-      'groups(0x4).attributeList(0xfffb)=[ 0, 65533, 65532, 65531, 65529, 65528 ]',
-      'groups(0x4).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5 ]',
-      'groups(0x4).generatedCommandList(0xfff8)=[ 0, 1, 2, 3 ]',
-      'scenesManagement(0x62).clusterRevision(0xfffd)=1',
-      'scenesManagement(0x62).featureMap(0xfffc)={ sceneNames: true }',
-      'scenesManagement(0x62).sceneTableSize(0x1)=128',
-      'scenesManagement(0x62).fabricSceneInfo(0x2)=[  ]',
-      'scenesManagement(0x62).attributeList(0xfffb)=[ 1, 2, 65533, 65532, 65531, 65529, 65528 ]',
-      'scenesManagement(0x62).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5, 6, 64 ]',
-      'scenesManagement(0x62).generatedCommandList(0xfff8)=[ 0, 1, 2, 3, 4, 6, 64 ]',
-    ]);
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 4, 6, 29, 98 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'onOff(0x6).clusterRevision(0xfffd)=6',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
+        'onOff(0x6).onOff(0x0)=false',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
+        'groups(0x4).clusterRevision(0xfffd)=4',
+        'groups(0x4).featureMap(0xfffc)={ groupNames: true }',
+        'groups(0x4).nameSupport(0x0)={ groupNames: true }',
+        'groups(0x4).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'groups(0x4).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5 ]',
+        'groups(0x4).generatedCommandList(0xfff8)=[ 0, 1, 2, 3 ]',
+        'scenesManagement(0x62).clusterRevision(0xfffd)=1',
+        'scenesManagement(0x62).featureMap(0xfffc)={ sceneNames: true }',
+        'scenesManagement(0x62).sceneTableSize(0x1)=128',
+        'scenesManagement(0x62).fabricSceneInfo(0x2)=[  ]',
+        'scenesManagement(0x62).attributeList(0xfffb)=[ 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'scenesManagement(0x62).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5, 6, 64 ]',
+        'scenesManagement(0x62).generatedCommandList(0xfff8)=[ 0, 1, 2, 3, 4, 6, 64 ]',
+      ].sort(),
+    );
   });
 });

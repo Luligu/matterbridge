@@ -30,7 +30,7 @@ import {
   Identify,
   PowerSource,
 } from '@matter/types/clusters';
-import { LogLevel } from 'node-ansi-logger';
+import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../behaviors/deviceEnergyManagementModeServer.js';
@@ -153,10 +153,19 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
 
       expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
@@ -164,13 +173,88 @@ describe('Matterbridge ' + NAME, () => {
 
       expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
 
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(61);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1292, revision: 2 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 64, 153, 157, 1026 ]',
+        'energyEvse(0x99).acceptedCommandList(0xfff9)=[ 1, 2, 5, 6, 7 ]',
+        'energyEvse(0x99).attributeList(0xfffb)=[ 0, 1, 2, 3, 5, 6, 7, 9, 35, 36, 37, 38, 64, 65, 66, 65528, 65529, 65531, 65532, 65533 ]',
+        'energyEvse(0x99).chargingEnabledUntil(0x3)=null',
+        'energyEvse(0x99).circuitCapacity(0x5)=32000',
+        'energyEvse(0x99).clusterRevision(0xfffd)=3',
+        'energyEvse(0x99).faultState(0x2)=0',
+        'energyEvse(0x99).featureMap(0xfffc)={ chargingPreferences: true, soCReporting: false, plugAndCharge: false, rfid: false, v2X: false }',
+        'energyEvse(0x99).generatedCommandList(0xfff8)=[ 0 ]',
+        'energyEvse(0x99).maximumChargeCurrent(0x7)=32000',
+        'energyEvse(0x99).minimumChargeCurrent(0x6)=6000',
+        'energyEvse(0x99).nextChargeRequiredEnergy(0x25)=null',
+        'energyEvse(0x99).nextChargeStartTime(0x23)=null',
+        'energyEvse(0x99).nextChargeTargetSoC(0x26)=null',
+        'energyEvse(0x99).nextChargeTargetTime(0x24)=null',
+        'energyEvse(0x99).sessionDuration(0x41)=null',
+        'energyEvse(0x99).sessionEnergyCharged(0x42)=null',
+        'energyEvse(0x99).sessionId(0x40)=null',
+        'energyEvse(0x99).state(0x0)=0',
+        'energyEvse(0x99).supplyState(0x1)=1',
+        'energyEvse(0x99).userMaximumChargeCurrent(0x9)=32000',
+        'energyEvseMode(0x9d).acceptedCommandList(0xfff9)=[ 0 ]',
+        'energyEvseMode(0x9d).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'energyEvseMode(0x9d).clusterRevision(0xfffd)=2',
+        'energyEvseMode(0x9d).currentMode(0x1)=1',
+        'energyEvseMode(0x9d).featureMap(0xfffc)={ onOff: false }',
+        'energyEvseMode(0x9d).generatedCommandList(0xfff8)=[ 1 ]',
+        "energyEvseMode(0x9d).supportedModes(0x0)=[ { label: 'On demand', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Scheduled', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Solar charging', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] } ]",
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'EVSE' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=4',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=2400',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].sort(),
+    );
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {

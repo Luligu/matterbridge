@@ -12,6 +12,7 @@ import { jest } from '@jest/globals';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { stringify } from 'node-ansi-logger';
 
 import { SoilMeasurement } from '../clusters/soil-measurement.js';
 import {
@@ -141,15 +142,83 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
+      expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
+
+      expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
+      expect(clusterId).toBeGreaterThanOrEqual(1);
+
+      expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
+
+      expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      expect(attributeId).toBeGreaterThanOrEqual(0);
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(41);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 69, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 1072 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+        'soilMeasurement(0x430).acceptedCommandList(0xfff9)=[  ]',
+        'soilMeasurement(0x430).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'soilMeasurement(0x430).clusterRevision(0xfffd)=1',
+        'soilMeasurement(0x430).featureMap(0xfffc)={  }',
+        'soilMeasurement(0x430).generatedCommandList(0xfff8)=[  ]',
+        'soilMeasurement(0x430).soilMoistureMeasuredValue(0x1)=null',
+        'soilMeasurement(0x430).soilMoistureMeasurementLimits(0x0)={ measurementType: 17, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [ { rangeMin: 0, rangeMax: 100, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+      ].sort(),
+    );
   });
 
   test('close the server node', async () => {

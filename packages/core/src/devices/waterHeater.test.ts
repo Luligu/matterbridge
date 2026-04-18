@@ -21,7 +21,7 @@ import {
   Thermostat,
   WaterHeaterManagement,
 } from '@matter/types/clusters';
-import { LogLevel } from 'node-ansi-logger';
+import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeThermostatServer } from '../behaviors/thermostatServer.js';
@@ -155,10 +155,19 @@ describe('Matterbridge Water Heater', () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
       expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
 
       expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
@@ -166,13 +175,82 @@ describe('Matterbridge Water Heater', () => {
 
       expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
 
       expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
       expect(attributeId).toBeGreaterThanOrEqual(0);
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(74);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1295, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 64, 148, 158, 513 ]',
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'Water Heater' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=8000',
+        'thermostat(0x201).absMinHeatSetpointLimit(0x3)=2000',
+        'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
+        'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 18, 21, 22, 27, 28, 41, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostat(0x201).clusterRevision(0xfffd)=9',
+        'thermostat(0x201).controlSequenceOfOperation(0x1b)=2',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: false, occupancy: false, scheduleConfiguration: false, setback: false, autoMode: false, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false }',
+        'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
+        'thermostat(0x201).localTemperature(0x0)=5000',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=8000',
+        'thermostat(0x201).minHeatSetpointLimit(0x15)=2000',
+        'thermostat(0x201).occupiedHeatingSetpoint(0x12)=5500',
+        'thermostat(0x201).systemMode(0x1c)=4',
+        'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
+        'waterHeaterManagement(0x94).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'waterHeaterManagement(0x94).attributeList(0xfffb)=[ 0, 1, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'waterHeaterManagement(0x94).boostState(0x5)=0',
+        'waterHeaterManagement(0x94).clusterRevision(0xfffd)=2',
+        'waterHeaterManagement(0x94).featureMap(0xfffc)={ energyManagement: false, tankPercent: true }',
+        'waterHeaterManagement(0x94).generatedCommandList(0xfff8)=[  ]',
+        'waterHeaterManagement(0x94).heatDemand(0x1)={ immersionElement1: false, immersionElement2: false, heatPump: false, boiler: false, other: false }',
+        'waterHeaterManagement(0x94).heaterTypes(0x0)={ immersionElement1: true, immersionElement2: false, heatPump: false, boiler: false, other: false }',
+        'waterHeaterManagement(0x94).tankPercentage(0x4)=90',
+        'waterHeaterMode(0x9e).acceptedCommandList(0xfff9)=[ 0 ]',
+        'waterHeaterMode(0x9e).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'waterHeaterMode(0x9e).clusterRevision(0xfffd)=1',
+        'waterHeaterMode(0x9e).currentMode(0x1)=1',
+        'waterHeaterMode(0x9e).featureMap(0xfffc)={ onOff: false }',
+        'waterHeaterMode(0x9e).generatedCommandList(0xfff8)=[ 1 ]',
+        "waterHeaterMode(0x9e).supportedModes(0x0)=[ { label: 'Auto', mode: 1, modeTags: [ { mfgCode: undefined, value: 0 } ] }, { label: 'Quick', mode: 2, modeTags: [ { mfgCode: undefined, value: 1 } ] }, { label: 'Quiet', mode: 3, modeTags: [ { mfgCode: undefined, value: 2 } ] }, { label: 'LowNoise', mode: 4, modeTags: [ { mfgCode: undefined, value: 3 } ] }, { label: 'LowEnergy', mode: 5, modeTags: [ { mfgCode: undefined, value: 4 } ] }, { label: 'Vacation', mode: 6, modeTags: [ { mfgCode: undefined, value: 5 } ] }, { label: 'Min', mode: 7, modeTags: [ { mfgCode: undefined, value: 6 } ] }, { label: 'Max', mode: 8, modeTags: [ { mfgCode: undefined, value: 7 } ] }, { label: 'Night', mode: 9, modeTags: [ { mfgCode: undefined, value: 8 } ] }, { label: 'Day', mode: 10, modeTags: [ { mfgCode: undefined, value: 9 } ] }, { label: 'Off', mode: 11, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Manual', mode: 12, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Timed', mode: 13, modeTags: [ { mfgCode: undefined, value: 16386 } ] } ]",
+      ].sort(),
+    );
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
