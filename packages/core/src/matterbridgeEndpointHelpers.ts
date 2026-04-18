@@ -321,6 +321,7 @@ export async function internalFor<T extends object = Record<string, unknown>>(
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
   if (!supportedBehavior) {
+    // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
     return undefined;
   }
   return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;

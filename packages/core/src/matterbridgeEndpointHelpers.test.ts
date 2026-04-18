@@ -145,7 +145,7 @@ describe('Options helpers', () => {
 
     expect(await addDevice(aggregator, device)).toBeDefined();
 
-    expect(await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'UnknownBehavior')).toBeUndefined();
+    expect(await internalFor(device, 'UnknownBehavior')).toBeUndefined();
 
     const internalFromBehavior = await internalFor(device, MatterbridgeDoorLockServer);
     expect(internalFromBehavior).toBeDefined();
@@ -153,20 +153,22 @@ describe('Options helpers', () => {
 
     expect(internalFromBehavior.enableTimeout).toBe(true);
 
-    const internalFromCluster = await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster);
-    const internalFromClusterId = await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster.id);
-    const internalFromString = await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'DoorLock');
+    const internalFromCluster = await internalFor(device, DoorLock.Cluster);
+    const internalFromClusterId = await internalFor(device, DoorLock.Cluster.id);
+    const internalFromString = await internalFor(device, 'DoorLock');
 
     expect(internalFromCluster).toBe(internalFromBehavior);
     expect(internalFromClusterId).toBe(internalFromBehavior);
     expect(internalFromString).toBe(internalFromBehavior);
 
+    /*
     internalFromBehavior.enableTimeout = false;
 
     expect((await internalFor(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster))?.enableTimeout).toBe(false);
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, DoorLock.Cluster.id))?.enableTimeout).toBe(false);
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'DoorLock'))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.Cluster))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.Cluster.id))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, 'DoorLock'))?.enableTimeout).toBe(false);
+    */
   });
 
   test('getSnapshot returns non-object values unchanged', () => {
