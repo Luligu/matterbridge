@@ -171,37 +171,40 @@ import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './m
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
 
-type BehaviorCommandName<T extends Behavior.Type> = {
-  [K in keyof CommandsOfBehavior<T>]: K;
-}[keyof CommandsOfBehavior<T>] &
-  string;
+type FirstCommandParam<Params extends unknown[]> = Params extends [] ? undefined : Params[0];
 
-type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType.Unknown;
+/** Behavior.Type utilities */
 
-type ClusterEventName<T extends ClusterType> = keyof ClusterType.EventsOf<T> & string;
+type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType;
 
-type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterType.EventsOf<T>
-  ? ClusterType.EventsOf<T>[E] extends { schema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
-    ? import('@matter/types/tlv').TypeFromSchema<S>
-    : never
+type CommandsOfBehavior<T extends Behavior.Type> = BehaviorCluster<T>['Typing'] extends { Commands: infer Commands } ? Commands : Record<string, never>;
+
+type BehaviorCommandName<T extends Behavior.Type> = keyof CommandsOfBehavior<T> & string;
+
+type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandName<T>> = CommandsOfBehavior<T>[C] extends (...args: infer P) => unknown
+  ? FirstCommandParam<P>
   : never;
 
 type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorCluster<T>>;
 
 type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
 
-type CommandsOfBehavior<T extends Behavior.Type> = {
-  [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
-    ? (input: P[0], context?: ActionContext) => Promise<Awaited<R>>
-    : never;
-};
+/** ClusterType utilities */
 
-type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandName<T>> = CommandsOfBehavior<T>[C] extends (
-  input: infer P,
-  context?: ActionContext,
-) => Promise<unknown>
-  ? P
-  : never;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type ClusterAttributesOf<T extends ClusterType> = T['Typing'] extends { Attributes: infer Attributes } ? Attributes : {};
+
+type ClusterCommandsOf<T extends ClusterType> = T['Typing'] extends { Commands: infer Commands } ? Commands : Record<string, never>;
+
+type ClusterCommandName<T extends ClusterType> = keyof ClusterCommandsOf<T> & string;
+
+type ClusterCommandParams<T extends ClusterType, C extends ClusterCommandName<T>> = ClusterCommandsOf<T>[C] extends (...args: infer P) => unknown ? FirstCommandParam<P> : never;
+
+type ClusterEventsOf<T extends ClusterType> = T['Typing'] extends { Events: infer Events } ? Events : Record<string, never>;
+
+type ClusterEventName<T extends ClusterType> = keyof ClusterEventsOf<T> & string;
+
+type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterEventsOf<T> ? ClusterEventsOf<T>[E] : never;
 
 /**
  * Type guard to check whether a value is a MatterbridgeEndpoint instance.
@@ -546,7 +549,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  getAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(cluster: T, attribute: A, log?: AnsiLogger): ClusterType.AttributeValues<T>[A] | undefined;
+  getAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(cluster: T, attribute: A, log?: AnsiLogger): ClusterAttributesOf<T>[A] | undefined;
   /**
    * Retrieves the value of the provided attribute from the given cluster.
    *
@@ -662,10 +665,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async setAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async setAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     clusterId: T,
     attribute: A,
-    value: ClusterType.AttributeValues<T>[A],
+    value: ClusterAttributesOf<T>[A],
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -789,10 +792,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async updateAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async updateAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
-    value: ClusterType.AttributeValues<T>[A],
+    value: ClusterAttributesOf<T>[A],
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -933,10 +936,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
-    listener: (newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void,
+    listener: (newValue: ClusterAttributesOf<T>[A], oldValue: ClusterAttributesOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -1083,7 +1086,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
-  async setCluster<T extends ClusterType>(cluster: T, value: ClusterType.AttributeValues<T>, log?: AnsiLogger): Promise<boolean>;
+  async setCluster<T extends ClusterType>(cluster: T, value: ClusterAttributesOf<T>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
@@ -1208,7 +1211,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * device.getCluster('OnOff')
    * ```
    */
-  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterType.AttributeValues<T> | undefined;
+  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterAttributesOf<T> | undefined;
   /**
    * Retrieves the state of the provided cluster from the given endpoint.
    *
@@ -1516,13 +1519,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
    */
-  async invokeBehaviorCommand<T extends ClusterType, C extends keyof ClusterType.CommandsOf<T>>(
-    cluster: T,
-    command: C,
-    params?: ClusterType.CommandsOf<T>[C] extends { requestSchema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
-      ? import('@matter/types/tlv').TypeFromSchema<S>
-      : never,
-  ): Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, params?: ClusterCommandParams<T, C>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
