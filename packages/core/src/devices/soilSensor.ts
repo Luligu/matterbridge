@@ -23,41 +23,14 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { AttributeElement, ClusterElement, ClusterModel } from '@matter/main/model';
 import { ClusterBehavior } from '@matter/node';
-import { MeasurementType } from '@matter/types/globals';
-import { type MeasurementAccuracy } from '@matter/types/globals';
+import { type MeasurementAccuracy, MeasurementType } from '@matter/types/globals';
 
 import { SoilMeasurement } from '../clusters/soil-measurement.js';
 import { powerSource, soilSensor } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
-/**
- * SoilMeasurement schema.
- */
-const SoilMeasurementSchema = ClusterElement(
-  {
-    id: SoilMeasurement.Cluster.id,
-    name: SoilMeasurement.Cluster.name,
-    classification: 'application',
-  },
-  // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: SoilMeasurement.Cluster.revision }),
-  AttributeElement({ id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M', default: 0 }),
-
-  // Custom attributes.
-  AttributeElement({ id: 0x0000, name: 'soilMoistureMeasurementLimits', type: 'MeasurementAccuracyStruct', conformance: 'M' }),
-  AttributeElement({
-    id: 0x0001,
-    name: 'soilMoistureMeasuredValue',
-    type: 'percent',
-    conformance: 'M',
-    quality: 'X',
-    default: null,
-  }),
-);
-
-const SoilMeasurementBehavior = ClusterBehavior.for(SoilMeasurement.Cluster, new ClusterModel(SoilMeasurementSchema));
+const SoilMeasurementBehavior = ClusterBehavior.for(SoilMeasurement, SoilMeasurement.schema);
 
 export namespace SoilMeasurementServer {
   export interface State {

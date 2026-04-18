@@ -23,9 +23,7 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement } from '@matter/main/model';
 import { ClusterBehavior } from '@matter/node';
-import { ClusterType } from '@matter/types';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -34,64 +32,7 @@ import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
-/**
- * ClosureDimension schema.
- */
-const ClosureDimensionSchema = ClusterElement(
-  {
-    id: ClosureDimension.Cluster.id,
-    name: ClosureDimension.Cluster.name,
-    classification: 'application',
-  },
-  // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureDimension.Base.revision }),
-  AttributeElement(
-    { id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M' },
-    FieldElement({ name: 'POS', constraint: '0', title: 'Positioning' }),
-    FieldElement({ name: 'ML', constraint: '1', title: 'MotionLatching' }),
-    FieldElement({ name: 'UNI', constraint: '2', title: 'Unit' }),
-    FieldElement({ name: 'LIM', constraint: '3', title: 'Limitation' }),
-    FieldElement({ name: 'SPD', constraint: '4', title: 'Speed' }),
-    FieldElement({ name: 'TRN', constraint: '5', title: 'Translation' }),
-    FieldElement({ name: 'ROT', constraint: '6', title: 'Rotation' }),
-    FieldElement({ name: 'MOD', constraint: '7', title: 'Modulation' }),
-  ),
-
-  // Attributes (base + Positioning extension).
-  AttributeElement({ name: 'CurrentState', id: 0x0000, type: 'DimensionStateStruct', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'TargetState', id: 0x0001, type: 'DimensionStateStruct', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'Resolution', id: 0x0002, type: 'percent100ths', conformance: 'POS', default: 1 }),
-  AttributeElement({ name: 'StepValue', id: 0x0003, type: 'percent100ths', conformance: 'POS', default: 1 }),
-
-  // Commands.
-  CommandElement(
-    { name: 'SetTarget', id: 0x0000, conformance: 'M', direction: 'request', response: 'status' },
-    FieldElement({ name: 'Position', id: 0, type: 'percent100ths', conformance: 'O' }),
-    FieldElement({ name: 'Latch', id: 1, type: 'bool', conformance: 'O' }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-  CommandElement(
-    { name: 'Step', id: 0x0001, conformance: 'POS', direction: 'request', response: 'status' },
-    FieldElement({ name: 'Direction', id: 0, type: 'StepDirectionEnum', conformance: 'M' }),
-    FieldElement({ name: 'NumberOfSteps', id: 1, type: 'uint16', conformance: 'M', constraint: { min: 1 } }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-
-  // Datatypes.
-  DatatypeElement(
-    { name: 'StepDirectionEnum', type: 'enum8' },
-    FieldElement({ name: 'Decrease', id: 0, conformance: 'M' }),
-    FieldElement({ name: 'Increase', id: 1, conformance: 'M' }),
-  ),
-  DatatypeElement(
-    { name: 'DimensionStateStruct', type: 'struct' },
-    FieldElement({ name: 'Position', id: 0, type: 'percent100ths', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Latch', id: 1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-);
-
-const ClosureDimensionBehavior = ClusterBehavior.for(ClusterType(ClosureDimension.Base), new ClusterModel(ClosureDimensionSchema));
+const ClosureDimensionBehavior = ClusterBehavior.for(ClosureDimension, ClosureDimension.schema);
 
 export namespace ClosureDimensionServer {
   export interface State {
