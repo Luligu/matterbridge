@@ -502,6 +502,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultOnOffClusterServer();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
 
+    expect(() => device.hasAttributeServer(Descriptor.Cluster.id, 'tagList')).not.toThrow();
     expect(device.hasAttributeServer(DescriptorBehavior, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(DescriptorServer, 'deviceTypeList')).toBe(true);
     expect(device.hasAttributeServer(Descriptor.Cluster, 'deviceTypeList')).toBe(true);

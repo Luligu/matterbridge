@@ -338,6 +338,30 @@ export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.O
 }
 
 /**
+ * Returns the configured defaults for a given behavior type without accessing endpoint initialization state.
+ *
+ * @param {T} type - The behavior type.
+ * @param {Behavior.Options<T> | undefined} options - The configured options for the behavior type.
+ * @returns {Partial<Behavior.Options<T>> | undefined} The subset of configured options that are declared as behavior defaults.
+ */
+export function defaultFor<T extends Behavior.Type>(type: T, options?: Behavior.Options<T>): Partial<Behavior.Options<T>> | undefined {
+  let defaults: Record<string, unknown> | undefined;
+
+  if (options) {
+    for (const key in type.defaults) {
+      if (key in options) {
+        if (!defaults) {
+          defaults = {};
+        }
+        defaults[key] = (options as Record<string, unknown>)[key];
+      }
+    }
+  }
+
+  return defaults as Partial<Behavior.Options<T>> | undefined;
+}
+
+/**
  * Maps a list of ClusterId to Behavior.Type for server clusters.
  *
  * @param {ClusterId[]} clusterServerList - The list of ClusterId to map.

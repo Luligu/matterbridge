@@ -132,6 +132,7 @@ import {
   addUserLabel,
   checkNotLatinCharacters,
   createUniqueId,
+  defaultFor,
   featuresFor,
   generateUniqueId,
   getApparentElectricalPowerMeasurementClusterServer,
@@ -474,9 +475,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   hasAttributeServer(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string): boolean {
     const behavior = getBehavior(this, cluster);
     if (!behavior || !this.behaviors.supported[behavior.id]) return false;
-    const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
-    const defaults = this.behaviors.defaultsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
-    return lowercaseFirstLetter(attribute) in options || lowercaseFirstLetter(attribute) in defaults;
+    const normalizedAttribute = lowercaseFirstLetter(attribute);
+    const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    const defaults = defaultFor(behavior, options) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    return (options !== undefined && normalizedAttribute in options) || (defaults !== undefined && normalizedAttribute in defaults);
   }
 
   /**
