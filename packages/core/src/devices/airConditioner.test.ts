@@ -1,19 +1,31 @@
 // src/airConditioner.test.ts
 
-const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
 const NAME = 'AirConditioner';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
-const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
+const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
 
 import { jest } from '@jest/globals';
-// @matter
-import { FanControl, Identify, OnOff, PowerSource, Thermostat, ThermostatCluster, ThermostatUserInterfaceConfiguration } from '@matter/types/clusters';
+import { FanControl } from '@matter/types/clusters/fan-control';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { stringify } from 'node-ansi-logger';
 
-// Matterbridge helpers
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+// Jest utilities for Matter testing
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  deleteDevice,
+  destroyTestEnvironment,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
+// Matterbridge
 import { airConditioner } from '../matterbridgeDeviceTypes.js';
 import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { AirConditioner } from './airConditioner.js';
@@ -25,11 +37,12 @@ describe('Matterbridge ' + NAME, () => {
   let device: AirConditioner;
 
   beforeAll(async () => {
-    // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    // Create the Matter test environment
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
+    // Clear all mocks
     jest.clearAllMocks();
   });
 
@@ -37,16 +50,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, airConditioner.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, airConditioner.code, 0, 0, 0);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create an air conditioner device (defaults)', async () => {
     device = new AirConditioner('Air Conditioner Test Device', 'AC123456');
@@ -97,7 +110,7 @@ describe('Matterbridge ' + NAME, () => {
       absMaxHeatSetpointLimit: 5000,
       absMinCoolSetpointLimit: 0,
       absMinHeatSetpointLimit: 0,
-      controlSequenceOfOperation: 4,
+      controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       externalMeasuredIndoorTemperature: 3000,
       localTemperature: 3000,
       maxCoolSetpointLimit: 5000,
@@ -107,8 +120,8 @@ describe('Matterbridge ' + NAME, () => {
       minSetpointDeadBand: 10,
       occupiedCoolingSetpoint: 2500,
       occupiedHeatingSetpoint: 2100,
-      systemMode: 1,
-      thermostatRunningMode: 0,
+      systemMode: Thermostat.SystemMode.Auto,
+      thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
       thermostatRunningState: {
         cool: false,
         coolStage2: false,
@@ -125,7 +138,7 @@ describe('Matterbridge ' + NAME, () => {
       temperatureDisplayMode: 0,
     });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
-    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(await addDevice(aggregator, custom, 1, 0)).toBeTruthy();
     expect(custom.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -136,10 +149,11 @@ describe('Matterbridge ' + NAME, () => {
       'thermostatUserInterfaceConfiguration',
       'fanControl',
     ]);
+    expect(await deleteDevice(aggregator, custom, 1, 0)).toBeTruthy();
   });
 
   test('add air conditioner to server', async () => {
-    expect(await addDevice(server, device)).toBeTruthy();
+    expect(await addDevice(aggregator, device, 1, 0)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -331,8 +345,15 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    await startServerNode(0, 0, 0);
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await stopServerNode(0, 0, 0);
   });
 });

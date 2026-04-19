@@ -1,11 +1,7 @@
 // src\base.test.ts
 
-const MATTER_PORT = 8000;
 const NAME = 'BaseTest';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
-const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
+const MATTER_PORT = 8000;
 
 import { jest } from '@jest/globals';
 import { Descriptor } from '@matter/types/clusters/descriptor';
@@ -15,8 +11,10 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { stringify } from 'node-ansi-logger';
 
+// Jest utilities for Matter testing
+import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, server, startServerNode, stopServerNode } from '../jestutils/jestMatterTest.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
-import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, setupTest } from '../jestutils/jestHelpers.js';
 import { bridge, onOffLight } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
@@ -28,9 +26,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
-    // Create the Server Node
-    await createServerNode(NAME, MATTER_PORT, bridge.code, 0, 0, 0);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -42,9 +38,15 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
+  });
+
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, bridge.code, 0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
   });
 
   test('create and add onOffLight device', async () => {
@@ -141,5 +143,17 @@ describe('Matterbridge ' + NAME, () => {
         'scenesManagement(0x62).generatedCommandList(0xfff8)=[ 0, 1, 2, 3, 4, 6, 64 ]',
       ].sort(),
     );
+  });
+
+  test('start the server node', async () => {
+    await startServerNode(0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    await stopServerNode(0, 0, 0);
   });
 });

@@ -3,7 +3,7 @@
 const MATTER_PORT = 11700;
 const NAME = 'EndpointTypeChecks';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
-const CREATE_ONLY = true;
+const MATTER_CREATE_ONLY = true;
 
 process.argv = [
   'node',
@@ -41,8 +41,8 @@ await setupTest(NAME, false);
 
 describe('Matterbridge Endpoint Typed Checks', () => {
   beforeAll(async () => {
-    createTestEnvironment(NAME, CREATE_ONLY);
-    await startServerNode(NAME, MATTER_PORT, undefined, CREATE_ONLY);
+    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -50,8 +50,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
   });
 
   afterAll(async () => {
-    await stopServerNode(server, CREATE_ONLY);
-    await destroyTestEnvironment(CREATE_ONLY);
+    await stopServerNode(server, MATTER_CREATE_ONLY);
+    await destroyTestEnvironment(MATTER_CREATE_ONLY);
     jest.restoreAllMocks();
   });
 
