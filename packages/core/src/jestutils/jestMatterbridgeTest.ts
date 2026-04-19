@@ -283,9 +283,13 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
  *
  * @example
  * ```typescript
+ * const NAME = 'Platform';
+ * const MATTER_PORT = 5540;
+ * const MATTER_CREATE_ONLY = true;
+ *
  * // Create Matterbridge environment
  * await createMatterbridgeEnvironment();
- * await startMatterbridgeEnvironment(MATTER_PORT);
+ * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
 export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
@@ -326,8 +330,12 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
  *
  * @example
  * ```typescript
+ * const NAME = 'Platform';
+ * const MATTER_PORT = 5540;
+ * const MATTER_CREATE_ONLY = true;
+ *
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+ * await createMatterbridgeEnvironment();
  * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
@@ -451,6 +459,10 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
  * @returns {Promise<void>} A promise that resolves when the environment is stopped.
  * @example
  * ```typescript
+ * const NAME = 'Platform';
+ * const MATTER_PORT = 5540;
+ * const MATTER_CREATE_ONLY = true;
+ *
  * // Destroy Matterbridge environment
  * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
  * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
@@ -501,9 +513,13 @@ export async function stopMatterbridgeEnvironment(createOnly: boolean = false): 
  * @param {boolean} closeMdns Whether to close the mDNS service (default true).
  * @example
  * ```typescript
+ * const NAME = 'Platform';
+ * const MATTER_PORT = 5540;
+ * const MATTER_CREATE_ONLY = true;
+ *
  * // Destroy Matterbridge environment
- * await stopMatterbridgeEnvironment();
- * await destroyMatterbridgeEnvironment();
+ * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+ * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
  * ```
  */
 export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true): Promise<void> {
