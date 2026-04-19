@@ -14,7 +14,7 @@ import { dev } from '@matterbridge/types';
 import { AnsiLogger, BLUE, er, id, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { DeviceManager } from './deviceManager.js';
-import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Setup the test environment

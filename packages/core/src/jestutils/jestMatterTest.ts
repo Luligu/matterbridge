@@ -194,6 +194,17 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
 }
 
 /**
+ * Close the server node stores to flush any pending endpoint number persistence.
+ *
+ * @param {ServerNode} targetServer The server whose endpoint stores should be closed.
+ * @returns {Promise<void>} Resolves when the stores have been closed.
+ */
+export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
+  // Close endpoint stores to avoid number persistence issues
+  if (!targetServer) targetServer = server;
+  await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
+}
+/**
  * Create a matter server node for testing.
  *
  * @param {number} port TCP port to listen on.

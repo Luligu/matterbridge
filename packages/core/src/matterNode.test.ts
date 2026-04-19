@@ -28,7 +28,8 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'nod
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from './deviceManager.js';
-import { closeServerNodeStores, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeServerNodeStores } from './jestutils/jestMatterTest.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

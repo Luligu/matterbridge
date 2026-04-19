@@ -1,16 +1,15 @@
 // src\matterbridgeEndpoint.test.ts
 
-const MATTER_PORT = 11100;
 const NAME = 'EndpointMatterJs';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 11100;
 
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
-import { Endpoint } from '@matter/node';
+import { Endpoint, ServerNode } from '@matter/node';
 import {
   BooleanStateConfigurationServer,
   BooleanStateServer,
@@ -40,13 +39,13 @@ import {
   ServiceAreaServer,
   SmokeCoAlarmServer,
   TemperatureMeasurementServer,
-  ThermostatServer,
   ValveConfigurationAndControlServer,
   WaterHeaterManagementServer,
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
 import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { FabricManager } from '@matter/protocol';
 import {
   ColorControl,
@@ -95,18 +94,15 @@ import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServ
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerLogSpy,
   matterbridge,
-  server,
-  setDebug,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import {
   coverDevice,
   doorLockDevice,
@@ -130,10 +126,11 @@ import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
-mkdirSync(HOMEDIR, { recursive: true });
-// await writeFile(path.join(HOMEDIR, 'diagnostic.log'), '', { encoding: 'utf8' });
 
 describe('Matterbridge ' + NAME, () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
+
   let context: StorageContext;
   let light: MatterbridgeEndpoint;
   let extendedLight: MatterbridgeEndpoint;
@@ -154,7 +151,7 @@ describe('Matterbridge ' + NAME, () => {
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
   });
 
   beforeEach(async () => {

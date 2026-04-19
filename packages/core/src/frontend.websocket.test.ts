@@ -49,7 +49,10 @@ import {
   wssSendRestartNotRequiredFrontendSpy,
   wssSendSnackbarMessageFrontendSpy,
 } from './jestutils/jestFrontendSpy.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, logKeepAlives, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { logKeepAlives } from './jestutils/jestLogAlive.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { installPluginSpy, uninstallPluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import { Matterbridge } from './matterbridge.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';

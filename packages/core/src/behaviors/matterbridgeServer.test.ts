@@ -2,14 +2,12 @@
 
 const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
+import { Endpoint, ServerNode } from '@matter/node';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -29,17 +27,11 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { StatusResponse } from '@matter/types/common';
-import { FabricIndex } from '@matter/types/datatype';
-import { Status } from '@matter/types/globals';
 import { LogLevel } from 'node-ansi-logger';
 
 import { RoboticVacuumCleaner } from '../devices/roboticVacuumCleaner.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
 import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
   getEnhancedMoveToHueAndSaturationRequest,
   getEnhancedMoveToHueRequest,
   getMoveToColorRequest,
@@ -48,11 +40,9 @@ import {
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
-  loggerLogSpy,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterRequest.js';
+import { addDevice } from '../jestutils/jestMatterTest.js';
+import { loggerLogSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { Matterbridge } from '../matterbridge.js';
 import {
   airPurifier,
@@ -89,6 +79,9 @@ jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementat
 await setupTest(NAME, false);
 
 describe('Server clusters and behaviors', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
+
   let light: MatterbridgeEndpoint;
   let enhancedLight: MatterbridgeEndpoint;
   let button: MatterbridgeEndpoint;
@@ -164,7 +157,7 @@ describe('Server clusters and behaviors', () => {
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {

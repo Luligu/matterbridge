@@ -1,8 +1,8 @@
 // src\matterbridge.test.ts
 
-const MATTER_PORT = 6000;
 const NAME = 'MatterbridgeGlobal';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 6000;
 
 process.argv = [
   'node',
@@ -25,6 +25,7 @@ process.argv = [
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
+import { rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -46,12 +47,16 @@ import {
   requestBroadcastServerSpy,
   respondBroadcastServerSpy,
 } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;

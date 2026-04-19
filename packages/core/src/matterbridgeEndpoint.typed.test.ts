@@ -3,7 +3,6 @@
 const MATTER_PORT = 11700;
 const NAME = 'EndpointTypeChecks';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
-const MATTER_CREATE_ONLY = true;
 
 process.argv = [
   'node',
@@ -32,7 +31,8 @@ import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 
-import { addDevice, aggregator, createTestEnvironment, deleteDevice, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from './jestutils/jestHelpers.js';
+import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from './jestutils/jestMatterTest.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 import { genericSwitch, rainSensor, thermostatDevice } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { internalFor } from './matterbridgeEndpointHelpers.js';
@@ -41,8 +41,8 @@ await setupTest(NAME, false);
 
 describe('Matterbridge Endpoint Typed Checks', () => {
   beforeAll(async () => {
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
+    await createServerNode(MATTER_PORT);
   });
 
   beforeEach(async () => {
@@ -50,8 +50,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
   });
 
   afterAll(async () => {
-    await stopServerNode(server, MATTER_CREATE_ONLY);
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await flushServerNode();
+    await destroyTestEnvironment();
     jest.restoreAllMocks();
   });
 

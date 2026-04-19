@@ -18,7 +18,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { BackendsWsServer } from './backendWsServer.js';
 import type { Frontend } from './frontend.js';
 import { isWorkerRequestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestHelpers.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestSetupTest.js';
 
 const mockedSharedMatterbridge = {
   //

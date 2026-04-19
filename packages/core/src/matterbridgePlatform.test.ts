@@ -11,21 +11,16 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { dev, plg } from '@matterbridge/types';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
   addMatterbridgePlatform,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerDebugSpy,
-  loggerInfoSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
   matterbridge,
-  setDebug,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

@@ -2,30 +2,21 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Endpoint, ServerNode } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 import { Matterbridge } from '../matterbridge.js';
 import { onOffOutlet } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import {
-  addDevice,
   addMatterbridgePlatform,
-  aggregator,
-  consoleDebugSpy,
-  consoleErrorSpy,
-  consoleInfoSpy,
-  consoleLogSpy,
-  consoleWarnSpy,
   createMatterbridgeEnvironment,
-  deleteDevice,
   destroyMatterbridgeEnvironment,
-  loggerLogSpy,
   matterbridge,
-  server,
-  setDebug,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestHelpers.js';
+} from './jestMatterbridgeTest.js';
+import { addDevice, deleteDevice } from './jestMatterTest.js';
+import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestSetupTest.js';
 
 process.argv.push('--debug');
 
@@ -33,6 +24,9 @@ describe('Matterbridge not initialized test environment', () => {
   const MATTER_PORT = 8502;
   const NAME = 'JestHelpersMatterbridgeNotInitialized';
   const HOMEDIR = path.join('.cache', 'jest', NAME);
+
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
 
   let deviceServer: MatterbridgeEndpoint;
   let deviceAggregator: MatterbridgeEndpoint;
@@ -99,7 +93,7 @@ describe('Matterbridge not initialized test environment', () => {
   });
 
   test('should start a Matterbridge instance', async () => {
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
     expect(server).toBeDefined();
     expect(server).toBeInstanceOf(ServerNode);
     expect(aggregator).toBeDefined();

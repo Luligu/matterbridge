@@ -1,7 +1,8 @@
 import { jest } from '@jest/globals';
 
 import { Matterbridge } from '../matterbridge.js';
-import { matterbridge, setupTest, startMatterbridge, stopMatterbridge } from './jestHelpers.js';
+import { matterbridge, startMatterbridge, stopMatterbridge } from './jestMatterbridgeTest.js';
+import { setupTest } from './jestSetupTest.js';
 
 process.argv.push('--debug');
 

@@ -72,8 +72,7 @@ jest.unstable_mockModule('node:child_process', async () => {
 const childprocessModule = await import('node:child_process');
 const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
 
-import { exec } from 'node:child_process';
-import fs, { mkdirSync, PathLike, unlinkSync, writeFileSync } from 'node:fs';
+import fs, { mkdirSync, PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -86,9 +85,10 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
-import { requestBroadcastServerSpy, respondBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { configurePluginSpy } from './jestutils/jestPluginManagerSpy.js';
+import { loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 
@@ -98,6 +98,8 @@ const { DeviceManager } = await import('./deviceManager.js');
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
 describe('Matterbridge mocked', () => {
   let matterbridge: MatterbridgeType;

@@ -96,7 +96,7 @@ import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-manag
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
-import { setupTest } from './jestutils/jestHelpers.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 
 // Helper to read a cluster's revision across variations in @matter/types exports
 const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.revision ?? entry?.Base?.revision ?? entry?.Complete?.revision ?? entry?.CompleteInstance?.revision;

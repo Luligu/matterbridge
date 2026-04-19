@@ -2,8 +2,8 @@
 
 /* eslint-disable no-console */
 
-const MATTER_PORT = 11000;
 const NAME = 'Endpoint';
+const MATTER_PORT = 11000;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
@@ -28,7 +28,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/general';
-import { ActionContext } from '@matter/node';
+import { ActionContext, Endpoint, ServerNode } from '@matter/node';
 import {
   BooleanStateBehavior,
   BooleanStateServer,
@@ -49,6 +49,7 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber } from '@matter/types';
 import {
   BooleanState,
@@ -71,19 +72,16 @@ import {
 } from '@matter/types/clusters';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
-  addDevice,
-  aggregator,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerDebugSpy,
-  loggerLogSpy,
   matterbridge,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { addDevice } from './jestutils/jestMatterTest.js';
+import { loggerDebugSpy, loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import {
   airQualitySensor,
   bridgedNode,
@@ -111,12 +109,14 @@ import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId,
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
   });
 
   beforeEach(async () => {

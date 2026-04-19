@@ -53,7 +53,9 @@ import { wait, waiter } from '@matterbridge/utils/wait';
 
 import { cliEmitter } from './cliEmitter.js';
 import type { Frontend as FrontendType } from './frontend.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 
 // Mock BroadcastServer methods

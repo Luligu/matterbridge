@@ -92,7 +92,7 @@ import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-manag
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
-import { setupTest } from './jestutils/jestHelpers.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 
 await setupTest(NAME, false);
 

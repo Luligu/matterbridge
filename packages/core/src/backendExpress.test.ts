@@ -28,7 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { BackendExpress } from './backendExpress.js';
 import type { Frontend } from './frontend.js';
-import { setupTest } from './jestutils/jestHelpers.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 
 const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
 

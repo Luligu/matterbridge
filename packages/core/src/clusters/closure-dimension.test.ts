@@ -4,7 +4,7 @@ const NAME = 'ClosureDimensionCluster';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { ClosureDimension } from './closure-dimension.js';
 
 // Setup the test environment

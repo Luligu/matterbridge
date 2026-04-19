@@ -23,7 +23,8 @@ import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from './deviceManager.js';
-import { closeServerNodeStores, originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { closeServerNodeStores } from './jestutils/jestMatterTest.js';
+import { originalProcessArgv, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

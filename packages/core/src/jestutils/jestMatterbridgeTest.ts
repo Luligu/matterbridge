@@ -291,7 +291,7 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
 
   // Setup matter environment
   // @ts-expect-error - access to private member for testing
-  matterbridge.environment = createTestEnvironment(name, createOnly);
+  matterbridge.environment = await createTestEnvironment(name, createOnly);
   // @ts-expect-error - access to private member for testing
   expect(matterbridge.environment).toBeDefined();
   // @ts-expect-error - access to private member for testing

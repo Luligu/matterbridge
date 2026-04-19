@@ -61,7 +61,7 @@ export let log: AnsiLogger;
  *
  * @example
  * ```typescript
- * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+ * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
  *
  * // Setup the test environment
  * await setupTest(NAME, false);

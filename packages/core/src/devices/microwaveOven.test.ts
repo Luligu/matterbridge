@@ -24,18 +24,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  flushAsync,
   server,
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
-import {
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
-  setupTest,
-} from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { microwaveOven } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from './microwaveOven.js';

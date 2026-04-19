@@ -25,6 +25,7 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { Endpoint, ServerNode } from '@matter/node';
 import {
   AirQualityServer,
   BooleanStateServer,
@@ -44,6 +45,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -84,22 +86,18 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
-import { deepCopy } from '@matterbridge/utils/deep-copy';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
-  addDevice,
-  aggregator,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerLogSpy,
   matterbridge,
-  setDebug,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { addDevice } from './jestutils/jestMatterTest.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -141,10 +139,13 @@ import {
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
+
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
   }, 30000);
 
   beforeEach(async () => {

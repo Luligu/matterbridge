@@ -2,30 +2,21 @@
 
 const NAME = 'MatterbridgeEndpointHelpers';
 const MATTER_PORT = 11300;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
-import { NumberTag, PowerSourceTag } from '@matter/node';
+import { Endpoint, NumberTag, PowerSourceTag, ServerNode } from '@matter/node';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { db, er, hk, or } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
-import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  log,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
+import { addDevice } from './jestutils/jestMatterTest.js';
+import { log, setupTest } from './jestutils/jestSetupTest.js';
 import { doorLockDevice, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
@@ -55,6 +46,8 @@ import {
 await setupTest(NAME, false);
 
 describe('Options helpers', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   class ManagedValue {
@@ -71,7 +64,7 @@ describe('Options helpers', () => {
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {

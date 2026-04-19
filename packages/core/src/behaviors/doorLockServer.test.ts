@@ -2,27 +2,20 @@
 
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import { Endpoint, ServerNode } from '@matter/main/node';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { StatusResponse } from '@matter/types/common';
 import { FabricIndex, NodeId } from '@matter/types/datatype';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
-import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from '../jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
+import { addDevice } from '../jestutils/jestMatterTest.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { doorLockDevice } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { internalFor } from '../matterbridgeEndpointHelpers.js';
@@ -32,6 +25,8 @@ import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 await setupTest(NAME, false);
 
 describe('Client clusters and behaviors', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let doorLock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
 
@@ -40,7 +35,7 @@ describe('Client clusters and behaviors', () => {
     MatterbridgeEndpoint.logLevel = LogLevel.DEBUG;
     // Create Matterbridge environment
     await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
