@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/irrigationSystem.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8021;
 const NAME = 'IrrigationSystem';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8021;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { NumberTag } from '@matter/main';
@@ -17,19 +14,19 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { stringify } from 'node-ansi-logger';
 
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
+  flushServerNode,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { irrigationSystem } from '../matterbridgeDeviceTypes.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 import { IrrigationSystem } from './irrigationSystem.js';
@@ -42,7 +39,8 @@ describe('Matterbridge ' + NAME, () => {
   let singleZoneBatteryDevice: IrrigationSystem;
 
   beforeAll(async () => {
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    // Setup the Matter test environment
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -56,15 +54,17 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterAll(async () => {
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, irrigationSystem.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, irrigationSystem.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create an irrigation system device', async () => {
     device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running })
@@ -330,8 +330,16 @@ describe('Matterbridge ' + NAME, () => {
     ]);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

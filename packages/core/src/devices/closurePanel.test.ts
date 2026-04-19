@@ -1,30 +1,27 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/closurePanel.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8023;
 const NAME = 'ClosurePanel';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8023;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { stringify } from 'node-ansi-logger';
 
 import { ClosureDimension } from '../clusters/closure-dimension.js';
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
+  flushServerNode,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { ClosurePanel } from './closurePanel.js';
 
@@ -36,7 +33,8 @@ describe('Matterbridge ' + NAME, () => {
   let device2: ClosurePanel;
 
   beforeAll(async () => {
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    // Setup the Matter test environment
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -50,15 +48,17 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   afterAll(async () => {
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, closurePanel.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, closurePanel.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a closure panel device', async () => {
     device = new ClosurePanel('Closure Panel Test Device', 'CP123456', { stepValue: 100 });
@@ -185,8 +185,16 @@ describe('Matterbridge ' + NAME, () => {
       ].sort(),
     );
   });
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

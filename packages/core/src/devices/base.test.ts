@@ -1,5 +1,5 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\base.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
 const NAME = 'BaseTest';
 const MATTER_PORT = 8000;
@@ -14,7 +14,17 @@ import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { stringify } from 'node-ansi-logger';
 
 // Jest utilities for Matter testing
-import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, server, startServerNode, stopServerNode } from '../jestutils/jestMatterTest.js';
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
 import { bridge, onOffLight } from '../matterbridgeDeviceTypes.js';
@@ -65,7 +75,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(LevelControl.Cluster)).toBeFalsy();
     expect(device.hasClusterServer(Groups.Cluster)).toBeTruthy();
     expect(device.hasClusterServer(ScenesManagement.Cluster)).toBeTruthy();
-    await addDevice(aggregator, device, 0);
+    expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
   test('device forEachAttribute', async () => {
@@ -160,6 +170,7 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    if (!MATTER_CREATE_ONLY) await stopServerNode();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

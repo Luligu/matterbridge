@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\roboticVacuumCleaner.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8013;
 const NAME = 'Vacuum';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8013;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
@@ -21,21 +18,26 @@ import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeServiceAreaServer } from '../behaviors/serviceAreaServer.js';
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import {
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
   loggerWarnSpy,
-  server,
   setDebug,
   setupTest,
-  startServerNode,
-  stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestSetupTest.js';
 import { roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './roboticVacuumCleaner.js';
 
@@ -47,7 +49,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -63,16 +65,16 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, roboticVacuumCleaner.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, roboticVacuumCleaner.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create an RVC device', async () => {
     device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
@@ -410,8 +412,16 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [0, 5]`);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

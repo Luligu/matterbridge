@@ -1,5 +1,5 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/airConditioner.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
 const NAME = 'AirConditioner';
 const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
@@ -22,6 +22,7 @@ import {
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  flushServerNode,
   server,
   startServerNode,
   stopServerNode,
@@ -360,6 +361,7 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    if (!MATTER_CREATE_ONLY) await stopServerNode();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/dishwasher.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8004;
 const NAME = 'Dishwasher';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8004;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
@@ -20,22 +17,20 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-// Matterbridge
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
+  flushServerNode,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { dishwasher } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { Dishwasher, MatterbridgeDishwasherModeServer } from './dishwasher.js';
@@ -49,7 +44,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -65,16 +60,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, dishwasher.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, dishwasher.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a dishwasher device', async () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456');
@@ -244,7 +239,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add a dishwasher device with number temperature control', async () => {
     expect(server).toBeDefined();
     expect(device).toBeDefined();
-    await server.add(device);
+    expect(await addDevice(server, device)).toBeTruthy();
     expect(server.parts.has('DishwasherTestDevice-DW123456')).toBeTruthy();
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
@@ -272,8 +267,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

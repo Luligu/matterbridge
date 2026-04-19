@@ -1,11 +1,7 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\temperatureControl.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 0;
 const NAME = 'TemperatureControl';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 

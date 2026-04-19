@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\evse.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8005;
 const NAME = 'Evse';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8005;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import {
@@ -32,20 +29,25 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../behaviors/deviceEnergyManagementModeServer.js';
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import {
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
   loggerWarnSpy,
-  server,
   setupTest,
-  startServerNode,
-  stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestSetupTest.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
 import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 
@@ -57,7 +59,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -73,16 +75,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, evse.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, evse.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a Evse device', async () => {
     device = new Evse('EVSE Test Device', 'EVSE12456');
@@ -338,8 +340,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseModeServer changeToMode called with newMode 1 => On demand`);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

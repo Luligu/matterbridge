@@ -1,14 +1,11 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\laundryDryer.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8008;
 const NAME = 'LaundryDryer';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8008;
 const MATTER_CREATE_ONLY = true;
 
 // Import necessary modules and types
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
 // @matter
@@ -21,22 +18,26 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-// Matterbridge
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import {
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
   loggerWarnSpy,
-  server,
   setupTest,
-  startServerNode,
-  stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestSetupTest.js';
 import { laundryDryer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { LaundryDryer } from './laundryDryer.js';
@@ -51,7 +52,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -67,16 +68,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, laundryDryer.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, laundryDryer.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a laundry dryer device', async () => {
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456');
@@ -290,8 +291,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src\waterHeater.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8016;
 const NAME = 'WaterHeater';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8016;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
@@ -23,20 +20,25 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeThermostatServer } from '../behaviors/thermostatServer.js';
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import {
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
   loggerWarnSpy,
-  server,
   setupTest,
-  startServerNode,
-  stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestSetupTest.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 
@@ -48,7 +50,7 @@ describe('Matterbridge Water Heater', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -64,16 +66,16 @@ describe('Matterbridge Water Heater', () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, waterHeater.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, waterHeater.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a water heater device with all parameters', async () => {
     device = new WaterHeater(
@@ -307,8 +309,16 @@ describe('Matterbridge Water Heater', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

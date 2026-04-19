@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/castingVideoPlayer.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8018;
 const NAME = 'CastingVideoPlayer';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8018;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
@@ -20,22 +17,26 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-// Matterbridge
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestMatterTest.js';
+import {
   loggerErrorSpy,
   loggerFatalSpy,
   loggerLogSpy,
   loggerWarnSpy,
-  server,
   setupTest,
-  startServerNode,
-  stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestSetupTest.js';
 import { castingVideoPlayer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { CastingVideoPlayer } from './castingVideoPlayer.js';
@@ -48,7 +49,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -64,16 +65,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, castingVideoPlayer.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, castingVideoPlayer.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a casting video player device', async () => {
     device = new CastingVideoPlayer('CastingVideoPlayer Test Device', 'CVP123456');
@@ -234,8 +235,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(await deleteDevice(server, device)).toBeTruthy();
   });
 
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

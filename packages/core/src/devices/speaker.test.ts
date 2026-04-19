@@ -1,12 +1,9 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/speaker.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8015;
 const NAME = 'Speaker';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8015;
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
@@ -14,20 +11,19 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { stringify } from 'node-ansi-logger';
 
-// matterbridge
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
+  flushServerNode,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { speakerDevice } from '../matterbridgeDeviceTypes.js';
 import { Speaker } from './speaker.js';
 
@@ -39,7 +35,7 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
@@ -55,16 +51,16 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy the Matter test environment
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    await destroyTestEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, speakerDevice.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, speakerDevice.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create speaker device (defaults)', async () => {
     device = new Speaker('Living Room Speaker', 'SPK123456');
@@ -210,8 +206,16 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('stop server', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });
