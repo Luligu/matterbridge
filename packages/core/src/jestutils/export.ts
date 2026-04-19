@@ -14,4 +14,5 @@ export * from './jestHelpers.js';
 export * from './jestMatterbridgeEndpointSpy.js';
 export * from './jestMatterbridgePlatformSpy.js';
 export * from './jestMatterbridgeSpy.js';
+export * from './jestMatterRequest.js';
 export * from './jestPluginManagerSpy.js';

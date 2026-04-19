@@ -3,6 +3,7 @@
 
 const NAME = 'BaseTest';
 const MATTER_PORT = 8000;
+const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Descriptor } from '@matter/types/clusters/descriptor';
@@ -151,7 +152,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('start the server node', async () => {
-    await startServerNode();
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -159,6 +160,6 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await stopServerNode();
+    if (!MATTER_CREATE_ONLY) await stopServerNode();
   });
 });

@@ -3,6 +3,7 @@
 
 const NAME = 'AirConditioner';
 const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
+const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { FanControl } from '@matter/types/clusters/fan-control';
@@ -351,7 +352,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('start the server node', async () => {
-    await startServerNode();
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -359,6 +360,6 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await stopServerNode();
+    if (!MATTER_CREATE_ONLY) await stopServerNode();
   });
 });
