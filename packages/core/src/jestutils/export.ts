@@ -9,10 +9,13 @@
 
 export * from './jestBroadcastServerSpy.js';
 export * from './jestDeviceManagerSpy.js';
+export * from './jestFlushAsync.js';
 export * from './jestFrontendSpy.js';
 export * from './jestHelpers.js';
+export * from './jestLogAlive.js';
 export * from './jestMatterbridgeEndpointSpy.js';
 export * from './jestMatterbridgePlatformSpy.js';
 export * from './jestMatterbridgeSpy.js';
 export * from './jestMatterRequest.js';
 export * from './jestPluginManagerSpy.js';
+export * from './jestSetupTest.js';

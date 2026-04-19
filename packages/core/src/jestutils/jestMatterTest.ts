@@ -64,6 +64,7 @@ import { MATTER_STORAGE_DIR } from '@matterbridge/types';
 import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
 
 import { bridge } from '../matterbridgeDeviceTypes.js';
+import { flushAsync } from './jestFlushAsync.js';
 import { HOMEDIR, NAME } from './jestSetupTest.js';
 
 export let environment: Environment;
@@ -103,24 +104,6 @@ export async function createTestEnvironment(): Promise<Environment> {
  */
 export async function destroyTestEnvironment(): Promise<void> {
   // Nothing to clean up right now
-}
-
-/**
- * Advance the Node.js event loop deterministically to allow chained asynchronous work (Promises scheduled in
- * microtasks and follow‑up macrotasks) to complete inside tests without adding arbitrary long timeouts.
- *
- * NOTE: This does not guarantee OS level network IO completion—only JavaScript task queue progression inside the
- *       current process.
- *
- * @param {number} ticks       Number of macrotask (setImmediate) turns to yield (default 3).
- * @param {number} microTurns  Number of microtask drains (Promise.resolve chains) after macrotask yielding (default 10).
- * @param {number} pause       Final timer delay in ms; set 0 to disable (default 250ms).
- * @returns {Promise<void>}        Resolves after the requested event loop advancement has completed.
- */
-export async function flushAsync(ticks: number = 3, microTurns: number = 10, pause: number = 250): Promise<void> {
-  for (let i = 0; i < ticks; i++) await new Promise((resolve) => setImmediate(resolve));
-  for (let i = 0; i < microTurns; i++) await Promise.resolve();
-  if (pause) await new Promise((resolve) => setTimeout(resolve, pause));
 }
 
 /**
