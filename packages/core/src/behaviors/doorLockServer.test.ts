@@ -34,7 +34,7 @@ describe('Client clusters and behaviors', () => {
     // Set log level to debug for better visibility during tests
     MatterbridgeEndpoint.logLevel = LogLevel.DEBUG;
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
+    await createMatterbridgeEnvironment();
     [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
@@ -48,7 +48,7 @@ describe('Client clusters and behaviors', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(10, 10, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });

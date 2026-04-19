@@ -1,8 +1,9 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
-const MATTER_PORT = 6600;
 const NAME = 'Helpers';
+const MATTER_PORT = 6600;
+const MATTER_CREATE_ONLY = true;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 /*
@@ -62,8 +63,8 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
-    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -75,8 +76,8 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await stopMatterbridgeEnvironment();
-    await destroyMatterbridgeEnvironment();
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });

@@ -14,7 +14,7 @@ await setupTest(NAME, false);
 describe('Matterbridge dynamic platform', () => {
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
+    await createMatterbridgeEnvironment();
   });
 
   beforeEach(async () => {
@@ -24,7 +24,7 @@ describe('Matterbridge dynamic platform', () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await destroyMatterbridgeEnvironment();
+    await destroyMatterbridgeEnvironment(undefined, undefined, false);
     // Restore all mocks
     jest.restoreAllMocks();
   });

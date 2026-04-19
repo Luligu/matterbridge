@@ -40,6 +40,26 @@
  *  });
  *  ```
  *
+ *  2) Matterbridge with not initialized Matterbridge instance.
+ *
+ *  ```typescript
+ *  const MATTER_CREATE_ONLY = true;
+ *
+ *  beforeAll(async () => {
+ *    // Create Matterbridge environment
+ *    await createMatterbridgeEnvironment();
+ *    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+ *  }, 30000);
+ *
+ *  afterAll(async () => {
+ *    // Destroy Matterbridge environment
+ *    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+ *    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+ *    // Restore all mocks
+ *    jest.restoreAllMocks();
+ *  }, 30000);
+ *  ```
+ *
  */
 
 import path from 'node:path';
@@ -259,18 +279,16 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
 /**
  * Create a Matterbridge instance for testing without initializing it.
  *
- * @param {string} name - Name for the environment (jest/name).
- * @param {boolean} createOnly - If true, only create the environment without starting it. Default is false.
  * @returns {Promise<Matterbridge>} The Matterbridge instance.
  *
  * @example
  * ```typescript
  * // Create Matterbridge environment
- * await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
- * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+ * await createMatterbridgeEnvironment();
+ * await startMatterbridgeEnvironment(MATTER_PORT);
  * ```
  */
-export async function createMatterbridgeEnvironment(name: string, createOnly: boolean = false): Promise<Matterbridge> {
+export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
   // Create a MatterbridgeEdge instance
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
@@ -290,12 +308,11 @@ export async function createMatterbridgeEnvironment(name: string, createOnly: bo
   devices = matterbridge.devices;
 
   // Setup matter environment
-  // @ts-expect-error - access to private member for testing
-  matterbridge.environment = await createTestEnvironment(name, createOnly);
-  // @ts-expect-error - access to private member for testing
-  expect(matterbridge.environment).toBeDefined();
-  // @ts-expect-error - access to private member for testing
-  expect(matterbridge.environment).toBeInstanceOf(Environment);
+  const environment = await createTestEnvironment();
+  expect(environment).toBeDefined();
+  expect(environment).toBeInstanceOf(Environment);
+  // @ts-expect-error - access to private member
+  matterbridge.environment = environment;
   return matterbridge;
 }
 
@@ -351,7 +368,6 @@ export async function startMatterbridgeEnvironment(port: number = 5540, createOn
   if (createOnly) {
     // Ensure the queue is empty and pause
     await flushAsync();
-
     return [server, aggregator];
   }
 
@@ -379,7 +395,6 @@ export async function startMatterbridgeEnvironment(port: number = 5540, createOn
 
   // Ensure the queue is empty and pause
   await flushAsync();
-
   return [server, aggregator];
 }
 

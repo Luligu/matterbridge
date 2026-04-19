@@ -2,6 +2,7 @@
 
 const NAME = 'EndpointMatterJs';
 const MATTER_PORT = 11100;
+const MATTER_CREATE_ONLY = true;
 
 import { existsSync } from 'node:fs';
 import { appendFile } from 'node:fs/promises';
@@ -150,8 +151,8 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
-    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -163,8 +164,8 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await stopMatterbridgeEnvironment();
-    await destroyMatterbridgeEnvironment();
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });

@@ -4,6 +4,7 @@
 
 const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
+const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Descriptor } from '@matter/types/clusters/descriptor';
@@ -56,8 +57,8 @@ describe('Matterbridge platform', () => {
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    await createMatterbridgeEnvironment();
+    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(() => {
@@ -67,8 +68,8 @@ describe('Matterbridge platform', () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await stopMatterbridgeEnvironment();
-    await destroyMatterbridgeEnvironment();
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -82,6 +83,9 @@ describe('Matterbridge platform', () => {
       debug: false,
       unregisterOnShutdown: false,
     });
+    // Should not be registered until setMatterNode is called
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', () => Promise.resolve())).toBe(false);
+
     // Add the platform to the Matterbridge environment
     addMatterbridgePlatform(platform, 'test');
     expect(platform).toBeDefined();
@@ -407,6 +411,11 @@ describe('Matterbridge platform', () => {
     expect(platform.getSelectEntity('name100')).toEqual({ name: 'name100', description: 'description100' });
     await platform.clearSelect();
     await platform.onShutdown();
+    // Test edge cases
+    expect(platform.verifyMatterbridgeVersion('1.5.3')).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('1.5.3', true)).toBe(true);
+    expect(platform.verifyMatterbridgeVersion('15.0.0')).toBe(false);
+    expect(platform.verifyMatterbridgeVersion('15.0.0', true)).toBe(false);
   });
 
   test('should clear the selects', async () => {
@@ -802,6 +811,18 @@ describe('Matterbridge platform', () => {
     await platform.registerDevice(testDevice);
     expect(platform.size()).toBe(1);
     expect(matterbridge.addBridgedEndpoint).toHaveBeenCalled();
+
+    const savedMode = matterbridge.bridgeMode;
+    const savedType = platform.type;
+    matterbridge.bridgeMode = 'childbridge';
+    platform.type = 'DynamicPlatform';
+    const testDevice2 = new MatterbridgeEndpoint(powerSource);
+    testDevice2.createDefaultBasicInformationClusterServer('test 2', 'serial0123445678');
+    await platform.registerDevice(testDevice2);
+    expect(platform.size()).toBe(2);
+    expect(matterbridge.addBridgedEndpoint).toHaveBeenCalled();
+    matterbridge.bridgeMode = savedMode;
+    platform.type = savedType;
   });
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint with correct parameters', async () => {

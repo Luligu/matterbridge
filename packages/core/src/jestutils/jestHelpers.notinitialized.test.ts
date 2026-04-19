@@ -87,7 +87,7 @@ describe('Matterbridge not initialized test environment', () => {
   });
 
   test('should create a Matterbridge instance', async () => {
-    await createMatterbridgeEnvironment(NAME);
+    await createMatterbridgeEnvironment();
     expect(matterbridge).toBeDefined();
     expect(matterbridge).toBeInstanceOf(Matterbridge);
   });
