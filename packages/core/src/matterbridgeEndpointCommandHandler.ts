@@ -32,7 +32,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 // @matter
 import { HandlerFunction } from '@matter/general';
 import { ActionContext } from '@matter/main';
-import type { Attribute } from '@matter/types/cluster';
+import type { ClusterType } from '@matter/types/cluster';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -209,7 +209,7 @@ type OptionalKeys<T> = {
   [K in keyof T]-?: T[K] extends { optional: true } ? K : never;
 }[keyof T];
 
-type AttributeValue<T> = T extends Attribute<infer JsType, infer _F> ? JsType : never;
+type AttributeValue<T> = T extends ClusterType.Attribute<infer JsType> ? JsType : never;
 
 export type ClusterAttributeValues<T extends Record<string, unknown>> = {
   -readonly [K in Exclude<keyof T, OptionalKeys<T>>]: AttributeValue<T[K]>;
