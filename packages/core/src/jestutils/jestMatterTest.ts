@@ -61,7 +61,7 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR } from '@matterbridge/types';
-import { AnsiLogger, er, LogLevel, rs, TimestampFormat } from 'node-ansi-logger';
+import { er, rs } from 'node-ansi-logger';
 
 import { bridge } from '../matterbridgeDeviceTypes.js';
 import { flushAsync } from './jestFlushAsync.js';
@@ -70,7 +70,6 @@ import { HOMEDIR, NAME } from './jestSetupTest.js';
 export let environment: Environment;
 export let server: ServerNode<ServerNode.RootEndpoint>;
 export let aggregator: Endpoint<AggregatorEndpoint>;
-export let log: AnsiLogger;
 
 /**
  * Create a matter test environment for testing:
@@ -83,9 +82,6 @@ export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
   expect(NAME.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
-
-  // Setup the logger
-  log = new AnsiLogger({ logName: NAME, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Setup the matter environment
   environment = Environment.default;

@@ -40,25 +40,6 @@
  *  });
  *  ```
  *
- *  2) Matter test environment with initialized ServerNode and AggregatorEndpoint. No matterbridge, frontend, devices and plugins.
- *
- *  ```typescript
- *  beforeAll(async () => {
- *    // Setup the Matter test environment
- *    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
- *    // Create the server node and aggregator
- *    await createServerNode(NAME, MATTER_PORT);
- *    // Start the server node and aggregator
- *    await startServerNode(NAME, MATTER_PORT, undefined, MATTER_CREATE_ONLY);
- *  });
- *
- *  afterAll(async () => {
- *    // Stop the server node
- *    await stopServerNode(server, MATTER_CREATE_ONLY);
- *    // Destroy the Matter test environment
- *    await destroyTestEnvironment(MATTER_CREATE_ONLY);
- *  });
- *  ```
  */
 
 import path from 'node:path';
@@ -70,7 +51,7 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
 // @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
-import { AnsiLogger, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager } from '../deviceManager.js';
@@ -82,15 +63,13 @@ import { flushAsync } from './jestFlushAsync.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jestMatterTest.js';
 import { HOMEDIR, loggerLogSpy, originalProcessArgv } from './jestSetupTest.js';
 
+let server: ServerNode<ServerNode.RootEndpoint>;
+let aggregator: Endpoint<AggregatorEndpoint>;
+
 export let matterbridge: Matterbridge;
 export let frontend: Frontend;
 export let plugins: PluginManager;
 export let devices: DeviceManager;
-
-export let environment: Environment;
-export let server: ServerNode<ServerNode.RootEndpoint>;
-export let aggregator: Endpoint<AggregatorEndpoint>;
-export let log: AnsiLogger;
 
 /**
  * Create and start a fully initialized Matterbridge instance for testing.
@@ -292,9 +271,6 @@ export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: 
  * ```
  */
 export async function createMatterbridgeEnvironment(name: string, createOnly: boolean = false): Promise<Matterbridge> {
-  // Create the exported log
-  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
-
   // Create a MatterbridgeEdge instance
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();

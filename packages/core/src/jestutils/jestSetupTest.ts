@@ -26,7 +26,7 @@ import path from 'node:path';
 
 import type { jest } from '@jest/globals';
 // @matterbridge
-import { AnsiLogger } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
@@ -51,6 +51,8 @@ export let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 export let NAME: string;
 export let HOMEDIR: string;
 
+export let log: AnsiLogger;
+
 /**
  * Setup the Jest environment:
  * - it will remove any existing home directory
@@ -73,6 +75,9 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
   HOMEDIR = path.join('.cache', 'jest', name);
+
+  // Create the exported log
+  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Cleanup any existing home directory
   rmSync(HOMEDIR, { recursive: true, force: true });
