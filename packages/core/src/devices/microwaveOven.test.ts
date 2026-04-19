@@ -11,7 +11,12 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
-import { Identify, MicrowaveOvenControl, MicrowaveOvenMode, OnOff, OperationalState, PowerSource } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
+import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -50,7 +55,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();

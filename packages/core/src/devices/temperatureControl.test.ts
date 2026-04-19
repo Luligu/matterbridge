@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\temperatureControl.test.ts
 
 const MATTER_PORT = 0;
@@ -9,7 +10,7 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 
 // Matterbridge
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestHelpers.js';
 import { laundryDryer, laundryWasher } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
@@ -25,6 +26,12 @@ describe('Matterbridge Temperature Control', () => {
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {

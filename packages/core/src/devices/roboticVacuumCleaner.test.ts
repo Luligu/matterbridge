@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\roboticVacuumCleaner.test.ts
 
 const MATTER_PORT = 8013;
@@ -10,7 +11,12 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
-import { Identify, PowerSource, RvcCleanMode, RvcOperationalState, RvcRunMode, ServiceArea } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { ServiceArea } from '@matter/types/clusters/service-area';
 import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -20,7 +26,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setDebug,
   setupTest,
@@ -44,6 +53,12 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {

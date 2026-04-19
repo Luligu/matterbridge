@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\laundryDryer.test.ts
 
 const MATTER_PORT = 8008;
@@ -11,7 +12,13 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
 // @matter
-import { Identify, LaundryDryerControls, LaundryWasherMode, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
+import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -21,7 +28,10 @@ import {
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -49,7 +59,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

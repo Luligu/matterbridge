@@ -11,16 +11,14 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
-import {
-  DeviceEnergyManagement,
-  DeviceEnergyManagementMode,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  Identify,
-  PowerSource,
-  Thermostat,
-  WaterHeaterManagement,
-} from '@matter/types/clusters';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -58,7 +56,7 @@ describe('Matterbridge Water Heater', () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();

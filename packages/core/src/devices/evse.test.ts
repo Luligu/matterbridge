@@ -20,16 +20,14 @@ import {
   TemperatureMeasurementServer,
 } from '@matter/node/behaviors';
 // @matter
-import {
-  DeviceEnergyManagement,
-  DeviceEnergyManagementMode,
-  ElectricalEnergyMeasurement,
-  ElectricalPowerMeasurement,
-  EnergyEvse,
-  EnergyEvseMode,
-  Identify,
-  PowerSource,
-} from '@matter/types/clusters';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -67,7 +65,7 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();

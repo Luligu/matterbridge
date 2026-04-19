@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src\base.test.ts
 
 const NAME = 'BaseTest';
@@ -13,7 +14,7 @@ import { stringify } from 'node-ansi-logger';
 
 // Jest utilities for Matter testing
 import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, server, startServerNode, stopServerNode } from '../jestutils/jestMatterTest.js';
-import { setupTest } from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
 import { bridge, onOffLight } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -34,7 +35,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -44,7 +49,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create the server node', async () => {
-    await createServerNode(MATTER_PORT, bridge.code, 0, 0, 0);
+    await createServerNode(MATTER_PORT, bridge.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -146,7 +151,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('start the server node', async () => {
-    await startServerNode(0, 0, 0);
+    await startServerNode();
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -154,6 +159,6 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await stopServerNode(0, 0, 0);
+    await stopServerNode();
   });
 });

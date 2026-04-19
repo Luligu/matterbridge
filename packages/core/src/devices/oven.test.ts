@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/oven.test.ts
 
 const MATTER_PORT = 8011;
@@ -11,7 +12,12 @@ import { jest } from '@jest/globals';
 // @matter
 import { PositionTag } from '@matter/node';
 import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/node/behaviors';
-import { Identify, OnOff, OperationalState, OvenCavityOperationalState, OvenMode, PowerSource } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
+import { OvenMode } from '@matter/types/clusters/oven-mode';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -20,7 +26,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -48,7 +57,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -427,6 +440,8 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 15 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
+    loggerErrorSpy.mockClear();
   });
 
   test('invoke MatterbridgeOvenCavityOperationalStateServer commands', async () => {

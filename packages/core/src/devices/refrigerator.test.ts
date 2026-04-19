@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/refrigerator.test.ts
 
 const MATTER_PORT = 8012;
@@ -11,7 +12,11 @@ import { jest } from '@jest/globals';
 // @matter
 import { PositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
-import { Identify, OnOff, PowerSource, RefrigeratorAlarm, RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
+import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -20,7 +25,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -48,7 +56,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -428,6 +440,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.ERROR,
       `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with invalid mode 15`,
     );
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with invalid mode 15`,
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('close the server node', async () => {

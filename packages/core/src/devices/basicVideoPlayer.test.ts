@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/basicVideoPlayer.test.ts
 
 const MATTER_PORT = 8017;
@@ -8,10 +9,10 @@ const MATTER_CREATE_ONLY = true;
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+// @matter
 import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
 import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
 import { KeypadInput } from '@matter/types/clusters/keypad-input';
-// @matter
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -23,7 +24,10 @@ import {
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -50,7 +54,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

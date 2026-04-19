@@ -313,6 +313,7 @@ export async function createServerNode(
 export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
+    // istanbul ignore next
     throw new Error('Server node and aggregator must be created before starting the server. Call createServerNode() first.');
   }
 

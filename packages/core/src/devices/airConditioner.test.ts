@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/airConditioner.test.ts
 
 const NAME = 'AirConditioner';
@@ -24,7 +25,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
-import { setupTest } from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
 import { airConditioner } from '../matterbridgeDeviceTypes.js';
 import { featuresFor } from '../matterbridgeEndpointHelpers.js';
@@ -46,7 +47,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
@@ -56,7 +61,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create the server node', async () => {
-    await createServerNode(MATTER_PORT, airConditioner.code, 0, 0, 0);
+    await createServerNode(MATTER_PORT, airConditioner.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -138,7 +143,7 @@ describe('Matterbridge ' + NAME, () => {
       temperatureDisplayMode: 0,
     });
     expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
-    expect(await addDevice(aggregator, custom, 1, 0)).toBeTruthy();
+    expect(await addDevice(aggregator, custom)).toBeTruthy();
     expect(custom.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -149,11 +154,11 @@ describe('Matterbridge ' + NAME, () => {
       'thermostatUserInterfaceConfiguration',
       'fanControl',
     ]);
-    expect(await deleteDevice(aggregator, custom, 1, 0)).toBeTruthy();
+    expect(await deleteDevice(aggregator, custom)).toBeTruthy();
   });
 
   test('add air conditioner to server', async () => {
-    expect(await addDevice(aggregator, device, 1, 0)).toBeTruthy();
+    expect(await addDevice(aggregator, device)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -346,7 +351,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('start the server node', async () => {
-    await startServerNode(0, 0, 0);
+    await startServerNode();
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -354,6 +359,6 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    await stopServerNode(0, 0, 0);
+    await stopServerNode();
   });
 });

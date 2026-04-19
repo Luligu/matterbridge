@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/dishwasher.test.ts
 
 const MATTER_PORT = 8004;
@@ -10,7 +11,13 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { DishwasherAlarm, DishwasherMode, Identify, OnOff, OperationalState, PowerSource, TemperatureControl } from '@matter/types/clusters';
+import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
+import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -20,7 +27,10 @@ import {
   createTestEnvironment,
   deleteDevice,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -47,7 +57,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

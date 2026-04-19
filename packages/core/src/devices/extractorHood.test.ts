@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/devices/extractorHood.test.ts
 
 const MATTER_PORT = 8006;
@@ -10,8 +11,8 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
-import { FanControl } from '@matter/types/clusters';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import { FanControl } from '@matter/types/clusters/fan-control';
 import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 // @matter
 import { Identify } from '@matter/types/clusters/identify';
@@ -27,7 +28,10 @@ import {
   aggregator,
   createTestEnvironment,
   destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
   loggerLogSpy,
+  loggerWarnSpy,
   server,
   setupTest,
   startServerNode,
@@ -54,7 +58,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment

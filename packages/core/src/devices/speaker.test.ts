@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/speaker.test.ts
 
 const MATTER_PORT = 8015;
@@ -9,11 +10,24 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 // @matter
-import { LevelControl, OnOff } from '@matter/types/clusters';
+import { LevelControl } from '@matter/types/clusters/level-control';
+import { OnOff } from '@matter/types/clusters/on-off';
 import { stringify } from 'node-ansi-logger';
 
 // matterbridge
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 import { speakerDevice } from '../matterbridgeDeviceTypes.js';
 import { Speaker } from './speaker.js';
 
@@ -31,6 +45,12 @@ describe('Matterbridge ' + NAME, () => {
   beforeEach(async () => {
     // Clear all mocks
     jest.clearAllMocks();
+  });
+
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {

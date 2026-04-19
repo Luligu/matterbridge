@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-standalone-expect */
 // src/cooktop.test.ts
 
 const MATTER_PORT = 8003;
@@ -10,11 +11,27 @@ import path from 'node:path';
 import { jest } from '@jest/globals';
 // @matter
 import { PositionTag } from '@matter/node';
-import { Identify, OnOff, PowerSource, TemperatureControl, TemperatureMeasurement } from '@matter/types/clusters';
+import { Identify } from '@matter/types/clusters/identify';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { stringify } from 'node-ansi-logger';
 
 // Matterbridge
-import { addDevice, aggregator, createTestEnvironment, destroyTestEnvironment, server, setupTest, startServerNode, stopServerNode } from '../jestutils/jestHelpers.js';
+import {
+  addDevice,
+  aggregator,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  server,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '../jestutils/jestHelpers.js';
 import { cooktop } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { Cooktop } from './cooktop.js';
@@ -37,7 +54,11 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
 
   afterAll(async () => {
     // Destroy the Matter test environment
