@@ -32,13 +32,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
-import {
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
-  setupTest,
-} from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from './waterHeater.js';
 

@@ -1,10 +1,8 @@
 // src\pluginManager.test.ts
 
-const MATTER_PORT = 12000;
 const NAME = 'PluginManager';
+const MATTER_PORT = 12000;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
-// const NPM_CONFIG_PREFIX = path.resolve(path.join(HOMEDIR, '.npm-global'));
-// const NPM_CONFIG_CACHE = path.resolve(path.join(HOMEDIR, '.npm-cache'));
 const NPM_CONFIG_PREFIX = path.resolve(path.join('.cache', '.npm-global'));
 const NPM_CONFIG_CACHE = path.resolve(path.join('.cache', '.npm-cache'));
 
@@ -43,8 +41,8 @@ import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi
 import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
 import { logKeepAlives } from './jestutils/jestLogAlive.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
-import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { addPluginSpy } from './jestutils/jestPluginManagerSpy.js';
+import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';

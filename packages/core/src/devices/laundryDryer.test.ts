@@ -31,13 +31,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
-import {
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
-  setupTest,
-} from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { laundryDryer } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { LaundryDryer } from './laundryDryer.js';

@@ -12,6 +12,7 @@ import { logKeepAlives } from './jestLogAlive.js';
 import {
   addDevice,
   aggregator,
+  closeServerNodeStores,
   createServerNode,
   createTestEnvironment,
   deleteDevice,
@@ -29,9 +30,7 @@ describe('Matter.js test environment', () => {
   let deviceServer: MatterbridgeEndpoint;
   let deviceAggregator: MatterbridgeEndpoint;
 
-  beforeAll(async () => {
-    await setupTest(NAME, true);
-  });
+  beforeAll(async () => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -43,6 +42,23 @@ describe('Matter.js test environment', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
+  });
+
+  test('should setup the test', async () => {
+    await setupTest(NAME, false);
+    expect(loggerLogSpy).toBeDefined();
+    expect(consoleLogSpy).toBeDefined();
+    expect(consoleDebugSpy).toBeDefined();
+    expect(consoleInfoSpy).toBeDefined();
+    expect(consoleWarnSpy).toBeDefined();
+    expect(consoleErrorSpy).toBeDefined();
+    await setupTest(NAME, true);
+    expect(loggerLogSpy).toBeDefined();
+    expect(consoleLogSpy).toBeDefined();
+    expect(consoleDebugSpy).toBeDefined();
+    expect(consoleInfoSpy).toBeDefined();
+    expect(consoleWarnSpy).toBeDefined();
+    expect(consoleErrorSpy).toBeDefined();
   });
 
   test('should set debug mode', async () => {
@@ -101,6 +117,12 @@ describe('Matter.js test environment', () => {
   test('should delete a device from a matter.js aggregator node', async () => {
     const state = deviceAggregator.state;
     expect(await deleteDevice(aggregator, deviceAggregator)).toBeTruthy();
+  });
+
+  test('should close server node stores', async () => {
+    await closeServerNodeStores();
+    expect(server).toBeDefined();
+    expect(server).toBeInstanceOf(ServerNode);
   });
 
   test('should stop a matter.js server node', async () => {

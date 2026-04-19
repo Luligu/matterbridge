@@ -43,17 +43,17 @@ import WebSocket from 'ws';
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';
 import { fetchBroadcastServerSpy, requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
   wssSendCloseSnackbarMessageFrontendSpy,
   wssSendRefreshRequiredFrontendSpy,
   wssSendRestartNotRequiredFrontendSpy,
   wssSendSnackbarMessageFrontendSpy,
 } from './jestutils/jestFrontendSpy.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
 import { logKeepAlives } from './jestutils/jestLogAlive.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
-import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { installPluginSpy, uninstallPluginSpy } from './jestutils/jestPluginManagerSpy.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

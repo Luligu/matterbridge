@@ -41,13 +41,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
-import {
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
-  setupTest,
-} from '../jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { evse } from '../matterbridgeDeviceTypes.js';
 import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from './evse.js';
 

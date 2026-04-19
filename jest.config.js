@@ -32,8 +32,8 @@ const jestConfig = {
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
+    '/packages/core/src/jestutils/',
     'matterNode',
-    'jestHelpers',
   ], // Ignore specific paths for test files
   coveragePathIgnorePatterns: [
     '/.cache/',
@@ -45,8 +45,8 @@ const jestConfig = {
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
+    '/packages/core/src/jestutils/',
     'matterNode',
-    'jestHelpers',
   ], // Ignore specific paths for test and coverage
   maxWorkers: '100%', // Use all available CPU cores for running tests
 };

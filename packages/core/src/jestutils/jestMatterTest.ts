@@ -204,6 +204,7 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
   if (!targetServer) targetServer = server;
   await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
+
 /**
  * Create a matter server node for testing.
  *
