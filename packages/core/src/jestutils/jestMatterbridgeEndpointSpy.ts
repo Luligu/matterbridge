@@ -29,5 +29,6 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 export const setClusterMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
 export const setAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
 export const updateAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
+export const subscribeAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'subscribeAttribute');
 export const triggerEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
 export const triggerSwitchEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');

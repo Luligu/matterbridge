@@ -77,6 +77,31 @@ export let aggregator: Endpoint<AggregatorEndpoint>;
  * - setup the matter environment with name, debug logging and ANSI format
  *
  * @returns {Environment} - The default matter environment.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
@@ -97,6 +122,31 @@ export async function createTestEnvironment(): Promise<Environment> {
  * Destroy the matter test environment
  *
  * @returns {Promise<void>} A promise that resolves when the test environment is destroyed.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function destroyTestEnvironment(): Promise<void> {
   // Nothing to clean up right now
@@ -214,6 +264,31 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 10ms).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function createServerNode(
   port: number,
@@ -295,6 +370,31 @@ export async function createServerNode(
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server start process to run before returning (default 10ms).
  * @returns {Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]>} Resolves to an array containing the created ServerNode and its AggregatorNode.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
@@ -337,6 +437,31 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 10ms).
  * @returns {Promise<void>} Resolves when the server has stopped.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function stopServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
   // Flush any pending endpoint number persistence
@@ -364,6 +489,31 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 10ms).
  * @returns {Promise<void>} Resolves when the server has stopped.
+ * @example
+ * ```typescript
+ * const NAME = 'BaseTest';
+ * const MATTER_PORT = 8000;
+ * const MATTER_CREATE_ONLY = true;
+ *
+ * // Setup the test environment
+ * await setupTest(NAME, false);
+ *
+ * // Setup the Matter test environment
+ * await createTestEnvironment();
+ *
+ * // Create the server node and aggregator
+ * await createServerNode(MATTER_PORT);
+ *
+ * // Start the server node if not in create-only mode
+ * if (!MATTER_CREATE_ONLY) await startServerNode();
+ *
+ * // Stop or flush the server node depending on the create-only mode
+ * if (MATTER_CREATE_ONLY) await flushServerNode();
+ * else await stopServerNode();
+ *
+ * // Destroy the Matter test environment
+ * await destroyTestEnvironment();
+ * ```
  */
 export async function flushServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
   // Flush any pending endpoint number persistence
@@ -384,6 +534,10 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * @param {number} rounds The number of rounds to perform after addition (default 3).
  * @param {number} pause The pause time in milliseconds after addition (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been added and is ready.
+ * @example
+ * ```typescript
+ * expect(await addDevice(aggregator, device)).toBeTruthy();
+ * ```
  */
 export async function addDevice(
   owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
@@ -428,6 +582,10 @@ export async function addDevice(
  * @param {number} rounds The number of rounds to perform after deletion (default 3).
  * @param {number} pause The pause time in milliseconds after deletion (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been removed and is no longer ready.
+ * @example
+ * ```typescript
+ * expect(await deleteDevice(aggregator, device)).toBeTruthy();
+ * ```
  */
 export async function deleteDevice(
   owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
