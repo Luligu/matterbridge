@@ -378,6 +378,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (this.webSocketServer?.clients.size === 0) {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
+          clearTimeout(this.authClientsTimeout);
           this.authClientsTimeout = setTimeout(() => {
             this.authClientsTimeout = undefined;
             this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
