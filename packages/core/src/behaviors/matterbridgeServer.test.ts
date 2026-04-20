@@ -170,7 +170,7 @@ describe('Server clusters and behaviors', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });

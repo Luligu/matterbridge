@@ -54,7 +54,7 @@
  *  afterAll(async () => {
  *    // Destroy Matterbridge environment
  *    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
- *    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+ *    await destroyMatterbridgeEnvironment();
  *    // Restore all mocks
  *    jest.restoreAllMocks();
  *  }, 30000);
@@ -65,7 +65,7 @@
 import path from 'node:path';
 
 // @matter
-import { Environment } from '@matter/general';
+import { Environment, RuntimeService } from '@matter/general';
 import { Endpoint, ServerNode } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
@@ -264,7 +264,8 @@ export async function startMatterbridge(
  *
  * @param {cleanupPause} cleanupPause The pause duration before cleanup. Default is 10 ms.
  * @param {destroyPause} destroyPause The pause duration before destruction. Default is 250 ms.
- * @param {closeMdns} closeMdns Whether to close the mDNS service. Default is true.
+ * @param {closeMdns} closeMdns Whether to close the mDNS service. Default is false.
+ * @param {closeRuntime} closeRuntime Whether to close the runtime service. Default is false.
  *
  * @example
  * ```typescript
@@ -272,8 +273,8 @@ export async function startMatterbridge(
  * await stopMatterbridge();
  * ```
  */
-export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true) {
-  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause, closeMdns);
+export async function stopMatterbridge(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = false, closeRuntime: boolean = false): Promise<void> {
+  await destroyMatterbridgeEnvironment(cleanupPause, destroyPause, closeMdns, closeRuntime);
 }
 
 /**
@@ -465,7 +466,7 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
  *
  * // Destroy Matterbridge environment
  * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
- * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+ * await destroyMatterbridgeEnvironment();
  * ```
  */
 export async function stopMatterbridgeEnvironment(createOnly: boolean = false): Promise<void> {
@@ -509,8 +510,10 @@ export async function stopMatterbridgeEnvironment(createOnly: boolean = false): 
  * Destroy the matterbridge environment
  *
  * @param {number} cleanupPause The timeout for the destroy operation (default 10ms).
- * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 250ms).
- * @param {boolean} closeMdns Whether to close the mDNS service (default true).
+ * @param {number} destroyPause The pause duration after cleanup before destroying the instance (default 100ms).
+ * @param {boolean} closeMdns Whether to close the mDNS service (default false).
+ * @param {boolean} closeRuntime Whether to close the runtime service (default false).
+ * @returns {Promise<void>} A promise that resolves when the environment is destroyed.
  * @example
  * ```typescript
  * const NAME = 'Platform';
@@ -519,16 +522,26 @@ export async function stopMatterbridgeEnvironment(createOnly: boolean = false): 
  *
  * // Destroy Matterbridge environment
  * await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
- * await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+ * await destroyMatterbridgeEnvironment();
  * ```
  */
-export async function destroyMatterbridgeEnvironment(cleanupPause: number = 10, destroyPause: number = 250, closeMdns: boolean = true): Promise<void> {
+export async function destroyMatterbridgeEnvironment(
+  cleanupPause: number = 10,
+  destroyPause: number = 100,
+  closeMdns: boolean = false,
+  closeRuntime: boolean = false,
+): Promise<void> {
   // Destroy a matterbridge instance
   await destroyInstance(matterbridge, cleanupPause, destroyPause);
 
   // Close the mDNS service
   if (closeMdns) {
     await closeMdnsInstance(matterbridge);
+  }
+
+  // Close the runtime service
+  if (closeRuntime) {
+    await closeRuntimeInstance(matterbridge);
   }
 
   // Reset the singleton instance
@@ -559,7 +572,21 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
-  // @ts-expect-error - accessing private member for testing
-  const mdns = matterbridge.environment.get(MdnsService);
+  const environment = (matterbridge as unknown as { environment: Environment }).environment;
+  const mdns = environment.maybeGet(MdnsService);
+  if (!mdns) return;
   await mdns.close();
+  environment.delete(MdnsService, mdns);
+}
+
+/**
+ * Close the runtime instance in the matterbridge environment.
+ *
+ * @param {Matterbridge} matterbridge The matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the runtime instance is closed.
+ */
+export async function closeRuntimeInstance(matterbridge: Matterbridge): Promise<void> {
+  const environment = (matterbridge as unknown as { environment: Environment }).environment;
+  const runtime = environment.maybeGet(RuntimeService);
+  await runtime?.close();
 }

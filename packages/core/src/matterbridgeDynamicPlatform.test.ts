@@ -24,7 +24,7 @@ describe('Matterbridge dynamic platform', () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await destroyMatterbridgeEnvironment(undefined, undefined, false);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
