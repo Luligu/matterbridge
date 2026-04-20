@@ -64,6 +64,11 @@ These classes will run as threads in the next releases:
 
 - [package]: Update dependencies.
 - [test]: Strengthen single-class device attribute assertions by aligning `forEachAttribute` checks with the base test model.
+- [test]: Refactor `jestutils` module.
+
+### Fixed
+
+- [frontend]: Add clear authClientsTimeout to destroy().
 
 ## [3.7.4] - 2026-04-17
 
