@@ -1,5 +1,5 @@
 /**
- * @description This file contains the Jest helpers.
+ * @description This file contains the Jest Spy helpers for Matterbridge.
  * @file src/jestMatterbridgeSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15

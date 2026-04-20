@@ -23,30 +23,6 @@
 
 /*
  *  Matter test environment with initialized ServerNode and AggregatorEndpoint. No matterbridge, frontend, devices and plugins.
- *
- * ```typescript
- * const NAME = 'BaseTest';
- * const MATTER_PORT = 8000;
- *
- * // Setup the test environment
- * await setupTest(NAME, false);
- *
- *  beforeAll(async () => {
- *    // Create the Matter test environment
- *    await createTestEnvironment();
- *    // Create the server node and aggregator
- *    await createServerNode(MATTER_PORT);
- *    // Start the server node and aggregator
- *    await startServerNode();
- *  });
- *
- *  afterAll(async () => {
- *    // Stop the server node
- *    await stopServerNode();
- *    // Destroy the Matter test environment
- *    await destroyTestEnvironment();
- *  });
- * ```
  */
 
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -63,6 +39,7 @@ import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { MATTER_STORAGE_DIR } from '@matterbridge/types';
 import { er, rs } from 'node-ansi-logger';
 
+// local modules
 import { bridge } from '../matterbridgeDeviceTypes.js';
 import { flushAsync } from './jestFlushAsync.js';
 import { HOMEDIR, NAME } from './jestSetupTest.js';
