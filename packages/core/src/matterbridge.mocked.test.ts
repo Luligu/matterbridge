@@ -121,7 +121,7 @@ describe('Matterbridge mocked', () => {
 
   afterEach(async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 1, 1);
+    await destroyInstance(matterbridge, 0, 0);
 
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
@@ -287,7 +287,7 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect((matterbridge as any).systemCheckTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateInterval).toBeUndefined();
@@ -889,7 +889,6 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
-    // await destroyInstance(matterbridge, 10, 10);
   }, 10000);
 
   test('Matterbridge.initialize() reset', async () => {
@@ -903,7 +902,7 @@ describe('Matterbridge mocked', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
 
     // Reset the process.argv to simulate reset of not registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
@@ -1729,7 +1728,7 @@ describe('Matterbridge mocked', () => {
     startServerNodeSpy.mockRestore();
     configurePluginSpy.mockRestore();
     // Destroy the matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
   }, 10000);
 
   test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {

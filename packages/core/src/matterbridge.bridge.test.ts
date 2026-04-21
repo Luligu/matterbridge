@@ -244,7 +244,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
     process.argv.push('--reset-sessions');
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   });
 
@@ -352,7 +352,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance

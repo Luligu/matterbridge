@@ -554,9 +554,9 @@ export async function destroyMatterbridgeEnvironment(
  *
  * @param {Matterbridge} matterbridge The matterbridge instance to destroy.
  * @param {number} cleanupPause The pause duration to wait for the cleanup to complete in milliseconds (default 10ms).
- * @param {number} destroyPause The pause duration to wait after cleanup before destroying the instance in milliseconds (default 250ms).
+ * @param {number} destroyPause The pause duration to wait after cleanup before destroying the instance in milliseconds (default 10ms).
  */
-export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: number = 10, destroyPause: number = 250): Promise<void> {
+export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: number = 10, destroyPause: number = 10): Promise<void> {
   // Cleanup the Matterbridge instance
   // @ts-expect-error - accessing private member for testing
   await matterbridge.cleanup('destroying instance...', false, cleanupPause);

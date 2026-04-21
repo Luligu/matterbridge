@@ -759,6 +759,6 @@ describe('Matterbridge frontend express with http', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
+    // await closeMdnsInstance(matterbridge);
   }, 60000);
 });

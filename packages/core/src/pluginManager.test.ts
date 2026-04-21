@@ -1917,7 +1917,7 @@ describe('PluginManager', () => {
 
   test('Matterbridge.destroyInstance()', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 250, 500);
+    await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);

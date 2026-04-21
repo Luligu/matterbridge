@@ -1150,6 +1150,6 @@ describe('Matterbridge frontend', () => {
     expect((frontend as any).webSocketServer).toBeUndefined();
 
     // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
+    // await closeMdnsInstance(matterbridge);
   });
 });

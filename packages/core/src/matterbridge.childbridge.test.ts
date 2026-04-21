@@ -492,7 +492,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
       expect(plugin.serverNode).toBeDefined();
     }
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance
