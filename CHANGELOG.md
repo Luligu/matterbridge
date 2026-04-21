@@ -60,6 +60,10 @@ These classes will run as threads in the next releases:
 - [endpoint]: Remove undefined attributes from MatterbridgeEndpoint.forEachAttribute().
 - [devcontainer]: Add `Claude Code for VS Code extension` to Dev Container.
 
+### Added
+
+- [docker]: Add script to [run two instances of matterbridge](README-DOCKER.md#how-to-run-a-double-instance-of-matterbridge) (edge case when you need two instances of a plugin).
+
 ### Changed
 
 - [package]: Update dependencies.
