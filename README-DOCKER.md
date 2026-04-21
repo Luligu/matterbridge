@@ -127,6 +127,10 @@ If you override the command, always start it with `matterbridge --docker`.
 In edge cases when you need a double instance of a matterbridge plugin (like for zigbee2mqtt when you have two mqtt brokers), you can run a double instance of matterbridge using the profiles.
 
 ```bash
+cd ~
+mkdir -p ~/matterbridge-one
+mkdir -p ~/matterbridge-two
+sudo chown -R $USER:$USER ~/matterbridge-one ~/matterbridge-two
 sudo docker pull luligu/matterbridge:latest
 sudo docker stop matterbridge-one 2>/dev/null
 sudo docker rm matterbridge-one 2>/dev/null
