@@ -404,6 +404,10 @@ Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum.
 
 Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices.
 
+### [Roomba](https://github.com/Rashed97/matterbridge-roomba)
+
+Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabric via their local MQTT broker and APIs.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
