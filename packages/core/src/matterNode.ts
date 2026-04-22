@@ -32,6 +32,7 @@ import path from 'node:path';
 
 // @matter
 import {
+  Crypto,
   Diagnostic,
   Environment,
   LogFormat as MatterLogFormat,
@@ -47,7 +48,7 @@ import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceCertification, ExposedFabricInformation, MdnsService } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
@@ -634,6 +635,18 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
     const storeId = await this.matterStorageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
+
+    // Validate the passcode
+    if (passcode < 0 || passcode > 99999999) {
+      this.log.warn(`Invalid passcode ${passcode} for server node ${storeId}. Passcode must be between 0 and 99999999. Generating a random passcode...`);
+      passcode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
+    }
+
+    // Validate the discriminator
+    if (discriminator < 0 || discriminator > 0xfff) {
+      this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
+      discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
+    }
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration

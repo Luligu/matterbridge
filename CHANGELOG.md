@@ -63,6 +63,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [docker]: Add script to [run two instances of matterbridge](README-DOCKER.md#how-to-run-a-double-instance-of-matterbridge) (edge case when you need two instances of a plugin).
+- [matter]: Validate out-of-range server node passcodes and discriminators before creating the server node. Thanks Alexander Thoukydides (https://github.com/Luligu/matterbridge/issues/549).
 
 ### Changed
 

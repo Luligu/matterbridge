@@ -29,7 +29,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from './deviceManager.js';
 import { closeServerNodeStores } from './jestutils/jestMatterTest.js';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -284,6 +284,31 @@ describe('MatterNode', () => {
   test('Start matter storage', async () => {
     expect(await matter.startMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
+  });
+
+  test('should generate valid commissioning values when passcode and discriminator are out of range', async () => {
+    matter.matterStorageContext = await matter.createServerNodeContext(
+      'InvalidCommissioning',
+      'Invalid commissioning node',
+      matter.aggregatorDeviceType,
+      matter.aggregatorVendorId,
+      matter.aggregatorVendorName,
+      matter.aggregatorProductId,
+      matter.aggregatorProductName,
+    );
+
+    const invalidServerNode = await matter.createServerNode(MATTER_PORT + 1, -1, 0x1000);
+
+    expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
+    expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'Invalid passcode -1 for server node InvalidCommissioning. Passcode must be between 0 and 99999999. Generating a random passcode...',
+    );
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'Invalid discriminator 4096 for server node InvalidCommissioning. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',
+    );
+
+    await invalidServerNode.close();
   });
 
   test('Create server node for Matterbridge', async () => {
