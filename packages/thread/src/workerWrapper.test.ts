@@ -43,6 +43,7 @@ describe('WorkerWrapper', () => {
       : null;
 
     const serverClose = jest.fn();
+    const serverRequest = jest.fn();
 
     const hasParameterMock = jest.fn((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
@@ -69,6 +70,7 @@ describe('WorkerWrapper', () => {
 
     jest.unstable_mockModule('./broadcastServer.js', () => ({
       BroadcastServer: class {
+        request = serverRequest;
         close = serverClose;
         // eslint-disable-next-line @typescript-eslint/no-useless-constructor
         constructor() {}
@@ -90,6 +92,7 @@ describe('WorkerWrapper', () => {
       parentPort,
       getOnMessageHandler: () => onMessageHandler,
       hasParameterMock,
+      serverRequest,
       serverClose,
       waitImmediate,
     };
@@ -268,6 +271,34 @@ describe('WorkerWrapper', () => {
 
     expect(createSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'hi');
+  });
+
+  test('snackBar sends frontend request through the broadcast server', async () => {
+    const { WorkerWrapper, serverRequest } = await setup({
+      isMainThread: true,
+      parentPortPresent: false,
+      threadId: 0,
+      threadName: 'Ignored',
+    });
+
+    const wrapper = new WorkerWrapper('SnackBarWrapper' as unknown as ThreadNames, async () => true);
+    wrapper.snackBar('system issue', 0, 'error');
+
+    expect(serverRequest).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: 'matterbridge',
+      dst: 'frontend',
+      params: { message: 'system issue', timeout: 0, severity: 'error' },
+    });
+
+    wrapper.snackBar('default issue');
+
+    expect(serverRequest).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: 'matterbridge',
+      dst: 'frontend',
+      params: { message: 'default issue', timeout: 5, severity: 'info' },
+    });
   });
 
   test('logWorkerInfo covers worker-thread and active parentPort branches', async () => {

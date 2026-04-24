@@ -208,6 +208,17 @@ export class WorkerWrapper {
   }
 
   /**
+   * Sends a snackbar message to the parent to be displayed in the frontend, with an optional timeout and severity level.
+   *
+   * @param {string} message - The message to be displayed in the snackbar.
+   * @param {number} [timeout] - The duration in seconds for which the snackbar should be displayed. Defaults to 5 seconds.
+   * @param {'error' | 'success' | 'info' | 'warning'} [severity] - The severity level of the snackbar message. Defaults to 'info'.
+   */
+  snackBar(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
+    this.server.request({ type: 'frontend_snackbarmessage', src: 'matterbridge', dst: 'frontend', params: { message, timeout, severity } });
+  }
+
+  /**
    * Log worker information either in the worker logger or the parent logger depending on whether it's running in a worker thread or the main thread.
    *
    * @param {AnsiLogger} log - The logger instance to use for logging.

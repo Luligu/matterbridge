@@ -35,7 +35,7 @@ import { Worker, WorkerOptions } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
-import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 import type { WorkerWrapper } from './workerWrapper.js';
@@ -160,7 +160,7 @@ export class ThreadsManager {
             this.runThread(msg.params.name, msg.params.workerData, msg.params.argv, msg.params.env, msg.params.execArgv, msg.params.pipedOutput);
             this.server.respond({ ...msg, result: { success: true } });
           } catch (err) {
-            this.log.warn(`Failed to run thread ${CYAN}${msg.params.name}${db}: ${(err as Error).message}`);
+            this.log.warn(`Failed to run thread ${CYAN}${msg.params.name}${wr}: ${(err as Error).message}`);
             this.server.respond({ ...msg, result: { success: false } });
           }
           break;

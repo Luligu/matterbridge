@@ -55,6 +55,12 @@ These classes will run as threads in the next releases:
 
 ## [3.7.6] - Dev branch
 
+### Added
+
+- [threads]: Add `snackBar()` helper to `WorkerWrapper` to send snackbar messages from worker threads to the frontend.
+- [systemcheck]: Show frontend snackbar errors for unsupported Node.js versions and network configuration issues detected by the SystemCheck worker.
+- [systemcheck]: Clarify excluded network interface guidance to mention the Mdns interface setting in the frontend.
+
 ### Changed
 
 - [package]: Update dependencies.
