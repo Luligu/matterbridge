@@ -75,6 +75,8 @@ These classes will run as threads in the next releases:
 
 - [frontend]: Add clear authClientsTimeout to destroy().
 
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.4] - 2026-04-17
 
 ### Dev news
