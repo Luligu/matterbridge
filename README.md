@@ -87,9 +87,9 @@ To verify which Node.js version is currently LTS (Active), check [Node.js Releas
 
 > **Nvm is a development tool and is not supported for production**.
 
-If you don't have Docker already installed, please use this method to install Docker Engine on a Debian system: https://docs.docker.com/engine/install.
+If you don't have Docker already installed, please use this method to install **Docker Engine** on a **Debian** system: https://docs.docker.com/engine/install.
 
-If you don't have Docker already installed, please use this method to install Docker Desktop on Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
+If you don't have Docker already installed, please use this method to install **Docker Desktop** on **Windows** or **macOS**: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
 
 After that, follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
@@ -100,8 +100,6 @@ Since Matter is designed as "a universal IPv6-based communication protocol for s
 **Important:** You only need IPv6 on your local network - it doesn't matter if your internet provider doesn't provide IPv6 on the internet side (WAN).
 
 Avoid VLANs, VMs, and firewalls that block communication between the controllers and Matterbridge.
-
-To pair Matterbridge, you need a Matter-enabled controller (Apple Home, SmartThings, Google Home, Alexa, Home Assistant, etc.).
 
 > **Important:** If your local network (LAN) or Docker setup has more than one external network interface, set the `Mdns Interface` in the frontend `Settings` page to the actual LAN interface to which the controller is connected.
 
