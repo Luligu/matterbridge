@@ -36,7 +36,7 @@ import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { MATTER_STORAGE_DIR } from '@matterbridge/types';
+import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
@@ -127,6 +127,67 @@ export async function createTestEnvironment(): Promise<Environment> {
  */
 export async function destroyTestEnvironment(): Promise<void> {
   // Nothing to clean up right now
+}
+
+/**
+ * Get a mocked PlatformMatterbridge.
+ *
+ * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
+ */
+export function getPlatformMatterbridge(): PlatformMatterbridge {
+  return {
+    systemInformation: {
+      interfaceName: 'eth0',
+      macAddress: 'aa:bb:cc:dd:ee:ff',
+      ipv4Address: '',
+      ipv6Address: '',
+      osRelease: 'xx.xx.xx.xx.xx.xx',
+      nodeVersion: '22.1.10',
+      hostname: 'jest',
+      user: 'matterbridge',
+      osType: 'Linux',
+      osPlatform: 'linux',
+      osArch: 'x64',
+      totalMemory: '0 B',
+      freeMemory: '0 B',
+      systemUptime: '0s',
+      processUptime: '0s',
+      cpuUsage: '0%',
+      processCpuUsage: '0%',
+      rss: '0 B',
+      heapTotal: '0 B',
+      heapUsed: '0 B',
+    },
+    rootDirectory: HOMEDIR,
+    homeDirectory: HOMEDIR,
+    matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
+    matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
+    matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
+    globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
+    matterbridgeVersion: '3.7.5',
+    matterbridgeLatestVersion: '3.7.5',
+    matterbridgeDevVersion: '3.7.5',
+    frontendVersion: '3.7.5',
+    bridgeMode: '',
+    restartMode: '',
+    virtualMode: 'mounted_switch',
+    aggregatorVendorId: 0xfff1,
+    aggregatorVendorName: 'Matterbridge',
+    aggregatorProductId: 0x8000,
+    aggregatorProductName: 'Matterbridge Jest',
+    addBridgedEndpoint: jest.fn(async () => {
+      return Promise.resolve(true);
+    }),
+    removeBridgedEndpoint: jest.fn(async () => {
+      return Promise.resolve(true);
+    }),
+    removeAllBridgedEndpoints: jest.fn(async () => {
+      return Promise.resolve(true);
+    }),
+    addVirtualEndpoint: jest.fn(async () => {
+      return Promise.resolve();
+    }),
+  } as unknown as PlatformMatterbridge;
 }
 
 /**
