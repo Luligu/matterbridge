@@ -533,6 +533,21 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       expect(triggerFromString).toBe(true);
 
       if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // Feature-gated event with proper feature selection will not fail type checks
+        device
+          .eventsOf(
+            SwitchServer.with(
+              Switch.Feature.MomentarySwitch,
+              Switch.Feature.MomentarySwitchRelease,
+              Switch.Feature.MomentarySwitchLongPress,
+              Switch.Feature.MomentarySwitchMultiPress,
+            ).enable({
+              events: { initialPress: true, longPress: true, shortRelease: true, longRelease: true, multiPressOngoing: true, multiPressComplete: true },
+            }),
+          )
+          .initialPress.emit({ newPosition: 1 }, {} as any);
+        // @ts-expect-error intentional type-check error for feature-gated event without feature selection
+        device.eventsOf(SwitchServer).initialPress.emit({ newPosition: 1 }, {} as any);
         // @ts-expect-error intentional type-check guard for Behavior.Type event overload
         device.triggerEvent(SwitchServer, 'identify', { identifyTime: 5 }, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type payload overload
