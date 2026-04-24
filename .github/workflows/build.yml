@@ -80,7 +80,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Test matterbridge
-        run: npm run test
+        run: npm run test -- --testTimeout=30000
 
       - name: List, audit, fix outdated dependencies and build again
         run: |

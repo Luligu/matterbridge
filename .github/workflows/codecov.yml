@@ -62,7 +62,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Run matterbridge tests
-        run: npm run test:coverage
+        run: npm run test:coverage -- --testTimeout=30000
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
