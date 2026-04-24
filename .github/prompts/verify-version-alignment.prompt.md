@@ -14,6 +14,7 @@ Checks:
 - Ignore mock plugin manifests under `packages/core/src/mock/**` unless I explicitly ask for them.
 - Verify [..\.dockerbuild.json](../../.dockerbuild.json) has a `version` field equal to the root package version.
 - Verify [packages/core/src/jestutils/jestHelpers.ts](../../packages/core/src/jestutils/jestHelpers.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
+- Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have `latest` equal to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
 - Verify the Docker workflow release tags in [docker-buildx-s6-rc.yml](../workflows/docker-buildx-s6-rc.yml) and [docker-buildx-s6-rc-legacy.yml](../workflows/docker-buildx-s6-rc-legacy.yml) are coherent.
@@ -44,6 +45,7 @@ Suggested search targets:
 - [packages](../../packages)
 - [..\.dockerbuild.json](../../.dockerbuild.json)
 - [packages/core/src/jestutils/jestHelpers.ts](../../packages/core/src/jestutils/jestHelpers.ts)
+- [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts)
 - [docs/main_update.json](../../docs/main_update.json)
 - [docs/dev_update.json](../../docs/dev_update.json)
 - [docker-buildx-s6-rc.yml](../workflows/docker-buildx-s6-rc.yml)
