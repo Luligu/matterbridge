@@ -13,7 +13,7 @@ Checks:
 - Verify every real workspace package under [packages](../../packages) has the same `version` as the root package version.
 - Ignore mock plugin manifests under `packages/core/src/mock/**` unless I explicitly ask for them.
 - Verify [..\.dockerbuild.json](../../.dockerbuild.json) has a `version` field equal to the root package version.
-- Verify [packages/core/src/jestutils/jestHelpers.ts](../../packages/core/src/jestutils/jestHelpers.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
+- Verify [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
 - Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have `latest` equal to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
@@ -44,7 +44,7 @@ Suggested search targets:
 - [package.json](../../package.json)
 - [packages](../../packages)
 - [..\.dockerbuild.json](../../.dockerbuild.json)
-- [packages/core/src/jestutils/jestHelpers.ts](../../packages/core/src/jestutils/jestHelpers.ts)
+- [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts)
 - [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts)
 - [docs/main_update.json](../../docs/main_update.json)
 - [docs/dev_update.json](../../docs/dev_update.json)
