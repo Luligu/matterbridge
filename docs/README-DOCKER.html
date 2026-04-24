@@ -210,6 +210,23 @@ sudo docker run --name matterbridge \
 </code></pre>
 <p>If you override the command, always start it with <code>matterbridge --docker</code>.</p>
 <p><strong>If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param</strong>.</p>
+<h3 id="how-to-run-a-double-instance-of-matterbridge">How to run a double instance of matterbridge</h3>
+<p>In edge cases when you need a double instance of a matterbridge plugin (like for zigbee2mqtt when you have two mqtt brokers), you can run a double instance of matterbridge using the profiles.</p>
+<pre><code class="language-bash">cd ~
+mkdir -p ~/matterbridge-one
+mkdir -p ~/matterbridge-two
+sudo chown -R $USER:$USER ~/matterbridge-one ~/matterbridge-two
+sudo docker pull luligu/matterbridge:latest
+sudo docker stop matterbridge-one 2&gt;/dev/null
+sudo docker rm matterbridge-one 2&gt;/dev/null
+sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
+sudo docker stop matterbridge-two 2&gt;/dev/null
+sudo docker rm matterbridge-two 2&gt;/dev/null
+sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
+</code></pre>
+<p>The first instance (profile BrokerOne) has the frontend on port 8081 and Matter port starting at 5540.</p>
+<p>The second instance (profile BrokerTwo) has the frontend on port 8082 and Matter port starting at 5560.</p>
+<p>Both instances have healthcheck disabled.</p>
 <h3 id="run-with-docker-compose">Run with Docker Compose</h3>
 <p>The <code>docker-compose.yml</code> file is available in the <code>docker</code> directory of this repository:</p>
 <pre><code class="language-yaml">services:

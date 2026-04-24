@@ -39,7 +39,9 @@ import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import type { Frontend as FrontendType } from './frontend.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 
 const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
@@ -757,6 +759,6 @@ describe('Matterbridge frontend express with http', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance
-    await closeMdnsInstance(matterbridge);
+    // await closeMdnsInstance(matterbridge);
   }, 60000);
 });

@@ -29,7 +29,7 @@ import { Inspector, Tracker } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import { cliEmitter } from './cliEmitter.js';
-import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';

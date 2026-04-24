@@ -53,6 +53,30 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.5] - 2026-04-24
+
+### Development changes
+
+- [endpoint]: Remove undefined attributes from MatterbridgeEndpoint.forEachAttribute().
+- [devcontainer]: Add `Claude Code for VS Code extension` to Dev Container.
+
+### Added
+
+- [docker]: Add script to [run two instances of matterbridge](README-DOCKER.md#how-to-run-a-double-instance-of-matterbridge) (edge case when you need two instances of a plugin).
+- [matter]: Validate out-of-range server node passcodes and discriminators before creating the server node. Thanks Alexander Thoukydides (https://github.com/Luligu/matterbridge/issues/549).
+
+### Changed
+
+- [package]: Update dependencies.
+- [test]: Strengthen single-class device attribute assertions by aligning `forEachAttribute` checks with the base test model.
+- [test]: Refactor `jestutils` module.
+
+### Fixed
+
+- [frontend]: Add clear authClientsTimeout to destroy().
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.4] - 2026-04-17
 
 ### Dev news

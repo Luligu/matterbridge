@@ -277,21 +277,21 @@ export function getSemtag(semtag: Semtag, label: string | null | undefined = und
  * @param {Endpoint} endpoint - The endpoint to retrieve the features from.
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to retrieve the features for.
  *
- * @returns {Record<string, boolean | undefined>} The features for the specified behavior.
+ * @returns {Partial<Record<string, boolean>>} The features for the specified behavior.
  *
  * @remarks Use with:
  * ```typescript
  *     expect(featuresFor(device, 'powerSource').wired).toBe(true);
  * ```
  */
-export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | undefined> {
+export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Partial<Record<string, boolean>> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
     endpoint.log?.error(`featuresFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return {};
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (endpoint.behaviors.supported as any)[lowercaseFirstLetter(behaviorId)]['cluster']['supportedFeatures'];
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)] as ClusterBehavior.Type | undefined;
+  return supportedBehavior?.cluster.supportedFeatures ?? {};
 }
 
 /**
@@ -308,6 +308,8 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  *     internal?.enableTimeout = true;
  * ```
  */
+export async function internalFor<T extends Behavior.Type>(endpoint: MatterbridgeEndpoint, cluster: T): Promise<InstanceType<T['Internal']> | undefined>;
+export async function internalFor<T extends object = Record<string, unknown>>(endpoint: MatterbridgeEndpoint, cluster: ClusterType | ClusterId | string): Promise<T | undefined>;
 export async function internalFor<T extends object = Record<string, unknown>>(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
@@ -317,7 +319,47 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     endpoint.log?.error(`internalFor error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
     return undefined;
   }
-  return endpoint.act((agent) => (agent as unknown as Record<string, { internal?: T } | undefined>)[behaviorId]?.internal);
+  const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
+  if (!supportedBehavior) {
+    // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
+    return undefined;
+  }
+  return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;
+}
+
+/**
+ * Returns the options for a given behavior type.
+ *
+ * @param {T} type - The behavior type.
+ * @param {Behavior.Options<T>} options - The options for the behavior type.
+ * @returns {Behavior.Options<T>} The options for the behavior type.
+ */
+export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>): Behavior.Options<T> {
+  return options;
+}
+
+/**
+ * Returns the configured defaults for a given behavior type without accessing endpoint initialization state.
+ *
+ * @param {T} type - The behavior type.
+ * @param {Behavior.Options<T> | undefined} options - The configured options for the behavior type.
+ * @returns {Partial<Behavior.Options<T>> | undefined} The subset of configured options that are declared as behavior defaults.
+ */
+export function defaultFor<T extends Behavior.Type>(type: T, options?: Behavior.Options<T>): Partial<Behavior.Options<T>> | undefined {
+  let defaults: Record<string, unknown> | undefined;
+
+  if (options) {
+    for (const key in type.defaults) {
+      if (key in options) {
+        if (!defaults) {
+          defaults = {};
+        }
+        defaults[key] = (options as Record<string, unknown>)[key];
+      }
+    }
+  }
+
+  return defaults as Partial<Behavior.Options<T>> | undefined;
 }
 
 /**
@@ -663,17 +705,6 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
     await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
   }
-}
-
-/**
- * Returns the options for a given behavior type.
- *
- * @param {T} type - The behavior type.
- * @param {Behavior.Options<T>} options - The options for the behavior type.
- * @returns {Behavior.Options<T>} The options for the behavior type.
- */
-export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.Options<T>): Behavior.Options<T> {
-  return options;
 }
 
 /**

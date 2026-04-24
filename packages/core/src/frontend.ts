@@ -108,6 +108,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private listening = false;
   storedPassword: string | undefined = undefined;
   authClients = new Set<string>();
+  authClientsTimeout: NodeJS.Timeout | undefined = undefined;
 
   private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -152,6 +153,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Stops the frontend broadcast server and releases resources.
    */
   destroy(): void {
+    clearTimeout(this.authClientsTimeout);
+    this.authClientsTimeout = undefined;
     this.server.off('broadcast_message', this.broadcastMsgHandler.bind(this));
     this.server.close();
   }
@@ -375,7 +378,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (this.webSocketServer?.clients.size === 0) {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
-          setTimeout(() => {
+          clearTimeout(this.authClientsTimeout);
+          this.authClientsTimeout = setTimeout(() => {
+            this.authClientsTimeout = undefined;
             this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
             if (this.webSocketServer?.clients.size === 0) this.authClients.clear();
           }, 250).unref();

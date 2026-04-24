@@ -23,7 +23,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from './deviceManager.js';
-import { originalProcessArgv, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge } from './matterbridge.js';
 import { temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

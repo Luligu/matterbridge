@@ -86,7 +86,7 @@ import {
   batteryStorage,
   heatPump,
 } from './matterbridgeDeviceTypes.js';
-import { setupTest } from './jestutils/jestHelpers.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 
 await setupTest(NAME, false);
 

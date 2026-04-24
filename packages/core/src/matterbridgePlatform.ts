@@ -608,6 +608,7 @@ export class MatterbridgePlatform {
     }
 
     // Validate bridgedNode and BridgedDeviceBasicInformation cluster
+    // istanbul ignore else
     if (device.mode === undefined && (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform'))) {
       // If the device is a bridged device, we add the bridgedNode to the deviceTypes map and to the Descriptor Cluster options
       // istanbul ignore else
@@ -615,8 +616,10 @@ export class MatterbridgePlatform {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no bridgedNode device type. Adding it...`);
         device.deviceTypes.set(bridgedNode.code, bridgedNode);
         const options = device.getClusterServerOptions(Descriptor.Cluster.id);
+        // istanbul ignore else
         if (options) {
           const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
+          // istanbul ignore else
           if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
             deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
           }

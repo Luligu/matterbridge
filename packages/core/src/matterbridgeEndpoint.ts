@@ -132,6 +132,7 @@ import {
   addUserLabel,
   checkNotLatinCharacters,
   createUniqueId,
+  defaultFor,
   featuresFor,
   generateUniqueId,
   getApparentElectricalPowerMeasurementClusterServer,
@@ -474,9 +475,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   hasAttributeServer(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string): boolean {
     const behavior = getBehavior(this, cluster);
     if (!behavior || !this.behaviors.supported[behavior.id]) return false;
-    const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
-    const defaults = this.behaviors.defaultsFor(behavior) as Record<string, boolean | number | bigint | string | object | null>;
-    return lowercaseFirstLetter(attribute) in options || lowercaseFirstLetter(attribute) in defaults;
+    const normalizedAttribute = lowercaseFirstLetter(attribute);
+    const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    const defaults = defaultFor(behavior, options) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    return (options !== undefined && normalizedAttribute in options) || (defaults !== undefined && normalizedAttribute in defaults);
   }
 
   /**
@@ -1607,13 +1609,15 @@ export class MatterbridgeEndpoint extends Endpoint {
         // Skip if the behavior has no associated cluster (i.e. matterbridge server)
         const clusterId = getClusterId(this, clusterName);
         if (clusterId === undefined) {
-          // this.log.debug(`***forEachAttribute: cluster ${clusterName} not found`);
           continue;
         }
         // Skip if the attribute is not present in the ClusterBehavior.Type. Also skip if the attribute it is an internal state.
         const attributeId = getAttributeId(this, clusterName, attributeName);
         if (attributeId === undefined) {
-          // this.log.debug(`***forEachAttribute: attribute ${clusterName}.${attributeName} not found`);
+          continue;
+        }
+        // Skip if the attribute value is undefined, cause it means that the attribute is not present in the device state.
+        if (attributeValue === undefined) {
           continue;
         }
         callback(clusterName, clusterId, attributeName, attributeId, attributeValue);
@@ -2399,7 +2403,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createLevelControlClusterServer(currentLevel: number = 254, onLevel: number | null = null): this {
-    this.behaviors.require(MatterbridgeLevelControlServer, {
+    this.behaviors.require(MatterbridgeLevelControlServer.with(), {
       currentLevel,
       onLevel,
       options: {

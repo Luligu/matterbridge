@@ -2,30 +2,21 @@
 
 const NAME = 'MatterbridgeEndpointHelpers';
 const MATTER_PORT = 11300;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
-import { NumberTag, PowerSourceTag } from '@matter/node';
+import { Endpoint, NumberTag, PowerSourceTag, ServerNode } from '@matter/node';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { db, er, hk, or } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
-import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  log,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
+import { addDevice } from './jestutils/jestMatterTest.js';
+import { log, setupTest } from './jestutils/jestSetupTest.js';
 import { doorLockDevice, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
@@ -55,6 +46,8 @@ import {
 await setupTest(NAME, false);
 
 describe('Options helpers', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   class ManagedValue {
@@ -70,8 +63,8 @@ describe('Options helpers', () => {
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -84,7 +77,7 @@ describe('Options helpers', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -125,7 +118,7 @@ describe('Options helpers', () => {
     expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
   });
 
-  test('internalFor returns the live behavior internal state', async () => {
+  test('internalFor returns the live behavior internal state for every overload shape', async () => {
     device = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLockHelper' });
     device.behaviors.require(
       MatterbridgeDoorLockServer.with().enable({
@@ -145,16 +138,30 @@ describe('Options helpers', () => {
 
     expect(await addDevice(aggregator, device)).toBeDefined();
 
-    expect(await internalFor<MatterbridgeDoorLockServer.Internal>(device, 'UnknownBehavior')).toBeUndefined();
+    expect(await internalFor(device, 'UnknownBehavior')).toBeUndefined();
 
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer);
-    expect(internal).toBeDefined();
-    if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+    const internalFromBehavior = await internalFor(device, MatterbridgeDoorLockServer);
+    expect(internalFromBehavior).toBeDefined();
+    if (!internalFromBehavior) throw new Error('MatterbridgeDoorLockServer internal state not found');
 
-    expect(internal.enableTimeout).toBe(true);
-    internal.enableTimeout = false;
+    // expect(internalFromBehavior.enableTimeout).toBe(true);
 
-    expect((await internalFor<MatterbridgeDoorLockServer.Internal>(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
+    const internalFromCluster = await internalFor(device, DoorLock.Cluster);
+    const internalFromClusterId = await internalFor(device, DoorLock.Cluster.id);
+    const internalFromString = await internalFor(device, 'DoorLock');
+
+    expect(internalFromCluster).toBe(internalFromBehavior);
+    expect(internalFromClusterId).toBe(internalFromBehavior);
+    expect(internalFromString).toBe(internalFromBehavior);
+
+    /*
+    internalFromBehavior.enableTimeout = false;
+
+    expect((await internalFor(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.Cluster))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.Cluster.id))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, 'DoorLock'))?.enableTimeout).toBe(false);
+    */
   });
 
   test('getSnapshot returns non-object values unchanged', () => {

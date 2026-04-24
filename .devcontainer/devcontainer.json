@@ -78,6 +78,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "ms-azuretools.vscode-containers",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
+        "anthropic.claude-code",
         "github.copilot-chat",
         "github.vscode-github-actions",
         "github.vscode-pull-request-github"

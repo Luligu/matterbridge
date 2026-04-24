@@ -1,7 +1,8 @@
 // src\matterbridgeEndpoint-default.test.ts
 
-const MATTER_PORT = 11200;
 const NAME = 'EndpointDefault';
+const MATTER_PORT = 11200;
+const MATTER_CREATE_ONLY = true;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = [
@@ -25,6 +26,7 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { Endpoint, ServerNode } from '@matter/node';
 import {
   AirQualityServer,
   BooleanStateServer,
@@ -43,6 +45,8 @@ import {
   RadonConcentrationMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -83,22 +87,18 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
-import { deepCopy } from '@matterbridge/utils/deep-copy';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/jestFlushAsync.js';
 import {
-  addDevice,
-  aggregator,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
-  loggerLogSpy,
   matterbridge,
-  setDebug,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { addDevice } from './jestutils/jestMatterTest.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -140,10 +140,13 @@ import {
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
+
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   }, 30000);
 
   beforeEach(async () => {
@@ -155,7 +158,7 @@ describe('Matterbridge ' + NAME, () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await stopMatterbridgeEnvironment();
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
     await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
@@ -1379,6 +1382,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
+    expect(featuresFor(device, FanControlServer)).toEqual({});
+    expect(featuresFor(device, FanControl.Complete)).toEqual({});
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
     expect(featuresFor(device, 'FanControl')).toEqual({});
 
     await add(device);
@@ -1400,6 +1406,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(true);
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
     expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: true, multiSpeed: true, rocking: false, step: true, wind: false });
 
     await add(device);
@@ -1422,6 +1431,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(true);
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
     expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: true, auto: true, multiSpeed: true, rocking: true, step: true, wind: true });
 
     await add(device);
@@ -1448,6 +1460,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(false);
+    expect(featuresFor(device, FanControlServer)).toEqual({});
+    expect(featuresFor(device, FanControl.Complete)).toEqual({});
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
     expect(featuresFor(device, 'FanControl')).toEqual({});
 
     await add(device);

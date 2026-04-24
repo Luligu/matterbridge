@@ -1087,7 +1087,7 @@ export type CommandHandlerDataMap = {
     command: 'sendKey';
     request: KeypadInput.SendKeyRequest;
     cluster: 'keypadInput';
-    attributes: ClusterAttributeValues<(typeof KeypadInput.Complete)['attributes']>;
+    attributes: {};
     endpoint: MatterbridgeEndpoint;
   };
 

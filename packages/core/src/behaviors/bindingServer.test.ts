@@ -2,26 +2,19 @@
 
 const NAME = 'BindingServer';
 const MATTER_PORT = 11400;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
 import { EndpointNumber, NodeId } from '@matter/main/types';
+import { Endpoint, ServerNode } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 
-import {
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from '../jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { onOffSwitch } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';
@@ -32,12 +25,14 @@ import { MatterbridgeOnOffServer } from './onOffServer.js';
 await setupTest(NAME, false);
 
 describe('Client clusters and behaviors', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -50,7 +45,7 @@ describe('Client clusters and behaviors', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });

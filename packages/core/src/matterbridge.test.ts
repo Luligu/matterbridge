@@ -1,8 +1,8 @@
 // src\matterbridge.test.ts
 
-const MATTER_PORT = 6000;
 const NAME = 'MatterbridgeGlobal';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 6000;
 
 process.argv = [
   'node',
@@ -25,6 +25,7 @@ process.argv = [
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 
+import { rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -46,12 +47,16 @@ import {
   requestBroadcastServerSpy,
   respondBroadcastServerSpy,
 } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
@@ -358,6 +363,22 @@ describe('Matterbridge', () => {
     });
     await Promise.resolve();
   }, 60000);
+
+  test('should generate valid commissioning values when passcode and discriminator are out of range', async () => {
+    expect(matterbridge.matterbridgeContext).toBeDefined();
+    if (!matterbridge.matterbridgeContext) return;
+
+    const invalidServerNode = await (matterbridge as any).createServerNode(matterbridge.matterbridgeContext, MATTER_PORT + 1, -1, 0x1000);
+
+    expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
+    expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
+    expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');
+    expect(loggerWarnSpy).toHaveBeenCalledWith(
+      'Invalid discriminator 4096 for server node Matterbridge. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',
+    );
+
+    await invalidServerNode.close();
+  });
 
   test('hasParameter("debug") should return false', async () => {
     expect(hasParameter('debug')).toBeFalsy();

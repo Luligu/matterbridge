@@ -1,29 +1,27 @@
-/* eslint-disable jest/no-standalone-expect */
 // src/closurePanel.test.ts
+/* eslint-disable jest/no-standalone-expect */
 
-const MATTER_PORT = 8023;
 const NAME = 'ClosurePanel';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 8023;
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
+import { stringify } from 'node-ansi-logger';
 
 import { ClosureDimension } from '../clusters/closure-dimension.js';
+// Jest utilities for Matter testing
 import {
   addDevice,
   aggregator,
+  createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
+  flushServerNode,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterTest.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { ClosurePanel } from './closurePanel.js';
 
@@ -35,29 +33,32 @@ describe('Matterbridge ' + NAME, () => {
   let device2: ClosurePanel;
 
   beforeAll(async () => {
-    createTestEnvironment(NAME, MATTER_CREATE_ONLY);
+    // Setup the Matter test environment
+    await createTestEnvironment();
   });
 
   beforeEach(async () => {
     jest.clearAllMocks();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {
-    await destroyTestEnvironment(MATTER_CREATE_ONLY);
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
     jest.restoreAllMocks();
   });
 
-  test('create and start the server node', async () => {
-    await startServerNode(NAME, MATTER_PORT, closurePanel.code, MATTER_CREATE_ONLY);
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, closurePanel.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-  }, 10000);
+  });
 
   test('create a closure panel device', async () => {
     device = new ClosurePanel('Closure Panel Test Device', 'CP123456', { stepValue: 100 });
@@ -121,18 +122,79 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('device forEachAttribute', async () => {
-    const attributes: { clusterName: string; clusterId: number; attributeName: string; attributeId: number; attributeValue: any }[] = [];
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+
+      expect(clusterName).toBeDefined();
       expect(typeof clusterName).toBe('string');
+      expect(clusterName.length).toBeGreaterThanOrEqual(1);
+
+      expect(clusterId).toBeDefined();
       expect(typeof clusterId).toBe('number');
+      expect(clusterId).toBeGreaterThanOrEqual(1);
+
+      expect(attributeName).toBeDefined();
       expect(typeof attributeName).toBe('string');
+      expect(attributeName.length).toBeGreaterThanOrEqual(1);
+
+      expect(attributeId).toBeDefined();
       expect(typeof attributeId).toBe('number');
-      attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      expect(attributeId).toBeGreaterThanOrEqual(0);
+
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
     });
-    expect(attributes.length).toBe(19);
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .sort(),
+    ).toEqual(
+      [
+        'closureDimension(0x105).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'closureDimension(0x105).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'closureDimension(0x105).clusterRevision(0xfffd)=1',
+        'closureDimension(0x105).currentState(0x0)={ position: 5100, latch: undefined, speed: 1 }',
+        'closureDimension(0x105).featureMap(0xfffc)={ positioning: true, motionLatching: false, unit: false, limitation: false, speed: false, translation: false, rotation: false, modulation: false }',
+        'closureDimension(0x105).generatedCommandList(0xfff8)=[  ]',
+        'closureDimension(0x105).resolution(0x2)=1',
+        'closureDimension(0x105).stepValue(0x3)=100',
+        'closureDimension(0x105).targetState(0x1)={ position: 5100, latch: true, speed: 2 }',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 561, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 261 ]',
+      ].sort(),
+    );
   });
-  test('close the server node', async () => {
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
-    await stopServerNode(server, MATTER_CREATE_ONLY);
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode();
+    else await stopServerNode();
   });
 });

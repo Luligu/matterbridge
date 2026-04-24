@@ -24,7 +24,7 @@ import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from './deviceManager.js';
-import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestHelpers.js';
+import { loggerInfoSpy, originalProcessArgv, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridgedNode, occupancySensor, onOffOutlet, powerSource, pressureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';

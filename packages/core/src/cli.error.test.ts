@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import { Inspector, Tracker } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
-import { loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 
 const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {

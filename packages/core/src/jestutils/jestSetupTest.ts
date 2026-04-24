@@ -1,9 +1,9 @@
 /**
- * @description This file contains the Jest base helpers.
- * @file src/helpers.test.ts
+ * @description This file contains the Jest Setup helpers.
+ * @file src/jestSetupTest.ts
  * @author Luca Liguori
- * @created 2025-09-03
- * @version 1.0.14
+ * @created 2026-04-19
+ * @version 1.0.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,13 +21,14 @@
  * limitations under the License.
  */
 
-import { rmSync } from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import type { jest } from '@jest/globals';
-// Imports from node-ansi-logger
+// @matterbridge
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
+// Freeze the original process arguments and environment variables to allow resetting them in tests
 export const originalProcessArgv = Object.freeze([...process.argv]);
 export const originalProcessEnv = Object.freeze({ ...process.env } as Record<string, string | undefined>);
 
@@ -42,13 +43,14 @@ export let loggerFatalSpy: jest.SpiedFunction<typeof AnsiLogger.prototype.fatal>
 
 // Spy on console methods
 export let consoleLogSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleDebugSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleInfoSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleWarnSpy: jest.SpiedFunction<typeof console.log>;
-export let consoleErrorSpy: jest.SpiedFunction<typeof console.log>;
+export let consoleDebugSpy: jest.SpiedFunction<typeof console.debug>;
+export let consoleInfoSpy: jest.SpiedFunction<typeof console.info>;
+export let consoleWarnSpy: jest.SpiedFunction<typeof console.warn>;
+export let consoleErrorSpy: jest.SpiedFunction<typeof console.error>;
 
 export let NAME: string;
 export let HOMEDIR: string;
+
 export let log: AnsiLogger;
 
 /**
@@ -73,13 +75,13 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
   HOMEDIR = path.join('.cache', 'jest', name);
-  process.argv = ['jest', name];
 
-  // Create the AnsiLogger instance
-  log = new AnsiLogger({ logName: 'Jest', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
+  // Create the exported log
+  log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   // Cleanup any existing home directory
   rmSync(HOMEDIR, { recursive: true, force: true });
+  mkdirSync(HOMEDIR, { recursive: true });
 
   const { jest } = await import('@jest/globals');
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');

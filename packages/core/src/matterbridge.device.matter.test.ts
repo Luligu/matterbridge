@@ -31,7 +31,8 @@ import { Environment } from '@matter/general';
 import { dev, plg } from '@matterbridge/types';
 import { db, er, LogLevel } from 'node-ansi-logger';
 
-import { closeMdnsInstance, destroyInstance, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 
 // Setup the test environment

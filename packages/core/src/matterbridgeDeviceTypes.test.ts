@@ -88,7 +88,7 @@ import {
   heatPump,
   DeviceClasses,
 } from './matterbridgeDeviceTypes.js';
-import { setupTest } from './jestutils/jestHelpers.js';
+import { setupTest } from './jestutils/jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

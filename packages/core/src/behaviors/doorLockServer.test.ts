@@ -2,27 +2,20 @@
 
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
+import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
+import { Endpoint, ServerNode } from '@matter/main/node';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { StatusResponse } from '@matter/types/common';
 import { FabricIndex, NodeId } from '@matter/types/datatype';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
-import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from '../jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
+import { addDevice } from '../jestutils/jestMatterTest.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { doorLockDevice } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { internalFor } from '../matterbridgeEndpointHelpers.js';
@@ -32,6 +25,8 @@ import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 await setupTest(NAME, false);
 
 describe('Client clusters and behaviors', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let doorLock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
 
@@ -39,8 +34,8 @@ describe('Client clusters and behaviors', () => {
     // Set log level to debug for better visibility during tests
     MatterbridgeEndpoint.logLevel = LogLevel.DEBUG;
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -53,7 +48,7 @@ describe('Client clusters and behaviors', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(10, 10, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -87,7 +82,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Auto relock', async () => {
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(doorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(doorLock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
     internal.enableTimeout = true;
@@ -107,7 +102,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Unlock commands without timeout scheduling', async () => {
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(doorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(doorLock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
 
@@ -165,7 +160,7 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
     const modifiedUser = await userPinDoorLock.act((agent) => agent.get(MatterbridgeDoorLockServer).getUser({ userIndex: 1 }));
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     expect(createdUser).toMatchObject({
       userIndex: 1,
@@ -235,7 +230,7 @@ describe('Client clusters and behaviors', () => {
       userStatus: null,
       userType: null,
     });
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearCredential', { credential: null });
     const clearedCredential = await userPinDoorLock.act((agent) =>
@@ -280,7 +275,7 @@ describe('Client clusters and behaviors', () => {
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearUser', { userIndex: 1 });
     const clearedUser = await userPinDoorLock.act((agent) => agent.get(MatterbridgeDoorLockServer).getUser({ userIndex: 1 }));
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(userPinDoorLock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(userPinDoorLock, MatterbridgeDoorLockServer);
 
     expect(clearedUser).toMatchObject({
       userIndex: 1,

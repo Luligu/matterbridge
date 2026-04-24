@@ -72,8 +72,7 @@ jest.unstable_mockModule('node:child_process', async () => {
 const childprocessModule = await import('node:child_process');
 const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
 
-import { exec } from 'node:child_process';
-import fs, { mkdirSync, PathLike, unlinkSync, writeFileSync } from 'node:fs';
+import fs, { mkdirSync, PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -86,9 +85,10 @@ import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager as DeviceManagerType } from './deviceManager.js';
-import { requestBroadcastServerSpy, respondBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, destroyInstance, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestHelpers.js';
+import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { configurePluginSpy } from './jestutils/jestPluginManagerSpy.js';
+import { loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import type { Matterbridge as MatterbridgeType } from './matterbridge.js';
 import type { Plugin, PluginManager as PluginManagerType } from './pluginManager.js';
 
@@ -98,6 +98,8 @@ const { DeviceManager } = await import('./deviceManager.js');
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
 describe('Matterbridge mocked', () => {
   let matterbridge: MatterbridgeType;
@@ -119,7 +121,7 @@ describe('Matterbridge mocked', () => {
 
   afterEach(async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 1, 1);
+    await destroyInstance(matterbridge, 0, 0);
 
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
@@ -285,7 +287,7 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
 
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect((matterbridge as any).systemCheckTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeUndefined();
     expect((matterbridge as any).checkUpdateInterval).toBeUndefined();
@@ -887,7 +889,6 @@ describe('Matterbridge mocked', () => {
       '-debug',
     ];
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
-    // await destroyInstance(matterbridge, 10, 10);
   }, 10000);
 
   test('Matterbridge.initialize() reset', async () => {
@@ -901,7 +902,7 @@ describe('Matterbridge mocked', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Reset commissioning for plugin ${plg}matterbridge-mock1${nt} done! Remove the device from the controller.`);
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
 
     // Reset the process.argv to simulate reset of not registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
@@ -1727,7 +1728,7 @@ describe('Matterbridge mocked', () => {
     startServerNodeSpy.mockRestore();
     configurePluginSpy.mockRestore();
     // Destroy the matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
   }, 10000);
 
   test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {

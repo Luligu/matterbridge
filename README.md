@@ -77,6 +77,10 @@ https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/
 
 To run Matterbridge, you need either a [Node.js](https://nodejs.org/en) environment or [Docker](https://docs.docker.com/get-started/get-docker/) installed on your system.
 
+I suggest using Docker for its simplicity.
+
+### Node.js Prerequisites
+
 If you don't have Node.js already installed, please use this method to install it on a Debian system: https://github.com/nodesource/distributions.
 
 The supported versions of Node.js are >=20.19.0, >=22.13.0, and 24. Please **install Node.js 24 LTS**. Don't use Node.js Current; always use the Node.js LTS releases.
@@ -87,13 +91,15 @@ To verify which Node.js version is currently LTS (Active), check [Node.js Releas
 
 > **Nvm is a development tool and is not supported for production**.
 
-If you don't have Docker already installed, please use this method to install Docker Engine on a Debian system: https://docs.docker.com/engine/install.
+### Docker Prerequisites
 
-If you don't have Docker already installed, please use this method to install Docker Desktop on Windows or macOS: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
+If you don't have Docker already installed, please use this method to install **Docker Engine** on a **Debian** system: https://docs.docker.com/engine/install.
+
+If you don't have Docker already installed, please use this method to install **Docker Desktop** on **Windows** or **macOS**: https://docs.docker.com/get-started/introduction/get-docker-desktop/.
 
 After that, follow the guidelines for the [Docker configurations](README-DOCKER.md).
 
-I suggest using Docker for its simplicity.
+### Global Prerequisites
 
 Since Matter is designed as "a universal IPv6-based communication protocol for smart home devices" (per the Matter specifications), **IPv6 must be enabled on your local network (LAN)**.
 
@@ -101,7 +107,7 @@ Since Matter is designed as "a universal IPv6-based communication protocol for s
 
 Avoid VLANs, VMs, and firewalls that block communication between the controllers and Matterbridge.
 
-To pair Matterbridge, you need a Matter-enabled controller (Apple Home, SmartThings, Google Home, Alexa, Home Assistant, etc.).
+> **Important:** If your local network (LAN) or Docker setup has more than one external network interface, set the `Mdns Interface` in the frontend `Settings` page to the actual LAN interface to which the controller is connected.
 
 ## Installation with Node.Js
 
@@ -329,7 +335,20 @@ Features:
 - Five preconfigured modes: Home, Away, Night, Vacation, Off.
 - Five preconfigured setters: Home, Away, Night, Vacation, Off.
 - Four preconfigured triggers: Home, Away, Night, Off.
-- Five preconfigured alerts: Home, Away, Night, Off, Master.
+- Five preconfigured alerts: Home, Away, Night, 24h, Master.
+
+### iRobot
+
+<a href="https://github.com/Luligu/matterbridge-irobot">
+  <img src="https://matterbridge.io/assets/irobot.svg" alt="iRobot logo" width="100" />
+</a>
+
+Matterbridge iRobot plugin allows you to expose iRobot devices to Matter.
+
+Features:
+
+- device retrieval from the iRobot cloud
+- automatic discovery of iRobot devices on the local network
 
 ### Accessory platform example
 
@@ -403,6 +422,10 @@ Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum.
 ### [Matterbridge Litetouch 2000](https://github.com/signal15/matterbridge-litetouch)
 
 Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices.
+
+### [Roomba](https://github.com/Rashed97/matterbridge-roomba)
+
+Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabric via their local MQTT broker and APIs.
 
 ## How to install and add a plugin with the frontend (best option)
 

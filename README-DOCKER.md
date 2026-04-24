@@ -122,6 +122,30 @@ If you override the command, always start it with `matterbridge --docker`.
 
 **If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param**.
 
+### How to run a double instance of matterbridge
+
+In edge cases when you need a double instance of a matterbridge plugin (like for zigbee2mqtt when you have two mqtt brokers), you can run a double instance of matterbridge using the profiles.
+
+```bash
+cd ~
+mkdir -p ~/matterbridge-one
+mkdir -p ~/matterbridge-two
+sudo chown -R $USER:$USER ~/matterbridge-one ~/matterbridge-two
+sudo docker pull luligu/matterbridge:latest
+sudo docker stop matterbridge-one 2>/dev/null
+sudo docker rm matterbridge-one 2>/dev/null
+sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
+sudo docker stop matterbridge-two 2>/dev/null
+sudo docker rm matterbridge-two 2>/dev/null
+sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
+```
+
+The first instance (profile BrokerOne) has the frontend on port 8081 and Matter port starting at 5540.
+
+The second instance (profile BrokerTwo) has the frontend on port 8082 and Matter port starting at 5560.
+
+Both instances have healthcheck disabled.
+
 ### Run with Docker Compose
 
 The `docker-compose.yml` file is available in the `docker` directory of this repository:

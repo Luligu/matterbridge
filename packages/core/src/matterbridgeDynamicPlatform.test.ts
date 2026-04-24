@@ -4,7 +4,8 @@ const NAME = 'MatterbridgeDynamicPlatform';
 
 import { jest } from '@jest/globals';
 
-import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, log, matterbridge, setupTest } from './jestutils/jestHelpers.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, matterbridge } from './jestutils/jestMatterbridgeTest.js';
+import { log, setupTest } from './jestutils/jestSetupTest.js';
 import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 
 // Setup the test environment
@@ -13,7 +14,7 @@ await setupTest(NAME, false);
 describe('Matterbridge dynamic platform', () => {
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
+    await createMatterbridgeEnvironment();
   });
 
   beforeEach(async () => {

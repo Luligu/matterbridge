@@ -2603,6 +2603,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
     this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
+    // Validate the passcode   
+    if(passcode < 0 || passcode > 99999999) {
+      this.log.warn(`Invalid passcode ${passcode} for server node ${storeId}. Passcode must be between 0 and 99999999. Generating a random passcode...`);
+      passcode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
+    }
+
+    // Validate the discriminator
+    if(discriminator < 0 || discriminator > 0xFFF) {
+      this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
+      discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
+    }
+    
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */

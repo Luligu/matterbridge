@@ -4,7 +4,7 @@ const NAME = 'ClosureControlCluster';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { ClosureControl } from './closure-control.js';
 
 // Setup the test environment

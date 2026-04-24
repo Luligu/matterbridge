@@ -547,19 +547,19 @@ describe('Utils test', () => {
   }, 60000);
 
   it('should get the latest dev version', async () => {
-    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 1000);
+    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 10000);
     expect(devVersion).toBeDefined();
     expect(typeof devVersion).toBe('string');
     // console.log('Latest version tag dev:', devVersion);
   }, 60000);
 
   it('should get version for tag latest and dev', async () => {
-    const version = await getNpmPackageVersion('matterbridge', 'latest', 1000);
+    const version = await getNpmPackageVersion('matterbridge', 'latest', 10000);
     expect(version).toBeDefined();
     expect(typeof version).toBe('string');
     // console.log('Latest version:', version);
 
-    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 1000);
+    const devVersion = await getNpmPackageVersion('matterbridge', 'dev', 10000);
     expect(devVersion).toBeDefined();
     expect(typeof devVersion).toBe('string');
     // console.log('Latest version tag dev:', devVersion);

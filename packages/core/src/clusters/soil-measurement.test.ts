@@ -4,7 +4,7 @@ const NAME = 'SoilMeasurementCluster';
 
 import { jest } from '@jest/globals';
 
-import { setupTest } from '../jestutils/jestHelpers.js';
+import { setupTest } from '../jestutils/jestSetupTest.js';
 import { SoilMeasurement } from './soil-measurement.js';
 
 // Setup the test environment

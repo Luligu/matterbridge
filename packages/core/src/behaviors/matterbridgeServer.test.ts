@@ -2,14 +2,12 @@
 
 const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const MATTER_CREATE_ONLY = true;
 
-import path from 'node:path';
-
 import { jest } from '@jest/globals';
+import { Endpoint, ServerNode } from '@matter/node';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -29,17 +27,11 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { StatusResponse } from '@matter/types/common';
-import { FabricIndex } from '@matter/types/datatype';
-import { Status } from '@matter/types/globals';
 import { LogLevel } from 'node-ansi-logger';
 
 import { RoboticVacuumCleaner } from '../devices/roboticVacuumCleaner.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
 import {
-  addDevice,
-  aggregator,
-  createMatterbridgeEnvironment,
-  destroyMatterbridgeEnvironment,
   getEnhancedMoveToHueAndSaturationRequest,
   getEnhancedMoveToHueRequest,
   getMoveToColorRequest,
@@ -48,11 +40,9 @@ import {
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
-  loggerLogSpy,
-  setupTest,
-  startMatterbridgeEnvironment,
-  stopMatterbridgeEnvironment,
-} from '../jestutils/jestHelpers.js';
+} from '../jestutils/jestMatterRequest.js';
+import { addDevice } from '../jestutils/jestMatterTest.js';
+import { loggerLogSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { Matterbridge } from '../matterbridge.js';
 import {
   airPurifier,
@@ -89,6 +79,9 @@ jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementat
 await setupTest(NAME, false);
 
 describe('Server clusters and behaviors', () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
+
   let light: MatterbridgeEndpoint;
   let enhancedLight: MatterbridgeEndpoint;
   let button: MatterbridgeEndpoint;
@@ -139,13 +132,7 @@ describe('Server clusters and behaviors', () => {
     return endpoint;
   }
 
-  async function expectCommand(
-    endpoint: MatterbridgeEndpoint,
-    cluster: any,
-    command: CommandHandlers,
-    expectedRequest?: Record<string, boolean | number | bigint | string | object | null>,
-    check?: (data: any) => void,
-  ) {
+  async function expectCommand(endpoint: MatterbridgeEndpoint, cluster: any, command: CommandHandlers, expectedRequest?: object, check?: (data: any) => void) {
     let invoke: Promise<void>;
 
     await new Promise((resolve, reject) => {
@@ -169,8 +156,8 @@ describe('Server clusters and behaviors', () => {
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME, MATTER_CREATE_ONLY);
-    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -183,7 +170,7 @@ describe('Server clusters and behaviors', () => {
   afterAll(async () => {
     // Destroy Matterbridge environment
     await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
-    await destroyMatterbridgeEnvironment(undefined, undefined, !MATTER_CREATE_ONLY);
+    await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();
   });
@@ -267,10 +254,10 @@ describe('Server clusters and behaviors', () => {
     expect(lock).toBeDefined();
     expect(await addDevice(aggregator, lock)).toBeTruthy();
     // Disable timeout for testing, to avoid flaky tests
-    const internal = await internalFor<MatterbridgeDoorLockServer.Internal>(lock, MatterbridgeDoorLockServer);
+    const internal = await internalFor(lock, MatterbridgeDoorLockServer);
     expect(internal).toBeDefined();
     if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
-    internal.enableTimeout = false;
+    if ((internal as any).enableTimeout !== undefined) (internal as any).enableTimeout = false;
   });
 
   test('Device type: fan', async () => {
@@ -707,7 +694,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('FanControl server', async () => {
-    const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     fan.addCommandHandler('step', async (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
@@ -764,8 +751,9 @@ describe('Server clusters and behaviors', () => {
     const initialThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
 
     expect(initialThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2100, occupiedCoolingSetpoint: 2500 });
-    expect((thermostat.stateOf(ThermostatServer) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(ThermostatServer) as any).generatedCommandList).toEqual([]);
+    const thermostatBehavior = MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode);
+    expect((thermostat.stateOf(thermostatBehavior) as any).acceptedCommandList).toEqual([0]);
+    expect((thermostat.stateOf(thermostatBehavior) as any).generatedCommandList).toEqual([]);
 
     await expectCommand(thermostat, Thermostat.Cluster, 'setpointRaiseLower', setBothRequest, (data) => {
       expect(data.cluster).toBe('thermostat');
@@ -833,7 +821,7 @@ describe('Server clusters and behaviors', () => {
       Thermostat.Feature.AutoMode,
       Thermostat.Feature.Presets,
     );
-    const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
 
     thermostatPreset.addCommandHandler('setActivePresetRequest', async (data) => {
       presetCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -1077,7 +1065,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('DeviceEnergyManagementMode server', async () => {
-    const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: Record<string, unknown> }> = [];
+    const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     energyManagement.addCommandHandler('changeToMode', async (data) => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });

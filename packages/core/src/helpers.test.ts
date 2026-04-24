@@ -1,8 +1,9 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
-const MATTER_PORT = 6600;
 const NAME = 'Helpers';
+const MATTER_PORT = 6600;
+const MATTER_CREATE_ONLY = true;
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 /*
@@ -21,26 +22,22 @@ const { getShelly, postShelly } = await import('./shelly.js');
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Logger } from '@matter/general';
-import { Endpoint } from '@matter/node';
+import { Endpoint, ServerNode } from '@matter/node';
 import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { setDebug } from '@matterbridge/jest-utils';
 
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import {
-  aggregator,
-  consoleLogSpy,
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
-  flushAsync,
   matterbridge,
-  server,
-  setupTest,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestHelpers.js';
+} from './jestutils/jestMatterbridgeTest.js';
+import { consoleLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 
 const shutdownProcessSpy = jest.spyOn(Matterbridge.prototype, 'shutdownProcess').mockImplementation(async () => {
@@ -60,12 +57,14 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
+  let server: ServerNode<ServerNode.RootEndpoint>;
+  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Endpoint;
 
   beforeAll(async () => {
     // Create Matterbridge environment
-    await createMatterbridgeEnvironment(NAME);
-    await startMatterbridgeEnvironment(MATTER_PORT);
+    await createMatterbridgeEnvironment();
+    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -77,7 +76,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
   afterAll(async () => {
     // Destroy Matterbridge environment
-    await stopMatterbridgeEnvironment();
+    await stopMatterbridgeEnvironment(MATTER_CREATE_ONLY);
     await destroyMatterbridgeEnvironment();
     // Restore all mocks
     jest.restoreAllMocks();

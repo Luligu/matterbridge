@@ -43,7 +43,9 @@ import { MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
-import { closeMdnsInstance, destroyInstance, flushAsync, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestHelpers.js';
+import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -242,7 +244,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   test('Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
     process.argv.push('--reset-sessions');
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
   });
 
@@ -350,7 +352,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
   test('Finally Matterbridge.destroyInstance() -bridge mode', async () => {
     // Destroy the Matterbridge instance
-    await destroyInstance(matterbridge, 10, 10);
+    await destroyInstance(matterbridge);
     expect((matterbridge as any).log.log).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
 
     // Close mDNS instance
