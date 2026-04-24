@@ -175,6 +175,8 @@
 <p><a href="https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/">https://blog.adafruit.com/2025/11/03/matterbridge-a-matter-plugin-manager/</a></p>
 <h2 id="prerequisites">Prerequisites</h2>
 <p>To run Matterbridge, you need either a <a href="https://nodejs.org/en">Node.js</a> environment or <a href="https://docs.docker.com/get-started/get-docker/">Docker</a> installed on your system.</p>
+<p>I suggest using Docker for its simplicity.</p>
+<h3 id="nodejs-prerequisites">Node.js Prerequisites</h3>
 <p>If you don&#39;t have Node.js already installed, please use this method to install it on a Debian system: <a href="https://github.com/nodesource/distributions">https://github.com/nodesource/distributions</a>.</p>
 <p>The supported versions of Node.js are &gt;=20.19.0, &gt;=22.13.0, and 24. Please <strong>install Node.js 24 LTS</strong>. Don&#39;t use Node.js Current; always use the Node.js LTS releases.</p>
 <p>Node.js 21, 23, 25, like all odd-numbered versions, are not supported.</p>
@@ -182,14 +184,17 @@
 <blockquote>
 <p><strong>Nvm is a development tool and is not supported for production</strong>.</p>
 </blockquote>
-<p>If you don&#39;t have Docker already installed, please use this method to install Docker Engine on a Debian system: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
-<p>If you don&#39;t have Docker already installed, please use this method to install Docker Desktop on Windows or macOS: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
+<h3 id="docker-prerequisites">Docker Prerequisites</h3>
+<p>If you don&#39;t have Docker already installed, please use this method to install <strong>Docker Engine</strong> on a <strong>Debian</strong> system: <a href="https://docs.docker.com/engine/install">https://docs.docker.com/engine/install</a>.</p>
+<p>If you don&#39;t have Docker already installed, please use this method to install <strong>Docker Desktop</strong> on <strong>Windows</strong> or <strong>macOS</strong>: <a href="https://docs.docker.com/get-started/introduction/get-docker-desktop/">https://docs.docker.com/get-started/introduction/get-docker-desktop/</a>.</p>
 <p>After that, follow the guidelines for the <a href="README-DOCKER.html">Docker configurations</a>.</p>
-<p>I suggest using Docker for its simplicity.</p>
+<h3 id="global-prerequisites">Global Prerequisites</h3>
 <p>Since Matter is designed as &quot;a universal IPv6-based communication protocol for smart home devices&quot; (per the Matter specifications), <strong>IPv6 must be enabled on your local network (LAN)</strong>.</p>
 <p><strong>Important:</strong> You only need IPv6 on your local network - it doesn&#39;t matter if your internet provider doesn&#39;t provide IPv6 on the internet side (WAN).</p>
 <p>Avoid VLANs, VMs, and firewalls that block communication between the controllers and Matterbridge.</p>
-<p>To pair Matterbridge, you need a Matter-enabled controller (Apple Home, SmartThings, Google Home, Alexa, Home Assistant, etc.).</p>
+<blockquote>
+<p><strong>Important:</strong> If your local network (LAN) or Docker setup has more than one external network interface, set the <code>Mdns Interface</code> in the frontend <code>Settings</code> page to the actual LAN interface to which the controller is connected.</p>
+</blockquote>
 <h2 id="installation-with-nodejs">Installation with Node.Js</h2>
 <p>Follow these steps to install Matterbridge:</p>
 <pre><code class="language-bash">npm install -g matterbridge --omit=dev
@@ -319,7 +324,16 @@
 <li>Five preconfigured modes: Home, Away, Night, Vacation, Off.</li>
 <li>Five preconfigured setters: Home, Away, Night, Vacation, Off.</li>
 <li>Four preconfigured triggers: Home, Away, Night, Off.</li>
-<li>Five preconfigured alerts: Home, Away, Night, Off, Master.</li>
+<li>Five preconfigured alerts: Home, Away, Night, 24h, Master.</li>
+</ul>
+<h3 id="irobot">iRobot</h3>
+<a href="https://github.com/Luligu/matterbridge-irobot">
+  <img src="https://matterbridge.io/assets/irobot.svg" alt="iRobot logo" width="100" />
+</a><p>Matterbridge iRobot plugin allows you to expose iRobot devices to Matter.</p>
+<p>Features:</p>
+<ul>
+<li>device retrieval from the iRobot cloud</li>
+<li>automatic discovery of iRobot devices on the local network</li>
 </ul>
 <h3 id="accessory-platform-example">Accessory platform example</h3>
 <p>This is an example of an accessory platform plugin.</p>
@@ -358,6 +372,8 @@ to the Matter smart home ecosystem via their local MQTT APIs.</p>
 <p>Matterbridge plugin to control and report status of the Wyze S200 Robot Vacuum.</p>
 <h3 id="matterbridge-litetouch-2000"><a href="https://github.com/signal15/matterbridge-litetouch">Matterbridge Litetouch 2000</a></h3>
 <p>Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices.</p>
+<h3 id="roomba"><a href="https://github.com/Rashed97/matterbridge-roomba">Roomba</a></h3>
+<p>Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabric via their local MQTT broker and APIs.</p>
 <h2 id="how-to-install-and-add-a-plugin-with-the-frontend-best-option">How to install and add a plugin with the frontend (best option)</h2>
 <p>Just open the frontend on the link provided in the log, select a plugin and click install.</p>
 <h2 id="how-to-install-and-add-a-plugin-manually-from-a-terminal-from-npm">How to install and add a plugin manually from a terminal (from npm)</h2>
