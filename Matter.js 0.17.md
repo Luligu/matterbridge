@@ -8,7 +8,7 @@ This file summarizes the [matter.js 0.17](https://github.com/matter-js/matter.js
 
 - All cluster types had .Cluster and .Complete (e.g. PowerSource.Cluster and PowerSource.Complete). Now .Cluster and .Complete are deprecated and resolve to the main cluster type (e.g. PowerSource.Cluster = PowerSource).
 
-- Also using the whole word PowerSourceCluster is now deprecated. Use directly PowerSource.
+- Also using the whole word PowerSourceCluster is now deprecated (e.g. PowerSourceCluster = PowerSource). Use directly PowerSource.
 
 - All clusters with features had .with(...) (e.g. PowerSource.Cluster.with(PowerSource.Feature.Wired)). Now .with(...) is deprecated and resolve to the complete instance (PowerSource.Cluster.with(PowerSource.Feature.Wired) = PowerSource). There is no more feature-gated typing in with().
 
@@ -29,6 +29,14 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 ## Removed without deprecation notice
 
 - The whole ClusterRegistry class is gone: use getClusterNameById() to obtain the cluster name given a ClusterId.
+
+## Custom clusters
+
+The way to create custom cluster in matter.js has changed.
+
+In matter.js there are no more typescript source files for cluster types they are generated. The memory use has dropped by around 20%-50% that is great.
+
+I will leave (without exporting them) the three Matter 1.5.1 cluster I created for testing like example.
 
 ## Implementation plan (work in progress)
 
