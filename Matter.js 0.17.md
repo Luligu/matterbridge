@@ -1,0 +1,37 @@
+WORK IN PROGRESS
+
+# Matter.js 0.17
+
+This file summarizes the [matter.js 0.17](https://github.com/matter-js/matter.js/blob/main/CHANGELOG.md) deltas compared with Matter 0.16.11.
+
+## Deprecated and modified
+
+- All cluster types had .Cluster and .Complete (e.g. PowerSource.Cluster and PowerSource.Complete). Now .Cluster and .Complete are deprecated and resolve to the main cluster type (e.g. PowerSource.Cluster = PowerSource).
+
+- Also using the whole word PowerSourceCluster is now deprecated. Use directly PowerSource.
+
+- All clusters with features had .with(...) (e.g. PowerSource.Cluster.with(PowerSource.Feature.Wired)). Now .with(...) is deprecated and resolve to the complete instance (PowerSource.Cluster.with(PowerSource.Feature.Wired) = PowerSource). There is no more feature-gated typing in with().
+
+You can just have the single types:
+
+```typescript
+type WiredAttrs = PowerSource.WiredAttributes;
+type BaseWiredAttrs = PowerSource.BaseAttributes & PowerSource.WiredAttributes;
+```
+
+The important distinction is:
+
+PowerSource.Attributes: the flattened full superset, not feature-specific
+PowerSource.BaseAttributes: the always present attributes
+PowerSource.WiredAttributes: only the Wired feature attributes
+PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power source exposes
+
+## Removed without deprecation notice
+
+- The whole ClusterRegistry class is gone: use getClusterNameById() to obtain the cluster name given a ClusterId.
+
+## Implementation plan (work in progress)
+
+I plan to release matter.js in Matterbridge 3.8.0.
+
+At that point, all plugins should require Matterbridge 3.8.0 and make the refactor required.
