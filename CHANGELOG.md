@@ -60,6 +60,8 @@ These classes will run as threads in the next releases:
 - [threads]: Add `snackBar()` helper to `WorkerWrapper` to send snackbar messages from worker threads to the frontend.
 - [systemcheck]: Show frontend snackbar errors for unsupported Node.js versions and network configuration issues detected by the SystemCheck worker.
 - [systemcheck]: Clarify excluded network interface guidance to mention the Mdns interface setting in the frontend.
+- [dockerversion]: Add snack bar message if a new Docker image exist.
+- [matter]: Add [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
 
 ### Changed
 
