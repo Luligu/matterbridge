@@ -442,11 +442,11 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
   }
 
   // Wait for the server to be online
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     server.lifecycle.online.on(async () => {
       resolve();
     });
-    server.start();
+    server.start().catch((err) => reject(err));
   });
 
   // Check if the server is online
