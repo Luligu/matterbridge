@@ -79,6 +79,7 @@ export type SharedMatterbridge = Readonly<{
     heapTotal: string;
     heapUsed: string;
   };
+  uuid: string;
   rootDirectory: string;
   homeDirectory: string;
   matterbridgeDirectory: string;

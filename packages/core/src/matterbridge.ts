@@ -139,7 +139,7 @@ interface MatterbridgeEvents {
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Debug flag */
-  private readonly debug = hasParameter('debug');
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
   /** Verbose flag */
   private readonly verbose = hasParameter('verbose');
 
@@ -172,6 +172,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   };
 
   // Matterbridge settings
+  public uuid = '';
   /** It indicates the home directory of the Matterbridge application. The home directory is the base directory where Matterbridge creates the matterbridge directories (os.homedir() if not overridden). */
   public homeDirectory = '';
   /** It indicates the root directory of the Matterbridge application. The root directory is the directory where Matterbridge is executed. */
@@ -283,14 +284,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   ipv4Address: string | undefined;
   /** Matter listeningAddressIpv6 address */
   ipv6Address: string | undefined;
-  /** Matter commissioning port */
-  port: number | undefined; // first server node port
-  /** Matter commissioning passcode */
-  passcode: number | undefined; // first server node passcode
-  /** Matter commissioning discriminator */
-  discriminator: number | undefined; // first server node discriminator
-  /** Matter device certification */
-  certification: DeviceCertification.Configuration | undefined; // device certification
+  /** Matter commissioning port (first server node port) */
+  port: number | undefined;
+  /** Matter commissioning passcode (first server node passcode) */
+  passcode: number | undefined;
+  /** Matter commissioning discriminator (first server node discriminator) */
+  discriminator: number | undefined;
+  /** Matter device certification (device certification) */
+  certification: DeviceCertification.Configuration | undefined;
 
   /** Matter server node in bridge mode */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
@@ -337,6 +338,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getPlatformMatterbridge(): PlatformMatterbridge {
     return {
       systemInformation: { ...this.systemInformation },
+      uuid: this.uuid,
       rootDirectory: this.rootDirectory,
       homeDirectory: this.homeDirectory,
       matterbridgeDirectory: this.matterbridgeDirectory,
@@ -365,6 +367,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getSharedMatterbridge(): SharedMatterbridge {
     return {
       systemInformation: { ...this.systemInformation },
+      uuid: this.uuid,
       rootDirectory: this.rootDirectory,
       homeDirectory: this.homeDirectory,
       matterbridgeDirectory: this.matterbridgeDirectory,
@@ -610,13 +613,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
 
-    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
-    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
-    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.discriminator =
       getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
@@ -735,6 +738,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.log.logLevel, true);
       this.fileLogger = true;
     }
+
+    // Set the matterbridge uuid
+    this.uuid = await this.nodeContext.get<string>('matterbridgeUuid');
+    if (!this.uuid) {
+      const { randomUUID } = await import('node:crypto');
+      this.uuid = randomUUID();
+      await this.nodeContext.set<string>('matterbridgeUuid', this.uuid);
+    }
+    this.log.debug(`Matterbridge UUID: ${CYAN}${this.uuid}${db}`);
 
     this.log.notice('Matterbridge is starting...');
 

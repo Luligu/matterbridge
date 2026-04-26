@@ -41,6 +41,7 @@ const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/fr
 const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
+  uuid: '',
   rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
   homeDirectory: HOMEDIR,
   matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),

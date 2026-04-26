@@ -55,6 +55,10 @@ These classes will run as threads in the next releases:
 
 ## [3.7.6] - Dev branch
 
+### Development changes
+
+- [matterbridge]: Add a persisted `uuid` properties to PlatformMatterbridge. This allows to detect a new setup in the plugin code.
+
 ### Added
 
 - [threads]: Add `snackBar()` helper to `WorkerWrapper` to send snackbar messages from worker threads to the frontend.
