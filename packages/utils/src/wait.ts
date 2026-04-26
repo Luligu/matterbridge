@@ -35,6 +35,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
  * @param {number} [resolveInterval] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
  * @param {boolean} [debug] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
+ * @throws {Error} If exitWithReject is true and the waiter times out before the condition is met.
  */
 export async function waiter(
   name: string,
@@ -79,7 +80,7 @@ export async function waiter(
  * @param {boolean} debug - Whether to enable debug logging. Default is false.
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
-export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
+export function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
   const log = new AnsiLogger({ logName: 'Wait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (debug) log.debug(`Wait "${name}" started...`);
 
