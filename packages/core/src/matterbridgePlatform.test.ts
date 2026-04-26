@@ -767,7 +767,7 @@ describe('Matterbridge platform', () => {
     expect(matterbridge.devices).toBeDefined();
     async function testCallback(): Promise<void> {}
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
-    expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
+    expect(matterbridge.aggregatorNode?.parts.has('Virtual:switch')).toBeTruthy();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}Virtual${nf} for plugin ${plg}${platform.name}${nf}`);
 
     jest
@@ -777,7 +777,7 @@ describe('Matterbridge platform', () => {
     platform.type = 'DynamicPlatform';
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
-    expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
+    expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge:switch')).toBeTruthy();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}VirtualChildbridge${nf} for plugin ${plg}${platform.name}${nf}`);
 
     const savedName = platform.name;

@@ -31,7 +31,7 @@ import { AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-an
 
 // matterbridge
 import { Multicast } from './multicast.js';
-export const enum DnsRecordType {
+export enum DnsRecordType {
   A = 1,
   NS = 2,
   MD = 3,
@@ -125,14 +125,14 @@ export const enum DnsRecordType {
   DLV = 32769,
 }
 
-export const enum DnsClass {
+export enum DnsClass {
   IN = 1, // Internet
   CH = 3, // Chaos
   HS = 4, // Hesiod
   ANY = 255, // Any class
 }
 
-export const enum DnsClassFlag {
+export enum DnsClassFlag {
   FLUSH = 0x8000, // For answers (resource records)
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   QU = 0x8000, // For questions (unicast response preferred)

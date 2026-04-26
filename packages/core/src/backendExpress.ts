@@ -236,7 +236,7 @@ export class BackendExpress {
 
       const { createRequire } = await import('node:module');
       const require = createRequire(import.meta.url);
-      const cjsModules = Object.keys(require.cache).sort();
+      const cjsModules = Object.keys(require.cache).toSorted();
 
       const memoryReport = {
         memoryUsage,

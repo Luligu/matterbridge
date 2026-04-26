@@ -154,7 +154,8 @@ describe('WorkerWrapper', () => {
     expect(onMessageHandler).toBeDefined();
     onMessageHandler?.({ type: 'ping' });
 
-    const sent = (parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const sent = (parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
 
@@ -177,7 +178,8 @@ describe('WorkerWrapper', () => {
 
     await waitImmediate();
 
-    const sent = (parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const sent = (parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.DEBUG }));
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.WARN }));
   });
@@ -219,8 +221,10 @@ describe('WorkerWrapper', () => {
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
-    expect((parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
-    expect((parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect((parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect((parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
     expect(serverClose).toHaveBeenCalledTimes(1);
   });
 

@@ -60,6 +60,8 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Add a persisted `uuid` properties to PlatformMatterbridge. This allows to detect a new setup in the plugin code.
 - [eslint]: Remove `eslint-plugin-promise` (not actively maintained) and add optional @typescript-eslint promise rules.
 - [utils]: Add fireAndForget() helper.
+- [tsgo]: Add experimental scripts to use tsgo (super fast typescript 7). Use npm run installExperimental before.
+- [oxlint]: Add experimental scripts to use oxlint (super fast linter). Use npm run installExperimental before.
 
 ### Added
 
@@ -68,6 +70,7 @@ These classes will run as threads in the next releases:
 - [systemcheck]: Clarify excluded network interface guidance to mention the Mdns interface setting in the frontend.
 - [dockerversion]: Add snack bar message if a new Docker image exist.
 - [matter]: Add [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [scripts]: Add scripts\install-experimental.mjs and scripts\npm-link.mjs.
 
 ### Changed
 

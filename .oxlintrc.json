@@ -1,0 +1,35 @@
+{
+  "options": {
+    "typeAware": false,
+    "typeCheck": false,
+    "maxWarnings": 0
+  },
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error"
+  },
+  "rules": {
+    "no-unused-vars": "off",
+    "no-console": "off",
+    "no-shadow": "off",
+    "no-new": "off",
+    "no-extend-native": "off",
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/require-post-message-target-origin": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/no-array-for-each": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-instanceof-array": "warn",
+    "oxc/no-async-endpoint-handlers": "off",
+    "oxc/no-accumulating-spread": "warn",
+    "oxc/no-const-enum": "error",
+    "oxc/no-map-spread": "off",
+    "typescript/no-duplicate-enum-values": "off"
+  },
+  "env": {
+    "builtin": true,
+    "node": true
+  },
+  "ignorePatterns": ["dist", "coverage", "temp", "jest", "apps", "chip", "node_modules", ".cache", "scripts"]
+}
