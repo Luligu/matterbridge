@@ -70,13 +70,13 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { wait } from '@matterbridge/utils';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
+import { fireAndForget, wait } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import {
   AnsiLogger,
@@ -586,13 +586,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       for (const storage of storages) {
         this.log.debug(`Checking storage: ${CYAN}${storage}${db}`);
         const nodeContext = await this.nodeStorage?.createStorage(storage);
-        // TODO: Remove this code when node-persist-manager is updated
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const keys = (await (nodeContext as any)?.storage.keys()) as string[];
-        keys.forEach(async (key) => {
+        const keys = await nodeContext.keys();
+        for (const key of keys) {
           this.log.debug(`Checking key: ${CYAN}${storage}:${key}${db}`);
           await nodeContext?.get(key);
-        });
+        }
       }
       // Creating a backup of the node storage since it is not corrupted
       this.log.debug('Creating node storage backup...');
@@ -1219,7 +1217,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.configured = false;
       plugin.registeredDevices = undefined;
       if (wait) await this.plugins.load(plugin, start, 'Matterbridge is starting');
-      else this.plugins.load(plugin, start, 'Matterbridge is starting'); // No await do it asyncronously
+      else fireAndForget(this.plugins.load(plugin, start, 'Matterbridge is starting'), this.log, 'Load plugin');
     }
     this.frontend.wssSendRefreshRequired('plugins');
   }
@@ -1951,13 +1949,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Cleared startMatterInterval interval in bridge mode');
 
         // Start the Matter server node
-        this.startServerNode(this.serverNode); // We don't await this, because the server node is started in the background
+        fireAndForget(this.startServerNode(this.serverNode), this.log, 'Start server node');
 
         // Start the Matter server node of single devices in mode 'server'
         for (const device of this.devices.array()) {
           if (device.mode === 'server' && device.serverNode) {
             this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+            fireAndForget(this.startServerNode(device.serverNode), this.log, `Start server node for device ${device.deviceName}`);
           }
         }
 
@@ -2099,7 +2097,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             continue;
           }
           // Start the Matter server node
-          this.startServerNode(plugin.serverNode); // We don't await this, because the server node is started in the background
+          fireAndForget(this.startServerNode(plugin.serverNode), this.log, `Start server node for plugin ${plugin.name}`);
 
           // Setting reachability to true
           plugin.reachabilityTimeout = setTimeout(() => {
@@ -2112,7 +2110,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         for (const device of this.devices.array()) {
           if (device.mode === 'server' && device.serverNode) {
             this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+            fireAndForget(this.startServerNode(device.serverNode), this.log, `Start server node for device ${device.deviceName}`);
           }
         }
 

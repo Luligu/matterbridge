@@ -2,9 +2,9 @@
 
 import { jest } from '@jest/globals';
 import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
-import { LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 
-import { wait, waiter, withTimeout } from './wait.js';
+import { fireAndForget, wait, waiter, withTimeout } from './wait.js';
 
 // Setup the test environment
 await setupTest('Wait', false);
@@ -249,5 +249,29 @@ describe('withTimeout()', () => {
 
     expect(clearSpy).toHaveBeenCalled();
     clearSpy.mockRestore();
+  });
+});
+
+describe('fireAndForget()', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should log the rejection error when the promise rejects', async () => {
+    const log = new AnsiLogger({ logName: 'FireAndForgetTest', logLevel: LogLevel.DEBUG });
+
+    fireAndForget(Promise.reject(new Error('boom')), log, 'publishUpdate');
+    await Promise.resolve();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'publishUpdate failed: Error: boom');
+  });
+
+  it('should not log an error when the promise resolves', async () => {
+    const log = new AnsiLogger({ logName: 'FireAndForgetTest', logLevel: LogLevel.DEBUG });
+
+    fireAndForget(Promise.resolve('ok'), log, 'publishUpdate');
+    await Promise.resolve();
+
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('publishUpdate failed:'));
   });
 });

@@ -126,3 +126,17 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 1
       });
   });
 }
+
+/**
+ * Utility function to handle promises without awaiting them, while still catching and logging any errors that occur.
+ *
+ * @param {Promise<unknown>} promise - The promise to handle.
+ * @param {AnsiLogger} log - The logger instance to use for logging errors.
+ * @param {string} context - The context or description of the operation for logging purposes.
+ *
+ * @example
+ * fireAndForget(this.publishUpdate(payload), log, 'publishUpdate');
+ */
+export function fireAndForget(promise: Promise<unknown>, log: AnsiLogger, context: string): void {
+  promise.catch((err) => log.error(`${context} failed: ${err}`));
+}
