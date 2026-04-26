@@ -104,7 +104,7 @@ export class BackendsWsServer {
    *
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
-  private async broadcastMsgHandler(msg: WorkerMessage) {
+  private broadcastMsgHandler(msg: WorkerMessage): void {
     // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
