@@ -58,6 +58,7 @@ These classes will run as threads in the next releases:
 ### Development changes
 
 - [matterbridge]: Add a persisted `uuid` properties to PlatformMatterbridge. This allows to detect a new setup in the plugin code.
+- [eslint]: Remove `eslint-plugin-promise` (not actively maintained) and add optional @typescript-eslint promise rules.
 
 ### Added
 

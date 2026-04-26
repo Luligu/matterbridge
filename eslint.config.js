@@ -15,7 +15,6 @@ import jest from 'eslint-plugin-jest';
 import jsdoc from 'eslint-plugin-jsdoc';
 import n from 'eslint-plugin-n';
 import prettier from 'eslint-plugin-prettier/recommended';
-import promise from 'eslint-plugin-promise';
 import pluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
@@ -33,7 +32,6 @@ export default defineConfig([
   // Uncomment this line to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
   // ...tseslint.configs.strictTypeChecked.map((c) => ({ ...c, files: sourceFiles })),
   { ...n.configs['flat/recommended-script'], files: sourceFiles },
-  { ...promise.configs['flat/recommended'], files: sourceFiles },
   { ...jsdoc.configs['flat/recommended'], files: sourceFiles },
   prettier, // Prettier plugin must be the last plugin in the list and is intentionally not spread with a files property cause it can be used in all file types, not just source files
   {
@@ -50,7 +48,6 @@ export default defineConfig([
     plugins: {
       js,
       n,
-      promise,
       jsdoc,
       'simple-import-sort': pluginSimpleImportSort,
     },
@@ -65,9 +62,6 @@ export default defineConfig([
       'n/no-unsupported-features/node-builtins': ['error', { ignores: ['fetch'] }],
       'n/no-extraneous-import': 'off', // Allow imports from node_modules
       'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
-      'promise/always-return': 'warn', // Ensure promises always return a value
-      'promise/catch-or-return': 'warn', // Ensure promises are either caught or returned
-      'promise/no-nesting': 'warn', // Avoid nesting promises
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
       'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
       'jsdoc/no-undefined-types': 'off',
@@ -127,6 +121,9 @@ export default defineConfig([
       // Eventually we want to enable these rules, but they may cause many errors
       // '@typescript-eslint/no-floating-promises': 'error',
       // '@typescript-eslint/no-misused-promises': 'error',
+      // '@typescript-eslint/await-thenable': 'error',
+      // '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      // '@typescript-eslint/promise-function-async': 'warn',
       // '@typescript-eslint/require-await': 'warn',
     },
   },
