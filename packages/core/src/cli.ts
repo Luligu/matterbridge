@@ -235,7 +235,7 @@ async function main() {
 
   // Check if the instance needs to shut down from parseCommandLine()
   if (!instance || instance.shutdown) {
-    shutdown();
+    await shutdown();
   } else {
     registerHandlers();
     cliEmitter.emit('ready');
@@ -249,7 +249,8 @@ if (hasAnyParameter('version', 'v')) await version();
 
 main().catch((error) => {
   inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
-  shutdown();
+  // istanbul ignore next cause process.exit is not relevant for coverage
+  shutdown().catch(() => process.exit(1));
 });
 
 /**
