@@ -74,6 +74,8 @@ These classes will run as threads in the next releases:
 - [package]: Update dependencies.
 - [package]: Bump `typescript-eslint` to v.8.59.0.
 - [jest]: Increase test timeout to 30 seconds in CI workflows.
+- [frontend]: Bump `frontend` version to v.3.4.13.
+- [frontend]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
