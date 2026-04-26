@@ -1390,7 +1390,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
-      // this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix' } });
     }
 
@@ -1553,7 +1553,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
-    await wait(timeout); // Wait for MessageExchange to finish
+    await wait(timeout);
     this.log.debug('Cleaning up and shutting down...');
     await this.cleanup('unregistered all devices and shutting down...', false, timeout);
   }
@@ -1795,7 +1795,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
         */
 
-        // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
+        // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk if enabled)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
         this.nodeContext = undefined;
@@ -2716,7 +2716,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`);
       } else {
-        this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect...`);
+        this.log.notice(`Server node for ${storeId} is already commissioned.`);
         this.advertisingNodes.delete(storeId);
       }
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });

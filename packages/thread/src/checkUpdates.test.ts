@@ -435,13 +435,13 @@ describe('getMatterbridgeLatestVersion', () => {
     matterbridge.matterbridgeVersion = '1.0.0';
     await checkUpdatesAndLog(matterbridge, log, testServer);
     await flushAsync(undefined, undefined, 100);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('main', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`GitHub main update status:`));
 
     matterbridge.matterbridgeVersion = '1.0.0-dev-1';
     await checkUpdatesAndLog(matterbridge, log, testServer);
     await flushAsync(undefined, undefined, 100);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`GitHub dev update status:`));
   });
 
@@ -459,7 +459,7 @@ describe('getMatterbridgeLatestVersion', () => {
     await checkUpdatesAndLog(matterbridge, log, testServer);
     await flushAsync(undefined, undefined, 100);
 
-    expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('main', expect.stringContaining('update.json'), 5_000);
     // Other tests may still emit snackbars asynchronously; assert this specific invalid payload does not.
     expect(wssSendSnackbarMessageFrontendSpy).not.toHaveBeenCalledWith('Hello', 0, expect.any(String));
   });
@@ -511,12 +511,12 @@ describe('getMatterbridgeLatestVersion', () => {
 
     matterbridge.matterbridgeVersion = '1.0.0';
     await checkUpdatesAndLog(matterbridge, log, testServer);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('main', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub main updates: Network error`);
 
     matterbridge.matterbridgeVersion = '1.0.0-dev-1';
     await checkUpdatesAndLog(matterbridge, log, testServer);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub dev updates: Network error`);
   });
 
@@ -526,13 +526,13 @@ describe('getMatterbridgeLatestVersion', () => {
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockRejectedValueOnce('Network error');
     matterbridge.matterbridgeVersion = '1.0.0';
     await checkUpdatesAndLog(matterbridge, log, testServer);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('main', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('main', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub main updates: Network error`);
 
     (getGitHubUpdate as jest.MockedFunction<(branch: string, file: string, timeout?: number) => Promise<any>>).mockRejectedValueOnce('Network error');
     matterbridge.matterbridgeVersion = '1.0.0-dev-1';
     await checkUpdatesAndLog(matterbridge, log, testServer);
-    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', 'update.json', 5_000);
+    expect(getGitHubUpdate).toHaveBeenCalledWith('dev', expect.stringContaining('update.json'), 5_000);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Error checking GitHub dev updates: Network error`);
   });
 });

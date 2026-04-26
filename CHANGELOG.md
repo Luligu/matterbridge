@@ -76,6 +76,7 @@ These classes will run as threads in the next releases:
 - [jest]: Increase test timeout to 30 seconds in CI workflows.
 - [frontend]: Bump `frontend` version to v.3.4.13.
 - [frontend]: Update dependencies.
+- [matter]: Remove `Waiting for controllers to connect...`. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
