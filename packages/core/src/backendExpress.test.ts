@@ -23,7 +23,7 @@ import {
   type SharedMatterbridge,
 } from '@matterbridge/types';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
 import { BackendExpress } from './backendExpress.js';

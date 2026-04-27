@@ -48,7 +48,7 @@ import { formatBytes } from '@matterbridge/utils/format';
 // Express
 import escapeHtml from 'escape-html';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
 // Multer
 import multer from 'multer';
 // AnsiLogger

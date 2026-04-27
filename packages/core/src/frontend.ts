@@ -72,7 +72,7 @@ import { wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
-import type WebSocket from 'ws';
+import type { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 
 // matterbridge

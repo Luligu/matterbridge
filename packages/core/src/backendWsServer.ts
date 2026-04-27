@@ -44,7 +44,7 @@ import { withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 // WebSocket
-import WebSocket, { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Frontend } from './frontend.js';
