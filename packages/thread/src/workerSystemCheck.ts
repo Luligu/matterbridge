@@ -38,9 +38,9 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
     const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 1000)).result.data;
 
     // Utility function to log an error and show a snack bar message
-    const logSnackBarError = (level: LogLevel, message: string) => {
+    const logSnackBarError = (level: LogLevel, message: string, timeout: number, severity: 'error' | 'info' | 'warning' | 'success') => {
       worker.logger(level, message);
-      worker.snackBar(message, 0, 'error');
+      worker.snackBar(message, timeout, severity);
     };
 
     /* Check Node.Js version */
@@ -48,6 +48,8 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
       logSnackBarError(
         LogLevel.ERROR,
         `System Check: NVM is a development tool and is not supported in production. Please install node from https://github.com/nodesource/distributions.`,
+        0,
+        'error',
       );
     const nodeVersion = process.versions.node;
     const versionMajor = parseInt(nodeVersion.split('.')[0]);
@@ -55,11 +57,11 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
     const versionPatch = parseInt(nodeVersion.split('.')[2]);
     worker.logger(LogLevel.DEBUG, `Node.js Version: ${versionMajor}.${versionMinor}.${versionPatch}`);
     if (versionMajor === 20 && versionMinor < 19)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 20.19.0 is not supported. Please upgrade to Node.js LTS version (24.x).`);
+      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 20.19.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
     if (versionMajor === 22 && versionMinor < 13)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).`);
+      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
     if (versionMajor === 21 || versionMajor === 23 || versionMajor === 25)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js odd major versions are not supported. Please upgrade to Node.js LTS version (24.x).`);
+      logSnackBarError(LogLevel.ERROR, `System Check: Node.js odd major versions are not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
     if (versionMajor !== 24)
       worker.logger(LogLevel.NOTICE, `You are running Node.js ${versionMajor}.${versionMinor}.${versionPatch}. Please consider upgrading to Node.js LTS version (24.x).`);
 
@@ -87,19 +89,24 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
       }
     }
     if (!foundInternal) {
-      logSnackBarError(LogLevel.ERROR, `System Check: No internal network interface found. Check your network configuration.`);
+      logSnackBarError(LogLevel.ERROR, `System Check: No internal network interface found. Check your network configuration.`, 0, 'error');
     }
     if (!foundExternal) {
-      logSnackBarError(LogLevel.ERROR, `System Check: No external network interface found. Check your network configuration.`);
+      logSnackBarError(LogLevel.ERROR, `System Check: No external network interface found. Check your network configuration.`, 0, 'error');
     }
     if (!foundIpv4) {
-      logSnackBarError(LogLevel.ERROR, `System Check: No IPv4 network interface found. Check your network configuration.`);
+      logSnackBarError(LogLevel.ERROR, `System Check: No IPv4 network interface found. Check your network configuration.`, 0, 'error');
     }
     if (!foundIpv6) {
-      logSnackBarError(LogLevel.ERROR, `System Check: No IPv6 network interface found. Check your network configuration.`);
+      logSnackBarError(LogLevel.ERROR, `System Check: No IPv6 network interface found. Check your network configuration.`, 0, 'error');
     }
     if (foundExcluded) {
-      logSnackBarError(LogLevel.ERROR, `System Check: Use --mdnsinterface parameter or set Mdns interface in Settings to specify the correct local interface for Matter mDNS.`);
+      logSnackBarError(
+        LogLevel.WARN,
+        `System Check: Use --mdnsinterface parameter or set Mdns interface in Settings to specify the correct local interface for Matter mDNS.`,
+        0,
+        'warning',
+      );
     }
 
     worker.logger(LogLevel.INFO, `System check succeeded`);

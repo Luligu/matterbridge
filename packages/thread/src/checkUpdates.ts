@@ -88,7 +88,10 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
   const params =
     `?id=${encodeURIComponent(matterbridge.uuid)}` +
     `&v=${encodeURIComponent(matterbridge.matterbridgeVersion)}` +
-    `&node=${encodeURIComponent(process.version)}` +
+    `&dockerv=${encodeURIComponent(matterbridge.dockerVersion ?? '')}` +
+    `&mode=${encodeURIComponent(matterbridge.bridgeMode)}` +
+    `&restart=${encodeURIComponent(matterbridge.restartMode)}` +
+    `&node=${encodeURIComponent(process.versions.node)}` +
     `&os=${encodeURIComponent(process.platform)}`;
   try {
     const updateJson = await getGitHubUpdate(branch, 'update.json' + params, 5_000);

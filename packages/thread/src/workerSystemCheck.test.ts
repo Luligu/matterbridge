@@ -123,11 +123,11 @@ describe('workerSystemCheck', () => {
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: NVM is a development tool/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 20\.19\.0 is not supported/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Found network interface 'docker0'.*Matter mDNS/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Use --mdnsinterface parameter or set Mdns interface in Settings.*Matter mDNS/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Use --mdnsinterface parameter or set Mdns interface in Settings.*Matter mDNS/));
     expect(snackBarMock).toHaveBeenCalledWith(
       'System Check: Use --mdnsinterface parameter or set Mdns interface in Settings to specify the correct local interface for Matter mDNS.',
       0,
-      'error',
+      'warning',
     );
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
   });
