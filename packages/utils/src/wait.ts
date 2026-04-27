@@ -85,9 +85,8 @@ export function wait(timeout: number = 1000, name?: string, debug: boolean = fal
   if (debug) log.debug(`Wait "${name}" started...`);
 
   return new Promise<void>((resolve) => {
-    const timeoutId = setTimeout(() => {
+    setTimeout(() => {
       if (debug) log.debug(`Wait "${name}" finished...`);
-      clearTimeout(timeoutId);
       resolve();
     }, timeout).unref();
   });
