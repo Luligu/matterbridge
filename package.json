@@ -190,6 +190,8 @@
     "oxlint:fix": "oxlint --fix",
     "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
     "format:check": "prettier --cache --cache-location .cache/.prettiercache --check .",
+    "oxfmt": "oxfmt",
+    "oxfmt:check": "oxfmt --check",
     "preversion": "npm run runMeBeforePublish",
     "postversion": "npm run sync && npm run reset",
     "version:patch": "npm version patch --no-git-tag-version",

@@ -4,13 +4,24 @@
     "typeCheck": false,
     "maxWarnings": 0
   },
-  "plugins": ["typescript", "unicorn", "oxc"],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc"],
   "categories": {
     "correctness": "error",
-    "suspicious": "error"
+    "suspicious": "warn",
+    "pedantic": "off"
   },
   "rules": {
-    "no-unused-vars": "off",
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "reportUsedIgnorePattern": true
+      }
+    ],
     "no-console": "off",
     "no-shadow": "off",
     "no-new": "off",
@@ -25,11 +36,21 @@
     "oxc/no-accumulating-spread": "warn",
     "oxc/no-const-enum": "error",
     "oxc/no-map-spread": "off",
-    "typescript/no-duplicate-enum-values": "off"
+    "typescript/no-duplicate-enum-values": "off",
+    "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
+    "import/no-unassigned-import": ["warn", { "allow": ["@matter/nodejs", "../scripts/mb-run.mjs"] }]
   },
+  "overrides": [
+    {
+      "files": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/**/*.ts"],
+      "rules": {
+        "no-unused-vars": "off"
+      }
+    }
+  ],
   "env": {
     "builtin": true,
     "node": true
   },
-  "ignorePatterns": ["dist", "coverage", "temp", "jest", "apps", "chip", "node_modules", ".cache", "scripts"]
+  "ignorePatterns": ["dist/**", "coverage/**", "temp/**", "jest/**", "apps/**", "chip/**", "node_modules/**", ".cache/**", "**/scripts/**", "eslint.config.js"]
 }

@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 - [utils]: Add fireAndForget() helper.
 - [tsgo]: Add experimental scripts to use tsgo (super fast typescript 7). Use npm run installExperimental before.
 - [oxlint]: Add experimental scripts to use oxlint (super fast linter). Use npm run installExperimental before.
+- [oxfmt]: Add experimental scripts to use oxfmt (super fast formatter). Use npm run installExperimental before.
 
 ### Added
 

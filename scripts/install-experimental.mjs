@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 import { spawnSync } from 'node:child_process';
 
-const packages = ['@typescript/native-preview', 'oxlint'];
+const packages = ['@typescript/native-preview', 'oxlint', 'oxlint-tsgolint', 'oxfmt'];
 const args = `install -g --no-fund --no-audit ${packages.join(' ')}`;
 
 console.log(`Installing experimental tools globally: ${packages.join(', ')}`);
