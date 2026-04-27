@@ -160,10 +160,6 @@ export async function startMatterbridge(
   clearTimeout((matterbridge as any).checkUpdateTimeout);
   clearInterval((matterbridge as any).checkUpdateInterval);
 
-  // Setup the mDNS service in the environment
-  // @ts-expect-error - access to private member for testing
-  new MdnsService(matterbridge.environment);
-
   expect(matterbridge).toBeDefined();
   expect(matterbridge.profile).toBeUndefined();
   expect(matterbridge.bridgeMode).toBe(bridgeMode);
