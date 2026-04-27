@@ -10,7 +10,8 @@ console.log(`Installing experimental tools globally: ${packages.join(', ')}`);
 const first = spawnSync(`npm ${args}`, { stdio: 'inherit', shell: true });
 
 if (first.status === 0) {
-  process.exit(0);
+  const link = spawnSync(`npm link ${packages.join(' ')}`, { stdio: 'inherit', shell: true });
+  process.exit(link.status ?? 1);
 }
 
 if (process.platform === 'win32') {
@@ -20,4 +21,9 @@ if (process.platform === 'win32') {
 
 console.log('Retrying with sudo...');
 const second = spawnSync('sudo', ['npm', ...args], { stdio: 'inherit' });
-process.exit(second.status ?? 1);
+if (second.status !== 0) {
+  process.exit(second.status ?? 1);
+}
+
+const link = spawnSync(`npm link ${packages.join(' ')}`, { stdio: 'inherit', shell: true });
+process.exit(link.status ?? 1);
