@@ -28,6 +28,7 @@
     "no-new": "warn",
     "no-extend-native": "off",
     "no-inline-comments": "off",
+    "no-underscore-dangle": "off",
     "max-lines-per-function": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
     "max-lines": "off",
     "unicorn/prefer-node-protocol": "error",
