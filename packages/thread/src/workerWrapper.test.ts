@@ -140,6 +140,38 @@ describe('WorkerWrapper', () => {
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
   });
 
+  test('worker thread: logs callback failures and exits with success false', async () => {
+    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 8,
+      threadName: 'ThreadFail',
+    });
+
+    const callbackError = new Error('boom');
+    const callback = jest.fn(async () => {
+      throw callbackError;
+    });
+
+    const worker = new WorkerWrapper('FailWorker' as unknown as ThreadNames, callback);
+    const errorSpy = jest.spyOn(worker.log, 'error');
+
+    await waitImmediate();
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith('Worker FailWorker callback failed: Error: boom');
+    expect(serverClose).toHaveBeenCalledTimes(1);
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'exit',
+        threadId: 8,
+        threadName: 'FailWorker',
+        success: false,
+      }),
+    );
+    expect(parentPort?.close).toHaveBeenCalledTimes(1);
+  });
+
   test('worker thread: responds to ping with pong', async () => {
     const { WorkerWrapper, parentPort, getOnMessageHandler } = await setup({
       isMainThread: false,

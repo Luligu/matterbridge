@@ -29,6 +29,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData } from '@matterbridge/types';
+import { inspectError } from '@matterbridge/utils';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { formatBytes } from '@matterbridge/utils/format';
 import type { Tracker } from '@matterbridge/utils/tracker';
@@ -133,8 +134,14 @@ export class WorkerWrapper {
     // Execute the callback function and destroy the worker with the success status returned by the callback
     if (!isMainThread) {
       setImmediate(async () => {
-        const success = await callback(this);
-        this.destroy(success);
+        let success = false;
+        try {
+          success = await callback(this);
+        } catch (err) {
+          inspectError(this.log, `Worker ${this.name} callback failed: ${err}`, err);
+        } finally {
+          this.destroy(success);
+        }
       });
     }
   }
