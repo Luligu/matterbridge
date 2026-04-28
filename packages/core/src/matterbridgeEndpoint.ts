@@ -1672,12 +1672,11 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.log.debug(`- with deviceType: ${zb}${'0x' + definition.code.toString(16).padStart(4, '0')}${db}-${zb}${definition.name}${db}`);
     }
     if (alreadyAdded) return child;
+    // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      void this.add(child).catch((error) => {
-        // istanbul ignore next cause is only a safety check
-        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
-      });
+      // istanbul ignore next cause is only a safety check
+      void this.add(child).catch((error) => { inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
@@ -1757,12 +1756,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     }
     addClusterServers(child, serverList);
     if (alreadyAdded) return child;
+    // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      void this.add(child).catch((error) => {
-        // istanbul ignore next cause is only a safety check
-        inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
-      });
+      // istanbul ignore next cause is only a safety check
+      void this.add(child).catch( (error) => { inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
