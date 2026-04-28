@@ -78,7 +78,7 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
-- [package]: Bump `typescript-eslint` to v.8.59.0.
+- [package]: Bump `typescript-eslint` to v.8.59.1.
 - [jest]: Increase test timeout to 30 seconds in CI workflows.
 - [frontend]: Bump `frontend` version to v.3.4.13.
 - [frontend]: Update dependencies.
