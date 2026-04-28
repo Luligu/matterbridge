@@ -138,7 +138,7 @@ export class WorkerWrapper {
         try {
           success = await callback(this);
         } catch (err) {
-          inspectError(this.log, `Worker ${this.name} callback failed: ${err}`, err);
+          inspectError(this.log, `Worker ${this.name} callback failed`, err);
         } finally {
           this.destroy(success);
         }

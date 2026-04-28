@@ -159,7 +159,10 @@ describe('WorkerWrapper', () => {
     await waitImmediate();
 
     expect(callback).toHaveBeenCalledTimes(1);
-    expect(errorSpy).toHaveBeenCalledWith('Worker FailWorker callback failed: Error: boom');
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const [loggedMessage] = errorSpy.mock.calls[0] as [string];
+    expect(loggedMessage).toContain('Worker FailWorker callback failed:');
+    expect(loggedMessage).toContain('boom');
     expect(serverClose).toHaveBeenCalledTimes(1);
     expect(parentPort?.postMessage).toHaveBeenCalledWith(
       expect.objectContaining({
