@@ -54,7 +54,7 @@ export class Cooktop extends MatterbridgeEndpoint {
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Cooktop');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createOffOnlyOnOffClusterServer(true);
-    this.addFixedLabel('composed', 'Cooktop');
+    void this.addFixedLabel('composed', 'Cooktop').catch(/* istanbul ignore next */ () => {});
   }
 
   /**

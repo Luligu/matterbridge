@@ -270,10 +270,11 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1.tgz' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       expect(plugins.has('matterbridge-mock1')).toBe(true); 
-      expect(await plugins.shutdown('matterbridge-mock1', 'Closing', false, true)).toBeDefined();
 
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      plugins.get('matterbridge-mock1')!.loaded = true;
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
-      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1', plugin: { loaded: true} } } as any);
+      await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       // await setDebug(false);
       expect(plugins.has('matterbridge-mock1')).toBe(false); 

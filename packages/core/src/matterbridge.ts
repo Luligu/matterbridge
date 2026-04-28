@@ -1978,7 +1978,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // Setting reachability to true
         this.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-          if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
+          if (this.aggregatorNode) fireAndForget(this.setAggregatorReachability(this.aggregatorNode, true), this.log, `Set aggregator node reachability for Matterbridge`);
         }, 60 * 1000).unref();
 
         // Logger.get('LogServerNode').info(this.serverNode);
@@ -2011,7 +2011,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug('Creating server nodes for DynamicPlatform plugins and starting all plugins in childbridge mode...');
     for (const plugin of this.plugins.array().filter((p) => p.enabled && !p.error)) {
       if (plugin.type === 'DynamicPlatform') await this.createDynamicPlugin(plugin);
-      this.plugins.start(plugin, 'Matterbridge is starting'); // Start the plugin in the background
+      fireAndForget(this.plugins.start(plugin, 'Matterbridge is starting'), this.log, `Start plugin ${plugin.name} in childbridge mode`);
     }
 
     // Start the Matterbridge in childbridge mode when all plugins are loaded and started
@@ -2102,7 +2102,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Setting reachability to true
           plugin.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
-            if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
+            if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode)
+              fireAndForget(this.setAggregatorReachability(plugin.aggregatorNode, true), this.log, `Set aggregator node reachability for plugin ${plugin.name}`);
           }, 60 * 1000).unref();
         }
 

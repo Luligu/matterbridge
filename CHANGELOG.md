@@ -72,6 +72,8 @@ These classes will run as threads in the next releases:
 - [dockerversion]: Add snack bar message if a new Docker image exist.
 - [matter]: Add [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
 - [scripts]: Add scripts\install-experimental.mjs and scripts\npm-link.mjs.
+- [threads]: Add a check on the worker result and fix cleanup for errors.
+- [promises]: Enforce `@typescript-eslint/no-floating-promises` rule.
 
 ### Changed
 

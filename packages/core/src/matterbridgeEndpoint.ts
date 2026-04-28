@@ -1674,12 +1674,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      try {
-        this.add(child);
-      } catch (error) {
+      void this.add(child).catch((error) => {
         // istanbul ignore next cause is only a safety check
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
-      }
+      });
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
@@ -1761,19 +1759,17 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (alreadyAdded) return child;
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      try {
-        this.add(child);
-      } catch (error) {
+      void this.add(child).catch((error) => {
         // istanbul ignore next cause is only a safety check
-        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
-      }
+        inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+      });
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
         this.parts.add(child);
       } catch (error) {
         // istanbul ignore next cause is only a safety check
-        inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
+        inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     }
     return child;

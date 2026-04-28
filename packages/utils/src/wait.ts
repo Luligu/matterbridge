@@ -25,6 +25,8 @@
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
+import { inspectError } from './error.js';
+
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
  *
@@ -137,5 +139,5 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 1
  * fireAndForget(this.publishUpdate(payload), log, 'publishUpdate');
  */
 export function fireAndForget(promise: Promise<unknown>, log: AnsiLogger, context: string): void {
-  promise.catch((err) => log.error(`${context} failed: ${err}`));
+  promise.catch((err) => inspectError(log, `${context} failed`, err));
 }

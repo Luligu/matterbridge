@@ -102,14 +102,8 @@ export async function addVirtualDevice(
   device.events.onOff.onOff$Changed.on((value) => {
     // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
     if (value) {
-      callback();
-      process.nextTick(async () => {
-        try {
-          await device.setStateOf(OnOffServer, { onOff: false });
-        } catch (_error) {
-          // Not necessary to handle the error
-        }
-      });
+      void callback().catch(/* istanbul ignore next */ () => {});
+      void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
     }
   });
 

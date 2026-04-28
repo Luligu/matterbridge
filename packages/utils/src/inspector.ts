@@ -33,6 +33,7 @@ import type { HeapProfiler, InspectorNotification, Session } from 'node:inspecto
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 import { getErrorMessage } from './error.js';
+import { fireAndForget } from './wait.js';
 
 // Inspector events
 interface InspectorEvents {
@@ -83,15 +84,15 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     this.log.logNameColor = YELLOW;
 
     this.on('start', () => {
-      this.start();
+      fireAndForget(this.start(), this.log, 'Inspector start');
     });
 
     this.on('stop', () => {
-      this.stop();
+      fireAndForget(this.stop(), this.log, 'Inspector stop');
     });
 
     this.on('snapshot', () => {
-      this.takeHeapSnapshot();
+      fireAndForget(this.takeHeapSnapshot(), this.log, 'Inspector snapshot');
     });
 
     this.on('gc', () => {

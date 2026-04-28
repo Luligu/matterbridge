@@ -68,7 +68,7 @@ import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
-import { wait, withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
@@ -360,7 +360,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {
-        this.wsMessageHandler(ws, message);
+        fireAndForget(this.wsMessageHandler(ws, message), this.log, `Error handling message from WebSocket client ${clientIp}`);
       });
 
       ws.on('ping', () => {
@@ -1847,7 +1847,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         if (plugin) {
-          this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
+          fireAndForget(this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true), this.log, `Save config for plugin ${plugin.name}`);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRestartRequired();
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });

@@ -19,7 +19,11 @@ import pluginSimpleImportSort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
 const sourceFiles = ['**/*.{js,mjs,cjs,ts,mts,cts}'];
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
+const javascriptFiles = ['**/*.{js,mjs,cjs}'];
+const typescriptFiles = ['**/src/**/*.{ts,mts,cts}'];
+const jestTestFiles = ['**/*.spec.ts', '**/*.test.ts', '**/__test__/**/*.ts'];
+const vitestTestFiles = ['**/vitest/**/*.spec.ts', '**/vitest/**/*.test.ts'];
+const configDirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 export default defineConfig([
   {
@@ -70,18 +74,18 @@ export default defineConfig([
   },
   {
     name: 'JavaScript Source Files',
-    files: ['**/*.{js,mjs,cjs}'],
+    files: javascriptFiles,
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
     name: 'TypeScript Source Files',
-    files: ['**/src/**/*.{ts,mts,cts}'],
+    files: typescriptFiles,
     ignores: ['**/src/**/*.test.{ts,mts,cts}', '**/src/**/*.spec.{ts,mts,cts}'], // Ignore test files
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
-        project: existsSync(path.join(__dirname, 'tsconfig.eslint.json')) ? './tsconfig.eslint.json' : './tsconfig.json', // Use a separate tsconfig for ESLint if it exists, otherwise fall back to the main tsconfig
+        tsconfigRootDir: configDirname,
+        project: existsSync(path.join(configDirname, 'tsconfig.eslint.json')) ? './tsconfig.eslint.json' : './tsconfig.json', // Use a separate tsconfig for ESLint if it exists, otherwise fall back to the main tsconfig
       },
     },
     rules: {
@@ -119,22 +123,23 @@ export default defineConfig([
         },
       ],
       // Eventually we want to enable these rules, but they may cause many errors
-      // '@typescript-eslint/no-floating-promises': 'error',
-      // '@typescript-eslint/no-misused-promises': 'error',
-      // '@typescript-eslint/await-thenable': 'error',
-      // '@typescript-eslint/return-await': ['error', 'in-try-catch'],
-      // '@typescript-eslint/promise-function-async': 'warn',
-      // '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/no-floating-promises': 'error', // Require unhandled promises to be explicitly voided or awaited
+      // '@typescript-eslint/no-misused-promises': 'error', // Disallow promises in non-async callbacks or boolean conditions
+      // '@typescript-eslint/await-thenable': 'error', // Disallow awaiting non-Promise values
+      // '@typescript-eslint/return-await': ['error', 'in-try-catch'], // Require return await inside try-catch so rejections are caught locally
+      // '@typescript-eslint/only-throw-error': 'error', // Require only Error objects to be thrown or rejected
+      // '@typescript-eslint/promise-function-async': 'warn', // Require Promise-returning functions to be async
+      // '@typescript-eslint/require-await': 'warn', // Disallow async functions without any await expression
     },
   },
   {
     name: 'Jest Test Files',
-    files: ['**/*.spec.ts', '**/*.test.ts', '**/__test__/**/*.ts'],
+    files: jestTestFiles,
     ignores: ['**/vitest'], // Ignore Vitest test files
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: configDirname,
         project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
       },
     },
@@ -153,11 +158,11 @@ export default defineConfig([
   },
   {
     name: 'Vitest Test Files',
-    files: ['**/vitest/**/*.spec.ts', '**/vitest/**/*.test.ts'],
+    files: vitestTestFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: configDirname,
         project: './tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
       },
     },
@@ -189,6 +194,9 @@ export default defineConfig([
     files: ['**/devcontainer.json', '**/*.jsonc'],
     plugins: { json },
     language: 'json/jsonc',
+    rules: {
+      'json/no-duplicate-keys': 'error',
+    },
   },
   {
     name: 'Markdown Files',

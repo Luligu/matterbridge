@@ -263,7 +263,7 @@ describe('fireAndForget()', () => {
     fireAndForget(Promise.reject(new Error('boom')), log, 'publishUpdate');
     await Promise.resolve();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'publishUpdate failed: Error: boom');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('publishUpdate failed: boom'));
   });
 
   it('should not log an error when the promise resolves', async () => {
