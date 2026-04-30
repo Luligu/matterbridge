@@ -79,6 +79,7 @@ These classes will run as threads in the next releases:
 - [promises]: Enforce `@typescript-eslint/no-floating-promises` rule.
 - [eslint]: Add `eslint` v.2.0.0 config (co-authored by Claude Sonnet 4.6).
 - [spawn]: Add `cross-spawn` v.7.0.6.
+- [frontend]: After the frontend upload a package, matterbridge will try to add the plugin too (this is a best effort and may fails). Thanks Pierre-Gilles Leymarie (https://github.com/Luligu/matterbridge/discussions/544)
 
 ### Changed
 

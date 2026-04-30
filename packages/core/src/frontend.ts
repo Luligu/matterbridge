@@ -238,6 +238,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
+              const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
+              // prettier-ignore
+              if (packageName.startsWith('matterbridge-')) await this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: packageName } }, this.serverFetchTimeout);
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
             }
