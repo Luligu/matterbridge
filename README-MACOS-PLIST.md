@@ -44,7 +44,7 @@ npm -v
 
 It should output something like:
 
-```
+```text
 v22.20.0
 10.9.3
 ```
@@ -57,7 +57,7 @@ which node
 
 It should output something like:
 
-```
+```text
 /usr/local/bin/node
 ```
 
@@ -87,7 +87,7 @@ sudo nano /Library/LaunchDaemons/matterbridge.plist
 
 - add the following to the file:
 
-```
+```text
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -216,7 +216,7 @@ sudo EDITOR=nano visudo
 
 Add this line at the end of the file (replace USER with your macOS username):
 
-```
+```text
 USER ALL=(ALL) NOPASSWD: ALL
 ```
 
@@ -234,7 +234,7 @@ sudo EDITOR=nano visudo
 
 Add (or edit) this line anywhere in the file:
 
-```
+```text
 Defaults        timestamp_timeout = 60
 ```
 

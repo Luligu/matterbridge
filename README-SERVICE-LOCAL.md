@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-missing-label-refs -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -75,7 +77,7 @@ sudo nano /etc/systemd/system/matterbridge.service
 
 Add the following to this file, **replacing 5 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global" and Environment="NPM_CONFIG_CACHE=/home/pi/.npm-cache"):
 
-```
+```text
 [Unit]
 Description=matterbridge
 After=network.target
@@ -113,6 +115,7 @@ Npm retries may randomly succeed or fail depending on resolution order.
 
 This often indicates a misconfigured IPv6 route / DNS preference.
 
+
 One possible fix, add this line to the existing [Service] section:
 
 ```text
@@ -122,14 +125,14 @@ Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 If you use the frontend with **-ssl** --frontend 443 and get an error message: "Port 443 requires elevated privileges",
 add this:
 
-```
+```text
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
 If you use the **matterbridge-bthome** plugin add this:
 
-```
+```text
 [Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```

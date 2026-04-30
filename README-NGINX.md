@@ -40,7 +40,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:
 
-```
+```text
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -85,7 +85,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:
 
-```
+```text
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -132,7 +132,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration:
 
-```
+```text
 # Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;
@@ -199,7 +199,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration:
 
-```
+```text
 # Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;

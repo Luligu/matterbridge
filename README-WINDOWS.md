@@ -50,7 +50,7 @@ npm -v
 
 It should output something like:
 
-```
+```text
 v22.20.0
 10.9.3
 ```
@@ -63,7 +63,7 @@ where.exe node
 
 It should output something like:
 
-```
+```text
 C:\Program Files\nodejs\node.exe
 ```
 

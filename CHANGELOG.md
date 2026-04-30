@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-missing-label-refs -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -74,6 +76,7 @@ These classes will run as threads in the next releases:
 - [scripts]: Add scripts\install-experimental.mjs and scripts\npm-link.mjs.
 - [threads]: Add a check on the worker result and fix cleanup for errors.
 - [promises]: Enforce `@typescript-eslint/no-floating-promises` rule.
+- [eslint]: Add `eslint` v.2.0.0 config (co-authored by Claude Sonnet 4.6).
 
 ### Changed
 
@@ -83,6 +86,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `frontend` version to v.3.4.13.
 - [frontend]: Update dependencies.
 - [matter]: Remove `Waiting for controllers to connect...`. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [eslint]: Update all docs.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

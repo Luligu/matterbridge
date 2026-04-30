@@ -157,7 +157,7 @@ sudo apt install nginx
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
 <p>paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:</p>
-<pre><code>server {
+<pre><code class="language-text">server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
@@ -189,7 +189,7 @@ sudo nginx -t
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
 <p>paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:</p>
-<pre><code>server {
+<pre><code class="language-text">server {
     listen 80 default_server;
     listen [::]:80 default_server;
     server_name _;
@@ -222,7 +222,7 @@ sudo nginx -t
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
 <p>paste this configuration:</p>
-<pre><code># Redirect all HTTP requests to HTTPS
+<pre><code class="language-text"># Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -275,7 +275,7 @@ sudo nginx -t
 <pre><code class="language-bash">sudo nano /etc/nginx/sites-available/matterbridge
 </code></pre>
 <p>paste this configuration:</p>
-<pre><code># Redirect all HTTP requests to HTTPS
+<pre><code class="language-text"># Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
