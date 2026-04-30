@@ -136,6 +136,16 @@ export function isValidUndefined(value: unknown): value is undefined {
 }
 
 /**
+ * Checks if a value is a valid Promise.
+ *
+ * @param {unknown} value - The value to check.
+ * @returns {value is Promise<unknown>} `true` if the value is a Promise, `false` otherwise.
+ */
+export function isValidPromise(value: unknown): value is Promise<unknown> {
+  return value !== undefined && value !== null && value instanceof Promise;
+}
+
+/**
  * Converts a semantic version string like "6.11.0-1011-raspi" to a numeric version code like 61100.
  * Format: major * 10000 + minor * 100 + patch
  *
