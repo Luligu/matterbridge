@@ -85,7 +85,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
       ],
       // Settings for the VS Code environment
       "settings": {
-        "terminal.integrated.defaultProfile.linux": "bash",
+        // Default .vscode/settings.json
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
         "editor.formatOnSave": true,
@@ -94,6 +94,27 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "eslint.format.enable": true,
         "eslint.useFlatConfig": true,
+        "eslint.nodePath": "node_modules",
+        "eslint.options": {
+          "cache": true,
+          "cacheLocation": ".cache/.eslintcache"
+        },
+        "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "markdown"],
+        "[javascript]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[json]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[jsonc]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
+        "[markdown]": {
+          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+        },
         "diffEditor.ignoreTrimWhitespace": false,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
@@ -113,9 +134,18 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "git.autofetch": true,
         "git.autoRepositoryDetection": false,
-        "git.ignoredRepositories": ["**/node_modules/**", "**/dist/**", "**/build/**", "**/.cache/**", "**/coverage/**", "**/docs/**"],
         "js/ts.tsdk.path": "node_modules/typescript/lib",
         "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+        "chat.useCustomizationsInParentRepositories": false,
+        "chat.useClaudeMdFile": true,
+        "chat.instructionsFilesLocations": {
+          ".github/instructions": true,
+          ".claude/rules": true,
+          "~/.copilot/instructions": false,
+          "~/.claude/rules": false
+        },
+        // Dev Container specific settings
+        "terminal.integrated.defaultProfile.linux": "bash",
         "js/ts.tsserver.watchOptions": {
           "watchFile": "dynamicPriorityPolling",
           "watchDirectory": "dynamicPriorityPolling",

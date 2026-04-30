@@ -1,4 +1,5 @@
 <!-- eslint-disable markdown/no-missing-label-refs -->
+<!-- eslint-disable markdown/no-multiple-h1 -->
 
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with local global node_modules
 
@@ -114,7 +115,6 @@ The connection fails with ENETUNREACH.
 Npm retries may randomly succeed or fail depending on resolution order.
 
 This often indicates a misconfigured IPv6 route / DNS preference.
-
 
 One possible fix, add this line to the existing [Service] section:
 

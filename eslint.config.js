@@ -174,30 +174,32 @@ export default defineConfig([
     name: 'JSON Files',
     files: ['**/*.json'],
     ignores: ['**/devcontainer.json', '**/package-lock.json'], // Ignore devcontainer.json and package-lock.json files
-    plugins: { json },
+    plugins: { json, prettier },
     language: 'json/json',
     extends: ['json/recommended'],
     rules: {
       'json/no-unsafe-values': 'off',
+      'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },
   {
     name: 'JSONC files',
     files: ['**/devcontainer.json', '**/*.jsonc'],
-    plugins: { json },
+    plugins: { json, prettier },
     language: 'json/jsonc',
     extends: ['json/recommended'],
     rules: {
       'json/no-unsafe-values': 'off',
+      'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },
   {
     name: 'Markdown Files',
     files: ['**/*.md'],
-    plugins: { markdown },
+    plugins: { markdown, prettier },
     extends: ['markdown/recommended'],
     rules: {
-      'markdown/no-multiple-h1': 'off',
+      'prettier/prettier': 'warn', // Use Prettier for formatting
     },
   },
 ]);
