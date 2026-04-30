@@ -9,6 +9,13 @@ import crossSpawn from 'cross-spawn';
 
 const { sync: spawnSync } = crossSpawn;
 
+const RED = '\x1b[91m';
+const YELLOW = '\x1b[93m';
+const RESET = '\x1b[0m';
+
+const error = (msg) => console.error(`${RED}${msg}${RESET}`);
+const warn = (msg) => console.warn(`${YELLOW}${msg}${RESET}`);
+
 const rootDirectory = resolve(fileURLToPath(import.meta.url), '..');
 const repoRoot = resolve(rootDirectory, '..');
 const args = ['link', '--no-fund', '--no-audit'];
@@ -20,7 +27,7 @@ if (first.status !== 0) {
   console.log('Retrying with sudo...');
   const second = spawnSync('sudo', ['npm', ...args], { stdio: 'inherit', cwd: repoRoot });
   if (second.status !== 0) {
-    console.error('Link failed even with sudo.');
+    error('Link failed even with sudo.');
     process.exit(second.status ?? 1);
   }
 }
@@ -29,7 +36,13 @@ console.log('Setting executable permissions for bin files...');
 const binDir = resolve(repoRoot, 'bin');
 for (const file of readdirSync(binDir).filter((f) => f.endsWith('.js'))) {
   console.log(`Setting permissions for ${file}...`);
-  chmodSync(resolve(binDir, file), 0o755);
+  try {
+    chmodSync(resolve(binDir, file), 0o755);
+  } catch (err) {
+    // 9P (WSL2 Windows mounts) and some other filesystems reject chmod even when
+    // the file already has the correct permissions. Warn and continue.
+    warn(`Warning: could not chmod ${file}: ${err.message}`);
+  }
 }
 
 console.log('Done.');

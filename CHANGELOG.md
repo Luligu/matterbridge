@@ -78,6 +78,7 @@ These classes will run as threads in the next releases:
 - [threads]: Add a check on the worker result and fix cleanup for errors.
 - [promises]: Enforce `@typescript-eslint/no-floating-promises` rule.
 - [eslint]: Add `eslint` v.2.0.0 config (co-authored by Claude Sonnet 4.6).
+- [spawn]: Add `cross-spawn` v.7.0.6.
 
 ### Changed
 
