@@ -1,6 +1,28 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/.git/**",
+    "apps/**",
+    "**/build/**",
+    "chip/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/temp/**",
+    "**/jest/**",
+    "**/node_modules/**",
+    "**/scripts/**",
+    "**/screenshots/**",
+    "**/package-lock.json",
+    "eslint.config.js"
+  ],
+  "env": {
+    "builtin": true,
+    "node": true
+  },
   "options": {
+    "reportUnusedDisableDirectives": "off",
+    "respectEslintDisableDirectives": true,
     "typeAware": false,
     "typeCheck": false,
     "maxWarnings": 0
@@ -23,7 +45,7 @@
         "reportUsedIgnorePattern": true
       }
     ],
-    "no-console": "off",
+    "no-console": "warn",
     "no-shadow": "off",
     "no-new": "warn",
     "no-extend-native": "off",
@@ -56,10 +78,5 @@
         "require-await": "off"
       }
     }
-  ],
-  "env": {
-    "builtin": true,
-    "node": true
-  },
-  "ignorePatterns": ["dist/**", "coverage/**", "temp/**", "jest/**", "apps/**", "chip/**", "node_modules/**", ".cache/**", "**/scripts/**", "eslint.config.js"]
+  ]
 }

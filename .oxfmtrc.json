@@ -1,5 +1,20 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/.git/**",
+    "apps/**",
+    "**/build/**",
+    "chip/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/temp/**",
+    "**/jest/**",
+    "**/node_modules/**",
+    "**/scripts/**",
+    "**/screenshots/**",
+    "package-lock.json"
+  ],
   "printWidth": 180,
   "tabWidth": 2,
   "useTabs": false,
@@ -17,6 +32,5 @@
   "endOfLine": "lf",
   "embeddedLanguageFormatting": "off",
   "singleAttributePerLine": false,
-  "sortPackageJson": false,
-  "ignorePatterns": ["**/.cache/", "**/.git/", "**/coverage/", "**/dist/", "**/build/", "**/jest/", "**/node_modules/", "**/temp/", "**/*.html", "apps/"]
+  "sortPackageJson": false
 }
