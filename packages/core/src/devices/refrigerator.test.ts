@@ -177,7 +177,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -189,7 +189,7 @@ describe('Matterbridge ' + NAME, () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -239,7 +239,7 @@ describe('Matterbridge ' + NAME, () => {
         'refrigeratorAndTemperatureControlledCabinetMode(0x52).featureMap(0xfffc)={ onOff: false }',
         'refrigeratorAndTemperatureControlledCabinetMode(0x52).generatedCommandList(0xfff8)=[ 1 ]',
         "refrigeratorAndTemperatureControlledCabinetMode(0x52).supportedModes(0x0)=[ { label: 'Auto', mode: 1, modeTags: [ { mfgCode: undefined, value: 0 } ] }, { label: 'RapidCool', mode: 2, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'RapidFreeze', mode: 3, modeTags: [ { mfgCode: undefined, value: 16385 } ] } ]",
-      ].sort(),
+      ].toSorted(),
     );
   });
 
@@ -271,7 +271,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -283,7 +283,7 @@ describe('Matterbridge ' + NAME, () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -314,7 +314,7 @@ describe('Matterbridge ' + NAME, () => {
         'temperatureMeasurement(0x402).measuredValue(0x0)=1000',
         'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
         'temperatureMeasurement(0x402).tolerance(0x3)=0',
-      ].sort(),
+      ].toSorted(),
     );
   });
 
@@ -346,7 +346,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -358,7 +358,7 @@ describe('Matterbridge ' + NAME, () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -389,7 +389,7 @@ describe('Matterbridge ' + NAME, () => {
         'temperatureMeasurement(0x402).measuredValue(0x0)=1000',
         'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
         'temperatureMeasurement(0x402).tolerance(0x3)=0',
-      ].sort(),
+      ].toSorted(),
     );
   });
 

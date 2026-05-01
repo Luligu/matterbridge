@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-missing-label-refs -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -52,6 +54,44 @@ These classes will run as threads in the next releases:
 - frontend;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+## [3.7.6] - 2026-05-01
+
+### Development changes
+
+- [matterbridge]: Add a persisted `uuid` properties to PlatformMatterbridge. This allows to detect a new setup in the plugin code.
+- [eslint]: Remove `eslint-plugin-promise` (not actively maintained) and add optional @typescript-eslint promise rules.
+- [utils]: Add `fireAndForget()` helper.
+- [utils]: Add `isValidPromise()` helper.
+- [tsgo]: Add experimental scripts to use `tsgo` (super fast typescript 7). Use npm run installExperimental before.
+- [oxlint]: Add experimental scripts to use `oxlint` (super fast linter). Use npm run installExperimental before.
+- [oxfmt]: Add experimental scripts to use `oxfmt` (super fast formatter). Use npm run installExperimental before.
+
+### Added
+
+- [threads]: Add `snackBar()` helper to `WorkerWrapper` to send snackbar messages from worker threads to the frontend.
+- [systemcheck]: Show frontend snackbar errors for unsupported Node.js versions and network configuration issues detected by the SystemCheck worker.
+- [systemcheck]: Clarify excluded network interface guidance to mention the Mdns interface setting in the frontend.
+- [dockerversion]: Add snack bar message if a new Docker image exist.
+- [matter]: Add [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [scripts]: Add scripts\install-experimental.mjs and scripts\npm-link.mjs.
+- [threads]: Add a check on the worker result and fix cleanup for errors.
+- [promises]: Enforce `@typescript-eslint/no-floating-promises` rule.
+- [eslint]: Add `eslint` v.2.0.0 config (co-authored by Claude Sonnet 4.6).
+- [spawn]: Add `cross-spawn` v.7.0.6.
+- [frontend]: After the frontend upload a package, matterbridge will try to add the plugin too (this is a best effort and may fails). Thanks Pierre-Gilles Leymarie (https://github.com/Luligu/matterbridge/discussions/544)
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `typescript-eslint` to v.8.59.1.
+- [jest]: Increase test timeout to 30 seconds in CI workflows.
+- [frontend]: Bump `frontend` version to v.3.4.13.
+- [frontend]: Update dependencies.
+- [matter]: Remove `Waiting for controllers to connect...`. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+- [eslint]: Update all docs.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.5] - 2026-04-24
 

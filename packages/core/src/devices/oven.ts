@@ -58,7 +58,7 @@ export class Oven extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
-    this.addFixedLabel('composed', 'Oven');
+    void this.addFixedLabel('composed', 'Oven').catch(/* istanbul ignore next */ () => {});
   }
 
   /**

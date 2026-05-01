@@ -7,6 +7,7 @@ import {
   isValidNull,
   isValidNumber,
   isValidObject,
+  isValidPromise,
   isValidRegExp,
   isValidString,
   isValidUndefined,
@@ -141,6 +142,22 @@ describe('Validation Functions', () => {
       expect(isValidArray([1, 2], 1, 3)).toBe(true);
       expect(isValidArray([1], 2)).toBe(false);
       expect(isValidArray([1, 2, 3, 4], undefined, 3)).toBe(false);
+    });
+  });
+
+  describe('isValidPromise', () => {
+    test('valid promises', () => {
+      expect(isValidPromise(Promise.resolve())).toBe(true);
+      expect(isValidPromise(new Promise(() => {}))).toBe(true);
+      expect(isValidPromise(Promise.reject(new Error('test')).catch(() => {}))).toBe(true);
+    });
+
+    test('invalid values', () => {
+      expect(isValidPromise(null)).toBe(false);
+      expect(isValidPromise(undefined)).toBe(false);
+      expect(isValidPromise({})).toBe(false);
+      expect(isValidPromise({ then: () => {} } as any)).toBe(false);
+      expect(isValidPromise('promise' as any)).toBe(false);
     });
   });
 

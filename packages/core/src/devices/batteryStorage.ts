@@ -83,7 +83,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.BatteryStorage, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
-    this.addFixedLabel('composed', 'Battery Storage');
+    void this.addFixedLabel('composed', 'Battery Storage').catch(/* istanbul ignore next */ () => {});
 
     const battery = this.addChildDeviceType('Battery', [powerSource, electricalSensor], {
       tagList: [getSemtag(PowerSourceTag.Battery)],

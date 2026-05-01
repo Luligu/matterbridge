@@ -25,6 +25,8 @@
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
+import { inspectError } from './error.js';
+
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
  *
@@ -35,6 +37,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
  * @param {number} [resolveInterval] - Optional. The interval duration in milliseconds between condition checks. Default is 500ms.
  * @param {boolean} [debug] - Optional. If true, debug messages will be logged to the console. Default is false.
  * @returns {Promise<boolean>} A promise that resolves to true when the condition is met, or false if the timeout occurs.
+ * @throws {Error} If exitWithReject is true and the waiter times out before the condition is met.
  */
 export async function waiter(
   name: string,
@@ -79,14 +82,13 @@ export async function waiter(
  * @param {boolean} debug - Whether to enable debug logging. Default is false.
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
-export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
+export function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
   const log = new AnsiLogger({ logName: 'Wait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (debug) log.debug(`Wait "${name}" started...`);
 
   return new Promise<void>((resolve) => {
-    const timeoutId = setTimeout(() => {
+    setTimeout(() => {
       if (debug) log.debug(`Wait "${name}" finished...`);
-      clearTimeout(timeoutId);
       resolve();
     }, timeout).unref();
   });
@@ -124,4 +126,18 @@ export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 1
         }
       });
   });
+}
+
+/**
+ * Utility function to handle promises without awaiting them, while still catching and logging any errors that occur.
+ *
+ * @param {Promise<unknown>} promise - The promise to handle.
+ * @param {AnsiLogger} log - The logger instance to use for logging errors.
+ * @param {string} context - The context or description of the operation for logging purposes.
+ *
+ * @example
+ * fireAndForget(this.publishUpdate(payload), log, 'publishUpdate');
+ */
+export function fireAndForget(promise: Promise<unknown>, log: AnsiLogger, context: string): void {
+  promise.catch((err) => inspectError(log, `${context} failed`, err));
 }

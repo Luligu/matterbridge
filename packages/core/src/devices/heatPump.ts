@@ -98,7 +98,11 @@ export class HeatPump extends MatterbridgeEndpoint {
     })
       .createDefaultThermostatClusterServer()
       .addRequiredClusterServers()
-      .addUserLabel('room', 'Living Room');
+      .addUserLabel('room', 'Living Room')
+      .catch(
+        /* istanbul ignore next */
+        () => {},
+      );
 
     // Add the Bedroom thermostat for the heat pump.
     this.addChildDeviceType('BedroomThermostat', thermostatDevice, {
@@ -106,6 +110,10 @@ export class HeatPump extends MatterbridgeEndpoint {
     })
       .createDefaultThermostatClusterServer()
       .addRequiredClusterServers()
-      .addUserLabel('room', 'Bedroom');
+      .addUserLabel('room', 'Bedroom')
+      .catch(
+        /* istanbul ignore next */
+        () => {},
+      );
   }
 }

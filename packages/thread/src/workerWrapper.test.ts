@@ -43,6 +43,7 @@ describe('WorkerWrapper', () => {
       : null;
 
     const serverClose = jest.fn();
+    const serverRequest = jest.fn();
 
     const hasParameterMock = jest.fn((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
@@ -69,6 +70,7 @@ describe('WorkerWrapper', () => {
 
     jest.unstable_mockModule('./broadcastServer.js', () => ({
       BroadcastServer: class {
+        request = serverRequest;
         close = serverClose;
         // eslint-disable-next-line @typescript-eslint/no-useless-constructor
         constructor() {}
@@ -90,6 +92,7 @@ describe('WorkerWrapper', () => {
       parentPort,
       getOnMessageHandler: () => onMessageHandler,
       hasParameterMock,
+      serverRequest,
       serverClose,
       waitImmediate,
     };
@@ -137,6 +140,41 @@ describe('WorkerWrapper', () => {
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
   });
 
+  test('worker thread: logs callback failures and exits with success false', async () => {
+    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 8,
+      threadName: 'ThreadFail',
+    });
+
+    const callbackError = new Error('boom');
+    const callback = jest.fn(async () => {
+      throw callbackError;
+    });
+
+    const worker = new WorkerWrapper('FailWorker' as unknown as ThreadNames, callback);
+    const errorSpy = jest.spyOn(worker.log, 'error');
+
+    await waitImmediate();
+
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    const [loggedMessage] = errorSpy.mock.calls[0] as [string];
+    expect(loggedMessage).toContain('Worker FailWorker callback failed:');
+    expect(loggedMessage).toContain('boom');
+    expect(serverClose).toHaveBeenCalledTimes(1);
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'exit',
+        threadId: 8,
+        threadName: 'FailWorker',
+        success: false,
+      }),
+    );
+    expect(parentPort?.close).toHaveBeenCalledTimes(1);
+  });
+
   test('worker thread: responds to ping with pong', async () => {
     const { WorkerWrapper, parentPort, getOnMessageHandler } = await setup({
       isMainThread: false,
@@ -151,7 +189,8 @@ describe('WorkerWrapper', () => {
     expect(onMessageHandler).toBeDefined();
     onMessageHandler?.({ type: 'ping' });
 
-    const sent = (parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const sent = (parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
 
@@ -174,7 +213,8 @@ describe('WorkerWrapper', () => {
 
     await waitImmediate();
 
-    const sent = (parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const sent = (parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.DEBUG }));
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.WARN }));
   });
@@ -216,8 +256,10 @@ describe('WorkerWrapper', () => {
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
-    expect((parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
-    expect((parentPort?.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect((parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect((parentPort!.postMessage as jest.Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
     expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
@@ -268,6 +310,34 @@ describe('WorkerWrapper', () => {
 
     expect(createSpy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'hi');
+  });
+
+  test('snackBar sends frontend request through the broadcast server', async () => {
+    const { WorkerWrapper, serverRequest } = await setup({
+      isMainThread: true,
+      parentPortPresent: false,
+      threadId: 0,
+      threadName: 'Ignored',
+    });
+
+    const wrapper = new WorkerWrapper('SnackBarWrapper' as unknown as ThreadNames, async () => true);
+    wrapper.snackBar('system issue', 0, 'error');
+
+    expect(serverRequest).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: 'matterbridge',
+      dst: 'frontend',
+      params: { message: 'system issue', timeout: 0, severity: 'error' },
+    });
+
+    wrapper.snackBar('default issue');
+
+    expect(serverRequest).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: 'matterbridge',
+      dst: 'frontend',
+      params: { message: 'default issue', timeout: 5, severity: 'info' },
+    });
   });
 
   test('logWorkerInfo covers worker-thread and active parentPort branches', async () => {

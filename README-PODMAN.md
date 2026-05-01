@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-multiple-h1 -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Podman configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -23,7 +25,7 @@
 
 ## Install Podman if it is not already installed
 
-```
+```bash
 cd ~
 sudo apt update
 sudo apt install podman -y
@@ -40,7 +42,7 @@ Podman handles container restarts a little differently than Docker. The --restar
 
 This will create the required directories if they don't exist
 
-```
+```bash
 cd ~
 mkdir -p ./Matterbridge
 mkdir -p ./.matterbridge
@@ -56,7 +58,7 @@ You may need to adapt the script to your setup:
 
 The container must have full access to the host network (needed for matter mdns).
 
-```
+```bash
 podman run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
@@ -70,7 +72,7 @@ You may need to adapt the script to your setup:
 
 ### Integrate the mattebridge podman container with systemd for automatic startup after reboots
 
-```
+```bash
 podman generate systemd --name matterbridge --files --new
 sudo mv container-matterbridge.service /etc/systemd/system/
 sudo systemctl enable container-matterbridge
@@ -79,36 +81,36 @@ sudo systemctl start container-matterbridge
 
 ### Start the Podman container
 
-```
+```bash
 podman start matterbridge
 ```
 
 ### Stop the Podman container
 
-```
+```bash
 podman stop matterbridge
 ```
 
 ### Restart the Podman container
 
-```
+```bash
 podman restart matterbridge
 ```
 
 ### Remove the Podman container
 
-```
+```bash
 podman rm matterbridge
 ```
 
 ### Shows the logs
 
-```
+```bash
 podman logs matterbridge
 ```
 
 ### Shows the logs real time (tail)
 
-```
+```bash
 podman logs --tail 1000 -f matterbridge
 ```

@@ -84,9 +84,17 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
 export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: AnsiLogger, server: BroadcastServer): Promise<void> {
   const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
 
-  const branch = matterbridge.matterbridgeVersion.includes('-dev-') ? 'dev' : 'main';
+  const branch = matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-') ? 'dev' : 'main';
+  const params =
+    `?id=${encodeURIComponent(matterbridge.uuid)}` +
+    `&v=${encodeURIComponent(matterbridge.matterbridgeVersion)}` +
+    `&dockerv=${encodeURIComponent(matterbridge.dockerVersion ?? '')}` +
+    `&mode=${encodeURIComponent(matterbridge.bridgeMode)}` +
+    `&restart=${encodeURIComponent(matterbridge.restartMode)}` +
+    `&node=${encodeURIComponent(process.versions.node)}` +
+    `&os=${encodeURIComponent(process.platform)}`;
   try {
-    const updateJson = await getGitHubUpdate(branch, 'update.json', 5_000);
+    const updateJson = await getGitHubUpdate(branch, 'update.json' + params, 5_000);
     log.debug(`GitHub ${branch} update status: ${debugStringify(updateJson)}.`);
     if (
       isValidString(branch === 'main' ? updateJson.latestMessage : updateJson.devMessage, 1) &&

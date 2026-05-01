@@ -70,13 +70,13 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { wait } from '@matterbridge/utils';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
+import { fireAndForget, wait } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import {
   AnsiLogger,
@@ -139,7 +139,7 @@ interface MatterbridgeEvents {
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Debug flag */
-  private readonly debug = hasParameter('debug');
+  private readonly debug = hasParameter('debug') || hasParameter('verbose');
   /** Verbose flag */
   private readonly verbose = hasParameter('verbose');
 
@@ -172,6 +172,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   };
 
   // Matterbridge settings
+  public uuid = '';
   /** It indicates the home directory of the Matterbridge application. The home directory is the base directory where Matterbridge creates the matterbridge directories (os.homedir() if not overridden). */
   public homeDirectory = '';
   /** It indicates the root directory of the Matterbridge application. The root directory is the directory where Matterbridge is executed. */
@@ -283,14 +284,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   ipv4Address: string | undefined;
   /** Matter listeningAddressIpv6 address */
   ipv6Address: string | undefined;
-  /** Matter commissioning port */
-  port: number | undefined; // first server node port
-  /** Matter commissioning passcode */
-  passcode: number | undefined; // first server node passcode
-  /** Matter commissioning discriminator */
-  discriminator: number | undefined; // first server node discriminator
-  /** Matter device certification */
-  certification: DeviceCertification.Configuration | undefined; // device certification
+  /** Matter commissioning port (first server node port) */
+  port: number | undefined;
+  /** Matter commissioning passcode (first server node passcode) */
+  passcode: number | undefined;
+  /** Matter commissioning discriminator (first server node discriminator) */
+  discriminator: number | undefined;
+  /** Matter device certification (device certification) */
+  certification: DeviceCertification.Configuration | undefined;
 
   /** Matter server node in bridge mode */
   serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
@@ -337,6 +338,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getPlatformMatterbridge(): PlatformMatterbridge {
     return {
       systemInformation: { ...this.systemInformation },
+      uuid: this.uuid,
       rootDirectory: this.rootDirectory,
       homeDirectory: this.homeDirectory,
       matterbridgeDirectory: this.matterbridgeDirectory,
@@ -365,6 +367,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getSharedMatterbridge(): SharedMatterbridge {
     return {
       systemInformation: { ...this.systemInformation },
+      uuid: this.uuid,
       rootDirectory: this.rootDirectory,
       homeDirectory: this.homeDirectory,
       matterbridgeDirectory: this.matterbridgeDirectory,
@@ -583,13 +586,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       for (const storage of storages) {
         this.log.debug(`Checking storage: ${CYAN}${storage}${db}`);
         const nodeContext = await this.nodeStorage?.createStorage(storage);
-        // TODO: Remove this code when node-persist-manager is updated
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const keys = (await (nodeContext as any)?.storage.keys()) as string[];
-        keys.forEach(async (key) => {
+        const keys = await nodeContext.keys();
+        for (const key of keys) {
           this.log.debug(`Checking key: ${CYAN}${storage}:${key}${db}`);
           await nodeContext?.get(key);
-        });
+        }
       }
       // Creating a backup of the node storage since it is not corrupted
       this.log.debug('Creating node storage backup...');
@@ -610,13 +611,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
 
-    // Set the first port to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
-    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
-    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode)
+    // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.discriminator =
       getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
@@ -735,6 +736,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       AnsiLogger.setGlobalLogfile(path.join(this.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.log.logLevel, true);
       this.fileLogger = true;
     }
+
+    // Set the matterbridge uuid
+    this.uuid = await this.nodeContext.get<string>('matterbridgeUuid');
+    if (!this.uuid) {
+      const { randomUUID } = await import('node:crypto');
+      this.uuid = randomUUID();
+      await this.nodeContext.set<string>('matterbridgeUuid', this.uuid);
+    }
+    this.log.debug(`Matterbridge UUID: ${CYAN}${this.uuid}${db}`);
 
     this.log.notice('Matterbridge is starting...');
 
@@ -1207,7 +1217,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       plugin.configured = false;
       plugin.registeredDevices = undefined;
       if (wait) await this.plugins.load(plugin, start, 'Matterbridge is starting');
-      else this.plugins.load(plugin, start, 'Matterbridge is starting'); // No await do it asyncronously
+      else fireAndForget(this.plugins.load(plugin, start, 'Matterbridge is starting'), this.log, 'Load plugin');
     }
     this.frontend.wssSendRefreshRequired('plugins');
   }
@@ -1380,7 +1390,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     } else {
       // The global node_modules directory is already set in the node storage and we check if it is still valid
-      // this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix' } });
     }
 
@@ -1543,7 +1553,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.removeAllBridgedEndpoints(plugin.name, 100);
     }
     this.log.debug('Waiting for the MessageExchange to finish...');
-    await wait(timeout); // Wait for MessageExchange to finish
+    await wait(timeout);
     this.log.debug('Cleaning up and shutting down...');
     await this.cleanup('unregistered all devices and shutting down...', false, timeout);
   }
@@ -1785,7 +1795,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info(`Saved registered devices (${serializedRegisteredDevices?.length})`);
         */
 
-        // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk)
+        // Clear nodeContext and nodeStorage (they just need 1000ms to write the data to disk if enabled)
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
         this.nodeContext = undefined;
@@ -1939,13 +1949,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Cleared startMatterInterval interval in bridge mode');
 
         // Start the Matter server node
-        this.startServerNode(this.serverNode); // We don't await this, because the server node is started in the background
+        fireAndForget(this.startServerNode(this.serverNode), this.log, 'Start server node');
 
         // Start the Matter server node of single devices in mode 'server'
         for (const device of this.devices.array()) {
           if (device.mode === 'server' && device.serverNode) {
             this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+            fireAndForget(this.startServerNode(device.serverNode), this.log, `Start server node for device ${device.deviceName}`);
           }
         }
 
@@ -1968,7 +1978,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // Setting reachability to true
         this.reachabilityTimeout = setTimeout(() => {
           this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-          if (this.aggregatorNode) this.setAggregatorReachability(this.aggregatorNode, true);
+          if (this.aggregatorNode) fireAndForget(this.setAggregatorReachability(this.aggregatorNode, true), this.log, `Set aggregator node reachability for Matterbridge`);
         }, 60 * 1000).unref();
 
         // Logger.get('LogServerNode').info(this.serverNode);
@@ -2001,7 +2011,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug('Creating server nodes for DynamicPlatform plugins and starting all plugins in childbridge mode...');
     for (const plugin of this.plugins.array().filter((p) => p.enabled && !p.error)) {
       if (plugin.type === 'DynamicPlatform') await this.createDynamicPlugin(plugin);
-      this.plugins.start(plugin, 'Matterbridge is starting'); // Start the plugin in the background
+      fireAndForget(this.plugins.start(plugin, 'Matterbridge is starting'), this.log, `Start plugin ${plugin.name} in childbridge mode`);
     }
 
     // Start the Matterbridge in childbridge mode when all plugins are loaded and started
@@ -2087,12 +2097,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             continue;
           }
           // Start the Matter server node
-          this.startServerNode(plugin.serverNode); // We don't await this, because the server node is started in the background
+          fireAndForget(this.startServerNode(plugin.serverNode), this.log, `Start server node for plugin ${plugin.name}`);
 
           // Setting reachability to true
           plugin.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
-            if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode) this.setAggregatorReachability(plugin.aggregatorNode, true);
+            if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode)
+              fireAndForget(this.setAggregatorReachability(plugin.aggregatorNode, true), this.log, `Set aggregator node reachability for plugin ${plugin.name}`);
           }, 60 * 1000).unref();
         }
 
@@ -2100,7 +2111,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         for (const device of this.devices.array()) {
           if (device.mode === 'server' && device.serverNode) {
             this.log.debug(`Starting server node for device ${dev}${device.deviceName}${db} in server mode...`);
-            this.startServerNode(device.serverNode); // We don't await this, because the server node is started in the background
+            fireAndForget(this.startServerNode(device.serverNode), this.log, `Start server node for device ${device.deviceName}`);
           }
         }
 
@@ -2706,7 +2717,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`);
       } else {
-        this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect...`);
+        this.log.notice(`Server node for ${storeId} is already commissioned.`);
         this.advertisingNodes.delete(storeId);
       }
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });

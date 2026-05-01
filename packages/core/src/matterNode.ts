@@ -924,9 +924,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    */
   async createAccessoryPlugin(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
     if (typeof plugin === 'string') {
-      const _plugin = this.pluginManager.get(plugin);
-      if (!_plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = _plugin;
+      const pluginInstance = this.pluginManager.get(plugin);
+      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
+      plugin = pluginInstance;
     }
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       plugin.locked = true;
@@ -963,9 +963,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    */
   async createDynamicPlugin(plugin: Plugin | PluginName): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
     if (typeof plugin === 'string') {
-      const _plugin = this.pluginManager.get(plugin);
-      if (!_plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = _plugin;
+      const pluginInstance = this.pluginManager.get(plugin);
+      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
+      plugin = pluginInstance;
     }
     if (!plugin.locked) {
       plugin.locked = true;
@@ -1005,9 +1005,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    */
   async createDeviceServerNode(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
     if (typeof plugin === 'string') {
-      const _plugin = this.pluginManager.get(plugin);
-      if (!_plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = _plugin;
+      const pluginInstance = this.pluginManager.get(plugin);
+      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
+      plugin = pluginInstance;
     }
     if (device.mode === 'server' && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);

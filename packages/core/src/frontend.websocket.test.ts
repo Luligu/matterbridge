@@ -38,7 +38,7 @@ import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@
 import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
-import WebSocket from 'ws';
+import { WebSocket } from 'ws';
 
 import type { Frontend as FrontendType } from './frontend.js';
 import { Frontend } from './frontend.js';

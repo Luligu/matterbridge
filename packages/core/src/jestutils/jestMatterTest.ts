@@ -164,10 +164,10 @@ export function getPlatformMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.7.5',
-    matterbridgeLatestVersion: '3.7.5',
-    matterbridgeDevVersion: '3.7.5',
-    frontendVersion: '3.7.5',
+    matterbridgeVersion: '3.7.6',
+    matterbridgeLatestVersion: '3.7.6',
+    matterbridgeDevVersion: '3.7.6',
+    frontendVersion: '3.7.6',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -442,11 +442,11 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
   }
 
   // Wait for the server to be online
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     server.lifecycle.online.on(async () => {
       resolve();
     });
-    server.start();
+    server.start().catch((err) => reject(err));
   });
 
   // Check if the server is online

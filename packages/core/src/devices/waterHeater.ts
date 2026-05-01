@@ -85,7 +85,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
-    this.addFixedLabel('composed', 'Water Heater');
+    void this.addFixedLabel('composed', 'Water Heater').catch(/* istanbul ignore next */ () => {});
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()

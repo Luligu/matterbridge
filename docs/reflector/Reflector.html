@@ -129,7 +129,7 @@
   </style>
 </head>
 <body>
-<h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbsp-matterbridge-mdns-reflector"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector</h1>
+<!-- eslint-disable markdown/no-multiple-h1 --><h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbsp-matterbridge-mdns-reflector"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector</h1>
 <p>This project aims to use Matterbridge in these configurations:</p>
 <table>
 <thead>
@@ -218,6 +218,8 @@
 </ul>
 <h2 id="docker-desktop-requirements-for-windows-and-macos">Docker Desktop requirements for Windows and macOS</h2>
 <p>See Docker Desktop System Requirements.</p>
+<h2 id="docker-desktop-on-macos">Docker Desktop on macOS</h2>
+<p>On macOS verify that Docker has access to the local network: <a href="DockerDesktopMacOs.png">System Settings → Privacy &amp; Security → Local Network</a> (macOS release upgrade may turn it off).</p>
 <h2 id="dual-stack-ipv4ipv6-mdns-enabled-and-no-filtering">Dual Stack IPv4/IPv6 mDNS enabled and No filtering</h2>
 <p><img src="DockerDesktopSetup.png" alt="alt text"></p>
 <h1 id="run-matterbridge-in-a-docker-desktop-container">Run Matterbridge in a Docker Desktop container</h1>
@@ -270,6 +272,34 @@ docker logs --tail 1000 -f matterbridge-test
 docker exec -it matterbridge-test apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
 docker exec -it matterbridge-test ip a
 docker exec -it matterbridge-test ip r
+</code></pre>
+<h2 id="optional-verify-the-network-stack">Optional: verify the network stack</h2>
+<p>Change eventually <code>homeassistant.local</code> with any other local hostname on your lan.</p>
+<p>With alpine image:</p>
+<pre><code class="language-bash">docker pull node:24-alpine
+docker run --rm node:24-alpine ping -c 2 homeassistant.local
+docker run --rm node:24-alpine ping -c 2 host.docker.internal
+docker run --rm node:24-alpine ping -c 2 8.8.8.8
+</code></pre>
+<p>or with trixie image:</p>
+<pre><code class="language-bash">docker pull node:24-trixie &amp;&amp; docker run --rm -e DEBIAN_FRONTEND=noninteractive node:24-trixie bash -c &quot;\
+  apt-get update -qq &amp;&amp; \
+  apt-get install -y -qq iproute2 iputils-ping curl &gt;/dev/null &amp;&amp; \
+  echo &#39;=== ip a ===&#39; &amp;&amp; ip a &amp;&amp; \
+  echo &#39;=== ip r ===&#39; &amp;&amp; ip r &amp;&amp; \
+  echo &#39;=== ping homeassistant.local (HA) ===&#39; &amp;&amp; ping -c 2 homeassistant.local &amp;&amp; \
+  echo &#39;=== ping host.docker.internal ===&#39; &amp;&amp; ping -c 2 host.docker.internal &amp;&amp; \
+  echo &#39;=== ping 8.8.8.8 ===&#39; &amp;&amp; ping -c 2 8.8.8.8&quot;
+</code></pre>
+<p>or with the matterbridge image:</p>
+<pre><code class="language-bash">docker pull luligu/matterbridge:dev &amp;&amp; docker run --rm -e DEBIAN_FRONTEND=noninteractive luligu/matterbridge:dev bash -c &quot;\
+  apt-get update -qq &amp;&amp; \
+  apt-get install -y -qq iproute2 iputils-ping curl &gt;/dev/null &amp;&amp; \
+  echo &#39;=== ip a ===&#39; &amp;&amp; ip a &amp;&amp; \
+  echo &#39;=== ip r ===&#39; &amp;&amp; ip r &amp;&amp; \
+  echo &#39;=== ping homeassistant.local (HA) ===&#39; &amp;&amp; ping -c 2 homeassistant.local &amp;&amp; \
+  echo &#39;=== ping host.docker.internal ===&#39; &amp;&amp; ping -c 2 host.docker.internal &amp;&amp; \
+  echo &#39;=== ping 8.8.8.8 ===&#39; &amp;&amp; ping -c 2 8.8.8.8&quot;
 </code></pre>
 <h3 id="issues-we-have-there">Issues we have there</h3>
 <ol>

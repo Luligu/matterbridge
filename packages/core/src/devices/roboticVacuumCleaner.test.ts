@@ -221,7 +221,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -233,7 +233,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -305,7 +305,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
         'serviceArea(0x150).selectedAreas(0x2)=[  ]',
         "serviceArea(0x150).supportedAreas(0x0)=[ { areaId: 1, mapId: null, areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: 52 }, landmarkInfo: null } }, { areaId: 2, mapId: null, areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: 47 }, landmarkInfo: null } }, { areaId: 3, mapId: null, areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: 7 }, landmarkInfo: null } }, { areaId: 4, mapId: null, areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: 6 }, landmarkInfo: null } } ]",
         'serviceArea(0x150).supportedMaps(0x1)=[  ]',
-      ].sort(),
+      ].toSorted(),
     );
   });
 

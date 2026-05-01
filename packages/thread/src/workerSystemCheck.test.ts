@@ -44,6 +44,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
   jest.resetModules();
 
   const loggerMock = jest.fn();
+  const snackBarMock = jest.fn();
   const fetchMock = options.fetchThrows
     ? jest.fn(async () => {
         throw new Error('fetch failed');
@@ -52,6 +53,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
 
   const worker = {
     logger: loggerMock,
+    snackBar: snackBarMock,
     log: { debug: jest.fn() },
     server: { fetch: fetchMock },
   } as any;
@@ -89,7 +91,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
   try {
     await import('./workerSystemCheck.js');
     const success = await runPromise;
-    return { wrapperName, success, loggerMock, fetchMock, inspectError, networkInterfacesMock };
+    return { wrapperName, success, loggerMock, snackBarMock, fetchMock, inspectError, networkInterfacesMock };
   } finally {
     restoreNvm();
     restoreNodeVersion();
@@ -102,7 +104,7 @@ describe('workerSystemCheck', () => {
   });
 
   test('success: covers node 20 branch, NVM warning, excluded interface warn, interface scan', async () => {
-    const { wrapperName, success, loggerMock, fetchMock } = await runWorkerSystemCheck({
+    const { wrapperName, success, loggerMock, snackBarMock, fetchMock } = await runWorkerSystemCheck({
       nvmBin: true,
       nvmDir: true,
       nodeVersion: '20.18.0',
@@ -118,9 +120,15 @@ describe('workerSystemCheck', () => {
     expect(fetchMock).toHaveBeenCalledWith({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 1000);
 
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting system check/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/NVM is a development tool/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/Node\.js version < 20\.19\.0 is not supported/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/Found network interface 'docker0'/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: NVM is a development tool/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 20\.19\.0 is not supported/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Found network interface 'docker0'.*Matter mDNS/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Use --mdnsinterface parameter or set Mdns interface in Settings.*Matter mDNS/));
+    expect(snackBarMock).toHaveBeenCalledWith(
+      'System Check: Use --mdnsinterface parameter or set Mdns interface in Settings to specify the correct local interface for Matter mDNS.',
+      0,
+      'warning',
+    );
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
   });
 
@@ -138,19 +146,23 @@ describe('workerSystemCheck', () => {
   });
 
   test('node 22.12: logs unsupported 22.x and missing-interface errors (still succeeds)', async () => {
-    const { success, loggerMock } = await runWorkerSystemCheck({
+    const { success, loggerMock, snackBarMock } = await runWorkerSystemCheck({
       nodeVersion: '22.12.0',
       mdnsInterface: '',
       networkInterfaces: {} as any,
     });
 
     expect(success).toBe(true);
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/Node\.js version < 22\.13\.0 is not supported/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 22\.13\.0 is not supported/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/Please consider upgrading to Node\.js LTS version/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/No internal network interface found/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/No external network interface found/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/No IPv4 network interface found/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/No IPv6 network interface found/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No internal network interface found/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No external network interface found/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No IPv4 network interface found/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No IPv6 network interface found/));
+    expect(snackBarMock).toHaveBeenCalledWith('System Check: No internal network interface found. Check your network configuration.', 0, 'error');
+    expect(snackBarMock).toHaveBeenCalledWith('System Check: No external network interface found. Check your network configuration.', 0, 'error');
+    expect(snackBarMock).toHaveBeenCalledWith('System Check: No IPv4 network interface found. Check your network configuration.', 0, 'error');
+    expect(snackBarMock).toHaveBeenCalledWith('System Check: No IPv6 network interface found. Check your network configuration.', 0, 'error');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
   });
 
@@ -164,7 +176,7 @@ describe('workerSystemCheck', () => {
     });
 
     expect(success).toBe(true);
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/odd major versions are not supported/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js odd major versions are not supported/));
     expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/Found network interface 'docker0'/));
   });
 
@@ -211,6 +223,6 @@ describe('workerSystemCheck', () => {
     });
 
     expect(success).toBe(true);
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/No internal network interface found/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No internal network interface found/));
   });
 });

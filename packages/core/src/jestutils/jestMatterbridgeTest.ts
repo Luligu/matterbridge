@@ -160,10 +160,6 @@ export async function startMatterbridge(
   clearTimeout((matterbridge as any).checkUpdateTimeout);
   clearInterval((matterbridge as any).checkUpdateInterval);
 
-  // Setup the mDNS service in the environment
-  // @ts-expect-error - access to private member for testing
-  new MdnsService(matterbridge.environment);
-
   expect(matterbridge).toBeDefined();
   expect(matterbridge.profile).toBeUndefined();
   expect(matterbridge.bridgeMode).toBe(bridgeMode);
@@ -298,7 +294,7 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.7.5';
+  matterbridge.matterbridgeVersion = '3.7.6';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join(HOMEDIR);
   matterbridge.homeDirectory = path.join(HOMEDIR);
@@ -382,11 +378,11 @@ export async function startMatterbridgeEnvironment(port: number = 5540, createOn
 
   // Wait for the server to be online
   expect(server.lifecycle.isOnline).toBeFalsy();
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     server.lifecycle.online.on(async () => {
       resolve();
     });
-    server.start();
+    server.start().catch((err) => reject(err));
   });
 
   // Check if the server is online

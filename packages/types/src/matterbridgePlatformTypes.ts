@@ -70,6 +70,7 @@ export type PlatformMatterbridge = {
       | 'heapUsed'
     >
   >;
+  readonly uuid: string;
   readonly rootDirectory: string;
   readonly homeDirectory: string;
   readonly matterbridgeDirectory: string;

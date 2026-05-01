@@ -78,25 +78,25 @@ export class ExtractorHood extends MatterbridgeEndpoint {
       activatedCarbonReplacementProductList,
     );
 
-    this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {
+    void this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Fan control fanMode attribute changed: ${newValue}`);
-    });
+    }).catch(/* istanbul ignore next */ () => {});
 
-    this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context) => {
+    void this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Fan control percentSetting attribute changed: ${newValue}`);
-      this.setAttribute('fanControl', 'percentCurrent', newValue, this.log);
-    });
+      void this.setAttribute('fanControl', 'percentCurrent', newValue, this.log).catch(/* istanbul ignore next */ () => {});
+    }).catch(/* istanbul ignore next */ () => {});
 
-    this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
+    void this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Hepa filter monitoring lastChangedTime attribute changed: ${newValue}`);
-    });
+    }).catch(/* istanbul ignore next */ () => {});
 
-    this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
+    void this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
       if (context.offline === true) return;
       this.log.info(`Activated carbon filter monitoring lastChangedTime attribute changed: ${newValue}`);
-    });
+    }).catch(/* istanbul ignore next */ () => {});
   }
 }

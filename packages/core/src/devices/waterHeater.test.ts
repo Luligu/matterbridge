@@ -176,7 +176,7 @@ describe('Matterbridge Water Heater', () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -188,7 +188,7 @@ describe('Matterbridge Water Heater', () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -243,7 +243,7 @@ describe('Matterbridge Water Heater', () => {
         'waterHeaterMode(0x9e).featureMap(0xfffc)={ onOff: false }',
         'waterHeaterMode(0x9e).generatedCommandList(0xfff8)=[ 1 ]',
         "waterHeaterMode(0x9e).supportedModes(0x0)=[ { label: 'Auto', mode: 1, modeTags: [ { mfgCode: undefined, value: 0 } ] }, { label: 'Quick', mode: 2, modeTags: [ { mfgCode: undefined, value: 1 } ] }, { label: 'Quiet', mode: 3, modeTags: [ { mfgCode: undefined, value: 2 } ] }, { label: 'LowNoise', mode: 4, modeTags: [ { mfgCode: undefined, value: 3 } ] }, { label: 'LowEnergy', mode: 5, modeTags: [ { mfgCode: undefined, value: 4 } ] }, { label: 'Vacation', mode: 6, modeTags: [ { mfgCode: undefined, value: 5 } ] }, { label: 'Min', mode: 7, modeTags: [ { mfgCode: undefined, value: 6 } ] }, { label: 'Max', mode: 8, modeTags: [ { mfgCode: undefined, value: 7 } ] }, { label: 'Night', mode: 9, modeTags: [ { mfgCode: undefined, value: 8 } ] }, { label: 'Day', mode: 10, modeTags: [ { mfgCode: undefined, value: 9 } ] }, { label: 'Off', mode: 11, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Manual', mode: 12, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Timed', mode: 13, modeTags: [ { mfgCode: undefined, value: 16386 } ] } ]",
-      ].sort(),
+      ].toSorted(),
     );
   });
 

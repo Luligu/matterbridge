@@ -116,7 +116,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -128,7 +128,7 @@ describe('Matterbridge ' + NAME, () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -196,7 +196,7 @@ describe('Matterbridge ' + NAME, () => {
         'temperatureControl(0x56).generatedCommandList(0xfff8)=[  ]',
         'temperatureControl(0x56).selectedTemperatureLevel(0x4)=1',
         "temperatureControl(0x56).supportedTemperatureLevels(0x5)=[ 'Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°' ]",
-      ].sort(),
+      ].toSorted(),
     );
   });
 

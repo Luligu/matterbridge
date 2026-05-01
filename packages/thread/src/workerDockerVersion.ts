@@ -53,10 +53,20 @@ export default new WorkerWrapper('DockerVersion', async (worker) => {
     const errorMessage = inspectError(worker.log, `Failed to check docker version`, error);
     worker.logger(LogLevel.ERROR, errorMessage);
   }
-  if (dockerBuildConfig && dockerBuildConfig.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest)
-    worker.logger(LogLevel.WARN, `You are using the v.${dockerBuildConfig.version} latest Docker image. Please pull the latest Docker image v.${dockerVersionLatest}.`);
-  if (dockerBuildConfig && dockerBuildConfig.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev)
-    worker.logger(LogLevel.WARN, `You are using the v.${dockerBuildConfig.version} dev Docker image. Please pull the dev Docker image v.${dockerVersionDev}.`);
+  if (dockerBuildConfig && dockerBuildConfig.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest) {
+    worker.logger(
+      LogLevel.WARN,
+      `You are using the v.${dockerBuildConfig.version} latest Docker image. Please pull the latest Docker image v.${dockerVersionLatest} and recreate the container to apply it.`,
+    );
+    worker.snackBar(`A new Docker image is available: v.${dockerVersionLatest}. Pull the latest Docker image and recreate the container to apply it.`, 0, 'info');
+  }
+  if (dockerBuildConfig && dockerBuildConfig.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev) {
+    worker.logger(
+      LogLevel.WARN,
+      `You are using the v.${dockerBuildConfig.version} dev Docker image. Please pull the dev Docker image v.${dockerVersionDev} and recreate the container to apply it.`,
+    );
+    worker.snackBar(`A new dev Docker image is available: v.${dockerVersionDev}. Pull the dev Docker image and recreate the container to apply it.`, 0, 'info');
+  }
 
   worker.server.request({
     type: 'matterbridge_docker_version',

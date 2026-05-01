@@ -149,7 +149,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeId).toBeGreaterThanOrEqual(0);
 
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
-        const sortedAttributeValue = Array.from(attributeValue as number[]).sort((a, b) => a - b);
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
       } else {
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
@@ -161,7 +161,7 @@ describe('Matterbridge ' + NAME, () => {
           ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
             `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
         )
-        .sort(),
+        .toSorted(),
     ).toEqual(
       [
         'closureDimension(0x105).acceptedCommandList(0xfff9)=[ 0, 1 ]',
@@ -182,7 +182,7 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
         'descriptor(0x1d).serverList(0x1)=[ 29, 261 ]',
-      ].sort(),
+      ].toSorted(),
     );
   });
   test('start the server node', async () => {

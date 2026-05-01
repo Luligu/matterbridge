@@ -7,20 +7,20 @@ const MATTER_PORT = 6000;
 process.argv = [
   'node',
   'matterbridge.test.js',
-  '-novirtual',
-  '-frontend',
+  '--novirtual',
+  '--frontend',
   '0',
-  '-port',
+  '--port',
   MATTER_PORT.toString(),
-  '-homedir',
+  '--homedir',
   HOMEDIR,
-  '-profile',
+  '--profile',
   'Jest',
-  '-logger',
+  '--logger',
   'debug',
-  '-matterlogger',
+  '--matterlogger',
   'debug',
-  '-debug',
+  '--debug',
 ];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
 process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
@@ -76,6 +76,11 @@ describe('Matterbridge', () => {
     jest.clearAllMocks();
   });
 
+  afterEach(async () => {
+    // Clear debug
+    await setDebug(false);
+  });
+
   afterAll(async () => {
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
@@ -90,6 +95,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
+    expect(matterbridge.uuid).toHaveLength(0);
     expect(matterbridge.serverNode).toBeUndefined();
     expect(matterbridge.aggregatorNode).toBeUndefined();
     expect(matterbridge.matterStorageManager).toBeUndefined();
@@ -172,6 +178,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).initialized).toBeFalsy();
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
+    expect(matterbridge.uuid).toHaveLength(36); // Check if uuid is set and has the correct length for a UUID
 
     // Clear the timeouts and intervals set by initialize to prevent them from running during tests
     expect((matterbridge as any).systemCheckTimeout).toBeDefined();
@@ -257,7 +264,7 @@ describe('Matterbridge', () => {
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
     await setDebug(false);
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '8081', '-port', MATTER_PORT.toString(), '-homedir', HOMEDIR, '-profile', 'Jest'];
+    process.argv = ['node', 'matterbridge.test.js', '--novirtual', '--frontend', '8081', '--port', MATTER_PORT.toString(), '--homedir', HOMEDIR, '--profile', 'Jest'];
 
     expect((Matterbridge as any).instance).toBeUndefined();
     matterbridge = await Matterbridge.loadInstance(true);
@@ -328,18 +335,18 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-novirtual',
-      '-frontend',
+      '--novirtual',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
     ];
     matterbridge = await Matterbridge.loadInstance(true);
@@ -575,19 +582,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-disable',
+      '--disable',
       './packages/core/src/mock/plugin1',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -617,19 +624,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-enable',
+      '--enable',
       './packages/core/src/mock/plugin1',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -659,19 +666,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-remove',
+      '--remove',
       './packages/core/src/mock/plugin1',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -692,19 +699,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-add',
+      '--add',
       './packages/core/src/mock/plugin1',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -729,19 +736,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-add',
+      '--add',
       './packages/core/src/mock/plugin2',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -766,19 +773,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-add',
+      '--add',
       './packages/core/src/mock/plugin3',
     ];
     await (matterbridge as any).parseCommandLine();
@@ -828,17 +835,17 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
     ];
     const plugins = matterbridge.plugins.array();
@@ -883,19 +890,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-list',
+      '--list',
     ];
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `│ Registered plugins (3)`);
@@ -905,7 +912,7 @@ describe('Matterbridge', () => {
     matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
-  test('matterbridge -logstorage', async () => {
+  test('matterbridge --logstorage', async () => {
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
@@ -923,19 +930,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-logstorage',
+      '--logstorage',
     ];
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `${plg}Matterbridge${nf} storage log`);
@@ -944,7 +951,7 @@ describe('Matterbridge', () => {
     matterbridge.removeAllListeners('shutdown');
   }, 60000);
 
-  test('matterbridge -loginterfaces', async () => {
+  test('matterbridge --loginterfaces', async () => {
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
@@ -962,19 +969,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-loginterfaces',
+      '--loginterfaces',
     ];
     await (matterbridge as any).parseCommandLine();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Network interface`));
@@ -989,7 +996,7 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
   });
 
-  test('matterbridge -reset', async () => {
+  test('matterbridge --reset', async () => {
     expect((matterbridge as any).initialized).toBe(false);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
@@ -1007,19 +1014,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-reset',
+      '--reset',
     ];
     (matterbridge as any).initialized = true;
 
@@ -1093,7 +1100,7 @@ describe('Matterbridge', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cleanup with instance not initialized...'));
   });
 
-  test('matterbridge -factoryreset', async () => {
+  test('matterbridge --factoryreset', async () => {
     expect((matterbridge as any).initialized).toBe(false);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
@@ -1101,19 +1108,19 @@ describe('Matterbridge', () => {
     process.argv = [
       'node',
       'matterbridge.test.js',
-      '-frontend',
+      '--frontend',
       '0',
-      '-port',
+      '--port',
       MATTER_PORT.toString(),
-      '-homedir',
+      '--homedir',
       HOMEDIR,
-      '-profile',
+      '--profile',
       'Jest',
-      '-logger',
+      '--logger',
       'debug',
-      '-matterlogger',
+      '--matterlogger',
       'debug',
-      '-factoryreset',
+      '--factoryreset',
     ];
     (matterbridge as any).initialized = true;
     await (matterbridge as any).parseCommandLine();

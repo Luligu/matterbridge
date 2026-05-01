@@ -35,12 +35,12 @@ Please always add the debug file to help explain your problem.
 
 **Plugin (please complete the following information):**
 
-- Version [e.g. 0.0.2]
+- Version (e.g. 0.0.2)
 
 **Matterbridge (please complete the following information):**
 
-- Version: [e.g. 1.6.6]
-- OS: [e.g. where you run Matterbridge]
+- Version: (e.g. 1.6.6)
+- OS: (e.g. where you run Matterbridge)
 - Setup used: systemctl, launchctl or docker
 
 **Additional context**

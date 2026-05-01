@@ -284,6 +284,7 @@
         "--verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/matterbridge.ts",
         "matterbridge.bridge.test.ts",
         "matterbridge.childbridge.test.ts",
         "matterbridge.device.matter.test.ts",

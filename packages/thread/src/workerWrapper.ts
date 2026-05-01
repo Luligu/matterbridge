@@ -29,6 +29,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData } from '@matterbridge/types';
+import { inspectError } from '@matterbridge/utils';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { formatBytes } from '@matterbridge/utils/format';
 import type { Tracker } from '@matterbridge/utils/tracker';
@@ -133,8 +134,14 @@ export class WorkerWrapper {
     // Execute the callback function and destroy the worker with the success status returned by the callback
     if (!isMainThread) {
       setImmediate(async () => {
-        const success = await callback(this);
-        this.destroy(success);
+        let success = false;
+        try {
+          success = await callback(this);
+        } catch (err) {
+          inspectError(this.log, `Worker ${this.name} callback failed`, err);
+        } finally {
+          this.destroy(success);
+        }
       });
     }
   }
@@ -205,6 +212,17 @@ export class WorkerWrapper {
   logger(level: LogLevel, message: string): void {
     if (!isMainThread && parentPort) this.parentLog(this.name, level, message);
     else AnsiLogger.create({ logName: this.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: ThreadsManager.logLevel }).log(level, message);
+  }
+
+  /**
+   * Sends a snackbar message to the parent to be displayed in the frontend, with an optional timeout and severity level.
+   *
+   * @param {string} message - The message to be displayed in the snackbar.
+   * @param {number} [timeout] - The duration in seconds for which the snackbar should be displayed. Defaults to 5 seconds.
+   * @param {'error' | 'success' | 'info' | 'warning'} [severity] - The severity level of the snackbar message. Defaults to 'info'.
+   */
+  snackBar(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
+    this.server.request({ type: 'frontend_snackbarmessage', src: 'matterbridge', dst: 'frontend', params: { message, timeout, severity } });
   }
 
   /**

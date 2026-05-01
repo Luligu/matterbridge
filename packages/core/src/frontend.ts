@@ -68,11 +68,11 @@ import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
-import { wait, withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
-import type WebSocket from 'ws';
+import type { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 
 // matterbridge
@@ -238,6 +238,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
+              const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
+              // prettier-ignore
+              if (packageName.startsWith('matterbridge-')) fireAndForget(this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: packageName } }, this.serverFetchTimeout), this.log, `Error adding plugin ${packageName} after uploading package ${msg.result.packageName}`);
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
             }
@@ -360,7 +363,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
 
       ws.on('message', (message) => {
-        this.wsMessageHandler(ws, message);
+        fireAndForget(this.wsMessageHandler(ws, message), this.log, `Error handling message from WebSocket client ${clientIp}`);
       });
 
       ws.on('ping', () => {
@@ -702,7 +705,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       const { createRequire } = await import('node:module');
       const require = createRequire(import.meta.url);
-      const cjsModules = Object.keys(require.cache).sort();
+      const cjsModules = Object.keys(require.cache).toSorted();
 
       const memoryReport = {
         memoryUsage,
@@ -1847,7 +1850,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
         const plugin = this.matterbridge.plugins.get(data.params.pluginName) as Plugin;
         if (plugin) {
-          this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true);
+          fireAndForget(this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true), this.log, `Save config for plugin ${plugin.name}`);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
           this.wssSendRestartRequired();
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2045,7 +2048,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         // istanbul ignore next
-        const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDeviceValues });
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -2058,7 +2061,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         // istanbul ignore next
-        const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().sort((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntityValues });
       } else if (data.method === '/api/action') {
         const localData = data;

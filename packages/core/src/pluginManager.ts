@@ -42,6 +42,7 @@ import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, P
 import { plg, typ } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { inspectError, logError } from '@matterbridge/utils/error';
+import { fireAndForget } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
 // NodeStorage
@@ -331,7 +332,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           {
             const plugin = this.get(msg.params.name);
             if (plugin) {
-              this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired); // No await as it's not necessary to wait
+              fireAndForget(this.saveConfigFromJson(plugin, msg.params.config, msg.params.restartRequired), this.log, `Save config for plugin ${plugin.name}`);
               this.server.respond({ ...msg, result: { success: true } });
             } else {
               this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
@@ -1168,7 +1169,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         const log = new AnsiLogger({
           logName: plugin.description,
           logTimestampFormat: TimestampFormat.TIME_MILLIS,
-          logLevel: (config.debug as boolean) ? LogLevel.DEBUG : this.matterbridge.logLevel,
+          logLevel: config.debug ? LogLevel.DEBUG : this.matterbridge.logLevel,
         });
         const platform = pluginInstance.default(this.matterbridge.getPlatformMatterbridge(), log, config);
         assertMatterbridgePlatform(platform, `Plugin ${plugin.name} does not export a valid MatterbridgePlatform`);

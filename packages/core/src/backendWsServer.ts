@@ -40,11 +40,11 @@ import type {
 import { hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { isValidNumber, isValidString } from '@matterbridge/utils/validate';
-import { withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 // WebSocket
-import WebSocket, { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Frontend } from './frontend.js';
@@ -104,7 +104,7 @@ export class BackendsWsServer {
    *
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
-  private async broadcastMsgHandler(msg: WorkerMessage) {
+  private broadcastMsgHandler(msg: WorkerMessage): void {
     // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
@@ -144,7 +144,7 @@ export class BackendsWsServer {
 
       websocket.on('message', (data) => {
         this.log.debug(`WebSocket client ${CYAN}${clientIp}${nf} sent a message`);
-        this.wsMessageHandler(websocket, data);
+        fireAndForget(this.wsMessageHandler(websocket, data), this.log, `Error handling message from WebSocket client ${clientIp}`);
       });
 
       websocket.on('ping', () => {

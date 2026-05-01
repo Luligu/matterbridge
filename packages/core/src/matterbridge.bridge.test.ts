@@ -12,23 +12,23 @@ const DISCRIMINATOR = 3860;
 process.argv = [
   'node',
   'matterbridge.test.js',
-  '-novirtual',
-  '-logger',
+  '--novirtual',
+  '--logger',
   'debug',
-  '-matterlogger',
+  '--matterlogger',
   'debug',
-  '-bridge',
-  '-frontend',
+  '--bridge',
+  '--frontend',
   FRONTEND_PORT.toString(),
-  '-homedir',
+  '--homedir',
   HOMEDIR,
-  '-profile',
+  '--profile',
   'JestBridge',
-  '-port',
+  '--port',
   MATTER_PORT.toString(),
-  '-passcode',
+  '--passcode',
   PASSCODE.toString(),
-  '-discriminator',
+  '--discriminator',
   DISCRIMINATOR.toString(),
 ];
 process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS'] = '10';
@@ -45,11 +45,11 @@ import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { flushAsync } from './jestutils/jestFlushAsync.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
-import { loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
+import { loggerErrorSpy, loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { PluginManager } from './pluginManager.js';
+import type { PluginManager } from './pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -190,7 +190,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
 
     /*
     jest.clearAllMocks();
-    matterbridge.aggregatorNode = { parts: { has: () => false }, add: () => {} } as any;
+    matterbridge.aggregatorNode = { parts: { has: () => false } } as any;
     await matterbridge.addVirtualEndpoint('matterbridge-mock1', 'Virtual', 'outlet', {} as any);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Created virtual endpoint`));
     */

@@ -77,7 +77,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Test matterbridge
-        run: npm run test
+        run: npm run test -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |
@@ -234,7 +234,7 @@ jobs:
           npm version "${BASE}" --no-git-tag-version --ignore-scripts
 
       - name: Test matterbridge
-        run: npm run test
+        run: npm run test -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |

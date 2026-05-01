@@ -68,7 +68,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
-    this.addFixedLabel('composed', 'Refrigerator');
+    void this.addFixedLabel('composed', 'Refrigerator').catch(/* istanbul ignore next */ () => {});
     this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(this, currentMode, supportedModes);
     this.createDefaultRefrigeratorAlarmClusterServer(this, false);
   }

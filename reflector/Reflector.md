@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-multiple-h1 -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector
 
 This project aims to use Matterbridge in these configurations:
@@ -32,6 +34,10 @@ Since the mDNS are shared between reflector clients, you can pair Matterbridge r
 ## Docker Desktop requirements for Windows and macOS
 
 See Docker Desktop System Requirements.
+
+## Docker Desktop on macOS
+
+On macOS verify that Docker has access to the local network: [System Settings → Privacy & Security → Local Network](DockerDesktopMacOs.png) (macOS release upgrade may turn it off).
 
 ## Dual Stack IPv4/IPv6 mDNS enabled and No filtering
 
@@ -109,6 +115,45 @@ docker exec -it matterbridge-test apt-get update
 docker exec -it matterbridge-test apt-get install -y --no-install-recommends iproute2 iputils-ping net-tools dnsutils tcpdump netcat-openbsd
 docker exec -it matterbridge-test ip a
 docker exec -it matterbridge-test ip r
+```
+
+## Optional: verify the network stack
+
+Change eventually `homeassistant.local` with any other local hostname on your lan.
+
+With alpine image:
+
+```bash
+docker pull node:24-alpine
+docker run --rm node:24-alpine ping -c 2 homeassistant.local
+docker run --rm node:24-alpine ping -c 2 host.docker.internal
+docker run --rm node:24-alpine ping -c 2 8.8.8.8
+```
+
+or with trixie image:
+
+```bash
+docker pull node:24-trixie && docker run --rm -e DEBIAN_FRONTEND=noninteractive node:24-trixie bash -c "\
+  apt-get update -qq && \
+  apt-get install -y -qq iproute2 iputils-ping curl >/dev/null && \
+  echo '=== ip a ===' && ip a && \
+  echo '=== ip r ===' && ip r && \
+  echo '=== ping homeassistant.local (HA) ===' && ping -c 2 homeassistant.local && \
+  echo '=== ping host.docker.internal ===' && ping -c 2 host.docker.internal && \
+  echo '=== ping 8.8.8.8 ===' && ping -c 2 8.8.8.8"
+```
+
+or with the matterbridge image:
+
+```bash
+docker pull luligu/matterbridge:dev && docker run --rm -e DEBIAN_FRONTEND=noninteractive luligu/matterbridge:dev bash -c "\
+  apt-get update -qq && \
+  apt-get install -y -qq iproute2 iputils-ping curl >/dev/null && \
+  echo '=== ip a ===' && ip a && \
+  echo '=== ip r ===' && ip r && \
+  echo '=== ping homeassistant.local (HA) ===' && ping -c 2 homeassistant.local && \
+  echo '=== ping host.docker.internal ===' && ping -c 2 host.docker.internal && \
+  echo '=== ping 8.8.8.8 ===' && ping -c 2 8.8.8.8"
 ```
 
 ### Issues we have there

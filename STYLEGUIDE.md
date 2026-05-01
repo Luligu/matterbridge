@@ -28,7 +28,7 @@ Concise rules the codebase and Copilot suggestions should follow.
 
 For every public/exported function or public methods (and important internal helpers):
 
-```
+```jsdoc
 /**
  * One‑line summary (starts with a verb, ends without period if short).
  *

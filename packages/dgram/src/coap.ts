@@ -357,7 +357,7 @@ export class Coap extends Multicast {
     }
 
     // Sort options by option number in ascending order.
-    const sortedOptions = msg.options.slice().sort((a, b) => a.number - b.number);
+    const sortedOptions = msg.options.toSorted((a, b) => a.number - b.number);
     let previousOptionNumber = 0;
 
     // Encode each option.

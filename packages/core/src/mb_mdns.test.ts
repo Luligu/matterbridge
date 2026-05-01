@@ -84,7 +84,7 @@ describe('mb_mdns', () => {
     MockMdns.clear();
     scheduledIntervals.length = 0;
     scheduledTimeouts.length = 0;
-    process.argv = [...originalProcessArgv.slice(0, 2)];
+    process.argv = originalProcessArgv.slice(0, 2);
 
     jest.spyOn(os, 'networkInterfaces').mockReturnValue({
       eth0: [

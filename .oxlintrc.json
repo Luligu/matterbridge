@@ -1,0 +1,82 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/.git/**",
+    "apps/**",
+    "**/build/**",
+    "chip/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/temp/**",
+    "**/jest/**",
+    "**/node_modules/**",
+    "**/scripts/**",
+    "**/screenshots/**",
+    "**/package-lock.json",
+    "eslint.config.js"
+  ],
+  "env": {
+    "builtin": true,
+    "node": true
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "off",
+    "respectEslintDisableDirectives": true,
+    "typeAware": false,
+    "typeCheck": false,
+    "maxWarnings": 0
+  },
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off"
+  },
+  "rules": {
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true,
+        "reportUsedIgnorePattern": true
+      }
+    ],
+    "no-console": "warn",
+    "no-shadow": "off",
+    "no-new": "warn",
+    "no-extend-native": "off",
+    "no-inline-comments": "off",
+    "no-underscore-dangle": "off",
+    "max-lines-per-function": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
+    "max-lines": "off",
+    "unicorn/prefer-node-protocol": "error",
+    "unicorn/require-post-message-target-origin": "off",
+    "unicorn/prefer-add-event-listener": "off",
+    "unicorn/no-array-for-each": "off",
+    "unicorn/consistent-function-scoping": "off",
+    "unicorn/no-instanceof-array": "error",
+    "oxc/no-async-endpoint-handlers": "off",
+    "oxc/no-accumulating-spread": "error",
+    "oxc/no-const-enum": "error",
+    "oxc/no-map-spread": "off",
+    "typescript/no-duplicate-enum-values": "off",
+    "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
+    "import/no-unassigned-import": ["error", { "allow": ["@matter/nodejs", "../scripts/mb-run.mjs"] }],
+    "promise/no-multiple-resolved": "off"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/**/*.ts"],
+      "rules": {
+        "no-unused-vars": "off",
+        "no-new": "off",
+        "max-lines-per-function": "off",
+        "require-await": "off"
+      }
+    }
+  ]
+}

@@ -113,7 +113,7 @@ describe('Matterbridge platform', () => {
 
   test('should validate and assert MatterbridgePlatform instances', async () => {
     // @ts-expect-error access private constructor
-    const guardPlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform guard' }), {
+    const guardPlatform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform guard' }), {
       name: 'guard',
       type: 'type',
       version: '1.0.0',
@@ -146,7 +146,7 @@ describe('Matterbridge platform', () => {
     expect(isMatterbridgePlatform(brandedWithoutInstance)).toBe(false);
 
     // @ts-expect-error access private constructor
-    const invalidShapePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform invalid shape' }), {
+    const invalidShapePlatform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform invalid shape' }), {
       name: 'invalid-shape',
       type: 'type',
       version: '1.0.0',
@@ -362,7 +362,7 @@ describe('Matterbridge platform', () => {
 
   it('should save the select', async () => {
     // @ts-expect-error access private constructor
-    let platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    let platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -420,7 +420,7 @@ describe('Matterbridge platform', () => {
 
   test('should clear the selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    const platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -437,12 +437,12 @@ describe('Matterbridge platform', () => {
     platform.getSelectDevices();
     platform.getSelectEntities();
     await platform.clearSelect();
-    await platform.destroy();
+    await (platform as any).destroy();
   });
 
   test('should clear the device selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    const platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -456,12 +456,12 @@ describe('Matterbridge platform', () => {
     platform.clearDeviceSelect('serial1');
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
-    await platform.destroy();
+    await (platform as any).destroy();
   });
 
   test('should clear the entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    const platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -475,12 +475,12 @@ describe('Matterbridge platform', () => {
     platform.clearEntitySelect('name1');
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
-    await platform.destroy();
+    await (platform as any).destroy();
   });
 
   it('should update a not existing entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    const platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -501,12 +501,12 @@ describe('Matterbridge platform', () => {
 
     platform.setSelectDeviceEntity('serial1', 'name2', 'description2', 'hub2');
     expect(platform.getSelectDevice('serial1')?.entities).toEqual([{ description: 'description2', icon: 'hub2', name: 'name2' }]);
-    await platform.destroy();
+    await (platform as any).destroy();
   });
 
   it('should update an existing entity selects', async () => {
     // @ts-expect-error access private constructor
-    const platform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
+    const platform: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
       name: 'matterbridge-jest',
       type: 'type',
       version: '1.0.0',
@@ -530,7 +530,7 @@ describe('Matterbridge platform', () => {
       { description: 'description1', icon: 'hub1', name: 'name1' },
       { description: 'description2', icon: 'hub2', name: 'name2' },
     ]);
-    await platform.destroy();
+    await (platform as any).destroy();
   });
 
   test('should check checkNotLatinCharacters', async () => {
@@ -767,7 +767,7 @@ describe('Matterbridge platform', () => {
     expect(matterbridge.devices).toBeDefined();
     async function testCallback(): Promise<void> {}
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
-    expect(matterbridge.aggregatorNode?.parts.has('Virtual' + ':' + 'switch')).toBeTruthy();
+    expect(matterbridge.aggregatorNode?.parts.has('Virtual:switch')).toBeTruthy();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}Virtual${nf} for plugin ${plg}${platform.name}${nf}`);
 
     jest
@@ -777,7 +777,7 @@ describe('Matterbridge platform', () => {
     platform.type = 'DynamicPlatform';
     expect(await platform.registerVirtualDevice('VirtualChildbridge', 'switch', testCallback)).toBe(true);
     matterbridge.bridgeMode = 'bridge';
-    expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge' + ':' + 'switch')).toBeTruthy();
+    expect(matterbridge.aggregatorNode?.parts.has('VirtualChildbridge:switch')).toBeTruthy();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Created virtual endpoint ${dev}VirtualChildbridge${nf} for plugin ${plg}${platform.name}${nf}`);
 
     const savedName = platform.name;

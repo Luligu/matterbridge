@@ -101,7 +101,7 @@ export class SolarPower extends MatterbridgeEndpoint {
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
       .addRequiredClusterServers();
-    panel.addUserLabel('panel', name.slice(0, 16)); // UserLabel has a max length of 16 characters
+    void panel.addUserLabel('panel', name.slice(0, 16)).catch(/* istanbul ignore next */ () => {}); // UserLabel has a max length of 16 characters
     return panel;
   }
 }

@@ -129,7 +129,8 @@
   </style>
 </head>
 <body>
-<h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-systemd-configuration-with-private-global-nodemodules"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with private global node_modules</h1>
+<!-- eslint-disable markdown/no-missing-label-refs -->
+<!-- eslint-disable markdown/no-multiple-h1 --><h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-systemd-configuration-with-private-global-nodemodules"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration with private global node_modules</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
 <a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version" alt="Docker Version"></a>
@@ -210,7 +211,7 @@ sudo cp -a ~/.mattercert/. /opt/matterbridge/.mattercert/
 <pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
 </code></pre>
 <p>Add the following to this file:</p>
-<pre><code>[Unit]
+<pre><code class="language-text">[Unit]
 Description=matterbridge
 After=network.target
 Wants=network.target
@@ -251,11 +252,11 @@ Npm retries may randomly succeed or fail depending on resolution order.</p>
 </code></pre>
 <p>If you use the frontend with <strong>-ssl</strong> -frontend 443 and get an error message: &quot;Port 443 requires elevated privileges&quot;,
 add this:</p>
-<pre><code>[Service]
+<pre><code class="language-text">[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 </code></pre>
 <p>If you use the <strong>matterbridge-bthome</strong> plugin add this:</p>
-<pre><code>[Service]
+<pre><code class="language-text">[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 </code></pre>
 <p>Now and if you modify matterbridge.service after, run:</p>

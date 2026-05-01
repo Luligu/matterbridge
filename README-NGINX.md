@@ -1,3 +1,5 @@
+<!-- eslint-disable markdown/no-multiple-h1 -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge NGINX configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -40,7 +42,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:
 
-```
+```text
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -85,7 +87,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration and if desired change the port to listen (here is 80) and the server_name using yours:
 
-```
+```text
 server {
     listen 80 default_server;
     listen [::]:80 default_server;
@@ -132,7 +134,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration:
 
-```
+```text
 # Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;
@@ -199,7 +201,7 @@ sudo nano /etc/nginx/sites-available/matterbridge
 
 paste this configuration:
 
-```
+```text
 # Redirect all HTTP requests to HTTPS
 server {
     listen 80 default_server;

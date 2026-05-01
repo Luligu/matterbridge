@@ -48,7 +48,7 @@ import { formatBytes } from '@matterbridge/utils/format';
 // Express
 import escapeHtml from 'escape-html';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
+import { rateLimit } from 'express-rate-limit';
 // Multer
 import multer from 'multer';
 // AnsiLogger
@@ -236,7 +236,7 @@ export class BackendExpress {
 
       const { createRequire } = await import('node:module');
       const require = createRequire(import.meta.url);
-      const cjsModules = Object.keys(require.cache).sort();
+      const cjsModules = Object.keys(require.cache).toSorted();
 
       const memoryReport = {
         memoryUsage,

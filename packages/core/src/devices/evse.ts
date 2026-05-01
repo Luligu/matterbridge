@@ -80,7 +80,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .createDefaultTemperatureMeasurementClusterServer(24_00) // Internal temperature 24°C in centi-degrees
       .addRequiredClusterServers();
-    this.addFixedLabel('composed', 'EVSE');
+    void this.addFixedLabel('composed', 'EVSE').catch(/* istanbul ignore next */ () => {});
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()

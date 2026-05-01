@@ -1,3 +1,6 @@
+<!-- eslint-disable markdown/no-missing-label-refs -->
+<!-- eslint-disable markdown/no-multiple-h1 -->
+
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge systemd configuration
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -55,7 +58,7 @@ You may need to adapt the configuration to your setup:
 
 - ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge --service
 
-```
+```text
 [Unit]
 Description=matterbridge
 After=network-online.target
@@ -211,7 +214,7 @@ sudo visudo
 
 verify the presence of of a line
 
-```
+```text
 @includedir /etc/sudoers.d
 ```
 
@@ -223,13 +226,13 @@ sudo nano /etc/sudoers.d/matterbridge
 
 add this line replacing USER with your user name (e.g. radxa ALL=(ALL) NOPASSWD: ALL)
 
-```
+```text
 <USER> ALL=(ALL) NOPASSWD: ALL
 ```
 
 or if you prefers to only give access to npm without password try with (e.g. radxa ALL=(ALL) NOPASSWD: /usr/bin/npm)
 
-```
+```text
 <USER> ALL=(ALL) NOPASSWD: /usr/bin/npm
 ```
 

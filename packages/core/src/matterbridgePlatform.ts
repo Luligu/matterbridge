@@ -38,6 +38,7 @@ import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
+import { fireAndForget } from '@matterbridge/utils/wait';
 // Node AnsiLogger module
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
@@ -914,7 +915,7 @@ export class MatterbridgePlatform {
 
     if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) {
       // istanbul ignore else
-      if (destroy) this.destroy();
+      if (destroy) fireAndForget(this.destroy(), this.log, `Destroy platform due to incompatible Matterbridge version`);
       return false;
     }
     return true;
