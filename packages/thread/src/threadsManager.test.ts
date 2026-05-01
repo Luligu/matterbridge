@@ -110,7 +110,7 @@ describe('ThreadsManager', () => {
         [
           "import { parentPort, workerData } from 'node:worker_threads';",
           'parentPort?.postMessage({ workerData, argv: process.argv });',
-          'setTimeout(() => process.exit(0), 25);',
+          'setInterval(() => undefined, 1000);',
         ].join('\n'),
         { encoding: 'utf8' },
       );
