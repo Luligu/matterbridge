@@ -1,7 +1,7 @@
-// jest.config.js
+// @ts-check
+// jest.config.js 2.0.0
 
 // This Jest configuration is designed for a TypeScript project using ESM modules with ts-jest.
-// @ts-check
 
 import { createDefaultEsmPreset } from 'ts-jest';
 

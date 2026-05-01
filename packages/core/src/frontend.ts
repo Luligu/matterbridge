@@ -239,8 +239,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
               const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
-              // prettier-ignore
-              if (packageName.startsWith('matterbridge-')) fireAndForget(this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: packageName } }, this.serverFetchTimeout), this.log, `Error adding plugin ${packageName} after uploading package ${msg.result.packageName}`);
+              // istanbul ignore next
+              if (msg.result.packageName.startsWith('matterbridge-') && msg.result.packageName.endsWith('.tgz')) {
+                fireAndForget(
+                  this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: packageName } }, this.serverFetchTimeout),
+                  this.log,
+                  `Error adding plugin ${packageName} after uploading package ${msg.result.packageName}`,
+                );
+                setImmediate(() => this.wssSendRefreshRequired('plugins')).unref();
+              }
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
             }

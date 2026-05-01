@@ -1,8 +1,10 @@
-// prettier.config.js
+// @ts-check
+// prettier.config.js 2.0.0
 
 // Config for Prettier
 
-export default {
+/** @type {import('prettier').Config} */
+const prettierConfig = {
   printWidth: 180, // default 80
   tabWidth: 2,
   useTabs: false,
@@ -21,3 +23,5 @@ export default {
   embeddedLanguageFormatting: 'off', // default 'auto'
   singleAttributePerLine: false,
 };
+
+export default prettierConfig;
