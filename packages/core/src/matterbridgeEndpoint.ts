@@ -1675,7 +1675,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      // istanbul ignore next cause is only a safety check
+      // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
       void this.add(child).catch((error) => { inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
@@ -1759,7 +1759,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      // istanbul ignore next cause is only a safety check
+      // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
       void this.add(child).catch( (error) => { inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);

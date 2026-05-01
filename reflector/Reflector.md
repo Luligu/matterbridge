@@ -37,7 +37,7 @@ See Docker Desktop System Requirements.
 
 ## Docker Desktop on macOS
 
-On macOS verify that Docker has access to the local network: [System Settings → Privacy & Security → Local Network](DockerDesktopMacOs.png) (mosOS release upgrade may turn it off).
+On macOS verify that Docker has access to the local network: [System Settings → Privacy & Security → Local Network](DockerDesktopMacOs.png) (macOS release upgrade may turn it off).
 
 ## Dual Stack IPv4/IPv6 mDNS enabled and No filtering
 
