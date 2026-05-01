@@ -57,6 +57,14 @@ These classes will run as threads in the next releases:
 
 ## [3.7.8] - Dev branch
 
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.3.0.
+- [package]: Bump `marked` to v.18.0.3.
+- [frontend]: Bump `frontend` version to v.3.4.14.
+- [frontend]: Update dependencies.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.7] - 2026-05-01

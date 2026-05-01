@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.4.13",
+  "version": "3.4.14",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -57,7 +57,7 @@
     "build:debug": "cross-env MB_FRONTEND_DEBUG_BUILD=true vite build",
     "watch": "vite build --watch",
     "preview": "vite preview",
-    "typecheck": "tsc --project ./tsconfig.json --noEmit",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
     "lint:debug": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --debug",
@@ -85,7 +85,7 @@
   },
   "overrides": {
     "@eslint/js": "10.0.1",
-    "eslint": "10.2.1",
+    "eslint": "10.3.0",
     "typescript": "6.0.3"
   },
   "dependencies": {
@@ -113,18 +113,18 @@
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
     "cross-env": "10.1.0",
-    "eslint": "10.2.1",
+    "eslint": "10.3.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
-    "globals": "17.5.0",
-    "jsdom": "29.0.2",
+    "globals": "17.6.0",
+    "jsdom": "29.1.1",
     "npm-check-updates": "22.0.1",
     "prettier": "3.8.3",
     "shx": "0.4.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.59.0",
+    "typescript-eslint": "8.59.1",
     "vite": "8.0.10",
     "vitest": "4.1.5"
   }
