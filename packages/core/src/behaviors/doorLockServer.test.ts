@@ -5,8 +5,8 @@ const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { AggregatorEndpoint } from '@matter/main/endpoints/aggregator';
-import { Endpoint, ServerNode } from '@matter/main/node';
+import { Endpoint, ServerNode } from '@matter/node';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { StatusResponse } from '@matter/types/common';
 import { FabricIndex, NodeId } from '@matter/types/datatype';

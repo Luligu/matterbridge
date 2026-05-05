@@ -24,9 +24,9 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { BindingBehavior } from '@matter/main/behaviors/binding';
-import { DescriptorServer } from '@matter/main/behaviors/descriptor';
-import { ClusterId } from '@matter/main/types';
+import { BindingBehavior } from '@matter/node/behaviors/binding';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { ClusterId } from '@matter/types';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

@@ -279,7 +279,9 @@
     "@matterbridge/thread": "3.7.7",
     "@matterbridge/types": "3.7.7",
     "@matterbridge/utils": "3.7.7",
-    "@matterbridge/vitest-utils": "3.7.7"
+    "@matterbridge/vitest-utils": "3.7.7",
+    "node-ansi-logger": "3.2.2-dev-20260505-d01e13b",
+    "node-persist-manager": "2.1.0-dev-20260505-762a5db"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

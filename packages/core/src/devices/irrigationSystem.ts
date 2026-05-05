@@ -22,7 +22,7 @@
  */
 
 import { AtLeastOne } from '@matter/general';
-import { LocationTag } from '@matter/main/node';
+import { LocationTag } from '@matter/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { Semtag } from '@matter/types/globals';
 

@@ -69,6 +69,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [storage]: Add the node storage health check.
+- [eslint]: Enforce `eslint-plugin-n` rules.
 
 ### Changed
 
@@ -78,6 +79,10 @@ These classes will run as threads in the next releases:
 - [package]: Bump `eslint` to v.10.3.0.
 - [package]: Bump `marked` to v.18.0.3.
 - [package]: Bump `typescript-eslint` to v.8.59.2.
+- [package]: Bump `eslint-plugin-n` to v.18.0.1.
+- [package]: Bump `jest.config.js` v.2.0.1.
+- [package]: Bump `eslint.config.js` v.2.0.1.
+- [package]: Bump `vite.config.ts` v.2.0.2.
 - [frontend]: Bump `frontend` version to v.3.4.14.
 - [frontend]: Update dependencies.
 

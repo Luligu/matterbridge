@@ -6,10 +6,10 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
-import { EndpointNumber, NodeId } from '@matter/main/types';
 import { Endpoint, ServerNode } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { EndpointNumber, NodeId } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 

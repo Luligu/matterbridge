@@ -65,5 +65,9 @@
   },
   "dependencies": {
     "node-ansi-logger": "3.2.2-dev-20260505-d01e13b"
+  },
+  "devDependencies": {
+    "@jest/globals": "30.3.0",
+    "vitest": "4.1.5"
   }
 }
