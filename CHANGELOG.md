@@ -60,11 +60,11 @@ These classes will run as threads in the next releases:
 ### Development Breaking Changes
 
 - [bin]: Remove mb-run bin. It will be replaced by mb-run package.
-- [matter]: Add the renamed Semantic Tag Namespaces in [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [matter]: Add the matter.js renamed Semantic Tag Namespaces in [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
 
 ### Development changes
 
-- [matter]: Add the new Semantic Tag Namespaces in [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+- [matter]: Add the new Matter 1.5.1 Semantic Tag Namespaces in [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 
 ### Added
 
