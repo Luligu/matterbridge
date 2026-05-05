@@ -66,6 +66,10 @@ These classes will run as threads in the next releases:
 
 - [matter]: Add the new Semantic Tag Namespaces in [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 
+### Added
+
+- [storage]: Add the node storage health check.
+
 ### Changed
 
 - [package]: Update dependencies.

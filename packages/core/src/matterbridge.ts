@@ -572,6 +572,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     try {
       this.log.debug(`Creating node storage manager: ${CYAN}${NODE_STORAGE_DIR}${db}`);
       this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+      if (!(await this.nodeStorage.healthCheck())) this.log.error('Node storage manager health check failed');
       this.log.debug('Creating node storage context for matterbridge');
       this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
       const keys = (await this.nodeStorage.keys()) as string[];
@@ -583,6 +584,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       for (const storage of storages) {
         this.log.debug(`Checking storage: ${CYAN}${storage}${db}`);
         const nodeContext = await this.nodeStorage?.createStorage(storage);
+        if (!(await nodeContext.healthCheck())) this.log.error(`Node storage ${CYAN}${storage}${er} health check failed`);
         const keys = await nodeContext.keys();
         for (const key of keys) {
           this.log.debug(`Checking key: ${CYAN}${storage}:${key}${db}`);
