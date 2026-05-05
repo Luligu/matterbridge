@@ -32,18 +32,21 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 
 - The whole ClusterRegistry class is gone: use getClusterNameById() to obtain the cluster name given a ClusterId.
 
-- The common namepace tags are now:
-  CommonAreaNamespaceTag
-  CommonClosureTag
-  CommonCompassDirectionTag
-  CommonCompassLocationTag
-  CommonDirectionTag
-  CommonLandmarkNamespaceTag
-  CommonLevelTag
-  CommonLocationTag
-  CommonNumberTag
-  CommonPositionTag
-  CommonRelativePositionTag
+- The common namespace tags were renamed (the `Common` prefix was added):
+
+| Old name (matter.js ≤ 0.16) | New name (matter.js 0.17)    |
+| --------------------------- | ---------------------------- |
+| `AreaNamespaceTag`          | `CommonAreaNamespaceTag`     |
+| `ClosureTag`                | `CommonClosureTag`           |
+| `CompassDirectionTag`       | `CommonCompassDirectionTag`  |
+| `CompassLocationTag`        | `CommonCompassLocationTag`   |
+| `DirectionTag`              | `CommonDirectionTag`         |
+| `LandmarkNamespaceTag`      | `CommonLandmarkNamespaceTag` |
+| `LevelTag`                  | `CommonLevelTag`             |
+| `LocationTag`               | `CommonLocationTag`          |
+| `NumberTag`                 | `CommonNumberTag`            |
+| `PositionTag`               | `CommonPositionTag`          |
+| `RelativePositionTag`       | `CommonRelativePositionTag`  |
 
 ## Custom clusters
 
