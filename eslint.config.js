@@ -1,5 +1,5 @@
 // @ts-check
-// eslint.config.js 2.0.0
+// eslint.config.js 2.0.1
 
 // This ESLint configuration is designed for a TypeScript project using ESM modules.
 
@@ -80,8 +80,18 @@ export default defineConfig([
       'require-await': 'off', // Allow async functions that don't use await
       'n/prefer-node-protocol': 'error', // Prefer using 'node:' protocol for built-in modules
       'n/no-unsupported-features/node-builtins': ['error', { ignores: ['fetch'] }],
-      'n/no-extraneous-import': 'off', // Allow imports from node_modules
-      'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
+      'n/no-extraneous-import': [
+        'error',
+        { allowModules: ['matterbridge', '@matter/main', '@matter/general', '@matter/types', '@matter/node', '@matter/nodejs', '@matter/protocol'] },
+      ], // Allow imports from matterbridge package
+      'n/hashbang': [
+        'error',
+        {
+          convertPath: {
+            'src/bin/**/*.ts': ['^src/bin/(.+)\\.ts$', 'dist/bin/$1.js'],
+          },
+        },
+      ],
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
       'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
       'jsdoc/no-undefined-types': 'off',
@@ -114,6 +124,7 @@ export default defineConfig([
           vars: 'all',
           args: 'after-used',
           ignoreRestSiblings: true,
+          reportUsedIgnorePattern: true, // Error when a _ prefixed variable is actually used
           varsIgnorePattern: '^_', // Ignore unused variables starting with _
           argsIgnorePattern: '^_', // Ignore unused arguments starting with _
           caughtErrorsIgnorePattern: '^_', // Ignore unused caught errors starting with _
@@ -143,6 +154,8 @@ export default defineConfig([
     rules: {
       'no-undef': 'off', // Disable no-undef for TypeScript files since TypeScript already checks for undefined variables
       'no-unused-vars': 'off', // Disable base rule for unused variables and use the TypeScript-specific rule instead
+      'n/no-extraneous-import': 'off', // Allow imports from devDependencies in test files
+      'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
       '@typescript-eslint/no-unused-vars': 'off', // Disable TypeScript rule for unused variables in test files
       '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
       '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
@@ -170,6 +183,8 @@ export default defineConfig([
     rules: {
       'no-undef': 'off', // Disable no-undef for TypeScript files since TypeScript already checks for undefined variables
       'no-unused-vars': 'off', // Disable base rule for unused variables and use the TypeScript-specific rule instead
+      'n/no-extraneous-import': 'off', // Allow imports from devDependencies in test files
+      'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
       '@typescript-eslint/no-unused-vars': 'off', // Disable TypeScript rule for unused variables in test files
       '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
       '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
