@@ -49,7 +49,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Test the project
-        run: npm run test -- --timeout=30000
+        run: npm run test -- --testTimeout=30000
         working-directory: apps/frontend
 
       - name: List, audit, fix outdated dependencies, update and build again
@@ -62,5 +62,5 @@ jobs:
           npm audit || true
           npm run lint || true
           npm run build || true
-          npm run test -- --timeout=30000 || true
+          npm run test -- --testTimeout=30000 || true
         working-directory: apps/frontend
