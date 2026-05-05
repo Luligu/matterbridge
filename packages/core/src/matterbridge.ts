@@ -568,19 +568,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Register process handlers
     this.registerProcessHandlers();
 
-    // Initialize nodeStorage and nodeContext
+    // Initialize nodeStorage and nodeContext and perform a check to verify if the node storage is corrupted or not. If it is corrupted, restore it with the backup created during the last successful initialization.
     try {
       this.log.debug(`Creating node storage manager: ${CYAN}${NODE_STORAGE_DIR}${db}`);
       this.nodeStorage = new NodeStorageManager({ dir: path.join(this.matterbridgeDirectory, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
       this.log.debug('Creating node storage context for matterbridge');
       this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-      // TODO: Remove this code when node-persist-manager is updated
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const keys = (await (this.nodeStorage as any)?.storage.keys()) as string[];
+      const keys = (await this.nodeStorage.keys()) as string[];
       for (const key of keys) {
         this.log.debug(`Checking node storage manager key: ${CYAN}${key}${db}`);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (this.nodeStorage as any)?.storage.get(key);
+        await this.nodeStorage.get(key);
       }
       const storages = await this.nodeStorage.getStorageNames();
       for (const storage of storages) {

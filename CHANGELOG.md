@@ -69,6 +69,8 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
+- [package]: Bump `node-ansi-logger` to v.3.2.2.
+- [package]: Bump `node-persist-manager` to v.2.1.0.
 - [package]: Bump `eslint` to v.10.3.0.
 - [package]: Bump `marked` to v.18.0.3.
 - [package]: Bump `typescript-eslint` to v.8.59.2.

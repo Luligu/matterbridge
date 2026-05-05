@@ -23,10 +23,10 @@ type BaseWiredAttrs = PowerSource.BaseAttributes & PowerSource.WiredAttributes;
 
 The important distinction is:
 
-PowerSource.Attributes: the flattened full superset, not feature-specific
-PowerSource.BaseAttributes: the always present attributes
-PowerSource.WiredAttributes: only the Wired feature attributes
-PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power source exposes
+PowerSource.Attributes: the flattened full superset, not feature-specific.
+PowerSource.BaseAttributes: the always present attributes.
+PowerSource.WiredAttributes: only the Wired feature attributes.
+PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power source exposes.
 
 ## Removed without deprecation notice
 

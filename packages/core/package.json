@@ -141,8 +141,8 @@
     "express": "5.2.1",
     "express-rate-limit": "8.5.0",
     "multer": "2.1.1",
-    "node-ansi-logger": "3.2.1",
-    "node-persist-manager": "2.0.2",
+    "node-ansi-logger": "3.2.2-dev-20260505-d01e13b",
+    "node-persist-manager": "2.1.0-dev-20260505-762a5db",
     "ws": "8.20.0"
   },
   "devDependencies": {

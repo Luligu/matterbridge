@@ -64,6 +64,6 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "node-ansi-logger": "3.2.1"
+    "node-ansi-logger": "3.2.2-dev-20260505-d01e13b"
   }
 }
