@@ -57,9 +57,14 @@ These classes will run as threads in the next releases:
 
 ## [3.7.8] - Dev branch
 
-### Dev Breaking Changes
+### Development Breaking Changes
 
 - [bin]: Remove mb-run bin. It will be replaced by mb-run package.
+- [matter]: Add the renamed Semantic Tag Namespaces in [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+
+### Development changes
+
+- [matter]: Add the new Semantic Tag Namespaces in [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 
 ### Changed
 

@@ -32,6 +32,19 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 
 - The whole ClusterRegistry class is gone: use getClusterNameById() to obtain the cluster name given a ClusterId.
 
+- The common namepace tags are now:
+  CommonAreaNamespaceTag
+  CommonClosureTag
+  CommonCompassDirectionTag
+  CommonCompassLocationTag
+  CommonDirectionTag
+  CommonLandmarkNamespaceTag
+  CommonLevelTag
+  CommonLocationTag
+  CommonNumberTag
+  CommonPositionTag
+  CommonRelativePositionTag
+
 ## Custom clusters
 
 The way to create custom cluster in matter.js has changed.
