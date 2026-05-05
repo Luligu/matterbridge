@@ -13,7 +13,9 @@
     "**/node_modules/**",
     "**/scripts/**",
     "**/screenshots/**",
-    "package-lock.json"
+    "vendor/**",
+    "**/package-lock.json",
+    "**/eslint.config.js"
   ],
   "printWidth": 180,
   "tabWidth": 2,

@@ -13,15 +13,16 @@
     "**/node_modules/**",
     "**/scripts/**",
     "**/screenshots/**",
+    "vendor/**",
     "**/package-lock.json",
-    "eslint.config.js"
+    "**/eslint.config.js"
   ],
   "env": {
     "builtin": true,
     "node": true
   },
   "options": {
-    "reportUnusedDisableDirectives": "off",
+    "reportUnusedDisableDirectives": "error",
     "respectEslintDisableDirectives": true,
     "typeAware": false,
     "typeCheck": false,
@@ -63,6 +64,7 @@
     "oxc/no-accumulating-spread": "error",
     "oxc/no-const-enum": "error",
     "oxc/no-map-spread": "off",
+    "typescript/no-dynamic-delete": "error",
     "typescript/no-duplicate-enum-values": "off",
     "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
     "import/no-unassigned-import": ["error", { "allow": ["@matter/nodejs", "../scripts/mb-run.mjs"] }],
@@ -70,7 +72,7 @@
   },
   "overrides": [
     {
-      "files": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/**/*.ts"],
+      "files": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/**/*.ts", "**/test/**/*.ts", "**/vitest/**/*.ts"],
       "rules": {
         "no-unused-vars": "off",
         "no-new": "off",
