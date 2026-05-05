@@ -7,7 +7,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 // @matter
-import { PositionTag } from '@matter/node';
+import { CommonPositionTag } from '@matter/node';
 import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -80,7 +80,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
 
-    cabinet1 = device.addCabinet('Oven Test Cabinet Top', [{ mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label }]);
+    cabinet1 = device.addCabinet('Oven Test Cabinet Top', [
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
+    ]);
     expect(cabinet1).toBeDefined();
     expect(cabinet1.id).toBe('OvenTestCabinetTop');
     expect(cabinet1.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
@@ -89,7 +91,7 @@ describe('Matterbridge ' + NAME, () => {
 
     cabinet2 = device.addCabinet(
       'Oven Test Cabinet Bottom',
-      [{ mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label }],
+      [{ mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label }],
       3,
       [
         { label: 'Convection', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Convection }] },

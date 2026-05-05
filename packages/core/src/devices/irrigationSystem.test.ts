@@ -6,7 +6,7 @@ const MATTER_PORT = 8021;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { NumberTag } from '@matter/main';
+import { CommonNumberTag } from '@matter/main';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
@@ -68,10 +68,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create an irrigation system device', async () => {
     device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running })
-      .addZone(getSemtag(NumberTag.One))
-      .addZone(getSemtag(NumberTag.Two))
-      .addZone(getSemtag(NumberTag.Three))
-      .addZone(getSemtag(NumberTag.Four));
+      .addZone(getSemtag(CommonNumberTag.One))
+      .addZone(getSemtag(CommonNumberTag.Two))
+      .addZone(getSemtag(CommonNumberTag.Three))
+      .addZone(getSemtag(CommonNumberTag.Four));
     expect(device).toBeDefined();
     expect(device.id).toBe('IrrigationSystemTestDevice-IR123456');
     expect(device.getChildEndpointByOriginalId('Zone 1')).toBeDefined();

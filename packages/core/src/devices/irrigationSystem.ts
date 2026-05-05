@@ -22,7 +22,7 @@
  */
 
 import { AtLeastOne } from '@matter/general';
-import { LocationTag } from '@matter/main/node';
+import { CommonLocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { Semtag } from '@matter/types/globals';
 
@@ -81,7 +81,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @returns {this} The current endpoint instance for chaining.
    */
   addZone(tag: Semtag) {
-    this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [getSemtag(tag), getSemtag(LocationTag.Zone)] })
+    this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [getSemtag(tag), getSemtag(CommonLocationTag.Zone)] })
       .createDefaultValveConfigurationAndControlClusterServer()
       .addRequiredClusterServers();
     return this;

@@ -22,7 +22,7 @@
  */
 
 // Imports from @matter
-import { AreaNamespaceTag, NumberTag, PowerSourceTag } from '@matter/node';
+import { CommonAreaNamespaceTag, CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
@@ -80,21 +80,21 @@ export class HeatPump extends MatterbridgeEndpoint {
 
     // Add the flow temperature sensor for the heat pump.
     this.addChildDeviceType('FlowTemperature', temperatureSensor, {
-      tagList: [getSemtag(NumberTag.One, 'FlowTemperature')],
+      tagList: [getSemtag(CommonNumberTag.One, 'FlowTemperature')],
     })
       .createDefaultTemperatureMeasurementClusterServer(4500) // Default flow temperature setpoint in hundredths of degrees Celsius (45.00°C).
       .addRequiredClusterServers();
 
     // Add the return temperature sensor for the heat pump.
     this.addChildDeviceType('ReturnTemperature', temperatureSensor, {
-      tagList: [getSemtag(NumberTag.Two, 'ReturnTemperature')],
+      tagList: [getSemtag(CommonNumberTag.Two, 'ReturnTemperature')],
     })
       .createDefaultTemperatureMeasurementClusterServer(3500) // Default return temperature setpoint in hundredths of degrees Celsius (35.00°C).
       .addRequiredClusterServers();
 
     // Add the Living thermostat for the heat pump.
     this.addChildDeviceType('LivingThermostat', thermostatDevice, {
-      tagList: [getSemtag(NumberTag.One, 'LivingThermostat'), getSemtag(AreaNamespaceTag.LivingRoom)],
+      tagList: [getSemtag(CommonNumberTag.One, 'LivingThermostat'), getSemtag(CommonAreaNamespaceTag.LivingRoom)],
     })
       .createDefaultThermostatClusterServer()
       .addRequiredClusterServers()
@@ -102,7 +102,7 @@ export class HeatPump extends MatterbridgeEndpoint {
 
     // Add the Bedroom thermostat for the heat pump.
     this.addChildDeviceType('BedroomThermostat', thermostatDevice, {
-      tagList: [getSemtag(NumberTag.Two, 'BedroomThermostat'), getSemtag(AreaNamespaceTag.Bedroom)],
+      tagList: [getSemtag(CommonNumberTag.Two, 'BedroomThermostat'), getSemtag(CommonAreaNamespaceTag.Bedroom)],
     })
       .createDefaultThermostatClusterServer()
       .addRequiredClusterServers()

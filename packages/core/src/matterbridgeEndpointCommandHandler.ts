@@ -553,6 +553,7 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  /*
   'DoorLock.setPinCode': {
     command: 'setPinCode'; // PIN not USR
     request: DoorLock.SetPinCodeRequest;
@@ -609,6 +610,7 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  */
   'DoorLock.setUser': {
     command: 'setUser'; // USR
     request: DoorLock.SetUserRequest;
