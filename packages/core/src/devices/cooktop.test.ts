@@ -7,7 +7,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 // @matter
-import { PositionTag } from '@matter/node';
+import { CommonPositionTag } from '@matter/node';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -79,8 +79,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'fixedLabel']);
 
     surface1 = device.addSurface('Surface Top Left', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
-      { mfgCode: null, namespaceId: PositionTag.Left.namespaceId, tag: PositionTag.Left.tag, label: PositionTag.Left.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Left.namespaceId, tag: CommonPositionTag.Left.tag, label: CommonPositionTag.Left.label },
     ]);
     expect(surface1).toBeDefined();
     expect(surface1.id).toBe('SurfaceTopLeft');
@@ -90,8 +90,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(surface1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'onOff']);
 
     surface2 = device.addSurface('Surface Top Right', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
-      { mfgCode: null, namespaceId: PositionTag.Right.namespaceId, tag: PositionTag.Right.tag, label: PositionTag.Right.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Right.namespaceId, tag: CommonPositionTag.Right.tag, label: CommonPositionTag.Right.label },
     ]);
     expect(surface2).toBeDefined();
     expect(surface2.id).toBe('SurfaceTopRight');

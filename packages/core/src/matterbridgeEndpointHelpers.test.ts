@@ -5,7 +5,7 @@ const MATTER_PORT = 11300;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { Endpoint, NumberTag, PowerSourceTag, ServerNode } from '@matter/node';
+import { CommonNumberTag, Endpoint, PowerSourceTag, ServerNode } from '@matter/node';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types';
@@ -84,20 +84,25 @@ describe('Options helpers', () => {
 
   test('getSemtag helper', () => {
     expect(getSemtag(PowerSourceTag.Solar)).toEqual({ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag });
-    expect(getSemtag(NumberTag.TwentyFour, 'My Label')).toEqual({ label: 'My Label', mfgCode: null, namespaceId: NumberTag.TwentyFour.namespaceId, tag: NumberTag.TwentyFour.tag });
-    expect(getSemtag(NumberTag.One, 'My Label', VendorId(12))).toEqual({
+    expect(getSemtag(CommonNumberTag.TwentyFour, 'My Label')).toEqual({
+      label: 'My Label',
+      mfgCode: null,
+      namespaceId: CommonNumberTag.TwentyFour.namespaceId,
+      tag: CommonNumberTag.TwentyFour.tag,
+    });
+    expect(getSemtag(CommonNumberTag.One, 'My Label', VendorId(12))).toEqual({
       label: 'My Label',
       mfgCode: 12,
       namespaceId: 7,
       tag: 1,
     });
-    expect(getSemtag(NumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12))).toEqual({
+    expect(getSemtag(CommonNumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12))).toEqual({
       label: '0123456789012345678901234567890123456789012345678901234567890123', // Label should be trimmed to 64 characters
       mfgCode: 12,
       namespaceId: 7,
       tag: 1,
     });
-    expect(NumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
+    expect(CommonNumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
   });
 
   test('options helpers', () => {

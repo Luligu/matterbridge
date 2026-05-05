@@ -7,7 +7,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 // @matter
-import { PositionTag, RefrigeratorTag } from '@matter/node';
+import { CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -90,7 +90,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeTruthy();
 
     cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
       { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
     ]);
     expect(cabinet1).toBeDefined();
@@ -102,7 +102,7 @@ describe('Matterbridge ' + NAME, () => {
     cabinet2 = device.addCabinet(
       'Freezer Test Cabinet Bottom',
       [
-        { mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label },
+        { mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label },
         { mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label },
       ],
       -20 * 100,
