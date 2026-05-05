@@ -1,3 +1,4 @@
+/* eslint-disable n/no-unpublished-import */
 /* eslint-disable n/no-missing-import */
 import { MatterbridgeAccessoryPlatform } from '../../matterbridgeAccessoryPlatform.js';
 import { humiditySensor } from '../../matterbridgeDeviceTypes.js';

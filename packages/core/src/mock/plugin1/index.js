@@ -1,3 +1,4 @@
+/* eslint-disable n/no-unpublished-import */
 /* eslint-disable n/no-missing-import */
 import { onOffSwitch } from '../../matterbridgeDeviceTypes.js';
 import { MatterbridgeDynamicPlatform } from '../../matterbridgeDynamicPlatform.js';
