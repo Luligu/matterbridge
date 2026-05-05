@@ -57,11 +57,16 @@ These classes will run as threads in the next releases:
 
 ## [3.7.8] - Dev branch
 
+### Dev Breaking Changes
+
+- [bin]: Remove mb-run bin. It will be replaced by mb-run package.
+
 ### Changed
 
 - [package]: Update dependencies.
 - [package]: Bump `eslint` to v.10.3.0.
 - [package]: Bump `marked` to v.18.0.3.
+- [package]: Bump `typescript-eslint` to v.8.59.2.
 - [frontend]: Bump `frontend` version to v.3.4.14.
 - [frontend]: Update dependencies.
 

@@ -23,6 +23,9 @@
  */
 
 // @matterbridge
+// Node.js modules
+import { createHash } from 'node:crypto';
+
 import type { ApiPlugin, SharedMatterbridge } from '@matterbridge/types';
 import { plg } from '@matterbridge/types';
 import { isValidString } from '@matterbridge/utils/validate';
@@ -86,7 +89,7 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
 
   const branch = matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-') ? 'dev' : 'main';
   const params =
-    `?id=${encodeURIComponent(matterbridge.uuid)}` +
+    `?id=${encodeURIComponent(createHash('sha256').update(matterbridge.uuid).digest('hex'))}` +
     `&v=${encodeURIComponent(matterbridge.matterbridgeVersion)}` +
     `&dockerv=${encodeURIComponent(matterbridge.dockerVersion ?? '')}` +
     `&mode=${encodeURIComponent(matterbridge.bridgeMode)}` +
