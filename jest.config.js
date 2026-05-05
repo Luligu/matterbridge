@@ -1,5 +1,5 @@
 // @ts-check
-// jest.config.js 2.0.0
+// jest.config.js 2.0.1
 
 // This Jest configuration is designed for a TypeScript project using ESM modules with ts-jest.
 
@@ -25,10 +25,14 @@ const jestConfig = {
   testPathIgnorePatterns: [
     '/.cache/',
     '/dist/',
+    '/build/',
     '/node_modules/',
     '/scripts/',
     '/vitest/',
     '/apps/',
+    '/src/mock/',
+    '/vendor/',
+    '/temp/',
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
@@ -38,10 +42,14 @@ const jestConfig = {
   coveragePathIgnorePatterns: [
     '/.cache/',
     '/dist/',
+    '/build/',
     '/node_modules/',
     '/scripts/',
     '/vitest/',
     '/apps/',
+    '/src/mock/',
+    '/vendor/',
+    '/temp/',
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
