@@ -14,7 +14,11 @@ import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } fro
 import { debug } from '../App';
 // const debug = true;
 
-function HomeBrowserRefresh(): React.JSX.Element {
+interface HomeBrowserRefreshProps {
+  version: string;
+}
+
+function HomeBrowserRefresh({ version }: HomeBrowserRefreshProps): React.JSX.Element {
   // Contexts
   const { online } = useContext(WebSocketContext);
 
@@ -28,7 +32,7 @@ function HomeBrowserRefresh(): React.JSX.Element {
         <MbfWindowHeaderText>Frontend Update</MbfWindowHeaderText>
       </MbfWindowHeader>
       <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h4 style={{ margin: 0 }}>The frontend has been updated. You are viewing an outdated web UI. Please refresh the page now.</h4>
+        <h4 style={{ margin: 0 }}>The frontend has been updated to version {version}. You are viewing an outdated web UI. Please refresh the page now.</h4>
         <div>
           <Button onClick={() => window.location.reload()} endIcon={<Refresh />} style={{ marginLeft: '10px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
             Refresh

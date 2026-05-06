@@ -33,14 +33,14 @@ async function loadHomeShowChangelog(debug = false) {
   return import('../src/components/HomeShowChangelog');
 }
 
-async function renderHomeShowChangelog(online: boolean, debug = false, changelog = 'https://example.com/changelog') {
+async function renderHomeShowChangelog(online: boolean, debug = false, version = '3.4.14', changelog = 'https://example.com/changelog') {
   const { WebSocketContext } = await import('../src/components/WebSocketProvider');
   const module = await loadHomeShowChangelog(debug);
   const HomeShowChangelog = module.default;
 
   return render(
     <WebSocketContext.Provider value={{ online } as never}>
-      <HomeShowChangelog changelog={changelog} />
+      <HomeShowChangelog version={version} changelog={changelog} />
     </WebSocketContext.Provider>
   );
 }
@@ -67,11 +67,11 @@ describe('HomeShowChangelog', () => {
       writable: true,
     });
 
-    await renderHomeShowChangelog(true, false, 'https://example.com/changelog');
+    await renderHomeShowChangelog(true, false, '3.4.14', 'https://example.com/changelog');
 
     expect(screen.getByTestId('mbf-window')).toBeInTheDocument();
     expect(screen.getByText('Matterbridge Update')).toBeInTheDocument();
-    expect(screen.getByText('Matterbridge has been updated.')).toBeInTheDocument();
+    expect(screen.getByText('Matterbridge has been updated to version 3.4.14.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Star' }));
     fireEvent.click(screen.getByRole('button', { name: 'Sponsor' }));

@@ -32,14 +32,14 @@ async function loadHomeBrowserRefresh(debug = false) {
   return import('../src/components/HomeBrowserRefresh');
 }
 
-async function renderHomeBrowserRefresh(online: boolean, debug = false) {
+async function renderHomeBrowserRefresh(online: boolean, debug = false, version = '3.4.14') {
   const { WebSocketContext } = await import('../src/components/WebSocketProvider');
   const module = await loadHomeBrowserRefresh(debug);
   const HomeBrowserRefresh = module.default;
 
   return render(
     <WebSocketContext.Provider value={{ online } as never}>
-      <HomeBrowserRefresh />
+      <HomeBrowserRefresh version={version} />
     </WebSocketContext.Provider>
   );
 }
@@ -69,7 +69,7 @@ describe('HomeBrowserRefresh', () => {
 
     expect(screen.getByTestId('mbf-window')).toBeInTheDocument();
     expect(screen.getByText('Frontend Update')).toBeInTheDocument();
-    expect(screen.getByText('The frontend has been updated. You are viewing an outdated web UI. Please refresh the page now.')).toBeInTheDocument();
+    expect(screen.getByText('The frontend has been updated to version 3.4.14. You are viewing an outdated web UI. Please refresh the page now.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
     expect(reloadSpy).toHaveBeenCalledTimes(1);

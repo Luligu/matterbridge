@@ -18,10 +18,11 @@ import { debug } from '../App';
 // const debug = true;
 
 interface HomeShowChangelogProps {
+  version: string;
   changelog: string;
 }
 
-function HomeShowChangelog({ changelog }: HomeShowChangelogProps): React.JSX.Element {
+function HomeShowChangelog({ version, changelog }: HomeShowChangelogProps): React.JSX.Element {
   // Contexts
   const { online } = useContext(WebSocketContext);
 
@@ -35,7 +36,7 @@ function HomeShowChangelog({ changelog }: HomeShowChangelogProps): React.JSX.Ele
         <MbfWindowHeaderText>Matterbridge Update</MbfWindowHeaderText>
       </MbfWindowHeader>
       <MbfWindowContent style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h4 style={{ margin: 0 }}>Matterbridge has been updated.</h4>
+        <h4 style={{ margin: 0 }}>Matterbridge has been updated to version {version}.</h4>
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
           <Button
             onClick={() => window.open('https://github.com/Luligu/matterbridge', '_blank')}
