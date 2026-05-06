@@ -70,6 +70,7 @@ These classes will run as threads in the next releases:
 
 - [storage]: Add the node storage health check.
 - [eslint]: Enforce `eslint-plugin-n` rules.
+- [frontend]: Add matterbridge and frontend version in the after update panels.
 
 ### Changed
 
