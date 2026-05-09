@@ -57,10 +57,14 @@ These classes will run as threads in the next releases:
 
 ## [3.7.9] - Dev branch
 
+### Breaking Changes
+
+- [docker]: The **latest** docker image includes only Matterbridge, using the latest release published on npm. Plugins are not included in the image: they will be reinstalled on first run.
+
 ### Changed
 
-- [docker]: Update **chip-test** dockerfile to ubuntu:24.04 cause now ubuntu:latest resolves to `Ubuntu 26.04 LTS (resolute)` that is still not supported by connectedhomeip.
-- [docker]: The **24-ubuntu-slim** and **ubuntu** matterbridge docker images now resolve to `Ubuntu 26.04 LTS (resolute)`.
+- [docker]: Update the **chip-test** Dockerfile to `ubuntu:24.04` because `ubuntu:latest` now resolves to Ubuntu 26.04 LTS (Resolute), which is not yet supported by connectedhomeip.
+- [docker]: The **24-ubuntu-slim** and **ubuntu** Matterbridge Docker images now resolve to "Ubuntu 26.04 LTS (Resolute)".
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
