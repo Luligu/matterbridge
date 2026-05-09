@@ -19,6 +19,7 @@ Checks:
 - Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have `latest` equal to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
+- Verify the `engines.node` field in every real workspace package under [packages](../../packages) is identical to the `engines.node` field in the root [package.json](../../package.json).
 - Verify the Docker workflow release tags in [docker-buildx-s6-rc.yml](../workflows/docker-buildx-s6-rc.yml) and [docker-buildx-s6-rc-legacy.yml](../workflows/docker-buildx-s6-rc-legacy.yml) are coherent.
 - Treat the tag format as `year.month.number`, not a calendar day, for example `2026.4.3` and `2026.4.3-legacy`.
 - Treat the tags as coherent only when the legacy tag is exactly the non-legacy tag plus the `-legacy` suffix.
@@ -43,7 +44,7 @@ Output requirements:
 
 Suggested search targets:
 
-- [package.json](../../package.json) — version, dependencies, scripts
+- [package.json](../../package.json) — version, dependencies, scripts, engines
 - [packages](../../packages)
 - [..\.dockerbuild.json](../../.dockerbuild.json)
 - [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts)

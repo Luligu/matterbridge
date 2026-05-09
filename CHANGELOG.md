@@ -60,11 +60,14 @@ These classes will run as threads in the next releases:
 ### Breaking Changes
 
 - [docker]: The **latest** docker image includes only Matterbridge, using the latest release published on npm. Plugins are not included in the image: they will be reinstalled on first run.
+- [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.
+- [workflows]: Add Node.js 26.x to the build matrix and remove Node.js 20.x.
 
 ### Changed
 
 - [docker]: Update the **chip-test** Dockerfile to `ubuntu:24.04` because `ubuntu:latest` now resolves to Ubuntu 26.04 LTS (Resolute), which is not yet supported by connectedhomeip.
 - [docker]: The **24-ubuntu-slim** and **ubuntu** Matterbridge Docker images now resolve to "Ubuntu 26.04 LTS (Resolute)".
+- [frontend]: Bump `frontend` version to v.3.4.15.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

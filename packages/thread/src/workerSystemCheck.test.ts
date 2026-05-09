@@ -154,7 +154,7 @@ describe('workerSystemCheck', () => {
 
     expect(success).toBe(true);
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 22\.13\.0 is not supported/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/Please consider upgrading to Node\.js LTS version/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/Please consider using the Node\.js LTS version/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No internal network interface found/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No external network interface found/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: No IPv4 network interface found/));
@@ -178,6 +178,22 @@ describe('workerSystemCheck', () => {
     expect(success).toBe(true);
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js odd major versions are not supported/));
     expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/Found network interface 'docker0'/));
+  });
+
+  test('node 26: no error, but NOTICE recommending LTS fires', async () => {
+    const { success, loggerMock } = await runWorkerSystemCheck({
+      nodeVersion: '26.0.0',
+      mdnsInterface: 'eth0',
+      networkInterfaces: {
+        eth0: [{ family: 'IPv4', internal: true } as any, { family: 'IPv4', internal: false } as any, { family: 'IPv6', internal: false } as any],
+      } as any,
+    });
+
+    expect(success).toBe(true);
+    const errorCalls = (loggerMock as jest.Mock).mock.calls.filter((c) => c[0] === LogLevel.ERROR);
+    expect(errorCalls).toHaveLength(0);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/Please consider using the Node\.js LTS version/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
   });
 
   test('node 24: does not emit NOTICE upgrade suggestion', async () => {
