@@ -55,7 +55,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.7.8] - Dev branch
+## [3.7.8] - 2026-05-09
 
 ### Development Breaking Changes
 
@@ -71,6 +71,7 @@ These classes will run as threads in the next releases:
 - [storage]: Add the node storage health check.
 - [eslint]: Enforce `eslint-plugin-n` rules.
 - [frontend]: Add matterbridge version and frontend version in the after update panels.
+- [frontend]: Parse docker info in Matterbridge info.
 
 ### Changed
 

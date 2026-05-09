@@ -19,6 +19,9 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
   const excludeKeys = [
     'matterbridgeLatestVersion',
     'matterbridgeDevVersion',
+    'dockerDev',
+    'dockerLatestVersion',
+    'dockerDevVersion',
     '--matterFileLogger',
     '--fileLogger',
     '--matterLoggerLevel',
@@ -67,9 +70,8 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
                     {key
                       .replace('matterbridgeVersion', 'Matterbridge version')
-                      .replace('matterbridgeLatestVersion', 'Matterbridge latest v.')
-                      .replace('matterbridgeDevVersion', 'Matterbridge dev v.')
                       .replace('frontendVersion', 'Frontend version')
+                      .replace('dockerVersion', 'Docker version')
                       .replace('homeDirectory', 'Home')
                       .replace('rootDirectory', 'Root')
                       .replace('matterbridgeDirectory', 'Storage')
