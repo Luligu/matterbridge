@@ -27,17 +27,17 @@
 
 The Matterbridge Docker images (multi-arch manifest list for **linux/amd64** and **linux/arm64**) are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use them, please consider starring the project on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
-The image (tag **latest** 87 MB) includes only Matterbridge, using the latest release published on npm. It is based on `node:24-trixie-slim`. Plugins are not included in the image: they will be installed on first run.
+The image (tag **latest** 87 MB) includes only Matterbridge, using the latest release published on npm. It is based on `node:24-trixie-slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
 The image (tag **dev** 99 MB) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
 
-The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be installed on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
-The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be installed on first run.
+The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
 
-The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`, supports `arm64`, `amd64` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
+The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`, supports `arm64`, `amd64` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
-The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
 
 ### Matterbridge chip-tool docker image
 
