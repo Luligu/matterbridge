@@ -1,4 +1,4 @@
-FROM ubuntu:latest AS builder
+FROM ubuntu:24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -98,7 +98,7 @@ RUN \
   npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
   npm prune --omit=dev --no-fund --no-audit
 
-FROM ubuntu:latest AS release
+FROM ubuntu:24.04 AS release
 
 ENV DEBIAN_FRONTEND=noninteractive
 
