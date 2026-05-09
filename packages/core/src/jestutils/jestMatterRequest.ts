@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-import { ColorControl } from '@matter/main/clusters/color-control';
-import { LevelControl } from '@matter/main/clusters/level-control';
+import { ColorControl } from '@matter/types/clusters/color-control';
+import { LevelControl } from '@matter/types/clusters/level-control';
 
 /**
  * Build a Matter LevelControl `MoveToLevelRequest` payload.

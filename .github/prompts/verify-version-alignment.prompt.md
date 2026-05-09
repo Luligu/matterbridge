@@ -12,6 +12,8 @@ Checks:
 - Read the root version from [package.json](../../package.json).
 - Verify every real workspace package under [packages](../../packages) has the same `version` as the root package version.
 - Ignore mock plugin manifests under `packages/core/src/mock/**` unless I explicitly ask for them.
+- Verify all `@matterbridge/*` entries in the root [package.json](../../package.json) `dependencies` block are pinned to the root package version.
+- Verify all `--build-arg CACHE_VERSION=x.y.z` values in the root [package.json](../../package.json) `scripts` block match the root package version.
 - Verify [..\.dockerbuild.json](../../.dockerbuild.json) has a `version` field equal to the root package version.
 - Verify [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
 - Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
@@ -41,7 +43,7 @@ Output requirements:
 
 Suggested search targets:
 
-- [package.json](../../package.json)
+- [package.json](../../package.json) — version, dependencies, scripts
 - [packages](../../packages)
 - [..\.dockerbuild.json](../../.dockerbuild.json)
 - [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts)

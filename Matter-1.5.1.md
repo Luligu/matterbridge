@@ -57,7 +57,7 @@ The official HTML specs under `chip/1.5.1/specs/` remain the primary reference.
 | CarbonMonoxideConcentrationMeasurement                | 0x040C | 3     | 4     | Removed P quality                                                                                                              |
 | ColorControl                                          | 0x0300 | 7     | 9     | Change WhitePoint and ColorPoint attributes from RW to R (CCB 2490, TCR 11893); Removed P quality                              |
 | ConcentrationMeasurementClusters                      | 0x0000 | 3     | 4     | Removed P quality                                                                                                              |
-| DoorLock                                              | 0x0101 | 9     | 10    | Removed Zigbee related elements and P quality                                                                                  |
+| DoorLock (1)                                          | 0x0101 | 9     | 10    | Removed Zigbee related elements (1) and P quality                                                                              |
 | ElectricalEnergyMeasurement                           | 0x0091 | 1     | 2     | Added support for apparent and reactive energy measurement                                                                     |
 | EnergyEVSE                                            | 0x0099 | 3     | 4     | Sync with SDK revision number                                                                                                  |
 | FanControl                                            | 0x0202 | 5     | 6     | Removed Zigbee related elements, removed P quality                                                                             |
@@ -86,6 +86,8 @@ The official HTML specs under `chip/1.5.1/specs/` remain the primary reference.
 
 Quality P = Reportable: means the attribute is intended to support interval or change reporting for interactions that care specifically about reportable attributes.
 
+(1) DoorLock cluster has no more PIN commands.
+
 ## New Cluster Types
 
 | Cluster Type                        | ID     | Revision | Summary                                                                                                                                                        |
@@ -107,3 +109,16 @@ Quality P = Reportable: means the attribute is intended to support interval or c
 | WebRTCTransportProvider             | 0x0553 | 2        | Initial version of the WebRTC Transport Provider Cluster; Add multi stream support                                                                             |
 | WebRTCTransportRequestor            | 0x0554 | 2        | Initial version of the WebRTC Transport Requestor Cluster; Add multi stream support                                                                            |
 | ZoneManagement                      | 0x0550 | 1        | Initial version of the Zone Management cluster                                                                                                                 |
+
+## New Semantic Tag Namespaces
+
+| Namespace                   | ID     | Tags                                                       |
+| --------------------------- | ------ | ---------------------------------------------------------- |
+| Closure                     | 0x0044 | Covering, Window, Barrier, Cabinet, Gate, GarageDoor, Door |
+| Closure Panel               | 0x0045 | Lift, Tilt, Sliding, Rotate                                |
+| Closure Covering            | 0x0046 | Blind, Awning, Shutter, Venetian, Curtain                  |
+| Closure Window              | 0x0047 | Roof, Facade                                               |
+| Closure Cabinet             | 0x0048 | CabinetDoor, Drawer, Flap                                  |
+| Commodity Tariff Chronology | 0x000B | Current, Previous, Upcoming                                |
+| Commodity Tariff Commodity  | 0x000D | ElectricalEnergy                                           |
+| Commodity Tariff Flow       | 0x0013 | Import, Export                                             |

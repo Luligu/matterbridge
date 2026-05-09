@@ -23,7 +23,7 @@
  */
 
 // @matter
-import type { VendorId } from '@matter/main/types';
+import type { VendorId } from '@matter/types';
 
 // Matterbridge
 import type { SystemInformation } from './matterbridgeTypes.js';

@@ -1,3 +1,4 @@
+/* eslint-disable n/no-unpublished-import */
 /* eslint-disable n/no-missing-import */
 import { pressureSensor } from '../../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../matterbridgeEndpoint.js';

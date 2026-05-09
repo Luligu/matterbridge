@@ -55,6 +55,41 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.8] - 2026-05-09
+
+### Development Breaking Changes
+
+- [bin]: Remove mb-run bin. It will be replaced by mb-run package.
+- [matter]: Add the matter.js renamed Semantic Tag Namespaces in [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+
+### Development changes
+
+- [matter]: Add the new Matter 1.5.1 Semantic Tag Namespaces in [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+
+### Added
+
+- [storage]: Add the node storage health check.
+- [eslint]: Enforce `eslint-plugin-n` rules.
+- [frontend]: Add matterbridge version and frontend version in the after update panels.
+- [frontend]: Parse docker info in Matterbridge info.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `node-ansi-logger` to v.3.2.2.
+- [package]: Bump `node-persist-manager` to v.2.1.0.
+- [package]: Bump `eslint` to v.10.3.0.
+- [package]: Bump `marked` to v.18.0.3.
+- [package]: Bump `typescript-eslint` to v.8.59.2.
+- [package]: Bump `eslint-plugin-n` to v.18.0.1.
+- [package]: Bump `jest.config.js` v.2.0.1.
+- [package]: Bump `eslint.config.js` v.2.0.1.
+- [package]: Bump `vite.config.ts` v.2.0.2.
+- [frontend]: Bump `frontend` version to v.3.4.14.
+- [frontend]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.7] - 2026-05-01
 
 ### Changed

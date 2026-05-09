@@ -6,7 +6,7 @@ const MATTER_PORT = 8021;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { NumberTag } from '@matter/main';
+import { NumberTag } from '@matter/node';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';

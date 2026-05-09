@@ -1,3 +1,4 @@
+/* eslint-disable n/no-extraneous-import */
 /* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
 import fs from 'node:fs/promises';

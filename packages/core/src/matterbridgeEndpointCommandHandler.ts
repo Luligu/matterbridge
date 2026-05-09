@@ -31,7 +31,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // @matter
 import { HandlerFunction } from '@matter/general';
-import { ActionContext } from '@matter/main';
+import { ActionContext } from '@matter/node';
 import type { Attribute } from '@matter/types/cluster';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';

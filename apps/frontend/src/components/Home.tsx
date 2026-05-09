@@ -133,10 +133,10 @@ function Home(): React.JSX.Element {
       {/* Right column */}
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: enableMobile && mobile ? '10px' : '20px' }}>
         {/* Refresh page on Frontend updates (flex: '0 0 auto', overflow: 'hidden') */}
-        {browserRefresh && <HomeBrowserRefresh />}
+        {browserRefresh && <HomeBrowserRefresh version={matterbridgeInfo.frontendVersion} />}
 
         {/* Show changelog page on Matterbridge updates (flex: '0 0 auto', overflow: 'hidden') */}
-        {showChangelog && <HomeShowChangelog changelog={changelog} />}
+        {showChangelog && <HomeShowChangelog version={matterbridgeInfo.matterbridgeVersion} changelog={changelog} />}
 
         {/* Left column on mobile */}
         {enableMobile && mobile && (

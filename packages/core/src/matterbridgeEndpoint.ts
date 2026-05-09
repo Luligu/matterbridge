@@ -191,6 +191,7 @@ type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorClust
 type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
 
 type CommandsOfBehavior<T extends Behavior.Type> = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
     ? (input: P[0], context?: ActionContext) => Promise<Awaited<R>>
     : never;
