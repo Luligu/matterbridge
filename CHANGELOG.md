@@ -55,6 +55,15 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.9] - Dev branch
+
+### Changed
+
+- [docker]: Update **chip-test** dockerfile to ubuntu:24.04 cause now ubuntu:latest resolves to `Ubuntu 26.04 LTS (resolute)` that is still not supported by connectedhomeip.
+- [docker]: The **24-ubuntu-slim** and **ubuntu** matterbridge docker images now resolve to `Ubuntu 26.04 LTS (resolute)`.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.8] - 2026-05-09
 
 ### Development Breaking Changes
