@@ -156,13 +156,13 @@ The `docker-compose.yml` file is available in the `docker` directory of this rep
 services:
   matterbridge:
     container_name: matterbridge
-    image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
-    network_mode: host                                        # Ensures the Matter mDNS works
-    restart: always                                           # Ensures the container always restarts automatically
+    image: luligu/matterbridge:latest # Matterbridge image with the tag latest
+    network_mode: host # Ensures the Matter mDNS works
+    restart: always # Ensures the container always restarts automatically
     volumes:
-      - "${HOME}/Matterbridge:/root/Matterbridge"             # Mounts the Matterbridge plugin directory
-      - "${HOME}/.matterbridge:/root/.matterbridge"           # Mounts the Matterbridge storage directory
-      - "${HOME}/.mattercert:/root/.mattercert"               # Mounts the Matterbridge certificate directory
+      - '${HOME}/Matterbridge:/root/Matterbridge' # Mounts the Matterbridge plugin directory
+      - '${HOME}/.matterbridge:/root/.matterbridge' # Mounts the Matterbridge storage directory
+      - '${HOME}/.mattercert:/root/.mattercert' # Mounts the Matterbridge certificate directory
 ```
 
 Copy it to your home directory or edit your existing compose file to add the Matterbridge service.
@@ -195,8 +195,8 @@ If you override the command, always start it with `["matterbridge", "--docker"]`
 **If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:**.
 
 ```yaml
-    healthcheck:
-      disable: true
+healthcheck:
+  disable: true
 ```
 
 ### Stop with Docker Compose

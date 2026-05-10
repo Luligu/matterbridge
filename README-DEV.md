@@ -366,12 +366,12 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 - @param {boolean} [debug] - Debug flag.
 
 ```typescript
-    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
-      .createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
-      .createDefaultBooleanStateClusterServer(true)
-      .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-      .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
+  .createDefaultIdentifyClusterServer()
+  .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
+  .createDefaultBooleanStateClusterServer(true)
+  .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
+  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
 ```
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.

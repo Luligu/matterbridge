@@ -7,10 +7,11 @@ const HOMEDIR = path.join('.cache', 'jest', NAME);
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import * as devices from '@matter/node/devices';
 // @matter endpoints
 import * as endpoints from '@matter/node/endpoints';
-import * as devices from '@matter/node/devices';
 
+import { setupTest } from './jestutils/jestSetupTest.js';
 import {
   DeviceTypeDefinition,
   // Utility device types
@@ -88,7 +89,6 @@ import {
   heatPump,
   DeviceClasses,
 } from './matterbridgeDeviceTypes.js';
-import { setupTest } from './jestutils/jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

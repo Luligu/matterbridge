@@ -1,8 +1,8 @@
 ---
-name: "Verify Version Alignment"
-description: "Verify that package, Docker build, core Jest helper, docs update JSON files, and Docker workflow tags match the expected root version rules"
-argument-hint: "Optional scope or notes"
-agent: "agent"
+name: 'Verify Version Alignment'
+description: 'Verify that package, Docker build, core Jest helper, docs update JSON files, and Docker workflow tags match the expected root version rules'
+argument-hint: 'Optional scope or notes'
+agent: 'agent'
 ---
 
 Verify version alignment in this repository using [package.json](../../package.json) as the source of truth.

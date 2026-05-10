@@ -1166,14 +1166,8 @@ This change, necessary to achieve plugin isolation, will require all plugins to 
 - require matterbridge 3.3.0:
 
 ```typescript
-if (
-  this.verifyMatterbridgeVersion === undefined ||
-  typeof this.verifyMatterbridgeVersion !== "function" ||
-  !this.verifyMatterbridgeVersion("3.3.0")
-) {
-  throw new Error(
-    `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`
-  );
+if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
+  throw new Error(`This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`);
 }
 ```
 
@@ -1194,8 +1188,8 @@ export type PlatformMatterbridge = {
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
-  readonly bridgeMode: "bridge" | "childbridge" | "controller" | "";
-  readonly restartMode: "service" | "docker" | "";
+  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
+  readonly restartMode: 'service' | 'docker' | '';
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;
