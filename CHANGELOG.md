@@ -59,7 +59,10 @@ These classes will run as threads in the next releases:
 
 ### Breaking Changes
 
-- [docker]: The **latest** docker image includes only Matterbridge, using the latest release published on npm. Plugins are not included in the image: they will be reinstalled on first run.
+- [docker]: The **latest** docker image now includes only Matterbridge, using the latest release published on npm. Plugins are not included in the image: they will be reinstalled on first run.
+
+### Added
+
 - [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.
 - [workflows]: Add Node.js 26.x to the build matrix and remove Node.js 20.x.
 
