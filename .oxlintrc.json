@@ -28,7 +28,7 @@
     "typeCheck": false,
     "maxWarnings": 0
   },
-  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise", "jest", "vitest"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
