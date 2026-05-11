@@ -1,10 +1,8 @@
 // src\broadcastChannel.test.ts
 
-const MATTER_PORT = 0;
 const NAME = 'BroadcastServer';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
+const MATTER_PORT = 0;
 
-import path from 'node:path';
 import { BroadcastChannel } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';

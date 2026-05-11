@@ -190,6 +190,10 @@
 <li>[docker]: Update the <strong>chip-test</strong> Dockerfile to <code>ubuntu:24.04</code> because <code>ubuntu:latest</code> now resolves to Ubuntu 26.04 LTS (Resolute), which is not yet supported by connectedhomeip.</li>
 <li>[docker]: The <strong>24-ubuntu-slim</strong> and <strong>ubuntu</strong> Matterbridge Docker images now resolve to &quot;Ubuntu 26.04 LTS (Resolute)&quot;.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.4.15.</li>
+<li>[package]: Update dependencies.</li>
+<li>[package]: Bump <code>jest</code> to v.30.4.2.</li>
+<li>[package]: Bump <code>vitest</code> to v.4.1.6.</li>
+<li>[package]: Bump <code>typescript-eslint</code> to v.8.59.3.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="378-2026-05-09">[3.7.8] - 2026-05-09</h2>
@@ -1196,14 +1200,8 @@ From the View menu of the frontend is possible to request the desktop site or th
 <ul>
 <li>require matterbridge 3.3.0:</li>
 </ul>
-<pre><code class="language-typescript">if (
-  this.verifyMatterbridgeVersion === undefined ||
-  typeof this.verifyMatterbridgeVersion !== &quot;function&quot; ||
-  !this.verifyMatterbridgeVersion(&quot;3.3.0&quot;)
-) {
-  throw new Error(
-    `This plugin requires Matterbridge version &gt;= &quot;3.3.0&quot;. Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version.&quot;`
-  );
+<pre><code class="language-typescript">if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== &#39;function&#39; || !this.verifyMatterbridgeVersion(&#39;3.3.0&#39;)) {
+  throw new Error(`This plugin requires Matterbridge version &gt;= &quot;3.3.0&quot;. Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version.&quot;`);
 }
 </code></pre>
 <ul>
@@ -1223,8 +1221,8 @@ From the View menu of the frontend is possible to request the desktop site or th
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
-  readonly bridgeMode: &quot;bridge&quot; | &quot;childbridge&quot; | &quot;controller&quot; | &quot;&quot;;
-  readonly restartMode: &quot;service&quot; | &quot;docker&quot; | &quot;&quot;;
+  readonly bridgeMode: &#39;bridge&#39; | &#39;childbridge&#39; | &#39;controller&#39; | &#39;&#39;;
+  readonly restartMode: &#39;service&#39; | &#39;docker&#39; | &#39;&#39;;
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;
