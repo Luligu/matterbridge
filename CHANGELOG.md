@@ -61,6 +61,10 @@ These classes will run as threads in the next releases:
 
 - [docker]: The **latest** docker image now includes only Matterbridge, using the latest release published on npm. Plugins are not included in the image: they will be reinstalled on first run.
 
+### Development Changes
+
+- [tsgo]: Add explicit TypeScript project `references` to all workspace `tsconfig.build.json` and `tsconfig.build.production.json` files, enabling correct parallel builds with `tsgo`. Clean build time drops from **~17s** (`tsc`) to **~3s** (`tsgo`) — a **5.7× speedup**.
+
 ### Added
 
 - [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.

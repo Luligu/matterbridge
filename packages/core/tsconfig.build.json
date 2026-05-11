@@ -5,5 +5,11 @@
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"],
+  "references": [
+    { "path": "../types/tsconfig.build.json" },
+    { "path": "../utils/tsconfig.build.json" },
+    { "path": "../thread/tsconfig.build.json" },
+    { "path": "../dgram/tsconfig.build.json" }
+  ]
 }
