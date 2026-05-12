@@ -141,7 +141,7 @@
   },
   "dependencies": {
     "@matterbridge/jest-utils": "3.7.9",
-    "node-ansi-logger": "3.2.2-dev-20260505-d01e13b"
+    "node-ansi-logger": "3.2.2-dev-20260512-55162c0"
   },
   "devDependencies": {
     "@jest/globals": "30.4.1"
