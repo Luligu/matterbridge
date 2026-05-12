@@ -68,7 +68,8 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.
-- [workflows]: Add Node.js 26.x to the build matrix and remove Node.js 20.x. Node.js 20.x is still listed in the package.json engines field even if EOL.
+- [workflows]: Add Node.js 26.x to the `build matrix` and remove Node.js 20.x. Node.js 20.x is still listed in the package.json engines field even if EOL.
+- [frontend]: Add `version` in the tooltip of plugin upgrade.
 
 ### Changed
 
