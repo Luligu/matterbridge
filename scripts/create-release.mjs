@@ -1,6 +1,6 @@
 /**
  * create-release.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Create a GitHub release from the current package.json version and CHANGELOG.md entry.
  *
@@ -12,6 +12,7 @@
  *   - tag = version (without leading 'v')
  *   - title = "Release x.x.x"
  *   - description = copied changelog text
+ *   - target = main (always points the release tag to the main branch)
  * - Print tag/title/description and pause for user confirmation before creating
  */
 
@@ -116,7 +117,7 @@ async function promptToContinue({ tag, title, description }) {
 
 function runGhReleaseCreate({ tag, title, notesFilePath }) {
   return new Promise((resolve, reject) => {
-    const args = ['release', 'create', tag, '--title', title, '--notes-file', notesFilePath];
+    const args = ['release', 'create', tag, '--title', title, '--notes-file', notesFilePath, '--target', 'main'];
     const child = spawn('gh', args, {
       cwd: repoRoot,
       stdio: 'inherit',

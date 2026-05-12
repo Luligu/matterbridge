@@ -18,7 +18,7 @@
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
-const SCRIPT_VERSION = '1.0.0';
+const SCRIPT_VERSION = '1.0.1';
 const PAGE_SIZE = 100;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
