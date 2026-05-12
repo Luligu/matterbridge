@@ -1,5 +1,6 @@
 /**
  * docker-downloads.mjs
+ * Version: 1.0.1
  *
  * Tracks Docker Hub pulls per day by sampling the repository "pull_count" daily.
  * Docker Hub provides total pulls for a repo; daily pulls are computed from deltas

@@ -1,5 +1,7 @@
-/* eslint-disable jsdoc/require-jsdoc */
 /**
+ * create-release.mjs
+ * Version: 1.0.1
+ *
  * Create a GitHub release from the current package.json version and CHANGELOG.md entry.
  *
  * Requirements (per repo request):
@@ -13,6 +15,8 @@
  * - Print tag/title/description and pause for user confirmation before creating
  */
 
+/* eslint-disable jsdoc/require-jsdoc */
+
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
@@ -22,9 +26,9 @@ import process from 'node:process';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const repoRoot = path.resolve(dirname, '..');
 
 function stripLeadingV(version) {
   return typeof version === 'string' ? version.replace(/^v/i, '') : '';

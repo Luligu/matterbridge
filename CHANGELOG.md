@@ -68,7 +68,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.
-- [workflows]: Add Node.js 26.x to the build matrix and remove Node.js 20.x.
+- [workflows]: Add Node.js 26.x to the build matrix and remove Node.js 20.x. Node.js 20.x is still listed in the package.json engines field even if EOL.
 
 ### Changed
 
@@ -79,6 +79,9 @@ These classes will run as threads in the next releases:
 - [package]: Bump `jest` to v.30.4.2.
 - [package]: Bump `vitest` to v.4.1.6.
 - [package]: Bump `typescript-eslint` to v.8.59.3.
+- [scripts]: Refactor `scripts`.
+- [package]: Bump `eslint.config.js` v.2.0.3.
+- [package]: Bump `vite.config.ts` v.2.0.3.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

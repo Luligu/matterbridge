@@ -1,3 +1,13 @@
+/**
+ * install-experimental.mjs
+ * Version: 1.0.1
+ *
+ * Installs experimental/pre-release versions of tsgo, oxlint and oxfmt.
+ *
+ * Usage:
+ *   node scripts/install-experimental.mjs
+ */
+
 /* eslint-disable n/no-process-exit */
 /* eslint-disable no-console */
 

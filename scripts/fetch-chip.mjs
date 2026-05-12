@@ -1,4 +1,15 @@
+/**
+ * fetch-chip.mjs
+ * Version: 1.0.1
+ *
+ * Downloads the Matter (CHIP) specification HTML files from the CSA server.
+ *
+ * Usage:
+ *   node scripts/fetch-chip.mjs
+ */
+
 /* eslint-disable */
+
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join as pathJoin, sep as pathSep } from 'node:path';
 import https from 'node:https';
@@ -11,6 +22,7 @@ import https from 'node:https';
  *  - ZCL_OUT: output path for zcl.json (default: chip/zcl.json)
  *  - ZCL_BRANCH: connectedhomeip branch to fetch from (default: v1.4-branch)
  */
+
 // Single branch strategy from online only
 const BRANCH = process.env.ZCL_BRANCH || 'v1.4.2-branch';
 const OUT_ZCL_PATH = process.env.ZCL_OUT || `chip/${BRANCH}/zcl.json`;

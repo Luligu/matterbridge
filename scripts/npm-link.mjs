@@ -1,3 +1,13 @@
+/**
+ * npm-link.mjs
+ * Version: 1.0.1
+ *
+ * Links matterbridge globally via npm link and sets executable permissions on bin files.
+ *
+ * Usage:
+ *   node scripts/npm-link.mjs
+ */
+
 /* eslint-disable n/no-process-exit */
 /* eslint-disable no-console */
 

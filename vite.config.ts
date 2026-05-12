@@ -1,5 +1,5 @@
 // vite.config.ts
-// vite.config.ts 2.0.2
+// vite.config.ts 2.0.3
 
 // This Vitest configuration is designed for a TypeScript project.
 

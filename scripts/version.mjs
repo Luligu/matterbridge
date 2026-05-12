@@ -1,5 +1,20 @@
+/**
+ * version.mjs
+ * Version: 1.0.1
+ *
+ * Updates package.json version to:
+ *   <baseVersion>-<dev|edge|git|local>-<yyyymmdd>-<7charSha>
+ *
+ * Usage:
+ *   node scripts/version.mjs <dev|edge|git|local> [--dry-run]
+ *
+ * Requirements:
+ *   Node.js 18+ (for global fetch)
+ */
+
 /* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
+
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -73,9 +88,9 @@ if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'local') {
   throw new Error('Missing or invalid parameter (expected dev, edge, git, or local).');
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const repoRoot = path.resolve(dirname, '..');
 const packageJsonPath = path.join(repoRoot, 'package.json');
 
 const raw = await fs.readFile(packageJsonPath, 'utf8');
