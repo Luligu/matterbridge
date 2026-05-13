@@ -284,7 +284,7 @@
     "@matterbridge/types": "3.7.9",
     "@matterbridge/utils": "3.7.9",
     "@matterbridge/vitest-utils": "3.7.9",
-    "node-ansi-logger": "3.2.2-dev-20260512-55162c0",
+    "node-ansi-logger": "3.3.0-dev-20260513-eaa1bd1",
     "node-persist-manager": "2.1.0-dev-20260512-3c3d427"
   },
   "devDependencies": {
