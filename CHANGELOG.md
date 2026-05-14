@@ -64,6 +64,7 @@ These classes will run as threads in the next releases:
 ### Development Changes
 
 - [tsgo]: Add explicit TypeScript project `references` to all workspace `tsconfig.build.json` and `tsconfig.build.production.json` files, enabling correct parallel builds with `tsgo`. Clean build time drops from **~17s** (`tsc`) to **~3s** (`tsgo`) — a **5.7× speedup**.
+- [localdev]: Add the (experimental) ability to auto link matterbridge in the local plugins (not published on npm) when using docker. Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
 
 ### Added
 

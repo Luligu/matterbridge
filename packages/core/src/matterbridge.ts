@@ -896,9 +896,29 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} with version ${CYAN}${plugin.version}${db} and type ${CYAN}${plugin.type}${db}.`,
       );
-      // Try to reinstall the plugin from npm (for Docker pull and external plugins)
+
+      // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (!fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) {
+      const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+      const isLocal = globalModulesDirectory && !plugin.path.includes(globalModulesDirectory);
+      if (
+        (isLocal &&
+          fs.existsSync(plugin.path) &&
+          !fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge')) &&
+          !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
+        process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
+      ) {
+        const { execSync } = await import('node:child_process');
+        execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path), stdio: 'inherit' });
+        this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
+      }
+
+      // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
+      // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
+      if (
+        (!isLocal && !fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
+        process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest'
+      ) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { execSync } = await import('node:child_process');
         const sudo =

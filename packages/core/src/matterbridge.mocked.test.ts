@@ -723,6 +723,11 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() reinstall of plugins', async () => {
+    process.env.MATTERBRIDGE_REINSTALL_PLUGINS = 'jest';
+    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'jest';
+    for (const plugin of plugins.array()) {
+      rmSync(path.join(path.dirname(plugin.path), 'node_modules'), { recursive: true, force: true });
+    }
     // Test reinstall of plugins
     const parseSpy = jest.spyOn(PluginManager.prototype, 'parse').mockImplementation(async (plugin: Plugin | string) => {
       return null; // Simulate a plugin that does not return a valid instance
@@ -731,7 +736,11 @@ describe('Matterbridge mocked', () => {
       return false; // Simulate a plugin that does not exist
     });
     // @ts-expect-error Mock the execSync to simulate a not successful npm install
-    execSyncMock.mockImplementationOnce(() => {
+    execSyncMock.mockImplementation((command: string) => {
+      if (command.includes('npm install')) {
+        if (command.includes('matterbridge-mock6')) return null; // Simulate a not successful npm install for one plugin
+        return command; // Simulate a successful npm install command
+      }
       return null; // Simulate a not successful npm install
     });
     await (matterbridge as any).initialize();
@@ -740,13 +749,17 @@ describe('Matterbridge mocked', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(plugins.length).toBe(6);
     expect(existSpy).toHaveBeenCalledTimes(6); // Six plugins checked for existence
-    expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to invalid install
-    expect(execSyncMock).toHaveBeenCalledTimes(6);
+    expect(parseSpy).toHaveBeenCalledTimes(5); // One plugin is skipped due to mocked invalid install
+    expect(execSyncMock).toHaveBeenCalledTimes(12); // Six plugins with npm install and six plugins with npm link
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Matterbridge linked to plugin'));
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Trying to reinstall it from npm...'));
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error reinstalling plugin'));
 
     parseSpy.mockRestore();
     existSpy.mockRestore();
+    process.env.MATTERBRIDGE_REINSTALL_PLUGINS = undefined;
+    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = undefined;
+    execSyncMock.mockRestore();
   });
 
   test('Matterbridge.initialize() startPlugins', async () => {
