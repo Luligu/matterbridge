@@ -85,6 +85,10 @@ These classes will run as threads in the next releases:
 - [package]: Bump `eslint.config.js` v.2.0.3.
 - [package]: Bump `vite.config.ts` v.2.0.3.
 
+### Fixed
+
+- [localdev]: Fix npm install for local plugins (not published on npm) when using docker. Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.8] - 2026-05-09

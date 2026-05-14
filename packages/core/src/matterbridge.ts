@@ -911,7 +911,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       ) {
         const { execSync } = await import('node:child_process');
         try {
-          execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path), stdio: 'inherit' });
+          execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
           this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
         } catch (error) {
           plugin.error = true;
@@ -1212,7 +1212,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Asynchronously loads and starts the registered plugins.
+   * Asynchronously checks, loads and starts the registered plugins.
    *
    * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
@@ -1222,19 +1222,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
   private async startPlugins(wait: boolean = false, start: boolean = true): Promise<void> {
-    // Check, load and start the plugins
     for (const plugin of this.plugins) {
+      // Always load the config and schema to have the correct values in the frontend even for disabled plugins
       plugin.configJson = await this.plugins.loadConfig(plugin);
       plugin.schemaJson = await this.plugins.loadSchema(plugin);
+      // If the plugin is not enabled, skip it
+      if (!plugin.enabled) {
+        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+        continue;
+      }
       // Check if the plugin is available
       if (!(await this.plugins.resolve(plugin.path))) {
         this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
         plugin.enabled = false;
         plugin.error = true;
-        continue;
-      }
-      if (!plugin.enabled) {
-        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
         continue;
       }
       plugin.error = false;

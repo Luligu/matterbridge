@@ -797,7 +797,7 @@ describe('Matterbridge mocked', () => {
       return pluginPath; // Simulate a plugin that returns a valid path
     });
     await (matterbridge as any).startPlugins();
-    expect(resolveSpy).toHaveBeenCalledTimes(12);
+    expect(resolveSpy).toHaveBeenCalledTimes(8);
     expect(plugins.length).toBe(6);
 
     resolveSpy.mockRestore();
