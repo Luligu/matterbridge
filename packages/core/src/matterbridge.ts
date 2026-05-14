@@ -940,17 +940,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           inspectError(this.log, `Error reinstalling plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
           continue;
         }
-        /*
-        if (execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --omit=dev`)) {
-          this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
-          plugin.error = false;
-        } else {
-          this.log.error(`Error reinstalling plugin ${plg}${plugin.name}${nf}. The plugin is disabled.`);
-          plugin.error = true;
-          plugin.enabled = false;
-          continue;
-        }
-        */
       }
       if ((await this.plugins.parse(plugin)) === null) {
         this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
