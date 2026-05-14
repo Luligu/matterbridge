@@ -917,7 +917,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           plugin.error = true;
           plugin.enabled = false;
           inspectError(this.log, `Error linking matterbridge to plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
-          continue;
         }
       }
 
