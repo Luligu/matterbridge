@@ -73,6 +73,7 @@ import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, 
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
+import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
@@ -909,8 +910,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
       ) {
         const { execSync } = await import('node:child_process');
-        execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path), stdio: 'inherit' });
-        this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
+        try {
+          execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path), stdio: 'inherit' });
+          this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
+        } catch (error) {
+          plugin.error = true;
+          plugin.enabled = false;
+          inspectError(this.log, `Error linking matterbridge to plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
+          continue;
+        }
       }
 
       // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
@@ -923,6 +931,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
+        try {
+          execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}  --no-fund --no-audit --silent --omit=dev`);
+          this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
+        } catch (error) {
+          plugin.error = true;
+          plugin.enabled = false;
+          inspectError(this.log, `Error reinstalling plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
+          continue;
+        }
+        /*
         if (execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --omit=dev`)) {
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
           plugin.error = false;
@@ -932,6 +950,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           plugin.enabled = false;
           continue;
         }
+        */
       }
       if ((await this.plugins.parse(plugin)) === null) {
         this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
