@@ -21,10 +21,6 @@
  * limitations under the License.
  */
 
-/*
- *  Matter test environment with initialized ServerNode and AggregatorEndpoint. No matterbridge, frontend, devices and plugins.
- */
-
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 
 import path from 'node:path';
@@ -37,6 +33,7 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
+// node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
 // local modules

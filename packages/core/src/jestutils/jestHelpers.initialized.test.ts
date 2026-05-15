@@ -1,3 +1,7 @@
+const NAME = 'JestHelpersMatterbridgeInitialized';
+const MATTER_PORT = 9600;
+const FRONTEND_PORT = 9501;
+
 import { jest } from '@jest/globals';
 
 import { Matterbridge } from '../matterbridge.js';
@@ -22,8 +26,8 @@ describe('Matterbridge initialized test environment', () => {
   });
 
   test('should start the active Matterbridge instance in bridge mode', async () => {
-    await setupTest('JestHelpersMatterbridgeInitializedBridge', false);
-    await startMatterbridge('bridge', 9501, 9601);
+    await setupTest(NAME + 'Bridge', false);
+    await startMatterbridge('bridge', FRONTEND_PORT, MATTER_PORT);
     expect(matterbridge).toBeDefined();
   });
 
@@ -34,8 +38,8 @@ describe('Matterbridge initialized test environment', () => {
   });
 
   test('should start the active Matterbridge instance in childbridge mode', async () => {
-    await setupTest('JestHelpersMatterbridgeInitializedChildbridge', false);
-    await startMatterbridge('childbridge', 9502, 9602);
+    await setupTest(NAME + 'Childbridge', false);
+    await startMatterbridge('childbridge', FRONTEND_PORT + 50, MATTER_PORT + 50);
     expect(matterbridge).toBeDefined();
   });
 

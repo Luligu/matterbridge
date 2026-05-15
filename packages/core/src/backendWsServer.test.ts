@@ -1,14 +1,10 @@
 // src\backendWsServer.test.ts
 
-const MATTER_PORT = 9300;
-const FRONTEND_PORT = 8287;
 const NAME = 'BackendWsServer';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 process.argv = ['node', 'backendWsServer.test.js', '--debug-frontend', '--verbose-frontend'];
 
 import { EventEmitter } from 'node:events';
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';

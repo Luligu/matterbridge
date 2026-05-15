@@ -25,7 +25,6 @@ import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import type { jest } from '@jest/globals';
-// @matterbridge
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests

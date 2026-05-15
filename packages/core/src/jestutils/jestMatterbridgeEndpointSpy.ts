@@ -1,5 +1,5 @@
 /**
- * @description This file contains the Jest Spy helpers for MatterbridgeEndpoint.
+ * @description This file contains the Jest MatterbridgeEndpoint spy.
  * @file src/jestMatterbridgeEndpointSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15

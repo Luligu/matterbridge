@@ -320,6 +320,25 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Backend",
+      "type": "shell",
+      "command": "node",
+      "args": [
+        "--no-warnings",
+        "--experimental-vm-modules",
+        "node_modules/jest/bin/jest.js",
+        "--verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--collectCoverageFrom=packages/core/src/backendWsServer.ts",
+        "--collectCoverageFrom=packages/core/src/backendExpress.ts",
+        "backendWsServer.test.ts",
+        "backendExpress.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Behaviors",
       "type": "process",
       "command": "node",

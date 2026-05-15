@@ -1,7 +1,5 @@
 // src\backendExpress.test.ts
 
-const MATTER_PORT = 9400;
-const FRONTEND_PORT = 8287;
 const NAME = 'BackendExpress';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 

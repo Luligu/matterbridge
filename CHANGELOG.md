@@ -55,7 +55,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.7.9] - Dev branch
+## [3.7.9] - 2026-05-15
 
 ### Breaking Changes
 
@@ -64,7 +64,7 @@ These classes will run as threads in the next releases:
 ### Development Changes
 
 - [tsgo]: Add explicit TypeScript project `references` to all workspace `tsconfig.build.json` and `tsconfig.build.production.json` files, enabling correct parallel builds with `tsgo`. Clean build time drops from **~17s** (`tsc`) to **~3s** (`tsgo`) — a **5.7× speedup**.
-- [localdev]: Add the (experimental) ability to auto link matterbridge in the local plugins (not published on npm) when using docker. Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
+- [localdev]: Add the ability to auto link matterbridge in the local plugins (not published on npm) when using docker (beta). Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
 
 ### Added
 

@@ -1,6 +1,6 @@
 /**
- * @description This file contains the Jest helpers.
- * @file src/jestHelpers.test.ts
+ * @description This file contains the Jest Matterbridge Test Environment.
+ * @file src/jestMatterbridgeTest.ts
  * @author Luca Liguori
  * @created 2025-09-03
  * @version 1.0.15
@@ -24,7 +24,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /*
- *  This file contains the Jest helpers for testing the Matterbridge core package.
+ *  Jest Matterbridge Test Environment helpers.
  *
  *  1) Matterbridge with initialized Matterbridge instance with matterbridge, frontend, devices and plugins.
  *
@@ -71,7 +71,9 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
 // @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
+// node-ansi-logger module
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+// node-persist-manager module
 import { NodeStorageManager } from 'node-persist-manager';
 
 import type { DeviceManager } from '../deviceManager.js';
