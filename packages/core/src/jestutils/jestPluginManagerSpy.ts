@@ -1,5 +1,5 @@
 /**
- * @description This file contains the Jest Spy helpers for PluginManager.
+ * @description This file contains the Jest PluginManager spy.
  * @file src/jestPluginManagerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15

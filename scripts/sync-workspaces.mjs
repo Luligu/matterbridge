@@ -1,6 +1,17 @@
+/**
+ * sync-workspaces.mjs
+ * Version: 1.0.1
+ *
+ * Syncs version and common fields across all workspace package.json files.
+ *
+ * Usage:
+ *   node scripts/sync-workspaces.mjs [--dry-run]
+ */
+
 /* eslint-disable n/no-extraneous-import */
 /* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
+
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -158,9 +169,9 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const repoRoot = path.resolve(dirname, '..');
 const rootPackageJsonPath = path.join(repoRoot, 'package.json');
 
 const rootRaw = await fs.readFile(rootPackageJsonPath, 'utf8');

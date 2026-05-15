@@ -49,13 +49,7 @@ Recommended pattern:
 ```ts
 const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
   .createDefaultIdentifyClusterServer()
-  .createDefaultBridgedDeviceBasicInformationClusterServer(
-    'Entry Door',
-    'ENTRY-DOOR-001',
-    0xfff1,
-    'Matterbridge',
-    'Entry Door Sensor',
-  )
+  .createDefaultBridgedDeviceBasicInformationClusterServer('Entry Door', 'ENTRY-DOOR-001', 0xfff1, 'Matterbridge', 'Entry Door Sensor')
   .createDefaultBooleanStateClusterServer(false)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
   .addRequiredClusterServers();
@@ -130,13 +124,7 @@ class ExamplePlatform extends MatterbridgeDynamicPlatform {
     await this.ready;
 
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightPlugin' })
-      .createDefaultBridgedDeviceBasicInformationClusterServer(
-        'Kitchen Light',
-        'LIGHT-001',
-        0xfff1,
-        'Matterbridge',
-        'Matterbridge OnOffLight',
-      )
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Kitchen Light', 'LIGHT-001', 0xfff1, 'Matterbridge', 'Matterbridge OnOffLight')
       .addRequiredClusterServers();
 
     await this.registerDevice(device);
@@ -158,14 +146,7 @@ class ExamplePlatform extends MatterbridgeAccessoryPlatform {
     await this.ready;
 
     const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TemperatureSensorPlugin' })
-      .createDefaultBasicInformationClusterServer(
-        'Temperature Sensor',
-        'TEMP-001',
-        0xfff1,
-        'Matterbridge',
-        0x8000,
-        'Matterbridge Temperature Sensor',
-      )
+      .createDefaultBasicInformationClusterServer('Temperature Sensor', 'TEMP-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Temperature Sensor')
       .addRequiredClusterServers();
 
     await this.registerDevice(device);
@@ -177,14 +158,7 @@ Standalone Matter device from a plugin:
 
 ```ts
 const device = new MatterbridgeEndpoint(pressureSensor, { id: 'ServerNodeDevice', mode: 'server' })
-  .createDefaultBasicInformationClusterServer(
-    'Server Node Device',
-    'SERVER-001',
-    0xfff1,
-    'Matterbridge',
-    0x8000,
-    'Matterbridge Server Node Device',
-  )
+  .createDefaultBasicInformationClusterServer('Server Node Device', 'SERVER-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Server Node Device')
   .addRequiredClusterServers();
 
 await this.registerDevice(device);
@@ -194,14 +168,7 @@ Native Matter endpoint on the server node:
 
 ```ts
 const device = new MatterbridgeEndpoint(pressureSensor, { id: 'MatterNodeDevice', mode: 'matter' })
-  .createDefaultBasicInformationClusterServer(
-    'Matter Node Device',
-    'MATTER-001',
-    0xfff1,
-    'Matterbridge',
-    0x8000,
-    'Matterbridge Matter Node Device',
-  )
+  .createDefaultBasicInformationClusterServer('Matter Node Device', 'MATTER-001', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Matter Node Device')
   .addRequiredClusterServers();
 
 await this.registerDevice(device);

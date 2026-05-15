@@ -1,4 +1,15 @@
+/**
+ * marked.mjs
+ * Version: 1.0.1
+ *
+ * Converts Markdown files to HTML using the marked library.
+ *
+ * Usage:
+ *   node scripts/marked.mjs
+ */
+
 /* eslint-disable no-console */
+
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';

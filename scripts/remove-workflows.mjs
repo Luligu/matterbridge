@@ -1,6 +1,6 @@
 /**
  * remove-workflows.mjs
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Removes GitHub Actions workflow runs that are older than one week, plus all
  * cancelled workflow runs regardless of age.
@@ -18,7 +18,7 @@
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 
-const SCRIPT_VERSION = '1.0.0';
+const SCRIPT_VERSION = '1.0.1';
 const PAGE_SIZE = 100;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
@@ -36,9 +36,9 @@ Usage:
   node scripts/remove-workflows.mjs [--dry-run]
 
 Options:
-  --dry-run  Show which workflow runs would be deleted without deleting them
-  --version  Show the script version
-  --help     Show this help message
+  --dry-run      Show which workflow runs would be deleted without deleting them
+  --version, -v  Show the script version
+  --help, -h     Show this help message
 
 Requirements:
   - gh CLI installed and authenticated

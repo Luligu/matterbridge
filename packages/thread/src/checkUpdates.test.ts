@@ -1,14 +1,11 @@
 // src\checkUpdates.test.ts
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
+const NAME = 'MatterbridgeUpdate';
 const MATTER_PORT = 13000;
 const FRONTEND_PORT = 8810;
-const NAME = 'MatterbridgeUpdate';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import type { ApiPlugin } from '@matterbridge/types';

@@ -1,3 +1,13 @@
+/**
+ * git-status.mjs
+ * Version: 1.0.1
+ *
+ * Prints a summary of the current git repository status.
+ *
+ * Usage:
+ *   node scripts/git-status.mjs
+ */
+
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable no-console */
 

@@ -114,7 +114,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `.github/copilot-instructions.md`                                | Main project instructions — always loaded                        |
 | `.github/instructions/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — dedicated Copilot instruction file |
-| `.github/instructions/testing/unit-tests.instructions.md`        | Testing standards — scoped to `packages/**/*.test.ts`            |
+| `.github/instructions/testing/unit-tests.instructions.md`        | Testing standards — scoped to `**/*.test.ts`                     |
 
 ## Claude instructions
 
@@ -122,7 +122,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
 | --------------------------------------------------------- | ----------------------------------------------------- |
 | `.claude/CLAUDE.md`                                       | Main project instructions — always loaded             |
 | `.claude/rules/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — loaded for all contexts |
-| `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `packages/**/*.test.ts` |
+| `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `**/*.test.ts`          |
 
 ## Guidelines on imports/exports
 
@@ -366,12 +366,12 @@ You create a Matter device with a new instance of MatterbridgeEndpoint(definitio
 - @param {boolean} [debug] - Debug flag.
 
 ```typescript
-    const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
-      .createDefaultIdentifyClusterServer()
-      .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
-      .createDefaultBooleanStateClusterServer(true)
-      .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-      .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'EntryDoor' })
+  .createDefaultIdentifyClusterServer()
+  .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
+  .createDefaultBooleanStateClusterServer(true)
+  .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
+  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
 ```
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.

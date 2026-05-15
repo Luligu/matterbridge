@@ -24,20 +24,20 @@ WORKDIR /matterbridge
 COPY ./.dockerbuild.json ./
 RUN \
   npm install --global --no-fund --no-audit --omit=dev \
-  matterbridge \
-  matterbridge-zigbee2mqtt \
-  matterbridge-somfy-tahoma \
-  matterbridge-shelly \
-  matterbridge-hass \
-  matterbridge-webhooks \
-  matterbridge-test \
-  matterbridge-example-accessory-platform \
-  matterbridge-example-dynamic-platform \
-  matterbridge-eve-door \
-  matterbridge-eve-motion \
-  matterbridge-eve-energy \
-  matterbridge-eve-room \
-  matterbridge-eve-weather && \
+  matterbridge && \
+  # matterbridge-zigbee2mqtt \
+  # matterbridge-somfy-tahoma \
+  # matterbridge-shelly \
+  # matterbridge-hass \
+  # matterbridge-webhooks \
+  # matterbridge-test \
+  # matterbridge-example-accessory-platform \
+  # matterbridge-example-dynamic-platform \
+  # matterbridge-eve-door \
+  # matterbridge-eve-motion \
+  # matterbridge-eve-energy \
+  # matterbridge-eve-room \
+  # matterbridge-eve-weather && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \

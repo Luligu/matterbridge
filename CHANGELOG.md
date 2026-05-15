@@ -55,6 +55,42 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.9] - 2026-05-15
+
+### Breaking Changes
+
+- [docker]: The **latest** docker image now includes only Matterbridge, using the latest release published on npm. Official plugins are not included in the image: they will be reinstalled on first run.
+
+### Development Changes
+
+- [tsgo]: Add explicit TypeScript project `references` to all workspace `tsconfig.build.json` and `tsconfig.build.production.json` files, enabling correct parallel builds with `tsgo`. Clean build time drops from **~17s** (`tsc`) to **~3s** (`tsgo`) — a **5.7× speedup**.
+- [localdev]: Add the ability to auto link matterbridge in the local plugins (not published on npm) when using docker (beta). Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
+
+### Added
+
+- [node]: Add Node.js 26.x to the allowed versions in the package.json `engines` field.
+- [workflows]: Add Node.js 26.x to the `build matrix` and remove Node.js 20.x. Node.js 20.x is still listed in the package.json engines field even if EOL.
+- [frontend]: Add `version` in the tooltip of plugin upgrade. Thanks [Tamer Salah](https://github.com/tammeryousef1006).
+
+### Changed
+
+- [docker]: Update the **chip-test** Dockerfile to `ubuntu:24.04` because `ubuntu:latest` now resolves to Ubuntu 26.04 LTS (Resolute), which is not yet supported by connectedhomeip.
+- [docker]: The **24-ubuntu-slim** and **ubuntu** Matterbridge Docker images now resolve to "Ubuntu 26.04 LTS (Resolute)".
+- [frontend]: Bump `frontend` version to v.3.4.15.
+- [package]: Update dependencies.
+- [package]: Bump `jest` to v.30.4.2.
+- [package]: Bump `vitest` to v.4.1.6.
+- [package]: Bump `typescript-eslint` to v.8.59.3.
+- [scripts]: Refactor `scripts`.
+- [package]: Bump `eslint.config.js` v.2.0.3.
+- [package]: Bump `vite.config.ts` v.2.0.3.
+
+### Fixed
+
+- [localdev]: Fix npm install for local plugins (not published on npm) when using docker. Thanks [prohand](https://github.com/Luligu/matterbridge/issues/558).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.8] - 2026-05-09
 
 ### Development Breaking Changes
@@ -1147,14 +1183,8 @@ This change, necessary to achieve plugin isolation, will require all plugins to 
 - require matterbridge 3.3.0:
 
 ```typescript
-if (
-  this.verifyMatterbridgeVersion === undefined ||
-  typeof this.verifyMatterbridgeVersion !== "function" ||
-  !this.verifyMatterbridgeVersion("3.3.0")
-) {
-  throw new Error(
-    `This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`
-  );
+if (this.verifyMatterbridgeVersion === undefined || typeof this.verifyMatterbridgeVersion !== 'function' || !this.verifyMatterbridgeVersion('3.3.0')) {
+  throw new Error(`This plugin requires Matterbridge version >= "3.3.0". Please update Matterbridge from ${this.matterbridge.matterbridgeVersion} to the latest version."`);
 }
 ```
 
@@ -1175,8 +1205,8 @@ export type PlatformMatterbridge = {
   readonly matterbridgeVersion: string;
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
-  readonly bridgeMode: "bridge" | "childbridge" | "controller" | "";
-  readonly restartMode: "service" | "docker" | "";
+  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
+  readonly restartMode: 'service' | 'docker' | '';
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;

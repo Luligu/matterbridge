@@ -1,3 +1,13 @@
+/**
+ * prune-releases.mjs
+ * Version: 1.0.1
+ *
+ * Prunes old releases for a given tag prefix.
+ *
+ * Usage:
+ *   node scripts/prune-releases.mjs [--help|-h] [--dry-run|-n] <tag-prefix-to-keep>
+ */
+
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable no-console */
 
@@ -16,11 +26,11 @@ class ExitError extends Error {
 
 function usage() {
   return [
-    'Usage: node scripts/remove-releases.mjs [--dry-run|-n] <tag-prefix-to-keep>',
+    'Usage: node scripts/prune-releases.mjs [--help|-h] [--dry-run|-n] <tag-prefix-to-keep>',
     '',
     'Examples:',
-    '  node scripts/remove-releases.mjs 2.',
-    '  node scripts/remove-releases.mjs --dry-run 2.',
+    '  node scripts/prune-releases.mjs 2.',
+    '  node scripts/prune-releases.mjs --dry-run 2.',
   ].join('\n');
 }
 

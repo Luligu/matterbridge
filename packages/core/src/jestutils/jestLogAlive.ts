@@ -1,6 +1,6 @@
 /**
  * @description This file contains the Jest logKeepAlives helper.
- * @file src/jestFlushAsync.ts
+ * @file src/jestLogAlive.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.1

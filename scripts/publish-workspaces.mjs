@@ -1,6 +1,17 @@
+/**
+ * publish-workspaces.mjs
+ * Version: 1.0.1
+ *
+ * Publishes all workspace packages to npm.
+ *
+ * Usage:
+ *   node scripts/publish-workspaces.mjs [--dry-run]
+ */
+
 /* eslint-disable n/no-extraneous-import */
 /* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
+
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -252,9 +263,9 @@ if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'latest') {
   throw new Error('Missing or invalid --tag (expected dev, edge, git, or latest).');
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const repoRoot = path.resolve(dirname, '..');
 const rootPackageJsonPath = path.join(repoRoot, 'package.json');
 
 const rootRaw = await fs.readFile(rootPackageJsonPath, 'utf8');

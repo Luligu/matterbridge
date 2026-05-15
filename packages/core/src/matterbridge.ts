@@ -73,6 +73,7 @@ import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, 
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
+import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { isValidNumber, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
@@ -896,20 +897,47 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} with version ${CYAN}${plugin.version}${db} and type ${CYAN}${plugin.type}${db}.`,
       );
-      // Try to reinstall the plugin from npm (for Docker pull and external plugins)
+
+      // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (!fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) {
+      const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+      const isLocal = globalModulesDirectory && !plugin.path.includes(globalModulesDirectory);
+      if (
+        (isLocal &&
+          fs.existsSync(plugin.path) &&
+          !fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge')) &&
+          !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
+        process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
+      ) {
+        const { execSync } = await import('node:child_process');
+        try {
+          execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
+          this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
+        } catch (error) {
+          plugin.error = true;
+          plugin.enabled = false;
+          inspectError(this.log, `Error linking matterbridge to plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
+          continue;
+        }
+      }
+
+      // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
+      // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
+      if (
+        (!isLocal && !fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
+        process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest'
+      ) {
         this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
-        if (execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --omit=dev`)) {
+        try {
+          execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}  --no-fund --no-audit --silent --omit=dev`);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
-          plugin.error = false;
-        } else {
-          this.log.error(`Error reinstalling plugin ${plg}${plugin.name}${nf}. The plugin is disabled.`);
+        } catch (error) {
           plugin.error = true;
           plugin.enabled = false;
+          inspectError(this.log, `Error reinstalling plugin ${plg}${plugin.name}${er}. The plugin is disabled.`, error);
           continue;
         }
       }
@@ -943,7 +971,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Check node version and throw error
     const minNodeVersion = 20;
     const nodeVersion = process.versions.node;
-    const versionMajor = parseInt(nodeVersion.split('.')[0]);
+    const [versionMajor] = nodeVersion.split('.').map(Number);
     if (versionMajor < minNodeVersion) {
       this.log.error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
       throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
@@ -1184,7 +1212,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Asynchronously loads and starts the registered plugins.
+   * Asynchronously checks, loads and starts the registered plugins.
    *
    * This method is responsible for initializing and starting all enabled plugins.
    * It ensures that each plugin is properly loaded and started before the bridge starts.
@@ -1194,19 +1222,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when all plugins have been loaded and started.
    */
   private async startPlugins(wait: boolean = false, start: boolean = true): Promise<void> {
-    // Check, load and start the plugins
     for (const plugin of this.plugins) {
+      // Always load the config and schema to have the correct values in the frontend even for disabled plugins
       plugin.configJson = await this.plugins.loadConfig(plugin);
       plugin.schemaJson = await this.plugins.loadSchema(plugin);
+      // If the plugin is not enabled, skip it
+      if (!plugin.enabled) {
+        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
+        continue;
+      }
       // Check if the plugin is available
       if (!(await this.plugins.resolve(plugin.path))) {
         this.log.error(`Plugin ${plg}${plugin.name}${er} not found or not validated. Disabling it.`);
         plugin.enabled = false;
         plugin.error = true;
-        continue;
-      }
-      if (!plugin.enabled) {
-        this.log.info(`Plugin ${plg}${plugin.name}${nf} not enabled`);
         continue;
       }
       plugin.error = false;
@@ -1325,9 +1354,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Node information
     this.systemInformation.nodeVersion = process.versions.node;
-    const versionMajor = parseInt(this.systemInformation.nodeVersion.split('.')[0]);
-    const versionMinor = parseInt(this.systemInformation.nodeVersion.split('.')[1]);
-    const versionPatch = parseInt(this.systemInformation.nodeVersion.split('.')[2]);
+    const [versionMajor, versionMinor, versionPatch] = this.systemInformation.nodeVersion.split('.').map(Number);
 
     // Host system information
     this.systemInformation.hostname = os.hostname();

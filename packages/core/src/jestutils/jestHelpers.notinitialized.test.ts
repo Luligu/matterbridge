@@ -1,4 +1,5 @@
-import path from 'node:path';
+const NAME = 'JestHelpersMatterbridgeNotInitialized';
+const MATTER_PORT = 9700;
 
 import { jest } from '@jest/globals';
 import { Endpoint, ServerNode } from '@matter/node';
@@ -21,10 +22,6 @@ import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consol
 process.argv.push('--debug');
 
 describe('Matterbridge not initialized test environment', () => {
-  const MATTER_PORT = 8502;
-  const NAME = 'JestHelpersMatterbridgeNotInitialized';
-  const HOMEDIR = path.join('.cache', 'jest', NAME);
-
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
@@ -83,7 +80,7 @@ describe('Matterbridge not initialized test environment', () => {
     expect(consoleInfoSpy).toBeDefined();
     expect(consoleWarnSpy).toBeDefined();
     expect(consoleErrorSpy).toBeDefined();
-    setDebug(false);
+    await setDebug(false);
   });
 
   test('should create a Matterbridge instance', async () => {

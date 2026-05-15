@@ -5,7 +5,7 @@ FROM node:24-trixie-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install git to clone the repositories
-RUN apt-get update && apt-get install -y --no-install-recommends git 
+RUN apt-get update && apt-get install -y --no-install-recommends git
 
 WORKDIR /matterbridge
 COPY . .
@@ -17,11 +17,9 @@ RUN \
   npm run buildProduction && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../.. && \
   npm link --no-fund --no-audit && \
-  npm --workspaces pkg delete devDependencies scripts && \
-  npm pkg delete devDependencies scripts && \
+  npm --workspaces --include-workspace-root pkg delete devDependencies scripts && \
   rm -rf .cache .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
   npm install --no-fund --no-audit --omit=dev && \
-  npm pkg delete devDependencies scripts workspaces && \
   npm shrinkwrap && \
   npm pack
 
@@ -55,6 +53,20 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
 
 WORKDIR /matterbridge-webhooks
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webhooks.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
+
+WORKDIR /matterbridge-security
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-security.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
+
+WORKDIR /matterbridge-irobot
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-irobot.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
   npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
@@ -148,6 +160,8 @@ COPY --from=builder \
   /matterbridge-shelly/*.tgz \
   /matterbridge-hass/*.tgz \
   /matterbridge-webhooks/*.tgz \
+  /matterbridge-security/*.tgz \
+  /matterbridge-irobot/*.tgz \
   /matterbridge-test/*.tgz \
   /matterbridge-example-accessory-platform/*.tgz \
   /matterbridge-example-dynamic-platform/*.tgz \

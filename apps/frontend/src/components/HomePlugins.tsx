@@ -178,14 +178,14 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             </IconButton>
           </Tooltip>
           {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='Update the plugin to the latest version' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title={`Update the plugin to the latest version v.${plugin.latestVersion}`} slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdatePlugin(plugin)} size='small'>
                 <SystemUpdateAltIcon />
               </IconButton>
             </Tooltip>
           )}
           {(plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='Update the plugin to the latest dev version' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title={`Update the plugin to the latest dev version v.${plugin.devVersion}`} slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ color: 'var(--secondary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdateDevPlugin(plugin)} size='small'>
                 <SystemUpdateAltIcon />
               </IconButton>

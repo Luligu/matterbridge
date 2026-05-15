@@ -33,7 +33,6 @@
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "files.watcherExclude": {
-    "**/node_modules/**": true,
     "**/build/**": true,
     "**/.cache/**": true,
     "**/coverage/**": true

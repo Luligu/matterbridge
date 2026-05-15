@@ -1,5 +1,5 @@
 const NAME = 'JestHelpersMatterjs';
-const MATTER_PORT = 8501;
+const MATTER_PORT = 9800;
 
 import { jest } from '@jest/globals';
 import { ServerNode } from '@matter/node';

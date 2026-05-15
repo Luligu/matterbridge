@@ -27,17 +27,17 @@
 
 The Matterbridge Docker images (multi-arch manifest list for **linux/amd64** and **linux/arm64**) are published on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge). If you use them, please consider starring the project on [**Docker Hub**](https://hub.docker.com/r/luligu/matterbridge).
 
-The image (tag **latest** 87 MB) includes Matterbridge and all official plugins, using the latest release published on npm. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything.
+The image (tag **latest** 87 MB) includes only Matterbridge, using the latest release published on npm. It is based on `node:24-trixie-slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
-The image (tag **dev** 99 MB) includes Matterbridge and all official plugins from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
+The image (tag **dev** 99 MB) includes Matterbridge and all official plugins (the BTHome plugin is not included and requires [additional setup](https://github.com/Luligu/matterbridge-bthome/blob/main/README.md)) from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
 
-The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be installed on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
-The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be installed on first run.
+The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
 
-The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`, supports `arm64`, `amd64` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
+The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`, supports `arm64`, `amd64` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
-The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be installed on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
 
 ### Matterbridge chip-tool docker image
 
@@ -156,13 +156,13 @@ The `docker-compose.yml` file is available in the `docker` directory of this rep
 services:
   matterbridge:
     container_name: matterbridge
-    image: luligu/matterbridge:latest                         # Matterbridge image with the tag latest
-    network_mode: host                                        # Ensures the Matter mDNS works
-    restart: always                                           # Ensures the container always restarts automatically
+    image: luligu/matterbridge:latest # Matterbridge image with the tag latest
+    network_mode: host # Ensures the Matter mDNS works
+    restart: always # Ensures the container always restarts automatically
     volumes:
-      - "${HOME}/Matterbridge:/root/Matterbridge"             # Mounts the Matterbridge plugin directory
-      - "${HOME}/.matterbridge:/root/.matterbridge"           # Mounts the Matterbridge storage directory
-      - "${HOME}/.mattercert:/root/.mattercert"               # Mounts the Matterbridge certificate directory
+      - '${HOME}/Matterbridge:/root/Matterbridge' # Mounts the Matterbridge plugin directory
+      - '${HOME}/.matterbridge:/root/.matterbridge' # Mounts the Matterbridge storage directory
+      - '${HOME}/.mattercert:/root/.mattercert' # Mounts the Matterbridge certificate directory
 ```
 
 Copy it to your home directory or edit your existing compose file to add the Matterbridge service.
@@ -195,8 +195,8 @@ If you override the command, always start it with `["matterbridge", "--docker"]`
 **If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:**.
 
 ```yaml
-    healthcheck:
-      disable: true
+healthcheck:
+  disable: true
 ```
 
 ### Stop with Docker Compose

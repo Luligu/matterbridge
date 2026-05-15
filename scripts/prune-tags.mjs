@@ -1,3 +1,13 @@
+/**
+ * prune-tags.mjs
+ * Version: 1.0.2
+ *
+ * Deletes old remote git tags that do not match a given prefix.
+ *
+ * Usage:
+ *   node scripts/prune-tags.mjs [--dry-run|-n] <tag-prefix-to-keep> [remote]
+ */
+
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable no-console */
 
@@ -231,7 +241,7 @@ async function main() {
 
   const { dryRun, keepPrefix, remote } = parsedArgs;
 
-  if (git(['rev-parse', '--is-inside-work-tree'], { allowFailure: true }) === undefined) {
+  if (runGit(['rev-parse', '--is-inside-work-tree'], { allowFailure: true }).status !== 0) {
     fail('Not a git repository.');
   }
 

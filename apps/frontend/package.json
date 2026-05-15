@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.4.14",
+  "version": "3.4.15",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -44,7 +44,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0"
+    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
   },
   "files": [
     "build",
@@ -65,10 +65,10 @@
     "lint:inspect": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --inspect-config",
     "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
     "format:check": "prettier --cache --cache-location .cache/.prettiercache --check .",
-    "test": "vitest run",
-    "test:watch": "vitest --reporter verbose",
-    "test:verbose": "vitest run --reporter verbose",
-    "test:coverage": "vitest run --reporter verbose --coverage",
+    "test": "cross-env NODE_OPTIONS=--no-experimental-webstorage vitest run",
+    "test:watch": "cross-env NODE_OPTIONS=--no-experimental-webstorage vitest --reporter verbose",
+    "test:verbose": "cross-env NODE_OPTIONS=--no-experimental-webstorage vitest run --reporter verbose",
+    "test:coverage": "cross-env NODE_OPTIONS=--no-experimental-webstorage vitest run --reporter verbose --coverage",
     "clean": "npx shx rm -rf build",
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "npx shx rm -rf package.json.backup package-lock.json npm-shrinkwrap.json build coverage .cache node_modules/* node_modules/.[!.]* node_modules/..?*",

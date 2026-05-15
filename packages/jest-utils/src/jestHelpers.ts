@@ -25,7 +25,6 @@ import { rmSync } from 'node:fs';
 import path from 'node:path';
 
 import type { jest } from '@jest/globals';
-// Imports from node-ansi-logger
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 export const originalProcessArgv = Object.freeze([...process.argv]);

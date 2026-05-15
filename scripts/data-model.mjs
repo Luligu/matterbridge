@@ -1,5 +1,6 @@
 /**
  * Data model script.
+ * Version: 1.0.1
  *
  * This script will fetch from the connectedhomeip GitHub repository the data model files and convert them to JSON.
  *

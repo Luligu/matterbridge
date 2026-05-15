@@ -1,5 +1,7 @@
-/* eslint-disable jsdoc/require-jsdoc */
 /**
+ * create-release.mjs
+ * Version: 1.0.2
+ *
  * Create a GitHub release from the current package.json version and CHANGELOG.md entry.
  *
  * Requirements (per repo request):
@@ -10,8 +12,11 @@
  *   - tag = version (without leading 'v')
  *   - title = "Release x.x.x"
  *   - description = copied changelog text
+ *   - target = main (always points the release tag to the main branch)
  * - Print tag/title/description and pause for user confirmation before creating
  */
+
+/* eslint-disable jsdoc/require-jsdoc */
 
 import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -22,9 +27,9 @@ import process from 'node:process';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
+const repoRoot = path.resolve(dirname, '..');
 
 function stripLeadingV(version) {
   return typeof version === 'string' ? version.replace(/^v/i, '') : '';
@@ -112,7 +117,7 @@ async function promptToContinue({ tag, title, description }) {
 
 function runGhReleaseCreate({ tag, title, notesFilePath }) {
   return new Promise((resolve, reject) => {
-    const args = ['release', 'create', tag, '--title', title, '--notes-file', notesFilePath];
+    const args = ['release', 'create', tag, '--title', title, '--notes-file', notesFilePath, '--target', 'main'];
     const child = spawn('gh', args, {
       cwd: repoRoot,
       stdio: 'inherit',

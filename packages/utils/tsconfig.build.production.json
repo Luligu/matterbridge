@@ -10,5 +10,6 @@
     "removeComments": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"],
+  "references": [{ "path": "../jest-utils/tsconfig.build.production.json" }]
 }

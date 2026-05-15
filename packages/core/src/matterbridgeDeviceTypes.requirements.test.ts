@@ -11,6 +11,7 @@ import { jest } from '@jest/globals';
 import * as devices from '@matter/node/devices';
 import * as endpoints from '@matter/node/endpoints';
 
+import { setupTest } from './jestutils/jestSetupTest.js';
 import {
   // Utility
   rootNode,
@@ -86,7 +87,6 @@ import {
   batteryStorage,
   heatPump,
 } from './matterbridgeDeviceTypes.js';
-import { setupTest } from './jestutils/jestSetupTest.js';
 
 await setupTest(NAME, false);
 

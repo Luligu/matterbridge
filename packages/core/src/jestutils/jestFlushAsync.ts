@@ -1,5 +1,5 @@
 /**
- * @description This file contains the Jest FlushAsync helper.
+ * @description This file contains the Jest flushAsync helper.
  * @file src/jestFlushAsync.ts
  * @author Luca Liguori
  * @created 2026-04-19
