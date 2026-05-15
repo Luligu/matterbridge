@@ -768,8 +768,8 @@ describe('Matterbridge mocked', () => {
 
     parseSpy.mockRestore();
     existSpy.mockRestore();
-    process.env.MATTERBRIDGE_REINSTALL_PLUGINS = undefined;
-    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = undefined;
+    delete process.env.MATTERBRIDGE_REINSTALL_PLUGINS;
+    delete process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
     execSyncMock.mockRestore();
     // await setDebug(false);
   });

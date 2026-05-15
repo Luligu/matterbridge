@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.4.15",
+  "version": "3.4.16",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -100,18 +100,18 @@
     "@rjsf/validator-ajv8": "6.5.2",
     "notistack": "3.0.2",
     "qrcode.react": "4.2.0",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
-    "react-router": "7.15.0"
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "react-router": "7.15.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@testing-library/jest-dom": "6.9.1",
     "@testing-library/react": "16.3.2",
-    "@types/node": "25.6.0",
+    "@types/node": "25.8.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.1",
+    "@vitejs/plugin-react": "6.0.2",
     "cross-env": "10.1.0",
     "eslint": "10.3.0",
     "eslint-config-prettier": "10.1.8",
@@ -120,12 +120,12 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "17.6.0",
     "jsdom": "29.1.1",
-    "npm-check-updates": "22.1.0",
+    "npm-check-updates": "22.2.0",
     "prettier": "3.8.3",
     "shx": "0.4.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.59.2",
-    "vite": "8.0.10",
-    "vitest": "4.1.5"
+    "typescript-eslint": "8.59.3",
+    "vite": "8.0.13",
+    "vitest": "4.1.6"
   }
 }

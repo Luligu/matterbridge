@@ -932,7 +932,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
         try {
-          execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}  --no-fund --no-audit --silent --omit=dev`);
+          execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --no-fund --no-audit --silent --omit=dev`);
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
         } catch (error) {
           plugin.error = true;
