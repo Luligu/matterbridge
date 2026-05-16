@@ -1,8 +1,9 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "rootDir": ".",
     "noEmit": true
   },
-  "include": ["package.json", "src/**/*.ts", "test/**/*.ts", "vitest/**/*.ts"]
+  "include": ["package.json", "**/src/**/*.ts", "**/test/**/*.ts", "**/vitest/**/*.ts"],
+  "exclude": ["apps"]
 }
