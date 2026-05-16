@@ -28,6 +28,8 @@
   "[markdown]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
+  "js/ts.experimental.useTsgo": true,
+  "oxc.enable": false,
   "diffEditor.ignoreTrimWhitespace": false,
   "files.eol": "\n",
   "files.insertFinalNewline": true,
@@ -46,8 +48,6 @@
   },
   "git.autofetch": true,
   "git.autoRepositoryDetection": false,
-  "js/ts.tsdk.path": "node_modules/typescript/lib",
-  "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "chat.useCustomizationsInParentRepositories": false,
   "chat.useClaudeMdFile": true,
   "chat.instructionsFilesLocations": {
