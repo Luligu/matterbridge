@@ -1,0 +1,67 @@
+# ─────────────── BUILD STAGE ───────────────
+FROM node:24-trixie-slim AS builder
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /matterbridge
+COPY . .
+RUN \
+  npm ci --no-fund --no-audit && \
+  node scripts/sync-workspaces.mjs --scope @matterbridge && \
+  node scripts/bundle-workspaces.mjs --scope @matterbridge && \
+  npm run buildProduction && \
+  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../.. && \
+  npm link --no-fund --no-audit && \
+  npm --workspaces --include-workspace-root pkg delete devDependencies scripts && \
+  rm -rf .cache .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
+  npm install --no-fund --no-audit --omit=dev && \
+  npm shrinkwrap && \
+  npm pack
+
+# ─────────────── RUNTIME STAGE ───────────────
+FROM node:24-trixie-slim AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:local" \
+  org.opencontainers.image.description="Matterbridge built from local source files" \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>"
+
+WORKDIR /matterbridge
+COPY --from=builder /matterbridge/*.tgz ./
+
+RUN \
+  npm install --no-fund --no-audit --omit=dev --global *.tgz && \
+  npm uninstall -g corepack && \
+  npm cache clean --force && \
+  rm *.tgz && \
+  rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
+  GLOBAL_NODE_MODULES="$(npm root -g)" && \
+  if [ -d "$GLOBAL_NODE_MODULES" ]; then \
+  find "$GLOBAL_NODE_MODULES" -type d -name ".github" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type d -name ".vscode" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type d -name "docs" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete; \
+  fi && \
+  if [ -d "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" ]; then \
+  find "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" -type d -name "src" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" -type d -name "cjs" -exec rm -rf {} +; \
+  fi
+
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD mb_health
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.local.sh ./
+RUN chmod +x ./entrypoint.local.sh
+ENTRYPOINT ["./entrypoint.local.sh"]
+CMD ["matterbridge", "-docker"]
+# ─────────────── END ───────────────
