@@ -67,7 +67,6 @@ RUN \
   npm install --no-fund --no-audit --omit=dev --global *.tgz && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
-  rm *.tgz && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
   GLOBAL_NODE_MODULES="$(npm root -g)" && \
   if [ -d "$GLOBAL_NODE_MODULES" ]; then \
