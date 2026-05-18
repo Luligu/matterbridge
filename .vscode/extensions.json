@@ -1,6 +1,5 @@
 {
   "recommendations": [
-    "ms-vscode.vscode-typescript-next",
     "typescriptteam.native-preview",
     "ms-azuretools.vscode-containers",
     "dbaeumer.vscode-eslint",

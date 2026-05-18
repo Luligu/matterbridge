@@ -74,7 +74,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "vscode": {
       // Extensions to install in the dev container
       "extensions": [
-        "ms-vscode.vscode-typescript-next",
         "typescriptteam.native-preview",
         "ms-azuretools.vscode-containers",
         "dbaeumer.vscode-eslint",
@@ -117,6 +116,10 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "[markdown]": {
           "editor.defaultFormatter": "dbaeumer.vscode-eslint"
         },
+        "js/ts.tsdk.path": "node_modules/@typescript/native-preview/lib",
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+        "js/ts.experimental.useTsgo": true,
+        "oxc.enable": false,
         "diffEditor.ignoreTrimWhitespace": false,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
@@ -136,8 +139,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "git.autofetch": true,
         "git.autoRepositoryDetection": false,
-        "js/ts.tsdk.path": "node_modules/typescript/lib",
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "chat.useCustomizationsInParentRepositories": false,
         "chat.useClaudeMdFile": true,
         "chat.instructionsFilesLocations": {

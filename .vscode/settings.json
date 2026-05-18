@@ -6,7 +6,6 @@
     "source.fixAll.eslint": "explicit"
   },
   "eslint.format.enable": true,
-  "eslint.useFlatConfig": true,
   "eslint.nodePath": "node_modules",
   "eslint.options": {
     "cache": true,
@@ -28,6 +27,7 @@
   "[markdown]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
+  "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "js/ts.experimental.useTsgo": true,
   "oxc.enable": false,
   "diffEditor.ignoreTrimWhitespace": false,
