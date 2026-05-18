@@ -86,6 +86,8 @@ These classes will run as threads in the next releases:
 - [package]: Add `.vscode/extensions.json` for improved development experience with tsgo and oxc.
 - [frontend]: Bump `frontend` version to v.3.4.16.
 - [frontend]: Update dependencies.
+- [package]: Remove tsconfig.eslint.json and use tsconfig.json.
+- [package]: Add VS Code extensions and update settings for improved development experience with tsgo and oxc.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
