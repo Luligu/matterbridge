@@ -57,11 +57,19 @@ These classes will run as threads in the next releases:
 
 ## [3.7.10] - Dev branch
 
+### Added
+
+- [development]: Local packages (not installed but just added from a local path) are now supported also in Docker (use a path reachable from the container). Matterbridge will be automatically linked to the package.
+- [development]: Local packages not published on npm are now supported (use private=true in package.json). They will be reinstalled on Docker recreate from the last used tarball.
+
 ### Changed
 
 - [package]: Update dependencies.
+- [package]: Bump `eslint` to v.10.4.0.
 - [frontend]: Bump `frontend` version to v.3.4.16.
 - [frontend]: Update dependencies.
+- [package]: Remove tsconfig.eslint.json and use tsconfig.json.
+- [package]: Add VS Code extensions and update settings for improved development experience with tsgo and oxc.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
