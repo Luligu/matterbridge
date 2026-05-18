@@ -178,7 +178,7 @@
 <h2 id="3710-dev-branch">[3.7.10] - Dev branch</h2>
 <h3 id="added">Added</h3>
 <ul>
-<li>[development]: Local plugins (not installed but just added from a local path) are now supported also with Docker (use a path reachable from the container). Matterbridge will be automatically linked to the package.</li>
+<li>[development]: Local plugins (not installed but just added from a local path) are now supported also with Docker (use a path reachable from the container i.e. /root/Matterbridge/factory/pluginname). Matterbridge will be automatically linked to the package on restart.</li>
 <li>[development]: Uploaded plugins not published on npm are now supported also with Docker (use private=true in package.json). They will be reinstalled on Docker recreate from the last used tarball.</li>
 </ul>
 <h3 id="changed">Changed</h3>
