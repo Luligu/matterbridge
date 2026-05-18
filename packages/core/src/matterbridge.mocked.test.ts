@@ -72,7 +72,8 @@ jest.unstable_mockModule('node:child_process', async () => {
 const childprocessModule = await import('node:child_process');
 const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
 
-import fs, { mkdirSync, PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
+import fs, { cpSync, existsSync, mkdirSync, PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -715,17 +716,30 @@ describe('Matterbridge mocked', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(plugins.length).toBe(6);
-    await plugins.load(plugins.array()[0]);
+    plugins.array()[3].private = true;
+    plugins.array()[3].tarballPath = 'matterbridge-mock4-1.0.4._tgz';
+    await plugins.load(plugins.array()[3]);
     matterbridge.setLogLevel(LogLevel.NOTICE);
     expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
-    expect(plugins.array()[0].platform?.log.logLevel).toBe(LogLevel.NOTICE);
-    await plugins.shutdown(plugins.array()[0], 'Test Shutdown', false, true);
+    expect(plugins.array()[3].private).toBe(true);
+    expect(plugins.array()[3].tarballPath).toBe('matterbridge-mock4-1.0.4._tgz');
+    expect(plugins.array()[3].platform?.log.logLevel).toBe(LogLevel.NOTICE);
+    await plugins.shutdown(plugins.array()[3], 'Test Shutdown', false, true);
+
+    // Prepare for next test by copying the tarball to the uploads directory
+    await fs.promises.copyFile(
+      'packages/core/src/mock/plugin4/matterbridge-mock4-1.0.4._tgz',
+      path.join(matterbridge.matterbridgeDirectory, 'uploads', 'matterbridge-mock4-1.0.4._tgz'),
+    );
+    expect(existsSync(path.join(matterbridge.matterbridgeDirectory, 'uploads', 'matterbridge-mock4-1.0.4._tgz'))).toBe(true);
   });
 
   test('Matterbridge.initialize() reinstall of plugins', async () => {
     // await setDebug(true);
     process.env.MATTERBRIDGE_REINSTALL_PLUGINS = 'jest';
     process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'jest';
+    process.argv.push('--debug', '--logger', 'debug', '--matterlogger', 'debug');
+    expect(plugins.length).toBe(0);
     for (const plugin of plugins.array()) {
       rmSync(path.join(path.dirname(plugin.path), 'node_modules'), { recursive: true, force: true });
     }
@@ -734,6 +748,7 @@ describe('Matterbridge mocked', () => {
       return null; // Simulate a plugin that does not return a valid instance
     });
     const existSpy = jest.spyOn(fs, 'existsSync').mockImplementation((path: PathLike) => {
+      if (path.toLocaleString().includes('matterbridge-mock4-1.0.4._tgz')) return true; // Simulate the tarball for one plugin exists in the uploads directory
       return false; // Simulate a plugin that does not exist
     });
     // @ts-expect-error Mock the execSync to simulate a not successful npm install
@@ -770,8 +785,11 @@ describe('Matterbridge mocked', () => {
     existSpy.mockRestore();
     delete process.env.MATTERBRIDGE_REINSTALL_PLUGINS;
     delete process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
-    execSyncMock.mockRestore();
-    // await setDebug(false);
+    // @ts-expect-error Restore the original execSync implementation
+    execSyncMock.mockImplementation((command: string) => {
+      return command; // Default mock implementation for execSync
+    });
+    await setDebug(false);
   });
 
   test('Matterbridge.initialize() startPlugins', async () => {
@@ -1368,6 +1386,7 @@ describe('Matterbridge mocked', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     await matterbridge.unregisterAndShutdownProcess(10);
     expect(removeAllBridgedEndpointsSpy).toHaveBeenCalled();
@@ -1384,6 +1403,7 @@ describe('Matterbridge mocked', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     (matterbridge as any).initialized = true;
     matterbridge.hasCleanupStarted = false;
@@ -1771,6 +1791,7 @@ describe('Matterbridge mocked', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     matterbridge.devices.set({ name: 'Test Device 1', uniqueId: '123', plugin: 'matterbridge-mock1', serverNode: {} } as any); // Mock a device in server mode
     expect(matterbridge.plugins.size).toBe(1);

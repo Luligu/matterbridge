@@ -231,35 +231,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       switch (msg.type) {
         case 'manager_spawn_response':
           if (msg.result && msg.result.packageCommand === 'install') {
-            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
             if (msg.result.success) {
               this.restartRequired = true;
               this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
-              const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
               // istanbul ignore next
-              if (msg.result.packageName.startsWith('matterbridge-') && msg.result.packageName.endsWith('.tgz')) {
-                fireAndForget(
-                  this.server.fetch({ type: 'plugins_add', src: this.server.name, dst: 'plugins', params: { nameOrPath: packageName } }, this.serverFetchTimeout),
-                  this.log,
-                  `Error adding plugin ${packageName} after uploading package ${msg.result.packageName}`,
-                );
-                setImmediate(() => this.wssSendRefreshRequired('plugins')).unref();
-              }
+              setTimeout(() => this.wssSendRefreshRequired('plugins'), 2000).unref();
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
             }
           }
           if (msg.result && msg.result.packageCommand === 'uninstall') {
-            // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
             if (msg.result.success) {
               this.restartRequired = true;
               this.fixedRestartRequired = true;
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
+              // istanbul ignore next
+              setTimeout(() => this.wssSendRefreshRequired('plugins'), 2000).unref();
             } else {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not uninstalled`, 10, 'error');
             }
@@ -1041,7 +1033,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
 
       try {
-        // Move the uploaded file to the specified path
+        // Move the uploaded file to the uploads directory
         const fs = await import('node:fs');
         await fs.promises.rename(file.path, filePath);
         this.log.info(`File ${plg}${filename}${nf} uploaded successfully`);
@@ -1449,6 +1441,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         type: plugin.type,
         name: plugin.name,
         version: plugin.version,
+        private: plugin.private,
         description: plugin.description,
         author: plugin.author,
         homepage: plugin.homepage,

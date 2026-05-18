@@ -330,6 +330,7 @@ describe('PluginManager', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     plugins.set({
       name: 'matterbridge-mock2',
@@ -340,6 +341,7 @@ describe('PluginManager', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     plugins.set({
       name: 'matterbridge-mock3',
@@ -350,6 +352,7 @@ describe('PluginManager', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     expect(plugins.size).toBe(3);
     expect(plugins.length).toBe(3);
@@ -361,6 +364,7 @@ describe('PluginManager', () => {
         homepage: 'https://example.com',
         name: 'matterbridge-mock1',
         path: './packages/core/src/mock/plugin1/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -371,6 +375,7 @@ describe('PluginManager', () => {
         homepage: 'https://example.com',
         name: 'matterbridge-mock2',
         path: './packages/core/src/mock/plugin2/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -381,6 +386,7 @@ describe('PluginManager', () => {
         homepage: 'https://example.com',
         name: 'matterbridge-mock3',
         path: './packages/core/src/mock/plugin3/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -392,6 +398,7 @@ describe('PluginManager', () => {
         enabled: true,
         name: 'matterbridge-mock1',
         path: './packages/core/src/mock/plugin1/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -401,6 +408,7 @@ describe('PluginManager', () => {
         enabled: true,
         name: 'matterbridge-mock2',
         path: './packages/core/src/mock/plugin2/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -410,6 +418,7 @@ describe('PluginManager', () => {
         enabled: true,
         name: 'matterbridge-mock3',
         path: './packages/core/src/mock/plugin3/package.json',
+        private: true,
         type: 'Unknown',
         version: '1.0.0',
       },
@@ -424,6 +433,7 @@ describe('PluginManager', () => {
         path: './packages/core/src/mock/plugin1/package.json',
         type: 'Unknown',
         version: '1.0.0',
+        private: true,
       },
       {
         author: 'To update',
@@ -434,6 +444,7 @@ describe('PluginManager', () => {
         path: './packages/core/src/mock/plugin2/package.json',
         type: 'Unknown',
         version: '1.0.0',
+        private: true,
       },
       {
         author: 'To update',
@@ -444,6 +455,7 @@ describe('PluginManager', () => {
         path: './packages/core/src/mock/plugin3/package.json',
         type: 'Unknown',
         version: '1.0.0',
+        private: true,
       },
     ]);
 
@@ -460,6 +472,7 @@ describe('PluginManager', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     };
     expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: mockPlugin4 } })).result.plugin).toEqual(mockPlugin4);
     expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).result.plugin).toEqual(mockPlugin4);
@@ -1079,6 +1092,7 @@ describe('PluginManager', () => {
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
+      private: true,
     });
     jest.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
       throw new Error('Test error');

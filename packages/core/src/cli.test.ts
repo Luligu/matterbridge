@@ -31,6 +31,8 @@ import { LogLevel } from 'node-ansi-logger';
 import { cliEmitter } from './cliEmitter.js';
 import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore cause is not included in the tsconfig include, but is needed for testing
 // eslint-disable-next-line n/no-missing-import
 import { MockMatterbridge } from './mock/mockMatterbridge.js';
 

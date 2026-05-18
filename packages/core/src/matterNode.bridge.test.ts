@@ -187,6 +187,7 @@ describe('MatterNode bridge', () => {
       description: 'Test accessory plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
       registeredDevices: 0,
     };
     matter.pluginManager.set(pluginServer);
@@ -199,6 +200,7 @@ describe('MatterNode bridge', () => {
       description: 'Test accessory plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
       registeredDevices: 0,
     };
     matter.pluginManager.set(pluginMatter);

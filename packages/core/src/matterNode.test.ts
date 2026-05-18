@@ -223,6 +223,7 @@ describe('MatterNode', () => {
       description: 'Test accessory plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
     };
     matter.pluginManager.set(plugin);
     const sensor = new MatterbridgeEndpoint([flowSensor], { id: 'Temperature sensor' }, true)
@@ -587,6 +588,7 @@ describe('MatterNode', () => {
       description: 'Test accessory plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
     };
     const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor' }, true)
       .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
@@ -630,6 +632,7 @@ describe('MatterNode', () => {
       description: 'Test dynamic plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
     };
     expect(await matter.createDynamicPlugin(plugin)).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created dynamic plugin ${plg}${plugin.name}${db} server node`);
@@ -670,6 +673,7 @@ describe('MatterNode', () => {
       description: 'A test accessory plugin',
       author: 'Test Author',
       enabled: true,
+      private: true,
     };
     const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor', mode: 'server' }, true)
       .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
