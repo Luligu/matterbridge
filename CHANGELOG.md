@@ -59,8 +59,8 @@ These classes will run as threads in the next releases:
 
 ### Added
 
-- [development]: Local packages (not installed but just added from a local path) are now supported also in Docker (use a path reachable from the container). Matterbridge will be automatically linked to the package.
-- [development]: Local packages not published on npm are now supported (use private=true in package.json). They will be reinstalled on Docker recreate from the last used tarball.
+- [development]: Local plugins (not installed but just added from a local path) are now supported also with Docker (use a path reachable from the container). Matterbridge will be automatically linked to the package.
+- [development]: Uploaded plugins not published on npm are now supported also with Docker (use private=true in package.json). They will be reinstalled on Docker recreate from the last used tarball.
 
 ### Changed
 
