@@ -57,6 +57,11 @@ These classes will run as threads in the next releases:
 
 ## [3.7.10] - Dev branch
 
+### Development
+
+- [matter]: Update [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+
 ### Added
 
 - [development]: Local plugins (not installed but just added from a local path) are now supported also with Docker (use a path reachable from the container i.e. /root/Matterbridge/factory/pluginname). Matterbridge will be automatically linked to the package on restart.

@@ -48,16 +48,27 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 | `PositionTag`               | `CommonPositionTag`          |
 | `RelativePositionTag`       | `CommonRelativePositionTag`  |
 
+- Matterbridge re export the old namespace tags.
+
 ## Custom clusters
 
 The way to create custom cluster in matter.js has changed.
 
-In matter.js there are no more typescript source files for cluster types they are generated. The memory usage has dropped by around 20%-50% that is great.
+In matter.js there are no more typescript source files for cluster types: they are generated. The memory usage has dropped by around 20%-50% that is great.
 
 I will leave (without exporting them) the three Matter 1.5.1 cluster I created for testing like example (branch dev-017).
 
 ## Implementation plan (work in progress)
 
-I plan to release matter.js in Matterbridge 3.8.0.
+I plan to release matter.js 0.17.0 in Matterbridge 3.8.0.
 
 At that point, all plugins should require Matterbridge 3.8.0 and make the refactor eventually required.
+
+## Errors found
+
+Device Types
+
+WindowCovering: disallowed not optional
+
+0x0104 Closure Control Server X
+0x0105 Closure Dimension Server X
