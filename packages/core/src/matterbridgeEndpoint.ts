@@ -3044,8 +3044,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @param {Uint8Array | null} [activePresetHandle] - The active preset handle. Defaults to null.
-   * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
-   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
+   * @param {Thermostat.Preset[]} [presets] - The list of thermostat presets. Defaults to empty array.
+   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to a predefined set.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPresetsThermostatClusterServer(
@@ -3062,8 +3062,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
     activePresetHandle: Uint8Array | null = null,
-    presetsList: Thermostat.Preset[] | null | undefined = undefined,
-    presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
+    presets: Thermostat.Preset[] = [],
+    presetTypes: Thermostat.PresetType[] = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ],
   ): this {
     this.behaviors.require(
       MatterbridgeThermostatServer.with(
@@ -3100,10 +3103,10 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
-        numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
+        numberOfPresets: Math.max(Array.isArray(presets) ? presets.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
         activePresetHandle: activePresetHandle ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
-        presets: (presetsList ?? []).map((p) => ({
+        presets: (presets ?? []).map((p) => ({
           presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,

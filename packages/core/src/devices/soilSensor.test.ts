@@ -8,10 +8,10 @@ const MATTER_CREATE_ONLY = true;
 import { jest } from '@jest/globals';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { stringify } from 'node-ansi-logger';
 
-import { SoilMeasurement } from '../clusters/soil-measurement.js';
 // Jest utilities for Matter testing
 import {
   addDevice,
@@ -68,24 +68,24 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     expect(device.id).toBe('SoilSensorTestDevice-SS123456');
 
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(SoilMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(SoilMeasurement.id)).toBeTruthy();
 
-    expect(device.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
+    expect(device.getClusterServerOptions(SoilMeasurement.id)).toMatchObject({
       soilMoistureMeasuredValue: 42,
     });
   });
 
   test('create a soil sensor device with default option', async () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000');
-    expect(defaultDevice.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
+    expect(defaultDevice.getClusterServerOptions(SoilMeasurement.id)).toMatchObject({
       soilMoistureMeasuredValue: null,
     });
   });
 
   test('create a soil sensor device with battery power', async () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { batteryPowered: true });
-    expect(defaultDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({
+    expect(defaultDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({
       batChargeLevel: 0,
       batPercentRemaining: null,
       batReplaceability: 0,
@@ -100,10 +100,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create a soil sensor device with temperature', async () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { temperatureMeasuredValue: 2500 });
-    expect(defaultDevice.getClusterServerOptions(SoilMeasurement.Cluster.id)).toMatchObject({
+    expect(defaultDevice.getClusterServerOptions(SoilMeasurement.id)).toMatchObject({
       soilMoistureMeasuredValue: null,
     });
-    expect(defaultDevice.getClusterServerOptions(TemperatureMeasurement.Cluster.id)).toMatchObject({
+    expect(defaultDevice.getClusterServerOptions(TemperatureMeasurement.id)).toMatchObject({
       maxMeasuredValue: null,
       measuredValue: 2500,
       minMeasuredValue: null,
@@ -121,15 +121,15 @@ describe('Matterbridge ' + NAME, () => {
 
   test('read SoilMeasurement global attributes', async () => {
     // Verify hasAttributeServer() sees both globals and custom attributes.
-    expect(device.hasAttributeServer(SoilMeasurement.Cluster.id, 'soilMoistureMeasurementLimits')).toBe(true);
-    expect(device.hasAttributeServer(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue')).toBe(true);
-    expect(featuresFor(device, SoilMeasurement.Cluster.id)).toEqual({});
+    expect(device.hasAttributeServer(SoilMeasurement.id, 'soilMoistureMeasurementLimits')).toBe(true);
+    expect(device.hasAttributeServer(SoilMeasurement.id, 'soilMoistureMeasuredValue')).toBe(true);
+    expect(featuresFor(device, SoilMeasurement.id)).toEqual({});
 
-    const clusterRevision = device.getAttribute(SoilMeasurement.Cluster.id, 'clusterRevision');
+    const clusterRevision = device.getAttribute(SoilMeasurement.id, 'clusterRevision');
     expect(typeof clusterRevision).toBe('number');
     expect(clusterRevision).toBeGreaterThanOrEqual(1);
 
-    const featureMap = device.getAttribute(SoilMeasurement.Cluster.id, 'featureMap');
+    const featureMap = device.getAttribute(SoilMeasurement.id, 'featureMap');
     expect(featureMap).toEqual({});
   });
 

@@ -139,9 +139,13 @@ export const ClosureControlDefinition = ClusterElement(
 export const ClosureControlModel = new ClusterModel(ClosureControlDefinition);
 
 // Register the cluster definition with the Matter definition so it can be referenced by devices and endpoints.
-MatterDefinition.children.push(ClosureControlDefinition);
+// istanbul ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster.
+if (!MatterDefinition.children.some((child) => child.id === ClosureControlDefinition.id)) {
+  MatterDefinition.children.push(ClosureControlDefinition);
+}
 
 // Register the cluster model with the canonical Matter model so helper utilities like `getClusterNameById()` can resolve the name for this custom cluster ID.
+// istanbul ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster.
 if (Matter.clusters(ClosureControlModel.id) === undefined) {
   Matter.children.push(ClosureControlModel);
 }

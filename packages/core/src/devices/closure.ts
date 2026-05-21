@@ -21,35 +21,25 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
-
-import { ClusterBehavior } from '@matter/node';
+// @matter
+import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { ClosureControl } from '../clusters/closure-control.js';
 import { closure } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
-const ClosureControlBehavior = ClusterBehavior.for(ClosureControl, ClosureControl.schema);
-
-export namespace ClosureControlServer {
-  export interface State {
-    mainState: ClosureControl.MainState;
-    currentErrorList: ClosureControl.ClosureError[];
-    overallCurrentState: ClosureControl.OverallCurrentState | null;
-    overallTargetState: ClosureControl.OverallTargetState | null;
-    countdownTime: number | null;
-  }
-}
-
 /**
  * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
  */
-export class ClosureControlServer extends ClosureControlBehavior.with(ClosureControl.Feature.Positioning) {
-  declare state: ClosureControlServer.State;
-
+export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
+  ClosureControl.Feature.Positioning,
+  ClosureControl.Feature.MotionLatching,
+  ClosureControl.Feature.Speed,
+) {
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MoveTo (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -66,7 +56,7 @@ export class ClosureControlServer extends ClosureControlBehavior.with(ClosureCon
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      ...(request?.speed !== undefined ? { speed: request.speed } : null),
+      speed: request?.speed ?? (previousTarget as ClosureControl.OverallTargetState).speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.overallTargetState = nextTarget;
@@ -109,7 +99,7 @@ export class Closure extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
 
-    this.behaviors.require(ClosureControlServer, {
+    this.behaviors.require(MatterbridgeClosureControlServer, {
       mainState: options.mainState ?? ClosureControl.MainState.Stopped,
       currentErrorList: [],
       overallCurrentState: null,

@@ -25,7 +25,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { BindingBehavior } from '@matter/node/behaviors/binding';
-import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { ClusterId } from '@matter/types';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
@@ -43,7 +42,6 @@ export class MatterbridgeBindingServer extends BindingBehavior {
   override async initialize(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) with clientList: ${this.state.clientList.join(', ')}`);
-    (await this.agent.load(DescriptorServer)).state.clientList.push(...this.state.clientList);
     this.reactTo(this.events.binding$Changed, (value) => {
       this.internal.bound = value.length > 0;
       device.log.notice(`MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding changed: ${value}, bound: ${this.internal.bound}`);

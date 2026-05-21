@@ -509,6 +509,9 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
   expect(server).toBeDefined();
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
+  // Close the server to release UDP sockets and other network resources created
+  // by ServerNode.create() (mDNS udp4/udp6 sockets), which would otherwise keep
+  // the Jest process alive indefinitely after all tests finish.
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();

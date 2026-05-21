@@ -21,30 +21,14 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
-
-import { ClusterBehavior } from '@matter/node';
+// @matter
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { type MeasurementAccuracy, MeasurementType } from '@matter/types/globals';
 
-import { SoilMeasurement } from '../clusters/soil-measurement.js';
+// Matterbridge
 import { powerSource, soilSensor } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-
-const SoilMeasurementBehavior = ClusterBehavior.for(SoilMeasurement, SoilMeasurement.schema);
-
-export namespace SoilMeasurementServer {
-  export interface State {
-    soilMoistureMeasurementLimits: MeasurementAccuracy;
-    soilMoistureMeasuredValue: number | null;
-  }
-}
-
-/**
- * Behavior server for the custom SoilMeasurement cluster.
- */
-export class SoilMeasurementServer extends SoilMeasurementBehavior {
-  declare state: SoilMeasurementServer.State;
-}
 
 export interface SoilSensorOptions {
   /** Measurement limits and accuracy for the soil moisture measurement. */
@@ -99,7 +83,7 @@ export class SoilSensor extends MatterbridgeEndpoint {
    * @returns {Promise<void>} Resolves when the attribute has been updated.
    */
   async setSoilMoistureMeasuredValue(value: number | null): Promise<void> {
-    await this.setAttribute(SoilMeasurement.Cluster.id, 'soilMoistureMeasuredValue', value);
+    await this.setAttribute(SoilMeasurement.id, 'soilMoistureMeasuredValue', value);
   }
 
   /**
@@ -108,6 +92,6 @@ export class SoilSensor extends MatterbridgeEndpoint {
    * @returns {number | null | undefined} Soil moisture in percent (0..100), or null when unknown.
    */
   getSoilMoistureMeasuredValue(): number | null | undefined {
-    return this.getAttribute(SoilMeasurement.Cluster, 'soilMoistureMeasuredValue');
+    return this.getAttribute(SoilMeasurement, 'soilMoistureMeasuredValue');
   }
 }

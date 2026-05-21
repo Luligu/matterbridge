@@ -7,6 +7,9 @@
  * @license Apache-2.0
  */
 
-export * from './closure-control.js';
-export * from './closure-dimension.js';
-export * from './soil-measurement.js';
+/**
+ * No custom clusters to export at this time.
+ * This file is kept for consistency and future use when custom clusters are added to the core package.
+ * The 3 clusters present (ClosureControl, ClosureDimension, SoilMeasurement) are now all defined in matter.js.
+ * Are there only to provide an example of custom clusters.
+ */

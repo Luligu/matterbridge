@@ -3,9 +3,6 @@
 /* eslint-disable simple-import-sort/imports */
 
 const NAME = 'MatterbridgeDevicetypesRequirements';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
-
-import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import * as devices from '@matter/node/devices';
@@ -86,6 +83,25 @@ import {
   solarPower,
   batteryStorage,
   heatPump,
+  // Matter 1.5.1 device types
+  closure,
+  closurePanel,
+  closureController,
+  irrigationSystem,
+  soilSensor,
+  meterReferencePoint,
+  electricalEnergyTariff,
+  electricalMeter,
+  electricalUtilityMeter,
+  camera,
+  floodlightCamera,
+  videoDoorbell,
+  intercom,
+  audioDoorbell,
+  snapshotCamera,
+  chime,
+  cameraController,
+  doorbell,
 } from './matterbridgeDeviceTypes.js';
 
 await setupTest(NAME, false);
@@ -192,6 +208,26 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'solarPower', mb: solarPower, md: devices.SolarPowerDeviceDefinition },
   { name: 'batteryStorage', mb: batteryStorage, md: devices.BatteryStorageDeviceDefinition },
   { name: 'heatPump', mb: heatPump, md: devices.HeatPumpDeviceDefinition },
+
+  // Matter 1.5.1 Device types
+  { name: 'closure', mb: closure, md: devices.ClosureDeviceDefinition },
+  { name: 'closurePanel', mb: closurePanel, md: devices.ClosurePanelDeviceDefinition },
+  { name: 'closureController', mb: closureController, md: devices.ClosureControllerDeviceDefinition },
+  { name: 'irrigationSystem', mb: irrigationSystem, md: devices.IrrigationSystemDeviceDefinition },
+  { name: 'soilSensor', mb: soilSensor, md: devices.SoilSensorDeviceDefinition },
+  { name: 'meterReferencePoint', mb: meterReferencePoint, md: devices.MeterReferencePointDeviceDefinition },
+  { name: 'electricalEnergyTariff', mb: electricalEnergyTariff, md: devices.ElectricalEnergyTariffDeviceDefinition },
+  { name: 'electricalMeter', mb: electricalMeter, md: devices.ElectricalMeterDeviceDefinition },
+  { name: 'electricalUtilityMeter', mb: electricalUtilityMeter, md: devices.ElectricalUtilityMeterDeviceDefinition },
+  { name: 'camera', mb: camera, md: devices.CameraDeviceDefinition },
+  { name: 'floodlightCamera', mb: floodlightCamera, md: devices.FloodlightCameraDeviceDefinition },
+  { name: 'videoDoorbell', mb: videoDoorbell, md: devices.VideoDoorbellDeviceDefinition },
+  { name: 'intercom', mb: intercom, md: devices.IntercomDeviceDefinition },
+  { name: 'audioDoorbell', mb: audioDoorbell, md: devices.AudioDoorbellDeviceDefinition },
+  { name: 'snapshotCamera', mb: snapshotCamera, md: devices.SnapshotCameraDeviceDefinition },
+  { name: 'chime', mb: chime, md: devices.ChimeDeviceDefinition },
+  { name: 'cameraController', mb: cameraController, md: devices.CameraControllerDeviceDefinition },
+  { name: 'doorbell', mb: doorbell, md: devices.DoorbellDeviceDefinition },
 ];
 
 const failures: string[] = [];
@@ -249,9 +285,9 @@ describe('Matterbridge device cluster mappings', () => {
       console.warn('Cluster validation failures:', failures); // eslint-disable-line no-console
     }
     expect(failures).toEqual([
-      'rootNode: required mismatch -> mb=[] md=[40,31,63,48,60,62,51]', // omitted to avoid imports
-      'rootNode: optional mismatch -> mb=[] md=[46,56,49,43,44,45,50,52,55,54,53,70]', // omitted to avoid imports
-      'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,1872,60]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
+      'rootNode: required mismatch -> mb=[] md=[31,40,48,51,60,62,63]', // omitted to avoid imports
+      'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
+      'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
       'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Client clusters as server clusters
       'onOffSwitch: optional mismatch -> mb=[4,98] md=[]', // Client clusters as server clusters
       'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Client clusters as server clusters

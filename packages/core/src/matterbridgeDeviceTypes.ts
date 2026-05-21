@@ -34,16 +34,26 @@ import { AdministratorCommissioning } from '@matter/types/clusters/administrator
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
+import { Binding } from '@matter/types/clusters/binding';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
+import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
 import { Channel } from '@matter/types/clusters/channel';
+import { Chime } from '@matter/types/clusters/chime';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { CommissionerControl } from '@matter/types/clusters/commissioner-control';
+import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
+import { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import { ContentControl } from '@matter/types/clusters/content-control';
 import { ContentLauncher } from '@matter/types/clusters/content-launcher';
+import { Descriptor } from '@matter/types/clusters/descriptor';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
@@ -51,11 +61,13 @@ import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { EnergyPreference } from '@matter/types/clusters/energy-preference';
 import { FanControl } from '@matter/types/clusters/fan-control';
+import { FixedLabel } from '@matter/types/clusters/fixed-label';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
 import { Groups } from '@matter/types/clusters/groups';
@@ -71,6 +83,7 @@ import { LowPower } from '@matter/types/clusters/low-power';
 import { MediaInput } from '@matter/types/clusters/media-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { Messages } from '@matter/types/clusters/messages';
+import { MeterIdentification } from '@matter/types/clusters/meter-identification';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
@@ -90,6 +103,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { PushAvStreamTransport } from '@matter/types/clusters/push-av-stream-transport';
 import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-concentration-measurement';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
@@ -100,6 +114,7 @@ import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
@@ -107,16 +122,22 @@ import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measu
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
+import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ZoneManagement } from '@matter/types/clusters/zone-management';
 import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
 
+/*
 import { ClosureControl } from './clusters/closure-control.js';
 import { ClosureDimension } from './clusters/closure-dimension.js';
 import { SoilMeasurement } from './clusters/soil-measurement.js';
+*/
 
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */
@@ -216,13 +237,24 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters,
 });
 
+// Chapter 1. Base device types
+
+export const baseDevice = DeviceTypeDefinition({
+  name: 'MA-baseDevice',
+  code: 0x0000,
+  deviceClass: DeviceClasses.Simple,
+  revision: 3,
+  requiredServerClusters: [Descriptor.id],
+  optionalServerClusters: [Binding.id, FixedLabel.id, UserLabel.id],
+});
+
 // Chapter 2. Utility device types
 
 export const rootNode = DeviceTypeDefinition({
   name: 'MA-rootNode',
   code: 0x0016,
   deviceClass: DeviceClasses.Node,
-  revision: 3,
+  revision: 4,
   requiredServerClusters: [], // Intentionally left empty to avoid imports
   optionalServerClusters: [], // Intentionally left empty to avoid imports
 });
@@ -232,7 +264,7 @@ export const powerSource = DeviceTypeDefinition({
   code: 0x0011,
   deviceClass: DeviceClasses.Utility,
   revision: 1,
-  requiredServerClusters: [PowerSource.Cluster.id],
+  requiredServerClusters: [PowerSource.id],
   optionalServerClusters: [],
 });
 
@@ -241,9 +273,9 @@ export const OTARequestor = DeviceTypeDefinition({
   code: 0x0012,
   deviceClass: DeviceClasses.Utility,
   revision: 1,
-  requiredServerClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  requiredServerClusters: [OtaSoftwareUpdateRequestor.id],
   optionalServerClusters: [],
-  requiredClientClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  requiredClientClusters: [OtaSoftwareUpdateProvider.id],
   optionalClientClusters: [],
 });
 
@@ -252,9 +284,9 @@ export const OTAProvider = DeviceTypeDefinition({
   code: 0x0014,
   deviceClass: DeviceClasses.Utility,
   revision: 1,
-  requiredServerClusters: [OtaSoftwareUpdateProvider.Cluster.id],
+  requiredServerClusters: [OtaSoftwareUpdateProvider.id],
   optionalServerClusters: [],
-  requiredClientClusters: [OtaSoftwareUpdateRequestor.Cluster.id],
+  requiredClientClusters: [OtaSoftwareUpdateRequestor.id],
   optionalClientClusters: [],
 });
 
@@ -284,8 +316,8 @@ export const bridgedNode = DeviceTypeDefinition({
   code: 0x0013,
   deviceClass: DeviceClasses.Utility,
   revision: 3,
-  requiredServerClusters: [BridgedDeviceBasicInformation.Cluster.id], // omitted PowerSourceConfiguration cause is deprecated
-  optionalServerClusters: [PowerSource.Cluster.id, EcosystemInformation.Cluster.id, AdministratorCommissioning.Cluster.id],
+  requiredServerClusters: [BridgedDeviceBasicInformation.id], // omitted PowerSourceConfiguration cause is deprecated
+  optionalServerClusters: [PowerSource.id, EcosystemInformation.id, AdministratorCommissioning.id],
 });
 
 /**
@@ -304,21 +336,28 @@ export const electricalSensor = DeviceTypeDefinition({
   code: 0x0510,
   deviceClass: DeviceClasses.Utility,
   revision: 1,
-  requiredServerClusters: [PowerTopology.Cluster.id],
-  optionalServerClusters: [ElectricalPowerMeasurement.Cluster.id, ElectricalEnergyMeasurement.Cluster.id],
+  requiredServerClusters: [PowerTopology.id],
+  optionalServerClusters: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
 });
 
 /**
  * A Device Energy Management device provides reporting and optionally adjustment of the electrical
  * power planned on being consumed or produced by the device.
+ *
+ * Element Requirements:
+ * - Device Energy Management Feature PowerAdjustment [ControllableESA].a+
+ * - Device Energy Management Feature StartTimeAdjustment [ControllableESA].a+
+ * - Device Energy Management Feature Pausable [ControllableESA].a+
+ * - Device Energy Management Feature ForecastAdjustment [ControllableESA].a+
+ * - Device Energy Management Feature ConstraintBasedAdjustment [ControllableESA].a+
  */
 export const deviceEnergyManagement = DeviceTypeDefinition({
   name: 'MA-deviceEnergyManagement',
   code: 0x050d,
   deviceClass: DeviceClasses.Utility,
-  revision: 2,
-  requiredServerClusters: [DeviceEnergyManagement.Cluster.id],
-  optionalServerClusters: [DeviceEnergyManagementMode.Cluster.id],
+  revision: 3,
+  requiredServerClusters: [DeviceEnergyManagement.id],
+  optionalServerClusters: [DeviceEnergyManagementMode.id],
 });
 
 /** Chapter 3. Application Device Types */
@@ -341,8 +380,8 @@ export const onOffLight = DeviceTypeDefinition({
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
+  optionalServerClusters: [LevelControl.id],
 });
 
 /**
@@ -361,7 +400,7 @@ export const dimmableLight = DeviceTypeDefinition({
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
 
@@ -383,7 +422,7 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
 });
 
@@ -406,7 +445,7 @@ export const extendedColorLight = DeviceTypeDefinition({
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
 });
 
@@ -436,8 +475,8 @@ export const onOffOutlet = DeviceTypeDefinition({
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
+  optionalServerClusters: [LevelControl.id],
 });
 
 /**
@@ -466,7 +505,7 @@ export const dimmableOutlet = DeviceTypeDefinition({
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
   revision: 5,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
 
@@ -496,8 +535,8 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
+  optionalServerClusters: [LevelControl.id],
 });
 
 /**
@@ -526,7 +565,7 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, ScenesManagement.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
 
@@ -549,15 +588,8 @@ export const pumpDevice = DeviceTypeDefinition({
   code: 0x303,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [OnOff.Cluster.id, PumpConfigurationAndControl.Cluster.id, Identify.Cluster.id],
-  optionalServerClusters: [
-    LevelControl.Cluster.id,
-    Groups.Cluster.id,
-    ScenesManagement.Cluster.id,
-    TemperatureMeasurement.Cluster.id,
-    PressureMeasurement.Cluster.id,
-    FlowMeasurement.Cluster.id,
-  ],
+  requiredServerClusters: [OnOff.id, PumpConfigurationAndControl.id, Identify.id],
+  optionalServerClusters: [LevelControl.id, Groups.id, ScenesManagement.id, TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -565,8 +597,8 @@ export const waterValve = DeviceTypeDefinition({
   code: 0x42,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, ValveConfigurationAndControl.Cluster.id],
-  optionalServerClusters: [FlowMeasurement.Cluster.id],
+  requiredServerClusters: [Identify.id, ValveConfigurationAndControl.id],
+  optionalServerClusters: [FlowMeasurement.id],
 });
 
 // Chapter 6. Switches and Controls device types
@@ -577,8 +609,8 @@ export const onOffSwitch = DeviceTypeDefinition({
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  requiredServerClusters: [Identify.id, OnOff.id],
+  optionalServerClusters: [Groups.id, ScenesManagement.id],
 });
 
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
@@ -587,8 +619,8 @@ export const dimmableSwitch = DeviceTypeDefinition({
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id],
+  optionalServerClusters: [Groups.id, ScenesManagement.id],
 });
 
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
@@ -597,8 +629,8 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, LevelControl.Cluster.id, ColorControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ScenesManagement.Cluster.id],
+  requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
+  optionalServerClusters: [Groups.id, ScenesManagement.id],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
@@ -606,7 +638,7 @@ export const genericSwitch = DeviceTypeDefinition({
   code: 0x000f,
   deviceClass: DeviceClasses.Simple,
   revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Switch.Cluster.id],
+  requiredServerClusters: [Identify.id, Switch.id],
   optionalServerClusters: [],
 });
 
@@ -621,16 +653,16 @@ export const contactSensor = DeviceTypeDefinition({
   code: 0x0015,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
-  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+  requiredServerClusters: [Identify.id, BooleanState.id],
+  optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
 export const lightSensor = DeviceTypeDefinition({
   name: 'MA-lightsensor',
   code: 0x0106,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, IlluminanceMeasurement.Cluster.id],
+  revision: 4,
+  requiredServerClusters: [Identify.id, IlluminanceMeasurement.id],
 });
 
 export const occupancySensor = DeviceTypeDefinition({
@@ -638,50 +670,58 @@ export const occupancySensor = DeviceTypeDefinition({
   code: 0x0107,
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, OccupancySensing.Cluster.id],
-  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+  requiredServerClusters: [Identify.id, OccupancySensing.id],
+  optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
+/**
+ * Element Requirements:
+ * - Thermostat User Interface Configuration Attribute KeypadLockout O
+ */
 export const temperatureSensor = DeviceTypeDefinition({
   name: 'MA-tempsensor',
   code: 0x0302,
   deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, TemperatureMeasurement.Cluster.id],
+  revision: 3,
+  requiredServerClusters: [Identify.id, TemperatureMeasurement.id],
+  optionalServerClusters: [ThermostatUserInterfaceConfiguration.id],
 });
 
 export const pressureSensor = DeviceTypeDefinition({
   name: 'MA-pressuresensor',
   code: 0x0305,
   deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, PressureMeasurement.Cluster.id],
+  revision: 3,
+  requiredServerClusters: [Identify.id, PressureMeasurement.id],
 });
 
 export const flowSensor = DeviceTypeDefinition({
   name: 'MA-flowsensor',
   code: 0x0306,
   deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, FlowMeasurement.Cluster.id],
+  revision: 3,
+  requiredServerClusters: [Identify.id, FlowMeasurement.id],
 });
 
 export const humiditySensor = DeviceTypeDefinition({
   name: 'MA-humiditysensor',
   code: 0x0307,
   deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, RelativeHumidityMeasurement.Cluster.id],
+  revision: 3,
+  requiredServerClusters: [Identify.id, RelativeHumidityMeasurement.id],
 });
 
-// Remark: A Smoke CO Alarm device type SHALL support an instance of a Power Source device type on some endpoint.
+/**
+ * Device Type Requirements:
+ * - 0x0011 Power Source min 1 M
+ */
 export const smokeCoAlarm = DeviceTypeDefinition({
   name: 'MA-smokeCoAlarm',
   code: 0x0076,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, SmokeCoAlarm.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, TemperatureMeasurement.Cluster.id, RelativeHumidityMeasurement.Cluster.id, CarbonMonoxideConcentrationMeasurement.Cluster.id],
+  requiredServerClusters: [Identify.id, SmokeCoAlarm.id],
+  optionalServerClusters: [Groups.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, CarbonMonoxideConcentrationMeasurement.id],
 });
 
 export const airQualitySensor = DeviceTypeDefinition({
@@ -689,54 +729,67 @@ export const airQualitySensor = DeviceTypeDefinition({
   code: 0x002c,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, AirQuality.Cluster.id],
+  requiredServerClusters: [Identify.id, AirQuality.id],
   optionalServerClusters: [
-    TemperatureMeasurement.Cluster.id,
-    RelativeHumidityMeasurement.Cluster.id,
-    CarbonMonoxideConcentrationMeasurement.Cluster.id,
-    CarbonDioxideConcentrationMeasurement.Cluster.id,
-    NitrogenDioxideConcentrationMeasurement.Cluster.id,
-    OzoneConcentrationMeasurement.Cluster.id,
-    FormaldehydeConcentrationMeasurement.Cluster.id,
-    Pm1ConcentrationMeasurement.Cluster.id,
-    Pm25ConcentrationMeasurement.Cluster.id,
-    Pm10ConcentrationMeasurement.Cluster.id,
-    RadonConcentrationMeasurement.Cluster.id,
-    TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id,
+    TemperatureMeasurement.id,
+    RelativeHumidityMeasurement.id,
+    CarbonMonoxideConcentrationMeasurement.id,
+    CarbonDioxideConcentrationMeasurement.id,
+    NitrogenDioxideConcentrationMeasurement.id,
+    OzoneConcentrationMeasurement.id,
+    FormaldehydeConcentrationMeasurement.id,
+    Pm1ConcentrationMeasurement.id,
+    Pm25ConcentrationMeasurement.id,
+    Pm10ConcentrationMeasurement.id,
+    RadonConcentrationMeasurement.id,
+    TotalVolatileOrganicCompoundsConcentrationMeasurement.id,
   ],
 });
 
+/**
+ * Element Requirements:
+ * - Boolean State Event StateChange M
+ */
 export const waterFreezeDetector = DeviceTypeDefinition({
   name: 'MA-waterFreezeDetector',
   code: 0x0041,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
-  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+  requiredServerClusters: [Identify.id, BooleanState.id],
+  optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
+/**
+ * Element Requirements:
+ * - Boolean State Event StateChange M
+ */
 export const waterLeakDetector = DeviceTypeDefinition({
   name: 'MA-waterLeakDetector',
   code: 0x0043,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
-  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+  requiredServerClusters: [Identify.id, BooleanState.id],
+  optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
+/**
+ * Element Requirements:
+ * - Boolean State Event StateChange M
+ */
 export const rainSensor = DeviceTypeDefinition({
   name: 'MA-rainSensor',
   code: 0x0044,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, BooleanState.Cluster.id],
-  optionalServerClusters: [BooleanStateConfiguration.Cluster.id],
+  requiredServerClusters: [Identify.id, BooleanState.id],
+  optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
 // Chapter 8. Closures device types
 
 /**
  * A Door Lock is a device used to secure a door. It is possible to actuate a door lock either by means of a manual or a remote method.
+ *
  * Element Requirements:
  *
  * - AccessControl Attribute Extension
@@ -747,18 +800,18 @@ export const doorLockDevice = DeviceTypeDefinition({
   name: 'MA-doorLock',
   code: 0xa,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, DoorLock.Cluster.id],
-  optionalServerClusters: [ScenesManagement.Cluster.id, Groups.Cluster.id],
+  revision: 4,
+  requiredServerClusters: [Identify.id, DoorLock.id],
+  optionalServerClusters: [],
 });
 
 export const coverDevice = DeviceTypeDefinition({
   name: 'MA-windowCovering',
   code: 0x202,
   deviceClass: DeviceClasses.Simple,
-  revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, WindowCovering.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id],
+  revision: 6,
+  requiredServerClusters: [Identify.id, WindowCovering.id],
+  optionalServerClusters: [Groups.id],
 });
 
 // Chapter 9. HVAC device types
@@ -775,15 +828,17 @@ export const thermostatDevice = DeviceTypeDefinition({
   name: 'MA-thermostat',
   code: 0x301,
   deviceClass: DeviceClasses.Simple,
-  revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, ThermostatUserInterfaceConfiguration.Cluster.id, EnergyPreference.Cluster.id],
+  revision: 5,
+  requiredServerClusters: [Identify.id, Thermostat.id],
+  optionalServerClusters: [Groups.id, ThermostatUserInterfaceConfiguration.id, EnergyPreference.id],
 });
 
 /**
  * A Fan device is typically standalone or mounted on a ceiling or wall and is used to circulate air in a room.
- *  Remark: it may have a thermostat device type.
- *  Additional device types MAY also be included in device compositions.
+ *
+ * Device Type Requirements:
+ * - 0x0301 Thermostat O
+ *
  * Element Requirements:
  *  The FanControl cluster must have the FanModeSequence attribute.
  *
@@ -803,9 +858,9 @@ export const fanDevice = DeviceTypeDefinition({
   name: 'MA-fan',
   code: 0x2b,
   deviceClass: DeviceClasses.Simple,
-  revision: 3,
-  requiredServerClusters: [Identify.Cluster.id, Groups.Cluster.id, FanControl.Cluster.id],
-  optionalServerClusters: [OnOff.Cluster.id],
+  revision: 4,
+  requiredServerClusters: [Identify.id, Groups.id, FanControl.id],
+  optionalServerClusters: [OnOff.id],
 });
 
 /**
@@ -813,15 +868,11 @@ export const fanDevice = DeviceTypeDefinition({
  * It is a device that has a fan to control the air speed while it is operating. Optionally, it can report on
  * the condition of its filters.
  *
- * Remark:
- * An Air Purifier MAY expose elements of its functionality through one or more additional device
- * types on different endpoints. All devices used in compositions SHALL adhere to the disambiguation
- * requirements of the System Model. Other device types, not explicitly listed in the table, MAY also be
- * included in device compositions but are not considered part of the core functionality of the device.
- * 0x0301 Thermostat O
- * 0x0302 Temperature Sensor O
- * 0x0307 Humidity Sensor O
- * 0x002C Air Quality Sensor O
+ * Device Type Requirements:
+ * - 0x002C Air Quality Sensor O
+ * - 0x0301 Thermostat O
+ * - 0x0302 Temperature Sensor O
+ * - 0x0307 Humidity Sensor O
  *
  * Cluster Restrictions:
  * The On/Off cluster is independent from the Fan Control Cluster’s FanMode attribute, which also
@@ -842,8 +893,8 @@ export const airPurifier = DeviceTypeDefinition({
   code: 0x2d,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
-  optionalServerClusters: [Groups.Cluster.id, OnOff.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
+  requiredServerClusters: [Identify.id, FanControl.id],
+  optionalServerClusters: [Groups.id, OnOff.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
 });
 
 // Chapter 10. Media Device Types
@@ -872,17 +923,8 @@ export const basicVideoPlayer = DeviceTypeDefinition({
   code: 0x0028,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OnOff.Cluster.id, MediaPlayback.Cluster.id, KeypadInput.Cluster.id],
-  optionalServerClusters: [
-    WakeOnLan.Cluster.id,
-    Channel.Cluster.id,
-    TargetNavigator.Cluster.id,
-    MediaInput.Cluster.id,
-    LowPower.Cluster.id,
-    AudioOutput.Cluster.id,
-    ContentControl.Cluster.id,
-    Messages.Cluster.id,
-  ],
+  requiredServerClusters: [OnOff.id, MediaPlayback.id, KeypadInput.id],
+  optionalServerClusters: [WakeOnLan.id, Channel.id, TargetNavigator.id, MediaInput.id, LowPower.id, AudioOutput.id, ContentControl.id, Messages.id],
 });
 
 /**
@@ -907,24 +949,27 @@ export const basicVideoPlayer = DeviceTypeDefinition({
  * - Wake On LAN (remote wake capabilities)
  * - Messages (device messaging / notifications)
  * - Content Control (parental or content access control)
+ *
+ * Element Requirements:
+ * - Application Launcher Feature ApplicationPlatform M
  */
 export const castingVideoPlayer = DeviceTypeDefinition({
   name: 'MA-castingVideoPlayer',
   code: 0x0023,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OnOff.Cluster.id, MediaPlayback.Cluster.id, KeypadInput.Cluster.id, ContentLauncher.Cluster.id],
+  requiredServerClusters: [OnOff.id, MediaPlayback.id, KeypadInput.id, ContentLauncher.id],
   optionalServerClusters: [
-    WakeOnLan.Cluster.id,
-    Channel.Cluster.id,
-    TargetNavigator.Cluster.id,
-    MediaInput.Cluster.id,
-    LowPower.Cluster.id,
-    AudioOutput.Cluster.id,
-    ApplicationLauncher.Cluster.id,
-    AccountLogin.Cluster.id,
-    ContentControl.Cluster.id,
-    Messages.Cluster.id,
+    WakeOnLan.id,
+    Channel.id,
+    TargetNavigator.id,
+    MediaInput.id,
+    LowPower.id,
+    AudioOutput.id,
+    ApplicationLauncher.id,
+    AccountLogin.id,
+    ContentControl.id,
+    Messages.id,
   ],
 });
 
@@ -939,7 +984,7 @@ export const speakerDevice = DeviceTypeDefinition({
   code: 0x0022,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [OnOff.Cluster.id, LevelControl.Cluster.id],
+  requiredServerClusters: [OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
 
@@ -950,7 +995,7 @@ export const modeSelect = DeviceTypeDefinition({
   code: 0x27,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [ModeSelect.Cluster.id],
+  requiredServerClusters: [ModeSelect.id],
 });
 
 /**
@@ -990,7 +1035,7 @@ export const aggregator = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Dynamic,
   revision: 2,
   requiredServerClusters: [],
-  optionalServerClusters: [Actions.Cluster.id, Identify.Cluster.id, CommissionerControl.Cluster.id],
+  optionalServerClusters: [Actions.id, Identify.id, CommissionerControl.id],
 });
 
 export const bridge = aggregator;
@@ -1017,6 +1062,8 @@ export const bridge = aggregator;
  * To attempt resuming a cleaning operation, the RVC Operational State cluster can be sent a Resume
  * command.
  *
+ * Element Requirements:
+ * - RVC Operational State Event OperationCompletion M
  *
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
@@ -1024,8 +1071,8 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
   revision: 4,
-  requiredServerClusters: [Identify.Cluster.id, RvcRunMode.Cluster.id, RvcOperationalState.Cluster.id],
-  optionalServerClusters: [RvcCleanMode.Cluster.id, ServiceArea.Cluster.id],
+  requiredServerClusters: [Identify.id, RvcRunMode.id, RvcOperationalState.id],
+  optionalServerClusters: [RvcCleanMode.id, ServiceArea.id],
 });
 
 // Chapter 13. Appliances device types
@@ -1034,14 +1081,20 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
+ *
+ * Element Requirements:
+ * - On/Off Feature DeadFrontBehavior M
+ * - Laundry Washer Mode Feature OnOff X
+ * - Laundry Washer Mode Attribute StartUpMode X
+ * - Operational State Event OperationCompletion M
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
   code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OperationalState.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryWasherControls.Cluster.id, TemperatureControl.Cluster.id],
+  requiredServerClusters: [OperationalState.id],
+  optionalServerClusters: [Identify.id, LaundryWasherMode.id, OnOff.id, LaundryWasherControls.id, TemperatureControl.id],
 });
 
 /**
@@ -1051,6 +1104,10 @@ export const laundryWasher = DeviceTypeDefinition({
  *
  * Device Type Requirements:
  * 0x0071 Temperature Controlled Cabinet with Cooler condition
+ *
+ * Element Requirements:
+ * - Refrigerator And Temperature Controlled Cabinet Mode Feature OnOff X
+ * - Refrigerator And Temperature Controlled Cabinet Mode Attribute StartUpMode X
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
@@ -1058,17 +1115,19 @@ export const refrigerator = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
-  optionalServerClusters: [Identify.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id, RefrigeratorAlarm.Cluster.id],
+  optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id],
 });
 
 /**
  * A Room Air Conditioner is a device with the primary function of controlling the air temperature in a single room.
  *
- * A Room Air Conditioner MAY have zero or more of each device type listed in this table subject to
- * the conformance column of the table. All devices used in compositions SHALL adhere to the disambiguation
- * requirements of the System Model. Additional device types not listed in this table MAY also be included in device compositions.
- *  0x0302 Temperature Sensor O
- *  0x0307 Humidity Sensor O
+ * Device Type Requirements:
+ * - 0x0302 Temperature Sensor O
+ * - 0x0307 Humidity Sensor O
+ *
+ * Element Requirements:
+ * - On/Off Feature DeadFrontBehavior M
+ * - Thermostat User Interface Configuration Attribute KeypadLockout O
  *
  *  Remark:
  *  The DF (Dead Front) feature is required for the On/Off cluster in this device type:
@@ -1082,15 +1141,17 @@ export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
   code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
-  revision: 2,
-  requiredServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, Thermostat.Cluster.id],
+  revision: 4,
+  requiredServerClusters: [Identify.id, OnOff.id, Thermostat.id],
   optionalServerClusters: [
-    Groups.Cluster.id,
-    ScenesManagement.Cluster.id,
-    FanControl.Cluster.id,
-    ThermostatUserInterfaceConfiguration.Cluster.id,
-    TemperatureMeasurement.Cluster.id,
-    RelativeHumidityMeasurement.Cluster.id,
+    Groups.id,
+    ScenesManagement.id,
+    FanControl.id,
+    ThermostatUserInterfaceConfiguration.id,
+    TemperatureMeasurement.id,
+    RelativeHumidityMeasurement.id,
+    HepaFilterMonitoring.id,
+    ActivatedCarbonFilterMonitoring.id,
   ],
 });
 
@@ -1106,14 +1167,25 @@ export const airConditioner = DeviceTypeDefinition({
  *
  * Cluster Restrictions:
  * TemperatureNumber is the only valid temperature control mode
+ *
+ * Element Requirements:
+ * - Refrigerator And Temperature Controlled Cabinet Mode Attribute StartUpMode X
+ * - Refrigerator And Temperature Controlled Cabinet Mode Feature OnOff X
+ * - Oven Mode Attribute StartUpMode X
+ * - Oven Mode Feature OnOff X
+ * - Oven Cavity Operational State Command Pause X
+ * - Oven Cavity Operational State Command Resume X
+ * - Oven Cavity Operational State Event OperationCompletion M
+ * - Temperature Control Feature TemperatureNumber M
+ * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
-  requiredServerClusters: [TemperatureControl.Cluster.id, RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+  requiredServerClusters: [TemperatureControl.id, RefrigeratorAndTemperatureControlledCabinetMode.id],
+  optionalServerClusters: [TemperatureMeasurement.id],
 });
 
 /**
@@ -1129,42 +1201,65 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * Cluster Restrictions:
  * TemperatureNumber is the only valid temperature control mode
  * OperationCompletion event for Oven Cavity Operational State cluster
+ *
+ * Element Requirements:
+ * - Refrigerator And Temperature Controlled Cabinet Mode Attribute StartUpMode X
+ * - Refrigerator And Temperature Controlled Cabinet Mode Feature OnOff X
+ * - Oven Mode Attribute StartUpMode X
+ * - Oven Mode Feature OnOff X
+ * - Oven Cavity Operational State Command Pause X
+ * - Oven Cavity Operational State Command Resume X
+ * - Oven Cavity Operational State Event OperationCompletion M
+ * - Temperature Control Feature TemperatureNumber M
+ * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   revision: 5,
-  requiredServerClusters: [TemperatureControl.Cluster.id, OvenMode.Cluster.id, OvenCavityOperationalState.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+  requiredServerClusters: [TemperatureControl.id, OvenMode.id, OvenCavityOperationalState.id],
+  optionalServerClusters: [TemperatureMeasurement.id],
 });
 
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
+ *
+ * Element Requirements:
+ * - On/Off Feature DeadFrontBehavior M
+ * - Dishwasher Mode Attribute StartUpMode X
+ * - Dishwasher Mode Feature OnOff X
+ * - Operational State Event OperationCompletion M
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
   code: 0x75, // 117
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OperationalState.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, OnOff.Cluster.id, TemperatureControl.Cluster.id, DishwasherMode.Cluster.id, DishwasherAlarm.Cluster.id],
+  requiredServerClusters: [OperationalState.id],
+  optionalServerClusters: [Identify.id, OnOff.id, TemperatureControl.id, DishwasherMode.id, DishwasherAlarm.id],
 });
 
 /**
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
+ *
+ * Element Requirements:
+ * - On/Off Feature DeadFrontBehavior M
+ * - Laundry Washer Mode Feature OnOff X
+ * - Laundry Washer Mode Attribute StartUpMode X
+ * - Operational State Event OperationCompletion M
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
   code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OperationalState.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, LaundryWasherMode.Cluster.id, OnOff.Cluster.id, LaundryDryerControls.Cluster.id, TemperatureControl.Cluster.id],
+  requiredServerClusters: [OperationalState.id],
+  optionalServerClusters: [Identify.id, LaundryWasherMode.id, OnOff.id, LaundryDryerControls.id, TemperatureControl.id],
 });
 
 /**
@@ -1174,6 +1269,11 @@ export const laundryDryer = DeviceTypeDefinition({
  * Cluster Restrictions:
  * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements. OnOff Cluster is optional.
  * The TemperatureLevel feature is the only valid temperature control feature.
+ *
+ * Element Requirements:
+ * - On/Off Feature OffOnly M
+ * - Temperature Control Feature TemperatureLevel M
+ * - Temperature Control Feature TemperatureNumber X
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
@@ -1181,7 +1281,7 @@ export const cookSurface = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
-  optionalServerClusters: [TemperatureControl.Cluster.id, TemperatureMeasurement.Cluster.id, OnOff.Cluster.id],
+  optionalServerClusters: [TemperatureControl.id, TemperatureMeasurement.id, OnOff.id],
 });
 
 /**
@@ -1195,14 +1295,17 @@ export const cookSurface = DeviceTypeDefinition({
  *
  * Cluster Restrictions:
  * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
+ *
+ * Element Requirements:
+ * - On/Off Feature OffOnly M
  */
 export const cooktop = DeviceTypeDefinition({
   name: 'MA-cooktop',
   code: 0x78, // 120
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [OnOff.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id],
+  requiredServerClusters: [OnOff.id],
+  optionalServerClusters: [Identify.id],
 });
 
 /**
@@ -1220,7 +1323,7 @@ export const oven = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 2,
   requiredServerClusters: [],
-  optionalServerClusters: [Identify.Cluster.id],
+  optionalServerClusters: [Identify.id],
 });
 
 /**
@@ -1240,8 +1343,8 @@ export const extractorHood = DeviceTypeDefinition({
   code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [FanControl.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, HepaFilterMonitoring.Cluster.id, ActivatedCarbonFilterMonitoring.Cluster.id],
+  requiredServerClusters: [FanControl.id],
+  optionalServerClusters: [Identify.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
 });
 
 /**
@@ -1257,8 +1360,8 @@ export const microwaveOven = DeviceTypeDefinition({
   code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [OperationalState.Cluster.id, MicrowaveOvenMode.Cluster.id, MicrowaveOvenControl.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, FanControl.Cluster.id],
+  requiredServerClusters: [OperationalState.id, MicrowaveOvenMode.id, MicrowaveOvenControl.id],
+  optionalServerClusters: [Identify.id, FanControl.id],
 });
 
 // Chapter 14. Energy Device Types
@@ -1287,8 +1390,8 @@ export const evse = DeviceTypeDefinition({
   code: 0x050c,
   deviceClass: DeviceClasses.Simple,
   revision: 2,
-  requiredServerClusters: [EnergyEvse.Cluster.id, EnergyEvseMode.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id, TemperatureMeasurement.Cluster.id],
+  requiredServerClusters: [EnergyEvse.id, EnergyEvseMode.id],
+  optionalServerClusters: [Identify.id, TemperatureMeasurement.id],
 });
 
 /**
@@ -1329,8 +1432,8 @@ export const waterHeater = DeviceTypeDefinition({
   code: 0x050f,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Thermostat.Cluster.id, WaterHeaterManagement.Cluster.id, WaterHeaterMode.Cluster.id],
-  optionalServerClusters: [Identify.Cluster.id],
+  requiredServerClusters: [Thermostat.id, WaterHeaterManagement.id, WaterHeaterMode.id],
+  optionalServerClusters: [Identify.id],
 });
 
 /**
@@ -1367,7 +1470,7 @@ export const solarPower = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [], // See 14.3.5.1. Cluster Requirements on Composing Device Types
-  optionalServerClusters: [Identify.Cluster.id],
+  optionalServerClusters: [Identify.id],
 });
 
 /**
@@ -1394,9 +1497,9 @@ export const batteryStorage = DeviceTypeDefinition({
   name: 'MA-batterystorage',
   code: 0x0018,
   deviceClass: DeviceClasses.Simple,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [], // See 14.4.5.1. Cluster Requirements on Composing Device Types
-  optionalServerClusters: [Identify.Cluster.id],
+  optionalServerClusters: [Identify.id],
 });
 
 /**
@@ -1428,7 +1531,7 @@ export const heatPump = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
-  optionalServerClusters: [Identify.Cluster.id, Thermostat.Cluster.id],
+  optionalServerClusters: [Identify.id, Thermostat.id],
 });
 
 /**
@@ -1445,8 +1548,8 @@ export const soilSensor = DeviceTypeDefinition({
   code: 0x0045,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, SoilMeasurement.Cluster.id],
-  optionalServerClusters: [TemperatureMeasurement.Cluster.id],
+  requiredServerClusters: [Identify.id, SoilMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id],
 });
 
 /**
@@ -1470,22 +1573,31 @@ export const irrigationSystem = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [],
-  optionalServerClusters: [Identify.Cluster.id, OperationalState.Cluster.id, FlowMeasurement.Cluster.id],
+  optionalServerClusters: [Identify.id, OperationalState.id, FlowMeasurement.id],
   requiredClientClusters: [],
-  optionalClientClusters: [FlowMeasurement.Cluster.id],
+  optionalClientClusters: [FlowMeasurement.id],
 });
 
 /**
  * 8.5. Closure Device Type
  *
  * A Closure device provides actuator control over an endpoint.
+ *
+ * Device Type Requirements:
+ * - 0x000A Door Lock O
+ * - 0x0100+ On/Off Light+ O
+ * - 0x0231 Closure Panel O
+ *
+ * Element Requirements:
+ * - Descriptor Feature TagList M
+ *   (exactly one tag from Closure namespace 0x44; no tag from ClosurePanel namespace 0x45)
  */
 export const closure = DeviceTypeDefinition({
   name: 'MA-closure',
   code: 0x0230,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [Identify.Cluster.id, ClosureControl.Cluster.id],
+  requiredServerClusters: [Identify.id, ClosureControl.id],
   optionalServerClusters: [],
 });
 
@@ -1493,12 +1605,434 @@ export const closure = DeviceTypeDefinition({
  * 8.6. Closure Panel Device Type
  *
  * A Closure Panel device provides dimension information for an endpoint.
+ *
+ * Element Requirements:
+ * - Descriptor Feature TagList M
+ *   (exactly one tag from ClosurePanel namespace 0x45; no tag from Closure namespace 0x44)
  */
 export const closurePanel = DeviceTypeDefinition({
   name: 'MA-closurePanel',
   code: 0x0231,
   deviceClass: DeviceClasses.Simple,
   revision: 1,
-  requiredServerClusters: [ClosureDimension.Cluster.id],
+  requiredServerClusters: [ClosureDimension.id],
   optionalServerClusters: [],
+});
+
+/**
+ * 8.7. Closure Controller Device Type
+ *
+ * A Closure Controller is capable of controlling a Closure.
+ *
+ * 8.7.5. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                Direction    Conformance
+ * - 0x0003 Identify            client       O
+ * - 0x0004 Groups              client       O
+ * - 0x0104 Closure Control     client       M
+ * - 0x0105 Closure Dimension   client       O
+ */
+export const closureController = DeviceTypeDefinition({
+  name: 'MA-closureController',
+  code: 0x023e,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+  requiredClientClusters: [ClosureControl.id],
+  optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
+});
+
+// Chapter 14. Energy Device Types
+
+/**
+ * 14.6. Meter Reference Point Device Type
+ *
+ * A Meter Reference Point device provides details about tariffs and metering.
+ *
+ * 14.6.5. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name        Direction    Conformance
+ * - 0x0003 Identify    server       M
+ *
+ * 14.6.6. Device Type Requirements
+ * A Meter Reference Point SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below.
+ *
+ * - ID     Name                       Constraint    Conformance
+ * - 0x0513 Electrical Energy Tariff   min 1         [ElectricalEnergy].a+
+ * - 0x0514 Electrical Meter           min 1         [ElectricalEnergy].a+
+ */
+export const meterReferencePoint = DeviceTypeDefinition({
+  name: 'MA-meterReferencePoint',
+  code: 0x0512,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Identify.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * 14.7. Electrical Energy Tariff Device Type
+ *
+ * An Electrical Energy Tariff is a device that defines a tariff for the consumption or production of electrical energy.
+ *
+ * 14.7.4. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                         Direction    Conformance
+ * - 0x0095 Commodity Price              server       [ActiveTariff].a+
+ * - 0x00A0 Electrical Grid Conditions   server       O
+ * - 0x0700 Commodity Tariff             server       O.a+
+ *
+ * Element Requirements:
+ * - Descriptor Feature TagList M
+ *
+ * Semantic Tag Requirements:
+ * - Commodity Tariff Chronology namespace (0x0B) Tag CurrentActiveTariff (0x00) M
+ * - Commodity Tariff Commodity namespace (0x0D) Tag ElectricalEnergy (0x00) M
+ */
+export const electricalEnergyTariff = DeviceTypeDefinition({
+  name: 'MA-electricalEnergyTariff',
+  code: 0x0513,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [CommodityPrice.id, ElectricalGridConditions.id, CommodityTariff.id],
+});
+
+/**
+ * 14.8. Electrical Meter Device Type
+ *
+ * An Electrical Meter device meters the electrical energy being imported and/or exported for billing purposes.
+ * It is a superset of the Electrical Energy Tariff device type.
+ *
+ * 14.8.3. Device Type Requirements
+ * An Electrical Meter SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below.
+ *
+ * - ID     Name                 Constraint    Conformance
+ * - 0x0510 Electrical Sensor    min 1         M
+ *
+ * 14.8.4. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                 Direction    Conformance
+ * - 0x0B07 Commodity Metering   server       P, M
+ */
+export const electricalMeter = DeviceTypeDefinition({
+  name: 'MA-electricalMeter',
+  code: 0x0514,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
+  optionalServerClusters: [CommodityMetering.id],
+});
+
+/**
+ * 14.9. Electrical Utility Meter Device Type
+ *
+ * An Electrical Utility Meter device provides utility account information, as well as optional details about tariffs and metering.
+ * It is a superset of the Meter Reference Point device type.
+ *
+ * 14.9.5. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                  Direction    Conformance
+ * - 0x0B06 Meter Identification  server       M
+ */
+export const electricalUtilityMeter = DeviceTypeDefinition({
+  name: 'MA-electricalUtilityMeter',
+  code: 0x0511,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [MeterIdentification.id],
+  optionalServerClusters: [],
+});
+
+// Chapter 16. Camera Device Types
+
+/**
+ * 16.1. Camera Device Type
+ *
+ * A Camera device is a camera that provides interfaces for controlling and transporting captured media,
+ * such as Audio, Video or Snapshots.
+ *
+ * 16.1.6. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                                         Direction    Conformance
+ * - 0x0003 Identify                                     server       O
+ * - 0x0406 Occupancy Sensing                            server       O
+ * - 0x0550 Zone Management                              server       O
+ * - 0x0551 Camera AV Stream Management                  server       M
+ * - 0x0552 Camera AV Settings User Level Management     server       O
+ * - 0x0553 WebRTC Transport Provider                    server       M
+ * - 0x0553 WebRTC Transport Provider                    client       O
+ * - 0x0554 WebRTC Transport Requestor                   server       O
+ * - 0x0554 WebRTC Transport Requestor                   client       M
+ * - 0x0555 Push AV Stream Transport                     server       O
+ *
+ * Device Type Requirements:
+ * - 0x0107 Occupancy Sensor O
+ *
+ * Element Requirements:
+ * - Zone Management Feature TwoDimensionalCartesianZone M
+ * - Camera AV Stream Management Feature Video M
+ * - Camera AV Stream Management Feature Audio M
+ * - Camera AV Stream Management Feature Snapshot M
+ */
+export const camera = DeviceTypeDefinition({
+  name: 'MA-camera',
+  code: 0x0142,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [CameraAvStreamManagement.id, WebRtcTransportProvider.id],
+  optionalServerClusters: [Identify.id, OccupancySensing.id, ZoneManagement.id, CameraAvSettingsUserLevelManagement.id, WebRtcTransportRequestor.id, PushAvStreamTransport.id],
+  requiredClientClusters: [WebRtcTransportRequestor.id],
+  optionalClientClusters: [WebRtcTransportProvider.id],
+});
+
+/**
+ * 16.2. Floodlight Camera Device Type
+ *
+ * A Floodlight Camera device is a composite device which combines a camera and a light,
+ * primarily used in security use cases.
+ *
+ * 16.2.4. Device Type Requirements
+ * A Floodlight Camera SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below.
+ *
+ * - ID     Name             Constraint    Conformance
+ * - 0x0100 On/Off Light     min 1         M
+ * - 0x0142 Camera           1             M
+ */
+export const floodlightCamera = DeviceTypeDefinition({
+  name: 'MA-floodlightCamera',
+  code: 0x0144,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+});
+
+/**
+ * 16.3. Video Doorbell Device Type
+ *
+ * A Video Doorbell device is a composite device which combines a camera and a switch to provide
+ * a doorbell with Video and Audio streaming.
+ *
+ * 16.3.3. Device Type Requirements
+ * A Video Doorbell SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below.
+ *
+ * - ID     Name        Constraint    Conformance
+ * - 0x0142 Camera      1             M
+ * - 0x0148 Doorbell    min 1         M
+ */
+export const videoDoorbell = DeviceTypeDefinition({
+  name: 'MA-videoDoorbell',
+  code: 0x0143,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+});
+
+/**
+ * 16.4. Intercom Device Type
+ *
+ * An Intercom is a device which provides two-way on demand communication facilities between devices.
+ *
+ * 16.4.4. Device Type Requirements
+ * An Intercom SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. The Generic Switch endpoint SHALL have the MomentarySwitch (MS) feature.
+ *
+ * - ID     Name            Constraint    Conformance
+ * - 0x000F Generic Switch  min 1         M
+ *
+ * 16.4.6. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                                         Direction    Conformance
+ * - 0x0003 Identify                                     server       O
+ * - 0x0551 Camera AV Stream Management                  server       M
+ * - 0x0552 Camera AV Settings User Level Management     server       O
+ * - 0x0553 WebRTC Transport Provider                    server       M
+ * - 0x0553 WebRTC Transport Provider                    client       M
+ * - 0x0554 WebRTC Transport Requestor                   server       M
+ * - 0x0554 WebRTC Transport Requestor                   client       M
+ * - 0x0556 Chime                                        client       O
+ *
+ * Element Requirements on Component Device Types:
+ * - Generic Switch (0x000F) Switch Feature MomentarySwitch M
+ */
+export const intercom = DeviceTypeDefinition({
+  name: 'MA-intercom',
+  code: 0x0140,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [CameraAvStreamManagement.id, WebRtcTransportProvider.id, WebRtcTransportRequestor.id],
+  optionalServerClusters: [Identify.id, CameraAvSettingsUserLevelManagement.id],
+  requiredClientClusters: [WebRtcTransportProvider.id, WebRtcTransportRequestor.id],
+  optionalClientClusters: [Chime.id],
+});
+
+/**
+ * 16.5. Audio Doorbell Device Type
+ *
+ * An Audio Doorbell device is composed in all cases with a generic switch to provide a doorbell
+ * with Audio only streaming.
+ *
+ * 16.5.4. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                               Direction    Conformance
+ * - 0x0003 Identify                           server       M
+ * - 0x003B Switch                             server       M
+ * - 0x0551 Camera AV Stream Management        server       M
+ * - 0x0553 WebRTC Transport Provider          server       M
+ * - 0x0553 WebRTC Transport Provider          client       O
+ * - 0x0554 WebRTC Transport Requestor         server       O
+ * - 0x0554 WebRTC Transport Requestor         client       M
+ * - 0x0555 Push AV Stream Transport           server       O
+ * - 0x0556 Chime                              client       M
+ *
+ * Element Requirements:
+ * - Camera AV Stream Management Feature Audio M
+ * - Camera AV Stream Management Feature Snapshot X
+ * - Camera AV Stream Management Feature Video X
+ */
+export const audioDoorbell = DeviceTypeDefinition({
+  name: 'MA-audioDoorbell',
+  code: 0x0141,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.id, Switch.id, CameraAvStreamManagement.id, WebRtcTransportProvider.id],
+  optionalServerClusters: [WebRtcTransportRequestor.id, PushAvStreamTransport.id],
+  requiredClientClusters: [WebRtcTransportRequestor.id, Chime.id],
+  optionalClientClusters: [WebRtcTransportProvider.id],
+});
+
+/**
+ * 16.6. Snapshot Camera Device Type
+ *
+ * A Snapshot Camera device is a camera which can only support retrieving still images on-demand
+ * via the Capture Snapshot command in the Camera AV Stream Management cluster.
+ *
+ * 16.6.6. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                                         Direction    Conformance
+ * - 0x0003 Identify                                     server       O
+ * - 0x0406 Occupancy Sensing                            server       O
+ * - 0x0550 Zone Management                              server       O
+ * - 0x0551 Camera AV Stream Management                  server       M
+ * - 0x0552 Camera AV Settings User Level Management     server       O
+ *
+ * Device Type Requirements:
+ * - 0x0107 Occupancy Sensor O
+ *
+ * Element Requirements:
+ * - Zone Management Feature TwoDimensionalCartesianZone M
+ * - Camera AV Stream Management Feature Snapshot M
+ * - Camera AV Stream Management Feature Video X
+ * - Camera AV Stream Management Feature Audio X
+ */
+export const snapshotCamera = DeviceTypeDefinition({
+  name: 'MA-snapshotCamera',
+  code: 0x0145,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [CameraAvStreamManagement.id],
+  optionalServerClusters: [Identify.id, OccupancySensing.id, ZoneManagement.id, CameraAvSettingsUserLevelManagement.id],
+});
+
+/**
+ * 16.7. Chime Device Type
+ *
+ * A Chime device is a device which can play from a range of pre-installed sounds and is typically
+ * used with a Doorbell, Audio Doorbell, or Video Doorbell.
+ *
+ * 16.7.4. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name        Direction    Conformance
+ * - 0x0003 Identify    server       O
+ * - 0x0556 Chime       server       M
+ *
+ * Element Requirements:
+ * - There are no cluster element overrides.
+ */
+export const chime = DeviceTypeDefinition({
+  name: 'MA-chime',
+  code: 0x0146,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [Chime.id],
+  optionalServerClusters: [Identify.id],
+});
+
+/**
+ * 16.8. Camera Controller Device Type
+ *
+ * A Camera controller device is a device that provides interfaces for controlling and managing camera devices.
+ *
+ * 16.8.3. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                                         Direction    Conformance
+ * - 0x0003 Identify                                     client       O
+ * - 0x002F Power Source                                 client       O
+ * - 0x0406 Occupancy Sensing                            client       O
+ * - 0x0550 Zone Management                              client       O
+ * - 0x0551 Camera AV Stream Management                  client       O
+ * - 0x0552 Camera AV Settings User Level Management     client       O
+ * - 0x0553 WebRTC Transport Provider                    client       M
+ * - 0x0554 WebRTC Transport Requestor                   server       M
+ * - 0x0555 Push AV Stream Transport                     client       O
+ * - 0x0801 TLS Certificate Management                   client       O
+ * - 0x0802 TLS Client Management                        client       O
+ */
+export const cameraController = DeviceTypeDefinition({
+  name: 'MA-cameraController',
+  code: 0x0147,
+  deviceClass: DeviceClasses.Simple,
+  revision: 1,
+  requiredServerClusters: [WebRtcTransportRequestor.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [WebRtcTransportProvider.id],
+  optionalClientClusters: [
+    Identify.id,
+    PowerSource.id,
+    OccupancySensing.id,
+    ZoneManagement.id,
+    CameraAvStreamManagement.id,
+    CameraAvSettingsUserLevelManagement.id,
+    WebRtcTransportRequestor.id,
+    PushAvStreamTransport.id,
+  ],
+});
+
+/**
+ * 16.9. Doorbell Device Type
+ *
+ * A Doorbell device is a switch which when pressed usually causes a Chime to activate.
+ * The Switch cluster SHALL have the MomentarySwitch (MS) feature.
+ *
+ * - ID     Name        Direction    Conformance
+ * - 0x0003 Identify    server       M
+ * - 0x003B Switch      server       M
+ * - 0x0556 Chime       client       M
+ */
+export const doorbell = DeviceTypeDefinition({
+  name: 'MA-doorbell',
+  code: 0x0148,
+  deviceClass: DeviceClasses.Simple,
+  revision: 2,
+  requiredServerClusters: [Identify.id, Switch.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [Chime.id],
 });

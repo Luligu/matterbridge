@@ -21,11 +21,19 @@ import { AudioOutput } from '@matter/types/clusters/audio-output';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
+import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
 import { Channel } from '@matter/types/clusters/channel';
+import { Chime } from '@matter/types/clusters/chime';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { CommissionerControl } from '@matter/types/clusters/commissioner-control';
+import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
+import { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import { ContentControl } from '@matter/types/clusters/content-control';
 import { ContentLauncher } from '@matter/types/clusters/content-launcher';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
@@ -35,6 +43,7 @@ import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
@@ -55,6 +64,7 @@ import { LowPower } from '@matter/types/clusters/low-power';
 import { MediaInput } from '@matter/types/clusters/media-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { Messages } from '@matter/types/clusters/messages';
+import { MeterIdentification } from '@matter/types/clusters/meter-identification';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
@@ -74,6 +84,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { PushAvStreamTransport } from '@matter/types/clusters/push-av-stream-transport';
 import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-concentration-measurement';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
@@ -83,18 +94,24 @@ import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-stat
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import { TlsCertificateManagement } from '@matter/types/clusters/tls-certificate-management';
+import { TlsClientManagement } from '@matter/types/clusters/tls-client-management';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { ZoneManagement } from '@matter/types/clusters/zone-management';
 
 import { setupTest } from './jestutils/jestSetupTest.js';
 
@@ -113,83 +130,100 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['AirQuality', AirQuality, 1],
     ['ApplicationLauncher', ApplicationLauncher, 2],
     ['AudioOutput', AudioOutput, 1],
-    ['BooleanState', BooleanState, 1],
+    ['BooleanState', BooleanState, 2],
     ['BooleanStateConfiguration', BooleanStateConfiguration, 1],
-    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 5], // ConfigurationVersion attribute added in rev 5 like P O
-    ['CarbonDioxideConcentrationMeasurement', CarbonDioxideConcentrationMeasurement, 3],
-    ['CarbonMonoxideConcentrationMeasurement', CarbonMonoxideConcentrationMeasurement, 3],
+    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 5],
+    ['CameraAvSettingsUserLevelManagement', CameraAvSettingsUserLevelManagement, 1],
+    ['CameraAvStreamManagement', CameraAvStreamManagement, 1],
+    ['CarbonDioxideConcentrationMeasurement', CarbonDioxideConcentrationMeasurement, 4],
+    ['CarbonMonoxideConcentrationMeasurement', CarbonMonoxideConcentrationMeasurement, 4],
     ['Channel', Channel, 2],
-    ['ColorControl', ColorControl, 7],
+    ['Chime', Chime, 2],
+    ['ClosureControl', ClosureControl, 1],
+    ['ClosureDimension', ClosureDimension, 1],
+    ['ColorControl', ColorControl, 9],
     ['CommissionerControl', CommissionerControl, 1],
+    ['CommodityMetering', CommodityMetering, 1],
+    ['CommodityPrice', CommodityPrice, 4],
+    ['CommodityTariff', CommodityTariff, 1],
     ['ContentControl', ContentControl, 1],
     ['ContentLauncher', ContentLauncher, 2],
     ['DeviceEnergyManagement', DeviceEnergyManagement, 4],
     ['DeviceEnergyManagementMode', DeviceEnergyManagementMode, 2],
     ['DishwasherAlarm', DishwasherAlarm, 1],
     ['DishwasherMode', DishwasherMode, 3],
-    ['DoorLock', DoorLock, 9], // Revision 9 removed AlarmMask attribute
+    ['DoorLock', DoorLock, 10],
     ['EcosystemInformation', EcosystemInformation, 1],
-    ['ElectricalEnergyMeasurement', ElectricalEnergyMeasurement, 1],
-    ['ElectricalPowerMeasurement', ElectricalPowerMeasurement, 3], // Revision 2 changed reactive and apparent power fields to use new data types. Revision 3 changed range of apparent current field to allow negative apparent current
-    ['EnergyEvse', EnergyEvse, 3],
+    ['ElectricalEnergyMeasurement', ElectricalEnergyMeasurement, 2],
+    ['ElectricalGridConditions', ElectricalGridConditions, 1],
+    ['ElectricalPowerMeasurement', ElectricalPowerMeasurement, 3],
+    ['EnergyEvse', EnergyEvse, 4],
     ['EnergyEvseMode', EnergyEvseMode, 2],
     ['EnergyPreference', EnergyPreference, 1],
-    ['FanControl', FanControl, 5], // Revision 5 Clarified attribute usage, added conformance column
-    ['FlowMeasurement', FlowMeasurement, 3],
-    ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 3],
+    ['FanControl', FanControl, 6],
+    ['FlowMeasurement', FlowMeasurement, 4],
+    ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 4],
     ['Groups', Groups, 4],
     ['HepaFilterMonitoring', HepaFilterMonitoring, 1],
-    ['Identify', Identify, 6], // Revision 6 added Q quality for IdentifyTime attribute
-    ['IlluminanceMeasurement', IlluminanceMeasurement, 3],
+    ['Identify', Identify, 6],
+    ['IlluminanceMeasurement', IlluminanceMeasurement, 4],
     ['KeypadInput', KeypadInput, 1],
     ['LaundryDryerControls', LaundryDryerControls, 1],
     ['LaundryWasherControls', LaundryWasherControls, 2],
     ['LaundryWasherMode', LaundryWasherMode, 3],
-    ['LevelControl', LevelControl, 6],
+    ['LevelControl', LevelControl, 7],
     ['LowPower', LowPower, 1],
     ['MediaInput', MediaInput, 1],
     ['MediaPlayback', MediaPlayback, 2],
     ['Messages', Messages, 3],
+    ['MeterIdentification', MeterIdentification, 1],
     ['MicrowaveOvenControl', MicrowaveOvenControl, 1],
     ['MicrowaveOvenMode', MicrowaveOvenMode, 2],
     ['ModeSelect', ModeSelect, 2],
-    ['NitrogenDioxideConcentrationMeasurement', NitrogenDioxideConcentrationMeasurement, 3],
-    ['OccupancySensing', OccupancySensing, 5],
+    ['NitrogenDioxideConcentrationMeasurement', NitrogenDioxideConcentrationMeasurement, 4],
+    ['OccupancySensing', OccupancySensing, 6], // 7 is empty/placeholder, so 6 is latest "real" revision
     ['OnOff', OnOff, 6],
     ['OperationalState', OperationalState, 3],
     ['OtaSoftwareUpdateProvider', OtaSoftwareUpdateProvider, 1],
     ['OtaSoftwareUpdateRequestor', OtaSoftwareUpdateRequestor, 1],
     ['OvenCavityOperationalState', OvenCavityOperationalState, 2],
     ['OvenMode', OvenMode, 2],
-    ['OzoneConcentrationMeasurement', OzoneConcentrationMeasurement, 3],
-    ['Pm1ConcentrationMeasurement', Pm1ConcentrationMeasurement, 3],
-    ['Pm10ConcentrationMeasurement', Pm10ConcentrationMeasurement, 3],
-    ['Pm25ConcentrationMeasurement', Pm25ConcentrationMeasurement, 3],
+    ['OzoneConcentrationMeasurement', OzoneConcentrationMeasurement, 4],
+    ['Pm1ConcentrationMeasurement', Pm1ConcentrationMeasurement, 4],
+    ['Pm10ConcentrationMeasurement', Pm10ConcentrationMeasurement, 4],
+    ['Pm25ConcentrationMeasurement', Pm25ConcentrationMeasurement, 4],
     ['PowerSource', PowerSource, 3],
     ['PowerTopology', PowerTopology, 1],
-    ['PressureMeasurement', PressureMeasurement, 3],
-    ['PumpConfigurationAndControl', PumpConfigurationAndControl, 4],
-    ['RadonConcentrationMeasurement', RadonConcentrationMeasurement, 3],
+    ['PressureMeasurement', PressureMeasurement, 4],
+    ['PumpConfigurationAndControl', PumpConfigurationAndControl, 5],
+    ['PushAvStreamTransport', PushAvStreamTransport, 2],
+    ['RadonConcentrationMeasurement', RadonConcentrationMeasurement, 4],
     ['RefrigeratorAlarm', RefrigeratorAlarm, 1],
     ['RefrigeratorAndTemperatureControlledCabinetMode', RefrigeratorAndTemperatureControlledCabinetMode, 3],
-    ['RelativeHumidityMeasurement', RelativeHumidityMeasurement, 3],
-    ['RvcCleanMode', RvcCleanMode, 4], // Revision 4 add Vacuum then Mop cleaning mode
-    ['RvcOperationalState', RvcOperationalState, 3], // Revision 3 add several operational states and errors
-    ['RvcRunMode', RvcRunMode, 3],
-    ['ServiceArea', ServiceArea, 2], // Revision 2 rename InitialTimeEstimate to EstimatedTime
+    ['RelativeHumidityMeasurement', RelativeHumidityMeasurement, 4],
+    ['RvcCleanMode', RvcCleanMode, 5],
+    ['RvcOperationalState', RvcOperationalState, 3],
+    ['RvcRunMode', RvcRunMode, 4],
+    ['ServiceArea', ServiceArea, 2],
     ['SmokeCoAlarm', SmokeCoAlarm, 1],
+    ['SoilMeasurement', SoilMeasurement, 1],
     ['Switch', Switch, 2],
     ['TargetNavigator', TargetNavigator, 2],
     ['TemperatureControl', TemperatureControl, 1],
-    ['TemperatureMeasurement', TemperatureMeasurement, 4],
-    ['Thermostat', Thermostat, 9], // Revision 9 removed AlarmMask attribute and AlarmCodeBitmap Type.
+    ['TemperatureMeasurement', TemperatureMeasurement, 5],
+    ['Thermostat', Thermostat, 10],
     ['ThermostatUserInterfaceConfiguration', ThermostatUserInterfaceConfiguration, 2],
-    ['TotalVolatileOrganicCompoundsConcentrationMeasurement', TotalVolatileOrganicCompoundsConcentrationMeasurement, 3],
+    ['TlsCertificateManagement', TlsCertificateManagement, 1],
+    ['TlsClientManagement', TlsClientManagement, 1],
+    ['TotalVolatileOrganicCompoundsConcentrationMeasurement', TotalVolatileOrganicCompoundsConcentrationMeasurement, 4],
     ['ValveConfigurationAndControl', ValveConfigurationAndControl, 1],
     ['WakeOnLan', WakeOnLan, 1],
     ['WaterHeaterManagement', WaterHeaterManagement, 2],
     ['WaterHeaterMode', WaterHeaterMode, 1],
-    ['WindowCovering', WindowCovering, 6], // Revision 6 marked AbsolutePosition feature and associated elements provisional.
+    ['WebRtcTransportProvider', WebRtcTransportProvider, 2],
+    ['WebRtcTransportRequestor', WebRtcTransportRequestor, 2],
+    ['WindowCovering', WindowCovering, 8],
+    ['ZoneManagement', ZoneManagement, 1],
   ];
 
   test.each(cases)('Cluster %s revision should match expected', (_name, entry, expected) => {

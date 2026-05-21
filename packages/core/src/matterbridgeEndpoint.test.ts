@@ -1081,7 +1081,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(39);
+    expect(count).toBe(41);
   });
 
   test('forEachAttribute AirQuality', async () => {

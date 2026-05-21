@@ -98,7 +98,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestMatterbridgeTest.js';
 import { addDevice } from './jestutils/jestMatterTest.js';
-import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -590,7 +590,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -633,7 +632,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -665,7 +663,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -697,7 +694,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -727,7 +723,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -757,7 +752,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -787,7 +781,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -817,7 +810,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -827,6 +819,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultPresetsThermostatClusterServer defaults', async () => {
+    // await setDebug(true);
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsDefault' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
@@ -852,7 +845,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -863,7 +855,7 @@ describe('Matterbridge ' + NAME, () => {
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
     const retrievedPresetTypes = device.getAttribute(Thermostat.Cluster.id, 'presetTypes');
-    expect(retrievedPresetTypes).toHaveLength(0);
+    expect(retrievedPresetTypes).toHaveLength(2);
     expect(device.getCluster(Thermostat.Complete)).toMatchObject({
       absMinHeatSetpointLimit: 0,
       absMaxHeatSetpointLimit: 5000,
@@ -879,12 +871,16 @@ describe('Matterbridge ' + NAME, () => {
       numberOfPresets: 10,
       activePresetHandle: null,
       presets: [],
-      presetTypes: [],
+      presetTypes: [
+        { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+        { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      ],
     });
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultPresetsThermostatClusterServer', async () => {
+    // await setDebug(false);
     const presetTypes: Thermostat.PresetType[] = [
       { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
       { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
@@ -918,7 +914,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -1022,7 +1017,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -1185,7 +1179,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 

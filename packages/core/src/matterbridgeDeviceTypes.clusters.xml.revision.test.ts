@@ -1,6 +1,6 @@
-// src/matterbridgeDeviceTypes.clusters.zcl.revision.test.ts
+// src/matterbridgeDeviceTypes.clusters.xml.revision.test.ts
 
-const NAME = 'MatterbridgeDevicetypesClustersZclRevision';
+const NAME = 'MatterbridgeDevicetypesClustersXmlRevision';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 // Cross-check a few cluster revisions between official ZCL XML and @matter/types
@@ -122,31 +122,46 @@ try {
   hasXmlDir = false;
 }
 
-// Helper to read a cluster's revision across variations in @matter/types exports
-const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.revision ?? entry?.Base?.revision ?? entry?.Complete?.revision ?? entry?.CompleteInstance?.revision;
+// Helper to extract cluster data across variations in @matter/types exports
+const getClusterData = (entry: any): { id: number | undefined; name: string | undefined; revision: number | undefined } => {
+  const c = entry?.Cluster ?? entry?.Base ?? entry?.Complete ?? entry?.CompleteInstance;
+  return { id: c?.id, name: c?.name, revision: c?.revision };
+};
 
 function normalizeName(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+type XmlClusterInfo = { revision: number | undefined; id: number | undefined; name: string };
+
 async function buildXmlIndex() {
   const files = await readdir(XML_CLUSTERS_DIR);
-  const index = new Map<string, number | undefined>();
+  const index = new Map<string, XmlClusterInfo>();
   for (const f of files.filter((f) => f.endsWith('.xml'))) {
     const xmlPath = path.join(XML_CLUSTERS_DIR, f);
     try {
       const xml = await readFile(xmlPath, 'utf8');
       const tagMatch = xml.match(/<cluster\b[^>]*>/i);
-      if (!tagMatch) continue;
+      if (!tagMatch) {
+        // eslint-disable-next-line no-console
+        console.warn(`No <cluster> tag found in ${f}`);
+        continue;
+      }
       const tag = tagMatch[0];
       const nameMatch = tag.match(/\bname\s*=\s*"([^"]+)"/i);
       const revMatch = tag.match(/\brevision\s*=\s*"(\d+)"/i);
-      if (!nameMatch) continue;
+      const idMatch = tag.match(/\bid\s*=\s*"([^"]+)"/i);
+      if (!nameMatch) {
+        // eslint-disable-next-line no-console
+        console.warn(`No name attribute in <cluster> tag in ${f}`);
+        continue;
+      }
       const name = nameMatch[1].replace(/\s*clusters?\s*$/i, '').trim();
       const revision = revMatch ? Number(revMatch[1]) : undefined;
-      index.set(normalizeName(name), revision);
-    } catch {
-      // ignore missing/unreadable files
+      const id = idMatch ? Number(idMatch[1]) : undefined;
+      index.set(normalizeName(name), { revision, id, name });
+    } catch (err) {
+      throw new Error(`Failed to read or parse ${f}: ${err instanceof Error ? err.message : String(err)}`, { cause: err });
     }
   }
   return index;
@@ -160,7 +175,7 @@ if (!hasXmlDir) {
   });
 } else {
   describe('Matter 1.5.1 XML vs @matter/types cluster revisions', () => {
-    let xmlIndex: Map<string, number | undefined>;
+    let xmlIndex: Map<string, XmlClusterInfo>;
     beforeAll(async () => {
       xmlIndex = await buildXmlIndex();
     });
@@ -267,18 +282,22 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s revision matches Matter 1.5.1 XML', async (display, entry) => {
+    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)', async (display, entry) => {
       const key = normalizeName(display);
-      const xmlRev = xmlIndex.get(key);
-      const typesRev = getClusterRevision(entry);
-      if (typeof xmlRev !== 'number') {
+      const xmlInfo = xmlIndex.get(key);
+      const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);
+      if (!xmlInfo) {
         // eslint-disable-next-line no-console
-        console.warn(`No XML entry found for ${display} (likely a template or derived cluster). types=${typesRev}`);
+        console.warn(
+          `No XML entry found for ${display} (likely a template or derived cluster). types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`,
+        );
         return; // not all clusters have individual 1.5.1 XML files
       }
       // eslint-disable-next-line no-console
-      console.info(`${display}: xml=${xmlRev} types=${typesRev}`);
-      expect(typeof xmlRev).toBe('number');
+      console.info(`${display}: xml=${JSON.stringify(xmlInfo)} types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`);
+      expect(typeof xmlInfo.revision).toBe('number');
+      expect(typesId).toBe(xmlInfo.id);
+      expect(normalizeName(typesName ?? '')).toBe(normalizeName(xmlInfo.name));
     });
   });
 }

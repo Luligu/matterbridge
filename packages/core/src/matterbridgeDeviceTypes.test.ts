@@ -87,6 +87,25 @@ import {
   solarPower,
   batteryStorage,
   heatPump,
+  // Matter 1.5.1 device types
+  closure,
+  closurePanel,
+  closureController,
+  irrigationSystem,
+  soilSensor,
+  meterReferencePoint,
+  electricalEnergyTariff,
+  electricalMeter,
+  electricalUtilityMeter,
+  camera,
+  floodlightCamera,
+  videoDoorbell,
+  intercom,
+  audioDoorbell,
+  snapshotCamera,
+  chime,
+  cameraController,
+  doorbell,
   DeviceClasses,
 } from './matterbridgeDeviceTypes.js';
 
@@ -203,6 +222,26 @@ describe('Matterbridge device types', () => {
     { name: 'solarPower', device: solarPower, def: devices.SolarPowerDeviceDefinition },
     { name: 'batteryStorage', device: batteryStorage, def: devices.BatteryStorageDeviceDefinition },
     { name: 'heatPump', device: heatPump, def: devices.HeatPumpDeviceDefinition },
+
+    // Matter 1.5.1 Device types
+    { name: 'closure', device: closure, def: devices.ClosureDeviceDefinition },
+    { name: 'closurePanel', device: closurePanel, def: devices.ClosurePanelDeviceDefinition },
+    { name: 'closureController', device: closureController, def: devices.ClosureControllerDeviceDefinition },
+    { name: 'irrigationSystem', device: irrigationSystem, def: devices.IrrigationSystemDeviceDefinition },
+    { name: 'soilSensor', device: soilSensor, def: devices.SoilSensorDeviceDefinition },
+    { name: 'meterReferencePoint', device: meterReferencePoint, def: devices.MeterReferencePointDeviceDefinition },
+    { name: 'electricalEnergyTariff', device: electricalEnergyTariff, def: devices.ElectricalEnergyTariffDeviceDefinition },
+    { name: 'electricalMeter', device: electricalMeter, def: devices.ElectricalMeterDeviceDefinition },
+    { name: 'electricalUtilityMeter', device: electricalUtilityMeter, def: devices.ElectricalUtilityMeterDeviceDefinition },
+    { name: 'camera', device: camera, def: devices.CameraDeviceDefinition },
+    { name: 'floodlightCamera', device: floodlightCamera, def: devices.FloodlightCameraDeviceDefinition },
+    { name: 'videoDoorbell', device: videoDoorbell, def: devices.VideoDoorbellDeviceDefinition },
+    { name: 'intercom', device: intercom, def: devices.IntercomDeviceDefinition },
+    { name: 'audioDoorbell', device: audioDoorbell, def: devices.AudioDoorbellDeviceDefinition },
+    { name: 'snapshotCamera', device: snapshotCamera, def: devices.SnapshotCameraDeviceDefinition },
+    { name: 'chime', device: chime, def: devices.ChimeDeviceDefinition },
+    { name: 'cameraController', device: cameraController, def: devices.CameraControllerDeviceDefinition },
+    { name: 'doorbell', device: doorbell, def: devices.DoorbellDeviceDefinition },
   ];
 
   for (const { name, device, def } of entries) {

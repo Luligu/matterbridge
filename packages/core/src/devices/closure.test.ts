@@ -6,10 +6,10 @@ const MATTER_PORT = 8022;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { Identify } from '@matter/types/clusters/identify';
 import { stringify } from 'node-ansi-logger';
 
-import { ClosureControl } from '../clusters/closure-control.js';
 // Jest utilities for Matter testing
 import {
   addDevice,
@@ -27,7 +27,7 @@ import { closure } from '../matterbridgeDeviceTypes.js';
 import { Closure } from './closure.js';
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
@@ -65,10 +65,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosureTestDevice-CL123456');
 
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ClosureControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(ClosureControl.id)).toBeTruthy();
 
-    expect(device.getClusterServerOptions(ClosureControl.Cluster.id)).toMatchObject({
+    expect(device.getClusterServerOptions(ClosureControl.id)).toMatchObject({
       mainState: ClosureControl.MainState.Stopped,
     });
   });
@@ -87,7 +87,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
-    expect(device.getAttribute(ClosureControl.Cluster.id, 'overallTargetState')).toMatchObject({
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
 
@@ -99,7 +99,7 @@ describe('Matterbridge ' + NAME, () => {
       latch: true,
       speed: 1,
     });
-    expect(device.getAttribute(ClosureControl.Cluster.id, 'overallTargetState')).toMatchObject({
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: true,
       speed: 1,
@@ -109,7 +109,7 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       latch: false,
     });
-    expect(device.getAttribute(ClosureControl.Cluster.id, 'overallTargetState')).toMatchObject({
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
     });
@@ -159,12 +159,13 @@ describe('Matterbridge ' + NAME, () => {
     ).toEqual(
       [
         'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
-        'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
         'closureControl(0x104).countdownTime(0x0)=null',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
-        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: false, instantaneous: false, speed: false, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
+        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
+        'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: false, remoteUnlatching: false }',
         'closureControl(0x104).mainState(0x1)=1',
         'closureControl(0x104).overallCurrentState(0x3)=null',
         'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 1 }',

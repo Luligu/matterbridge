@@ -21,34 +21,25 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
-
-import { ClusterBehavior } from '@matter/node';
+// @matter
+import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { ClosureDimension } from '../clusters/closure-dimension.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
-const ClosureDimensionBehavior = ClusterBehavior.for(ClosureDimension, ClosureDimension.schema);
-
-export namespace ClosureDimensionServer {
-  export interface State {
-    currentState: ClosureDimension.DimensionState | null;
-    targetState: ClosureDimension.DimensionState | null;
-    resolution: number;
-    stepValue: number;
-  }
-}
-
 /**
  * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
  */
-export class ClosureDimensionServer extends ClosureDimensionBehavior.with(ClosureDimension.Feature.Positioning) {
-  declare state: ClosureDimensionServer.State;
-
+export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
+  ClosureDimension.Feature.Positioning,
+  ClosureDimension.Feature.MotionLatching,
+  ClosureDimension.Feature.Speed,
+) {
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -65,7 +56,7 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      ...(request?.speed !== undefined ? { speed: request.speed } : null),
+      speed: request?.speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.targetState = nextTarget;
@@ -95,13 +86,16 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
     let nextPosition = isIncrease ? currentPosition + delta : currentPosition - delta;
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
+    const speed: ThreeLevelAuto =
+      request?.speed ?? (previousCurrent as ClosureDimension.DimensionState).speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto;
+
     this.state.currentState = {
       ...previousCurrent,
       position: nextPosition,
-      ...(request?.speed !== undefined ? { speed: request.speed } : null),
+      speed,
     };
 
-    this.state.targetState = { ...previousTarget, position: nextPosition };
+    this.state.targetState = { ...previousTarget, position: nextPosition, speed };
   };
 }
 
@@ -126,7 +120,7 @@ export class ClosurePanel extends MatterbridgeEndpoint {
 
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
 
-    this.behaviors.require(ClosureDimensionServer, {
+    this.behaviors.require(MatterbridgeClosureDimensionServer, {
       currentState: null,
       targetState: null,
       resolution: options.resolution ?? 1,
