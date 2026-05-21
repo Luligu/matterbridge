@@ -66,7 +66,7 @@ The official HTML specs under `chip/1.5.1/specs/` remain the primary reference.
 | IlluminanceMeasurement                                | 0x0400 | 3     | 4     | Removed P quality                                                                                                                                                                            |
 | LevelControl                                          | 0x0008 | 6     | 7     | Simplify constraint, added F quality and changed the conformance to mandatory for MinLevel and MaxLevel, and removed P quality                                                               |
 | NitrogenDioxideConcentrationMeasurement               | 0x0413 | 3     | 4     | Removed P quality                                                                                                                                                                            |
-| OccupancySensing                                      | 0x0406 | 5     | 6     | Removed P quality                                                                                                                                                                            |
+| OccupancySensing (1)                                  | 0x0406 | 5     | 6     | Removed P quality                                                                                                                                                                            |
 | OzoneConcentrationMeasurement                         | 0x0415 | 3     | 4     | Removed P quality                                                                                                                                                                            |
 | PM10ConcentrationMeasurement                          | 0x042D | 3     | 4     | Removed P quality                                                                                                                                                                            |
 | PM1ConcentrationMeasurement                           | 0x042C | 3     | 4     | Removed P quality                                                                                                                                                                            |
@@ -90,6 +90,8 @@ Quality P = Reportable: means the attribute is intended to support interval or c
 (1) DoorLock cluster has no more PIN commands.
 
 (2) Thermostat cluster is revision 10 (not 9 like in xml).
+
+(3) Occupancy revision 7 is likely a typo in spec.
 
 ## New Cluster Types
 
@@ -125,9 +127,3 @@ Quality P = Reportable: means the attribute is intended to support interval or c
 | Commodity Tariff Chronology | 0x000B | Current, Previous, Upcoming                                |
 | Commodity Tariff Commodity  | 0x000D | ElectricalEnergy                                           |
 | Commodity Tariff Flow       | 0x0013 | Import, Export                                             |
-
-## Errors found
-
-Clusters
-
-Occupancy revision 7 is likely a typo in spec.

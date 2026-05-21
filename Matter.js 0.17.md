@@ -63,12 +63,3 @@ I will leave (without exporting them) the three Matter 1.5.1 cluster I created f
 I plan to release matter.js 0.17.0 in Matterbridge 3.8.0.
 
 At that point, all plugins should require Matterbridge 3.8.0 and make the refactor eventually required.
-
-## Errors found
-
-Device Types
-
-WindowCovering: disallowed not optional
-
-0x0104 Closure Control Server X
-0x0105 Closure Dimension Server X
