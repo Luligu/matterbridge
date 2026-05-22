@@ -895,7 +895,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
       const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-      const isLocal = globalModulesDirectory && !plugin.path.startsWith(globalModulesDirectory);
+      const isLocal = globalModulesDirectory.length > 0 && !plugin.path.startsWith(globalModulesDirectory);
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +
           `with version ${CYAN}${plugin.version}${db} type ${CYAN}${plugin.type}${db} local ${CYAN}${isLocal}${db} ` +

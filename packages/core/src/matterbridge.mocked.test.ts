@@ -783,6 +783,7 @@ describe('Matterbridge mocked', () => {
 
     parseSpy.mockRestore();
     existSpy.mockRestore();
+    execSyncMock.mockRestore();
     delete process.env.MATTERBRIDGE_REINSTALL_PLUGINS;
     delete process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
     // @ts-expect-error Restore the original execSync implementation
