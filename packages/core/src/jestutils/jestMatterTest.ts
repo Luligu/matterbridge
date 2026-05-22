@@ -557,6 +557,14 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
   // Ensure all endpoint numbers are persisted
   await assertAllEndpointNumbersPersisted(server);
 
+  // Stop the server
+  expect(server).toBeDefined();
+  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isOnline).toBeFalsy();
+  await server.close();
+  expect(server.lifecycle.isReady).toBeFalsy();
+  expect(server.lifecycle.isOnline).toBeFalsy();
+
   // Ensure the queue is empty
   await flushAsync(ticks, microTurns, pause);
 }

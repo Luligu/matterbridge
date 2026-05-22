@@ -4,8 +4,6 @@ This file summarizes the Matter 1.5.1 deltas captured for Matterbridge, compared
 
 IDs below are hexadecimal, matching the official Matter specs.
 
-The official HTML specs under `chip/1.5.1/specs/` remain the primary reference.
-
 ## Changed Device Types
 
 | Device Type            | ID     | 1.4.2 | 1.5.1 | Difference                                                                                |

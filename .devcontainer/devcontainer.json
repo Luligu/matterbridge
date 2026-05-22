@@ -69,7 +69,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
     // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
     "--network=matterbridge"
   ],
-  // Publish the Matterbridge UI port on the Docker host (so http://localhost:8283 works even without VS Code port forwarding)
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
@@ -87,45 +86,29 @@ Dev containers have networking limitations depending on the host OS and Docker s
       // Settings for the VS Code environment
       "settings": {
         // Default .vscode/settings.json
+        "eslint.enable": true,
+        "prettier.enable": true,
+        "oxc.enable": false,
+        "js/ts.experimental.useTsgo": true,
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "explicit"
         },
         "eslint.format.enable": true,
-        "eslint.useFlatConfig": true,
-        "eslint.nodePath": "node_modules",
         "eslint.options": {
           "cache": true,
           "cacheLocation": ".cache/.eslintcache"
         },
         "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "markdown"],
-        "[javascript]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[typescript]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[json]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[jsonc]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[markdown]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "js/ts.tsdk.path": "node_modules/@typescript/native-preview/lib",
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-        "js/ts.experimental.useTsgo": true,
-        "oxc.enable": false,
         "diffEditor.ignoreTrimWhitespace": false,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.watcherExclude": {
-          "**/node_modules/**": true,
           "**/build/**": true,
           "**/.cache/**": true,
           "**/coverage/**": true
