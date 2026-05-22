@@ -57,6 +57,11 @@ These classes will run as threads in the next releases:
 
 ## [3.8.0] - Dev branch
 
+### Breaking changes
+
+- [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.7.10] - 2026-05-22

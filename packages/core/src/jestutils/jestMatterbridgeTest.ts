@@ -296,7 +296,7 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.7.10';
+  matterbridge.matterbridgeVersion = '3.8.0';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join(HOMEDIR);
   matterbridge.homeDirectory = path.join(HOMEDIR);

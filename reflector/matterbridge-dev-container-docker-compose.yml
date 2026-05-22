@@ -34,3 +34,4 @@ services:
       - matterserver:/data
     environment:
       - TZ=Europe/Paris
+      - ENABLE_TEST_NET_DCL=true
