@@ -169,10 +169,10 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
     // Make write return false once to hit the if (!write) branch
     let first = true;
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: () => {},
       createWriteStream: () => ({
         once: () => {},
@@ -187,7 +187,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
@@ -209,8 +209,8 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: () => {},
       createWriteStream: () => ({
         once: () => {},
@@ -221,7 +221,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -256,8 +256,8 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: () => {},
       createWriteStream: () => ({
         once: (_: string, fn: (e: any) => void) => {
@@ -268,7 +268,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -290,9 +290,9 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
 
     const originalSetInterval = global.setInterval;
     let unrefCalled = false;
@@ -325,9 +325,9 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
 
     jest.useFakeTimers();
     const { Inspector } = await import('./inspector.js');
@@ -390,12 +390,12 @@ describe('Inspector', () => {
     }
 
     // Use ESM mocking for dynamic imports in inspector.ts
-    await jest.unstable_mockModule('node:inspector', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({
       default: {},
       Session: FakeSession,
     }));
 
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (p: string) => {
         mkdirCalls.push(p);
       },
@@ -416,7 +416,7 @@ describe('Inspector', () => {
       },
     }));
 
-    await jest.unstable_mockModule('./commandLine.js', () => ({
+    jest.unstable_mockModule('./commandLine.js', () => ({
       getIntParameter: () => 30000,
     }));
 
@@ -461,8 +461,8 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
       createWriteStream: () => ({
         once: () => {},
@@ -474,7 +474,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 1000 }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 1000 }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
@@ -495,8 +495,8 @@ describe('Inspector', () => {
         else cb(null);
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
       createWriteStream: () => ({
         once: () => {},
@@ -508,7 +508,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
@@ -538,13 +538,13 @@ describe('Inspector', () => {
         return this;
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: ErrSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: ErrSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
       createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
@@ -572,13 +572,13 @@ describe('Inspector', () => {
         return this;
       }
     }
-    await jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: StopErrSession }));
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: StopErrSession }));
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
       createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
       writeFileSync: () => {},
     }));
-    await jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
     const { Inspector } = await import('./inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
@@ -602,16 +602,16 @@ describe('Inspector', () => {
       }
     }
 
-    await jest.unstable_mockModule('node:inspector', () => ({
+    jest.unstable_mockModule('node:inspector', () => ({
       default: {},
       Session: FailingSession,
     }));
 
-    await jest.unstable_mockModule('node:fs', () => ({
+    jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
     }));
 
-    await jest.unstable_mockModule('./commandLine.js', () => ({
+    jest.unstable_mockModule('./commandLine.js', () => ({
       getIntParameter: () => undefined,
     }));
 

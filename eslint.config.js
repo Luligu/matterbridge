@@ -3,7 +3,6 @@
 
 // This ESLint configuration is designed for a TypeScript project using ESM modules.
 
-import { existsSync } from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
@@ -105,7 +104,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         tsconfigRootDir: configDirname,
-        project: existsSync(path.join(configDirname, 'tsconfig.eslint.json')) ? './tsconfig.eslint.json' : './tsconfig.json', // Use a separate tsconfig for ESLint if it exists, otherwise fall back to the main tsconfig
+        project: './tsconfig.json',
       },
     },
     // Comment out this line if you want to enable strict type-checked rules, but be aware that it may cause many errors until you fix all type issues in your codebase
@@ -145,7 +144,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         tsconfigRootDir: configDirname,
-        project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests with "isolatedModules": true
+        project: './tsconfig.jest.json', // Use a separate tsconfig for Jest tests
       },
     },
     extends: [jest.configs['flat/recommended']],

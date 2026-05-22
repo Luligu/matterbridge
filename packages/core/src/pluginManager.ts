@@ -373,23 +373,38 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         case 'manager_spawn_response':
           if (msg.result && msg.result.packageCommand === 'install') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-            if (msg.result.packageName.endsWith('.tgz')) return; // Ignore install responses for tarball packages
-            if (msg.result.success) {
+            if (!msg.result.success) {
+              this.log.error(`Failed to install package ${plg}${msg.result.packageName}${er}`);
+              return;
+            }
+            if (msg.result.packageName.endsWith('.tgz')) {
+              const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
+              this.log.info(`Installed package ${plg}${packageName}${nf} from ${CYAN}${msg.result.packageName}${nf} successfully`);
+              // istanbul ignore else
+              if (msg.result.packageName.startsWith('matterbridge-') && msg.result.packageName.endsWith('.tgz')) {
+                // istanbul ignore else
+                if (!this.has(packageName)) await this.add(packageName);
+                const plugin = this.get(packageName);
+                // istanbul ignore else
+                if (plugin) plugin.tarballPath = msg.result.packageName;
+                await this.saveToStorage();
+                // istanbul ignore else
+                if (plugin && !plugin.loaded) await this.load(plugin);
+              }
+            } else {
               const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
+              this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
               // istanbul ignore else
               if (packageName !== 'matterbridge') {
                 // istanbul ignore else
                 if (!this.has(packageName)) await this.add(packageName);
                 const plugin = this.get(packageName);
                 // istanbul ignore else
-                if (plugin && !plugin.loaded) {
-                  await this.load(plugin);
-                  this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
-                }
+                if (plugin) plugin.tarballPath = undefined;
+                await this.saveToStorage();
+                // istanbul ignore else
+                if (plugin && !plugin.loaded) await this.load(plugin);
               }
-              this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
-            } else {
-              this.log.error(`Failed to install plugin ${plg}${msg.result.packageName}${er}`);
             }
           }
           if (msg.result && msg.result.packageCommand === 'uninstall') {
@@ -401,7 +416,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
                 // istanbul ignore else
                 if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
                 await this.remove(msg.result.packageName);
-                this.server.request({ type: 'frontend_refreshrequired', src: 'plugins', dst: 'frontend', params: { changed: 'plugins' } });
               }
               this.log.info(`Uninstalled plugin ${plg}${msg.result.packageName}${db} successfully`);
             } else {
@@ -484,6 +498,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       description: plugin.description,
       author: plugin.author,
       enabled: plugin.enabled,
+      private: plugin.private,
     };
   }
 
@@ -501,6 +516,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       author: plugin.author,
       path: plugin.path,
       type: plugin.type,
+      private: plugin.private,
       latestVersion: plugin.latestVersion,
       devVersion: plugin.devVersion,
       homepage: plugin.homepage,
@@ -606,7 +622,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     }
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, plugin);
+    for (const plugin of pluginsArray) this._plugins.set(plugin.name, { ...plugin, private: plugin.private ?? false });
     this.log.debug(`Loaded ${BLUE}${pluginsArray.length}${db} plugins from storage`);
     return pluginsArray;
   }
@@ -631,6 +647,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         description: plugin.description,
         author: plugin.author,
         enabled: plugin.enabled,
+        private: plugin.private,
+        tarballPath: plugin.tarballPath,
       });
     }
     await this.matterbridge.nodeContext.set<StoragePlugin[]>('plugins', plugins);
@@ -1093,6 +1111,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         path: packageJsonPath,
         type: 'AnyPlatform',
         version: packageJson.version,
+        private: packageJson.private || false,
         description: packageJson.description,
         author: this.getAuthor(packageJson),
         homepage: this.getHomepage(packageJson),
@@ -1193,6 +1212,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         plugin.name = packageJson.name;
         plugin.description = this.getDescription(packageJson);
         plugin.version = packageJson.version;
+        plugin.private = packageJson.private || false;
         plugin.author = this.getAuthor(packageJson);
         plugin.homepage = this.getHomepage(packageJson);
         plugin.help = this.getHelp(packageJson);

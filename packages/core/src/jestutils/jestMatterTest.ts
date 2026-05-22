@@ -161,10 +161,10 @@ export function getPlatformMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.7.9',
-    matterbridgeLatestVersion: '3.7.9',
-    matterbridgeDevVersion: '3.7.9',
-    frontendVersion: '3.7.9',
+    matterbridgeVersion: '3.7.10',
+    matterbridgeLatestVersion: '3.7.10',
+    matterbridgeDevVersion: '3.7.10',
+    frontendVersion: '3.7.10',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -556,6 +556,14 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
 
   // Ensure all endpoint numbers are persisted
   await assertAllEndpointNumbersPersisted(server);
+
+  // Stop the server
+  expect(server).toBeDefined();
+  expect(server.lifecycle.isReady).toBeTruthy();
+  expect(server.lifecycle.isOnline).toBeFalsy();
+  await server.close();
+  expect(server.lifecycle.isReady).toBeFalsy();
+  expect(server.lifecycle.isOnline).toBeFalsy();
 
   // Ensure the queue is empty
   await flushAsync(ticks, microTurns, pause);

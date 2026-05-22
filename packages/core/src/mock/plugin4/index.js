@@ -1,4 +1,3 @@
-/* eslint-disable n/no-unpublished-import */
 /* eslint-disable n/no-missing-import */
 import { MatterbridgeAccessoryPlatform } from '../../matterbridgeAccessoryPlatform.js';
 import { temperatureSensor } from '../../matterbridgeDeviceTypes.js';

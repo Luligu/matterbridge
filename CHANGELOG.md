@@ -55,6 +55,40 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.7.10] - 2026-05-22
+
+### Development
+
+- [matter]: Update [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+
+### Added
+
+- [development]: Local plugins (not installed but just added from a local path) are now supported also with Docker (use a path reachable from the container i.e. /root/Matterbridge/factory/pluginname). Matterbridge will be automatically linked to the package on restart.
+- [development]: Uploaded plugins not published on npm are now supported also with Docker (use private=true in package.json). They will be reinstalled on Docker recreate from the last used tarball.
+
+### Changed
+
+- [package]: Update dependencies.
+
+- [package]: Bump `eslint` to v.10.4.0.
+- [package]: Bump `@types/node` to v.25.9.1.
+- [package]: Bump `ts-jest` to v.29.4.11.
+- [package]: Bump `typescript-eslint` to v.8.59.4.
+- [package]: Bump `vitest` to v.4.1.7.
+- [package]: Bump `@vitest/coverage-v8` to v.4.1.7.
+- [package]: Bump `eslint-plugin-jsdoc` to v.63.0.0.
+- [package]: Bump `@eslint/markdown` to v.8.0.2.
+- [package]: Bump `marked` to v.18.0.4.
+- [package]: Remove tsconfig.eslint.json and use tsconfig.json.
+- [package]: Update `.devcontainer/devcontainer.json` for improved development experience with tsgo and oxc.
+- [package]: Update `.vscode/settings.json` for improved development experience with tsgo and oxc.
+- [package]: Add `.vscode/extensions.json` for improved development experience with tsgo and oxc.
+- [frontend]: Bump `frontend` version to v.3.4.16.
+- [frontend]: Update dependencies.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.9] - 2026-05-15
 
 ### Breaking Changes

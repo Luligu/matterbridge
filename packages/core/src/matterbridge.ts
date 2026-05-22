@@ -894,14 +894,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
+      const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+      const isLocal = globalModulesDirectory.length > 0 && !plugin.path.startsWith(globalModulesDirectory);
       this.log.debug(
-        `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} with version ${CYAN}${plugin.version}${db} and type ${CYAN}${plugin.type}${db}.`,
+        `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +
+          `with version ${CYAN}${plugin.version}${db} type ${CYAN}${plugin.type}${db} local ${CYAN}${isLocal}${db} ` +
+          `private ${CYAN}${plugin.private}${db} tarball ${CYAN}${plugin.tarballPath}${db}.`,
       );
 
       // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-      const isLocal = globalModulesDirectory && !plugin.path.includes(globalModulesDirectory);
       if (
         (isLocal &&
           fs.existsSync(plugin.path) &&
@@ -927,12 +929,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         (!isLocal && !fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
         process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest'
       ) {
-        this.log.info(`Error parsing plugin ${plg}${plugin.name}${nf}. Trying to reinstall it from npm...`);
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
         try {
-          execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''}  --no-fund --no-audit --silent --omit=dev`);
+          if (plugin.private && plugin.tarballPath && fs.existsSync(path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath))) {
+            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
+            execSync(`${sudo ? 'sudo ' : ''}npm install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} --no-fund --no-audit --silent --omit=dev`);
+          } else {
+            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm...`);
+            execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --no-fund --no-audit --silent --omit=dev`);
+          }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
         } catch (error) {
           plugin.error = true;
@@ -941,6 +948,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           continue;
         }
       }
+
+      // Parse the plugin and disable it if there is an error.
       if ((await this.plugins.parse(plugin)) === null) {
         this.log.error(`Error parsing plugin ${plg}${plugin.name}${er}. The plugin is disabled.`);
         plugin.error = true;

@@ -1,5 +1,3 @@
-WORK IN PROGRESS
-
 # Matter.js 0.17
 
 This file summarizes the [matter.js 0.17](https://github.com/matter-js/matter.js/blob/main/CHANGELOG.md) deltas compared with Matter 0.16.11.
@@ -48,16 +46,18 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 | `PositionTag`               | `CommonPositionTag`          |
 | `RelativePositionTag`       | `CommonRelativePositionTag`  |
 
+- Matterbridge re export the old namespace tags.
+
 ## Custom clusters
 
 The way to create custom cluster in matter.js has changed.
 
-In matter.js there are no more typescript source files for cluster types they are generated. The memory usage has dropped by around 20%-50% that is great.
+In matter.js there are no more typescript source files for cluster types: they are generated. The memory usage has dropped by around 20%-50% that is great.
 
-I will leave (without exporting them) the three Matter 1.5.1 cluster I created for testing like example (branch dev-017).
+I will leave (without exporting them) the three Matter 1.5.1 cluster I created for testing like example.
 
-## Implementation plan (work in progress)
+## Implementation plan
 
-I plan to release matter.js in Matterbridge 3.8.0.
+I plan to release matter.js 0.17.0 in Matterbridge 3.8.0.
 
 At that point, all plugins should require Matterbridge 3.8.0 and make the refactor eventually required.

@@ -1,0 +1,46 @@
+FROM node:24-trixie-slim
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:local" \
+  org.opencontainers.image.description="Matterbridge built from local source files" \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>"
+
+WORKDIR /matterbridge
+COPY . .
+RUN \
+  npm ci --no-fund --no-audit && \
+  npm run buildProduction && \
+  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../.. && \
+  find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
+  npm link --no-fund --no-audit && \
+  npm prune --omit=dev --no-fund --no-audit && \
+  npm cache clean --force && \
+  rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
+  rm -rf /matterbridge/.git /matterbridge/.claude /matterbridge/chip /matterbridge/docker \
+  /matterbridge/scripts /matterbridge/src /matterbridge/systemd \
+  /matterbridge/docker-downloads-history.json && \
+  find /matterbridge/packages -type d -name "src" -exec rm -rf {} + && \
+  find /matterbridge -maxdepth 1 -name "tsconfig*.json" -o -name "*.tsbuildinfo" | xargs -r rm -f && \
+  find /matterbridge -type d \( -name ".github" -o -name ".vscode" -o -name "docs" \) -exec rm -rf {} + && \
+  find /matterbridge -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
+  if [ -d "/matterbridge/node_modules/@matter" ]; then \
+  find "/matterbridge/node_modules/@matter" -type d -name "src" -exec rm -rf {} + && \
+  find "/matterbridge/node_modules/@matter" -type d -name "cjs" -exec rm -rf {} +; \
+  fi
+
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD mb_health
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.local.sh ./
+RUN chmod +x ./entrypoint.local.sh
+ENTRYPOINT ["./entrypoint.local.sh"]
+CMD ["matterbridge", "-docker"]

@@ -69,15 +69,15 @@ Dev containers have networking limitations depending on the host OS and Docker s
     // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
     "--network=matterbridge"
   ],
-  // Publish the Matterbridge UI port on the Docker host (so http://localhost:8283 works even without VS Code port forwarding)
   "customizations": {
     "vscode": {
       // Extensions to install in the dev container
       "extensions": [
-        "ms-vscode.vscode-typescript-next",
+        "typescriptteam.native-preview",
         "ms-azuretools.vscode-containers",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
+        "oxc.oxc-vscode",
         "anthropic.claude-code",
         "github.copilot-chat",
         "github.vscode-github-actions",
@@ -86,41 +86,29 @@ Dev containers have networking limitations depending on the host OS and Docker s
       // Settings for the VS Code environment
       "settings": {
         // Default .vscode/settings.json
+        "eslint.enable": true,
+        "prettier.enable": true,
+        "oxc.enable": false,
+        "js/ts.experimental.useTsgo": true,
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "explicit"
         },
         "eslint.format.enable": true,
-        "eslint.useFlatConfig": true,
-        "eslint.nodePath": "node_modules",
         "eslint.options": {
           "cache": true,
           "cacheLocation": ".cache/.eslintcache"
         },
         "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "json", "jsonc", "markdown"],
-        "[javascript]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[typescript]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[json]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[jsonc]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
-        "[markdown]": {
-          "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-        },
         "diffEditor.ignoreTrimWhitespace": false,
         "files.eol": "\n",
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
         "files.watcherExclude": {
-          "**/node_modules/**": true,
           "**/build/**": true,
           "**/.cache/**": true,
           "**/coverage/**": true
@@ -134,8 +122,6 @@ Dev containers have networking limitations depending on the host OS and Docker s
         },
         "git.autofetch": true,
         "git.autoRepositoryDetection": false,
-        "js/ts.tsdk.path": "node_modules/typescript/lib",
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "chat.useCustomizationsInParentRepositories": false,
         "chat.useClaudeMdFile": true,
         "chat.instructionsFilesLocations": {

@@ -137,13 +137,24 @@ export interface ApiPlugin extends StoragePlugin {
 
 /** Define an interface for storing the plugin information */
 export interface StoragePlugin {
+  /** The name of the plugin, which is used as a unique identifier */
   name: string;
+  /** The path to the plugin, which can be a local path or a global module path */
   path: string;
+  /** The type of the plugin */
   type: 'DynamicPlatform' | 'AccessoryPlatform' | 'AnyPlatform';
+  /** The version of the plugin */
   version: string;
+  /** A short description of the plugin */
   description: string;
+  /** The author of the plugin */
   author: string;
+  /** Indicates whether the plugin is enabled */
   enabled: boolean;
+  /** Indicates whether the plugin is private */
+  private: boolean;
+  /** Path to the latest uploaded plugin tarball or undefined if not available */
+  tarballPath?: string;
 }
 
 /** Define an interface for the system information */

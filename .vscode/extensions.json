@@ -1,0 +1,13 @@
+{
+  "recommendations": [
+    "typescriptteam.native-preview",
+    "ms-azuretools.vscode-containers",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "oxc.oxc-vscode",
+    "anthropic.claude-code",
+    "github.copilot-chat",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github"
+  ]
+}
