@@ -25,7 +25,7 @@ import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { ClosurePanel } from './closurePanel.js';
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: ClosurePanel;

@@ -937,7 +937,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
             execSync(`${sudo ? 'sudo ' : ''}npm install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} --no-fund --no-audit --silent --omit=dev`);
           } else {
-            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm...`);
+            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm${plugin.version.includes('-dev-') ? ' with tag @dev' : ''}...`);
             execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --no-fund --no-audit --silent --omit=dev`);
           }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);

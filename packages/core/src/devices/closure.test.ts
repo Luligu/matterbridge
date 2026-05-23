@@ -27,7 +27,7 @@ import { closure } from '../matterbridgeDeviceTypes.js';
 import { Closure } from './closure.js';
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;

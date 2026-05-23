@@ -40,27 +40,27 @@ export const ClosureDimensionDefinition = ClusterElement(
   AttributeElement({ name: 'ClusterRevision', id: 0xfffd, type: 'ClusterRevision', default: 1 }),
   AttributeElement(
     { name: 'FeatureMap', id: 0xfffc, type: 'FeatureMap' },
-    FieldElement({ name: 'POS', conformance: 'O', constraint: '0', title: 'Positioning' }),
-    FieldElement({ name: 'ML', conformance: 'O', constraint: '1', title: 'MotionLatching' }),
-    FieldElement({ name: 'UNI', conformance: '[POS]', constraint: '2', title: 'Unit' }),
-    FieldElement({ name: 'LIM', conformance: '[POS]', constraint: '3', title: 'Limitation' }),
-    FieldElement({ name: 'SPD', conformance: '[POS]', constraint: '4', title: 'Speed' }),
-    FieldElement({ name: 'TRN', conformance: '[POS]', constraint: '5', title: 'Translation' }),
-    FieldElement({ name: 'ROT', conformance: '[POS]', constraint: '6', title: 'Rotation' }),
-    FieldElement({ name: 'MOD', conformance: '[POS]', constraint: '7', title: 'Modulation' }),
+    FieldElement({ name: 'PS', conformance: 'O', constraint: '0', title: 'Positioning' }),
+    FieldElement({ name: 'LT', conformance: 'O', constraint: '1', title: 'MotionLatching' }),
+    FieldElement({ name: 'UT', conformance: '[PS]', constraint: '2', title: 'Unit' }),
+    FieldElement({ name: 'LM', conformance: '[PS]', constraint: '3', title: 'Limitation' }),
+    FieldElement({ name: 'SP', conformance: '[PS]', constraint: '4', title: 'Speed' }),
+    FieldElement({ name: 'TR', conformance: '[PS]', constraint: '5', title: 'Translation' }),
+    FieldElement({ name: 'RO', conformance: '[PS]', constraint: '6', title: 'Rotation' }),
+    FieldElement({ name: 'MD', conformance: '[PS]', constraint: '7', title: 'Modulation' }),
   ),
   AttributeElement({ name: 'CurrentState', id: 0x0000, type: 'DimensionStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
   AttributeElement({ name: 'TargetState', id: 0x0001, type: 'DimensionStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'Resolution', id: 0x0002, type: 'percent100ths', access: 'R V', conformance: 'POS', default: 1, quality: 'F' }),
-  AttributeElement({ name: 'StepValue', id: 0x0003, type: 'percent100ths', access: 'R V', conformance: 'POS', default: 1, quality: 'F' }),
-  AttributeElement({ name: 'Unit', id: 0x0004, type: 'ClosureUnitEnum', access: 'R V', conformance: 'UNI', quality: 'F' }),
-  AttributeElement({ name: 'UnitRange', id: 0x0005, type: 'UnitRangeStruct', access: 'R V', conformance: 'UNI', default: null, quality: 'X' }),
-  AttributeElement({ name: 'LimitRange', id: 0x0006, type: 'RangePercent100thsStruct', access: 'R V', conformance: 'LIM' }),
-  AttributeElement({ name: 'TranslationDirection', id: 0x0007, type: 'TranslationDirectionEnum', access: 'R V', conformance: 'TRN', quality: 'F' }),
-  AttributeElement({ name: 'RotationAxis', id: 0x0008, type: 'RotationAxisEnum', access: 'R V', conformance: 'ROT', quality: 'F' }),
-  AttributeElement({ name: 'Overflow', id: 0x0009, type: 'OverflowEnum', access: 'R V', conformance: 'ROT', quality: 'F' }),
-  AttributeElement({ name: 'ModulationType', id: 0x000a, type: 'ModulationTypeEnum', access: 'R V', conformance: 'MOD', quality: 'F' }),
-  AttributeElement({ name: 'LatchControlModes', id: 0x000b, type: 'LatchControlModesAttribute', access: 'R V', conformance: 'ML', quality: 'F' }),
+  AttributeElement({ name: 'Resolution', id: 0x0002, type: 'percent100ths', access: 'R V', conformance: 'PS', default: 1, quality: 'F' }),
+  AttributeElement({ name: 'StepValue', id: 0x0003, type: 'percent100ths', access: 'R V', conformance: 'PS', default: 1, quality: 'F' }),
+  AttributeElement({ name: 'Unit', id: 0x0004, type: 'ClosureUnitEnum', access: 'R V', conformance: 'UT', quality: 'F' }),
+  AttributeElement({ name: 'UnitRange', id: 0x0005, type: 'UnitRangeStruct', access: 'R V', conformance: 'UT', default: null, quality: 'X' }),
+  AttributeElement({ name: 'LimitRange', id: 0x0006, type: 'RangePercent100thsStruct', access: 'R V', conformance: 'LM' }),
+  AttributeElement({ name: 'TranslationDirection', id: 0x0007, type: 'TranslationDirectionEnum', access: 'R V', conformance: 'TR', quality: 'F' }),
+  AttributeElement({ name: 'RotationAxis', id: 0x0008, type: 'RotationAxisEnum', access: 'R V', conformance: 'RO', quality: 'F' }),
+  AttributeElement({ name: 'Overflow', id: 0x0009, type: 'OverflowEnum', access: 'R V', conformance: 'RO', quality: 'F' }),
+  AttributeElement({ name: 'ModulationType', id: 0x000a, type: 'ModulationTypeEnum', access: 'R V', conformance: 'MD', quality: 'F' }),
+  AttributeElement({ name: 'LatchControlModes', id: 0x000b, type: 'LatchControlModesBitmap', access: 'R V', conformance: 'LT', quality: 'F' }),
   CommandElement(
     { name: 'SetTarget', id: 0x0000, access: 'O T', conformance: 'M', direction: 'request', response: 'status' },
     FieldElement({ name: 'Position', id: 0x0, type: 'percent100ths', conformance: 'O' }),
@@ -68,7 +68,7 @@ export const ClosureDimensionDefinition = ClusterElement(
     FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
   ),
   CommandElement(
-    { name: 'Step', id: 0x0001, access: 'O T', conformance: 'POS', direction: 'request', response: 'status' },
+    { name: 'Step', id: 0x0001, access: 'O T', conformance: 'PS', direction: 'request', response: 'status' },
     FieldElement({ name: 'Direction', id: 0x0, type: 'StepDirectionEnum', conformance: 'M' }),
     FieldElement({ name: 'NumberOfSteps', id: 0x1, type: 'uint16', conformance: 'M', constraint: 'min 1' }),
     FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
@@ -135,7 +135,7 @@ export const ClosureDimensionDefinition = ClusterElement(
     FieldElement({ name: 'DepthSymmetry', id: 0x0b, conformance: 'M' }),
   ),
   DatatypeElement(
-    { name: 'LatchControlModesAttribute', type: 'map8' },
+    { name: 'LatchControlModesBitmap', type: 'map8' },
     FieldElement({ name: 'RemoteLatching', constraint: '0' }),
     FieldElement({ name: 'RemoteUnlatching', constraint: '1' }),
   ),
@@ -253,7 +253,7 @@ export declare namespace ClosureDimension {
   type StepDirection = StepDirectionEnum[keyof StepDirectionEnum];
   type TranslationDirection = TranslationDirectionEnum[keyof TranslationDirectionEnum];
 
-  interface LatchControlModesAttribute {
+  interface LatchControlModesBitmap {
     remoteLatching?: boolean;
     remoteUnlatching?: boolean;
   }
@@ -298,7 +298,7 @@ export declare namespace ClosureDimension {
     rotationAxis?: RotationAxis;
     overflow?: Overflow;
     modulationType?: ModulationType;
-    latchControlModes?: LatchControlModesAttribute;
+    latchControlModes?: LatchControlModesBitmap;
   }
 
   interface Commands {
@@ -323,6 +323,7 @@ export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterTyp
   readonly schema: ClusterModel;
   readonly attributes: ClusterType.AttributeObjects<ClosureDimension.Attributes>;
   readonly commands: ClusterType.CommandObjects<ClosureDimension.Commands>;
+  readonly events: ClusterType.EventObjects<Record<string, never>>;
   readonly Feature: ClosureDimension.FeatureEnum;
   readonly ClosureUnit: ClosureDimension.ClosureUnitEnum;
   readonly ModulationType: ClosureDimension.ModulationTypeEnum;
@@ -330,6 +331,12 @@ export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterTyp
   readonly RotationAxis: ClosureDimension.RotationAxisEnum;
   readonly StepDirection: ClosureDimension.StepDirectionEnum;
   readonly TranslationDirection: ClosureDimension.TranslationDirectionEnum;
+  readonly LatchControlModes: new (value?: Partial<ClosureDimension.LatchControlModesBitmap> | number) => ClosureDimension.LatchControlModesBitmap;
+  readonly DimensionState: new (value?: Partial<ClosureDimension.DimensionState>) => ClosureDimension.DimensionState;
+  readonly RangePercent100ths: new (value?: Partial<ClosureDimension.RangePercent100ths>) => ClosureDimension.RangePercent100ths;
+  readonly UnitRange: new (value?: Partial<ClosureDimension.UnitRange>) => ClosureDimension.UnitRange;
+  readonly SetTargetRequest: new (value?: Partial<ClosureDimension.SetTargetRequest>) => ClosureDimension.SetTargetRequest;
+  readonly StepRequest: new (value?: Partial<ClosureDimension.StepRequest>) => ClosureDimension.StepRequest;
   readonly Typing: ClosureDimension.Typing;
   /** @deprecated Use {@link ClosureDimension}. */
   readonly Cluster: typeof ClosureDimension;

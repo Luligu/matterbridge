@@ -100,5 +100,4 @@ export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.
   readonly Cluster: typeof SoilMeasurement;
   /** @deprecated Use {@link SoilMeasurement}. */
   readonly Complete: typeof SoilMeasurement;
-  /** @deprecated */
 };

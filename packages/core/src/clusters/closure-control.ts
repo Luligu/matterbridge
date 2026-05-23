@@ -40,40 +40,40 @@ export const ClosureControlDefinition = ClusterElement(
   AttributeElement({ name: 'ClusterRevision', id: 0xfffd, type: 'ClusterRevision', default: 1 }),
   AttributeElement(
     { name: 'FeatureMap', id: 0xfffc, type: 'FeatureMap' },
-    FieldElement({ name: 'POS', conformance: 'O', constraint: '0', title: 'Positioning' }),
-    FieldElement({ name: 'ML', conformance: 'O', constraint: '1', title: 'MotionLatching' }),
-    FieldElement({ name: 'INS', conformance: 'O', constraint: '2', title: 'Instantaneous' }),
-    FieldElement({ name: 'SPD', conformance: '[POS & !INS]', constraint: '3', title: 'Speed' }),
-    FieldElement({ name: 'VNT', conformance: '[POS]', constraint: '4', title: 'Ventilation' }),
-    FieldElement({ name: 'PED', conformance: '[POS]', constraint: '5', title: 'Pedestrian' }),
-    FieldElement({ name: 'CAL', conformance: '[POS]', constraint: '6', title: 'Calibration' }),
-    FieldElement({ name: 'PRT', conformance: 'O', constraint: '7', title: 'Protection' }),
-    FieldElement({ name: 'MAN', conformance: 'O', constraint: '8', title: 'ManuallyOperable' }),
+    FieldElement({ name: 'PS', conformance: 'O.a+', constraint: '0', title: 'Positioning' }),
+    FieldElement({ name: 'LT', conformance: 'O.a+', constraint: '1', title: 'MotionLatching' }),
+    FieldElement({ name: 'IS', conformance: 'O', constraint: '2', title: 'Instantaneous' }),
+    FieldElement({ name: 'SP', conformance: '[PS & !IS]', constraint: '3', title: 'Speed' }),
+    FieldElement({ name: 'VT', conformance: '[PS]', constraint: '4', title: 'Ventilation' }),
+    FieldElement({ name: 'PD', conformance: '[PS]', constraint: '5', title: 'Pedestrian' }),
+    FieldElement({ name: 'CL', conformance: '[PS]', constraint: '6', title: 'Calibration' }),
+    FieldElement({ name: 'PT', conformance: 'O', constraint: '7', title: 'Protection' }),
+    FieldElement({ name: 'MO', conformance: 'O', constraint: '8', title: 'ManuallyOperable' }),
   ),
-  AttributeElement({ name: 'CountdownTime', id: 0x0000, type: 'uint32', access: 'R V', conformance: '[POS & !INS]', constraint: 'max 259200', default: null, quality: 'X' }),
+  AttributeElement({ name: 'CountdownTime', id: 0x0000, type: 'elapsed-s', access: 'R V', conformance: '[PS & !IS]', constraint: 'max 259200', default: null, quality: 'X Q' }),
   AttributeElement({ name: 'MainState', id: 0x0001, type: 'MainStateEnum', access: 'R V', conformance: 'M', constraint: 'desc' }),
   AttributeElement(
-    { name: 'CurrentErrorList', id: 0x0002, type: 'list', access: 'R V', conformance: 'M', constraint: 'max 10', default: [] },
+    { name: 'CurrentErrorList', id: 0x0002, type: 'list', access: 'R V', conformance: 'M', constraint: 'max 10[all]', default: [] },
     FieldElement({ name: 'entry', type: 'ClosureErrorEnum' }),
   ),
   AttributeElement({ name: 'OverallCurrentState', id: 0x0003, type: 'OverallCurrentStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
   AttributeElement({ name: 'OverallTargetState', id: 0x0004, type: 'OverallTargetStateStruct', access: 'R V', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'LatchControlModes', id: 0x0005, type: 'LatchControlModesAttribute', access: 'R V', conformance: 'ML', quality: 'F' }),
-  CommandElement({ name: 'Stop', id: 0x0000, access: 'O', conformance: '!INS', direction: 'request', response: 'status' }),
+  AttributeElement({ name: 'LatchControlModes', id: 0x0005, type: 'LatchControlModesBitmap', access: 'R V', conformance: 'LT', quality: 'F' }),
+  CommandElement({ name: 'Stop', id: 0x0000, access: 'O', conformance: '!IS', direction: 'request', response: 'status' }),
   CommandElement(
     { name: 'MoveTo', id: 0x0001, access: 'O T', conformance: 'M', direction: 'request', response: 'status' },
-    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'O' }),
-    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O' }),
-    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'O.a+' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O.a+' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O.a+', default: 0 }),
   ),
-  CommandElement({ name: 'Calibrate', id: 0x0002, access: 'O T', conformance: 'CAL', direction: 'request', response: 'status' }),
+  CommandElement({ name: 'Calibrate', id: 0x0002, access: 'M T', conformance: 'CL', direction: 'request', response: 'status' }),
   EventElement(
     { name: 'OperationalError', id: 0x0000, access: 'V', conformance: 'M', priority: 'critical' },
-    FieldElement({ name: 'ErrorState', id: 0x0, type: 'list', conformance: 'M', constraint: 'max 10' }, FieldElement({ name: 'entry', type: 'ClosureErrorEnum' })),
+    FieldElement({ name: 'ErrorState', id: 0x0, type: 'list', conformance: 'M', constraint: '1 to 10[all]' }, FieldElement({ name: 'entry', type: 'ClosureErrorEnum' })),
   ),
-  EventElement({ name: 'MovementCompleted', id: 0x0001, access: 'V', conformance: '!INS', priority: 'info' }),
+  EventElement({ name: 'MovementCompleted', id: 0x0001, access: 'V', conformance: '!IS', priority: 'info' }),
   EventElement(
-    { name: 'EngageStateChanged', id: 0x0002, access: 'V', conformance: 'MAN', priority: 'info' },
+    { name: 'EngageStateChanged', id: 0x0002, access: 'V', conformance: 'MO', priority: 'info' },
     FieldElement({ name: 'EngageValue', id: 0x0, type: 'bool', conformance: 'M' }),
   ),
   EventElement(
@@ -93,8 +93,8 @@ export const ClosureControlDefinition = ClusterElement(
     FieldElement({ name: 'FullyClosed', id: 0x0, conformance: 'M' }),
     FieldElement({ name: 'FullyOpened', id: 0x1, conformance: 'M' }),
     FieldElement({ name: 'PartiallyOpened', id: 0x2, conformance: 'M' }),
-    FieldElement({ name: 'OpenedForPedestrian', id: 0x3, conformance: 'M' }),
-    FieldElement({ name: 'OpenedForVentilation', id: 0x4, conformance: 'M' }),
+    FieldElement({ name: 'OpenedForPedestrian', id: 0x3, conformance: 'PD' }),
+    FieldElement({ name: 'OpenedForVentilation', id: 0x4, conformance: 'VT' }),
     FieldElement({ name: 'OpenedAtSignature', id: 0x5, conformance: 'M' }),
   ),
   DatatypeElement(
@@ -103,36 +103,36 @@ export const ClosureControlDefinition = ClusterElement(
     FieldElement({ name: 'Moving', id: 0x1, conformance: 'M' }),
     FieldElement({ name: 'WaitingForMotion', id: 0x2, conformance: 'M' }),
     FieldElement({ name: 'Error', id: 0x3, conformance: 'M' }),
-    FieldElement({ name: 'Calibrating', id: 0x4, conformance: 'M' }),
-    FieldElement({ name: 'Protected', id: 0x5, conformance: 'M' }),
-    FieldElement({ name: 'Disengaged', id: 0x6, conformance: 'M' }),
+    FieldElement({ name: 'Calibrating', id: 0x4, conformance: 'CL' }),
+    FieldElement({ name: 'Protected', id: 0x5, conformance: 'PT' }),
+    FieldElement({ name: 'Disengaged', id: 0x6, conformance: 'MO' }),
     FieldElement({ name: 'SetupRequired', id: 0x7, conformance: 'M' }),
   ),
   DatatypeElement(
     { name: 'TargetPositionEnum', type: 'enum8' },
     FieldElement({ name: 'MoveToFullyClosed', id: 0x0, conformance: 'M' }),
     FieldElement({ name: 'MoveToFullyOpen', id: 0x1, conformance: 'M' }),
-    FieldElement({ name: 'MoveToPedestrianPosition', id: 0x2, conformance: 'M' }),
-    FieldElement({ name: 'MoveToVentilationPosition', id: 0x3, conformance: 'M' }),
+    FieldElement({ name: 'MoveToPedestrianPosition', id: 0x2, conformance: 'PD' }),
+    FieldElement({ name: 'MoveToVentilationPosition', id: 0x3, conformance: 'VT' }),
     FieldElement({ name: 'MoveToSignaturePosition', id: 0x4, conformance: 'M' }),
   ),
   DatatypeElement(
-    { name: 'LatchControlModesAttribute', type: 'map8' },
+    { name: 'LatchControlModesBitmap', type: 'map8' },
     FieldElement({ name: 'RemoteLatching', constraint: '0' }),
     FieldElement({ name: 'RemoteUnlatching', constraint: '1' }),
   ),
   DatatypeElement(
     { name: 'OverallCurrentStateStruct', type: 'struct' },
-    FieldElement({ name: 'Position', id: 0x0, type: 'CurrentPositionEnum', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-    FieldElement({ name: 'SecureState', id: 0x3, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
+    FieldElement({ name: 'Position', id: 0x0, type: 'CurrentPositionEnum', conformance: 'PS', default: null, quality: 'X' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'LT', default: null, quality: 'X' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'SP' }),
+    FieldElement({ name: 'SecureState', id: 0x3, type: 'bool', conformance: 'M', default: null, quality: 'X' }),
   ),
   DatatypeElement(
     { name: 'OverallTargetStateStruct', type: 'struct' },
-    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
+    FieldElement({ name: 'Position', id: 0x0, type: 'TargetPositionEnum', conformance: 'PS', default: null, quality: 'X' }),
+    FieldElement({ name: 'Latch', id: 0x1, type: 'bool', conformance: 'LT', default: null, quality: 'X' }),
+    FieldElement({ name: 'Speed', id: 0x2, type: 'ThreeLevelAutoEnum', conformance: 'SP' }),
   ),
 );
 
@@ -206,7 +206,7 @@ export declare namespace ClosureControl {
   type MainState = MainStateEnum[keyof MainStateEnum];
   type TargetPosition = TargetPositionEnum[keyof TargetPositionEnum];
 
-  interface LatchControlModesAttribute {
+  interface LatchControlModesBitmap {
     remoteLatching?: boolean;
     remoteUnlatching?: boolean;
   }
@@ -215,7 +215,7 @@ export declare namespace ClosureControl {
     position?: CurrentPosition | null;
     latch?: boolean | null;
     speed?: ThreeLevelAuto;
-    secureState?: boolean | null;
+    secureState: boolean | null;
   }
 
   interface OverallTargetState {
@@ -248,7 +248,7 @@ export declare namespace ClosureControl {
     currentErrorList: ClosureError[];
     overallCurrentState: OverallCurrentState | null;
     overallTargetState: OverallTargetState | null;
-    latchControlModes?: LatchControlModesAttribute;
+    latchControlModes?: LatchControlModesBitmap;
   }
 
   interface Commands {
@@ -288,6 +288,13 @@ export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Co
   readonly CurrentPosition: ClosureControl.CurrentPositionEnum;
   readonly MainState: ClosureControl.MainStateEnum;
   readonly TargetPosition: ClosureControl.TargetPositionEnum;
+  readonly LatchControlModes: new (value?: Partial<ClosureControl.LatchControlModesBitmap>) => ClosureControl.LatchControlModesBitmap;
+  readonly OverallCurrentState: new (value?: Partial<ClosureControl.OverallCurrentState>) => ClosureControl.OverallCurrentState;
+  readonly OverallTargetState: new (value?: Partial<ClosureControl.OverallTargetState>) => ClosureControl.OverallTargetState;
+  readonly MoveToRequest: new (value?: Partial<ClosureControl.MoveToRequest>) => ClosureControl.MoveToRequest;
+  readonly OperationalErrorEvent: new (value?: Partial<ClosureControl.OperationalErrorEvent>) => ClosureControl.OperationalErrorEvent;
+  readonly EngageStateChangedEvent: new (value?: Partial<ClosureControl.EngageStateChangedEvent>) => ClosureControl.EngageStateChangedEvent;
+  readonly SecureStateChangedEvent: new (value?: Partial<ClosureControl.SecureStateChangedEvent>) => ClosureControl.SecureStateChangedEvent;
   readonly Typing: ClosureControl.Typing;
   /** @deprecated Use {@link ClosureControl}. */
   readonly Cluster: typeof ClosureControl;
