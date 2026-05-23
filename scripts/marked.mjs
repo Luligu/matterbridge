@@ -84,6 +84,8 @@ const FILES_TO_RENDER = [
   { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },
   { source: 'STYLEGUIDE.md', target: 'STYLEGUIDE.html' },
   { source: 'CODE_OF_CONDUCT.md', target: 'CODE_OF_CONDUCT.html' },
+  { source: 'Matter-1.5.1.md', target: 'Matter-1.5.1.html' },
+  { source: 'Matter.js-0.17.md', target: 'Matter.js-0.17.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },
 ];

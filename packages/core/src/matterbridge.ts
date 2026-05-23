@@ -2676,6 +2676,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         listeningAddressIpv4: this.ipv4Address,
         listeningAddressIpv6: this.ipv6Address,
         port,
+        tcp: true,
+        transportPreference: 'udp',
       },
 
       // Provide the certificate for the device

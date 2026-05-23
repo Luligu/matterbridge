@@ -60,7 +60,8 @@ These classes will run as threads in the next releases:
 ### Breaking changes
 
 - [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
-- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
+- [matter]: Enable `tcp` transport with `udp` preference.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -69,7 +70,7 @@ These classes will run as threads in the next releases:
 ### Development
 
 - [matter]: Update [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
-- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
 
 ### Added
 
@@ -79,7 +80,6 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
-
 - [package]: Bump `eslint` to v.10.4.0.
 - [package]: Bump `@types/node` to v.25.9.1.
 - [package]: Bump `ts-jest` to v.29.4.11.
