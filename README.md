@@ -49,9 +49,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Acknowledgements
 
-The project is build on top of [matter.js](https://github.com/matter-js/matter.js).
+This project is built on top of [matter.js](https://github.com/matter-js/matter.js).
 
-A special thanks to Apollon77 for his incredible work.
+A heartfelt thank you to [Apollon77](https://github.com/Apollon77) for his incredible and foundational work on matter.js.
+
+A very special thank you to my friend [Tamer Salah](https://github.com/tammeryousef1006) — without his invaluable daily support since day one, we would not be where we are today.
 
 ## Discord
 

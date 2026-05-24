@@ -59,8 +59,8 @@ These classes will run as threads in the next releases:
 
 ### Breaking changes
 
-- [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
-- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
+- [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](https://matterbridge.io/Matter-1.5.1.html).
+- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.md).
 - [matter]: Enable `tcp` transport with `udp` preference.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
