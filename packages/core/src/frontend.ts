@@ -1228,9 +1228,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterMdnsInterface: this.matterbridge.mdnsInterface,
       matterIpv4Address: this.matterbridge.ipv4Address,
       matterIpv6Address: this.matterbridge.ipv6Address,
-      matterPort: this.matterbridge.port || 5540,
-      matterDiscriminator: this.matterbridge.discriminator,
-      matterPasscode: this.matterbridge.passcode,
+      matterPort: this.matterbridge.initialPort || 5540,
+      matterDiscriminator: this.matterbridge.initialDiscriminator,
+      matterPasscode: this.matterbridge.initialPasscode,
       readOnly: this.readOnly,
       shellyBoard: this.shellyBoard,
       shellySysUpdate: this.shellySysUpdate,
@@ -2221,14 +2221,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const port = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(port, 5540, 5600)) {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
-              this.matterbridge.port = port;
+              this.matterbridge.port = this.matterbridge.initialPort = port;
               await this.matterbridge.nodeContext?.set<number>('matterport', port);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter port changed to ${port}`);
             } else {
               this.log.debug(`Reset matter commissioning port to ${CYAN}5540${db}`);
-              this.matterbridge.port = 5540;
+              this.matterbridge.port = this.matterbridge.initialPort = 5540;
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning port to default 5540' });
@@ -2240,14 +2240,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
-              this.matterbridge.discriminator = discriminator;
+              this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter discriminator changed to ${discriminator}`);
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
-              this.matterbridge.discriminator = undefined;
+              this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
               sendResponse({
@@ -2264,7 +2264,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
-              this.matterbridge.passcode = passcode;
+              this.matterbridge.passcode = this.matterbridge.initialPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
               this.wssSendRestartRequired();
@@ -2272,7 +2272,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendSnackbarMessage(`Matter passcode changed to ${passcode}`);
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
-              this.matterbridge.passcode = undefined;
+              this.matterbridge.passcode = this.matterbridge.initialPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
               sendResponse({

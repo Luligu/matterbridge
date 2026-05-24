@@ -285,12 +285,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   ipv4Address: string | undefined;
   /** Matter listeningAddressIpv6 address */
   ipv6Address: string | undefined;
-  /** Matter commissioning port (first server node port) */
+  /** Matter commissioning port (next server node port) */
   port: number | undefined;
-  /** Matter commissioning passcode (first server node passcode) */
+  /** Initial Matter commissioning port */
+  initialPort: number | undefined;
+  /** Matter commissioning passcode (next server node passcode) */
   passcode: number | undefined;
-  /** Matter commissioning discriminator (first server node discriminator) */
+  /** Initial Matter commissioning passcode */
+  initialPasscode: number | undefined;
+  /** Matter commissioning discriminator (next server node discriminator) */
   discriminator: number | undefined;
+  /** Initial Matter commissioning discriminator */
+  initialDiscriminator: number | undefined;
   /** Matter device certification (device certification) */
   certification: DeviceCertification.Configuration | undefined;
 
@@ -612,13 +618,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
+    this.initialPort = this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
+    this.initialPasscode = this.passcode =
+      getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.discriminator =
+    this.initialDiscriminator = this.discriminator =
       getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
     // Certificate management
@@ -2715,8 +2722,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         softwareVersionString: await storageContext.get<string>('softwareVersionString'),
         hardwareVersion: await storageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
-
-        // specificationVersion: 0x01050000, // Matter 1.5
 
         reachable: true,
       },
