@@ -75,7 +75,7 @@
     "@matterbridge/types": "3.8.0",
     "@matterbridge/utils": "3.8.0",
     "@zip.js/zip.js": "2.8.26",
-    "node-ansi-logger": "3.3.0-dev-20260513-eaa1bd1"
+    "node-ansi-logger": "3.3.0-dev-20260524-cac9dd5"
   },
   "devDependencies": {
     "@jest/globals": "30.4.1"

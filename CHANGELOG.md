@@ -63,6 +63,15 @@ These classes will run as threads in the next releases:
 - [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
 - [matter]: Enable `tcp` transport with `udp` preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.
 
+### Development
+
+- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API.
+
+### Changed
+
+- [package]: Bump `node-ansi-logger` to v.3.3.0-dev-20260524-cac9dd5.
+- [package]: Bump `node-persist-manager` to v.2.1.0-dev-20260524-6a6019a.
+
 ### Fixed
 
 - [frontend]: Fix value of port discriminator and passcode shown on Settings/Matter settings on the frontend.

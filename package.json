@@ -285,8 +285,8 @@
     "@matterbridge/types": "3.8.0",
     "@matterbridge/utils": "3.8.0",
     "@matterbridge/vitest-utils": "3.8.0",
-    "node-ansi-logger": "3.3.0-dev-20260513-eaa1bd1",
-    "node-persist-manager": "2.1.0-dev-20260512-3c3d427"
+    "node-ansi-logger": "3.3.0-dev-20260524-cac9dd5",
+    "node-persist-manager": "2.1.0-dev-20260524-6a6019a"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
