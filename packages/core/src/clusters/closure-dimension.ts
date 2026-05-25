@@ -24,6 +24,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
+import { inspect } from 'node:util';
+
 import { type MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
@@ -244,6 +246,17 @@ export declare namespace ClosureDimension {
     readonly DepthSymmetry: 11;
   }
 
+  interface FeatureFlags {
+    positioning?: boolean;
+    motionLatching?: boolean;
+    unit?: boolean;
+    limitation?: boolean;
+    speed?: boolean;
+    translation?: boolean;
+    rotation?: boolean;
+    modulation?: boolean;
+  }
+
   type Feature = FeatureEnum[keyof FeatureEnum];
   type Features = Feature;
   type ClosureUnit = ClosureUnitEnum[keyof ClosureUnitEnum];
@@ -316,6 +329,9 @@ export declare namespace ClosureDimension {
   }
 }
 
+// eslint-disable-next-line no-console
+console.log('ClosureDimension cluster:', inspect(ClusterType(ClosureDimensionModel), { depth: null, colors: true }));
+
 export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0105;
   readonly name: 'ClosureDimension';
@@ -324,7 +340,9 @@ export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterTyp
   readonly attributes: ClusterType.AttributeObjects<ClosureDimension.Attributes>;
   readonly commands: ClusterType.CommandObjects<ClosureDimension.Commands>;
   readonly events: ClusterType.EventObjects<Record<string, never>>;
+  readonly features: ClusterType.Features<ClosureDimension.Features>;
   readonly Feature: ClosureDimension.FeatureEnum;
+  readonly FeatureMap: new (value?: Partial<ClosureDimension.FeatureFlags> | number) => ClosureDimension.FeatureFlags;
   readonly ClosureUnit: ClosureDimension.ClosureUnitEnum;
   readonly ModulationType: ClosureDimension.ModulationTypeEnum;
   readonly Overflow: ClosureDimension.OverflowEnum;
@@ -337,11 +355,18 @@ export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterTyp
   readonly UnitRange: new (value?: Partial<ClosureDimension.UnitRange>) => ClosureDimension.UnitRange;
   readonly SetTargetRequest: new (value?: Partial<ClosureDimension.SetTargetRequest>) => ClosureDimension.SetTargetRequest;
   readonly StepRequest: new (value?: Partial<ClosureDimension.StepRequest>) => ClosureDimension.StepRequest;
-  readonly Typing: ClosureDimension.Typing;
+  readonly Typing: ClosureDimension;
   /** @deprecated Use {@link ClosureDimension}. */
-  readonly Cluster: typeof ClosureDimension;
+  readonly Cluster: ClusterType.WithCompat<typeof ClosureDimension, ClosureDimension>;
   /** @deprecated Use {@link ClosureDimension}. */
   readonly Complete: typeof ClosureDimension;
-  /** @deprecated */
+  /** @deprecated Use {@link ClosureDimension}. */
   with(...features: ClosureDimension.Feature[]): typeof ClosureDimension;
 };
+
+export interface ClosureDimension extends ClusterTyping {
+  Attributes: ClosureDimension.Attributes;
+  Commands: ClosureDimension.Commands;
+  Features: ClosureDimension.Features;
+  Components: ClosureDimension.Components;
+}

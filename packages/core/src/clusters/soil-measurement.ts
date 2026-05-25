@@ -24,6 +24,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
+import { inspect } from 'node:util';
+
 import { AttributeElement, ClusterElement, ClusterModel, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
 import { type ClusterId } from '@matter/types/datatype';
@@ -89,15 +91,24 @@ export declare namespace SoilMeasurement {
   }
 }
 
+// eslint-disable-next-line no-console
+console.log('SoilMeasurement cluster:', inspect(ClusterType(SoilMeasurementModel), { depth: null, colors: true }));
+
 export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0430;
   readonly name: 'SoilMeasurement';
   readonly revision: 1;
   readonly schema: ClusterModel;
   readonly attributes: ClusterType.AttributeObjects<SoilMeasurement.Attributes>;
-  readonly Typing: SoilMeasurement.Typing;
+  readonly features: Record<string, never>;
+  readonly Typing: SoilMeasurement;
   /** @deprecated Use {@link SoilMeasurement}. */
-  readonly Cluster: typeof SoilMeasurement;
+  readonly Cluster: ClusterType.WithCompat<typeof SoilMeasurement, SoilMeasurement>;
   /** @deprecated Use {@link SoilMeasurement}. */
   readonly Complete: typeof SoilMeasurement;
 };
+
+export interface SoilMeasurement extends ClusterTyping {
+  Attributes: SoilMeasurement.Attributes;
+  Components: SoilMeasurement.Components;
+}

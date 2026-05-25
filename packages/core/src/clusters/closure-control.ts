@@ -24,6 +24,8 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
+import { inspect } from 'node:util';
+
 import { type MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, EventElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
@@ -199,6 +201,18 @@ export declare namespace ClosureControl {
     readonly MoveToSignaturePosition: 4;
   }
 
+  interface FeatureFlags {
+    positioning?: boolean;
+    motionLatching?: boolean;
+    instantaneous?: boolean;
+    speed?: boolean;
+    ventilation?: boolean;
+    pedestrian?: boolean;
+    calibration?: boolean;
+    protection?: boolean;
+    manuallyOperable?: boolean;
+  }
+
   type Feature = FeatureEnum[keyof FeatureEnum];
   type Features = Feature;
   type ClosureError = ClosureErrorEnum[keyof ClosureErrorEnum];
@@ -275,6 +289,9 @@ export declare namespace ClosureControl {
   }
 }
 
+// eslint-disable-next-line no-console
+console.log('ClosureControl cluster:', inspect(ClusterType(ClosureControlModel), { depth: null, colors: true }));
+
 export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0104;
   readonly name: 'ClosureControl';
@@ -283,7 +300,9 @@ export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Co
   readonly attributes: ClusterType.AttributeObjects<ClosureControl.Attributes>;
   readonly commands: ClusterType.CommandObjects<ClosureControl.Commands>;
   readonly events: ClusterType.EventObjects<ClosureControl.Events>;
+  readonly features: ClusterType.Features<ClosureControl.Features>;
   readonly Feature: ClosureControl.FeatureEnum;
+  readonly FeatureMap: new (value?: Partial<ClosureControl.FeatureFlags> | number) => ClosureControl.FeatureFlags;
   readonly ClosureError: ClosureControl.ClosureErrorEnum;
   readonly CurrentPosition: ClosureControl.CurrentPositionEnum;
   readonly MainState: ClosureControl.MainStateEnum;
@@ -295,11 +314,19 @@ export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Co
   readonly OperationalErrorEvent: new (value?: Partial<ClosureControl.OperationalErrorEvent>) => ClosureControl.OperationalErrorEvent;
   readonly EngageStateChangedEvent: new (value?: Partial<ClosureControl.EngageStateChangedEvent>) => ClosureControl.EngageStateChangedEvent;
   readonly SecureStateChangedEvent: new (value?: Partial<ClosureControl.SecureStateChangedEvent>) => ClosureControl.SecureStateChangedEvent;
-  readonly Typing: ClosureControl.Typing;
+  readonly Typing: ClosureControl;
   /** @deprecated Use {@link ClosureControl}. */
-  readonly Cluster: typeof ClosureControl;
+  readonly Cluster: ClusterType.WithCompat<typeof ClosureControl, ClosureControl>;
   /** @deprecated Use {@link ClosureControl}. */
   readonly Complete: typeof ClosureControl;
-  /** @deprecated */
+  /** @deprecated Use {@link ClosureControl}. */
   with(...features: ClosureControl.Feature[]): typeof ClosureControl;
 };
+
+export interface ClosureControl extends ClusterTyping {
+  Attributes: ClosureControl.Attributes;
+  Commands: ClosureControl.Commands;
+  Events: ClosureControl.Events;
+  Features: ClosureControl.Features;
+  Components: ClosureControl.Components;
+}
