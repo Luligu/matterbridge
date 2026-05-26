@@ -4,6 +4,7 @@
   "oxc.enable": false,
   "js/ts.experimental.useTsgo": true,
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+  "typescript.native-preview.tsdk": "/workspaces/matterbridge/node_modules/@typescript/native-preview",
   "terminal.integrated.scrollback": 10000,
   "editor.tabSize": 2,
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",

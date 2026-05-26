@@ -173,7 +173,7 @@
     "cleanWatch": "npm run clean && npm run watch",
     "cleanWatch:tsgo": "npm run clean && npm run watch:tsgo",
     "clean": "npx shx rm -rf *.tsbuildinfo packages/**/*.tsbuildinfo dist packages/**/dist",
-    "deepClean": "npm run clean && npx shx rm -rf coverage packages/**/coverage jest packages/**/jest temp packages/**/temp package-lock.json packages/**/package-lock.json npm-shrinkwrap.json packages/**/npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* packages/**/.cache node_modules/* node_modules/.[!.]* node_modules/..?*  packages/*/node_modules",
+    "deepClean": "npm run clean && npx shx rm -rf coverage packages/**/coverage jest packages/**/jest temp packages/**/temp package-lock.json packages/**/package-lock.json npm-shrinkwrap.json packages/**/npm-shrinkwrap.json .cache/* .cache/.[!.]* .cache/..?* packages/*/.cache node_modules/* node_modules/.[!.]* node_modules/..?*  packages/*/node_modules",
     "test": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --maxWorkers=100%",
     "test:watch": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --watch --maxWorkers=100%",
     "test:verbose": "cross-env NODE_OPTIONS=\"--experimental-vm-modules --no-warnings\" jest --verbose --maxWorkers=100%",

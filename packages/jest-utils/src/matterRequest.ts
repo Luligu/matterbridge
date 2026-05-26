@@ -1,9 +1,9 @@
 /**
- * @description This file contains the Jest Matter Request utilities.
- * @file src/jestMatterRequest.test.ts
+ * @description This file contains the Matter Request utilities.
+ * @file src/matterRequest.ts
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.

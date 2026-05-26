@@ -39,6 +39,7 @@ import { plg } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { LogLevel, nf } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   broadcastMessageHandlerBroadcastServerSpy,
   fetchBroadcastServerSpy,
@@ -47,7 +48,6 @@ import {
   requestBroadcastServerSpy,
   respondBroadcastServerSpy,
 } from './jestutils/jestBroadcastServerSpy.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';

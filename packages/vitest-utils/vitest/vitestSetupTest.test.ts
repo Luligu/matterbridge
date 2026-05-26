@@ -1,20 +1,28 @@
 /* eslint-disable no-console */
-import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
+import { vi } from 'vitest';
 
-import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, log, loggerLogSpy, setDebug, setupTest } from './jestHelpers.js';
+import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, log, loggerLogSpy, setDebug, setupTest } from '../src/vitestSetupTest.js';
 
 process.argv.push('--debug');
 
-describe('Jest Helpers', () => {
-  const NAME = 'JestHelpers';
+describe('Vitest Helpers', () => {
+  const NAME = 'VitestHelpers';
+
+  beforeAll(async () => {
+    await setupTest(NAME, true);
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   test('should setup test', async () => {
@@ -37,18 +45,15 @@ describe('Jest Helpers', () => {
 
   test('should set debug mode', async () => {
     await setDebug(true);
-    await setDebug(false);
-    log.log(LogLevel.INFO, 'Test setup completed');
-    console.log('Test setup completed');
-    console.debug('Test setup completed');
-    console.info('Test setup completed');
-    console.warn('Test setup completed');
-    console.error('Test setup completed');
     expect(loggerLogSpy).toBeDefined();
     expect(consoleLogSpy).toBeDefined();
     expect(consoleDebugSpy).toBeDefined();
     expect(consoleInfoSpy).toBeDefined();
     expect(consoleWarnSpy).toBeDefined();
     expect(consoleErrorSpy).toBeDefined();
+
+    await setDebug(false);
+    expect(loggerLogSpy.getMockImplementation()).toBeDefined();
+    expect(consoleLogSpy.getMockImplementation()).toBeDefined();
   });
 });

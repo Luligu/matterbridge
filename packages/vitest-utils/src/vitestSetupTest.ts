@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-import { rmSync } from 'node:fs';
+import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
@@ -71,6 +71,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
 
   // Cleanup any existing home directory
   rmSync(HOMEDIR, { recursive: true, force: true });
+  mkdirSync(HOMEDIR, { recursive: true });
 
   const { vi } = await import('vitest');
   loggerDebugSpy = vi.spyOn(AnsiLogger.prototype, 'debug');

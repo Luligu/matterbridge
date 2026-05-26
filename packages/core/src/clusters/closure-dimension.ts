@@ -24,8 +24,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { inspect } from 'node:util';
-
 import { type MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
@@ -329,8 +327,7 @@ export declare namespace ClosureDimension {
   }
 }
 
-// eslint-disable-next-line no-console
-console.log('ClosureDimension cluster:', inspect(ClusterType(ClosureDimensionModel), { depth: null, colors: true }));
+// console.log('ClosureDimension cluster:', inspect(ClusterType(ClosureDimensionModel), { depth: null, colors: true }));
 
 export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0105;

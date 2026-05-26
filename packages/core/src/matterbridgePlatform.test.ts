@@ -12,7 +12,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { dev, plg } from '@matterbridge/types';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   addMatterbridgePlatform,
   createMatterbridgeEnvironment,

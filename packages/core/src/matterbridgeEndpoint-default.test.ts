@@ -89,7 +89,7 @@ import {
 } from '@matter/types/clusters';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,

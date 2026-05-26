@@ -39,7 +39,7 @@ import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import type { Frontend as FrontendType } from './frontend.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { Matterbridge } from './matterbridge.js';

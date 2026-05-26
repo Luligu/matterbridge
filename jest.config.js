@@ -1,5 +1,5 @@
 // @ts-check
-// jest.config.js 2.0.1
+// jest.config.js 2.0.2
 
 // This Jest configuration is designed for a TypeScript project using ESM modules with ts-jest.
 
@@ -37,6 +37,8 @@ const jestConfig = {
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
+    '/packages/vitest-utils/',
+    '/packages/jest-utils/',
     'matterNode',
   ], // Ignore specific paths for test files
   coveragePathIgnorePatterns: [
@@ -54,6 +56,8 @@ const jestConfig = {
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
+    '/packages/vitest-utils/',
+    '/packages/jest-utils/',
     'matterNode',
   ], // Ignore specific paths for test and coverage
   maxWorkers: '100%', // Use all available CPU cores for running tests

@@ -211,6 +211,10 @@ git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbr
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 ```
 
@@ -221,6 +225,10 @@ git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/m
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 ```
 

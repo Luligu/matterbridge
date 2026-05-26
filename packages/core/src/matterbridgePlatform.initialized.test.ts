@@ -9,7 +9,7 @@ process.argv = [...originalProcessArgv, '--verbose', '--loader'];
 import { jest } from '@jest/globals';
 
 import { Frontend } from './frontend.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import { plugins, startMatterbridge, stopMatterbridge } from './jestutils/jestMatterbridgeTest.js';
 import { originalProcessArgv, setupTest } from './jestutils/jestSetupTest.js';
 import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';

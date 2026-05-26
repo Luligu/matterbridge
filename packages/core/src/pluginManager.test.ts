@@ -39,10 +39,10 @@ import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
 import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { logKeepAlives } from './jestutils/jestLogAlive.js';
 import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { addPluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
+import { logKeepAlives } from './jestutils/logKeepAlives.js';
 import { Matterbridge } from './matterbridge.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';

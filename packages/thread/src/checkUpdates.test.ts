@@ -13,8 +13,6 @@ import { plg } from '@matterbridge/types';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
 // @ts-ignore
-import { flushAsync } from '../../../packages/core/src/jestutils/jestFlushAsync.js';
-// @ts-ignore
 import { wssSendRefreshRequiredFrontendSpy, wssSendSnackbarMessageFrontendSpy, wssSendUpdateRequiredFrontendSpy } from '../../../packages/core/src/jestutils/jestFrontendSpy.js';
 import {
   matterbridge,
@@ -23,6 +21,8 @@ import {
   // @ts-ignore
 } from '../../../packages/core/src/jestutils/jestMatterbridgeTest.js';
 import { loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '../../../packages/core/src/jestutils/jestSetupTest.js';
+// @ts-ignore
+import { flushAsync } from '../../core/src/jestutils/flushAsync.js';
 import { BroadcastServer } from './broadcastServer.js';
 import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from './checkUpdates.js';
 

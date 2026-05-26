@@ -81,7 +81,7 @@ import type { Frontend } from '../frontend.js';
 import { Matterbridge } from '../matterbridge.js';
 import type { MatterbridgePlatform } from '../matterbridgePlatform.js';
 import type { PluginManager } from '../pluginManager.js';
-import { flushAsync } from './jestFlushAsync.js';
+import { flushAsync } from './flushAsync.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jestMatterTest.js';
 import { HOMEDIR, loggerLogSpy, originalProcessArgv } from './jestSetupTest.js';
 

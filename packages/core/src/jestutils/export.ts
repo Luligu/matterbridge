@@ -7,16 +7,16 @@
  * @license Apache-2.0
  */
 
+export * from './flushAsync.js';
 export * from './jestBroadcastServerSpy.js';
 export * from './jestDeviceManagerSpy.js';
-export * from './jestFlushAsync.js';
 export * from './jestFrontendSpy.js';
-export * from './jestLogAlive.js';
 export * from './jestMatterbridgeEndpointSpy.js';
 export * from './jestMatterbridgePlatformSpy.js';
 export * from './jestMatterbridgeSpy.js';
 export * from './jestMatterbridgeTest.js';
-export * from './jestMatterRequest.js';
 export * from './jestMatterTest.js';
 export * from './jestPluginManagerSpy.js';
 export * from './jestSetupTest.js';
+export * from './logKeepAlives.js';
+export * from './matterRequest.js';

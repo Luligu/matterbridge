@@ -95,7 +95,7 @@ import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServ
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,

@@ -1,6 +1,6 @@
 /**
- * @description This file contains the Jest Matter Test Environment.
- * @file src/jestMatterTest.test.ts
+ * @description This file contains the Vitest Matter Test Environment.
+ * @file src/vitestMatterTest.test.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0
@@ -38,7 +38,7 @@ import { er, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from './flushAsync.js';
-import { HOMEDIR, NAME } from './jestSetupTest.js';
+import { HOMEDIR, NAME } from './vitestSetupTest.js';
 
 export let environment: Environment;
 export let server: ServerNode<ServerNode.RootEndpoint>;

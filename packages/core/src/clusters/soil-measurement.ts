@@ -24,8 +24,6 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { inspect } from 'node:util';
-
 import { AttributeElement, ClusterElement, ClusterModel, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
 import { type ClusterId } from '@matter/types/datatype';
@@ -91,8 +89,7 @@ export declare namespace SoilMeasurement {
   }
 }
 
-// eslint-disable-next-line no-console
-console.log('SoilMeasurement cluster:', inspect(ClusterType(SoilMeasurementModel), { depth: null, colors: true }));
+// console.log('SoilMeasurement cluster:', inspect(ClusterType(SoilMeasurementModel), { depth: null, colors: true }));
 
 export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0430;

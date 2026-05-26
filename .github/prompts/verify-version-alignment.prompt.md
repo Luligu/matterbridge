@@ -17,6 +17,8 @@ Checks:
 - Verify [..\.dockerbuild.json](../../.dockerbuild.json) has a `version` field equal to the root package version.
 - Verify [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
 - Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
+- Verify [packages/jest-utils/src/jestMatterTest.ts](../../packages/jest-utils/src/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
+- Verify [packages/vitest-utils/src/vitestMatterTest.ts](../../packages/vitest-utils/src/vitestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have `latest` equal to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
 - Verify the `engines.node` field in every real workspace package under [packages](../../packages) is identical to the `engines.node` field in the root [package.json](../../package.json).
@@ -49,6 +51,8 @@ Suggested search targets:
 - [..\.dockerbuild.json](../../.dockerbuild.json)
 - [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts)
 - [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts)
+- [packages/jest-utils/src/jestMatterTest.ts](../../packages/jest-utils/src/jestMatterTest.ts)
+- [packages/vitest-utils/src/vitestMatterTest.ts](../../packages/vitest-utils/src/vitestMatterTest.ts)
 - [docs/main_update.json](../../docs/main_update.json)
 - [docs/dev_update.json](../../docs/dev_update.json)
 - [docker-buildx-s6-rc.yml](../workflows/docker-buildx-s6-rc.yml)
