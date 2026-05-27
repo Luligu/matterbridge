@@ -72,6 +72,8 @@ These classes will run as threads in the next releases:
 - [package]: Bump `node-ansi-logger` to v.3.3.0-dev-20260524-cac9dd5.
 - [package]: Bump `node-persist-manager` to v.2.1.0-dev-20260524-6a6019a.
 - [package]: Refactor `jest-utils` and `vitest-utils` packages.
+- [oxlint]: Bump `oxlint` config to v.1.0.1.
+- [oxfmt]: Bump `oxfmt` config to v.1.0.1.
 
 ### Fixed
 

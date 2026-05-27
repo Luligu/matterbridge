@@ -1,3 +1,6 @@
+// .oxlintrc.json 1.0.1
+
+// This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": [
@@ -28,7 +31,7 @@
     "typeCheck": true,
     "maxWarnings": 0
   },
-  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise", "jest", "vitest"],
+  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -71,8 +74,28 @@
     "promise/no-multiple-resolved": "off"
   },
   "overrides": [
+    /* Jest */
     {
-      "files": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/**/*.ts", "**/test/**/*.ts", "**/vitest/**/*.ts"],
+      "files": ["**/src/**/*.{spec,test}.ts", "**/test/**/*.{spec,test}.ts"],
+      "plugins": ["jest"],
+      "env": { "jest": true },
+      "rules": {
+        "require-to-throw-message": "off",
+        "no-conditional-expect": "off",
+        "no-conditional-tests": "off",
+        "unbound-method": "off",
+        "no-unsafe-type-assertion": "off",
+        "no-unused-vars": "off",
+        "no-new": "off",
+        "max-lines-per-function": "off",
+        "require-await": "off"
+      }
+    },
+    /* Vitest */
+    {
+      "files": ["**/vitest/**/*.{spec,test}.ts"],
+      "plugins": ["vitest"],
+      "env": { "vitest": true },
       "rules": {
         "require-to-throw-message": "off",
         "no-conditional-expect": "off",

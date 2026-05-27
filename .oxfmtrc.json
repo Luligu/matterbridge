@@ -1,3 +1,6 @@
+// .oxfmtrc.json 1.0.1
+
+// This Oxfmt configuration is designed for a TypeScript project using ESM modules.
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": [
