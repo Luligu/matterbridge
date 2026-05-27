@@ -74,6 +74,7 @@ These classes will run as threads in the next releases:
 - [package]: Refactor `jest-utils` and `vitest-utils` packages.
 - [oxlint]: Bump `oxlint` config to v.1.0.1.
 - [oxfmt]: Bump `oxfmt` config to v.1.0.1.
+- [jest]: Bump `jest` config to v.2.0.2.
 
 ### Fixed
 

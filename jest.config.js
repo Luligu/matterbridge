@@ -19,48 +19,67 @@ const presetConfig = createDefaultEsmPreset(tsJestEsmPresetOptions);
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const jestConfig = {
   ...presetConfig,
-  testEnvironment: 'node', // Use Node.js environment for testing
+  // Use Node.js environment for testing
+  testEnvironment: 'node',
+  // Use a custom cache directory for Jest to improve performance
   cacheDirectory: '<rootDir>/.cache/jest',
-  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
+  // Handle ESM imports by removing the .js extension
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
+  // Match test files in src and test directories (glob)
+  testMatch: ['**/src/**/*.{spec,test}.{ts,mts,cts}', '**/test/**/*.{spec,test}.{ts,mts,cts}'],
+  // Ignore specific paths for test files (regex)
   testPathIgnorePatterns: [
     '/.cache/',
-    '/dist/',
-    '/build/',
-    '/node_modules/',
-    '/scripts/',
-    '/vitest/',
     '/apps/',
+    '/build/',
+    '/chip/',
+    '/coverage/',
+    '/dist/',
+    '/node_modules/',
+    '/screenshots/',
+    '/scripts/',
     '/src/mock/',
-    '/vendor/',
     '/temp/',
+    '/vendor/',
+    '/vitest/',
+    // Matterbridge specific paths to ignore
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
+    '/packages/core/src/backend', // Not released yet, so ignore for now
+    '/packages/core/src/matterNode', // Not released yet, so ignore for now
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
-    'matterNode',
-  ], // Ignore specific paths for test files
+  ],
+  // Ignore specific paths for coverage files (regex)
   coveragePathIgnorePatterns: [
     '/.cache/',
-    '/dist/',
-    '/build/',
-    '/node_modules/',
-    '/scripts/',
-    '/vitest/',
     '/apps/',
+    '/build/',
+    '/chip/',
+    '/coverage/',
+    '/dist/',
+    '/node_modules/',
+    '/screenshots/',
+    '/scripts/',
     '/src/mock/',
-    '/vendor/',
     '/temp/',
+    '/vendor/',
+    '/vitest/',
+    '/src/.*\\.d\\.ts$/',
+    // Matterbridge specific paths to ignore
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
+    '/packages/core/src/backend', // Not released yet, so ignore for now
+    '/packages/core/src/matterNode', // Not released yet, so ignore for now
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
-    'matterNode',
-  ], // Ignore specific paths for test and coverage
-  maxWorkers: '100%', // Use all available CPU cores for running tests
+  ],
+  // Use all available CPU cores for running tests
+  maxWorkers: '100%',
 };
 
 export default jestConfig;
