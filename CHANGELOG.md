@@ -75,6 +75,7 @@ These classes will run as threads in the next releases:
 - [oxlint]: Bump `oxlint` config to v.1.0.1.
 - [oxfmt]: Bump `oxfmt` config to v.1.0.1.
 - [jest]: Bump `jest` config to v.2.0.2.
+- [vitest]: Bump `vitest` config to v.2.0.4.
 
 ### Fixed
 
