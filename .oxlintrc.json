@@ -31,10 +31,11 @@
     "typeCheck": true,
     "maxWarnings": 0
   },
-  "plugins": ["typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "node", "jsdoc", "promise"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
+    "perf": "warn",
     "pedantic": "off"
   },
   "rules": {
@@ -57,20 +58,28 @@
     "no-underscore-dangle": "off",
     "max-lines-per-function": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
     "max-lines": "off",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-param-reassign": "warn",
     "unicorn/prefer-node-protocol": "error",
     "unicorn/require-post-message-target-origin": "off",
     "unicorn/prefer-add-event-listener": "off",
     "unicorn/no-array-for-each": "off",
     "unicorn/consistent-function-scoping": "off",
     "unicorn/no-instanceof-array": "error",
+    "unicorn/no-abusive-eslint-disable": "error",
     "oxc/no-async-endpoint-handlers": "off",
     "oxc/no-accumulating-spread": "error",
     "oxc/no-const-enum": "error",
     "oxc/no-map-spread": "off",
     "typescript/no-dynamic-delete": "error",
     "typescript/no-duplicate-enum-values": "off",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/no-explicit-any": "warn",
     "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
     "import/no-unassigned-import": ["error", { "allow": ["@matter/nodejs"] }],
+    "import/no-cycle": "error",
     "promise/no-multiple-resolved": "off"
   },
   "overrides": [
