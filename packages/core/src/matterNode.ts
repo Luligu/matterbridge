@@ -72,6 +72,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { Plugin, PluginManager } from './pluginManager.js';
+import { getErrorMessage } from './utils/export.js';
 
 /**
  * Represents the Matter events.
@@ -843,7 +844,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.notice(`Started ${this.serverNode.id} server node`);
     } catch (error) {
       // istanbul ignore next
-      this.log.error(`Failed to start ${this.serverNode.id} server node: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Failed to start ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }
 
@@ -864,7 +865,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.info(`Closed ${this.serverNode.id} server node`);
     } catch (error) {
       // istanbul ignore next
-      this.log.error(`Failed to close ${this.serverNode.id} server node: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Failed to close ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }
 
