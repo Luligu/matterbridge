@@ -11,7 +11,7 @@ import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
-import { BackendsWsServer } from './backendWsServer.js';
+import { BackendWsServer } from './backendWsServer.js';
 import type { Frontend } from './frontend.js';
 import { isWorkerRequestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestSetupTest.js';
@@ -34,7 +34,7 @@ await setupTest(NAME, false);
 // No isolation needed or allowed since we're testing a single module and want to preserve module state across tests
 
 describe('BackendWsServer', () => {
-  let wsServer: BackendsWsServer;
+  let wsServer: BackendWsServer;
 
   beforeEach(() => {
     // Clear all mocks
@@ -47,8 +47,8 @@ describe('BackendWsServer', () => {
   });
 
   test('Constructor', () => {
-    wsServer = new BackendsWsServer(mockedSharedMatterbridge, mockedBackend);
-    expect(wsServer).toBeInstanceOf(BackendsWsServer);
+    wsServer = new BackendWsServer(mockedSharedMatterbridge, mockedBackend);
+    expect(wsServer).toBeInstanceOf(BackendWsServer);
   });
 
   test('BroadcastServer handler', async () => {
