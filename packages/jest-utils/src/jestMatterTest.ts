@@ -130,7 +130,8 @@ export async function destroyTestEnvironment(): Promise<void> {
  *
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export function getPlatformMatterbridge(): PlatformMatterbridge {
+export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
+  const { jest } = await import('@jest/globals');
   return {
     systemInformation: {
       interfaceName: 'eth0',

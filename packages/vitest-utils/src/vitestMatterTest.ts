@@ -130,7 +130,8 @@ export async function destroyTestEnvironment(): Promise<void> {
  *
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export function getPlatformMatterbridge(): PlatformMatterbridge {
+export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
+  const { vi } = await import('vitest');
   return {
     systemInformation: {
       interfaceName: 'eth0',
@@ -171,16 +172,16 @@ export function getPlatformMatterbridge(): PlatformMatterbridge {
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
     aggregatorProductName: 'Matterbridge Jest',
-    addBridgedEndpoint: jest.fn(async () => {
+    addBridgedEndpoint: vi.fn(async () => {
       return Promise.resolve(true);
     }),
-    removeBridgedEndpoint: jest.fn(async () => {
+    removeBridgedEndpoint: vi.fn(async () => {
       return Promise.resolve(true);
     }),
-    removeAllBridgedEndpoints: jest.fn(async () => {
+    removeAllBridgedEndpoints: vi.fn(async () => {
       return Promise.resolve(true);
     }),
-    addVirtualEndpoint: jest.fn(async () => {
+    addVirtualEndpoint: vi.fn(async () => {
       return Promise.resolve();
     }),
   } as unknown as PlatformMatterbridge;
