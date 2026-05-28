@@ -11,8 +11,8 @@ import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
+import { Backend } from './backend.js';
 import { BackendWsServer } from './backendWsServer.js';
-import type { Frontend } from './frontend.js';
 import { isWorkerRequestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestutils/jestSetupTest.js';
 
@@ -26,7 +26,7 @@ const mockedBackend = {
   restartRequired: false,
   fixedRestartRequired: false,
   updateRequired: false,
-} as unknown as Frontend;
+} as unknown as Backend;
 
 // Setup the test environment
 await setupTest(NAME, false);

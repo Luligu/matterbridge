@@ -24,8 +24,8 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
+import { Backend } from './backend.js';
 import { BackendExpress } from './backendExpress.js';
-import type { Frontend } from './frontend.js';
 import { setupTest } from './jestutils/jestSetupTest.js';
 
 const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
@@ -48,7 +48,7 @@ const mockedBackend = {
     await fs.mkdir(path.dirname(diagnosticPath), { recursive: true });
     await fs.writeFile(diagnosticPath, `${'x'.repeat(29)}DIAGNOSTIC_OK`, 'utf8');
   }),
-} as unknown as Frontend;
+} as unknown as Backend;
 
 // No isolation needed or allowed since we're testing a single module and want to preserve module state across tests
 
