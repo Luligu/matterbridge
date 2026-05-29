@@ -132,7 +132,7 @@ export async function destroyTestEnvironment(): Promise<void> {
  */
 export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
   const { vi } = await import('vitest');
-  return {
+  const matterbridge: PlatformMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
       macAddress: 'aa:bb:cc:dd:ee:ff',
@@ -155,6 +155,7 @@ export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
       heapTotal: '0 B',
       heapUsed: '0 B',
     },
+    uuid: '00000000-0000-0000-0000-000000000000',
     rootDirectory: HOMEDIR,
     homeDirectory: HOMEDIR,
     matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
@@ -168,10 +169,12 @@ export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
-    aggregatorVendorId: 0xfff1,
+    aggregatorVendorId: VendorId(0xfff1),
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
-    aggregatorProductName: 'Matterbridge Jest',
+    aggregatorProductName: 'Matterbridge Vitest',
+  };
+  const injectedFunctions = {
     addBridgedEndpoint: vi.fn(async () => {
       return Promise.resolve(true);
     }),
@@ -182,9 +185,10 @@ export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
       return Promise.resolve(true);
     }),
     addVirtualEndpoint: vi.fn(async () => {
-      return Promise.resolve();
+      return Promise.resolve(true);
     }),
-  } as unknown as PlatformMatterbridge;
+  };
+  return { ...matterbridge, ...injectedFunctions } as unknown as PlatformMatterbridge;
 }
 
 /**
