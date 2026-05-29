@@ -90,6 +90,14 @@
       "import": "./dist/jestutils/export.js",
       "types": "./dist/jestutils/export.d.ts"
     },
+    "./jest-utils": {
+      "import": "./dist/jest-utils/export.js",
+      "types": "./dist/jest-utils/export.d.ts"
+    },
+    "./vitest-utils": {
+      "import": "./dist/vitest-utils/export.js",
+      "types": "./dist/vitest-utils/export.d.ts"
+    },
     "./logger": {
       "import": "./dist/logger/export.js",
       "types": "./dist/logger/export.d.ts"
