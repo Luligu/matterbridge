@@ -436,6 +436,53 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 </ul>
 <p>The mode=<code>server</code> property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.</p>
 <p>The mode=<code>matter</code> property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.</p>
+<h2 id="how-to-use-cluster-clients">How to use cluster clients</h2>
+<p>Some Matter device types act as <strong>controllers</strong> rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called <strong>client clusters</strong>.</p>
+<p>Matterbridge exposes client cluster support through <code>MatterbridgeBindingServer</code>. When required on an endpoint it:</p>
+<ol>
+<li>Registers the given cluster IDs in the Binding cluster&#39;s <code>clientList</code> state.</li>
+<li>Syncs those IDs into the Descriptor cluster&#39;s <code>clientList</code> attribute so the fabric sees them.</li>
+<li>Reacts to established bindings and — for client-kind bindings — enables auto-subscription on the remote node.</li>
+</ol>
+<h3 id="adding-client-clusters-explicitly">Adding client clusters explicitly</h3>
+<p>Use <code>addClusterClients(clientList)</code> when you know exactly which cluster IDs to advertise:</p>
+<pre><code class="language-typescript">import { ClosureControl } from &#39;@matter/types/clusters/closure-control&#39;;
+import { closureController } from &#39;matterbridge&#39;;
+
+const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
+  .createDefaultBridgedDeviceBasicInformationClusterServer(&#39;Closure Controller&#39;, &#39;CC-001&#39;, 0xfff1, &#39;Acme&#39;, &#39;Closure Controller&#39;)
+  .addRequiredClusterServers()
+  .addClusterClients([ClosureControl.id]); // advertises ClosureControl as a client cluster
+
+await this.registerDevice(device);
+</code></pre>
+<p><code>addClusterClients</code> is safe to call multiple times — each call merges the new IDs into the existing list without duplicates.</p>
+<h3 id="adding-client-clusters-from-the-device-type-definition">Adding client clusters from the device type definition</h3>
+<p>Each <code>DeviceTypeDefinition</code> carries <code>requiredClientClusters</code> and <code>optionalClientClusters</code> lists, taken directly from the Matter specification. Use these helpers to populate the binding automatically from the device type:</p>
+<pre><code class="language-typescript">import { closureController } from &#39;matterbridge&#39;;
+
+const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
+  .createDefaultBridgedDeviceBasicInformationClusterServer(&#39;Closure Controller&#39;, &#39;CC-001&#39;, 0xfff1, &#39;Acme&#39;, &#39;Closure Controller&#39;)
+  .addRequiredClusterServers()
+  .addRequiredClusterClients()   // adds ClosureControl.id (required by closureController)
+  .addOptionalClusterClients();   // adds Identify, Groups, ClosureDimension (optional)
+
+await this.registerDevice(device);
+</code></pre>
+<h3 id="reacting-to-a-binding-and-controlling-the-remote-endpoint">Reacting to a binding and controlling the remote endpoint</h3>
+<p>Once the controller is commissioned and a binding is established, use <code>getEndpoint</code> on the <code>MatterbridgeBindingServer</code> to retrieve the bound remote endpoint for a given cluster:</p>
+<pre><code class="language-typescript">import { ClosureControl } from &#39;@matter/types/clusters/closure-control&#39;;
+import { MatterbridgeBindingServer } from &#39;matterbridge&#39;;
+
+// Inside a command handler or event listener on the controller endpoint:
+await device.act(async (agent) =&gt; {
+  const binding = agent.get(MatterbridgeBindingServer);
+  const remoteEndpoint = binding.getEndpoint(ClosureControl.id);
+  if (!remoteEndpoint) return;
+  // interact with the remote closure endpoint
+  await remoteEndpoint.setAttribute(ClosureControl.id, &#39;targetState&#39;, { position: 100 });
+});
+</code></pre>
 <h2 id="matterbridgeendpoint-single-class-devices">MatterbridgeEndpoint single class devices</h2>
 <p>For the device types listed below there are single class provided to createa a fully functional device.</p>
 <p>For a working example refer to the &#39;matterbridge-example-dynamic-platform&#39;.</p>

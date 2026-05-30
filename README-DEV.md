@@ -399,6 +399,68 @@ The mode=`server` property of MatterbridgeEndpointOptions, allows to create an i
 
 The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.
 
+## How to use cluster clients
+
+Some Matter device types act as **controllers** rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called **client clusters**.
+
+Matterbridge exposes client cluster support through `MatterbridgeBindingServer`. When required on an endpoint it:
+
+1. Registers the given cluster IDs in the Binding cluster's `clientList` state.
+2. Syncs those IDs into the Descriptor cluster's `clientList` attribute so the fabric sees them.
+3. Reacts to established bindings and — for client-kind bindings — enables auto-subscription on the remote node.
+
+### Adding client clusters explicitly
+
+Use `addClusterClients(clientList)` when you know exactly which cluster IDs to advertise:
+
+```typescript
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { closureController } from 'matterbridge';
+
+const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
+  .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
+  .addRequiredClusterServers()
+  .addClusterClients([ClosureControl.id]); // advertises ClosureControl as a client cluster
+
+await this.registerDevice(device);
+```
+
+`addClusterClients` is safe to call multiple times — each call merges the new IDs into the existing list without duplicates.
+
+### Adding client clusters from the device type definition
+
+Each `DeviceTypeDefinition` carries `requiredClientClusters` and `optionalClientClusters` lists, taken directly from the Matter specification. Use these helpers to populate the binding automatically from the device type:
+
+```typescript
+import { closureController } from 'matterbridge';
+
+const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
+  .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
+  .addRequiredClusterServers()
+  .addRequiredClusterClients()   // adds ClosureControl.id (required by closureController)
+  .addOptionalClusterClients();   // adds Identify, Groups, ClosureDimension (optional)
+
+await this.registerDevice(device);
+```
+
+### Reacting to a binding and controlling the remote endpoint
+
+Once the controller is commissioned and a binding is established, use `getEndpoint` on the `MatterbridgeBindingServer` to retrieve the bound remote endpoint for a given cluster:
+
+```typescript
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { MatterbridgeBindingServer } from 'matterbridge';
+
+// Inside a command handler or event listener on the controller endpoint:
+await device.act(async (agent) => {
+  const binding = agent.get(MatterbridgeBindingServer);
+  const remoteEndpoint = binding.getEndpoint(ClosureControl.id);
+  if (!remoteEndpoint) return;
+  // interact with the remote closure endpoint
+  await remoteEndpoint.setAttribute(ClosureControl.id, 'targetState', { position: 100 });
+});
+```
+
 ## MatterbridgeEndpoint single class devices
 
 For the device types listed below there are single class provided to createa a fully functional device.

@@ -71,6 +71,11 @@ These classes will run as threads in the next releases:
 
 - [plugins]: The plugins can have their own frontend in /apps/frontend/build. It will be served by the Matterbridge express app under /plugins/plugin-name. (https://github.com/Luligu/matterbridge/issues/561).
 - [plugins]: The plugin frontend can fetch from the platform with a full REST API: /plugins/plugin-name/api/:path. It will call platform.onFetch(method: string, path?: string, query?: Record<string, unknown>, body?: unknown) (for an example check matterbridge-test). (https://github.com/Luligu/matterbridge/issues/561).
+- [bindingServer]: Add `getEndpoint(clusterId: ClusterId): Endpoint | undefined` to `MatterbridgeBindingServer` to look up the bound remote endpoint for a given client cluster ID.
+- [endpoint]: Add `addClusterClients(clientList: ClusterId[])` helper and chainable `MatterbridgeEndpoint` method to require `MatterbridgeBindingServer` with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.
+- [endpoint]: Add `addRequiredClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all required client clusters declared by the endpoint's device types.
+- [endpoint]: Add `addOptionalClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all optional client clusters declared by the endpoint's device types.
+- [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
 
 ### Changed
 
