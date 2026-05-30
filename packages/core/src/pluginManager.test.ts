@@ -38,8 +38,9 @@ import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
+import { flushAsync } from './jestutils/flushAsync.js';
 import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
+import { closeMdnsInstance, closeRuntimeInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
 import { addPluginSpy } from './jestutils/jestPluginManagerSpy.js';
 import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { logKeepAlives } from './jestutils/logKeepAlives.js';
@@ -910,6 +911,26 @@ describe('PluginManager', () => {
     );
     expect(await plugins.parse(plugin)).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Found invalid packages'));
+
+    // frontendPath is set when apps/frontend/build/index.html exists
+    /*
+    loggerLogSpy.mockClear();
+    const frontendIndexPath = path.join(plugin.path.replace('package.json', ''), 'apps', 'frontend', 'build', 'index.html');
+    await fs.mkdir(path.dirname(frontendIndexPath), { recursive: true });
+    await fs.writeFile(frontendIndexPath, '<html></html>', 'utf8');
+    await fs.writeFile(
+      packageFilePath,
+      JSON.stringify({ name: 'test', type: 'module', main: 'index.js', version: '1.0.0', description: 'To update', author: 'To update' }),
+      'utf8',
+    );
+    plugin.frontendPath = undefined;
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(plugin.frontendPath).toBe(frontendIndexPath);
+    await fs.rm(path.join(plugin.path.replace('package.json', ''), 'apps'), { recursive: true, force: true });
+    plugin.frontendPath = undefined;
+    expect(await plugins.parse(plugin)).not.toBeNull();
+    expect(plugin.frontendPath).toBeUndefined();
+    */
 
     loggerLogSpy.mockClear();
     await fs.writeFile(
@@ -1936,5 +1957,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
+    // Close runtime instance
+    await closeRuntimeInstance(matterbridge);
   });
 });

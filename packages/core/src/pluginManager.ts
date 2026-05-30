@@ -31,6 +31,7 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // Node.js import
 import EventEmitter from 'node:events';
+import path from 'node:path';
 
 // @matter
 import type { StorageContext } from '@matter/general';
@@ -927,6 +928,11 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       plugin.changelog = this.getChangelog(packageJson);
       plugin.funding = this.getFunding(packageJson);
       if (!plugin.type) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no type`);
+
+      // Test if frontend build exists and set frontendPath if it does
+      const frontendPath = path.join(plugin.path.replace('package.json', ''), 'apps', 'frontend', 'build', 'index.html');
+      const { existsSync } = await import('node:fs');
+      if (existsSync(frontendPath)) plugin.frontendPath = frontendPath;
 
       const invalidDependencies = this.findInvalidDependencies(packageJson as PackageJsonLike);
       if (invalidDependencies) {

@@ -67,11 +67,23 @@ These classes will run as threads in the next releases:
 
 - [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API.
 
+### Added
+
+- [plugins]: The plugins can have their own frontend in /apps/frontend/build. It will be served by the Matterbridge express app under /plugins/plugin-name.
+- [plugins]: The plugin frontend can fetch from the platform with /plugins/plugin-name/get/:var. It will call platform.onGet(var)
+
 ### Changed
 
+- [package]: Update dependencies.
 - [package]: Bump `node-ansi-logger` to v.3.3.0-dev-20260524-cac9dd5.
 - [package]: Bump `node-persist-manager` to v.2.1.0-dev-20260524-6a6019a.
 - [package]: Refactor `jest-utils` and `vitest-utils` packages.
+- [package]: Add exports for `jest-utils` and `vitest-utils` packages.
+- [package]: Bump `@eslint/json` to v.2.0.0.
+- [package]: Bump `@vitest/eslint-plugin` to v.1.6.18.
+- [package]: Bump `eslint-plugin-prettier` to v.5.5.6.
+- [package]: Bump `npm-check-updates` to v.22.2.1.
+- [package]: Bump `typescript-eslint` to v.8.60.0.
 - [oxlint]: Bump `oxlint` config to v.1.0.1.
 - [oxfmt]: Bump `oxfmt` config to v.1.0.1.
 - [jest]: Bump `jest` config to v.2.0.2.

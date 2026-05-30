@@ -378,6 +378,20 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Called when a GET request is made to `/plugins/<name>/get/:var` from the plugin frontend.
+   *
+   * @param {string} variable The variable name from the `:var` route parameter.
+   * @returns {Promise<unknown>} The value to return as JSON. Return `undefined` to send a 404.
+   *
+   * @remarks
+   * This method can be overridden in the extended class to expose plugin-specific data to the frontend.
+   */
+  async onGet(variable: string): Promise<unknown> {
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onGet. Received variable ${CYAN}${variable}${db}`);
+    return undefined;
+  }
+
+  /**
    * Called when the plugin config has been updated.
    *
    * @param {PlatformConfig} config The new plugin config.

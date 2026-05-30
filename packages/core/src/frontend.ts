@@ -71,7 +71,7 @@ import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidStri
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
-import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
 import type { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 
@@ -1064,6 +1064,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.status(500).send(`Error uploading or installing plugin package ${filename}`);
       }
     });
+
+    // Plugin frontend routes
+    for (const plugin of this.matterbridge.plugins.array().filter((p) => p.enabled && !p.error)) {
+      const { existsSync } = await import('node:fs');
+      // istanbul ignore next cause is under development and will be tested in the future
+      if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
+        this.log.debug(`****Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
+        this.expressApp.get(`/plugins/${plugin.name}/get/:var`, async (req, res) => {
+          this.log.debug(`****The frontend sent GET /plugins/${plugin.name}/get/${req.params.var}`);
+          if (!plugin.platform) {
+            this.log.debug(`****The platform for plugin ${plugin.name} is not running`);
+            res.status(503).json({ error: `Plugin ${plugin.name} platform is not running` });
+            return;
+          }
+          const value = await plugin.platform.onGet(req.params.var);
+          if (value === undefined) {
+            this.log.debug(`****Variable ${req.params.var} not found in plugin ${plugin.name}`);
+            res.status(404).json({ error: `Variable ${req.params.var} not found in plugin ${plugin.name}` });
+            return;
+          }
+          res.json(value);
+        });
+        // SPA fallback: serve the plugin's index.html for any unmatched sub-path
+        this.expressApp.use(`/plugins/${plugin.name}`, (_req, res) => {
+          this.log.debug(`****The frontend sent GET /plugins/${plugin.name}/* (SPA fallback)`);
+          res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
+        });
+      }
+    }
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {

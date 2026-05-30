@@ -120,6 +120,7 @@ export interface ApiPlugin extends StoragePlugin {
   help?: string;
   changelog?: string;
   funding?: string;
+  frontendPath?: string;
   locked?: boolean;
   error?: boolean;
   loaded?: boolean;
