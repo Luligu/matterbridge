@@ -675,13 +675,20 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
 
 /**
  * Adds cluster clients to the specified endpoint by requiring MatterbridgeBindingServer with the given client list.
+ * Safe to call multiple times: if MatterbridgeBindingServer has already been required, the new cluster IDs are
+ * merged into the existing clientList (duplicates are removed) via a direct options update using inject.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster clients to.
  * @param {ClusterId[]} clientList - The list of cluster IDs to add as clients.
  */
 export function addClusterClients(endpoint: MatterbridgeEndpoint, clientList: ClusterId[]): void {
   if (clientList.length === 0) return;
-  endpoint.behaviors.require(MatterbridgeBindingServer, { clientList });
+  if (!endpoint.behaviors.has(MatterbridgeBindingServer)) {
+    endpoint.behaviors.require(MatterbridgeBindingServer, { clientList });
+    return;
+  }
+  const existing = (endpoint.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList ?? [];
+  endpoint.behaviors.inject(MatterbridgeBindingServer, { clientList: [...new Set([...existing, ...clientList])] });
 }
 
 /**

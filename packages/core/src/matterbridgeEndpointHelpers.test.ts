@@ -366,10 +366,23 @@ describe('Options helpers', () => {
     expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
   });
 
-  test('addClusterClients with empty list is a no-op', () => {
+  test('addClusterClients with empty list is a no-op', async () => {
     device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsEmpty' });
     device.addClusterClients([]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(0);
+  });
+
+  test('addClusterClients called twice merges clientList without duplicates', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsMerge' });
+    device.addClusterClients([ClosureControl.id]);
+    device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
+    await addDevice(aggregator, device);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
+    expect(clientList).toContain(FlowMeasurement.id);
+    expect(clientList.filter((id) => id === ClosureControl.id)).toHaveLength(1);
   });
 
   test('addRequiredClusterClients requires MatterbridgeBindingServer for device types with required client clusters', async () => {
