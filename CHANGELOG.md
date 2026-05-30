@@ -69,8 +69,8 @@ These classes will run as threads in the next releases:
 
 ### Added
 
-- [plugins]: The plugins can have their own frontend in /apps/frontend/build. It will be served by the Matterbridge express app under /plugins/plugin-name.
-- [plugins]: The plugin frontend can fetch from the platform with /plugins/plugin-name/get/:var. It will call platform.onGet(var)
+- [plugins]: The plugins can have their own frontend in /apps/frontend/build. It will be served by the Matterbridge express app under /plugins/plugin-name. (https://github.com/Luligu/matterbridge/issues/561).
+- [plugins]: The plugin frontend can fetch from the platform with /plugins/plugin-name/get/:var. It will call platform.onGet(var) (for an example check matterbridge-test). (https://github.com/Luligu/matterbridge/issues/561).
 
 ### Changed
 
