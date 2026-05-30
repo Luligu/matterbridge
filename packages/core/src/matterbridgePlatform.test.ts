@@ -731,10 +731,12 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`), undefined);
   });
 
-  test('onGet should log a message and return undefined when not overridden', async () => {
-    const result = await platform.onGet('myVar');
-    expect(result).toBeUndefined();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onGet.`));
+  test('onFetch should log a message and return undefined when not overridden', async () => {
+    expect(await platform.onFetch('GET')).toBeUndefined();
+    expect(await platform.onFetch('GET', 'myVar')).toBeUndefined();
+    expect(await platform.onFetch('POST', 'myVar', { filter: 'a' })).toBeUndefined();
+    expect(await platform.onFetch('PUT', 'myVar', { filter: 'a' }, { key: 'value' })).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`onFetch called:`));
   });
 
   test('onConfigChanged should log a message', async () => {

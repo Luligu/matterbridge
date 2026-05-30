@@ -1072,23 +1072,49 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
         this.log.debug(`****Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
-        this.expressApp.get(`/plugins/${plugin.name}/get/:var`, async (req, res) => {
-          this.log.debug(`****The frontend sent GET /plugins/${plugin.name}/get/${req.params.var}`);
+
+        // Unified API route handler for GET, POST, PUT, PATCH, DELETE
+        const apiHandler = async (req: import('express').Request, res: import('express').Response) => {
+          const method = req.method.toUpperCase();
+          const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
+          const query = req.query;
+          const body = req.body;
+          this.log.debug(`****The frontend sent ${method} /plugins/${plugin.name}/api/${path ?? ''}`);
+
           if (!plugin.platform) {
             this.log.debug(`****The platform for plugin ${plugin.name} is not running`);
             res.status(503).json({ error: `Plugin ${plugin.name} platform is not running` });
             return;
           }
-          const value = await plugin.platform.onGet(req.params.var);
-          if (value === undefined) {
-            this.log.debug(`****Variable ${req.params.var} not found in plugin ${plugin.name}`);
-            res.status(404).json({ error: `Variable ${req.params.var} not found in plugin ${plugin.name}` });
-            return;
+
+          try {
+            const value = await plugin.platform.onFetch(method, path, query, body);
+            if (value === undefined) {
+              this.log.debug(`****onFetch returned undefined for plugin ${plugin.name} method ${method} path ${path}`);
+              res.status(404).json({ error: `Not found in plugin ${plugin.name}` });
+              return;
+            }
+            if (method === 'DELETE') res.status(204).send();
+            else res.json(value);
+          } catch (error) {
+            this.log.error(`****onFetch threw an error for plugin ${plugin.name}: ${error}`);
+            res.status(500).json({ error: `Internal error in plugin ${plugin.name}` });
           }
-          res.json(value);
-        });
-        // SPA fallback: serve the plugin's index.html for any unmatched sub-path
-        this.expressApp.use(`/plugins/${plugin.name}`, (_req, res) => {
+        };
+
+        // GET    /api/:path? — read collection or single resource, query for filters
+        // POST   /api/:path? — create, data in body
+        // PUT    /api/:path? — full replace of resource
+        // PATCH  /api/:path? — partial update of resource
+        // DELETE /api/:path? — delete resource
+        this.expressApp.get(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.post(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.put(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.patch(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.delete(`/plugins/${plugin.name}/api/:path`, apiHandler);
+
+        // SPA fallback: serve the plugin's index.html for unmatched GET requests only (Express 5 syntax)
+        this.expressApp.get(`/plugins/${plugin.name}/{*splat}`, (_req, res) => {
           this.log.debug(`****The frontend sent GET /plugins/${plugin.name}/* (SPA fallback)`);
           res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
         });
