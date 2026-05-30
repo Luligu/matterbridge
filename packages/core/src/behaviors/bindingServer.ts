@@ -24,15 +24,19 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { BindingBehavior } from '@matter/node/behaviors/binding';
+import { Endpoint } from '@matter/main/node';
+import { BindingBehavior, BindingResolution, BindingServer } from '@matter/node/behaviors/binding';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { ClusterId } from '@matter/types';
+import { Binding } from '@matter/types/clusters/binding';
+import { debugStringify, nt } from 'node-ansi-logger';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * Binding client behavior that mirrors bindings into the Descriptor clientList.
  */
-export class MatterbridgeBindingServer extends BindingBehavior {
+export class MatterbridgeBindingServer extends BindingServer {
   declare protected internal: MatterbridgeBindingServer.Internal;
   declare state: MatterbridgeBindingServer.State;
 
@@ -40,13 +44,66 @@ export class MatterbridgeBindingServer extends BindingBehavior {
    * Initializes binding handling and reacts to binding changes.
    */
   override async initialize(): Promise<void> {
+    super.initialize();
+
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) with clientList: ${this.state.clientList.join(', ')}`);
+
+    // Ensure that the Descriptor clientList includes all clusters from the binding clientList (deferred after construction)
+    const clientList = this.state.clientList;
+    this.endpoint.construction.onSuccess(async () => {
+      const currentClientList = this.endpoint.stateOf(DescriptorServer).clientList;
+      const toAddClientList = clientList.filter((id) => !currentClientList.includes(id));
+      // istanbul ignore else
+      if (toAddClientList.length > 0) {
+        await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
+        device.log.info(`Adding client clusters to endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: ${toAddClientList.join(', ')}`);
+      }
+    });
+
+    // React to binding changes and update internal bound state
     this.reactTo(this.events.binding$Changed, (value) => {
       this.internal.bound = value.length > 0;
-      device.log.notice(`MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding changed: ${value}, bound: ${this.internal.bound}`);
+      device.log.notice(
+        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding changed: ${debugStringify(value)}${nt}, bound: ${this.internal.bound}`,
+      );
     });
-    await super.initialize();
+
+    // React to established bindings, update internal bound state and subscribe to remote node
+    this.reactTo(this.events.established, async (resolution: BindingResolution) => {
+      device.log.notice(
+        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding established: kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt}`,
+      );
+      this.internal.boundEndpoints.set(resolution.entry, resolution.endpoint);
+      if (resolution.kind !== 'client') return;
+      await resolution.node.set({ network: { autoSubscribe: true } });
+    });
+
+    // React to removed bindings and update internal bound state
+    this.reactTo(this.events.removed, async (resolution: BindingResolution) => {
+      device.log.notice(
+        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding removed: kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt}`,
+      );
+      this.internal.boundEndpoints.delete(resolution.entry);
+    });
+  }
+
+  override async [Symbol.asyncDispose]() {
+    this.internal.boundEndpoints.clear();
+    await super[Symbol.asyncDispose]();
+  }
+
+  /**
+   * Returns the bound endpoint for the given cluster id, or undefined if not found.
+   *
+   * @param {ClusterId} clusterId - The cluster id to look up in the bound endpoints.
+   * @returns {Endpoint | undefined} The bound endpoint, or undefined if not found.
+   */
+  getEndpoint(clusterId: ClusterId): Endpoint | undefined {
+    for (const [target, endpoint] of this.internal.boundEndpoints) {
+      if (target.cluster === clusterId) return endpoint;
+    }
+    return undefined;
   }
 }
 
@@ -57,6 +114,7 @@ export namespace MatterbridgeBindingServer {
    */
   export class Internal {
     bound: boolean = false;
+    boundEndpoints: Map<Binding.Target, Endpoint> = new Map();
   }
   /**
    * Persistent state for binding behavior.

@@ -121,6 +121,7 @@ import { isValidArray } from '@matterbridge/utils/validate';
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
+import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
 import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
 import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
@@ -670,6 +671,59 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
   if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
   if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
+}
+
+/**
+ * Adds cluster clients to the specified endpoint by requiring MatterbridgeBindingServer with the given client list.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster clients to.
+ * @param {ClusterId[]} clientList - The list of cluster IDs to add as clients.
+ */
+export function addClusterClients(endpoint: MatterbridgeEndpoint, clientList: ClusterId[]): void {
+  if (clientList.length === 0) return;
+  endpoint.behaviors.require(MatterbridgeBindingServer, { clientList });
+}
+
+/**
+ * Adds required cluster clients to the specified endpoint based on the device types.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the required cluster clients to.
+ * @returns {void}
+ */
+export function addRequiredClusterClients(endpoint: MatterbridgeEndpoint): void {
+  const requiredClientList: ClusterId[] = [];
+  endpoint.log.debug(`addRequiredClusterClients for ${CYAN}${endpoint.maybeId}${db}`);
+  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
+    endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+    deviceType.requiredClientClusters.forEach((clusterId) => {
+      if (!requiredClientList.includes(clusterId)) {
+        requiredClientList.push(clusterId);
+        endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      }
+    });
+  });
+  addClusterClients(endpoint, requiredClientList);
+}
+
+/**
+ * Adds optional cluster clients to the specified endpoint based on the device types.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the optional cluster clients to.
+ * @returns {void}
+ */
+export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void {
+  const optionalClientList: ClusterId[] = [];
+  endpoint.log.debug(`addOptionalClusterClients for ${CYAN}${endpoint.maybeId}${db}`);
+  Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
+    endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
+    deviceType.optionalClientClusters.forEach((clusterId) => {
+      if (!optionalClientList.includes(clusterId)) {
+        optionalClientList.push(clusterId);
+        endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
+      }
+    });
+  });
+  addClusterClients(endpoint, optionalClientList);
 }
 
 /**

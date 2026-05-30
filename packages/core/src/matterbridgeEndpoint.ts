@@ -125,9 +125,12 @@ import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServ
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
+  addClusterClients,
   addClusterServers,
   addFixedLabel,
+  addOptionalClusterClients,
   addOptionalClusterServers,
+  addRequiredClusterClients,
   addRequiredClusterServers,
   addUserLabel,
   checkNotLatinCharacters,
@@ -1565,6 +1568,37 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   addOptionalClusterServers(): MatterbridgeEndpoint {
     addOptionalClusterServers(this);
+    return this;
+  }
+
+  /**
+   * Adds the required cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addRequiredClusterClients(): MatterbridgeEndpoint {
+    addRequiredClusterClients(this);
+    return this;
+  }
+
+  /**
+   * Adds the optional cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addOptionalClusterClients(): MatterbridgeEndpoint {
+    addOptionalClusterClients(this);
+    return this;
+  }
+
+  /**
+   * Adds the cluster clients to the specified endpoint by requiring MatterbridgeBindingServer with the given client list.
+   *
+   * @param {ClusterId[]} clientList - The list of cluster IDs to add as clients.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addClusterClients(clientList: ClusterId[]): MatterbridgeEndpoint {
+    addClusterClients(this, clientList);
     return this;
   }
 

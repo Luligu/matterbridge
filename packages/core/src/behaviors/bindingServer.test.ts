@@ -6,14 +6,20 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
-import { Endpoint, ServerNode } from '@matter/node';
+import { BindingResolution } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber, NodeId } from '@matter/types';
+import { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 
-import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
+import {
+  createMatterbridgeEnvironment,
+  destroyMatterbridgeEnvironment,
+  matterbridge,
+  startMatterbridgeEnvironment,
+  stopMatterbridgeEnvironment,
+} from '../jestutils/jestMatterbridgeTest.js';
 import { setupTest } from '../jestutils/jestSetupTest.js';
 import { onOffSwitch } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -22,17 +28,15 @@ import { MatterbridgeIdentifyServer } from './identifyServer.js';
 import { MatterbridgeOnOffServer } from './onOffServer.js';
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, true);
 
 describe('Client clusters and behaviors', () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
-  let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Create Matterbridge environment
     await createMatterbridgeEnvironment();
-    [server, aggregator] = await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
+    await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
   });
 
   beforeEach(async () => {
@@ -63,7 +67,8 @@ describe('Client clusters and behaviors', () => {
     device.behaviors.require(MatterbridgeOnOffServer, {
       onOff: false,
     });
-    expect(await aggregator.add(device)).toBeDefined();
+    device.addRequiredClusterServers();
+    expect(await matterbridge.aggregatorNode?.add(device)).toBeDefined();
     await device.construction.ready;
     Logger.get('client').notice(`Device clientList: ${device.stateOf(DescriptorServer).clientList.join(', ')}`);
     Logger.get('client').notice('Device behaviors:', device.behaviors);
@@ -77,8 +82,76 @@ describe('Client clusters and behaviors', () => {
     expect(device.behaviors.supported['identify']).toBeDefined();
     expect(device.behaviors.supported['onOff']).toBeDefined();
     expect(device.stateOf(MatterbridgeIdentifyServer).identifyTime).toBe(5);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(Identify.Cluster.id);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(OnOff.Cluster.id);
     await device.setStateOf(MatterbridgeBindingServer, { binding: [{ node: NodeId(1), endpoint: EndpointNumber(1) }] });
 
     Logger.get('client').notice('Device behaviors:\n', device);
+  });
+
+  test('MatterbridgeBindingServer established event - server kind does not call node.set', async () => {
+    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const resolution: BindingResolution = {
+      kind: 'server',
+      entry: { node: NodeId(1), endpoint: EndpointNumber(1) } as Binding.Target,
+      node: { set: mockNodeSet } as any,
+      endpoint: device as any,
+    };
+
+    await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
+    expect(mockNodeSet).not.toHaveBeenCalled();
+    await device.act((agent) => {
+      expect((agent.get(MatterbridgeBindingServer) as any).internal.boundEndpoints.has(resolution.entry)).toBe(true);
+    });
+  });
+
+  test('MatterbridgeBindingServer established event - client kind calls node.set with autoSubscribe', async () => {
+    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const resolution: BindingResolution = {
+      kind: 'client',
+      entry: { node: NodeId(2), endpoint: EndpointNumber(2) } as Binding.Target,
+      node: { set: mockNodeSet } as any,
+      endpoint: device as any,
+    };
+
+    await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
+    expect(mockNodeSet).toHaveBeenCalledWith({ network: { autoSubscribe: true } });
+    await device.act((agent) => {
+      expect((agent.get(MatterbridgeBindingServer) as any).internal.boundEndpoints.has(resolution.entry)).toBe(true);
+    });
+  });
+
+  test('MatterbridgeBindingServer removed event - deletes entry from boundEndpoints', async () => {
+    const resolution: BindingResolution = {
+      kind: 'server',
+      entry: { node: NodeId(3), endpoint: EndpointNumber(3) } as Binding.Target,
+      node: {} as any,
+      endpoint: device as any,
+    };
+
+    await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
+    await device.act((agent) => {
+      expect((agent.get(MatterbridgeBindingServer) as any).internal.boundEndpoints.has(resolution.entry)).toBe(true);
+    });
+    await device.eventsOf(MatterbridgeBindingServer).removed.emit(resolution);
+    await device.act((agent) => {
+      expect((agent.get(MatterbridgeBindingServer) as any).internal.boundEndpoints.has(resolution.entry)).toBe(false);
+    });
+  });
+
+  test('MatterbridgeBindingServer getEndpoint - returns endpoint by clusterId or undefined', async () => {
+    const resolution: BindingResolution = {
+      kind: 'server',
+      entry: { node: NodeId(4), endpoint: EndpointNumber(4), cluster: OnOff.id } as Binding.Target,
+      node: {} as any,
+      endpoint: device as any,
+    };
+
+    await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
+    await device.act((agent) => {
+      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      expect(binding.getEndpoint(OnOff.id)).toBe(device);
+      expect(binding.getEndpoint(Identify.id)).toBeUndefined();
+    });
   });
 });
