@@ -71,7 +71,7 @@ import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidStri
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
-import { AnsiLogger, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
 import type { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 
@@ -82,6 +82,7 @@ import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import type { Plugin } from './pluginManager.js';
+import { logError } from './utils/export.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // eslint-disable-next-line no-console
@@ -1070,7 +1071,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const { existsSync } = await import('node:fs');
       // istanbul ignore next cause is under development and will be tested in the future
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
-        this.log.debug(`****Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
 
         // Unified API route handler for GET, POST, PUT, PATCH, DELETE
@@ -1079,10 +1080,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
           const query = req.query;
           const body = req.body;
-          this.log.debug(`****The frontend sent ${method} /plugins/${plugin.name}/api/${path ?? ''}`);
+          this.log.debug(`The frontend sent ${bgHex('#0ba7bc').bold.white` ${method} `} ${bgHex('#0b6a2b').bold.italic.white` /plugins/${plugin.name}/api/${path ?? ''} `}`);
 
           if (!plugin.platform) {
-            this.log.debug(`****The platform for plugin ${plugin.name} is not running`);
+            this.log.error(`The platform for plugin ${plg}${plugin.name}${er} is not running`);
             res.status(503).json({ error: `Plugin ${plugin.name} platform is not running` });
             return;
           }
@@ -1090,14 +1091,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           try {
             const value = await plugin.platform.onFetch(method, path, query, body);
             if (value === undefined) {
-              this.log.debug(`****onFetch returned undefined for plugin ${plugin.name} method ${method} path ${path}`);
+              this.log.warn(`MatterbridgePlatform.onFetch returned undefined for plugin ${plg}${plugin.name}${wr} method ${method} path ${path}`);
               res.status(404).json({ error: `Not found in plugin ${plugin.name}` });
               return;
             }
             if (method === 'DELETE') res.status(204).send();
             else res.json(value);
           } catch (error) {
-            this.log.error(`****onFetch threw an error for plugin ${plugin.name}: ${error}`);
+            logError(this.log, `MatterbridgePlatform.onFetch threw an error for plugin ${plg}${plugin.name}${er}`, error);
             res.status(500).json({ error: `Internal error in plugin ${plugin.name}` });
           }
         };
@@ -1115,7 +1116,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
         // SPA fallback: serve the plugin's index.html for unmatched GET requests only (Express 5 syntax)
         this.expressApp.get(`/plugins/${plugin.name}/{*splat}`, (_req, res) => {
-          this.log.debug(`****The frontend sent GET /plugins/${plugin.name}/* (SPA fallback)`);
+          this.log.warn(`The plugin frontend sent /plugins/${plugin.name}/index.html (plugin SPA fallback)`);
           res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
         });
       }
