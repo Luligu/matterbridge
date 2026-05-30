@@ -2270,6 +2270,18 @@ export class MatterbridgeEndpoint extends Endpoint {
   /** Application Cluster Helpers */
 
   /**
+   * Creates a default binding cluster server with the specified client list.
+   * Safe to call multiple times: subsequent calls merge the new cluster IDs into the existing clientList.
+   *
+   * @param {ClusterId[]} [clientList] - The list of cluster IDs to advertise as client clusters. Defaults to [].
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBindingClusterServer(clientList: ClusterId[] = []): this {
+    addClusterClients(this, clientList);
+    return this;
+  }
+
+  /**
    * Creates a default identify cluster server with the specified identify time and type.
    *
    * @param {number} [identifyTime] - The time to identify the server. Defaults to 0.

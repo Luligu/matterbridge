@@ -411,7 +411,7 @@ Matterbridge exposes client cluster support through `MatterbridgeBindingServer`.
 
 ### Adding client clusters explicitly
 
-Use `addClusterClients(clientList)` when you know exactly which cluster IDs to advertise:
+Use `createDefaultBindingClusterServer(clientList)` when you know exactly which cluster IDs to advertise:
 
 ```typescript
 import { ClosureControl } from '@matter/types/clusters/closure-control';
@@ -419,13 +419,13 @@ import { closureController } from 'matterbridge';
 
 const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
   .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
-  .addRequiredClusterServers()
-  .addClusterClients([ClosureControl.id]); // advertises ClosureControl as a client cluster
+  .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
+  .addRequiredClusterServers();
 
 await this.registerDevice(device);
 ```
 
-`addClusterClients` is safe to call multiple times — each call merges the new IDs into the existing list without duplicates.
+`createDefaultBindingClusterServer` delegates to `addClusterClients` and is safe to call multiple times — each call merges the new IDs into the existing list without duplicates. Use `addClusterClients(clientList)` directly when you need to add client clusters after the initial chain.
 
 ### Adding client clusters from the device type definition
 

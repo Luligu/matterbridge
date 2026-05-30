@@ -445,18 +445,18 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 <li>Reacts to established bindings and — for client-kind bindings — enables auto-subscription on the remote node.</li>
 </ol>
 <h3 id="adding-client-clusters-explicitly">Adding client clusters explicitly</h3>
-<p>Use <code>addClusterClients(clientList)</code> when you know exactly which cluster IDs to advertise:</p>
+<p>Use <code>createDefaultBindingClusterServer(clientList)</code> when you know exactly which cluster IDs to advertise:</p>
 <pre><code class="language-typescript">import { ClosureControl } from &#39;@matter/types/clusters/closure-control&#39;;
 import { closureController } from &#39;matterbridge&#39;;
 
 const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
   .createDefaultBridgedDeviceBasicInformationClusterServer(&#39;Closure Controller&#39;, &#39;CC-001&#39;, 0xfff1, &#39;Acme&#39;, &#39;Closure Controller&#39;)
-  .addRequiredClusterServers()
-  .addClusterClients([ClosureControl.id]); // advertises ClosureControl as a client cluster
+  .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
+  .addRequiredClusterServers();
 
 await this.registerDevice(device);
 </code></pre>
-<p><code>addClusterClients</code> is safe to call multiple times — each call merges the new IDs into the existing list without duplicates.</p>
+<p><code>createDefaultBindingClusterServer</code> delegates to <code>addClusterClients</code> and is safe to call multiple times — each call merges the new IDs into the existing list without duplicates. Use <code>addClusterClients(clientList)</code> directly when you need to add client clusters after the initial chain.</p>
 <h3 id="adding-client-clusters-from-the-device-type-definition">Adding client clusters from the device type definition</h3>
 <p>Each <code>DeviceTypeDefinition</code> carries <code>requiredClientClusters</code> and <code>optionalClientClusters</code> lists, taken directly from the Matter specification. Use these helpers to populate the binding automatically from the device type:</p>
 <pre><code class="language-typescript">import { closureController } from &#39;matterbridge&#39;;

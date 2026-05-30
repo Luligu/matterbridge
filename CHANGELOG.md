@@ -75,6 +75,7 @@ These classes will run as threads in the next releases:
 - [endpoint]: Add `addClusterClients(clientList: ClusterId[])` helper and chainable `MatterbridgeEndpoint` method to require `MatterbridgeBindingServer` with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.
 - [endpoint]: Add `addRequiredClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all required client clusters declared by the endpoint's device types.
 - [endpoint]: Add `addOptionalClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all optional client clusters declared by the endpoint's device types.
+- [endpoint]: Add `createDefaultBindingClusterServer(clientList: ClusterId[])` chainable `MatterbridgeEndpoint` method as the standard `createDefault*` helper for the Binding cluster.
 - [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
 
 ### Changed

@@ -8,9 +8,12 @@ import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
 import { BindingResolution } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { EndpointNumber, NodeId } from '@matter/types';
 import { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
+import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 
 import {
@@ -21,7 +24,7 @@ import {
   stopMatterbridgeEnvironment,
 } from '../jestutils/jestMatterbridgeTest.js';
 import { setupTest } from '../jestutils/jestSetupTest.js';
-import { onOffSwitch } from '../matterbridgeDeviceTypes.js';
+import { occupancySensor, onOffLight, onOffSwitch } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';
 import { MatterbridgeIdentifyServer } from './identifyServer.js';
@@ -153,5 +156,70 @@ describe('Client clusters and behaviors', () => {
       expect(binding.getEndpoint(OnOff.id)).toBe(device);
       expect(binding.getEndpoint(Identify.id)).toBeUndefined();
     });
+  });
+
+  test('server-kind binding: occupancy sensor bound to OnOff light', async () => {
+    // Create the occupancy sensor (the binding target)
+    const sensor = new MatterbridgeEndpoint(occupancySensor, { id: 'OccSensor' }).createDefaultIdentifyClusterServer().addRequiredClusterServers(); // adds OccupancySensingServer with Feature.PassiveInfrared, occupied: false
+    expect(await matterbridge.aggregatorNode?.add(sensor)).toBeDefined();
+    await sensor.construction.ready;
+
+    // Create the OnOff light with OccupancySensing advertised as a client cluster
+    const light = new MatterbridgeEndpoint(onOffLight, { id: 'OccLight' })
+      .createDefaultBindingClusterServer([OccupancySensing.id])
+      .createDefaultIdentifyClusterServer()
+      .createDefaultOnOffClusterServer(false)
+      .addRequiredClusterServers();
+    expect(await matterbridge.aggregatorNode?.add(light)).toBeDefined();
+    await light.construction.ready;
+
+    // Descriptor of the light must advertise OccupancySensing as a client cluster
+    expect(light.getAttribute(DescriptorServer, 'clientList')).toContain(OccupancySensing.id);
+
+    // Simulate what BindingManager emits for a local (same-node) binding: kind 'server'
+    if (!sensor.number) throw new Error('sensor endpoint number not assigned');
+    if (!light.number) throw new Error('light endpoint number not assigned');
+    const resolution: BindingResolution = {
+      kind: 'server',
+      entry: { node: NodeId(sensor.number), endpoint: EndpointNumber(sensor.number), cluster: OccupancySensing.id } as Binding.Target,
+      node: {} as any,
+      endpoint: sensor as any,
+    };
+    await light.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
+
+    // getEndpoint must return the sensor and no node.set must have been called
+    await light.act((agent) => {
+      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      expect(binding.getEndpoint(OccupancySensing.id)).toBe(sensor);
+    });
+
+    // Read the sensor occupancy state directly through the bound endpoint (no wire transport)
+    await light.act((agent) => {
+      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const boundSensor = binding.getEndpoint(OccupancySensing.id);
+      expect(boundSensor?.stateOf(OccupancySensingServer).occupancy.occupied).toBe(false);
+    });
+
+    // Subscribe to occupancy changes through the bound sensor and automate the light.
+    // pendingUpdate tracks the setAttribute promise so the test can await it after each trigger.
+    let pendingUpdate: Promise<boolean> = Promise.resolve(false);
+    await light.act((agent) => {
+      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const boundSensor = binding.getEndpoint(OccupancySensing.id);
+      if (!boundSensor) throw new Error('bound sensor not found');
+      boundSensor.eventsOf(OccupancySensingServer).occupancy$Changed.on((newValue) => {
+        pendingUpdate = light.setAttribute(OnOffServer, 'onOff', newValue.occupied ?? false);
+      });
+    });
+
+    // Simulate occupied: true — light must turn on
+    await sensor.setAttribute(OccupancySensingServer, 'occupancy', { occupied: true });
+    await pendingUpdate;
+    expect(light.getAttribute(OnOff.id, 'onOff')).toBe(true);
+
+    // Simulate occupied: false — light must turn off
+    await sensor.setAttribute(OccupancySensingServer, 'occupancy', { occupied: false });
+    await pendingUpdate;
+    expect(light.getAttribute(OnOff.id, 'onOff')).toBe(false);
   });
 });

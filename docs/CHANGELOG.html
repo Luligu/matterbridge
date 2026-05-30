@@ -194,6 +194,7 @@
 <li>[endpoint]: Add <code>addClusterClients(clientList: ClusterId[])</code> helper and chainable <code>MatterbridgeEndpoint</code> method to require <code>MatterbridgeBindingServer</code> with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.</li>
 <li>[endpoint]: Add <code>addRequiredClusterClients()</code> helper and chainable <code>MatterbridgeEndpoint</code> method to collect and register all required client clusters declared by the endpoint&#39;s device types.</li>
 <li>[endpoint]: Add <code>addOptionalClusterClients()</code> helper and chainable <code>MatterbridgeEndpoint</code> method to collect and register all optional client clusters declared by the endpoint&#39;s device types.</li>
+<li>[endpoint]: Add <code>createDefaultBindingClusterServer(clientList: ClusterId[])</code> chainable <code>MatterbridgeEndpoint</code> method as the standard <code>createDefault*</code> helper for the Binding cluster.</li>
 <li>[readme]: Add &quot;How to use cluster clients&quot; section to README-DEV.html with description and examples for <code>addClusterClients</code>, <code>addRequiredClusterClients</code>, <code>addOptionalClusterClients</code>, and <code>getEndpoint</code>.</li>
 </ul>
 <h3 id="changed">Changed</h3>
