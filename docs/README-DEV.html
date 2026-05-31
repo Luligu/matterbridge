@@ -469,20 +469,6 @@ const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureC
 
 await this.registerDevice(device);
 </code></pre>
-<h3 id="reacting-to-a-binding-and-controlling-the-remote-endpoint">Reacting to a binding and controlling the remote endpoint</h3>
-<p>Once the controller is commissioned and a binding is established, use <code>getEndpoint</code> on the <code>MatterbridgeBindingServer</code> to retrieve the bound remote endpoint for a given cluster:</p>
-<pre><code class="language-typescript">import { ClosureControl } from &#39;@matter/types/clusters/closure-control&#39;;
-import { MatterbridgeBindingServer } from &#39;matterbridge&#39;;
-
-// Inside a command handler or event listener on the controller endpoint:
-await device.act(async (agent) =&gt; {
-  const binding = agent.get(MatterbridgeBindingServer);
-  const remoteEndpoint = binding.getEndpoint(ClosureControl.id);
-  if (!remoteEndpoint) return;
-  // interact with the remote closure endpoint
-  await remoteEndpoint.setAttribute(ClosureControl.id, &#39;targetState&#39;, { position: 100 });
-});
-</code></pre>
 <h2 id="matterbridgeendpoint-single-class-devices">MatterbridgeEndpoint single class devices</h2>
 <p>For the device types listed below there are single class provided to createa a fully functional device.</p>
 <p>For a working example refer to the &#39;matterbridge-example-dynamic-platform&#39;.</p>
