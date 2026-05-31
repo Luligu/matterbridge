@@ -121,6 +121,8 @@ import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import { TlsCertificateManagement } from '@matter/types/clusters/tls-certificate-management';
+import { TlsClientManagement } from '@matter/types/clusters/tls-client-management';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
@@ -286,8 +288,8 @@ export const OTAProvider = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [OtaSoftwareUpdateProvider.id],
   optionalServerClusters: [],
-  requiredClientClusters: [OtaSoftwareUpdateRequestor.id],
-  optionalClientClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OtaSoftwareUpdateRequestor.id],
 });
 
 /**
@@ -358,6 +360,8 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
   revision: 3,
   requiredServerClusters: [DeviceEnergyManagement.id],
   optionalServerClusters: [DeviceEnergyManagementMode.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [ElectricalGridConditions.id],
 });
 
 /** Chapter 3. Application Device Types */
@@ -382,6 +386,8 @@ export const onOffLight = DeviceTypeDefinition({
   revision: 3,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -402,6 +408,8 @@ export const dimmableLight = DeviceTypeDefinition({
   revision: 3,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -424,6 +432,8 @@ export const colorTemperatureLight = DeviceTypeDefinition({
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -447,6 +457,8 @@ export const extendedColorLight = DeviceTypeDefinition({
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 // Chapter 5. Smart plugs/Outlets and other Actuators device types
@@ -477,6 +489,8 @@ export const onOffOutlet = DeviceTypeDefinition({
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -507,6 +521,8 @@ export const dimmableOutlet = DeviceTypeDefinition({
   revision: 5,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -537,6 +553,8 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
   revision: 2,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -567,6 +585,8 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
   revision: 2,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
+  requiredClientClusters: [],
+  optionalClientClusters: [OccupancySensing.id],
 });
 
 /**
@@ -590,6 +610,8 @@ export const pumpDevice = DeviceTypeDefinition({
   revision: 3,
   requiredServerClusters: [OnOff.id, PumpConfigurationAndControl.id, Identify.id],
   optionalServerClusters: [LevelControl.id, Groups.id, ScenesManagement.id, TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id, OccupancySensing.id],
 });
 
 export const waterValve = DeviceTypeDefinition({
@@ -599,6 +621,8 @@ export const waterValve = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [Identify.id, ValveConfigurationAndControl.id],
   optionalServerClusters: [FlowMeasurement.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [FlowMeasurement.id],
 });
 
 // Chapter 6. Switches and Controls device types
@@ -610,7 +634,9 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id],
-  optionalServerClusters: [Groups.id, ScenesManagement.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [Identify.id, OnOff.id],
+  optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
@@ -620,7 +646,9 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id],
-  optionalServerClusters: [Groups.id, ScenesManagement.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id],
+  optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
@@ -630,7 +658,9 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
-  optionalServerClusters: [Groups.id, ScenesManagement.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
+  optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
 export const genericSwitch = DeviceTypeDefinition({
@@ -831,6 +861,8 @@ export const thermostatDevice = DeviceTypeDefinition({
   revision: 5,
   requiredServerClusters: [Identify.id, Thermostat.id],
   optionalServerClusters: [Groups.id, ThermostatUserInterfaceConfiguration.id, EnergyPreference.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [FanControl.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, OccupancySensing.id],
 });
 
 /**
@@ -1531,7 +1563,9 @@ export const heatPump = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   revision: 1,
   requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
-  optionalServerClusters: [Identify.id, Thermostat.id],
+  optionalServerClusters: [Identify.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [Thermostat.id],
 });
 
 /**
@@ -2011,8 +2045,9 @@ export const cameraController = DeviceTypeDefinition({
     ZoneManagement.id,
     CameraAvStreamManagement.id,
     CameraAvSettingsUserLevelManagement.id,
-    WebRtcTransportRequestor.id,
     PushAvStreamTransport.id,
+    TlsCertificateManagement.id,
+    TlsClientManagement.id,
   ],
 });
 

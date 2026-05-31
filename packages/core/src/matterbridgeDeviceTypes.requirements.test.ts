@@ -248,7 +248,7 @@ describe('Matterbridge device cluster mappings', () => {
       const mbServerRequired = asSet(mb.requiredServerClusters ?? []);
       const mbServerOptional = asSet(mb.optionalServerClusters ?? []);
 
-      // Required clusters
+      // Server required clusters
       const serverRequiredOk = setEquals(mbServerRequired, mandatoryServerSet);
       if (!serverRequiredOk) {
         const failure = `${name}: required mismatch -> mb=[${[...mbServerRequired].join(',')}] md=[${[...mandatoryServerSet].join(',')}]`;
@@ -256,7 +256,7 @@ describe('Matterbridge device cluster mappings', () => {
         // console.warn('Required validation failure:', failure); // eslint-disable-line no-console
       }
 
-      // Optional clusters
+      // Server optional clusters
       const serverOptionalOk = setEquals(mbServerOptional, optionalServerSet);
       if (!serverOptionalOk) {
         const failure = `${name}: optional mismatch -> mb=[${[...mbServerOptional].join(',')}] md=[${[...optionalServerSet].join(',')}]`;
@@ -264,7 +264,7 @@ describe('Matterbridge device cluster mappings', () => {
         // console.warn('Optional validation failure:', failure); // eslint-disable-line no-console
       }
 
-      // Ensure no overlap between required and optional in Matterbridge definition
+      // Ensure no overlap between server required and optional in Matterbridge definition
       let serverOverlapOk = true;
       for (const id of mbServerRequired) {
         if (mbServerOptional.has(id)) {
@@ -274,9 +274,45 @@ describe('Matterbridge device cluster mappings', () => {
           // console.warn('Overlap validation failure:', failure); // eslint-disable-line no-console
         }
       }
+
+      const mandatoryClientSet = asSet(extractClusterIds(md.requirements?.client?.mandatory ?? {}));
+      const optionalClientSet = asSet(extractClusterIds(md.requirements?.client?.optional ?? {}));
+      const mbClientRequired = asSet(mb.requiredClientClusters ?? []);
+      const mbClientOptional = asSet(mb.optionalClientClusters ?? []);
+
+      // Client required clusters
+      const clientRequiredOk = setEquals(mbClientRequired, mandatoryClientSet);
+      if (!clientRequiredOk) {
+        const failure = `${name}: client required mismatch -> mb=[${[...mbClientRequired].join(',')}] md=[${[...mandatoryClientSet].join(',')}]`;
+        failures.push(failure);
+        // console.warn('Client required validation failure:', failure); // eslint-disable-line no-console
+      }
+
+      // Client optional clusters
+      const clientOptionalOk = setEquals(mbClientOptional, optionalClientSet);
+      if (!clientOptionalOk) {
+        const failure = `${name}: client optional mismatch -> mb=[${[...mbClientOptional].join(',')}] md=[${[...optionalClientSet].join(',')}]`;
+        failures.push(failure);
+        // console.warn('Client optional validation failure:', failure); // eslint-disable-line no-console
+      }
+
+      // Ensure no overlap between client required and optional in Matterbridge definition
+      let clientOverlapOk = true;
+      for (const id of mbClientRequired) {
+        if (mbClientOptional.has(id)) {
+          clientOverlapOk = false;
+          const failure = `${name}: client cluster ${id} listed in both required and optional`;
+          failures.push(failure);
+          // console.warn('Client overlap validation failure:', failure); // eslint-disable-line no-console
+        }
+      }
+
       expect(serverRequiredOk).toBeDefined();
       expect(serverOptionalOk).toBeDefined();
       expect(serverOverlapOk).toBeDefined();
+      expect(clientRequiredOk).toBeDefined();
+      expect(clientOptionalOk).toBeDefined();
+      expect(clientOverlapOk).toBeDefined();
     });
   }
 
@@ -285,20 +321,38 @@ describe('Matterbridge device cluster mappings', () => {
       console.warn('Cluster validation failures:', failures); // eslint-disable-line no-console
     }
     expect(failures).toEqual([
+      // Failures are listed in device-definition order; for each device: server checks then client checks
       'rootNode: required mismatch -> mb=[] md=[31,40,48,51,60,62,63]', // omitted to avoid imports
       'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
+      'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
-      'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Client clusters as server clusters
-      'onOffSwitch: optional mismatch -> mb=[4,98] md=[]', // Client clusters as server clusters
-      'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Client clusters as server clusters
-      'dimmableSwitch: optional mismatch -> mb=[4,98] md=[]', // Client clusters as server clusters
-      'colorTemperatureSwitch: required mismatch -> mb=[3,6,8,768] md=[3]', // Client clusters as server clusters
-      'colorTemperatureSwitch: optional mismatch -> mb=[4,98] md=[]', // Client clusters as server clusters
+      // TODO: onOffSwitch / dimmableSwitch / colorTemperatureSwitch expose client clusters also as server clusters for Apple Home compatibility.
+      //       The following plugins rely on these device types (only .code is accessed, no cluster-list reads):
+      //
+      //       Plugin                              File                   Device type(s)              Usage
+      //       ----------------------------------  ---------------------  --------------------------  ---------------------------------------------------
+      //       matterbridge-security               module.ts:112          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
+      //       matterbridge-example-dyn-platform   module.ts:428          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
+      //       matterbridge-webhooks               module.ts:125          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
+      //       matterbridge-zigbee2mqtt            entity.ts:1009         onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
+      //       matterbridge-zigbee2mqtt            entity.ts:1062         onOffSwitch                 deviceType = onOffSwitch  (selection)
+      //       matterbridge-zigbee2mqtt            entity.ts:1275         onOffSwitch                 deviceType: onOffSwitch   (feature map entry)
+      //       matterbridge-zigbee2mqtt            entity.ts:1276         dimmableSwitch              deviceType: dimmableSwitch (feature map entry)
+      //       matterbridge-zigbee2mqtt            entity.ts:1277-1279    colorTemperatureSwitch      deviceType: colorTemperatureSwitch (feature map entries)
+      //       matterbridge-zigbee2mqtt            entity.ts:1669         onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
+      //       matterbridge-zigbee2mqtt            entity.ts:1670         dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
+      //       matterbridge-hass                   mutableDevice.ts:992   onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
+      //       matterbridge-hass                   mutableDevice.ts:993   onOffSwitch, colorTemperatureSwitch     deviceTypesMap .code comparisons
+      //       matterbridge-hass                   mutableDevice.ts:994   dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
+      //       matterbridge-shelly                 platform.ts:875        onOffSwitch                 deviceType = onOffSwitch  (selection)
+      //       matterbridge-test                   module.ts:144          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, ...])
+      'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Added extraneous server clusters for Apple Home compatibility
+      'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Added extraneous server clusters for Apple Home compatibility
+      'colorTemperatureSwitch: required mismatch -> mb=[3,6,8,768] md=[3]', // Added extraneous server clusters for Apple Home compatibility
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
-      'heatPump: optional mismatch -> mb=[3,513] md=[3]', // Client clusters as server clusters
     ]);
   });
 });
