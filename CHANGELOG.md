@@ -75,8 +75,15 @@ These classes will run as threads in the next releases:
 - [endpoint]: Add `addClusterClients(clientList: ClusterId[])` helper and chainable `MatterbridgeEndpoint` method to require `MatterbridgeBindingServer` with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.
 - [endpoint]: Add `addRequiredClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all required client clusters declared by the endpoint's device types.
 - [endpoint]: Add `addOptionalClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all optional client clusters declared by the endpoint's device types.
+- [endpoint]: Add `addRequiredClusters()` chainable `MatterbridgeEndpoint` method that calls both `addRequiredClusterServers()` and `addRequiredClusterClients()` in one step.
 - [endpoint]: Add `createDefaultBindingClusterServer(clientList: ClusterId[])` chainable `MatterbridgeEndpoint` method as the standard `createDefault*` helper for the Binding cluster.
 - [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
+- [deviceTypes]: Add `requiredClientClusters` and `optionalClientClusters` to the device type definitions for: `OTAProvider`, `deviceEnergyManagement`, `onOffLight`, `dimmableLight`, `colorTemperatureLight`, `extendedColorLight`, `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `waterValve`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `thermostatDevice`, `heatPump`, `cameraController`.
+- [deviceTypes]: Fix `heatPump` definition: move `Thermostat` from `optionalServerClusters` to `optionalClientClusters`.
+- [deviceTypes]: Fix `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`: move `Groups` and `ScenesManagement` from `optionalServerClusters` to `optionalClientClusters`.
+- [deviceTypes]: Fix `cameraController`: replace misplaced `WebRtcTransportRequestor` client entry with `TlsCertificateManagement` and `TlsClientManagement`; add imports for both TLS clusters.
+- [deviceTypes]: Fix `OTAProvider`: move `OtaSoftwareUpdateRequestor` from `requiredClientClusters` to `optionalClientClusters` per Matter 1.5.1 spec (conformance O).
+- [test]: Add cluster client validation (required, optional, overlap) to `matterbridgeDeviceTypes.requirements.test.ts` alongside the existing server cluster checks.
 
 ### Changed
 

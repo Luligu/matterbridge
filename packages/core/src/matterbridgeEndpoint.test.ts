@@ -73,6 +73,7 @@ import {
 } from '@matter/types/clusters';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
 import { flushAsync } from './jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
@@ -97,6 +98,7 @@ import {
   occupancySensor,
   onOffLight,
   onOffOutlet,
+  onOffSwitch,
   powerSource,
   pressureSensor,
   rainSensor,
@@ -981,6 +983,21 @@ describe('Matterbridge ' + NAME, () => {
     // expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
     // expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(true);
     // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true); /
+
+    await add(device);
+  });
+
+  test('addRequiredClusters', async () => {
+    const device = new MatterbridgeEndpoint(onOffSwitch, { id: 'OnOffSwitch1' });
+    expect(device).toBeDefined();
+    device.addRequiredClusters();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'onOff', 'binding']);
+    expect(device.hasClusterServer(IdentifyServer)).toBe(true);
+    expect(device.hasClusterServer(OnOffServer)).toBe(true);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
+    const clientList = (device.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: number[] })?.clientList ?? [];
+    expect(clientList).toContain(Identify.Cluster.id);
+    expect(clientList).toContain(OnOff.Cluster.id);
 
     await add(device);
   });

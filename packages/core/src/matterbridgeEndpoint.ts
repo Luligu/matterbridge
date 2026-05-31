@@ -1552,6 +1552,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Adds both the required cluster servers and the required cluster clients for the device types of the specified endpoint.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addRequiredClusters(): MatterbridgeEndpoint {
+    addRequiredClusterServers(this);
+    addRequiredClusterClients(this);
+    return this;
+  }
+
+  /**
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
