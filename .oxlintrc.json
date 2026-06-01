@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.1
+// .oxlintrc.json 1.0.2
 
 // This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
@@ -17,8 +17,7 @@
     "**/scripts/**",
     "**/screenshots/**",
     "vendor/**",
-    "**/package-lock.json",
-    "**/eslint.config.js"
+    "**/package-lock.json"
   ],
   "env": {
     "builtin": true,
@@ -36,10 +35,13 @@
     "correctness": "error",
     "suspicious": "warn",
     "perf": "warn",
-    "pedantic": "off"
+    "style": "off",
+    "pedantic": "off",
+    "restriction": "off",
+    "nursery": "off"
   },
   "rules": {
-    "no-unused-vars": [
+    "eslint/no-unused-vars": [
       "warn",
       {
         "argsIgnorePattern": "^_",
@@ -50,17 +52,18 @@
         "reportUsedIgnorePattern": true
       }
     ],
-    "no-console": "warn",
-    "no-shadow": "off",
-    "no-new": "warn",
-    "no-extend-native": "off",
-    "no-inline-comments": "off",
-    "no-underscore-dangle": "off",
-    "max-lines-per-function": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
-    "max-lines": "off",
-    "no-eval": "error",
-    "no-implied-eval": "error",
-    "no-param-reassign": "warn",
+    "eslint/no-console": "warn",
+    "eslint/no-shadow": "off",
+    "eslint/no-new": "warn",
+    "eslint/no-extend-native": "off",
+    "eslint/no-inline-comments": "off",
+    "eslint/no-underscore-dangle": "off",
+    "eslint/max-lines-per-function": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
+    "eslint/max-lines": "off",
+    "eslint/no-eval": "error",
+    "eslint/no-implied-eval": "error",
+    "eslint/no-param-reassign": "warn",
+    "eslint/no-await-in-loop": "off",
     "unicorn/prefer-node-protocol": "error",
     "unicorn/require-post-message-target-origin": "off",
     "unicorn/prefer-add-event-listener": "off",
@@ -68,6 +71,10 @@
     "unicorn/consistent-function-scoping": "off",
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-abusive-eslint-disable": "error",
+    "unicorn/prefer-array-find": "warn",
+    "unicorn/prefer-includes": "warn",
+    "unicorn/no-useless-undefined": "warn",
+    "unicorn/no-negated-condition": "warn",
     "oxc/no-async-endpoint-handlers": "off",
     "oxc/no-accumulating-spread": "error",
     "oxc/no-const-enum": "error",
@@ -77,10 +84,20 @@
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "typescript/no-explicit-any": "warn",
+    "typescript/no-non-null-assertion": "warn",
+    "typescript/require-await": "warn",
+    "typescript/promise-function-async": "warn",
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "typescript/only-throw-error": "error",
+    "typescript/ban-ts-comment": "error",
+    "typescript/no-require-imports": "error",
+    "typescript/prefer-nullish-coalescing": "warn",
+    "typescript/prefer-optional-chain": "warn",
     "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
     "import/no-unassigned-import": ["error", { "allow": ["@matter/nodejs"] }],
     "import/no-cycle": "error",
-    "promise/no-multiple-resolved": "off"
+    "promise/no-multiple-resolved": "off",
+    "promise/no-nesting": "warn"
   },
   "overrides": [
     /* Jest */
@@ -89,15 +106,15 @@
       "plugins": ["jest"],
       "env": { "jest": true },
       "rules": {
-        "require-to-throw-message": "off",
-        "no-conditional-expect": "off",
-        "no-conditional-tests": "off",
-        "unbound-method": "off",
-        "no-unsafe-type-assertion": "off",
-        "no-unused-vars": "off",
-        "no-new": "off",
-        "max-lines-per-function": "off",
-        "require-await": "off"
+        "eslint/no-unused-vars": "off",
+        "eslint/no-new": "off",
+        "eslint/max-lines-per-function": "off",
+        "eslint/require-await": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/unbound-method": "off",
+        "jest/require-to-throw-message": "off",
+        "jest/no-conditional-in-test": "off"
       }
     },
     /* Vitest */
@@ -106,15 +123,15 @@
       "plugins": ["vitest"],
       "env": { "vitest": true },
       "rules": {
-        "require-to-throw-message": "off",
-        "no-conditional-expect": "off",
-        "no-conditional-tests": "off",
-        "unbound-method": "off",
-        "no-unsafe-type-assertion": "off",
-        "no-unused-vars": "off",
-        "no-new": "off",
-        "max-lines-per-function": "off",
-        "require-await": "off"
+        "eslint/no-unused-vars": "off",
+        "eslint/no-new": "off",
+        "eslint/max-lines-per-function": "off",
+        "eslint/require-await": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/unbound-method": "off",
+        "vitest/require-to-throw-message": "off",
+        "vitest/no-conditional-tests": "off"
       }
     }
   ]
