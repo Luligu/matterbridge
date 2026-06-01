@@ -72,7 +72,5 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           disable_search: true
-          files: |
-            ./coverage/jest/lcov.info
-            ./coverage/jest/coverage-final.json
+          files: ./coverage/jest/lcov.info,./coverage/jest/coverage-final.json
           fail_ci_if_error: true

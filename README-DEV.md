@@ -379,7 +379,7 @@ const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'Ent
   .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
   .createDefaultBooleanStateClusterServer(true)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+  .addRequiredClusters(); // Always better to call it at the end of the chain to add all the not already created but required clusters (server and client).
 ```
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
@@ -420,7 +420,7 @@ import { closureController } from 'matterbridge';
 const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
   .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
   .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
-  .addRequiredClusterServers();
+  .addRequiredClusters();
 
 await this.registerDevice(device);
 ```
