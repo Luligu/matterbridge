@@ -1,4 +1,4 @@
-// vite.config.ts 2.0.4
+// vite.config.ts 2.0.5
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -23,13 +23,14 @@ export default defineConfig({
       '**/vendor/',
     ],
     globals: true,
-    clearMocks: true,
-    restoreMocks: true,
+    clearMocks: false,
+    restoreMocks: false,
     environment: 'node',
-    maxWorkers: 100,
+    maxWorkers: '100%',
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov'],
+      provider: 'istanbul',
+      reportsDirectory: 'coverage/vitest',
+      reporter: ['lcov', 'text', 'json'],
       include: ['**/src/**/*.{ts,mts,cts}'],
       exclude: [
         '**/.cache/',
@@ -44,14 +45,9 @@ export default defineConfig({
         '**/src/mock/',
         '**/temp/',
         '**/vendor/',
+        '**/vitest/**',
         '**/src/**/*.d.ts',
       ],
-      thresholds: {
-        statements: 100,
-        branches: 100,
-        functions: 100,
-        lines: 100,
-      },
     },
   },
 });

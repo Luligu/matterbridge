@@ -50,7 +50,7 @@ for (const additionalRecord of additionalRecords) {
   const additionalRecordEncoded = DnsCodec.encodeRecord(additionalRecord);
   chunkSize += additionalRecordEncoded.byteLength;
   if (chunkSize > MAX_MDNS_MESSAGE_SIZE) {
-    break;  // ← remaining records are silently dropped, no second packet
+    break; // ← remaining records are silently dropped, no second packet
   }
   chunk.additionalRecords.push(additionalRecordEncoded);
 }
@@ -72,7 +72,7 @@ for (const answer of message.answers ?? []) {
   } else {
     chunkSize += answerEncoded.byteLength;
   }
-  chunk.answers.push(answerEncoded);  // ← always pushed, never dropped
+  chunk.answers.push(answerEncoded); // ← always pushed, never dropped
 }
 ```
 
@@ -117,16 +117,16 @@ if (this.advertiser.server.supportsIpv4) {
 **After:**
 
 ```js
-for (const addr of addrs.ipV6.filter((a) => a.startsWith("fe80"))) {
-  records.push(AAAARecord(hostname, addr));    // AAAA link-local first — stable, MAC-derived
+for (const addr of addrs.ipV6.filter((a) => a.startsWith('fe80'))) {
+  records.push(AAAARecord(hostname, addr)); // AAAA link-local first — stable, MAC-derived
 }
 if (this.advertiser.server.supportsIpv4) {
   for (const addr of addrs.ipV4) {
-    records.push(ARecord(hostname, addr));      // A second — reliable IPv4 fallback
+    records.push(ARecord(hostname, addr)); // A second — reliable IPv4 fallback
   }
 }
-for (const addr of addrs.ipV6.filter((a) => !a.startsWith("fe80"))) {
-  records.push(AAAARecord(hostname, addr));    // AAAA non-link-local last — may rotate
+for (const addr of addrs.ipV6.filter((a) => !a.startsWith('fe80'))) {
+  records.push(AAAARecord(hostname, addr)); // AAAA non-link-local last — may rotate
 }
 ```
 

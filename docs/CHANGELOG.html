@@ -181,6 +181,7 @@
 <li>[matter]: Update to Matter 1.5.1. See <a href="https://matterbridge.io/Matter-1.5.1.html">Matter 1.5.1 changes from 1.4.2</a>.</li>
 <li>[matter]: Update to matter.js 0.17.0. See <a href="https://matterbridge.io/Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
 <li>[matter]: Enable <code>tcp</code> transport with <code>udp</code> preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.</li>
+<li>[endpoint]: Since the cluster clients have been added to each device type, instead of <code>addRequiredClusterServers()</code> call <code>addRequiredClusters()</code> that adds both required server clusters and required client clusters.</li>
 </ul>
 <h3 id="development">Development</h3>
 <ul>
@@ -194,27 +195,50 @@
 <li>[endpoint]: Add <code>addClusterClients(clientList: ClusterId[])</code> helper and chainable <code>MatterbridgeEndpoint</code> method to require <code>MatterbridgeBindingServer</code> with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.</li>
 <li>[endpoint]: Add <code>addRequiredClusterClients()</code> helper and chainable <code>MatterbridgeEndpoint</code> method to collect and register all required client clusters declared by the endpoint&#39;s device types.</li>
 <li>[endpoint]: Add <code>addOptionalClusterClients()</code> helper and chainable <code>MatterbridgeEndpoint</code> method to collect and register all optional client clusters declared by the endpoint&#39;s device types.</li>
+<li>[endpoint]: Add <code>addRequiredClusters()</code> chainable <code>MatterbridgeEndpoint</code> method that calls both <code>addRequiredClusterServers()</code> and <code>addRequiredClusterClients()</code> in one step.</li>
 <li>[endpoint]: Add <code>createDefaultBindingClusterServer(clientList: ClusterId[])</code> chainable <code>MatterbridgeEndpoint</code> method as the standard <code>createDefault*</code> helper for the Binding cluster.</li>
 <li>[readme]: Add &quot;How to use cluster clients&quot; section to README-DEV.html with description and examples for <code>addClusterClients</code>, <code>addRequiredClusterClients</code>, <code>addOptionalClusterClients</code>, and <code>getEndpoint</code>.</li>
+<li>[deviceTypes]: Add <code>requiredClientClusters</code> and <code>optionalClientClusters</code> to the device type definitions for: <code>OTAProvider</code>, <code>deviceEnergyManagement</code>, <code>onOffLight</code>, <code>dimmableLight</code>, <code>colorTemperatureLight</code>, <code>extendedColorLight</code>, <code>onOffOutlet</code>, <code>dimmableOutlet</code>, <code>onOffMountedSwitch</code>, <code>dimmableMountedSwitch</code>, <code>pumpDevice</code>, <code>waterValve</code>, <code>onOffSwitch</code>, <code>dimmableSwitch</code>, <code>colorTemperatureSwitch</code>, <code>thermostatDevice</code>, <code>heatPump</code>, <code>cameraController</code>.</li>
+<li>[codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
-<li>[package]: Update dependencies.</li>
-<li>[package]: Bump <code>node-ansi-logger</code> to v.3.3.0-dev-20260524-cac9dd5.</li>
-<li>[package]: Bump <code>node-persist-manager</code> to v.2.1.0-dev-20260524-6a6019a.</li>
-<li>[package]: Refactor <code>jest-utils</code> and <code>vitest-utils</code> packages.</li>
-<li>[package]: Add exports for <code>jest-utils</code> and <code>vitest-utils</code> packages.</li>
-<li>[package]: Bump <code>@eslint/json</code> to v.2.0.0.</li>
-<li>[package]: Bump <code>@vitest/eslint-plugin</code> to v.1.6.18.</li>
-<li>[package]: Bump <code>eslint-plugin-prettier</code> to v.5.5.6.</li>
-<li>[package]: Bump <code>npm-check-updates</code> to v.22.2.1.</li>
-<li>[package]: Bump <code>typescript-eslint</code> to v.8.60.0.</li>
-<li>[oxlint]: Bump <code>oxlint</code> config to v.1.0.1.</li>
-<li>[oxfmt]: Bump <code>oxfmt</code> config to v.1.0.1.</li>
-<li>[jest]: Bump <code>jest</code> config to v.2.0.2.</li>
-<li>[vitest]: Bump <code>vitest</code> config to v.2.0.4.</li>
-<li>[eslint]: Bump <code>eslint</code> config to v.2.0.5.</li>
-<li>[eslint]: Bump <code>devcontainer</code> config to v.1.0.1.</li>
+<li><p>[package]: Update dependencies.</p>
+</li>
+<li><p>[package]: Bump <code>node-ansi-logger</code> to v.3.3.0-dev-20260524-cac9dd5.</p>
+</li>
+<li><p>[package]: Bump <code>node-persist-manager</code> to v.2.1.0-dev-20260524-6a6019a.</p>
+</li>
+<li><p>[package]: Refactor <code>jest-utils</code> and <code>vitest-utils</code> packages.</p>
+</li>
+<li><p>[package]: Add exports for <code>jest-utils</code> and <code>vitest-utils</code> packages.</p>
+</li>
+<li><p>[package]: Bump <code>@eslint/json</code> to v.2.0.0.</p>
+</li>
+<li><p>[package]: Bump <code>@vitest/eslint-plugin</code> to v.1.6.18.</p>
+</li>
+<li><p>[package]: Bump <code>eslint-plugin-prettier</code> to v.5.5.6.</p>
+</li>
+<li><p>[package]: Bump <code>npm-check-updates</code> to v.22.2.1.</p>
+</li>
+<li><p>[package]: Bump <code>typescript-eslint</code> to v.8.60.0.</p>
+</li>
+<li><p>[oxlint]: Bump <code>oxlint</code> config to v.1.0.1.</p>
+</li>
+<li><p>[oxfmt]: Bump <code>oxfmt</code> config to v.1.0.1.</p>
+</li>
+<li><p>[jest]: Bump <code>jest</code> config to v.2.0.2.</p>
+</li>
+<li><p>[vitest]: Bump <code>vitest</code> config to v.2.0.4.</p>
+</li>
+<li><p>[eslint]: Bump <code>eslint</code> config to v.2.0.5.</p>
+</li>
+<li><p>[eslint]: Bump <code>devcontainer</code> config to v.1.0.1.</p>
+</li>
+<li><p>[claude]: Move CLAUDE.html in the repo root.</p>
+</li>
+<li><p>[claude]: Add .claude/settings.json with permissions configuration.</p>
+</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>

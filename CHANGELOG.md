@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 - [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](https://matterbridge.io/Matter-1.5.1.html).
 - [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
 - [matter]: Enable `tcp` transport with `udp` preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.
+- [endpoint]: Since the cluster clients have been added to each device type, instead of `addRequiredClusterServers()` call `addRequiredClusters()` that adds both required server clusters and required client clusters.
 
 ### Development
 
@@ -79,11 +80,7 @@ These classes will run as threads in the next releases:
 - [endpoint]: Add `createDefaultBindingClusterServer(clientList: ClusterId[])` chainable `MatterbridgeEndpoint` method as the standard `createDefault*` helper for the Binding cluster.
 - [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
 - [deviceTypes]: Add `requiredClientClusters` and `optionalClientClusters` to the device type definitions for: `OTAProvider`, `deviceEnergyManagement`, `onOffLight`, `dimmableLight`, `colorTemperatureLight`, `extendedColorLight`, `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `waterValve`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `thermostatDevice`, `heatPump`, `cameraController`.
-- [deviceTypes]: Fix `heatPump` definition: move `Thermostat` from `optionalServerClusters` to `optionalClientClusters`.
-- [deviceTypes]: Fix `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`: move `Groups` and `ScenesManagement` from `optionalServerClusters` to `optionalClientClusters`.
-- [deviceTypes]: Fix `cameraController`: replace misplaced `WebRtcTransportRequestor` client entry with `TlsCertificateManagement` and `TlsClientManagement`; add imports for both TLS clusters.
-- [deviceTypes]: Fix `OTAProvider`: move `OtaSoftwareUpdateRequestor` from `requiredClientClusters` to `optionalClientClusters` per Matter 1.5.1 spec (conformance O).
-- [test]: Add cluster client validation (required, optional, overlap) to `matterbridgeDeviceTypes.requirements.test.ts` alongside the existing server cluster checks.
+- [codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.
 
 ### Changed
 
@@ -103,6 +100,9 @@ These classes will run as threads in the next releases:
 - [vitest]: Bump `vitest` config to v.2.0.4.
 - [eslint]: Bump `eslint` config to v.2.0.5.
 - [eslint]: Bump `devcontainer` config to v.1.0.1.
+
+- [claude]: Move CLAUDE.md in the repo root.
+- [claude]: Add .claude/settings.json with permissions configuration.
 
 ### Fixed
 

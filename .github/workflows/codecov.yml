@@ -61,10 +61,14 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Run matterbridge tests
+      - name: Run matterbridge Jest tests
         run: npm run test:coverage -- --testTimeout=30000
+
+      - name: Run matterbridge Vitest tests
+        run: npm run test:vitest:coverage -- --testTimeout=30000
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true

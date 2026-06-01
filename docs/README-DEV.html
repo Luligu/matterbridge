@@ -464,8 +464,8 @@ await this.registerDevice(device);
 const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
   .createDefaultBridgedDeviceBasicInformationClusterServer(&#39;Closure Controller&#39;, &#39;CC-001&#39;, 0xfff1, &#39;Acme&#39;, &#39;Closure Controller&#39;)
   .addRequiredClusterServers()
-  .addRequiredClusterClients()   // adds ClosureControl.id (required by closureController)
-  .addOptionalClusterClients();   // adds Identify, Groups, ClosureDimension (optional)
+  .addRequiredClusterClients() // adds ClosureControl.id (required by closureController)
+  .addOptionalClusterClients(); // adds Identify, Groups, ClosureDimension (optional)
 
 await this.registerDevice(device);
 </code></pre>

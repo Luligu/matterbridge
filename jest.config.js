@@ -52,6 +52,9 @@ const jestConfig = {
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
   ],
+  collectCoverageFrom: ['**/src/**/*.{ts,mts,cts}'],
+  coverageDirectory: 'coverage/jest',
+  coverageReporters: ['lcov', 'text', 'json'],
   // Ignore specific paths for coverage files (regex)
   coveragePathIgnorePatterns: [
     '/.cache/',
@@ -67,7 +70,7 @@ const jestConfig = {
     '/temp/',
     '/vendor/',
     '/vitest/',
-    '/src/.*\\.d\\.ts$/',
+    '/src/.*\\.d\\.ts$',
     // Matterbridge specific paths to ignore
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
