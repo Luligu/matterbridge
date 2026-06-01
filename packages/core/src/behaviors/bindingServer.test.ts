@@ -31,7 +31,7 @@ import { MatterbridgeIdentifyServer } from './identifyServer.js';
 import { MatterbridgeOnOffServer } from './onOffServer.js';
 
 // Setup the test environment
-await setupTest(NAME, true);
+await setupTest(NAME, false);
 
 describe('Client clusters and behaviors', () => {
   let device: MatterbridgeEndpoint;
