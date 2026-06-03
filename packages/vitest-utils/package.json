@@ -73,6 +73,6 @@
   },
   "devDependencies": {
     "@jest/globals": "30.4.1",
-    "vitest": "4.1.7"
+    "vitest": "4.1.8"
   }
 }
