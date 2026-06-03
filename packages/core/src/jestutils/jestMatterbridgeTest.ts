@@ -447,6 +447,7 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
     description: 'Plugin ' + platform.config.name,
     author: 'Unknown',
     enabled: true,
+    registeredDevices: 0,
   });
   platform['name'] = platform.config.name;
 }

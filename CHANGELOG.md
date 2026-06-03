@@ -90,14 +90,14 @@ These classes will run as threads in the next releases:
 - [package]: Refactor `jest-utils` and `vitest-utils` packages.
 - [package]: Add exports for `jest-utils` and `vitest-utils` packages.
 - [package]: Bump `@eslint/json` to v.2.0.0.
-- [package]: Bump `@vitest/eslint-plugin` to v.1.6.18.
+- [package]: Bump `@vitest/eslint-plugin` to v.1.6.19.
 - [package]: Bump `eslint-plugin-prettier` to v.5.5.6.
 - [package]: Bump `npm-check-updates` to v.22.2.1.
-- [package]: Bump `typescript-eslint` to v.8.60.0.
-- [oxlint]: Bump `oxlint` config to v.1.0.1.
-- [oxfmt]: Bump `oxfmt` config to v.1.0.1.
+- [package]: Bump `typescript-eslint` to v.8.60.1.
+- [oxlint]: Bump `oxlint` config to v.1.0.2.
+- [oxfmt]: Bump `oxfmt` config to v.1.0.2.
 - [jest]: Bump `jest` config to v.2.0.2.
-- [vitest]: Bump `vitest` config to v.2.0.4.
+- [vitest]: Bump `vitest` config to v.2.0.5.
 - [eslint]: Bump `eslint` config to v.2.0.5.
 - [eslint]: Bump `devcontainer` config to v.1.0.1.
 
