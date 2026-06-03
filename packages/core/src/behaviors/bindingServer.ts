@@ -56,8 +56,12 @@ export class MatterbridgeBindingServer extends BindingServer {
       const toAddClientList = clientList.filter((id) => !currentClientList.includes(id));
       // istanbul ignore else
       if (toAddClientList.length > 0) {
-        await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
         device.log.info(`Adding client clusters to endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: ${toAddClientList.join(', ')}`);
+        await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
+      }
+      const targets = this.state.binding;
+      for (const target of targets) {
+        device.log.info(`Active binding for endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: target ${debugStringify(target)}`);
       }
     });
 
