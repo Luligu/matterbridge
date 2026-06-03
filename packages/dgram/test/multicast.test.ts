@@ -13,10 +13,10 @@ import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
-import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, Multicast } from './multicast.js';
+import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, Multicast } from '../src/multicast.js';
+import { loggerLogSpy, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Multicast', false);

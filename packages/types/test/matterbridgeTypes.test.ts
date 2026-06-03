@@ -22,7 +22,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
   typ,
-} from './matterbridgeTypes.js';
+} from '../src/matterbridgeTypes.js';
 
 describe('matterbridgeTypes constants', () => {
   beforeEach(() => {

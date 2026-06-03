@@ -9,15 +9,7 @@ process.argv.push('--debug');
 describe('Vitest Helpers', () => {
   const NAME = 'VitestHelpers';
 
-  beforeAll(async () => {
-    await setupTest(NAME, true);
-  });
-
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterEach(() => {
     vi.clearAllMocks();
   });
 

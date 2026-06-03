@@ -28,7 +28,7 @@ async function runWorkerCheckUpdates(options: RunOptions) {
 
   const inspectError = jest.fn(() => 'inspected error');
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -38,10 +38,10 @@ async function runWorkerCheckUpdates(options: RunOptions) {
     },
   }));
 
-  jest.unstable_mockModule('./checkUpdates.js', () => ({ checkUpdates }));
+  jest.unstable_mockModule('../src/checkUpdates.js', () => ({ checkUpdates }));
   jest.unstable_mockModule('@matterbridge/utils/error', () => ({ inspectError }));
 
-  await import('./workerCheckUpdates.js');
+  await import('../src/workerCheckUpdates.js');
   const success = await runPromise;
 
   return { wrapperName, success, loggerMock, fetchMock, checkUpdates, inspectError };

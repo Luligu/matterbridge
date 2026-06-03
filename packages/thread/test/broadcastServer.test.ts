@@ -1,4 +1,4 @@
-// src\broadcastChannel.test.ts
+// test\broadcastServer.test.ts
 
 const NAME = 'BroadcastServer';
 const MATTER_PORT = 0;
@@ -6,10 +6,11 @@ const MATTER_PORT = 0;
 import { BroadcastChannel } from 'node:worker_threads';
 
 import { jest } from '@jest/globals';
-import { flushAsync, loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/core/jestutils';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { BroadcastServer } from './broadcastServer.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
+import { flushAsync } from './flushAsync.js';
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -328,7 +329,7 @@ describe('BroadcastServer', () => {
     const eventHandler = jest.fn();
     server.on('broadcast_message', eventHandler);
 
-    const { BroadcastServer } = await import('./broadcastServer.js');
+    const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
     const testMessage = { id: 123456, type: 'jest', src: 'frontend', dst: 'manager' } as const;
     // @ts-expect-error: access private method for test
@@ -403,7 +404,7 @@ describe('BroadcastServer', () => {
     server.on('broadcast_message', handler);
 
     // Use a separate BroadcastServer instance to simulate another worker
-    const { BroadcastServer } = await import('./broadcastServer.js');
+    const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('frontend', log, NAME);
     const result = await testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
     testServer.close();
@@ -455,7 +456,7 @@ describe('BroadcastServer', () => {
 
   test('fetch: should reject on timeout from another thread', async () => {
     // Use a separate BroadcastServer instance to simulate another worker
-    const { BroadcastServer } = await import('./broadcastServer.js');
+    const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
     await expect(testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
     testServer.close();

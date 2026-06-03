@@ -2,7 +2,7 @@
 import { jest } from '@jest/globals';
 import { LogLevel } from 'node-ansi-logger';
 
-import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, log, loggerLogSpy, setDebug, setupTest } from './jestSetupTest.js';
+import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, log, loggerLogSpy, setDebug, setupTest } from '../src/jestSetupTest.js';
 
 process.argv.push('--debug');
 

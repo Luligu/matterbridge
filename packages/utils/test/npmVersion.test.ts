@@ -1,4 +1,4 @@
-// src\utils\npmVersion.test.ts
+// test\npmVersion.test.ts
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 // ESM mock for https get
@@ -41,9 +41,9 @@ import { get, RequestOptions } from 'node:https';
 import { PassThrough } from 'node:stream';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/jest-utils';
 
-import { getNpmPackageVersion } from './npmVersion.js';
+import { getNpmPackageVersion } from '../src/npmVersion.js';
+import { setupTest } from './jestSetupTest.js';
 
 await setupTest('NpmVersion');
 

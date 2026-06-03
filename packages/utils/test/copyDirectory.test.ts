@@ -1,9 +1,10 @@
-// src\utils\copyDirectory.test.ts
+// test\copyDirectory.test.ts
 
 const NAME = 'CopyDirectory';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/jest-utils';
+
+import { setupTest } from './jestSetupTest.js';
 
 // Prepare fake implementations
 const fakeMkdir: jest.MockedFunction<(path: string, options: { recursive: boolean }) => Promise<void>> = jest.fn();
@@ -31,7 +32,7 @@ jest.unstable_mockModule('node:path', () =>
 );
 
 // Import the function under test after mocking
-const { copyDirectory } = await import('./copyDirectory.js');
+const { copyDirectory } = await import('../src/copyDirectory.js');
 
 // Helper Dirent-like objects
 const makeDirent = (name: string, isFile: boolean, isDirectory: boolean) => ({

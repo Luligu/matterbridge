@@ -1,4 +1,4 @@
-// src\threadsManager.mainthread.test.ts
+// test\threadsManager.mainthread.test.ts
 
 const NAME = 'ThreadsManagerMainThread';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
@@ -6,12 +6,12 @@ const HOMEDIR = path.join('.cache', 'jest', NAME);
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/core/jestutils';
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { BroadcastServer } from './broadcastServer.js';
-import { ThreadsManager } from './threadsManager.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
+import { ThreadsManager } from '../src/threadsManager.js';
+import { setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

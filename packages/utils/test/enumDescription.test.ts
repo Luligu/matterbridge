@@ -1,4 +1,4 @@
-import { getEnumDescription } from './enumDescription.js';
+import { getEnumDescription } from '../src/enumDescription.js';
 
 enum DoorState {
   DoorOpen = 0,

@@ -61,7 +61,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
   let wrapperName: string | undefined;
   let runPromise: Promise<boolean> | undefined;
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -89,7 +89,7 @@ async function runWorkerSystemCheck(options: RunOptions) {
   const restoreNvm = setNvmEnv(options);
 
   try {
-    await import('./workerSystemCheck.js');
+    await import('../src/workerSystemCheck.js');
     const success = await runPromise;
     return { wrapperName, success, loggerMock, snackBarMock, fetchMock, inspectError, networkInterfacesMock };
   } finally {

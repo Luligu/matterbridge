@@ -1,7 +1,8 @@
-// tracker.test.ts
+// test\inspector.test.ts
 
 import { jest } from '@jest/globals';
-import { consoleLogSpy, setDebug, setupTest } from '@matterbridge/jest-utils';
+
+import { consoleLogSpy, setDebug, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Inspector', false);
@@ -37,7 +38,7 @@ describe('Inspector', () => {
   test('does not print loader banner when loader flag missing', async () => {
     process.argv.push('-loader');
 
-    await import('./inspector.js');
+    await import('../src/inspector.js');
 
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Inspector loaded'));
   });
@@ -45,7 +46,7 @@ describe('Inspector', () => {
   test('argv flags: --debug and -verbose enable debug logging', async () => {
     process.argv.push('--debug');
     process.argv.push('--verbose');
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     delete (global as any).gc;
     const inspector = new Inspector(undefined, true);
     expect(inspector['debug']).toBe(true);
@@ -58,7 +59,7 @@ describe('Inspector', () => {
   test('argv flags: -debug and --verbose also work', async () => {
     process.argv.push('-debug');
     process.argv.push('--verbose');
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     delete (global as any).gc;
     const inspector = new Inspector('Inspector');
     const debugSpy = jest.spyOn((inspector as any)['log'], 'debug');
@@ -69,7 +70,7 @@ describe('Inspector', () => {
   // Keep loader banner covered by the previous test; avoid ESM re-import flakiness here.
 
   test('runGarbageCollector: no global.gc is safe', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     delete (global as any).gc;
 
     const inspector = new Inspector('Inspector', true, false);
@@ -77,7 +78,7 @@ describe('Inspector', () => {
   });
 
   test('runGarbageCollector: with global.gc options and fallback', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const gc = jest
       .fn()
       // Throw when called with options object
@@ -102,7 +103,7 @@ describe('Inspector', () => {
 
   test('start: warns when session already active', async () => {
     // Mock only what we need later, but here we avoid triggering real inspector
-    const mod = await import('./inspector.js');
+    const mod = await import('../src/inspector.js');
     const inspector = new mod.Inspector('Inspector', true, false) as any;
     const warnSpy = jest.spyOn(inspector['log'], 'warn');
     inspector.session = {};
@@ -111,7 +112,7 @@ describe('Inspector', () => {
   });
 
   test('takeHeapSnapshot: warns without active session', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     const warnSpy = jest.spyOn((inspector as any)['log'], 'warn');
     await inspector.takeHeapSnapshot();
@@ -119,7 +120,7 @@ describe('Inspector', () => {
   });
 
   test('stop: warns when no active session', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     const warnSpy = jest.spyOn((inspector as any)['log'], 'warn');
     await inspector.stop();
@@ -138,10 +139,10 @@ describe('Inspector', () => {
     }
     jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
     jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => 30000 }));
 
     jest.useFakeTimers();
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const debugSpy = jest.spyOn(inspector['log'], 'debug');
     // Make snapshot call a fast no-op
@@ -187,8 +188,8 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
     await inspector.takeHeapSnapshot();
@@ -221,8 +222,8 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
     await inspector.start();
@@ -232,7 +233,7 @@ describe('Inspector', () => {
   });
 
   test('runGarbageCollector: success path with options logs and emits', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     const debugSpy = jest.spyOn((inspector as any)['log'], 'debug');
     const events: Array<{ t: string; e: string }> = [];
@@ -268,8 +269,8 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
     await inspector.start();
@@ -292,7 +293,7 @@ describe('Inspector', () => {
     }
     jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
     jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => 30000 }));
 
     const originalSetInterval = global.setInterval;
     let unrefCalled = false;
@@ -306,7 +307,7 @@ describe('Inspector', () => {
       } as any;
     };
     try {
-      const { Inspector } = await import('./inspector.js');
+      const { Inspector } = await import('../src/inspector.js');
       const inspector = new Inspector('Inspector', true, false);
       await inspector.start();
       expect(unrefCalled).toBe(true);
@@ -327,10 +328,10 @@ describe('Inspector', () => {
     }
     jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: FakeSession }));
     jest.unstable_mockModule('node:fs', () => ({ mkdirSync: () => {} }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 30000 }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => 30000 }));
 
     jest.useFakeTimers();
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
     jest.spyOn(inspector, 'takeHeapSnapshot').mockRejectedValue(new Error('scheduled-error'));
@@ -343,7 +344,7 @@ describe('Inspector', () => {
   });
 
   test('events: snapshot emits warn without session, gc emits gc_done', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     const warnSpy = jest.spyOn((inspector as any)['log'], 'warn');
     const gcDone: Array<{ t: string; e: string }> = [];
@@ -416,11 +417,11 @@ describe('Inspector', () => {
       },
     }));
 
-    jest.unstable_mockModule('./commandLine.js', () => ({
+    jest.unstable_mockModule('../src/commandLine.js', () => ({
       getIntParameter: () => 30000,
     }));
 
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
 
     // Expose a fake gc to cover gc paths invoked around snapshot
     (global as any).gc = jest.fn();
@@ -474,8 +475,8 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => 1000 }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => 1000 }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
     await inspector.stop();
@@ -508,8 +509,8 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
     inspector.snapshotInProgress = true; // force skip
@@ -544,8 +545,8 @@ describe('Inspector', () => {
       createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -578,8 +579,8 @@ describe('Inspector', () => {
       createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('./commandLine.js', () => ({ getIntParameter: () => undefined }));
-    const { Inspector } = await import('./inspector.js');
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
     const errorSpy = jest.spyOn((inspector as any)['log'], 'error');
@@ -611,11 +612,11 @@ describe('Inspector', () => {
       mkdirSync: (_p: string) => {},
     }));
 
-    jest.unstable_mockModule('./commandLine.js', () => ({
+    jest.unstable_mockModule('../src/commandLine.js', () => ({
       getIntParameter: () => undefined,
     }));
 
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
 
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -627,7 +628,7 @@ describe('Inspector', () => {
   });
 
   test('start event', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('StartEventTester');
     // @ts-expect-error accessing private member for test
     expect(inspector.session).toBeUndefined();
@@ -638,7 +639,7 @@ describe('Inspector', () => {
   });
 
   test('stop event', async () => {
-    const { Inspector } = await import('./inspector.js');
+    const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('StopEventTester');
     // @ts-expect-error accessing private member for test
     expect(inspector.session).toBeUndefined();

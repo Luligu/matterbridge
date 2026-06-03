@@ -1,4 +1,4 @@
-// src\checkUpdates.test.ts
+// test\checkUpdates.test.ts
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 const NAME = 'MatterbridgeUpdate';
@@ -20,11 +20,11 @@ import {
   stopMatterbridge,
   // @ts-ignore
 } from '../../../packages/core/src/jestutils/jestMatterbridgeTest.js';
-import { loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '../../../packages/core/src/jestutils/jestSetupTest.js';
 // @ts-ignore
-import { flushAsync } from '../../core/src/jestutils/flushAsync.js';
-import { BroadcastServer } from './broadcastServer.js';
-import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from './checkUpdates.js';
+import { loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '../../../packages/core/src/jestutils/jestSetupTest.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
+import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from '../src/checkUpdates.js';
+import { flushAsync } from './flushAsync.js';
 
 // Mock selected functions from @matterbridge/utils (tree-shaken subpath imports)
 jest.unstable_mockModule('@matterbridge/utils/npm-version', () => ({
@@ -37,7 +37,7 @@ jest.unstable_mockModule('@matterbridge/utils/github-version', () => ({
 
 /*
 // Mock the function getShellySysUpdate and getShellyMainUpdate
-jest.unstable_mockModule('./shelly.js', () => ({
+jest.unstable_mockModule('../src/shelly.js', () => ({
   getShellySysUpdate: jest.fn(),
   getShellyMainUpdate: jest.fn(),
 }));
@@ -82,7 +82,7 @@ describe('getMatterbridgeLatestVersion', () => {
   it('should check updates', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
 
-    // const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
+    // const { getShellySysUpdate, getShellyMainUpdate } = await import('../src/shelly.js');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as jest.MockedFunction<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValue('1.0.0');

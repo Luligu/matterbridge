@@ -1,4 +1,4 @@
-// src\backendExpress.test.ts
+// test\backendExpress.test.ts
 
 const NAME = 'BackendExpress';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
@@ -24,11 +24,11 @@ import express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
-import { Backend } from './backend.js';
-import { BackendExpress } from './backendExpress.js';
-import { setupTest } from './jestutils/jestSetupTest.js';
+import { Backend } from '../src/backend.js';
+import { BackendExpress } from '../src/backendExpress.js';
+import { setupTest } from '../src/jestutils/jestSetupTest.js';
 
-const TEST_ZIP_FIXTURE = new URL('./mock/test.zip', import.meta.url);
+const TEST_ZIP_FIXTURE = new URL('../src/mock/test.zip', import.meta.url);
 
 const mockedSharedMatterbridge = {
   matterbridgeDirectory: HOMEDIR,
@@ -41,8 +41,11 @@ const mockedBackend = {
   getApiSettings: () => ({ ok: true, settings: { a: 1 } }),
   getApiPlugins: () => ({ ok: true, plugins: [{ name: 'plugin1' }] }),
   getApiDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
-  wssSendSnackbarMessage: jest.fn(),
-  wssSendCloseSnackbarMessage: jest.fn(),
+  // Snackbar helpers now live on backend.backendWsServer; the source calls them via this.backend.backendWsServer?.wssSend*.
+  backendWsServer: {
+    wssSendSnackbarMessage: jest.fn(),
+    wssSendCloseSnackbarMessage: jest.fn(),
+  },
   generateDiagnostic: jest.fn(async () => {
     const diagnosticPath = path.join(HOMEDIR, MATTERBRIDGE_DIAGNOSTIC_FILE);
     await fs.mkdir(path.dirname(diagnosticPath), { recursive: true });
@@ -691,7 +694,7 @@ describe('BackendExpress', () => {
       await delay(10);
     }
 
-    expect((mockedBackend as any).wssSendCloseSnackbarMessage).toHaveBeenCalledTimes(endpoints.length);
+    expect((mockedBackend as any).backendWsServer.wssSendCloseSnackbarMessage).toHaveBeenCalledTimes(endpoints.length);
   });
 
   test('POST /api/uploadpackage invalid request (no file)', async () => {

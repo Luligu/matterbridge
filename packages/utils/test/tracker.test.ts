@@ -1,9 +1,10 @@
-// tracker.test.ts
+// test\tracker.test.ts
 
 import os, { type CpuInfo } from 'node:os';
 
 import { jest } from '@jest/globals';
-import { consoleLogSpy, setDebug, setupTest } from '@matterbridge/jest-utils';
+
+import { consoleLogSpy, setDebug, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Tracker', false);
@@ -39,7 +40,7 @@ describe('Tracker', () => {
   test('does not print loader banner when loader flag missing', async () => {
     process.argv.push('-loader');
 
-    await import('./tracker.js');
+    await import('../src/tracker.js');
 
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Tracker loaded'));
   });
@@ -50,7 +51,7 @@ describe('Tracker', () => {
     const spyCpuUsage = jest.spyOn(process, 'cpuUsage');
     const spyMem = jest.spyOn(process, 'memoryUsage');
 
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     // Instantiate to trigger verbose branch in constructor
     new Tracker('VerboseTester');
 
@@ -60,14 +61,14 @@ describe('Tracker', () => {
   });
 
   test('does not print loader banner when flag is absent', async () => {
-    await import('./tracker.js');
+    await import('../src/tracker.js');
     expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Tracker loaded'));
   });
 
   test('start emits events and stop clears interval', async () => {
     jest.useFakeTimers();
     process.argv.push('--debug');
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('EventTester');
 
     const events = { uptime: 0, cpu: 0, memory: 0, tracker: 0 };
@@ -90,7 +91,7 @@ describe('Tracker', () => {
 
   test('reset peaks triggers reset_done', async () => {
     jest.useFakeTimers();
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker();
 
     let resetCalled = 0;
@@ -105,7 +106,7 @@ describe('Tracker', () => {
   });
 
   test('gc event runs garbage collector and emits gc_done (major-sync)', async () => {
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester');
 
     const gcMock: (...args: any[]) => any = jest.fn(() => undefined);
@@ -123,7 +124,7 @@ describe('Tracker', () => {
   });
 
   test('gc event falls back to minor-async when major call throws', async () => {
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester2');
 
     const gcMock: (...args: any[]) => any = jest.fn((arg?: unknown) => {
@@ -145,7 +146,7 @@ describe('Tracker', () => {
   });
 
   test('gc not exposed does not throw', async () => {
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester3');
 
     delete (global as any).gc;
@@ -155,7 +156,7 @@ describe('Tracker', () => {
 
   test('hourly gc trigger inside sampling loop', async () => {
     jest.useFakeTimers();
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('HourlyGCTester');
 
     const spy = jest.spyOn(tracker as any, 'runGarbageCollector');
@@ -170,7 +171,7 @@ describe('Tracker', () => {
 
   test('cpu load calc handles missing prev and zero deltas', async () => {
     jest.useFakeTimers();
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('CpuBranchTester');
 
     const cpuTimes = { user: 100, nice: 0, sys: 50, idle: 200, irq: 0 };
@@ -196,7 +197,7 @@ describe('Tracker', () => {
 
   test('start early-return when already running', async () => {
     jest.useFakeTimers();
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('StartGuardTester');
 
     let trackerEvents = 0;
@@ -214,7 +215,7 @@ describe('Tracker', () => {
 
   test('gc not exposed logs message when in debug mode', async () => {
     process.argv.push('--debug');
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     delete (global as any).gc;
     const tracker = new Tracker('GCDebug');
     const debugSpy = jest.spyOn((tracker as any)['log'], 'debug');
@@ -225,7 +226,7 @@ describe('Tracker', () => {
   test('reset peaks logs in debug mode', async () => {
     jest.useFakeTimers();
     process.argv.push('--debug');
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('ResetTesterDebug');
     const debugSpy = jest.spyOn((tracker as any)['log'], 'debug');
 
@@ -240,7 +241,7 @@ describe('Tracker', () => {
   });
 
   test('stop event', async () => {
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('StopEventTester');
     tracker.emit('stop');
     // @ts-expect-error accessing private member for test
@@ -248,10 +249,12 @@ describe('Tracker', () => {
   });
 
   test('start event', async () => {
-    const { Tracker } = await import('./tracker.js');
+    const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('StartEventTester');
     tracker.emit('start');
     // @ts-expect-error accessing private member for test
     expect(tracker.trackerInterval).toBeDefined();
+    // Clear the real (non-fake) interval started above so it does not keep the Jest worker alive.
+    tracker.stop();
   });
 });

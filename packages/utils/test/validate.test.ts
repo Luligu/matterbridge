@@ -1,4 +1,4 @@
-// src\utils\validate.test.ts
+// test\validate.test.ts
 
 import {
   isValidArray,
@@ -12,7 +12,7 @@ import {
   isValidString,
   isValidUndefined,
   parseVersionString,
-} from './validate.js';
+} from '../src/validate.js';
 
 describe('Validation Functions', () => {
   describe('isValidIpv4Address', () => {

@@ -1,4 +1,4 @@
-// src\utils\createDirectory.test.ts
+// test\createDirectory.test.ts
 
 const NAME = 'CreateDirectory';
 
@@ -6,10 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { HOMEDIR, log, loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
-import { createDirectory } from './createDirectory.js';
+import { createDirectory } from '../src/createDirectory.js';
+import { HOMEDIR, log, loggerLogSpy, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

@@ -47,8 +47,8 @@ const jestConfig = {
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
-    '/packages/core/src/backend', // Not released yet, so ignore for now
-    '/packages/core/src/matterNode', // Not released yet, so ignore for now
+    '/packages/core/test/backend', // Not released yet, so ignore for now
+    '/packages/core/test/matterNode', // Not released yet, so ignore for now
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
   ],

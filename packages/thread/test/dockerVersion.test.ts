@@ -8,7 +8,7 @@ jest.unstable_mockModule('node:https', async () => {
   };
 });
 
-const { getDockerVersion } = await import('./dockerVersion.js');
+const { getDockerVersion } = await import('../src/dockerVersion.js');
 
 function createStreamingJsonResponse(statusCode: number | undefined, jsonBody: any, raw = false, headers: Record<string, any> = {}) {
   const handlers: Record<string, Array<(...args: any[]) => void>> = {};

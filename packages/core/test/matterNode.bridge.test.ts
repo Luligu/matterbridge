@@ -1,4 +1,4 @@
-// src\matterNode.bridge.test.ts
+// test\matterNode.bridge.test.ts
 
 const MATTER_PORT = 10010;
 const NAME = 'MatterNodeBridge';
@@ -22,14 +22,14 @@ import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@
 import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { DeviceManager } from './deviceManager.js';
-import { closeServerNodeStores } from './jestutils/jestMatterTest.js';
-import { originalProcessArgv, setupTest } from './jestutils/jestSetupTest.js';
-import type { Matterbridge } from './matterbridge.js';
-import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterNode } from './matterNode.js';
-import { type Plugin, PluginManager } from './pluginManager.js';
+import { DeviceManager } from '../src/deviceManager.js';
+import { closeServerNodeStores } from '../src/jestutils/jestMatterTest.js';
+import { originalProcessArgv, setupTest } from '../src/jestutils/jestSetupTest.js';
+import type { Matterbridge } from '../src/matterbridge.js';
+import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { MatterNode } from '../src/matterNode.js';
+import { type Plugin, PluginManager } from '../src/pluginManager.js';
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));

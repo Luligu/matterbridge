@@ -11,11 +11,11 @@
 import { RemoteInfo } from 'node:dgram';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/jest-utils';
 import { getMacAddress } from '@matterbridge/utils';
 
-import { DnsClass, DnsRecordType, Mdns, MdnsMessage } from './mdns.js';
-import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
+import { DnsClass, DnsRecordType, Mdns, MdnsMessage } from '../src/mdns.js';
+import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from '../src/multicast.js';
+import { setupTest } from './jestSetupTest.js';
 
 process.argv.push('--verbose');
 

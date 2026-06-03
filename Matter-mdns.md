@@ -2,7 +2,7 @@
 
 ## Symptom
 
-Matter mDNS announcements (commissionable and operational) may carry only AAAA records. The A record (IPv4) is never seen by controllers or mDNS scanners on the LAN, making IPv4-only commissioning and connection impossible. The issue appears on any platform where a network interface has enough IPv6 addresses to push the mDNS packet past the 1232-byte limit, most commonly Windows where privacy extension addresses result in 3 or more AAAA records per interface.
+Matter mDNS announcements (commissionable and operational) may carry only AAAA records. The A record (IPv4) is never seen by controllers or mDNS scanners on the LAN, making IPv4-only commissioning and connection impossible. The issue appears on any platform where a network interface has enough IPv6 addresses to push the mDNS packet past the 1232-byte limit, most commonly where privacy extension addresses result in 2 or more AAAA records per interface. Furthermore the length of DN field in the TXT record can add pressure on the packet size too.
 
 ---
 
@@ -76,7 +76,7 @@ for (const answer of message.answers ?? []) {
 }
 ```
 
-### 2. `MdnsAdvertisement.#recordsFor()` places A records after AAAA records
+### 2. `MdnsAdvertisement.#recordsFor()` places A records after all AAAA records
 
 File: `@matter/protocol/dist/esm/advertisement/mdns/MdnsAdvertisement.js`
 
@@ -99,7 +99,7 @@ Windows is the most common trigger because its IPv6 privacy extensions assign tw
 
 ## Fix Applied (node_modules workaround)
 
-The immediate fix reverses the A/AAAA ordering in `#recordsFor()` in both the ESM and CJS builds of `@matter/protocol`:
+The immediate fix reverses the A/AAAA ordering in `#recordsFor()` in builds of `@matter/protocol`:
 
 **Before:**
 
@@ -130,13 +130,15 @@ for (const addr of addrs.ipV6.filter((a) => !a.startsWith('fe80'))) {
 }
 ```
 
-The ordering gives highest priority to the `fe80::` link-local AAAA address: it is derived from the MAC address, has `valid_lft forever`, and never rotates — making it the most stable endpoint a controller can use. The A record comes second as a reliable IPv4 fallback that always fits in the packet. Non-link-local AAAA addresses (global, ULA, and privacy-extension addresses) come last: they may expire and rotate, so dropping them under packet budget pressure is the least harmful outcome.
+The ordering gives highest priority to the `fe80::` link-local AAAA address: it is derived from the MAC address, has `valid_lft forever`, and never rotates — making it the most stable endpoint a controller can use and the first to try. The A record comes second as a reliable IPv4 fallback that always fits in the packet. Non-link-local AAAA addresses (global, ULA, and privacy-extension addresses) come last: they may expire and rotate, so dropping them under packet budget pressure is the least harmful outcome.
 
 The corrected `additionalRecords` order is:
 
 ```text
 additionalRecords = [ SRV, TXT, AAAA(fe80), A, AAAA(global1), AAAA(global2) ]
 ```
+
+that is the same order Apple TV uses to advertise itself.
 
 ---
 
@@ -181,13 +183,5 @@ Applied to both the ESM and CJS builds of `@matter/protocol/dist/.../advertiseme
 Files patched:
 
 - `node_modules/@matter/protocol/dist/esm/advertisement/mdns/MdnsAdvertisement.js`
-- `node_modules/@matter/protocol/dist/cjs/advertisement/mdns/MdnsAdvertisement.js`
 
 ---
-
-## Affected Files
-
-| File                                                                | Change                                                                               |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `@matter/protocol/dist/esm/advertisement/mdns/MdnsAdvertisement.js` | A records before AAAA in `#recordsFor()`; AAAA sorted with `fe80::` link-local first |
-| `@matter/protocol/dist/cjs/advertisement/mdns/MdnsAdvertisement.js` | Same change in CJS build                                                             |

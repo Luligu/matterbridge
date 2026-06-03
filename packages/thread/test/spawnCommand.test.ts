@@ -1,4 +1,4 @@
-// src\utils\spawnCommand.test.ts
+// test\spawnCommand.test.ts
 
 /* eslint-disable jest/no-conditional-expect */
 
@@ -19,9 +19,9 @@ const { spawn } = await import('node:child_process');
 import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
 import { jest } from '@jest/globals';
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/jest-utils';
 
-import { spawnCommand } from './spawnCommand.js';
+import { spawnCommand } from '../src/spawnCommand.js';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from './jestSetupTest.js';
 
 await setupTest('SpawnCommand', false);
 

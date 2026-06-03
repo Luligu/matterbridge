@@ -19,7 +19,7 @@ import importsort from 'eslint-plugin-simple-import-sort';
 import tseslint from 'typescript-eslint';
 
 const sourceFiles = ['**/*.{js,mjs,cjs,ts,mts,cts}'];
-const typescriptFiles = ['**/src/**/*.{ts,mts,cts}', '**/test/**/*.{spec,test}.{ts,mts,cts}', '**/vitest/**/*.{spec,test}.{ts,mts,cts}'];
+const typescriptFiles = ['**/src/**/*.{ts,mts,cts}', '**/test/**/*.{ts,mts,cts}', '**/vitest/**/*.{ts,mts,cts}'];
 const jestTestFiles = ['**/src/**/*.{spec,test}.{ts,mts,cts}', '**/test/**/*.{spec,test}.{ts,mts,cts}'];
 const vitestTestFiles = ['**/vitest/**/*.{spec,test}.{ts,mts,cts}'];
 const configDirname = path.dirname(url.fileURLToPath(import.meta.url));

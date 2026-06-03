@@ -8,10 +8,10 @@
  */
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/jest-utils';
 import { AnsiLogger } from 'node-ansi-logger';
 
-import { getErrorMessage, inspectError, logError } from './error.js';
+import { getErrorMessage, inspectError, logError } from '../src/error.js';
+import { setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Error', false);

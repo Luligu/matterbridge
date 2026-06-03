@@ -9,8 +9,8 @@
 
 import { jest } from '@jest/globals';
 
-import type { WsMessage } from './frontendTypes.js';
-import { isApiRequest, isApiResponse, isBroadcast } from './frontendTypes.js';
+import type { WsMessage } from '../src/frontendTypes.js';
+import { isApiRequest, isApiResponse, isBroadcast } from '../src/frontendTypes.js';
 
 describe('WsMessage type guards', () => {
   beforeEach(() => {

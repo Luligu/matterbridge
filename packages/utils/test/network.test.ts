@@ -1,13 +1,13 @@
-// src\utils\network.test.ts
+// test\network.test.ts
 
 import dns from 'node:dns';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
 import { BLUE, LogLevel, nf } from 'node-ansi-logger';
 
-import { getInterfaceDetails, getInterfaceName, getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname } from './network.js';
+import { getInterfaceDetails, getInterfaceName, getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname } from '../src/network.js';
+import { loggerLogSpy, setupTest } from './jestSetupTest.js';
 
 jest.useFakeTimers();
 

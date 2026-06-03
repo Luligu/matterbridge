@@ -12,11 +12,11 @@ import { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
 import { CYAN, LogLevel, nf } from 'node-ansi-logger';
 
-import { Dgram } from './dgram.js';
-import { Unicast } from './unicast.js';
+import { Dgram } from '../src/dgram.js';
+import { Unicast } from '../src/unicast.js';
+import { loggerLogSpy, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Unicast', false);

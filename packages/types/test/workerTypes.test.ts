@@ -9,7 +9,7 @@
 
 import { jest } from '@jest/globals';
 
-import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from './workerTypes.js';
+import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';
 
 describe('Worker data type guards', () => {
   beforeEach(() => {

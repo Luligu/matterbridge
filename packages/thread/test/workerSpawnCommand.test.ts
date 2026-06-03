@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { id, LogLevel } from 'node-ansi-logger';
+import { LogLevel } from 'node-ansi-logger';
 
 type RunOptions = Readonly<{
   spawnSuccess: boolean;
@@ -42,9 +42,9 @@ async function runWorkerSpawnCommand(options: RunOptions) {
     return { ...actual, workerData };
   });
 
-  jest.unstable_mockModule('./spawnCommand.js', () => ({ spawnCommand }));
+  jest.unstable_mockModule('../src/spawnCommand.js', () => ({ spawnCommand }));
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -54,7 +54,7 @@ async function runWorkerSpawnCommand(options: RunOptions) {
     },
   }));
 
-  await import('./workerSpawnCommand.js');
+  await import('../src/workerSpawnCommand.js');
   const success = await runPromise;
 
   return { wrapperName, success, loggerMock, respondMock, spawnCommand, workerData };

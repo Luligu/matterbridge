@@ -140,7 +140,6 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "3.8.0",
     "node-ansi-logger": "3.3.0-dev-20260524-cac9dd5"
   },
   "devDependencies": {

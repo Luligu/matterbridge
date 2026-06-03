@@ -422,7 +422,7 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
   .createDefaultBasicInformationClusterServer(&#39;My entry door&#39;, &#39;0123456789&#39;)
   .createDefaultBooleanStateClusterServer(true)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+  .addRequiredClusters(); // Always better to call it at the end of the chain to add all the not already created but required clusters (server and client).
 </code></pre>
 <p>In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.</p>
 <p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.2-Device-Library-Specification.pdf&#39;.</p>
@@ -452,7 +452,7 @@ import { closureController } from &#39;matterbridge&#39;;
 const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
   .createDefaultBridgedDeviceBasicInformationClusterServer(&#39;Closure Controller&#39;, &#39;CC-001&#39;, 0xfff1, &#39;Acme&#39;, &#39;Closure Controller&#39;)
   .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
-  .addRequiredClusterServers();
+  .addRequiredClusters();
 
 await this.registerDevice(device);
 </code></pre>

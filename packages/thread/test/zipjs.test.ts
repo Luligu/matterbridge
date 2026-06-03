@@ -9,7 +9,7 @@ import { loggerInfoSpy, setupTest } from '@matterbridge/jest-utils';
 // eslint-disable-next-line n/no-missing-import
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipWriter } from '@zip.js/zip.js';
 
-import { createZip, readZip, unZip } from './zipjs.js';
+import { createZip, readZip, unZip } from '../src/zipjs.js';
 
 const execFileAsync = promisify(execFile);
 const tempDirectories: string[] = [];
@@ -129,7 +129,7 @@ describe('zipjs', () => {
     jest.resetModules();
     jest.unstable_mockModule('node:fs/promises', () => mockedFsPromises);
 
-    const { createZip: createZipWithMockedStat } = await import('./zipjs.js');
+    const { createZip: createZipWithMockedStat } = await import('../src/zipjs.js');
 
     await expect(createZipWithMockedStat(join(tempDirectory, 'unsupported.zip'), [sourcePath])).rejects.toThrow(`Unsupported source path type: ${sourcePath}`);
 

@@ -130,7 +130,7 @@ export async function destroyTestEnvironment(): Promise<void> {
  *
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
+export async function getMatterbridge(): Promise<PlatformMatterbridge> {
   const { jest } = await import('@jest/globals');
   const matterbridge: PlatformMatterbridge = {
     systemInformation: {
@@ -140,8 +140,8 @@ export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
       ipv6Address: '',
       osRelease: 'xx.xx.xx.xx.xx.xx',
       nodeVersion: '22.1.10',
-      hostname: 'jest',
-      user: 'matterbridge',
+      hostname: 'matterbridge',
+      user: 'jest',
       osType: 'Linux',
       osPlatform: 'linux',
       osArch: 'x64',
@@ -189,6 +189,34 @@ export async function getPlatformMatterbridge(): Promise<PlatformMatterbridge> {
     }),
   };
   return { ...matterbridge, ...injectedFunctions } as unknown as PlatformMatterbridge;
+}
+
+/**
+ * Inject matterbridge platform for testing.
+ *
+ * @param {object} platform The platform to inject.
+ *
+ * @example
+ * ```typescript
+ * platform = new MatterbridgePlatform(matterbridge, log, config);
+ * // Inject in the platform the Matterbridge environment
+ * addMatterbridge(platform);
+ * ```
+ */
+export function addMatterbridge(platform: object): void {
+  expect(platform).toBeDefined();
+  // Setup the platform MatterNode helpers
+  // @ts-expect-error - setMatterNode is intentionally private
+  platform.setMatterNode(
+    // @ts-expect-error - the methods are injected in getMatterbridge()
+    platform.matterbridge.addBridgedEndpoint,
+    // @ts-expect-error - the methods are injected in getMatterbridge()
+    platform.matterbridge.removeBridgedEndpoint,
+    // @ts-expect-error - the methods are injected in getMatterbridge()
+    platform.matterbridge.removeAllBridgedEndpoints,
+    // @ts-expect-error - the methods are injected in getMatterbridge()
+    platform.matterbridge.addVirtualEndpoint,
+  );
 }
 
 /**
@@ -359,7 +387,7 @@ export async function createServerNode(
       vendorId: VendorId(0xfff1),
       vendorName: 'Matterbridge',
       productId: 0x8000,
-      productName: 'Matterbridge ' + NAME,
+      productName: ('Matterbridge ' + NAME).slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
       nodeLabel: NAME + 'ServerNode',
       hardwareVersion: 1,
       softwareVersion: 1,
@@ -570,6 +598,9 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
   expect(server).toBeDefined();
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeFalsy();
+  // Close the server to release UDP sockets and other network resources created
+  // by ServerNode.create() (mDNS udp4/udp6 sockets), which would otherwise keep
+  // the Jest process alive indefinitely after all tests finish.
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();

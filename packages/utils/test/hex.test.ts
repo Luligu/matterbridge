@@ -1,5 +1,5 @@
-// src\utils\hex.test.ts
-import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from './hex.js';
+// test\hex.test.ts
+import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from '../src/hex.js';
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {

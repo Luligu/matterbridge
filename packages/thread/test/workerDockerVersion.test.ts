@@ -42,7 +42,7 @@ async function runWorkerDockerVersion(options: RunOptions) {
       })
     : jest.fn(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -52,11 +52,11 @@ async function runWorkerDockerVersion(options: RunOptions) {
     },
   }));
 
-  jest.unstable_mockModule('./dockerVersion.js', () => ({ getDockerVersion }));
+  jest.unstable_mockModule('../src/dockerVersion.js', () => ({ getDockerVersion }));
   jest.unstable_mockModule('@matterbridge/utils/error', () => ({ inspectError }));
   jest.unstable_mockModule('node:fs', () => ({ readFileSync }));
 
-  await import('./workerDockerVersion.js');
+  await import('../src/workerDockerVersion.js');
   const success = await runPromise;
 
   return { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, inspectError, readFileSync };

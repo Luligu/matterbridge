@@ -1,4 +1,4 @@
-// src\deviceManager.test.ts
+// test\deviceManager.test.ts
 
 const NAME = 'DeviceManager';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
@@ -13,9 +13,9 @@ import type { BaseDevice } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { AnsiLogger, BLUE, er, id, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { DeviceManager } from './deviceManager.js';
-import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { DeviceManager } from '../src/deviceManager.js';
+import { loggerLogSpy, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

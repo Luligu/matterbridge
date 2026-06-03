@@ -1,4 +1,4 @@
-// src\threadsManager.test.ts
+// test\threadsManager.test.ts
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
@@ -10,16 +10,16 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/core/jestutils';
 import { LogLevel } from 'node-ansi-logger';
 
-import { ThreadsManager } from './threadsManager.js';
+import { ThreadsManager } from '../src/threadsManager.js';
+import { setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('ThreadsManager', () => {
-  const moduleDirectory = path.dirname(url.fileURLToPath(new URL('./threadsManager.js', import.meta.url)));
+  const moduleDirectory = path.dirname(url.fileURLToPath(new URL('../src/threadsManager.js', import.meta.url)));
   const tempWorkerDirectory = path.resolve(HOMEDIR, 'temp-workers');
 
   beforeAll(async () => {
@@ -608,7 +608,7 @@ describe('ThreadsManager', () => {
         };
       });
 
-      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
 
       const threads = (manager as any).threads as Array<any>;
@@ -658,7 +658,7 @@ describe('ThreadsManager', () => {
         };
       });
 
-      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
       const errorSpy = jest.spyOn((manager as any).log, 'error');
 
@@ -697,7 +697,7 @@ describe('ThreadsManager', () => {
         };
       });
 
-      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const { AnsiLogger: AnsiLoggerMocked } = await import('node-ansi-logger');
       const createSpy = jest.spyOn(AnsiLoggerMocked, 'create');
       const logSpy = jest.fn();
@@ -740,7 +740,7 @@ describe('ThreadsManager', () => {
         };
       });
 
-      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
 
       const threads = (manager as any).threads as Array<any>;
@@ -782,7 +782,7 @@ describe('ThreadsManager', () => {
         };
       });
 
-      const { ThreadsManager: ThreadsManagerMocked } = await import('./threadsManager.js');
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
 
       const threads = (manager as any).threads as Array<any>;

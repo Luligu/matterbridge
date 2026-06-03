@@ -68,7 +68,7 @@ describe('WorkerWrapper', () => {
       };
     });
 
-    jest.unstable_mockModule('./broadcastServer.js', () => ({
+    jest.unstable_mockModule('../src/broadcastServer.js', () => ({
       BroadcastServer: class {
         request = serverRequest;
         close = serverClose;
@@ -77,14 +77,14 @@ describe('WorkerWrapper', () => {
       },
     }));
 
-    jest.unstable_mockModule('./threadsManager.js', () => ({
+    jest.unstable_mockModule('../src/threadsManager.js', () => ({
       // eslint-disable-next-line @typescript-eslint/no-extraneous-class
       ThreadsManager: class {
         static logLevel = LogLevel.DEBUG;
       },
     }));
 
-    const { WorkerWrapper } = await import('./workerWrapper.js');
+    const { WorkerWrapper } = await import('../src/workerWrapper.js');
     const waitImmediate = () => new Promise<void>((resolve) => setImmediate(resolve));
 
     return {

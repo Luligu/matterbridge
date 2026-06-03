@@ -1,4 +1,4 @@
-// src\matterNode.bridge.test.ts
+// test\matterNode.server.test.ts
 
 const MATTER_PORT = 10020;
 const NAME = 'MatterNodeServer';
@@ -22,13 +22,13 @@ import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { DeviceManager } from './deviceManager.js';
-import { originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
-import type { Matterbridge } from './matterbridge.js';
-import { temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterNode } from './matterNode.js';
-import { PluginManager } from './pluginManager.js';
+import { DeviceManager } from '../src/deviceManager.js';
+import { originalProcessArgv, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
+import type { Matterbridge } from '../src/matterbridge.js';
+import { temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { MatterNode } from '../src/matterNode.js';
+import { PluginManager } from '../src/pluginManager.js';
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));

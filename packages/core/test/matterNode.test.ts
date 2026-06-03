@@ -1,4 +1,4 @@
-// src\matterNode.test.ts
+// test\matterNode.test.ts
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
@@ -27,14 +27,14 @@ import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDe
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
-import { DeviceManager } from './deviceManager.js';
-import { closeServerNodeStores } from './jestutils/jestMatterTest.js';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from './jestutils/jestSetupTest.js';
-import type { Matterbridge } from './matterbridge.js';
-import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterNode } from './matterNode.js';
-import { type Plugin, PluginManager } from './pluginManager.js';
+import { DeviceManager } from '../src/deviceManager.js';
+import { closeServerNodeStores } from '../src/jestutils/jestMatterTest.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
+import type { Matterbridge } from '../src/matterbridge.js';
+import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { MatterNode } from '../src/matterNode.js';
+import { type Plugin, PluginManager } from '../src/pluginManager.js';
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));

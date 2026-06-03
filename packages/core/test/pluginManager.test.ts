@@ -1,4 +1,4 @@
-// src\pluginManager.test.ts
+// test\pluginManager.test.ts
 
 const NAME = 'PluginManager';
 const MATTER_PORT = 12000;
@@ -38,15 +38,15 @@ import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
-import { flushAsync } from './jestutils/flushAsync.js';
-import { requestBroadcastServerSpy } from './jestutils/jestBroadcastServerSpy.js';
-import { closeMdnsInstance, closeRuntimeInstance, destroyInstance } from './jestutils/jestMatterbridgeTest.js';
-import { addPluginSpy } from './jestutils/jestPluginManagerSpy.js';
-import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
-import { logKeepAlives } from './jestutils/logKeepAlives.js';
-import { Matterbridge } from './matterbridge.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { type Plugin, PluginManager } from './pluginManager.js';
+import { flushAsync } from '../src/jestutils/flushAsync.js';
+import { requestBroadcastServerSpy } from '../src/jestutils/jestBroadcastServerSpy.js';
+import { closeMdnsInstance, closeRuntimeInstance, destroyInstance } from '../src/jestutils/jestMatterbridgeTest.js';
+import { addPluginSpy } from '../src/jestutils/jestPluginManagerSpy.js';
+import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
+import { logKeepAlives } from '../src/jestutils/logKeepAlives.js';
+import { Matterbridge } from '../src/matterbridge.js';
+import { MatterbridgePlatform } from '../src/matterbridgePlatform.js';
+import { type Plugin, PluginManager } from '../src/pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

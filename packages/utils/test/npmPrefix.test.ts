@@ -1,4 +1,4 @@
-// src\utils\npmRoot.test.ts
+// test\npmPrefix.test.ts
 
 // ESM mock for child_process exec
 let mockedExec: jest.MockedFunction<typeof exec>;
@@ -17,9 +17,9 @@ jest.unstable_mockModule('node:child_process', () => {
 import { ChildProcess, exec, ExecException } from 'node:child_process';
 
 import { jest } from '@jest/globals';
-import { setupTest } from '@matterbridge/jest-utils';
 
-import { getGlobalNodeModules } from './npmPrefix.js';
+import { getGlobalNodeModules } from '../src/npmPrefix.js';
+import { setupTest } from './jestSetupTest.js';
 
 await setupTest('NpmRoot');
 

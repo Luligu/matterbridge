@@ -1,4 +1,4 @@
-// src/matterbridgeDeviceTypes.clusters.zcl.revision.test.ts
+// packages\core\src\matterbridgeDeviceTypes.clusters.xml.matterjs.revision.test.ts
 
 const NAME = 'MatterbridgeDevicetypesClustersZclRevision';
 const HOMEDIR = path.join('.cache', 'jest', NAME);

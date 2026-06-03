@@ -43,9 +43,9 @@ async function runWorkerArchiveCommand(options: RunOptions) {
   const readZip = jest.fn(async () => options.readZipResult ?? [{ filename: 'file.txt' }]);
   const unZip = jest.fn(async () => options.unZipResult ?? workerData.destinationPath);
 
-  jest.unstable_mockModule('./zipjs.js', () => ({ createZip, readZip, unZip }));
+  jest.unstable_mockModule('../src/zipjs.js', () => ({ createZip, readZip, unZip }));
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -55,7 +55,7 @@ async function runWorkerArchiveCommand(options: RunOptions) {
     },
   }));
 
-  await import('./workerArchiveCommand.js');
+  await import('../src/workerArchiveCommand.js');
   const success = await runPromise;
 
   return { wrapperName, success, loggerMock, respondMock, createZip, readZip, unZip, workerData };

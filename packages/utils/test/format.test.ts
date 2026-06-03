@@ -1,4 +1,4 @@
-import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from './format.js';
+import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from '../src/format.js';
 
 describe('formatTimeStamp(), formatBytes() and formatUptime()', () => {
   test('Frontend formatTimeStamp', () => {

@@ -11,9 +11,9 @@
 import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/jest-utils';
 
-import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from './mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from '../src/mdns.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './jestSetupTest.js';
 
 jest.mock('node:dgram');
 

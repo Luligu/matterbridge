@@ -29,7 +29,7 @@ async function runWorkerGlobalPrefix(options: RunOptions) {
 
   const inspectError = jest.fn(() => 'inspected error');
 
-  jest.unstable_mockModule('./workerWrapper.js', () => ({
+  jest.unstable_mockModule('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
@@ -42,7 +42,7 @@ async function runWorkerGlobalPrefix(options: RunOptions) {
   jest.unstable_mockModule('@matterbridge/utils/npm-prefix', () => ({ getGlobalNodeModules }));
   jest.unstable_mockModule('@matterbridge/utils/error', () => ({ inspectError }));
 
-  await import('./workerGlobalPrefix.js');
+  await import('../src/workerGlobalPrefix.js');
   const success = await runPromise;
 
   return { wrapperName, success, loggerMock, requestMock, getGlobalNodeModules, inspectError };

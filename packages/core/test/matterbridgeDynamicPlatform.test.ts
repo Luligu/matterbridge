@@ -1,12 +1,12 @@
-// src\matterbridgeDynamicPlatform.test.ts
+// test\matterbridgeDynamicPlatform.test.ts
 
 const NAME = 'MatterbridgeDynamicPlatform';
 
 import { jest } from '@jest/globals';
 
-import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, matterbridge } from './jestutils/jestMatterbridgeTest.js';
-import { log, setupTest } from './jestutils/jestSetupTest.js';
-import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
+import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, matterbridge } from '../src/jestutils/jestMatterbridgeTest.js';
+import { log, setupTest } from '../src/jestutils/jestSetupTest.js';
+import { isMatterbridgeDynamicPlatform, MatterbridgeDynamicPlatform } from '../src/matterbridgeDynamicPlatform.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

@@ -1,6 +1,6 @@
-// src\utils\deepCopy.test.ts
+// test\deepCopy.test.ts
 
-import { deepCopy } from './deepCopy.js';
+import { deepCopy } from '../src/deepCopy.js';
 
 describe('deepCopy', () => {
   // Primitives

@@ -1,4 +1,4 @@
-// src\matterbridgePlatform.initialized.test.ts
+// test\matterbridgePlatform.initialized.test.ts
 
 const NAME = 'MatterbridgePlatformInitialized';
 const MATTER_PORT = 7100;
@@ -8,13 +8,13 @@ process.argv = [...originalProcessArgv, '--verbose', '--loader'];
 
 import { jest } from '@jest/globals';
 
-import { Frontend } from './frontend.js';
-import { flushAsync } from './jestutils/flushAsync.js';
-import { plugins, startMatterbridge, stopMatterbridge } from './jestutils/jestMatterbridgeTest.js';
-import { originalProcessArgv, setupTest } from './jestutils/jestSetupTest.js';
-import { MatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
-import { MatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
-import { PlatformSchema } from './matterbridgePlatform.js';
+import { Frontend } from '../src/frontend.js';
+import { flushAsync } from '../src/jestutils/flushAsync.js';
+import { plugins, startMatterbridge, stopMatterbridge } from '../src/jestutils/jestMatterbridgeTest.js';
+import { originalProcessArgv, setupTest } from '../src/jestutils/jestSetupTest.js';
+import { MatterbridgeAccessoryPlatform } from '../src/matterbridgeAccessoryPlatform.js';
+import { MatterbridgeDynamicPlatform } from '../src/matterbridgeDynamicPlatform.js';
+import { PlatformSchema } from '../src/matterbridgePlatform.js';
 
 const wssSendRestartRequired = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
 

@@ -8,7 +8,5 @@
  */
 
 export * from './flushAsync.js';
-export * from './jestMatterTest.js';
 export * from './jestSetupTest.js';
 export * from './logKeepAlives.js';
-export * from './matterRequest.js';

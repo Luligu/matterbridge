@@ -9,6 +9,4 @@
 
 export * from './flushAsync.js';
 export * from './logKeepAlives.js';
-export * from './matterRequest.js';
-export * from './vitestMatterTest.js';
 export * from './vitestSetupTest.js';

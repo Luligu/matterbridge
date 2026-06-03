@@ -49,6 +49,10 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./matter": {
+      "types": "./dist/matter.d.ts",
+      "import": "./dist/matter.js"
     }
   },
   "engines": {

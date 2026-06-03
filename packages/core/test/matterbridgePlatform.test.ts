@@ -1,4 +1,4 @@
-// src\matterbridgePlatform.test.ts
+// test\matterbridgePlatform.test.ts
 
 /* eslint-disable jest/no-conditional-expect */
 
@@ -12,7 +12,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { dev, plg } from '@matterbridge/types';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
 
-import { flushAsync } from './jestutils/flushAsync.js';
+import { flushAsync } from '../src/jestutils/flushAsync.js';
 import {
   addMatterbridgePlatform,
   createMatterbridgeEnvironment,
@@ -20,12 +20,12 @@ import {
   matterbridge,
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
-} from './jestutils/jestMatterbridgeTest.js';
-import { loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
-import { Matterbridge } from './matterbridge.js';
-import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from './matterbridgePlatform.js';
+} from '../src/jestutils/jestMatterbridgeTest.js';
+import { loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
+import { Matterbridge } from '../src/matterbridge.js';
+import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from '../src/matterbridgePlatform.js';
 
 jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);

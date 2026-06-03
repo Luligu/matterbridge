@@ -11,10 +11,10 @@
 import os from 'node:os';
 
 import { jest } from '@jest/globals';
-import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/jest-utils';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
-import { Dgram } from './dgram.js';
+import { Dgram } from '../src/dgram.js';
+import { loggerDebugSpy, loggerLogSpy, setupTest } from './jestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Dgram', false);
