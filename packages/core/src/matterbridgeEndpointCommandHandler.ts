@@ -1200,7 +1200,7 @@ export class CommandHandler {
    */
   removeHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     this.handler = this.handler.filter(({ command: registeredCommand, handler: registeredHandler }) => {
-      return registeredCommand !== command && registeredHandler !== handler;
+      return registeredCommand !== command || registeredHandler !== handler;
     });
   }
 }

@@ -1,4 +1,5 @@
-// src\matterbridgeDeviceTypes.test.ts
+// test/matterbridgeDeviceTypes.test.ts
+
 /* eslint-disable simple-import-sort/imports */
 
 const NAME = 'MatterbridgeDevicetypes';
@@ -11,7 +12,7 @@ import * as devices from '@matter/node/devices';
 // @matter endpoints
 import * as endpoints from '@matter/node/endpoints';
 
-import { setupTest } from './jestutils/jestSetupTest.js';
+import { setupTest } from '../src/jestutils/jestSetupTest.js';
 import {
   DeviceTypeDefinition,
   // Utility device types
@@ -107,7 +108,8 @@ import {
   cameraController,
   doorbell,
   DeviceClasses,
-} from './matterbridgeDeviceTypes.js';
+  DeviceScopes,
+} from '../src/matterbridgeDeviceTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -255,13 +257,17 @@ describe('Matterbridge device types', () => {
   test('DeviceTypeDefinition', () => {
     const dt = DeviceTypeDefinition({
       name: 'MA-rootNode',
+      deviceName: 'Root Node',
       code: 0x0016,
       deviceClass: DeviceClasses.Node,
+      deviceScope: DeviceScopes.Node,
       revision: 3,
     });
     expect(dt.name).toBe('MA-rootNode');
+    expect(dt.deviceName).toBe('Root Node');
     expect(dt.code).toBe(0x0016);
     expect(dt.deviceClass).toBe(DeviceClasses.Node);
+    expect(dt.deviceScope).toBe(DeviceScopes.Node);
     expect(dt.revision).toBe(3);
   });
 });

@@ -199,10 +199,20 @@ export enum DeviceClasses {
   BridgedPowerSourceInfo = 'BridgedPowerSourceInfo',
 }
 
+export enum DeviceScopes {
+  /** Endpoint scope — the device type applies to an endpoint. */
+  Endpoint = 'endpoint',
+
+  /** Node scope — the device type applies to a node. */
+  Node = 'node',
+}
+
 export interface DeviceTypeDefinition {
   name: string;
+  deviceName: string;
   code: DeviceTypeId;
   deviceClass: DeviceClasses;
+  deviceScope: DeviceScopes;
   revision: number;
   requiredServerClusters: ClusterId[];
   optionalServerClusters: ClusterId[];
@@ -212,8 +222,10 @@ export interface DeviceTypeDefinition {
 
 export const DeviceTypeDefinition = ({
   name,
+  deviceName,
   code,
   deviceClass,
+  deviceScope,
   revision,
   requiredServerClusters = [],
   optionalServerClusters = [],
@@ -221,8 +233,10 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters = [],
 }: {
   name: string;
+  deviceName: string;
   code: number;
   deviceClass: DeviceClasses;
+  deviceScope: DeviceScopes;
   revision: number;
   requiredServerClusters?: ClusterId[];
   optionalServerClusters?: ClusterId[];
@@ -230,8 +244,10 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters?: ClusterId[];
 }): DeviceTypeDefinition => ({
   name,
+  deviceName,
   code: DeviceTypeId(code),
   deviceClass,
+  deviceScope,
   revision,
   requiredServerClusters,
   optionalServerClusters,
@@ -243,8 +259,10 @@ export const DeviceTypeDefinition = ({
 
 export const baseDevice = DeviceTypeDefinition({
   name: 'MA-baseDevice',
+  deviceName: 'Base Device Type',
   code: 0x0000,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Descriptor.id],
   optionalServerClusters: [Binding.id, FixedLabel.id, UserLabel.id],
@@ -254,8 +272,10 @@ export const baseDevice = DeviceTypeDefinition({
 
 export const rootNode = DeviceTypeDefinition({
   name: 'MA-rootNode',
+  deviceName: 'Root Node',
   code: 0x0016,
   deviceClass: DeviceClasses.Node,
+  deviceScope: DeviceScopes.Node,
   revision: 4,
   requiredServerClusters: [], // Intentionally left empty to avoid imports
   optionalServerClusters: [], // Intentionally left empty to avoid imports
@@ -263,8 +283,10 @@ export const rootNode = DeviceTypeDefinition({
 
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
+  deviceName: 'Power Source',
   code: 0x0011,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Node,
   revision: 1,
   requiredServerClusters: [PowerSource.id],
   optionalServerClusters: [],
@@ -272,8 +294,10 @@ export const powerSource = DeviceTypeDefinition({
 
 export const OTARequestor = DeviceTypeDefinition({
   name: 'MA-OTARequestor',
+  deviceName: 'OTA Requestor',
   code: 0x0012,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Node,
   revision: 1,
   requiredServerClusters: [OtaSoftwareUpdateRequestor.id],
   optionalServerClusters: [],
@@ -283,8 +307,10 @@ export const OTARequestor = DeviceTypeDefinition({
 
 export const OTAProvider = DeviceTypeDefinition({
   name: 'MA-OTAProvider',
+  deviceName: 'OTA Provider',
   code: 0x0014,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Node,
   revision: 1,
   requiredServerClusters: [OtaSoftwareUpdateProvider.id],
   optionalServerClusters: [],
@@ -315,8 +341,10 @@ export const OTAProvider = DeviceTypeDefinition({
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
+  deviceName: 'Bridged Node',
   code: 0x0013,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [BridgedDeviceBasicInformation.id], // omitted PowerSourceConfiguration cause is deprecated
   optionalServerClusters: [PowerSource.id, EcosystemInformation.id, AdministratorCommissioning.id],
@@ -335,8 +363,10 @@ export const bridgedNode = DeviceTypeDefinition({
  */
 export const electricalSensor = DeviceTypeDefinition({
   name: 'MA-electricalSensor',
+  deviceName: 'Electrical Sensor',
   code: 0x0510,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [PowerTopology.id],
   optionalServerClusters: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
@@ -355,8 +385,10 @@ export const electricalSensor = DeviceTypeDefinition({
  */
 export const deviceEnergyManagement = DeviceTypeDefinition({
   name: 'MA-deviceEnergyManagement',
+  deviceName: 'Device Energy Management',
   code: 0x050d,
   deviceClass: DeviceClasses.Utility,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [DeviceEnergyManagement.id],
   optionalServerClusters: [DeviceEnergyManagementMode.id],
@@ -381,8 +413,10 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
  */
 export const onOffLight = DeviceTypeDefinition({
   name: 'MA-onofflight',
+  deviceName: 'OnOff Light',
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
@@ -403,8 +437,10 @@ export const onOffLight = DeviceTypeDefinition({
  */
 export const dimmableLight = DeviceTypeDefinition({
   name: 'MA-dimmablelight',
+  deviceName: 'Dimmable Light',
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
@@ -427,8 +463,10 @@ export const dimmableLight = DeviceTypeDefinition({
  */
 export const colorTemperatureLight = DeviceTypeDefinition({
   name: 'MA-colortemperaturelight',
+  deviceName: 'Color Temperature Light',
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
@@ -452,8 +490,10 @@ export const colorTemperatureLight = DeviceTypeDefinition({
  */
 export const extendedColorLight = DeviceTypeDefinition({
   name: 'MA-extendedcolorlight',
+  deviceName: 'Extended Color Light',
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
@@ -484,8 +524,10 @@ export const extendedColorLight = DeviceTypeDefinition({
  */
 export const onOffOutlet = DeviceTypeDefinition({
   name: 'MA-onoffpluginunit',
+  deviceName: 'OnOff Plugin Unit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
@@ -516,8 +558,10 @@ export const onOffOutlet = DeviceTypeDefinition({
  */
 export const dimmableOutlet = DeviceTypeDefinition({
   name: 'MA-dimmablepluginunit',
+  deviceName: 'Dimmable PlugIn Unit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 5,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
@@ -548,8 +592,10 @@ export const dimmableOutlet = DeviceTypeDefinition({
  */
 export const onOffMountedSwitch = DeviceTypeDefinition({
   name: 'MA-onoffmountedswitch',
+  deviceName: 'Mounted OnOff Control',
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id],
   optionalServerClusters: [LevelControl.id],
@@ -580,8 +626,10 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
  */
 export const dimmableMountedSwitch = DeviceTypeDefinition({
   name: 'MA-dimmablemountedswitch',
+  deviceName: 'Mounted Dimmable Load Control',
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
@@ -605,8 +653,10 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
  */
 export const pumpDevice = DeviceTypeDefinition({
   name: 'MA-pump',
+  deviceName: 'Pump',
   code: 0x303,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [OnOff.id, PumpConfigurationAndControl.id, Identify.id],
   optionalServerClusters: [LevelControl.id, Groups.id, ScenesManagement.id, TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id],
@@ -616,11 +666,41 @@ export const pumpDevice = DeviceTypeDefinition({
 
 export const waterValve = DeviceTypeDefinition({
   name: 'MA-waterValve',
+  deviceName: 'Water Valve',
   code: 0x42,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, ValveConfigurationAndControl.id],
   optionalServerClusters: [FlowMeasurement.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [FlowMeasurement.id],
+});
+
+/**
+ * 5.7. Irrigation System Device Type
+ *
+ * An irrigation system is always defined via endpoint composition. Irrigation system manufacturers
+ * determine how many watering "zone" terminals are present on the physical device. Each zone is
+ * represented by a disambiguated Water Valve endpoint.
+ *
+ * 5.7.5. Device Type Requirements
+ * An irrigation system SHALL be composed of at least one endpoint with device types as defined by the
+ * conformance below. There MAY be more endpoints with additional instances of these device types or
+ * additional device types existing in the irrigation system.
+ *
+ * - ID     Name                        Constraint    Conformance
+ * - 0x0042 Water Valve                 min 1         M
+ */
+export const irrigationSystem = DeviceTypeDefinition({
+  name: 'MA-irrigationSystem',
+  deviceName: 'Irrigation System',
+  code: 0x0040,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.id, OperationalState.id, FlowMeasurement.id],
   requiredClientClusters: [],
   optionalClientClusters: [FlowMeasurement.id],
 });
@@ -630,8 +710,10 @@ export const waterValve = DeviceTypeDefinition({
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
+  deviceName: 'OnOff Light Switch',
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id],
   optionalServerClusters: [],
@@ -642,8 +724,10 @@ export const onOffSwitch = DeviceTypeDefinition({
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
+  deviceName: 'Dimmer Switch',
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id],
   optionalServerClusters: [],
@@ -654,8 +738,10 @@ export const dimmableSwitch = DeviceTypeDefinition({
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
+  deviceName: 'Color Dimmer Switch',
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalServerClusters: [],
@@ -665,8 +751,10 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
 
 export const genericSwitch = DeviceTypeDefinition({
   name: 'MA-genericswitch',
+  deviceName: 'Generic Switch',
   code: 0x000f,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, Switch.id],
   optionalServerClusters: [],
@@ -680,8 +768,10 @@ export const genericSwitch = DeviceTypeDefinition({
  */
 export const contactSensor = DeviceTypeDefinition({
   name: 'MA-contactsensor',
+  deviceName: 'Contact Sensor',
   code: 0x0015,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
@@ -689,16 +779,20 @@ export const contactSensor = DeviceTypeDefinition({
 
 export const lightSensor = DeviceTypeDefinition({
   name: 'MA-lightsensor',
+  deviceName: 'Light Sensor',
   code: 0x0106,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, IlluminanceMeasurement.id],
 });
 
 export const occupancySensor = DeviceTypeDefinition({
   name: 'MA-occupancysensor',
+  deviceName: 'Occupancy Sensor',
   code: 0x0107,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, OccupancySensing.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
@@ -710,8 +804,10 @@ export const occupancySensor = DeviceTypeDefinition({
  */
 export const temperatureSensor = DeviceTypeDefinition({
   name: 'MA-tempsensor',
+  deviceName: 'Temperature Sensor',
   code: 0x0302,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, TemperatureMeasurement.id],
   optionalServerClusters: [ThermostatUserInterfaceConfiguration.id],
@@ -719,24 +815,30 @@ export const temperatureSensor = DeviceTypeDefinition({
 
 export const pressureSensor = DeviceTypeDefinition({
   name: 'MA-pressuresensor',
+  deviceName: 'Pressure Sensor',
   code: 0x0305,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, PressureMeasurement.id],
 });
 
 export const flowSensor = DeviceTypeDefinition({
   name: 'MA-flowsensor',
+  deviceName: 'Flow Sensor',
   code: 0x0306,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, FlowMeasurement.id],
 });
 
 export const humiditySensor = DeviceTypeDefinition({
   name: 'MA-humiditysensor',
+  deviceName: 'Humidity Sensor',
   code: 0x0307,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 3,
   requiredServerClusters: [Identify.id, RelativeHumidityMeasurement.id],
 });
@@ -747,8 +849,10 @@ export const humiditySensor = DeviceTypeDefinition({
  */
 export const smokeCoAlarm = DeviceTypeDefinition({
   name: 'MA-smokeCoAlarm',
+  deviceName: 'Smoke CO Alarm',
   code: 0x0076,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, SmokeCoAlarm.id],
   optionalServerClusters: [Groups.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, CarbonMonoxideConcentrationMeasurement.id],
@@ -756,8 +860,10 @@ export const smokeCoAlarm = DeviceTypeDefinition({
 
 export const airQualitySensor = DeviceTypeDefinition({
   name: 'MA-airQualitySensor',
+  deviceName: 'Air Quality Sensor',
   code: 0x002c,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, AirQuality.id],
   optionalServerClusters: [
@@ -782,8 +888,10 @@ export const airQualitySensor = DeviceTypeDefinition({
  */
 export const waterFreezeDetector = DeviceTypeDefinition({
   name: 'MA-waterFreezeDetector',
+  deviceName: 'Water Freeze Detector',
   code: 0x0041,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
@@ -795,8 +903,10 @@ export const waterFreezeDetector = DeviceTypeDefinition({
  */
 export const waterLeakDetector = DeviceTypeDefinition({
   name: 'MA-waterLeakDetector',
+  deviceName: 'Water Leak Detector',
   code: 0x0043,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
@@ -808,11 +918,29 @@ export const waterLeakDetector = DeviceTypeDefinition({
  */
 export const rainSensor = DeviceTypeDefinition({
   name: 'MA-rainSensor',
+  deviceName: 'Rain Sensor',
   code: 0x0044,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
+});
+
+/**
+ * 7.14. Soil Sensor Device Type
+ *
+ * A Soil Sensor device reports measurements of soil values, such as moisture and (optionally) temperature.
+ */
+export const soilSensor = DeviceTypeDefinition({
+  name: 'MA-soilSensor',
+  deviceName: 'Soil Sensor',
+  code: 0x0045,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [Identify.id, SoilMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id],
 });
 
 // Chapter 8. Closures device types
@@ -828,8 +956,10 @@ export const rainSensor = DeviceTypeDefinition({
  */
 export const doorLockDevice = DeviceTypeDefinition({
   name: 'MA-doorLock',
+  deviceName: 'Door Lock',
   code: 0xa,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, DoorLock.id],
   optionalServerClusters: [],
@@ -837,11 +967,85 @@ export const doorLockDevice = DeviceTypeDefinition({
 
 export const coverDevice = DeviceTypeDefinition({
   name: 'MA-windowCovering',
+  deviceName: 'Window Covering',
   code: 0x202,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 6,
   requiredServerClusters: [Identify.id, WindowCovering.id],
   optionalServerClusters: [Groups.id],
+});
+
+/**
+ * 8.5. Closure Device Type
+ *
+ * A Closure device provides actuator control over an endpoint.
+ *
+ * Device Type Requirements:
+ * - 0x000A Door Lock O
+ * - 0x0100+ On/Off Light+ O
+ * - 0x0231 Closure Panel O
+ *
+ * Element Requirements:
+ * - Descriptor Feature TagList M
+ *   (exactly one tag from Closure namespace 0x44; no tag from ClosurePanel namespace 0x45)
+ */
+export const closure = DeviceTypeDefinition({
+  name: 'MA-closure',
+  deviceName: 'Closure',
+  code: 0x0230,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [Identify.id, ClosureControl.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * 8.6. Closure Panel Device Type
+ *
+ * A Closure Panel device provides dimension information for an endpoint.
+ *
+ * Element Requirements:
+ * - Descriptor Feature TagList M
+ *   (exactly one tag from ClosurePanel namespace 0x45; no tag from Closure namespace 0x44)
+ */
+export const closurePanel = DeviceTypeDefinition({
+  name: 'MA-closurePanel',
+  deviceName: 'Closure Panel',
+  code: 0x0231,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [ClosureDimension.id],
+  optionalServerClusters: [],
+});
+
+/**
+ * 8.7. Closure Controller Device Type
+ *
+ * A Closure Controller is capable of controlling a Closure.
+ *
+ * 8.7.5. Cluster Requirements
+ * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
+ *
+ * - ID     Name                Direction    Conformance
+ * - 0x0003 Identify            client       O
+ * - 0x0004 Groups              client       O
+ * - 0x0104 Closure Control     client       M
+ * - 0x0105 Closure Dimension   client       O
+ */
+export const closureController = DeviceTypeDefinition({
+  name: 'MA-closureController',
+  deviceName: 'Closure Controller',
+  code: 0x023e,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+  requiredClientClusters: [ClosureControl.id],
+  optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
 });
 
 // Chapter 9. HVAC device types
@@ -856,8 +1060,10 @@ export const coverDevice = DeviceTypeDefinition({
  */
 export const thermostatDevice = DeviceTypeDefinition({
   name: 'MA-thermostat',
+  deviceName: 'Thermostat',
   code: 0x301,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 5,
   requiredServerClusters: [Identify.id, Thermostat.id],
   optionalServerClusters: [Groups.id, ThermostatUserInterfaceConfiguration.id, EnergyPreference.id],
@@ -888,8 +1094,10 @@ export const thermostatDevice = DeviceTypeDefinition({
  */
 export const fanDevice = DeviceTypeDefinition({
   name: 'MA-fan',
+  deviceName: 'Fan',
   code: 0x2b,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, Groups.id, FanControl.id],
   optionalServerClusters: [OnOff.id],
@@ -922,8 +1130,10 @@ export const fanDevice = DeviceTypeDefinition({
  */
 export const airPurifier = DeviceTypeDefinition({
   name: 'MA-airPurifier',
+  deviceName: 'Air Purifier',
   code: 0x2d,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, FanControl.id],
   optionalServerClusters: [Groups.id, OnOff.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
@@ -952,8 +1162,10 @@ export const airPurifier = DeviceTypeDefinition({
  */
 export const basicVideoPlayer = DeviceTypeDefinition({
   name: 'MA-basicVideoPlayer',
+  deviceName: 'Basic Video Player',
   code: 0x0028,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OnOff.id, MediaPlayback.id, KeypadInput.id],
   optionalServerClusters: [WakeOnLan.id, Channel.id, TargetNavigator.id, MediaInput.id, LowPower.id, AudioOutput.id, ContentControl.id, Messages.id],
@@ -987,8 +1199,10 @@ export const basicVideoPlayer = DeviceTypeDefinition({
  */
 export const castingVideoPlayer = DeviceTypeDefinition({
   name: 'MA-castingVideoPlayer',
+  deviceName: 'Casting Video Player',
   code: 0x0023,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OnOff.id, MediaPlayback.id, KeypadInput.id, ContentLauncher.id],
   optionalServerClusters: [
@@ -1013,8 +1227,10 @@ export const castingVideoPlayer = DeviceTypeDefinition({
  */
 export const speakerDevice = DeviceTypeDefinition({
   name: 'MA-speaker',
+  deviceName: 'Speaker',
   code: 0x0022,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [OnOff.id, LevelControl.id],
   optionalServerClusters: [],
@@ -1024,8 +1240,10 @@ export const speakerDevice = DeviceTypeDefinition({
 
 export const modeSelect = DeviceTypeDefinition({
   name: 'MA-modeselect',
+  deviceName: 'Mode Select',
   code: 0x27,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [ModeSelect.id],
 });
@@ -1063,8 +1281,10 @@ export const modeSelect = DeviceTypeDefinition({
  */
 export const aggregator = DeviceTypeDefinition({
   name: 'MA-aggregator',
+  deviceName: 'Aggregator',
   code: 0x000e,
   deviceClass: DeviceClasses.Dynamic,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [],
   optionalServerClusters: [Actions.id, Identify.id, CommissionerControl.id],
@@ -1100,8 +1320,10 @@ export const bridge = aggregator;
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
   name: 'MA-roboticvacuumcleaner',
+  deviceName: 'Robotic Vacuum Cleaner',
   code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 4,
   requiredServerClusters: [Identify.id, RvcRunMode.id, RvcOperationalState.id],
   optionalServerClusters: [RvcCleanMode.id, ServiceArea.id],
@@ -1122,8 +1344,10 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  */
 export const laundryWasher = DeviceTypeDefinition({
   name: 'MA-laundrywasher',
+  deviceName: 'Laundry Washer',
   code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OperationalState.id],
   optionalServerClusters: [Identify.id, LaundryWasherMode.id, OnOff.id, LaundryWasherControls.id, TemperatureControl.id],
@@ -1143,8 +1367,10 @@ export const laundryWasher = DeviceTypeDefinition({
  */
 export const refrigerator = DeviceTypeDefinition({
   name: 'MA-refrigerator',
+  deviceName: 'Refrigerator',
   code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [],
   optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id],
@@ -1171,9 +1397,11 @@ export const refrigerator = DeviceTypeDefinition({
  */
 export const airConditioner = DeviceTypeDefinition({
   name: 'MA-airConditioner',
+  deviceName: 'Room Air Conditioner',
   code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
-  revision: 4,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 3,
   requiredServerClusters: [Identify.id, OnOff.id, Thermostat.id],
   optionalServerClusters: [
     Groups.id,
@@ -1213,8 +1441,10 @@ export const airConditioner = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetcooler',
+  deviceName: 'Temperature Controlled Cabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 5,
   requiredServerClusters: [TemperatureControl.id, RefrigeratorAndTemperatureControlledCabinetMode.id],
   optionalServerClusters: [TemperatureMeasurement.id],
@@ -1247,8 +1477,10 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   name: 'MA-temperaturecontrolledcabinetheater',
+  deviceName: 'Temperature Controlled Cabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 5,
   requiredServerClusters: [TemperatureControl.id, OvenMode.id, OvenCavityOperationalState.id],
   optionalServerClusters: [TemperatureMeasurement.id],
@@ -1267,8 +1499,10 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
  */
 export const dishwasher = DeviceTypeDefinition({
   name: 'MA-dishwasher',
+  deviceName: 'Dishwasher',
   code: 0x75, // 117
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OperationalState.id],
   optionalServerClusters: [Identify.id, OnOff.id, TemperatureControl.id, DishwasherMode.id, DishwasherAlarm.id],
@@ -1287,8 +1521,10 @@ export const dishwasher = DeviceTypeDefinition({
  */
 export const laundryDryer = DeviceTypeDefinition({
   name: 'MA-laundrydryer',
+  deviceName: 'Laundry Dryer',
   code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OperationalState.id],
   optionalServerClusters: [Identify.id, LaundryWasherMode.id, OnOff.id, LaundryDryerControls.id, TemperatureControl.id],
@@ -1309,8 +1545,10 @@ export const laundryDryer = DeviceTypeDefinition({
  */
 export const cookSurface = DeviceTypeDefinition({
   name: 'MA-cooksurface',
+  deviceName: 'Cook Surface',
   code: 0x77, // 119
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [],
   optionalServerClusters: [TemperatureControl.id, TemperatureMeasurement.id, OnOff.id],
@@ -1333,8 +1571,10 @@ export const cookSurface = DeviceTypeDefinition({
  */
 export const cooktop = DeviceTypeDefinition({
   name: 'MA-cooktop',
+  deviceName: 'Cooktop',
   code: 0x78, // 120
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [OnOff.id],
   optionalServerClusters: [Identify.id],
@@ -1351,8 +1591,10 @@ export const cooktop = DeviceTypeDefinition({
  */
 export const oven = DeviceTypeDefinition({
   name: 'MA-oven',
+  deviceName: 'Oven',
   code: 0x7b, // 123
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [],
   optionalServerClusters: [Identify.id],
@@ -1372,8 +1614,10 @@ export const oven = DeviceTypeDefinition({
  */
 export const extractorHood = DeviceTypeDefinition({
   name: 'MA-extractorhood',
+  deviceName: 'Extractor Hood',
   code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [FanControl.id],
   optionalServerClusters: [Identify.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
@@ -1389,8 +1633,10 @@ export const extractorHood = DeviceTypeDefinition({
  */
 export const microwaveOven = DeviceTypeDefinition({
   name: 'MA-microwaveoven',
+  deviceName: 'Microwave Oven',
   code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [OperationalState.id, MicrowaveOvenMode.id, MicrowaveOvenControl.id],
   optionalServerClusters: [Identify.id, FanControl.id],
@@ -1419,8 +1665,10 @@ export const microwaveOven = DeviceTypeDefinition({
  */
 export const evse = DeviceTypeDefinition({
   name: 'MA-evse',
+  deviceName: 'Energy EVSE',
   code: 0x050c,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [EnergyEvse.id, EnergyEvseMode.id],
   optionalServerClusters: [Identify.id, TemperatureMeasurement.id],
@@ -1461,8 +1709,10 @@ export const evse = DeviceTypeDefinition({
  */
 export const waterHeater = DeviceTypeDefinition({
   name: 'MA-waterheater',
+  deviceName: 'Water Heater',
   code: 0x050f,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Thermostat.id, WaterHeaterManagement.id, WaterHeaterMode.id],
   optionalServerClusters: [Identify.id],
@@ -1498,8 +1748,10 @@ export const waterHeater = DeviceTypeDefinition({
  */
 export const solarPower = DeviceTypeDefinition({
   name: 'MA-solarpower',
+  deviceName: 'Solar Power',
   code: 0x0017,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [], // See 14.3.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.id],
@@ -1527,8 +1779,10 @@ export const solarPower = DeviceTypeDefinition({
  */
 export const batteryStorage = DeviceTypeDefinition({
   name: 'MA-batterystorage',
+  deviceName: 'Battery Storage',
   code: 0x0018,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [], // See 14.4.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.id],
@@ -1559,126 +1813,16 @@ export const batteryStorage = DeviceTypeDefinition({
  */
 export const heatPump = DeviceTypeDefinition({
   name: 'MA-heatpump',
+  deviceName: 'Heat Pump',
   code: 0x0309,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [], // See 14.5.5.1. Cluster Requirements on Composing Device Types
   optionalServerClusters: [Identify.id],
   requiredClientClusters: [],
   optionalClientClusters: [Thermostat.id],
 });
-
-/**
- * See Matter-1.5.1.md in the repository root for the Matter 1.5.1 changes summary tables.
- */
-
-/**
- * 7.14. Soil Sensor Device Type
- *
- * A Soil Sensor device reports measurements of soil values, such as moisture and (optionally) temperature.
- */
-export const soilSensor = DeviceTypeDefinition({
-  name: 'MA-soilSensor',
-  code: 0x0045,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [Identify.id, SoilMeasurement.id],
-  optionalServerClusters: [TemperatureMeasurement.id],
-});
-
-/**
- * 5.7. Irrigation System Device Type
- *
- * An irrigation system is always defined via endpoint composition. Irrigation system manufacturers
- * determine how many watering "zone" terminals are present on the physical device. Each zone is
- * represented by a disambiguated Water Valve endpoint.
- *
- * 5.7.5. Device Type Requirements
- * An irrigation system SHALL be composed of at least one endpoint with device types as defined by the
- * conformance below. There MAY be more endpoints with additional instances of these device types or
- * additional device types existing in the irrigation system.
- *
- * - ID     Name                        Constraint    Conformance
- * - 0x0042 Water Valve                 min 1         M
- */
-export const irrigationSystem = DeviceTypeDefinition({
-  name: 'MA-irrigationSystem',
-  code: 0x0040,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [],
-  optionalServerClusters: [Identify.id, OperationalState.id, FlowMeasurement.id],
-  requiredClientClusters: [],
-  optionalClientClusters: [FlowMeasurement.id],
-});
-
-/**
- * 8.5. Closure Device Type
- *
- * A Closure device provides actuator control over an endpoint.
- *
- * Device Type Requirements:
- * - 0x000A Door Lock O
- * - 0x0100+ On/Off Light+ O
- * - 0x0231 Closure Panel O
- *
- * Element Requirements:
- * - Descriptor Feature TagList M
- *   (exactly one tag from Closure namespace 0x44; no tag from ClosurePanel namespace 0x45)
- */
-export const closure = DeviceTypeDefinition({
-  name: 'MA-closure',
-  code: 0x0230,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [Identify.id, ClosureControl.id],
-  optionalServerClusters: [],
-});
-
-/**
- * 8.6. Closure Panel Device Type
- *
- * A Closure Panel device provides dimension information for an endpoint.
- *
- * Element Requirements:
- * - Descriptor Feature TagList M
- *   (exactly one tag from ClosurePanel namespace 0x45; no tag from Closure namespace 0x44)
- */
-export const closurePanel = DeviceTypeDefinition({
-  name: 'MA-closurePanel',
-  code: 0x0231,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [ClosureDimension.id],
-  optionalServerClusters: [],
-});
-
-/**
- * 8.7. Closure Controller Device Type
- *
- * A Closure Controller is capable of controlling a Closure.
- *
- * 8.7.5. Cluster Requirements
- * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
- *
- * - ID     Name                Direction    Conformance
- * - 0x0003 Identify            client       O
- * - 0x0004 Groups              client       O
- * - 0x0104 Closure Control     client       M
- * - 0x0105 Closure Dimension   client       O
- */
-export const closureController = DeviceTypeDefinition({
-  name: 'MA-closureController',
-  code: 0x023e,
-  deviceClass: DeviceClasses.Simple,
-  revision: 1,
-  requiredServerClusters: [],
-  optionalServerClusters: [],
-  requiredClientClusters: [ClosureControl.id],
-  optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
-});
-
-// Chapter 14. Energy Device Types
 
 /**
  * 14.6. Meter Reference Point Device Type
@@ -1701,8 +1845,10 @@ export const closureController = DeviceTypeDefinition({
  */
 export const meterReferencePoint = DeviceTypeDefinition({
   name: 'MA-meterReferencePoint',
+  deviceName: 'Meter Reference Point',
   code: 0x0512,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Identify.id],
   optionalServerClusters: [],
@@ -1730,8 +1876,10 @@ export const meterReferencePoint = DeviceTypeDefinition({
  */
 export const electricalEnergyTariff = DeviceTypeDefinition({
   name: 'MA-electricalEnergyTariff',
+  deviceName: 'Electrical Energy Tariff',
   code: 0x0513,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [],
   optionalServerClusters: [CommodityPrice.id, ElectricalGridConditions.id, CommodityTariff.id],
@@ -1758,8 +1906,10 @@ export const electricalEnergyTariff = DeviceTypeDefinition({
  */
 export const electricalMeter = DeviceTypeDefinition({
   name: 'MA-electricalMeter',
+  deviceName: 'Electrical Meter',
   code: 0x0514,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
   optionalServerClusters: [CommodityMetering.id],
@@ -1779,8 +1929,10 @@ export const electricalMeter = DeviceTypeDefinition({
  */
 export const electricalUtilityMeter = DeviceTypeDefinition({
   name: 'MA-electricalUtilityMeter',
+  deviceName: 'Electrical Utility Meter',
   code: 0x0511,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [MeterIdentification.id],
   optionalServerClusters: [],
@@ -1820,8 +1972,10 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  */
 export const camera = DeviceTypeDefinition({
   name: 'MA-camera',
+  deviceName: 'Camera',
   code: 0x0142,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [CameraAvStreamManagement.id, WebRtcTransportProvider.id],
   optionalServerClusters: [Identify.id, OccupancySensing.id, ZoneManagement.id, CameraAvSettingsUserLevelManagement.id, WebRtcTransportRequestor.id, PushAvStreamTransport.id],
@@ -1845,8 +1999,10 @@ export const camera = DeviceTypeDefinition({
  */
 export const floodlightCamera = DeviceTypeDefinition({
   name: 'MA-floodlightCamera',
+  deviceName: 'Floodlight Camera',
   code: 0x0144,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [],
   optionalServerClusters: [],
@@ -1868,8 +2024,10 @@ export const floodlightCamera = DeviceTypeDefinition({
  */
 export const videoDoorbell = DeviceTypeDefinition({
   name: 'MA-videoDoorbell',
+  deviceName: 'Video Doorbell',
   code: 0x0143,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [],
   optionalServerClusters: [],
@@ -1905,8 +2063,10 @@ export const videoDoorbell = DeviceTypeDefinition({
  */
 export const intercom = DeviceTypeDefinition({
   name: 'MA-intercom',
+  deviceName: 'Intercom',
   code: 0x0140,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [CameraAvStreamManagement.id, WebRtcTransportProvider.id, WebRtcTransportRequestor.id],
   optionalServerClusters: [Identify.id, CameraAvSettingsUserLevelManagement.id],
@@ -1941,8 +2101,10 @@ export const intercom = DeviceTypeDefinition({
  */
 export const audioDoorbell = DeviceTypeDefinition({
   name: 'MA-audioDoorbell',
+  deviceName: 'Audio Doorbell',
   code: 0x0141,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, Switch.id, CameraAvStreamManagement.id, WebRtcTransportProvider.id],
   optionalServerClusters: [WebRtcTransportRequestor.id, PushAvStreamTransport.id],
@@ -1977,8 +2139,10 @@ export const audioDoorbell = DeviceTypeDefinition({
  */
 export const snapshotCamera = DeviceTypeDefinition({
   name: 'MA-snapshotCamera',
+  deviceName: 'Snapshot Camera',
   code: 0x0145,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [CameraAvStreamManagement.id],
   optionalServerClusters: [Identify.id, OccupancySensing.id, ZoneManagement.id, CameraAvSettingsUserLevelManagement.id],
@@ -2002,8 +2166,10 @@ export const snapshotCamera = DeviceTypeDefinition({
  */
 export const chime = DeviceTypeDefinition({
   name: 'MA-chime',
+  deviceName: 'Chime',
   code: 0x0146,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [Chime.id],
   optionalServerClusters: [Identify.id],
@@ -2032,8 +2198,10 @@ export const chime = DeviceTypeDefinition({
  */
 export const cameraController = DeviceTypeDefinition({
   name: 'MA-cameraController',
+  deviceName: 'Camera Controller',
   code: 0x0147,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 1,
   requiredServerClusters: [WebRtcTransportRequestor.id],
   optionalServerClusters: [],
@@ -2064,8 +2232,10 @@ export const cameraController = DeviceTypeDefinition({
  */
 export const doorbell = DeviceTypeDefinition({
   name: 'MA-doorbell',
+  deviceName: 'Doorbell',
   code: 0x0148,
   deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
   revision: 2,
   requiredServerClusters: [Identify.id, Switch.id],
   optionalServerClusters: [],

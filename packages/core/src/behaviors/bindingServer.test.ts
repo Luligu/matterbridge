@@ -6,16 +6,20 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
+import { ClusterBehavior, Endpoint } from '@matter/main/node';
 import { BindingResolution } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
-import { EndpointNumber, NodeId } from '@matter/types';
+import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types';
 import { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
+import { debugStringify } from 'node-ansi-logger';
 
+import { flushAsync } from '../jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
@@ -23,9 +27,12 @@ import {
   startMatterbridgeEnvironment,
   stopMatterbridgeEnvironment,
 } from '../jestutils/jestMatterbridgeTest.js';
-import { setupTest } from '../jestutils/jestSetupTest.js';
-import { occupancySensor, onOffLight, onOffSwitch } from '../matterbridgeDeviceTypes.js';
+import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '../jestutils/jestSetupTest.js';
+import { BindingServer } from '../matter/behaviors.js';
+import { getClusterNameById } from '../matter/types.js';
+import { bridgedNode, occupancySensor, onOffLight, onOffOutlet, onOffSwitch } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { lowercaseFirstLetter } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';
 import { MatterbridgeIdentifyServer } from './identifyServer.js';
 import { MatterbridgeOnOffServer } from './onOffServer.js';
@@ -47,7 +54,16 @@ describe('Client clusters and behaviors', () => {
     jest.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(async () => {
+    // eslint-disable-next-line jest/no-standalone-expect
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    // eslint-disable-next-line jest/no-standalone-expect
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    // eslint-disable-next-line jest/no-standalone-expect
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+    // Clear debug
+    await setDebug(false);
+  });
 
   afterAll(async () => {
     // Destroy Matterbridge environment
@@ -158,9 +174,42 @@ describe('Client clusters and behaviors', () => {
     });
   });
 
+  test('MatterbridgeBindingServer onSuccess: adds uncovered clientList IDs and logs active bindings', async () => {
+    // Create an onOffLight endpoint and manually require the binding server with a clientList that
+    // contains OccupancySensing, which is NOT in endpoint.type.clientClusters (no addClusterClients
+    // was called). This forces toAddClientList to be non-empty, covering lines 60-61 (addClientClusters).
+    // Providing an initial binding entry at construction time covers lines 65 (active binding log).
+    const sw = new MatterbridgeEndpoint([onOffLight, bridgedNode], { id: 'BindingOnlyLight' });
+    sw.behaviors.require(MatterbridgeBindingServer, {
+      clientList: [OccupancySensing.id],
+      binding: [{ node: NodeId(99), endpoint: EndpointNumber(99), cluster: OccupancySensing.id, fabricIndex: FabricIndex(1) }],
+    });
+    sw.createDefaultBridgedDeviceBasicInformationClusterServer('Light', '123456789', 0xfff1, 'Matterbridge', 'Light')
+      .createDefaultIdentifyClusterServer()
+      .createDefaultOnOffClusterServer(false)
+      .addRequiredClusterServers();
+    expect(await matterbridge.aggregatorNode?.add(sw)).toBeDefined();
+    await sw.construction.ready;
+    await flushAsync(); // Wait for onSuccess to be processed
+    // OccupancySensing must have been appended to the Descriptor clientList
+    expect(sw.getAttribute(DescriptorServer, 'clientList')).toContain(OccupancySensing.id);
+    // Logs must include initialization with the clientList, adding client clusters, and active binding
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Initializing MatterbridgeBindingServer (endpoint ${sw.maybeId}.${sw.maybeNumber}) with clientList: ${OccupancySensing.id}`);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Adding client clusters to endpoint ${sw.maybeId}.${sw.maybeNumber}: ${OccupancySensing.id}`);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(
+      `Active binding for endpoint ${sw.maybeId}.${sw.maybeNumber}: target ${debugStringify({
+        node: NodeId(99),
+        group: undefined,
+        endpoint: EndpointNumber(99),
+        cluster: OccupancySensing.id,
+        fabricIndex: FabricIndex(1),
+      })}`,
+    );
+  });
+
   test('server-kind binding: occupancy sensor bound to OnOff light', async () => {
     // Create the occupancy sensor (the binding target)
-    const sensor = new MatterbridgeEndpoint(occupancySensor, { id: 'OccSensor' }).createDefaultIdentifyClusterServer().addRequiredClusterServers(); // adds OccupancySensingServer with Feature.PassiveInfrared, occupied: false
+    const sensor = new MatterbridgeEndpoint(occupancySensor, { id: 'OccSensor' }).createDefaultIdentifyClusterServer().addRequiredClusterServers();
     expect(await matterbridge.aggregatorNode?.add(sensor)).toBeDefined();
     await sensor.construction.ready;
 
@@ -175,6 +224,11 @@ describe('Client clusters and behaviors', () => {
 
     // Descriptor of the light must advertise OccupancySensing as a client cluster
     expect(light.getAttribute(DescriptorServer, 'clientList')).toContain(OccupancySensing.id);
+    // endpoint.type.clientClusters must be populated so BindingManager can validate this endpoint
+    const clientClusters = light.type.clientClusters as Record<string, ClusterBehavior.Type> | undefined;
+    if (!clientClusters) throw new Error('clientClusters is undefined');
+    expect(Object.keys(clientClusters)).toHaveLength(1);
+    expect(clientClusters[lowercaseFirstLetter(getClusterNameById(OccupancySensing.id))].cluster.id).toBe(OccupancySensing.id);
 
     // Simulate what BindingManager emits for a local (same-node) binding: kind 'server'
     if (!sensor.number) throw new Error('sensor endpoint number not assigned');
@@ -221,5 +275,68 @@ describe('Client clusters and behaviors', () => {
     await sensor.setAttribute(OccupancySensingServer, 'occupancy', { occupied: false });
     await pendingUpdate;
     expect(light.getAttribute(OnOff.id, 'onOff')).toBe(false);
+  });
+
+  test('add onOffOutlet', async () => {
+    const endpoint = new MatterbridgeEndpoint(onOffOutlet, { id: 'OnOffOutlet' }).addRequiredClusters().addClusterClients([OccupancySensing.id]);
+    expect(endpoint).toBeDefined();
+    expect(await matterbridge.aggregatorNode?.add(endpoint)).toBeDefined();
+    await endpoint.construction.ready;
+
+    // Descriptor of the plug must advertise OccupancySensing as a client cluster
+    expect(endpoint.stateOf(DescriptorServer).clientList).toHaveLength(1);
+    expect(endpoint.stateOf(DescriptorServer).clientList).toContain(OccupancySensing.id);
+
+    // OnOff is typed as supported, so it should be in endpoint.behaviors.supported
+    expect(endpoint.stateOf(OnOffServer).onOff).toBeDefined();
+    expect(endpoint.getCluster(OnOffServer)?.onOff).toBeDefined();
+    expect(endpoint.getAttribute(OnOffServer, 'onOff')).toBeDefined();
+
+    // endpoint.type.behaviors must be kept in sync with behaviors.supported by the inject wrapper
+    const serverBehaviors = endpoint.type.behaviors as Record<string, ClusterBehavior.Type>;
+    expect(serverBehaviors['onOff']).toBeDefined();
+    expect(serverBehaviors['onOff'].cluster.id).toBe(OnOff.id);
+
+    // endpoint.type.clientClusters must be populated with cluster info
+    const clientClusters = endpoint.type.clientClusters as Record<string, ClusterBehavior.Type> | undefined;
+    if (!clientClusters) throw new Error('clientClusters is undefined');
+    expect(Object.keys(clientClusters)).toHaveLength(1);
+    expect(clientClusters['occupancySensing']).toBe(OccupancySensingClient);
+    expect(clientClusters['occupancySensing'].cluster.id).toBe(OccupancySensing.id);
+  });
+
+  test('add OnOffPlugInUnitDevice', async () => {
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer).withClientClusters(OccupancySensingClient), {
+      id: 'OnOffPlugIn',
+      identify: {
+        identifyTime: 0,
+        identifyType: Identify.IdentifyType.None,
+      },
+      onOff: {
+        onOff: false,
+      },
+    });
+    expect(endpoint).toBeDefined();
+    expect(await matterbridge.aggregatorNode?.add(endpoint)).toBeDefined();
+    await endpoint.construction.ready;
+
+    // Descriptor of the plug must advertise OccupancySensing as a client cluster
+    expect(endpoint.stateOf(DescriptorServer).clientList).toHaveLength(1);
+    expect(endpoint.stateOf(DescriptorServer).clientList).toContain(OccupancySensing.id);
+
+    // OnOff is typed as supported, so it should be in endpoint.behaviors.supported
+    expect(endpoint.stateOf(OnOffServer).onOff).toBeDefined();
+
+    // endpoint.type.behaviors must be kept in sync with behaviors.supported by the inject wrapper
+    const serverBehaviors = endpoint.type.behaviors as Record<string, ClusterBehavior.Type>;
+    expect(serverBehaviors['onOff']).toBeDefined();
+    expect(serverBehaviors['onOff'].cluster.id).toBe(OnOff.id);
+
+    // endpoint.type.clientClusters must be populated with cluster info
+    const clientClusters = endpoint.type.clientClusters as Record<string, ClusterBehavior.Type> | undefined;
+    if (!clientClusters) throw new Error('clientClusters is undefined');
+    expect(Object.keys(clientClusters)).toHaveLength(1);
+    expect(clientClusters['occupancySensing']).toBe(OccupancySensingClient);
+    expect(clientClusters['occupancySensing'].cluster.id).toBe(OccupancySensing.id);
   });
 });

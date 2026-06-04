@@ -418,7 +418,6 @@ import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { closureController } from 'matterbridge';
 
 const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
-  .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
   .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
   .addRequiredClusters();
 
@@ -435,7 +434,6 @@ Each `DeviceTypeDefinition` carries `requiredClientClusters` and `optionalClient
 import { closureController } from 'matterbridge';
 
 const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
-  .createDefaultBridgedDeviceBasicInformationClusterServer('Closure Controller', 'CC-001', 0xfff1, 'Acme', 'Closure Controller')
   .addRequiredClusterServers()
   .addRequiredClusterClients() // adds ClosureControl.id (required by closureController)
   .addOptionalClusterClients(); // adds Identify, Groups, ClosureDimension (optional)

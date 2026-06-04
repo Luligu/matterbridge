@@ -59,6 +59,7 @@ import {
   DeviceEnergyManagementMode,
   DoorLock,
   ElectricalEnergyMeasurement,
+  ElectricalGridConditions,
   ElectricalPowerMeasurement,
   FanControl,
   FixedLabel,
@@ -71,6 +72,8 @@ import {
   ModeSelect,
   OccupancySensing,
   OnOff,
+  OtaSoftwareUpdateProvider,
+  OtaSoftwareUpdateRequestor,
   PowerSource,
   PowerTopology,
   PressureMeasurement,
@@ -193,10 +196,56 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('getBehaviourTypesFromClusterClientIds', async () => {
-    expect(getBehaviourTypesFromClusterClientIds([Identify.Cluster.id])).toEqual([]);
+    const clusterIds = [
+      Identify.id,
+      Groups.id,
+      OnOff.id,
+      LevelControl.id,
+      ColorControl.id,
+      OccupancySensing.id,
+      ScenesManagement.id,
+      DoorLock.id,
+      ElectricalGridConditions.id,
+      FanControl.id,
+      FlowMeasurement.id,
+      IlluminanceMeasurement.id,
+      OtaSoftwareUpdateProvider.id,
+      OtaSoftwareUpdateRequestor.id,
+      PressureMeasurement.id,
+      PumpConfigurationAndControl.id,
+      RelativeHumidityMeasurement.id,
+      TemperatureMeasurement.id,
+      Thermostat.id,
+      WindowCovering.id,
+    ];
+    const result = getBehaviourTypesFromClusterClientIds(clusterIds);
+    expect(result).toHaveLength(20);
+    expect(result.map((b) => (b as any).cluster?.id)).toEqual(clusterIds);
+    expect(getBehaviourTypesFromClusterClientIds([0xffff as any])).toEqual([]);
   });
+
   test('getBehaviourTypeFromClusterClientId', async () => {
-    expect(getBehaviourTypeFromClusterClientId(Identify.Cluster.id)).toBeUndefined();
+    expect((getBehaviourTypeFromClusterClientId(Identify.id) as any)?.cluster?.id).toBe(Identify.id);
+    expect((getBehaviourTypeFromClusterClientId(Groups.id) as any)?.cluster?.id).toBe(Groups.id);
+    expect((getBehaviourTypeFromClusterClientId(OnOff.id) as any)?.cluster?.id).toBe(OnOff.id);
+    expect((getBehaviourTypeFromClusterClientId(LevelControl.id) as any)?.cluster?.id).toBe(LevelControl.id);
+    expect((getBehaviourTypeFromClusterClientId(ColorControl.id) as any)?.cluster?.id).toBe(ColorControl.id);
+    expect((getBehaviourTypeFromClusterClientId(OccupancySensing.id) as any)?.cluster?.id).toBe(OccupancySensing.id);
+    expect((getBehaviourTypeFromClusterClientId(ScenesManagement.id) as any)?.cluster?.id).toBe(ScenesManagement.id);
+    expect((getBehaviourTypeFromClusterClientId(DoorLock.id) as any)?.cluster?.id).toBe(DoorLock.id);
+    expect((getBehaviourTypeFromClusterClientId(ElectricalGridConditions.id) as any)?.cluster?.id).toBe(ElectricalGridConditions.id);
+    expect((getBehaviourTypeFromClusterClientId(FanControl.id) as any)?.cluster?.id).toBe(FanControl.id);
+    expect((getBehaviourTypeFromClusterClientId(FlowMeasurement.id) as any)?.cluster?.id).toBe(FlowMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(IlluminanceMeasurement.id) as any)?.cluster?.id).toBe(IlluminanceMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(OtaSoftwareUpdateProvider.id) as any)?.cluster?.id).toBe(OtaSoftwareUpdateProvider.id);
+    expect((getBehaviourTypeFromClusterClientId(OtaSoftwareUpdateRequestor.id) as any)?.cluster?.id).toBe(OtaSoftwareUpdateRequestor.id);
+    expect((getBehaviourTypeFromClusterClientId(PressureMeasurement.id) as any)?.cluster?.id).toBe(PressureMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(PumpConfigurationAndControl.id) as any)?.cluster?.id).toBe(PumpConfigurationAndControl.id);
+    expect((getBehaviourTypeFromClusterClientId(RelativeHumidityMeasurement.id) as any)?.cluster?.id).toBe(RelativeHumidityMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(TemperatureMeasurement.id) as any)?.cluster?.id).toBe(TemperatureMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(Thermostat.id) as any)?.cluster?.id).toBe(Thermostat.id);
+    expect((getBehaviourTypeFromClusterClientId(WindowCovering.id) as any)?.cluster?.id).toBe(WindowCovering.id);
+    expect(getBehaviourTypeFromClusterClientId(0xffff as any)).toBeUndefined();
   });
 
   test('createDefaultIdentifyClusterServer', async () => {

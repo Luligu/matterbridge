@@ -14,13 +14,14 @@ import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { db, er, hk, or } from 'node-ansi-logger';
+import { ClusterId } from '@matter/types/datatype';
+import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
 import { addDevice } from './jestutils/jestMatterTest.js';
-import { log, setupTest } from './jestutils/jestSetupTest.js';
+import { log, loggerWarnSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { closureController, doorLockDevice, irrigationSystem, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
@@ -372,6 +373,15 @@ describe('Options helpers', () => {
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     await addDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toHaveLength(0);
+  });
+
+  test('addClusterClients with unknown cluster log message', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsUnknown' });
+    device.addClusterClients([0xffff as ClusterId]);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(1);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
   });
 
   test('addClusterClients called twice merges clientList without duplicates', async () => {

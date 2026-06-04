@@ -41,30 +41,41 @@ import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ColorControlClient } from '@matter/node/behaviors/color-control';
+import { DoorLockClient } from '@matter/node/behaviors/door-lock';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { ElectricalGridConditionsClient } from '@matter/node/behaviors/electrical-grid-conditions';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { FanControlClient } from '@matter/node/behaviors/fan-control';
 import { FixedLabelServer } from '@matter/node/behaviors/fixed-label';
-import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
+import { FlowMeasurementClient, FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
 import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
-import { GroupsServer } from '@matter/node/behaviors/groups';
-import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { GroupsClient, GroupsServer } from '@matter/node/behaviors/groups';
+import { IdentifyClient } from '@matter/node/behaviors/identify';
+import { IlluminanceMeasurementClient, IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { LevelControlClient } from '@matter/node/behaviors/level-control';
 import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OnOffClient } from '@matter/node/behaviors/on-off';
+import { OtaSoftwareUpdateProviderClient } from '@matter/node/behaviors/ota-software-update-provider';
+import { OtaSoftwareUpdateRequestorClient } from '@matter/node/behaviors/ota-software-update-requestor';
 import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
 import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
 import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
 import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
-import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { PressureMeasurementClient, PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
+import { PumpConfigurationAndControlClient, PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
-import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
-import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { RelativeHumidityMeasurementClient, RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
+import { ScenesManagementClient, ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
 import { SwitchServer } from '@matter/node/behaviors/switch';
-import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { TemperatureMeasurementClient, TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ThermostatClient } from '@matter/node/behaviors/thermostat';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabelServer } from '@matter/node/behaviors/user-label';
+import { WindowCoveringClient } from '@matter/node/behaviors/window-covering';
 // @matter types
 import { ClusterType, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
@@ -79,6 +90,7 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { FixedLabel } from '@matter/types/clusters/fixed-label';
@@ -93,6 +105,8 @@ import { NitrogenDioxideConcentrationMeasurement } from '@matter/types/clusters/
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import { OtaSoftwareUpdateProvider } from '@matter/types/clusters/ota-software-update-provider';
+import { OtaSoftwareUpdateRequestor } from '@matter/types/clusters/ota-software-update-requestor';
 import { OzoneConcentrationMeasurement } from '@matter/types/clusters/ozone-concentration-measurement';
 import { Pm1ConcentrationMeasurement } from '@matter/types/clusters/pm1-concentration-measurement';
 import { Pm10ConcentrationMeasurement } from '@matter/types/clusters/pm10-concentration-measurement';
@@ -118,7 +132,7 @@ import { MeasurementType, Semtag } from '@matter/types/globals';
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, or, YELLOW, zb } from 'node-ansi-logger';
+import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
@@ -388,8 +402,9 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
 export function getBehaviourTypesFromClusterClientIds(clusterClientList: ClusterId[]): Behavior.Type[] {
   // Map Client ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
-  clusterClientList.forEach((_clusterId) => {
-    // behaviorTypes.push(getBehaviourTypeFromClusterClientId(clusterId));
+  clusterClientList.forEach((clusterId) => {
+    const behaviorType = getBehaviourTypeFromClusterClientId(clusterId);
+    if (behaviorType) behaviorTypes.push(behaviorType);
   });
   return behaviorTypes;
 }
@@ -452,13 +467,33 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
 }
 
 /**
- *  Maps a ClusterId to a Behavior.Type for client clusters.
+ * Maps a ClusterId to a ClusterBehavior.Type for client clusters.
  *
- * @param {ClusterId} _clusterId - The ClusterId to map.
+ * @param {ClusterId} clusterId - The ClusterId to map.
+ * @returns {ClusterBehavior.Type | undefined} The corresponding ClusterBehavior.Type, or undefined if not found.
  */
-export function getBehaviourTypeFromClusterClientId(_clusterId: ClusterId) {
-  // Map ClusterId to Client Behavior.Type
-  // return IdentifyClient;
+export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): ClusterBehavior.Type | undefined {
+  if (clusterId === Identify.id) return IdentifyClient;
+  if (clusterId === Groups.id) return GroupsClient;
+  if (clusterId === OnOff.id) return OnOffClient;
+  if (clusterId === LevelControl.id) return LevelControlClient;
+  if (clusterId === ColorControl.id) return ColorControlClient;
+  if (clusterId === OccupancySensing.id) return OccupancySensingClient;
+  if (clusterId === ScenesManagement.id) return ScenesManagementClient;
+  if (clusterId === DoorLock.id) return DoorLockClient;
+  if (clusterId === ElectricalGridConditions.id) return ElectricalGridConditionsClient;
+  if (clusterId === FanControl.id) return FanControlClient;
+  if (clusterId === FlowMeasurement.id) return FlowMeasurementClient;
+  if (clusterId === IlluminanceMeasurement.id) return IlluminanceMeasurementClient;
+  if (clusterId === OtaSoftwareUpdateProvider.id) return OtaSoftwareUpdateProviderClient;
+  if (clusterId === OtaSoftwareUpdateRequestor.id) return OtaSoftwareUpdateRequestorClient;
+  if (clusterId === PressureMeasurement.id) return PressureMeasurementClient;
+  if (clusterId === PumpConfigurationAndControl.id) return PumpConfigurationAndControlClient;
+  if (clusterId === RelativeHumidityMeasurement.id) return RelativeHumidityMeasurementClient;
+  if (clusterId === TemperatureMeasurement.id) return TemperatureMeasurementClient;
+  if (clusterId === Thermostat.id) return ThermostatClient;
+  if (clusterId === WindowCovering.id) return WindowCoveringClient;
+  return undefined;
 }
 
 /**
@@ -685,10 +720,24 @@ export function addClusterClients(endpoint: MatterbridgeEndpoint, clientList: Cl
   if (clientList.length === 0) return;
   if (!endpoint.behaviors.has(MatterbridgeBindingServer)) {
     endpoint.behaviors.require(MatterbridgeBindingServer, { clientList });
-    return;
+  } else {
+    const existing = (endpoint.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList ?? [];
+    endpoint.behaviors.inject(MatterbridgeBindingServer, { clientList: [...new Set([...existing, ...clientList])] });
   }
-  const existing = (endpoint.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList ?? [];
-  endpoint.behaviors.inject(MatterbridgeBindingServer, { clientList: [...new Set([...existing, ...clientList])] });
+  // Populate endpoint.type.clientClusters so BindingManager.#selectClientClusters() can validate
+  // this endpoint pre-construction. clientClusters is a plain writable {} on MutableEndpoint.
+  const clientClusters = endpoint.type.clientClusters as Record<string, ClusterBehavior.Type>;
+  for (const clusterId of clientList) {
+    const key = lowercaseFirstLetter(getClusterNameById(clusterId));
+    const value = getBehaviourTypeFromClusterClientId(clusterId);
+    if (!value) {
+      endpoint.log.warn(`addClusterClients: no client behavior found for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${wr}`);
+    }
+    if (!clientClusters[key] && value) {
+      clientClusters[key] = value;
+      endpoint.log.info(`addClusterClients: added client behavior for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${nf}`);
+    }
+  }
 }
 
 /**

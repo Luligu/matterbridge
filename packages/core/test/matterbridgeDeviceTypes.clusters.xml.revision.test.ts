@@ -1,9 +1,10 @@
-// src/matterbridgeDeviceTypes.clusters.xml.revision.test.ts
+// test/matterbridgeDeviceTypes.clusters.xml.revision.test.ts
 
 const NAME = 'MatterbridgeDevicetypesClustersXmlRevision';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 // Cross-check a few cluster revisions between official ZCL XML and @matter/types
+
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -109,7 +110,7 @@ import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transpo
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ZoneManagement } from '@matter/types/clusters/zone-management';
 
-import { setupTest } from './jestutils/jestSetupTest.js';
+import { setupTest } from '../src/jestutils/jestSetupTest.js';
 
 await setupTest(NAME, false);
 

@@ -1,4 +1,4 @@
-// src/matterbridgeDeviceTypes.requirements.test.ts
+// test/matterbridgeDeviceTypes.requirements.test.ts
 
 /* eslint-disable simple-import-sort/imports */
 
@@ -8,7 +8,7 @@ import { jest } from '@jest/globals';
 import * as devices from '@matter/node/devices';
 import * as endpoints from '@matter/node/endpoints';
 
-import { setupTest } from './jestutils/jestSetupTest.js';
+import { setupTest } from '../src/jestutils/jestSetupTest.js';
 import {
   // Utility
   rootNode,
@@ -102,7 +102,7 @@ import {
   chime,
   cameraController,
   doorbell,
-} from './matterbridgeDeviceTypes.js';
+} from '../src/matterbridgeDeviceTypes.js';
 
 await setupTest(NAME, false);
 

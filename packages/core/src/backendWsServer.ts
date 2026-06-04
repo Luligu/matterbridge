@@ -258,7 +258,9 @@ export class BackendWsServer {
         } else if ('error' in data) {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
         }
-        client.send(JSON.stringify(data));
+        // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
+        const bigintReplacer = (_: string, v: unknown) => (typeof v === 'bigint' ? `${v}n` : v);
+        client.send(JSON.stringify(data, bigintReplacer));
       } else {
         this.log.error('Cannot send api response, client not connected');
       }

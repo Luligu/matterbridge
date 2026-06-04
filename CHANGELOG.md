@@ -55,12 +55,12 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.8.0] - Dev branch
+## [3.8.0] - 2026-06-05
 
 ### Breaking changes
 
 - [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](https://matterbridge.io/Matter-1.5.1.html).
-- [matter]: Update to matter.js 0.17.0. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
+- [matter]: Update to matter.js 0.17.1. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
 - [matter]: Enable `tcp` transport with `udp` preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.
 - [endpoint]: Since the cluster clients have been added to each device type, instead of `addRequiredClusterServers()` call `addRequiredClusters()` to add both required server clusters and required client clusters.
 

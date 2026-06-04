@@ -378,6 +378,21 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     super(endpointV8, optionsV8);
 
+    // MatterbridgeEndpoint creates a unique type per instance so it is safe to mutate type.behaviors.
+    // Wrap behaviors.inject to keep type.behaviors in sync with behaviors.supported so that matter.js
+    // internals that inspect endpoint.type.behaviors (e.g. BindingManager.#endpointHasClusterServer)
+    // see every cluster server installed via behaviors.require().
+    const typeBehaviors = this.type.behaviors as Record<string, Behavior.Type>;
+    const origInject = this.behaviors.inject.bind(this.behaviors);
+    Object.defineProperty(this.behaviors, 'inject', {
+      configurable: true,
+      writable: true,
+      value: (type: Behavior.Type, options?: Behavior.Options, notify = true) => {
+        origInject(type, options, notify);
+        typeBehaviors[type.id] = type;
+      },
+    });
+
     // Set the brand
     Object.defineProperty(this, MATTERBRIDGE_ENDPOINT_BRAND, {
       value: true,

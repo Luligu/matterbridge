@@ -34,7 +34,8 @@ import { debugStringify, nt } from 'node-ansi-logger';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
- * Binding client behavior that mirrors bindings into the Descriptor clientList.
+ * Binding client behavior that mirrors bindings into the Descriptor clientList and populates
+ * endpoint.type.clientClusters so that matter.js BindingManager can validate and resolve bindings.
  */
 export class MatterbridgeBindingServer extends BindingServer {
   declare protected internal: MatterbridgeBindingServer.Internal;
@@ -59,7 +60,7 @@ export class MatterbridgeBindingServer extends BindingServer {
         device.log.info(`Adding client clusters to endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: ${toAddClientList.join(', ')}`);
         await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
       }
-      const targets = this.state.binding;
+      const targets = this.endpoint.stateOf(BindingServer).binding;
       for (const target of targets) {
         device.log.info(`Active binding for endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: target ${debugStringify(target)}`);
       }
@@ -117,7 +118,9 @@ export namespace MatterbridgeBindingServer {
    * Internal state for binding behavior.
    */
   export class Internal {
+    /** Whether this endpoint is currently bound to any remote endpoints. */
     bound: boolean = false;
+    /** Map of bound endpoints by their target. */
     boundEndpoints: Map<Binding.Target, Endpoint> = new Map();
   }
   /**

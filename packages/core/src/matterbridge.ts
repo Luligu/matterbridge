@@ -51,10 +51,10 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { type CommissioningDiscovery, Endpoint, NetworkClient, ServerNode, type SessionsBehavior } from '@matter/node';
-import { BasicInformationClient, BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
@@ -2176,6 +2176,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   // istanbul ignore next cause controller is under development and not tested yet
   private async startController(): Promise<void> {
+    /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -2482,6 +2483,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           });
       }
     }
+    */
   }
 
   /**                                                                                                                                   */
