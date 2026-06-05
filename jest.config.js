@@ -1,5 +1,5 @@
 // @ts-check
-// jest.config.js 2.0.1
+// jest.config.js 2.0.2
 
 // This Jest configuration is designed for a TypeScript project using ESM modules with ts-jest.
 
@@ -19,44 +19,70 @@ const presetConfig = createDefaultEsmPreset(tsJestEsmPresetOptions);
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 const jestConfig = {
   ...presetConfig,
-  testEnvironment: 'node', // Use Node.js environment for testing
+  // Use Node.js environment for testing
+  testEnvironment: 'node',
+  // Use a custom cache directory for Jest to improve performance
   cacheDirectory: '<rootDir>/.cache/jest',
-  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' }, // Handle ESM imports by removing the .js extension
+  // Handle ESM imports by removing the .js extension
+  moduleNameMapper: { '^(\\.{1,2}/.*)\\.js$': '$1' },
+  // Match test files in src and test directories (glob)
+  testMatch: ['**/src/**/*.{spec,test}.{ts,mts,cts}', '**/test/**/*.{spec,test}.{ts,mts,cts}'],
+  // Ignore specific paths for test files (regex)
   testPathIgnorePatterns: [
     '/.cache/',
-    '/dist/',
-    '/build/',
-    '/node_modules/',
-    '/scripts/',
-    '/vitest/',
     '/apps/',
+    '/build/',
+    '/chip/',
+    '/coverage/',
+    '/dist/',
+    '/node_modules/',
+    '/screenshots/',
+    '/scripts/',
     '/src/mock/',
-    '/vendor/',
     '/temp/',
+    '/vendor/',
+    '/vitest/',
+    // Matterbridge specific paths to ignore
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
-    'matterNode',
-  ], // Ignore specific paths for test files
+    '/packages/core/test/backend', // Not released yet, so ignore for now
+    '/packages/core/test/matterNode', // Not released yet, so ignore for now
+    '/packages/vitest-utils/',
+    '/packages/jest-utils/',
+  ],
+  collectCoverageFrom: ['**/src/**/*.{ts,mts,cts}'],
+  coverageDirectory: 'coverage/jest',
+  coverageReporters: ['lcov', 'text', 'json'],
+  // Ignore specific paths for coverage files (regex)
   coveragePathIgnorePatterns: [
     '/.cache/',
-    '/dist/',
-    '/build/',
-    '/node_modules/',
-    '/scripts/',
-    '/vitest/',
     '/apps/',
+    '/build/',
+    '/chip/',
+    '/coverage/',
+    '/dist/',
+    '/node_modules/',
+    '/screenshots/',
+    '/scripts/',
     '/src/mock/',
-    '/vendor/',
     '/temp/',
+    '/vendor/',
+    '/vitest/',
+    '/src/.*\\.d\\.ts$',
+    // Matterbridge specific paths to ignore
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/jestutils/',
-    'matterNode',
-  ], // Ignore specific paths for test and coverage
-  maxWorkers: '100%', // Use all available CPU cores for running tests
+    '/packages/core/src/backend', // Not released yet, so ignore for now
+    '/packages/core/src/matterNode', // Not released yet, so ignore for now
+    '/packages/vitest-utils/',
+    '/packages/jest-utils/',
+  ],
+  // Use all available CPU cores for running tests
+  maxWorkers: '100%',
 };
 
 export default jestConfig;

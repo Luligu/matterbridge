@@ -33,22 +33,22 @@ import path from 'node:path';
 // @matter
 import {
   Crypto,
-  Diagnostic,
+  type Diagnostic,
   Environment,
   LogFormat as MatterLogFormat,
   Logger,
   LogLevel as MatterLogLevel,
-  StorageContext,
-  StorageManager,
+  type StorageContext,
+  type StorageManager,
   StorageService,
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { Endpoint, ServerNode, SessionsBehavior } from '@matter/node';
+import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceCertification, ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
+import { type DeviceCertification, type ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
@@ -70,8 +70,9 @@ import { addVirtualDevice } from './helpers.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { Plugin, PluginManager } from './pluginManager.js';
+import { type MatterbridgePlatform } from './matterbridgePlatform.js';
+import { type Plugin, PluginManager } from './pluginManager.js';
+import { getErrorMessage } from './utils/export.js';
 
 /**
  * Represents the Matter events.
@@ -122,7 +123,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   certification: DeviceCertification.Configuration | undefined;
 
   /** Matter server node */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  serverNode: ServerNode | undefined;
   /** Matter aggregator node */
   aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   // Default values for the aggregator node
@@ -296,7 +297,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await this.pluginManager.loadFromStorage();
 
     // Create Matter node for a server mode device
-    if (this.pluginName && this.device && this.device.deviceName) {
+    if (this.pluginName && this.device?.deviceName) {
       this.log.debug(`Creating MatterNode instance for server node device ${CYAN}${this.device.deviceName}${db}...`);
       await this.createDeviceServerNode(this.pluginName, this.device);
       this.log.debug(`Created MatterNode instance for server node device ${CYAN}${this.device.deviceName}${db}`);
@@ -344,7 +345,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.info('Starting MatterNode...');
 
     // Start Matter node for a server mode device
-    if (this.pluginName && this.device && this.device.deviceName) {
+    if (this.pluginName && this.device?.deviceName) {
       // Start the server node
       this.log.debug(`Starting MatterNode for server device ${this.pluginName}:${this.device.deviceName}...`);
       await this.startServerNode();
@@ -407,7 +408,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.info('Stopping MatterNode...');
 
     // Stop Matter node for a server mode device
-    if (this.pluginName && this.device && this.device.deviceName) {
+    if (this.pluginName && this.device?.deviceName) {
       // Stop the server node
       this.log.debug(`Stopping MatterNode for server device ${this.pluginName}:${this.device.deviceName}...`);
       await this.stopServerNode();
@@ -629,7 +630,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    * @throws {Error} If the matter storage context is not created yet.
    */
-  async createServerNode(port: number = 5540, passcode: number = 20252026, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  async createServerNode(port: number = 5540, passcode: number = 20252026, discriminator: number = 3850): Promise<ServerNode> {
     if (!this.matterStorageContext) {
       throw new Error('Matter server node context not created yet. Call createServerNodeContext() first.');
     }
@@ -663,6 +664,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         listeningAddressIpv4: this.ipv4Address,
         listeningAddressIpv6: this.ipv6Address,
         port,
+        tcp: true,
+        transportPreference: 'udp',
       },
 
       // Provide the certificate for the device
@@ -807,7 +810,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {ServerNode} [serverNode] - The server node to start.
    * @returns {ApiMatter} The serializable data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatter {
+  getServerNodeData(serverNode: ServerNode): ApiMatter {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
@@ -841,7 +844,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.notice(`Started ${this.serverNode.id} server node`);
     } catch (error) {
       // istanbul ignore next
-      this.log.error(`Failed to start ${this.serverNode.id} server node: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Failed to start ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }
 
@@ -862,7 +865,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.info(`Closed ${this.serverNode.id} server node`);
     } catch (error) {
       // istanbul ignore next
-      this.log.error(`Failed to close ${this.serverNode.id} server node: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Failed to close ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }
 
@@ -877,7 +880,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       throw new Error('Matter server node context not created yet. Call createServerNodeContext() first.');
     }
     this.log.notice(`Creating ${await this.matterStorageContext.get<string>('storeId')} aggregator...`);
-    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await this.matterStorageContext.get<string>('storeId')}` });
+    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: await this.matterStorageContext.get<string>('storeId') });
     this.log.info(`Created ${await this.matterStorageContext.get<string>('storeId')} aggregator`);
     return aggregatorNode;
   }
@@ -887,7 +890,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    *
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created matterbridge server node.
    */
-  async createMatterbridgeServerNode(): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  async createMatterbridgeServerNode(): Promise<ServerNode> {
     this.log.debug(`Creating ${plg}Matterbridge${db} server node...`);
     this.matterStorageContext = await this.createServerNodeContext(
       'Matterbridge', // storeId
@@ -922,7 +925,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the accessory plugin.
    */
-  async createAccessoryPlugin(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
+  async createAccessoryPlugin(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
     if (typeof plugin === 'string') {
       const pluginInstance = this.pluginManager.get(plugin);
       if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
@@ -961,7 +964,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {Plugin | PluginName} plugin - The plugin to configure.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the dynamic plugin.
    */
-  async createDynamicPlugin(plugin: Plugin | PluginName): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
+  async createDynamicPlugin(plugin: Plugin | PluginName): Promise<ServerNode | undefined> {
     if (typeof plugin === 'string') {
       const pluginInstance = this.pluginManager.get(plugin);
       if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
@@ -1003,7 +1006,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the device with mode server.
    */
-  async createDeviceServerNode(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode<ServerNode.RootEndpoint> | undefined> {
+  async createDeviceServerNode(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
     if (typeof plugin === 'string') {
       const pluginInstance = this.pluginManager.get(plugin);
       if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
@@ -1252,7 +1255,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   async subscribeAttributeChanged(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
+    if (!plugin || !device?.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.debug(
       `Subscribing attributes for endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} (${zb}${device.name}${db})`,
     );

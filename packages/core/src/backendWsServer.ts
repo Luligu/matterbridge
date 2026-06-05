@@ -1,5 +1,5 @@
 /**
- * This file contains the class FrontendsWsServer.
+ * This file contains the class BackendWsServer.
  *
  * @file backendWsServer.ts
  * @author Luca Liguori
@@ -47,7 +47,7 @@ import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 
 import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import type { Frontend } from './frontend.js';
+import { Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // eslint-disable-next-line no-console
@@ -59,22 +59,23 @@ if (hasParameter('loader')) console.log('\u001B[32mBackendWsServer loaded.\u001B
  * This class manages the WebSocket server that allows communication between the backend and the frontend.
  * It provides methods to send messages to the frontend and handle incoming messages from the frontend.
  */
-export class BackendsWsServer {
+export class BackendWsServer {
   private debug: boolean;
   private verbose: boolean;
-  private webSocketServer: WebSocketServer | undefined;
   private log: AnsiLogger;
-  private backend: Frontend;
+  private backend: Backend;
   private matterbridge: SharedMatterbridge;
   private readonly server: BroadcastServer;
 
+  webSocketServer: WebSocketServer | undefined;
+
   /**
-   * Create a new FrontendsWsServer instance.
+   * Create a new BackendWsServer instance.
    *
    * @param {SharedMatterbridge} matterbridge - The shared Matterbridge instance.
-   * @param {Frontend} backend - The backend instance to which this WebSocket server will be connected.
+   * @param {Backend} backend - The backend instance to which this WebSocket server will be connected.
    */
-  constructor(matterbridge: SharedMatterbridge, backend: Frontend) {
+  constructor(matterbridge: SharedMatterbridge, backend: Backend) {
     // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
@@ -257,14 +258,17 @@ export class BackendsWsServer {
         } else if ('error' in data) {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
         }
-        client.send(JSON.stringify(data));
+        // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
+        const bigintReplacer = (_: string, v: unknown) => (typeof v === 'bigint' ? `${v}n` : v);
+        client.send(JSON.stringify(data, bigintReplacer));
       } else {
         this.log.error('Cannot send api response, client not connected');
       }
     };
 
     try {
-      data = JSON.parse(rawData.toString());
+      const raw = Array.isArray(rawData) ? Buffer.concat(rawData) : rawData instanceof ArrayBuffer ? Buffer.from(rawData) : rawData;
+      data = JSON.parse(raw.toString());
       if (!isValidNumber(data.id) || !isValidString(data.dst) || !isValidString(data.src) || !isValidString(data.method) || data.dst !== 'Matterbridge') {
         this.log.error(`Invalid message from websocket client: ${debugStringify(data)}`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid message' });
@@ -273,6 +277,7 @@ export class BackendsWsServer {
       this.log.debug(`Received message from websocket client: ${debugStringify(data)}`);
 
       // Handle the message based on the method
+      // TODO add methods
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);
       return;
@@ -380,10 +385,11 @@ export class BackendsWsServer {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart required message to all connected clients');
-    this.backend.restartRequired = true;
-    this.backend.fixedRestartRequired = fixed;
+    // TODO check
+    // this.backend.restartRequired = true;
+    // this.backend.fixedRestartRequired = fixed;
     // istanbul ignore else
-    if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
+    if (snackbar) this.wssSendSnackbarMessage(`Restart required`, 0);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
 
@@ -396,9 +402,10 @@ export class BackendsWsServer {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart not required message to all connected clients');
-    this.backend.restartRequired = false;
+    // TODO check
+    // this.backend.restartRequired = false;
     // istanbul ignore else
-    if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
+    if (snackbar) this.wssSendCloseSnackbarMessage(`Restart required`);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
 
@@ -411,7 +418,8 @@ export class BackendsWsServer {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an update required message to all connected clients');
-    this.backend.updateRequired = true;
+    // TODO check
+    // this.backend.updateRequired = true;
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
   }
 

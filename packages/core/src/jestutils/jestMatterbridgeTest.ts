@@ -81,7 +81,7 @@ import type { Frontend } from '../frontend.js';
 import { Matterbridge } from '../matterbridge.js';
 import type { MatterbridgePlatform } from '../matterbridgePlatform.js';
 import type { PluginManager } from '../pluginManager.js';
-import { flushAsync } from './jestFlushAsync.js';
+import { flushAsync } from './flushAsync.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jestMatterTest.js';
 import { HOMEDIR, loggerLogSpy, originalProcessArgv } from './jestSetupTest.js';
 
@@ -296,7 +296,7 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.7.10';
+  matterbridge.matterbridgeVersion = '3.8.0';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join(HOMEDIR);
   matterbridge.homeDirectory = path.join(HOMEDIR);
@@ -447,6 +447,7 @@ export function addMatterbridgePlatform(platform: MatterbridgePlatform, name?: s
     description: 'Plugin ' + platform.config.name,
     author: 'Unknown',
     enabled: true,
+    registeredDevices: 0,
   });
   platform['name'] = platform.config.name;
 }

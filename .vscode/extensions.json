@@ -1,10 +1,11 @@
+// VS Code extension v. 1.0.1
 {
   "recommendations": [
     "typescriptteam.native-preview",
+    "oxc.oxc-vscode",
     "ms-azuretools.vscode-containers",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "oxc.oxc-vscode",
     "anthropic.claude-code",
     "github.copilot-chat",
     "github.vscode-github-actions",

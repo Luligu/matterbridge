@@ -55,7 +55,7 @@ import multer from 'multer';
 import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 // matterbridge
-import type { Frontend } from './frontend.js';
+import { Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // eslint-disable-next-line no-console
@@ -69,9 +69,8 @@ if (hasParameter('loader')) console.log('\u001B[32mBackendExpress loaded.\u001B[
 export class BackendExpress {
   private debug: boolean;
   private verbose: boolean;
-  private expressApp: express.Application | undefined;
   private log: AnsiLogger;
-  private backend: Frontend;
+  private backend: Backend;
   private matterbridge: SharedMatterbridge;
   private readonly server: BroadcastServer;
   private fileLimiter = rateLimit({
@@ -79,13 +78,15 @@ export class BackendExpress {
     max: 20, // max 20 requests per windowMs
   });
 
+  expressApp: express.Application | undefined;
+
   /**
    * Create a new BackendExpress instance.
    *
    * @param {SharedMatterbridge} matterbridge - The shared Matterbridge instance.
-   * @param {Frontend} backend - The backend instance to which this Express server will be connected.
+   * @param {Backend} backend - The backend instance to which this Express server will be connected.
    */
-  constructor(matterbridge: SharedMatterbridge, backend: Frontend) {
+  constructor(matterbridge: SharedMatterbridge, backend: Backend) {
     // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
@@ -223,7 +224,7 @@ export class BackendExpress {
       const heapSpacesRaw = v8.getHeapSpaceStatistics();
 
       // Format heapStats
-      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, formatBytes(value as number)]));
+      const heapStats = Object.fromEntries(Object.entries(heapStatsRaw).map(([key, value]) => [key, typeof value === 'number' ? formatBytes(value) : value]));
 
       // Format heapSpaces
       const heapSpaces = heapSpacesRaw.map((space) => ({
@@ -436,7 +437,7 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/download-backup');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_BACKUP_FILE), MATTERBRIDGE_BACKUP_FILE, (error) => {
-        this.backend.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_BACKUP_FILE}: ${getErrorMessage(error)}`);
           res.status(500).send(`Error downloading the matterbridge backup file.`);
@@ -451,9 +452,9 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/download-mbstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
-        this.backend.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         if (error) {
-          this.log.error(`Error downloading file ${`matterbridge.${NODE_STORAGE_DIR}.zip`}: ${getErrorMessage(error)}`);
+          this.log.error(`Error downloading file matterbridge.${NODE_STORAGE_DIR}.zip: ${getErrorMessage(error)}`);
           res.status(500).send('Error downloading the matterbridge storage file');
         } else {
           this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
@@ -466,7 +467,7 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/download-mjstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), `matterbridge.${MATTER_STORAGE_DIR}.zip`, (error) => {
-        this.backend.wssSendCloseSnackbarMessage('Creating matter storage backup...');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         if (error) {
           this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip: ${getErrorMessage(error)}`);
           res.status(500).send('Error downloading the matter storage file');
@@ -481,7 +482,7 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_STORAGE_FILE), MATTERBRIDGE_PLUGIN_STORAGE_FILE, (error) => {
-        this.backend.wssSendCloseSnackbarMessage('Creating plugin backup...');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating plugin backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_PLUGIN_STORAGE_FILE}: ${getErrorMessage(error)}`);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
@@ -496,7 +497,7 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_CONFIG_FILE), MATTERBRIDGE_PLUGIN_CONFIG_FILE, (error) => {
-        this.backend.wssSendCloseSnackbarMessage('Creating config backup...');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating config backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_PLUGIN_CONFIG_FILE}: ${getErrorMessage(error)}`);
           res.status(500).send('Error downloading the matterbridge plugin config file');
@@ -518,7 +519,7 @@ export class BackendExpress {
         res.status(400).send('Invalid request: file and filename are required');
         return;
       }
-      this.backend.wssSendSnackbarMessage(`Installing package ${filename}...`, 0);
+      this.backend.backendWsServer?.wssSendSnackbarMessage(`Installing package ${filename}...`, 0);
 
       // Define the path where the plugin file will be saved
       const filePath = path.join(this.matterbridge.matterbridgeDirectory, 'uploads', filename);
@@ -550,8 +551,8 @@ export class BackendExpress {
         res.send(`File ${escapeHtml(filename)} uploaded successfully`);
       } catch (err) {
         this.log.error(`Error uploading or installing plugin package file ${plg}${filename}${er}:`, err);
-        this.backend.wssSendCloseSnackbarMessage(`Installing package ${filename}...`);
-        this.backend.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
+        this.backend.backendWsServer?.wssSendCloseSnackbarMessage(`Installing package ${filename}...`);
+        this.backend.backendWsServer?.wssSendSnackbarMessage(`Error uploading or installing plugin package ${filename}`, 10, 'error');
         res.status(500).send(`Error uploading or installing plugin package ${escapeHtml(filename)}`);
       }
     });

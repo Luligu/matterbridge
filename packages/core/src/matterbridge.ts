@@ -51,10 +51,10 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { type CommissioningDiscovery, Endpoint, NetworkClient, ServerNode, type SessionsBehavior } from '@matter/node';
-import { BasicInformationClient, BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceCertification, ExposedFabricInformation, PaseClient, Read, Subscribe } from '@matter/protocol';
+import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
@@ -285,12 +285,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   ipv4Address: string | undefined;
   /** Matter listeningAddressIpv6 address */
   ipv6Address: string | undefined;
-  /** Matter commissioning port (first server node port) */
+  /** Matter commissioning port (next server node port) */
   port: number | undefined;
-  /** Matter commissioning passcode (first server node passcode) */
+  /** Initial Matter commissioning port */
+  initialPort: number | undefined;
+  /** Matter commissioning passcode (next server node passcode) */
   passcode: number | undefined;
-  /** Matter commissioning discriminator (first server node discriminator) */
+  /** Initial Matter commissioning passcode */
+  initialPasscode: number | undefined;
+  /** Matter commissioning discriminator (next server node discriminator) */
   discriminator: number | undefined;
+  /** Initial Matter commissioning discriminator */
+  initialDiscriminator: number | undefined;
   /** Matter device certification (device certification) */
   certification: DeviceCertification.Configuration | undefined;
 
@@ -612,13 +618,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
+    this.initialPort = this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
     // Set the first passcode to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.passcode = getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
+    this.initialPasscode = this.passcode =
+      getIntParameter('passcode') ?? (await this.nodeContext.get<number>('matterpasscode')) ?? PaseClient.generateRandomPasscode(this.environment.get(Crypto));
 
     // Set the first discriminator to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
-    this.discriminator =
+    this.initialDiscriminator = this.discriminator =
       getIntParameter('discriminator') ?? (await this.nodeContext.get<number>('matterdiscriminator')) ?? PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
 
     // Certificate management
@@ -937,7 +944,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
             execSync(`${sudo ? 'sudo ' : ''}npm install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} --no-fund --no-audit --silent --omit=dev`);
           } else {
-            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm...`);
+            this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm${plugin.version.includes('-dev-') ? ' with tag @dev' : ''}...`);
             execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --no-fund --no-audit --silent --omit=dev`);
           }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
@@ -2169,6 +2176,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   // istanbul ignore next cause controller is under development and not tested yet
   private async startController(): Promise<void> {
+    /*
     if (!this.matterStorageManager) {
       this.log.error('No storage manager initialized');
       await this.cleanup('No storage manager initialized');
@@ -2475,6 +2483,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           });
       }
     }
+    */
   }
 
   /**                                                                                                                                   */
@@ -2676,6 +2685,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         listeningAddressIpv4: this.ipv4Address,
         listeningAddressIpv6: this.ipv6Address,
         port,
+        tcp: true,
+        transportPreference: 'udp',
       },
 
       // Provide the certificate for the device
@@ -2713,8 +2724,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         softwareVersionString: await storageContext.get<string>('softwareVersionString'),
         hardwareVersion: await storageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await storageContext.get<string>('hardwareVersionString'),
-
-        // specificationVersion: 0x01050000, // Matter 1.5
 
         reachable: true,
       },

@@ -21,93 +21,25 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
-
-import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement } from '@matter/main/model';
-import { ClusterBehavior } from '@matter/node';
-import { ClusterType } from '@matter/types';
+// @matter
+import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { ClosureDimension } from '../clusters/closure-dimension.js';
 import { closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
- * ClosureDimension schema.
- */
-const ClosureDimensionSchema = ClusterElement(
-  {
-    id: ClosureDimension.Cluster.id,
-    name: ClosureDimension.Cluster.name,
-    classification: 'application',
-  },
-  // Matter global attributes.
-  AttributeElement({ id: 0xfffd, name: 'ClusterRevision', type: 'ClusterRevision', conformance: 'M', default: ClosureDimension.Base.revision }),
-  AttributeElement(
-    { id: 0xfffc, name: 'FeatureMap', type: 'FeatureMap', conformance: 'M' },
-    FieldElement({ name: 'POS', constraint: '0', title: 'Positioning' }),
-    FieldElement({ name: 'ML', constraint: '1', title: 'MotionLatching' }),
-    FieldElement({ name: 'UNI', constraint: '2', title: 'Unit' }),
-    FieldElement({ name: 'LIM', constraint: '3', title: 'Limitation' }),
-    FieldElement({ name: 'SPD', constraint: '4', title: 'Speed' }),
-    FieldElement({ name: 'TRN', constraint: '5', title: 'Translation' }),
-    FieldElement({ name: 'ROT', constraint: '6', title: 'Rotation' }),
-    FieldElement({ name: 'MOD', constraint: '7', title: 'Modulation' }),
-  ),
-
-  // Attributes (base + Positioning extension).
-  AttributeElement({ name: 'CurrentState', id: 0x0000, type: 'DimensionStateStruct', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'TargetState', id: 0x0001, type: 'DimensionStateStruct', conformance: 'M', default: null, quality: 'X' }),
-  AttributeElement({ name: 'Resolution', id: 0x0002, type: 'percent100ths', conformance: 'POS', default: 1 }),
-  AttributeElement({ name: 'StepValue', id: 0x0003, type: 'percent100ths', conformance: 'POS', default: 1 }),
-
-  // Commands.
-  CommandElement(
-    { name: 'SetTarget', id: 0x0000, conformance: 'M', direction: 'request', response: 'status' },
-    FieldElement({ name: 'Position', id: 0, type: 'percent100ths', conformance: 'O' }),
-    FieldElement({ name: 'Latch', id: 1, type: 'bool', conformance: 'O' }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-  CommandElement(
-    { name: 'Step', id: 0x0001, conformance: 'POS', direction: 'request', response: 'status' },
-    FieldElement({ name: 'Direction', id: 0, type: 'StepDirectionEnum', conformance: 'M' }),
-    FieldElement({ name: 'NumberOfSteps', id: 1, type: 'uint16', conformance: 'M', constraint: { min: 1 } }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-
-  // Datatypes.
-  DatatypeElement(
-    { name: 'StepDirectionEnum', type: 'enum8' },
-    FieldElement({ name: 'Decrease', id: 0, conformance: 'M' }),
-    FieldElement({ name: 'Increase', id: 1, conformance: 'M' }),
-  ),
-  DatatypeElement(
-    { name: 'DimensionStateStruct', type: 'struct' },
-    FieldElement({ name: 'Position', id: 0, type: 'percent100ths', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Latch', id: 1, type: 'bool', conformance: 'O', default: null, quality: 'X' }),
-    FieldElement({ name: 'Speed', id: 2, type: 'ThreeLevelAutoEnum', conformance: 'O' }),
-  ),
-);
-
-const ClosureDimensionBehavior = ClusterBehavior.for(ClusterType(ClosureDimension.Base), new ClusterModel(ClosureDimensionSchema));
-
-export namespace ClosureDimensionServer {
-  export interface State {
-    currentState: ClosureDimension.DimensionState | null;
-    targetState: ClosureDimension.DimensionState | null;
-    resolution: number;
-    stepValue: number;
-  }
-}
-
-/**
  * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
  */
-export class ClosureDimensionServer extends ClosureDimensionBehavior.with(ClosureDimension.Feature.Positioning) {
-  declare state: ClosureDimensionServer.State;
-
+export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
+  ClosureDimension.Feature.Positioning,
+  ClosureDimension.Feature.MotionLatching,
+  ClosureDimension.Feature.Speed,
+) {
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -124,7 +56,7 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      ...(request?.speed !== undefined ? { speed: request.speed } : null),
+      speed: request?.speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.targetState = nextTarget;
@@ -154,13 +86,16 @@ export class ClosureDimensionServer extends ClosureDimensionBehavior.with(Closur
     let nextPosition = isIncrease ? currentPosition + delta : currentPosition - delta;
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
+    const speed: ThreeLevelAuto =
+      request?.speed ?? (previousCurrent as ClosureDimension.DimensionState).speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto;
+
     this.state.currentState = {
       ...previousCurrent,
       position: nextPosition,
-      ...(request?.speed !== undefined ? { speed: request.speed } : null),
+      speed,
     };
 
-    this.state.targetState = { ...previousTarget, position: nextPosition };
+    this.state.targetState = { ...previousTarget, position: nextPosition, speed };
   };
 }
 
@@ -185,7 +120,7 @@ export class ClosurePanel extends MatterbridgeEndpoint {
 
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
 
-    this.behaviors.require(ClosureDimensionServer, {
+    this.behaviors.require(MatterbridgeClosureDimensionServer, {
       currentState: null,
       targetState: null,
       resolution: options.resolution ?? 1,

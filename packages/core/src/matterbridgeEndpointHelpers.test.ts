@@ -5,19 +5,24 @@ const MATTER_PORT = 11300;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { Endpoint, NumberTag, PowerSourceTag, ServerNode } from '@matter/node';
+import { CommonNumberTag, Endpoint, PowerSourceTag, ServerNode } from '@matter/node';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
+import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { db, er, hk, or } from 'node-ansi-logger';
+import { ClusterId } from '@matter/types/datatype';
+import { db, er, hk, or, wr } from 'node-ansi-logger';
 
+import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
 import { addDevice } from './jestutils/jestMatterTest.js';
-import { log, setupTest } from './jestutils/jestSetupTest.js';
-import { doorLockDevice, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { log, loggerWarnSpy, setupTest } from './jestutils/jestSetupTest.js';
+import { closureController, doorLockDevice, irrigationSystem, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -84,20 +89,25 @@ describe('Options helpers', () => {
 
   test('getSemtag helper', () => {
     expect(getSemtag(PowerSourceTag.Solar)).toEqual({ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag });
-    expect(getSemtag(NumberTag.TwentyFour, 'My Label')).toEqual({ label: 'My Label', mfgCode: null, namespaceId: NumberTag.TwentyFour.namespaceId, tag: NumberTag.TwentyFour.tag });
-    expect(getSemtag(NumberTag.One, 'My Label', VendorId(12))).toEqual({
+    expect(getSemtag(CommonNumberTag.TwentyFour, 'My Label')).toEqual({
+      label: 'My Label',
+      mfgCode: null,
+      namespaceId: CommonNumberTag.TwentyFour.namespaceId,
+      tag: CommonNumberTag.TwentyFour.tag,
+    });
+    expect(getSemtag(CommonNumberTag.One, 'My Label', VendorId(12))).toEqual({
       label: 'My Label',
       mfgCode: 12,
       namespaceId: 7,
       tag: 1,
     });
-    expect(getSemtag(NumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12))).toEqual({
+    expect(getSemtag(CommonNumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12))).toEqual({
       label: '0123456789012345678901234567890123456789012345678901234567890123', // Label should be trimmed to 64 characters
       mfgCode: 12,
       namespaceId: 7,
       tag: 1,
     });
-    expect(NumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
+    expect(CommonNumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
   });
 
   test('options helpers', () => {
@@ -355,5 +365,51 @@ describe('Options helpers', () => {
     const cluster5 = getCluster(device, 'TemperatureMeasurement', log);
     expect(cluster5).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
+  });
+
+  test('addClusterClients with empty list is a no-op', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsEmpty' });
+    device.addClusterClients([]);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(0);
+  });
+
+  test('addClusterClients with unknown cluster log message', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsUnknown' });
+    device.addClusterClients([0xffff as ClusterId]);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(1);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
+  });
+
+  test('addClusterClients called twice merges clientList without duplicates', async () => {
+    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsMerge' });
+    device.addClusterClients([ClosureControl.id]);
+    device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
+    await addDevice(aggregator, device);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
+    expect(clientList).toContain(FlowMeasurement.id);
+    expect(clientList.filter((id) => id === ClosureControl.id)).toHaveLength(1);
+  });
+
+  test('addRequiredClusterClients requires MatterbridgeBindingServer for device types with required client clusters', async () => {
+    device = new MatterbridgeEndpoint(closureController, { id: 'ClusterClientsRequired' });
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    device.addRequiredClusterClients();
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(ClosureControl.id);
+  });
+
+  test('addOptionalClusterClients requires MatterbridgeBindingServer for device types with optional client clusters', async () => {
+    device = new MatterbridgeEndpoint(irrigationSystem, { id: 'ClusterClientsOptional' });
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    device.addOptionalClusterClients();
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(FlowMeasurement.id);
   });
 });

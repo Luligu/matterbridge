@@ -64,7 +64,7 @@ import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 // @matter/types
-import { ClusterType, getClusterNameById } from '@matter/types/cluster';
+import { ClusterType, type ClusterTyping, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
@@ -125,9 +125,12 @@ import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServ
 import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import {
+  addClusterClients,
   addClusterServers,
   addFixedLabel,
+  addOptionalClusterClients,
   addOptionalClusterServers,
+  addRequiredClusterClients,
   addRequiredClusterServers,
   addUserLabel,
   checkNotLatinCharacters,
@@ -171,38 +174,44 @@ import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './m
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
 
-type BehaviorCommandName<T extends Behavior.Type> = {
-  [K in keyof CommandsOfBehavior<T>]: K;
-}[keyof CommandsOfBehavior<T>] &
-  string;
+type FirstCommandParam<Params extends unknown[]> = Params extends [] ? undefined : Params[0];
 
-type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType.Unknown;
+/** Behavior.Type utilities */
 
-type ClusterEventName<T extends ClusterType> = keyof ClusterType.EventsOf<T> & string;
+type BehaviorCluster<T extends Behavior.Type> = T extends { cluster: infer C extends ClusterType } ? C : ClusterType;
 
-type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterType.EventsOf<T>
-  ? ClusterType.EventsOf<T>[E] extends { schema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
-    ? import('@matter/types/tlv').TypeFromSchema<S>
-    : never
+type CommandsOfBehavior<T extends Behavior.Type> = BehaviorCluster<T>['Typing'] extends { Commands: infer Commands } ? Commands : Record<string, never>;
+
+type BehaviorCommandName<T extends Behavior.Type> = keyof CommandsOfBehavior<T> & string;
+
+type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandName<T>> = CommandsOfBehavior<T>[C] extends (...args: infer P) => unknown
+  ? FirstCommandParam<P>
   : never;
 
-type BehaviorEventName<T extends Behavior.Type> = ClusterEventName<BehaviorCluster<T>>;
+type BehaviorInterface<T extends Behavior.Type> = T extends { Interface: infer N extends ClusterTyping } ? N : ClusterTyping;
 
-type BehaviorEventPayload<T extends Behavior.Type, E extends string> = ClusterEventPayload<BehaviorCluster<T>, E>;
+type BehaviorEvents<T extends Behavior.Type> = NonNullable<BehaviorInterface<T>['Events']>;
 
-type CommandsOfBehavior<T extends Behavior.Type> = {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  [K in keyof InstanceType<T> as InstanceType<T>[K] extends (...args: infer _P) => infer _R ? K : never]: InstanceType<T>[K] extends (...args: infer P) => infer R
-    ? (input: P[0], context?: ActionContext) => Promise<Awaited<R>>
-    : never;
-};
+type BehaviorEventName<T extends Behavior.Type> = keyof BehaviorEvents<T> & string;
 
-type BehaviorCommandParams<T extends Behavior.Type, C extends BehaviorCommandName<T>> = CommandsOfBehavior<T>[C] extends (
-  input: infer P,
-  context?: ActionContext,
-) => Promise<unknown>
-  ? P
-  : never;
+type BehaviorEventPayload<T extends Behavior.Type, E extends string> = E extends BehaviorEventName<T> ? BehaviorEvents<T>[E] : never;
+
+/** ClusterType utilities */
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+type ClusterAttributesOf<T extends ClusterType> = T['Typing'] extends { Attributes: infer Attributes } ? Attributes : {};
+
+type ClusterCommandsOf<T extends ClusterType> = T['Typing'] extends { Commands: infer Commands } ? Commands : Record<string, never>;
+
+type ClusterCommandName<T extends ClusterType> = keyof ClusterCommandsOf<T> & string;
+
+type ClusterCommandParams<T extends ClusterType, C extends ClusterCommandName<T>> = ClusterCommandsOf<T>[C] extends (...args: infer P) => unknown ? FirstCommandParam<P> : never;
+
+type ClusterEventsOf<T extends ClusterType> = T['Typing'] extends { Events: infer Events } ? Events : Record<string, never>;
+
+type ClusterEventName<T extends ClusterType> = keyof ClusterEventsOf<T> & string;
+
+type ClusterEventPayload<T extends ClusterType, E extends string> = E extends keyof ClusterEventsOf<T> ? ClusterEventsOf<T>[E] : never;
 
 /**
  * Type guard to check whether a value is a MatterbridgeEndpoint instance.
@@ -368,6 +377,21 @@ export class MatterbridgeEndpoint extends Endpoint {
     } as { id?: string; number?: EndpointNumber; descriptor?: Record<string, object> };
 
     super(endpointV8, optionsV8);
+
+    // MatterbridgeEndpoint creates a unique type per instance so it is safe to mutate type.behaviors.
+    // Wrap behaviors.inject to keep type.behaviors in sync with behaviors.supported so that matter.js
+    // internals that inspect endpoint.type.behaviors (e.g. BindingManager.#endpointHasClusterServer)
+    // see every cluster server installed via behaviors.require().
+    const typeBehaviors = this.type.behaviors as Record<string, Behavior.Type>;
+    const origInject = this.behaviors.inject.bind(this.behaviors);
+    Object.defineProperty(this.behaviors, 'inject', {
+      configurable: true,
+      writable: true,
+      value: (type: Behavior.Type, options?: Behavior.Options, notify = true) => {
+        origInject(type, options, notify);
+        typeBehaviors[type.id] = type;
+      },
+    });
 
     // Set the brand
     Object.defineProperty(this, MATTERBRIDGE_ENDPOINT_BRAND, {
@@ -547,7 +571,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  getAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(cluster: T, attribute: A, log?: AnsiLogger): ClusterType.AttributeValues<T>[A] | undefined;
+  getAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(cluster: T, attribute: A, log?: AnsiLogger): ClusterAttributesOf<T>[A] | undefined;
   /**
    * Retrieves the value of the provided attribute from the given cluster.
    *
@@ -663,10 +687,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async setAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async setAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     clusterId: T,
     attribute: A,
-    value: ClusterType.AttributeValues<T>[A],
+    value: ClusterAttributesOf<T>[A],
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -790,10 +814,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  async updateAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async updateAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
-    value: ClusterType.AttributeValues<T>[A],
+    value: ClusterAttributesOf<T>[A],
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -934,10 +958,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterType.AttributeValues<T>>(
+  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
-    listener: (newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void,
+    listener: (newValue: ClusterAttributesOf<T>[A], oldValue: ClusterAttributesOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
   ): Promise<boolean>;
   /**
@@ -1084,7 +1108,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
-  async setCluster<T extends ClusterType>(cluster: T, value: ClusterType.AttributeValues<T>, log?: AnsiLogger): Promise<boolean>;
+  async setCluster<T extends ClusterType>(cluster: T, value: ClusterAttributesOf<T>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
@@ -1209,7 +1233,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * device.getCluster('OnOff')
    * ```
    */
-  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterType.AttributeValues<T> | undefined;
+  getCluster<T extends ClusterType>(cluster: T, log?: AnsiLogger): ClusterAttributesOf<T> | undefined;
   /**
    * Retrieves the state of the provided cluster from the given endpoint.
    *
@@ -1517,13 +1541,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
    */
-  async invokeBehaviorCommand<T extends ClusterType, C extends keyof ClusterType.CommandsOf<T>>(
-    cluster: T,
-    command: C,
-    params?: ClusterType.CommandsOf<T>[C] extends { requestSchema: infer S extends import('@matter/types/tlv').TlvSchema<unknown> }
-      ? import('@matter/types/tlv').TypeFromSchema<S>
-      : never,
-  ): Promise<void>;
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, params?: ClusterCommandParams<T, C>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
@@ -1548,6 +1567,17 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Adds both the required cluster servers and the required cluster clients for the device types of the specified endpoint.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addRequiredClusters(): MatterbridgeEndpoint {
+    addRequiredClusterServers(this);
+    addRequiredClusterClients(this);
+    return this;
+  }
+
+  /**
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -1564,6 +1594,37 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   addOptionalClusterServers(): MatterbridgeEndpoint {
     addOptionalClusterServers(this);
+    return this;
+  }
+
+  /**
+   * Adds the required cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addRequiredClusterClients(): MatterbridgeEndpoint {
+    addRequiredClusterClients(this);
+    return this;
+  }
+
+  /**
+   * Adds the optional cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addOptionalClusterClients(): MatterbridgeEndpoint {
+    addOptionalClusterClients(this);
+    return this;
+  }
+
+  /**
+   * Adds the cluster clients to the specified endpoint by requiring MatterbridgeBindingServer with the given client list.
+   *
+   * @param {ClusterId[]} clientList - The list of cluster IDs to add as clients.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  addClusterClients(clientList: ClusterId[]): MatterbridgeEndpoint {
+    addClusterClients(this, clientList);
     return this;
   }
 
@@ -2233,6 +2294,18 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /** Application Cluster Helpers */
+
+  /**
+   * Creates a default binding cluster server with the specified client list.
+   * Safe to call multiple times: subsequent calls merge the new cluster IDs into the existing clientList.
+   *
+   * @param {ClusterId[]} [clientList] - The list of cluster IDs to advertise as client clusters. Defaults to [].
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultBindingClusterServer(clientList: ClusterId[] = []): this {
+    addClusterClients(this, clientList);
+    return this;
+  }
 
   /**
    * Creates a default identify cluster server with the specified identify time and type.
@@ -3043,8 +3116,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
    * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
    * @param {Uint8Array | null} [activePresetHandle] - The active preset handle. Defaults to null.
-   * @param {Thermostat.Preset[] | null | undefined} [presetsList] - The list of thermostat presets. Defaults to undefined.
-   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to undefined.
+   * @param {Thermostat.Preset[]} [presets] - The list of thermostat presets. Defaults to empty array.
+   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to a predefined set.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultPresetsThermostatClusterServer(
@@ -3061,8 +3134,11 @@ export class MatterbridgeEndpoint extends Endpoint {
     occupied: boolean | undefined = undefined,
     outdoorTemperature: number | null | undefined = undefined,
     activePresetHandle: Uint8Array | null = null,
-    presetsList: Thermostat.Preset[] | null | undefined = undefined,
-    presetTypes: Thermostat.PresetType[] | null | undefined = undefined,
+    presets: Thermostat.Preset[] = [],
+    presetTypes: Thermostat.PresetType[] = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ],
   ): this {
     this.behaviors.require(
       MatterbridgeThermostatServer.with(
@@ -3099,10 +3175,10 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
-        numberOfPresets: Math.max(Array.isArray(presetsList) ? presetsList.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
+        numberOfPresets: Math.max(Array.isArray(presets) ? presets.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute.
         activePresetHandle: activePresetHandle ? Uint8Array.from([activePresetHandle]) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
-        presets: (presetsList ?? []).map((p) => ({
+        presets: (presets ?? []).map((p) => ({
           presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,
@@ -3714,9 +3790,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm).enable({
         events: {
           smokeAlarm: true,
-          interconnectSmokeAlarm: false,
           coAlarm: true,
-          interconnectCoAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,
@@ -3751,7 +3825,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm).enable({
         events: {
           smokeAlarm: true,
-          interconnectSmokeAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,
@@ -3785,7 +3858,6 @@ export class MatterbridgeEndpoint extends Endpoint {
       MatterbridgeSmokeCoAlarmServer.with(SmokeCoAlarm.Feature.CoAlarm).enable({
         events: {
           coAlarm: true,
-          interconnectCoAlarm: false,
           lowBattery: true,
           hardwareFault: true,
           endOfService: true,

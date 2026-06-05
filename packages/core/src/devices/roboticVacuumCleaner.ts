@@ -22,7 +22,7 @@
  */
 
 // Imports from @matter
-import { AreaNamespaceTag } from '@matter/node';
+import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
 import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
@@ -153,22 +153,22 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
         {
           areaId: 1,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: AreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: CommonAreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
         },
         {
           areaId: 2,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: AreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: CommonAreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
         },
         {
           areaId: 3,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: AreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
         },
         {
           areaId: 4,
           mapId: null,
-          areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: AreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
+          areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
         },
       ],
       selectedAreas: selectedAreas ?? [], // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.

@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="matter-151">Matter 1.5.1</h1>
+<p>This file summarizes the Matter 1.5.1 deltas captured for Matterbridge, compared with Matter 1.4.2.</p>
+<p>IDs below are hexadecimal, matching the official Matter specs.</p>
+<h2 id="changed-device-types">Changed Device Types</h2>
+<table>
+<thead>
+<tr>
+<th>Device Type</th>
+<th>ID</th>
+<th>1.4.2</th>
+<th>1.5.1</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BaseDeviceType</td>
+<td>0x0000</td>
+<td>2</td>
+<td>3</td>
+<td>Removed certification program conditions</td>
+</tr>
+<tr>
+<td>BatteryStorage</td>
+<td>0x0018</td>
+<td>1</td>
+<td>2</td>
+<td>Added mandate of two Power Source and Electrical Sensor composed device types</td>
+</tr>
+<tr>
+<td>DeviceEnergyManagement</td>
+<td>0x050D</td>
+<td>2</td>
+<td>3</td>
+<td>Updated to include Electrical Grid Conditions</td>
+</tr>
+<tr>
+<td>DoorLock</td>
+<td>0x000A</td>
+<td>3</td>
+<td>4</td>
+<td>Removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>Fan</td>
+<td>0x002B</td>
+<td>3</td>
+<td>4</td>
+<td>Moved FanModeSequence element requirement to Fan Control cluster</td>
+</tr>
+<tr>
+<td>FlowSensor</td>
+<td>0x0306</td>
+<td>2</td>
+<td>3</td>
+<td>Removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>HumiditySensor</td>
+<td>0x0307</td>
+<td>2</td>
+<td>3</td>
+<td>Removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>LightSensor</td>
+<td>0x0106</td>
+<td>3</td>
+<td>4</td>
+<td>Removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>PressureSensor</td>
+<td>0x0305</td>
+<td>2</td>
+<td>3</td>
+<td>Removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>RoomAirConditioner</td>
+<td>0x0072</td>
+<td>2</td>
+<td>3</td>
+<td>Added filter monitoring clusters</td>
+</tr>
+<tr>
+<td>RootNode</td>
+<td>0x0016</td>
+<td>3</td>
+<td>4</td>
+<td>Added conditions and cluster requirements for Time Sync, TLS, and Power Source clusters</td>
+</tr>
+<tr>
+<td>TemperatureSensor</td>
+<td>0x0302</td>
+<td>2</td>
+<td>3</td>
+<td>Added Thermostat User Interface Configuration cluster and removed Zigbee related elements</td>
+</tr>
+<tr>
+<td>Thermostat</td>
+<td>0x0301</td>
+<td>4</td>
+<td>5</td>
+<td>Moved disallowed element conformance to Thermostat cluster</td>
+</tr>
+<tr>
+<td>WindowCovering</td>
+<td>0x0202</td>
+<td>4</td>
+<td>6</td>
+<td>Introduced conditions on Closure clusters; removed Zigbee related elements</td>
+</tr>
+</tbody></table>
+<h2 id="new-device-types">New Device Types</h2>
+<table>
+<thead>
+<tr>
+<th>Device Type</th>
+<th>ID</th>
+<th>Revision</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AudioDoorbell</td>
+<td>0x0141</td>
+<td>2</td>
+<td>Initial release; Remove superset</td>
+</tr>
+<tr>
+<td>Camera</td>
+<td>0x0142</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>CameraController</td>
+<td>0x0147</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>Chime</td>
+<td>0x0146</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>Closure</td>
+<td>0x0230</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>ClosureController</td>
+<td>0x023E</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>ClosurePanel</td>
+<td>0x0231</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>Doorbell</td>
+<td>0x0148</td>
+<td>2</td>
+<td>Initial release; Remove superset</td>
+</tr>
+<tr>
+<td>ElectricalEnergyTariff</td>
+<td>0x0513</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>ElectricalMeter</td>
+<td>0x0514</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>ElectricalUtilityMeter</td>
+<td>0x0511</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>FloodlightCamera</td>
+<td>0x0144</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>Intercom</td>
+<td>0x0140</td>
+<td>2</td>
+<td>Initial release; Addition of Generic Switch</td>
+</tr>
+<tr>
+<td>IrrigationSystem</td>
+<td>0x0040</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>MeterReferencePoint</td>
+<td>0x0512</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>SnapshotCamera</td>
+<td>0x0145</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>SoilSensor</td>
+<td>0x0045</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>VideoDoorbell</td>
+<td>0x0143</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+</tbody></table>
+<h2 id="changed-cluster-types">Changed Cluster Types</h2>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>ID</th>
+<th>1.4.2</th>
+<th>1.5.1</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BooleanState</td>
+<td>0x0045</td>
+<td>1</td>
+<td>2</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>CarbonDioxideConcentrationMeasurement</td>
+<td>0x040D</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>CarbonMonoxideConcentrationMeasurement</td>
+<td>0x040C</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>ColorControl</td>
+<td>0x0300</td>
+<td>7</td>
+<td>9</td>
+<td>Change WhitePoint and ColorPoint attributes from RW to R (CCB 2490, TCR 11893); Removed P quality</td>
+</tr>
+<tr>
+<td>ConcentrationMeasurementClusters</td>
+<td>0x0000</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>DoorLock (1)</td>
+<td>0x0101</td>
+<td>9</td>
+<td>10</td>
+<td>Removed Zigbee related elements (1) and P quality</td>
+</tr>
+<tr>
+<td>ElectricalEnergyMeasurement</td>
+<td>0x0091</td>
+<td>1</td>
+<td>2</td>
+<td>Added support for apparent and reactive energy measurement</td>
+</tr>
+<tr>
+<td>EnergyEVSE</td>
+<td>0x0099</td>
+<td>3</td>
+<td>4</td>
+<td>Sync with SDK revision number</td>
+</tr>
+<tr>
+<td>FanControl</td>
+<td>0x0202</td>
+<td>5</td>
+<td>6</td>
+<td>Removed Zigbee related elements, removed P quality</td>
+</tr>
+<tr>
+<td>FlowMeasurement</td>
+<td>0x0404</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>FormaldehydeConcentrationMeasurement</td>
+<td>0x042B</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>IlluminanceMeasurement</td>
+<td>0x0400</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>LevelControl</td>
+<td>0x0008</td>
+<td>6</td>
+<td>7</td>
+<td>Simplify constraint, added F quality and changed the conformance to mandatory for MinLevel and MaxLevel, and removed P quality</td>
+</tr>
+<tr>
+<td>NitrogenDioxideConcentrationMeasurement</td>
+<td>0x0413</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>OccupancySensing (1)</td>
+<td>0x0406</td>
+<td>5</td>
+<td>6</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>OzoneConcentrationMeasurement</td>
+<td>0x0415</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>PM10ConcentrationMeasurement</td>
+<td>0x042D</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>PM1ConcentrationMeasurement</td>
+<td>0x042C</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>PM2.5ConcentrationMeasurement</td>
+<td>0x042A</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>PressureMeasurement</td>
+<td>0x0403</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>PumpConfigurationandControl</td>
+<td>0x0200</td>
+<td>4</td>
+<td>5</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>RVCCleanMode</td>
+<td>0x0055</td>
+<td>4</td>
+<td>5</td>
+<td>DirectModeChange made non-provisional</td>
+</tr>
+<tr>
+<td>RVCRunMode</td>
+<td>0x0054</td>
+<td>3</td>
+<td>4</td>
+<td>DirectModeChange made non-provisional</td>
+</tr>
+<tr>
+<td>RadonConcentrationMeasurement</td>
+<td>0x042F</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>RelativeHumidityMeasurement</td>
+<td>0x0405</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>TemperatureMeasurement</td>
+<td>0x0402</td>
+<td>4</td>
+<td>5</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>Thermostat (2)</td>
+<td>0x0201</td>
+<td>9</td>
+<td>10</td>
+<td>Removed Zigbee related elements and P quality, deprecated ThermostatProgrammingOperationMode and removed ProgrammingOperationModeBitmap and deprecated Setback feature and related elements.</td>
+</tr>
+<tr>
+<td>TotalVolatileOrganicCompoundsConcentrationMeasurement</td>
+<td>0x042E</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>WaterContentMeasurementClusters</td>
+<td>0x0000</td>
+<td>3</td>
+<td>4</td>
+<td>Removed P quality</td>
+</tr>
+<tr>
+<td>WindowCovering</td>
+<td>0x0102</td>
+<td>6</td>
+<td>8</td>
+<td>Removed ABS feature and all associated elements from the cluster; Removed P quality</td>
+</tr>
+</tbody></table>
+<h3 id="remarks">Remarks</h3>
+<p>Quality P = Reportable: means the attribute is intended to support interval or change reporting for interactions that care specifically about reportable attributes.</p>
+<p>(1) DoorLock cluster has no more PIN commands.</p>
+<p>(2) Thermostat cluster is revision 10 (not 9 like in xml).</p>
+<p>(3) Occupancy revision 7 is likely a typo in spec. We decided to keep it to 6.</p>
+<h2 id="new-cluster-types">New Cluster Types</h2>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>ID</th>
+<th>Revision</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>CameraAVSettingsUserLevelManagement</td>
+<td>0x0552</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>CameraAVStreamManagement</td>
+<td>0x0551</td>
+<td>1</td>
+<td>Initial release</td>
+</tr>
+<tr>
+<td>Chime</td>
+<td>0x0556</td>
+<td>2</td>
+<td>Initial; Add ChimeStartedPlaying event, new optional param to PlayChimeSound to play a specific sound, and remove F quality from InstalledChimeSounds release</td>
+</tr>
+<tr>
+<td>ClosureControl</td>
+<td>0x0104</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>ClosureDimension</td>
+<td>0x0105</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>CommodityMetering</td>
+<td>0x0B07</td>
+<td>1</td>
+<td>Initial Release</td>
+</tr>
+<tr>
+<td>CommodityPrice</td>
+<td>0x0095</td>
+<td>4</td>
+<td>Mandatory global ClusterRevision attribute added; Updated from SE1.4 version; CCB 1447 2964 2965; CCBs 2043 2706 2810 2912 3566; Initial Matter revision</td>
+</tr>
+<tr>
+<td>CommodityTariff</td>
+<td>0x0700</td>
+<td>1</td>
+<td>Initial Matter revision</td>
+</tr>
+<tr>
+<td>ElectricalGridConditions</td>
+<td>0x00A0</td>
+<td>1</td>
+<td>Initial Matter revision</td>
+</tr>
+<tr>
+<td>MeterIdentification</td>
+<td>0x0B06</td>
+<td>1</td>
+<td>Initial version</td>
+</tr>
+<tr>
+<td>PushAVStreamTransport</td>
+<td>0x0555</td>
+<td>2</td>
+<td>Initial Release; Add DoorbellPressed to TriggerActivationReason. Augment PushTransport events with Session numbers and Event context. Add multi-stream support</td>
+</tr>
+<tr>
+<td>SoilMeasurement</td>
+<td>0x0430</td>
+<td>1</td>
+<td>Initial revision</td>
+</tr>
+<tr>
+<td>TLSCertificateManagement</td>
+<td>0x0801</td>
+<td>1</td>
+<td>Initial Release</td>
+</tr>
+<tr>
+<td>TLSClientManagement</td>
+<td>0x0802</td>
+<td>1</td>
+<td>Initial Release</td>
+</tr>
+<tr>
+<td>WebRTCTransportProvider</td>
+<td>0x0553</td>
+<td>2</td>
+<td>Initial version of the WebRTC Transport Provider Cluster; Add multi stream support</td>
+</tr>
+<tr>
+<td>WebRTCTransportRequestor</td>
+<td>0x0554</td>
+<td>2</td>
+<td>Initial version of the WebRTC Transport Requestor Cluster; Add multi stream support</td>
+</tr>
+<tr>
+<td>ZoneManagement</td>
+<td>0x0550</td>
+<td>1</td>
+<td>Initial version of the Zone Management cluster</td>
+</tr>
+</tbody></table>
+<h2 id="new-semantic-tag-namespaces">New Semantic Tag Namespaces</h2>
+<table>
+<thead>
+<tr>
+<th>Namespace</th>
+<th>ID</th>
+<th>Tags</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Closure</td>
+<td>0x0044</td>
+<td>Covering, Window, Barrier, Cabinet, Gate, GarageDoor, Door</td>
+</tr>
+<tr>
+<td>Closure Panel</td>
+<td>0x0045</td>
+<td>Lift, Tilt, Sliding, Rotate</td>
+</tr>
+<tr>
+<td>Closure Covering</td>
+<td>0x0046</td>
+<td>Blind, Awning, Shutter, Venetian, Curtain</td>
+</tr>
+<tr>
+<td>Closure Window</td>
+<td>0x0047</td>
+<td>Roof, Facade</td>
+</tr>
+<tr>
+<td>Closure Cabinet</td>
+<td>0x0048</td>
+<td>CabinetDoor, Drawer, Flap</td>
+</tr>
+<tr>
+<td>Commodity Tariff Chronology</td>
+<td>0x000B</td>
+<td>Current, Previous, Upcoming</td>
+</tr>
+<tr>
+<td>Commodity Tariff Commodity</td>
+<td>0x000D</td>
+<td>ElectricalEnergy</td>
+</tr>
+<tr>
+<td>Commodity Tariff Flow</td>
+<td>0x0013</td>
+<td>Import, Export</td>
+</tr>
+</tbody></table>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

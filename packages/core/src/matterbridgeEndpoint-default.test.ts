@@ -59,6 +59,7 @@ import {
   DeviceEnergyManagementMode,
   DoorLock,
   ElectricalEnergyMeasurement,
+  ElectricalGridConditions,
   ElectricalPowerMeasurement,
   FanControl,
   FixedLabel,
@@ -71,6 +72,8 @@ import {
   ModeSelect,
   OccupancySensing,
   OnOff,
+  OtaSoftwareUpdateProvider,
+  OtaSoftwareUpdateRequestor,
   PowerSource,
   PowerTopology,
   PressureMeasurement,
@@ -89,7 +92,7 @@ import {
 } from '@matter/types/clusters';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
@@ -98,7 +101,7 @@ import {
   stopMatterbridgeEnvironment,
 } from './jestutils/jestMatterbridgeTest.js';
 import { addDevice } from './jestutils/jestMatterTest.js';
-import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
+import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -193,10 +196,56 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('getBehaviourTypesFromClusterClientIds', async () => {
-    expect(getBehaviourTypesFromClusterClientIds([Identify.Cluster.id])).toEqual([]);
+    const clusterIds = [
+      Identify.id,
+      Groups.id,
+      OnOff.id,
+      LevelControl.id,
+      ColorControl.id,
+      OccupancySensing.id,
+      ScenesManagement.id,
+      DoorLock.id,
+      ElectricalGridConditions.id,
+      FanControl.id,
+      FlowMeasurement.id,
+      IlluminanceMeasurement.id,
+      OtaSoftwareUpdateProvider.id,
+      OtaSoftwareUpdateRequestor.id,
+      PressureMeasurement.id,
+      PumpConfigurationAndControl.id,
+      RelativeHumidityMeasurement.id,
+      TemperatureMeasurement.id,
+      Thermostat.id,
+      WindowCovering.id,
+    ];
+    const result = getBehaviourTypesFromClusterClientIds(clusterIds);
+    expect(result).toHaveLength(20);
+    expect(result.map((b) => (b as any).cluster?.id)).toEqual(clusterIds);
+    expect(getBehaviourTypesFromClusterClientIds([0xffff as any])).toEqual([]);
   });
+
   test('getBehaviourTypeFromClusterClientId', async () => {
-    expect(getBehaviourTypeFromClusterClientId(Identify.Cluster.id)).toBeUndefined();
+    expect((getBehaviourTypeFromClusterClientId(Identify.id) as any)?.cluster?.id).toBe(Identify.id);
+    expect((getBehaviourTypeFromClusterClientId(Groups.id) as any)?.cluster?.id).toBe(Groups.id);
+    expect((getBehaviourTypeFromClusterClientId(OnOff.id) as any)?.cluster?.id).toBe(OnOff.id);
+    expect((getBehaviourTypeFromClusterClientId(LevelControl.id) as any)?.cluster?.id).toBe(LevelControl.id);
+    expect((getBehaviourTypeFromClusterClientId(ColorControl.id) as any)?.cluster?.id).toBe(ColorControl.id);
+    expect((getBehaviourTypeFromClusterClientId(OccupancySensing.id) as any)?.cluster?.id).toBe(OccupancySensing.id);
+    expect((getBehaviourTypeFromClusterClientId(ScenesManagement.id) as any)?.cluster?.id).toBe(ScenesManagement.id);
+    expect((getBehaviourTypeFromClusterClientId(DoorLock.id) as any)?.cluster?.id).toBe(DoorLock.id);
+    expect((getBehaviourTypeFromClusterClientId(ElectricalGridConditions.id) as any)?.cluster?.id).toBe(ElectricalGridConditions.id);
+    expect((getBehaviourTypeFromClusterClientId(FanControl.id) as any)?.cluster?.id).toBe(FanControl.id);
+    expect((getBehaviourTypeFromClusterClientId(FlowMeasurement.id) as any)?.cluster?.id).toBe(FlowMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(IlluminanceMeasurement.id) as any)?.cluster?.id).toBe(IlluminanceMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(OtaSoftwareUpdateProvider.id) as any)?.cluster?.id).toBe(OtaSoftwareUpdateProvider.id);
+    expect((getBehaviourTypeFromClusterClientId(OtaSoftwareUpdateRequestor.id) as any)?.cluster?.id).toBe(OtaSoftwareUpdateRequestor.id);
+    expect((getBehaviourTypeFromClusterClientId(PressureMeasurement.id) as any)?.cluster?.id).toBe(PressureMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(PumpConfigurationAndControl.id) as any)?.cluster?.id).toBe(PumpConfigurationAndControl.id);
+    expect((getBehaviourTypeFromClusterClientId(RelativeHumidityMeasurement.id) as any)?.cluster?.id).toBe(RelativeHumidityMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(TemperatureMeasurement.id) as any)?.cluster?.id).toBe(TemperatureMeasurement.id);
+    expect((getBehaviourTypeFromClusterClientId(Thermostat.id) as any)?.cluster?.id).toBe(Thermostat.id);
+    expect((getBehaviourTypeFromClusterClientId(WindowCovering.id) as any)?.cluster?.id).toBe(WindowCovering.id);
+    expect(getBehaviourTypeFromClusterClientId(0xffff as any)).toBeUndefined();
   });
 
   test('createDefaultIdentifyClusterServer', async () => {
@@ -590,7 +639,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -633,7 +681,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -665,7 +712,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -697,7 +743,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -727,7 +772,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -757,7 +801,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -787,7 +830,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -817,7 +859,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -827,6 +868,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultPresetsThermostatClusterServer defaults', async () => {
+    // await setDebug(true);
     const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermoPresetsDefault' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
@@ -852,7 +894,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -863,7 +904,7 @@ describe('Matterbridge ' + NAME, () => {
     const retrievedPresets = device.getAttribute(Thermostat.Cluster.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
     const retrievedPresetTypes = device.getAttribute(Thermostat.Cluster.id, 'presetTypes');
-    expect(retrievedPresetTypes).toHaveLength(0);
+    expect(retrievedPresetTypes).toHaveLength(2);
     expect(device.getCluster(Thermostat.Complete)).toMatchObject({
       absMinHeatSetpointLimit: 0,
       absMaxHeatSetpointLimit: 5000,
@@ -879,12 +920,16 @@ describe('Matterbridge ' + NAME, () => {
       numberOfPresets: 10,
       activePresetHandle: null,
       presets: [],
-      presetTypes: [],
+      presetTypes: [
+        { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+        { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      ],
     });
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
   test('createDefaultPresetsThermostatClusterServer', async () => {
+    // await setDebug(false);
     const presetTypes: Thermostat.PresetType[] = [
       { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
       { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
@@ -918,7 +963,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -1022,7 +1066,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -1185,7 +1228,6 @@ describe('Matterbridge ' + NAME, () => {
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
-      scheduleConfiguration: false,
       setback: false,
     });
 
@@ -1382,10 +1424,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedSetting')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
     expect(device.hasAttributeServer(FanControl.Cluster, 'speedCurrent')).toBe(false);
-    expect(featuresFor(device, FanControlServer)).toEqual({});
-    expect(featuresFor(device, FanControl.Complete)).toEqual({});
-    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
-    expect(featuresFor(device, 'FanControl')).toEqual({});
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);
@@ -1460,10 +1502,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(FanControl.Cluster, 'rockSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'windSupport')).toBe(false);
     expect(device.hasAttributeServer(FanControl.Cluster, 'airflowDirection')).toBe(false);
-    expect(featuresFor(device, FanControlServer)).toEqual({});
-    expect(featuresFor(device, FanControl.Complete)).toEqual({});
-    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({});
-    expect(featuresFor(device, 'FanControl')).toEqual({});
+    expect(featuresFor(device, FanControlServer)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Complete)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, FanControl.Cluster.id)).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
+    expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: false, multiSpeed: false, rocking: false, step: false, wind: false });
 
     await add(device);
     expect((device.getAttribute(FanControl.Cluster.id, 'featureMap') as Record<string, boolean>).auto).toBe(false);

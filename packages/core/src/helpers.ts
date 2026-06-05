@@ -37,8 +37,6 @@ import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { Identify } from '@matter/types/clusters/identify';
-import { OnOff } from '@matter/types/clusters/on-off';
 import { VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
@@ -110,14 +108,6 @@ export async function addVirtualDevice(
   // Add the created device to the given endpoint.
   await aggregatorEndpoint.add(device);
   await device.construction.ready;
-
-  // Set the client list for the switch type device.
-  if (type === 'switch') {
-    await device.act(async (agent) => {
-      const descriptor = await agent.load(DescriptorServer);
-      descriptor.state.clientList.push(Identify.Cluster.id, OnOff.Cluster.id);
-    });
-  }
 
   // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
   if (type === 'mounted_switch') {

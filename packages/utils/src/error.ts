@@ -45,7 +45,7 @@ export function getErrorMessage(error: unknown): string {
  *                          its message and stack trace will be included in the log.
  */
 export function logError(log: AnsiLogger, message: string, error: unknown): void {
-  log.error(`${message}: ${error instanceof Error ? error.message + ' \nStack: \n' + error.stack : error}`);
+  log.error(`${message}: ${error instanceof Error ? error.message + ' \nStack: \n' + error.stack : String(error)}`);
 }
 
 /**

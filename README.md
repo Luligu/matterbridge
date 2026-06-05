@@ -49,9 +49,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## Acknowledgements
 
-The project is build on top of [matter.js](https://github.com/matter-js/matter.js).
+This project is built on top of [matter.js](https://github.com/matter-js/matter.js).
 
-A special thanks to Apollon77 for his incredible work.
+A heartfelt thank you to [Apollon77](https://github.com/Apollon77) for his incredible and foundational work on matter.js.
+
+A very special thank you to my friend [Tamer Salah](https://github.com/tammeryousef1006) — without his invaluable daily support since day one, we would not be where we are today.
 
 ## Discord
 
@@ -765,6 +767,60 @@ Click on the badge below to get started:
 </a>
 
 Thank you for your support!
+
+# Package structure
+
+Matterbridge is published as an npm **monorepo**. The package you install, `matterbridge`, is a thin top-level package that depends on and re-exports a set of focused `@matterbridge/*` packages. Each scoped package is also published independently to npm, shares the same version, and is released together with the others.
+
+| Folder                  | npm package                  | Description                                                                                                                   |
+| ----------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| (root)                  | `matterbridge`               | Matterbridge — the package end users install; aggregates and re-exports the public API.                                       |
+| `packages/core`         | `@matterbridge/core`         | Core bridge engine: Matterbridge runtime, frontend/backend servers, Matter endpoints, clusters, behaviors and device classes. |
+| `packages/thread`       | `@matterbridge/thread`       | Node.js `worker_threads` manager and background worker tasks (update checks, command spawning, archiving).                    |
+| `packages/dgram`        | `@matterbridge/dgram`        | UDP datagram networking: multicast/unicast sockets, mDNS and CoAP.                                                            |
+| `packages/utils`        | `@matterbridge/utils`        | General-purpose utilities (validation, network, command line, error handling).                                                |
+| `packages/types`        | `@matterbridge/types`        | Shared TypeScript types and constants.                                                                                        |
+| `packages/jest-utils`   | `@matterbridge/jest-utils`   | Jest test-environment setup helpers.                                                                                          |
+| `packages/vitest-utils` | `@matterbridge/vitest-utils` | Vitest test-environment setup helpers.                                                                                        |
+
+## Imports graph
+
+Runtime dependencies between the published packages.
+
+```mermaid
+graph TD
+  matterbridge["matterbridge"]
+  core["@matterbridge/core"]
+  thread["@matterbridge/thread"]
+  dgram["@matterbridge/dgram"]
+  utils["@matterbridge/utils"]
+  types["@matterbridge/types"]
+  jestutils["@matterbridge/jest-utils"]
+  vitestutils["@matterbridge/vitest-utils"]
+
+  matterbridge --> core
+  matterbridge --> jestutils
+  matterbridge --> vitestutils
+
+  core --> thread
+  core --> dgram
+  core --> utils
+  core --> types
+
+  thread --> utils
+  thread --> types
+  dgram --> utils
+  jestutils --> types
+  vitestutils --> types
+```
+
+The graph is acyclic and layered:
+
+- **Foundation (no internal dependencies):** `@matterbridge/types`, `@matterbridge/utils`.
+- **Networking & workers:** `@matterbridge/dgram` (→ `utils`), `@matterbridge/thread` (→ `utils`, `types`).
+- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `types`).
+- **Core:** `@matterbridge/core` (→ `dgram`, `thread`, `utils`, `types`).
+- **Top level:** `matterbridge` declares all scoped packages as direct dependencies; `core` pulls in the rest transitively.
 
 # Licensing
 

@@ -66,12 +66,13 @@ import {
 } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
+import { logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
-import { AnsiLogger, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
 import type { WebSocket } from 'ws';
 import type { WebSocketServer } from 'ws';
 
@@ -1065,6 +1066,62 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       }
     });
 
+    // Plugin frontend routes
+    for (const plugin of this.matterbridge.plugins.array().filter((p) => p.enabled && !p.error)) {
+      const { existsSync } = await import('node:fs');
+      // istanbul ignore next cause is under development and will be tested in the future
+      if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
+        this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
+
+        // Unified API route handler for GET, POST, PUT, PATCH, DELETE
+        const apiHandler = async (req: import('express').Request, res: import('express').Response) => {
+          const method = req.method.toUpperCase();
+          const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
+          const query = req.query;
+          const body = req.body;
+          this.log.debug(`The frontend sent ${bgHex('#0ba7bc').bold.white` ${method} `} ${bgHex('#0b6a2b').bold.italic.white` /plugins/${plugin.name}/api/${path ?? ''} `}`);
+
+          if (!plugin.platform) {
+            this.log.error(`The platform for plugin ${plg}${plugin.name}${er} is not running`);
+            res.status(503).json({ error: `Plugin ${plugin.name} platform is not running` });
+            return;
+          }
+
+          try {
+            const value = await plugin.platform.onFetch(method, path, query, body);
+            if (value === undefined) {
+              this.log.warn(`MatterbridgePlatform.onFetch returned undefined for plugin ${plg}${plugin.name}${wr} method ${method} path ${path}`);
+              res.status(404).json({ error: `Not found in plugin ${plugin.name}` });
+              return;
+            }
+            if (method === 'DELETE') res.status(204).send();
+            else res.json(value);
+          } catch (error) {
+            logError(this.log, `MatterbridgePlatform.onFetch threw an error for plugin ${plg}${plugin.name}${er}`, error);
+            res.status(500).json({ error: `Internal error in plugin ${plugin.name}` });
+          }
+        };
+
+        // GET    /api/:path? — read collection or single resource, query for filters
+        // POST   /api/:path? — create, data in body
+        // PUT    /api/:path? — full replace of resource
+        // PATCH  /api/:path? — partial update of resource
+        // DELETE /api/:path? — delete resource
+        this.expressApp.get(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.post(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.put(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.patch(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.delete(`/plugins/${plugin.name}/api/:path`, apiHandler);
+
+        // SPA fallback: serve the plugin's index.html for unmatched GET requests only (Express 5 syntax)
+        this.expressApp.get(`/plugins/${plugin.name}/{*splat}`, (_req, res) => {
+          this.log.warn(`The plugin frontend sent /plugins/${plugin.name}/index.html (plugin SPA fallback)`);
+          res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
+        });
+      }
+    }
+
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {
       const filePath = path.resolve(this.matterbridge.rootDirectory, 'apps', 'frontend', 'build');
@@ -1228,9 +1285,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterMdnsInterface: this.matterbridge.mdnsInterface,
       matterIpv4Address: this.matterbridge.ipv4Address,
       matterIpv6Address: this.matterbridge.ipv6Address,
-      matterPort: this.matterbridge.port || 5540,
-      matterDiscriminator: this.matterbridge.discriminator,
-      matterPasscode: this.matterbridge.passcode,
+      matterPort: this.matterbridge.initialPort || 5540,
+      matterDiscriminator: this.matterbridge.initialDiscriminator,
+      matterPasscode: this.matterbridge.initialPasscode,
       readOnly: this.readOnly,
       shellyBoard: this.shellyBoard,
       shellySysUpdate: this.shellySysUpdate,
@@ -1652,7 +1709,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         } else {
           this.log.debug(`Sending api response message: ${debugStringify(data)}`);
         }
-        client.send(JSON.stringify(data));
+        // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
+        const bigintReplacer = (_: string, v: unknown) => (typeof v === 'bigint' ? `${v}n` : v);
+        client.send(JSON.stringify(data, bigintReplacer));
       } else {
         this.log.error('Cannot send api response, client not connected');
       }
@@ -2221,14 +2280,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const port = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(port, 5540, 5600)) {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
-              this.matterbridge.port = port;
+              this.matterbridge.port = this.matterbridge.initialPort = port;
               await this.matterbridge.nodeContext?.set<number>('matterport', port);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter port changed to ${port}`);
             } else {
               this.log.debug(`Reset matter commissioning port to ${CYAN}5540${db}`);
-              this.matterbridge.port = 5540;
+              this.matterbridge.port = this.matterbridge.initialPort = 5540;
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning port to default 5540' });
@@ -2240,14 +2299,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
-              this.matterbridge.discriminator = discriminator;
+              this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter discriminator changed to ${discriminator}`);
             } else {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
-              this.matterbridge.discriminator = undefined;
+              this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
               this.wssSendRestartRequired();
               sendResponse({
@@ -2264,7 +2323,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
             if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
-              this.matterbridge.passcode = passcode;
+              this.matterbridge.passcode = this.matterbridge.initialPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
               this.wssSendRestartRequired();
@@ -2272,7 +2331,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendSnackbarMessage(`Matter passcode changed to ${passcode}`);
             } else {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
-              this.matterbridge.passcode = undefined;
+              this.matterbridge.passcode = this.matterbridge.initialPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
               this.wssSendRestartRequired();
               sendResponse({

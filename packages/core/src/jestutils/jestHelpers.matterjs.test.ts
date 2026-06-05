@@ -7,8 +7,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { bridge, onOffOutlet } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { flushAsync } from './jestFlushAsync.js';
-import { logKeepAlives } from './jestLogAlive.js';
+import { flushAsync } from './flushAsync.js';
 import {
   addDevice,
   aggregator,
@@ -23,6 +22,7 @@ import {
   stopServerNode,
 } from './jestMatterTest.js';
 import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestSetupTest.js';
+import { logKeepAlives } from './logKeepAlives.js';
 
 process.argv.push('--debug');
 

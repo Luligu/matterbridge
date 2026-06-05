@@ -6,7 +6,7 @@ const MATTER_PORT = 8021;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { NumberTag } from '@matter/node';
+import { CommonNumberTag } from '@matter/main';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
@@ -68,10 +68,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create an irrigation system device', async () => {
     device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running })
-      .addZone(getSemtag(NumberTag.One))
-      .addZone(getSemtag(NumberTag.Two))
-      .addZone(getSemtag(NumberTag.Three))
-      .addZone(getSemtag(NumberTag.Four));
+      .addZone(getSemtag(CommonNumberTag.One))
+      .addZone(getSemtag(CommonNumberTag.Two))
+      .addZone(getSemtag(CommonNumberTag.Three))
+      .addZone(getSemtag(CommonNumberTag.Four));
     expect(device).toBeDefined();
     expect(device.id).toBe('IrrigationSystemTestDevice-IR123456');
     expect(device.getChildEndpointByOriginalId('Zone 1')).toBeDefined();
@@ -183,7 +183,7 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 96, 1028 ]',
         'flowMeasurement(0x404).acceptedCommandList(0xfff9)=[  ]',
         'flowMeasurement(0x404).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
-        'flowMeasurement(0x404).clusterRevision(0xfffd)=3',
+        'flowMeasurement(0x404).clusterRevision(0xfffd)=4',
         'flowMeasurement(0x404).featureMap(0xfffc)={  }',
         'flowMeasurement(0x404).generatedCommandList(0xfff8)=[  ]',
         'flowMeasurement(0x404).maxMeasuredValue(0x2)=null',
@@ -276,7 +276,7 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 96, 129, 1028 ]',
         'flowMeasurement(0x404).acceptedCommandList(0xfff9)=[  ]',
         'flowMeasurement(0x404).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
-        'flowMeasurement(0x404).clusterRevision(0xfffd)=3',
+        'flowMeasurement(0x404).clusterRevision(0xfffd)=4',
         'flowMeasurement(0x404).featureMap(0xfffc)={  }',
         'flowMeasurement(0x404).generatedCommandList(0xfff8)=[  ]',
         'flowMeasurement(0x404).maxMeasuredValue(0x2)=null',

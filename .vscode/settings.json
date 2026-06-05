@@ -1,3 +1,4 @@
+// VS Code settings v. 1.0.1
 {
   "eslint.enable": true,
   "prettier.enable": true,
@@ -6,8 +7,13 @@
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "terminal.integrated.scrollback": 10000,
   "editor.tabSize": 2,
-  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+  "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[typescript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[json]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[jsonc]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+  "[markdown]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },

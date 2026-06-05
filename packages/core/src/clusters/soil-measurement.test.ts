@@ -20,8 +20,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('has stable id and required attributes', () => {
-    expect(SoilMeasurement.Cluster.id).toBe(0x0430);
-    expect(SoilMeasurement.Cluster.attributes).toHaveProperty('soilMoistureMeasurementLimits');
-    expect(SoilMeasurement.Cluster.attributes).toHaveProperty('soilMoistureMeasuredValue');
+    expect(SoilMeasurement.id).toBe(0x0430);
+    expect(SoilMeasurement.attributes).toHaveProperty('soilMoistureMeasurementLimits');
+    expect(SoilMeasurement.attributes).toHaveProperty('soilMoistureMeasuredValue');
   });
 });

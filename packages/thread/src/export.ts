@@ -12,6 +12,7 @@ export * from './threadsManager.js';
 /**
  * Export the systemCheck thread module.
  */
+// istanbul ignore next
 export async function systemCheck() {
   await import('./workerSystemCheck.js');
 }

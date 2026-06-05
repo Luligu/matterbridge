@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+// istanbul ignore next -- Loader logs are not relevant for coverage
 // eslint-disable-next-line no-console
 if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mIndex loaded.\u001B[40;0m');
 

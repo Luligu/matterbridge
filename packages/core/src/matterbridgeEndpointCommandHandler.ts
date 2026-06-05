@@ -31,8 +31,8 @@ if (process.argv.includes('--loader') || process.argv.includes('-loader')) conso
 
 // @matter
 import { HandlerFunction } from '@matter/general';
-import { ActionContext } from '@matter/node';
-import type { Attribute } from '@matter/types/cluster';
+import { ActionContext } from '@matter/main';
+import type { ClusterType } from '@matter/types/cluster';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -209,7 +209,7 @@ type OptionalKeys<T> = {
   [K in keyof T]-?: T[K] extends { optional: true } ? K : never;
 }[keyof T];
 
-type AttributeValue<T> = T extends Attribute<infer JsType, infer _F> ? JsType : never;
+type AttributeValue<T> = T extends ClusterType.Attribute<infer JsType> ? JsType : never;
 
 export type ClusterAttributeValues<T extends Record<string, unknown>> = {
   -readonly [K in Exclude<keyof T, OptionalKeys<T>>]: AttributeValue<T[K]>;
@@ -549,62 +549,6 @@ export type CommandHandlerDataMap = {
   'DoorLock.unlockWithTimeout': {
     command: 'unlockWithTimeout'; // Base command
     request: DoorLock.UnlockWithTimeoutRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setPinCode': {
-    command: 'setPinCode'; // PIN not USR
-    request: DoorLock.SetPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getPinCode': {
-    command: 'getPinCode'; // PIN not USR
-    request: DoorLock.GetPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearPinCode': {
-    command: 'clearPinCode'; // PIN not USR
-    request: DoorLock.ClearPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearAllPinCodes': {
-    command: 'clearAllPinCodes'; // PIN not USR
-    request: {};
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setUserStatus': {
-    command: 'setUserStatus'; // PIN not USR
-    request: DoorLock.SetUserStatusRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getUserStatus': {
-    command: 'getUserStatus'; // PIN not USR
-    request: DoorLock.GetUserStatusRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setUserType': {
-    command: 'setUserType'; // PIN not USR
-    request: DoorLock.SetUserTypeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getUserType': {
-    command: 'getUserType'; // PIN not USR
-    request: DoorLock.GetUserTypeRequest;
     cluster: 'doorLock';
     attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
     endpoint: MatterbridgeEndpoint;
@@ -1198,7 +1142,7 @@ export class CommandHandler {
    */
   removeHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     this.handler = this.handler.filter(({ command: registeredCommand, handler: registeredHandler }) => {
-      return registeredCommand !== command && registeredHandler !== handler;
+      return registeredCommand !== command || registeredHandler !== handler;
     });
   }
 }

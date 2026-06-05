@@ -5,6 +5,5 @@
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["**/*.spec.ts", "**/*.test.ts", "**/__test__/*"],
-  "references": [{ "path": "../jest-utils/tsconfig.build.json" }]
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.7.10",
+  "version": "3.8.0",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -140,8 +140,7 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/jest-utils": "3.7.10",
-    "node-ansi-logger": "3.3.0-dev-20260513-eaa1bd1"
+    "node-ansi-logger": "3.3.0-dev-20260524-cac9dd5"
   },
   "devDependencies": {
     "@jest/globals": "30.4.1"

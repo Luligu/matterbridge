@@ -1,5 +1,7 @@
-// .devcontainer/devcontainer.json
+// .devcontainer/devcontainer.json v. 1.0.1
+
 // This file defines the development container configuration for Matterbridge.
+
 /* 
   ************************************************* NOTICE *************************************************
 Dev containers have networking limitations depending on the host OS and Docker setup.
@@ -71,19 +73,19 @@ Dev containers have networking limitations depending on the host OS and Docker s
   ],
   "customizations": {
     "vscode": {
-      // Extensions to install in the dev container
+      // Extensions for the VS Code environment in dev container (installed in the container, not on the host)
       "extensions": [
         "typescriptteam.native-preview",
+        "oxc.oxc-vscode",
         "ms-azuretools.vscode-containers",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "oxc.oxc-vscode",
         "anthropic.claude-code",
         "github.copilot-chat",
         "github.vscode-github-actions",
         "github.vscode-pull-request-github"
       ],
-      // Settings for the VS Code environment
+      // Settings for the VS Code environment in dev container (applies to the container, not the host)
       "settings": {
         // Default .vscode/settings.json
         "eslint.enable": true,
@@ -93,8 +95,13 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "editor.formatOnSave": true,
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+        "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+        "[typescript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+        "[json]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+        "[jsonc]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
+        "[markdown]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "explicit"
         },

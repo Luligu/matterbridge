@@ -37,8 +37,7 @@ import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/typ
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
-import { bridge } from '../matterbridgeDeviceTypes.js';
-import { flushAsync } from './jestFlushAsync.js';
+import { flushAsync } from './flushAsync.js';
 import { HOMEDIR, NAME } from './jestSetupTest.js';
 
 export let environment: Environment;
@@ -161,10 +160,10 @@ export function getPlatformMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.7.10',
-    matterbridgeLatestVersion: '3.7.10',
-    matterbridgeDevVersion: '3.7.10',
-    frontendVersion: '3.7.10',
+    matterbridgeVersion: '3.8.0',
+    matterbridgeLatestVersion: '3.8.0',
+    matterbridgeDevVersion: '3.8.0',
+    frontendVersion: '3.8.0',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -327,7 +326,7 @@ export async function closeServerNodeStores(targetServer?: ServerNode): Promise<
  */
 export async function createServerNode(
   port: number,
-  deviceType: DeviceTypeId = bridge.code,
+  deviceType: DeviceTypeId = DeviceTypeId(0x000e),
   ticks: number = 1,
   microTurns: number = 1,
   pause: number = 10,
@@ -369,6 +368,8 @@ export async function createServerNode(
       listeningAddressIpv4: undefined,
       listeningAddressIpv6: undefined,
       port,
+      tcp: true,
+      transportPreference: 'udp',
     },
 
     // Provide the certificate for the device
@@ -509,6 +510,9 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
   expect(server).toBeDefined();
   expect(server.lifecycle.isReady).toBeTruthy();
   expect(server.lifecycle.isOnline).toBeTruthy();
+  // Close the server to release UDP sockets and other network resources created
+  // by ServerNode.create() (mDNS udp4/udp6 sockets), which would otherwise keep
+  // the Jest process alive indefinitely after all tests finish.
   await server.close();
   expect(server.lifecycle.isReady).toBeFalsy();
   expect(server.lifecycle.isOnline).toBeFalsy();

@@ -7,7 +7,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 // @matter
-import { PositionTag, RefrigeratorTag } from '@matter/node';
+import { CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -90,7 +90,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeTruthy();
 
     cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [
-      { mfgCode: null, namespaceId: PositionTag.Top.namespaceId, tag: PositionTag.Top.tag, label: PositionTag.Top.label },
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
       { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
     ]);
     expect(cabinet1).toBeDefined();
@@ -102,7 +102,7 @@ describe('Matterbridge ' + NAME, () => {
     cabinet2 = device.addCabinet(
       'Freezer Test Cabinet Bottom',
       [
-        { mfgCode: null, namespaceId: PositionTag.Bottom.namespaceId, tag: PositionTag.Bottom.tag, label: PositionTag.Bottom.label },
+        { mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label },
         { mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label },
       ],
       -20 * 100,
@@ -307,7 +307,7 @@ describe('Matterbridge ' + NAME, () => {
         'temperatureControl(0x56).temperatureSetpoint(0x0)=1000',
         'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
         'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
-        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=4',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=5',
         'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
         'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
         'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
@@ -382,7 +382,7 @@ describe('Matterbridge ' + NAME, () => {
         'temperatureControl(0x56).temperatureSetpoint(0x0)=-2000',
         'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
         'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
-        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=4',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=5',
         'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
         'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
         'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',

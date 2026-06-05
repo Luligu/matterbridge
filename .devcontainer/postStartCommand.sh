@@ -24,6 +24,7 @@ echo ""
 
 echo "1 - Installing dependencies..."
 npm install --no-fund --no-audit
+node scripts/install-experimental.mjs
 
 echo "2 - Building the package..."
 npm run build

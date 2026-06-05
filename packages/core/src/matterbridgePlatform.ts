@@ -378,6 +378,21 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Called by the Matterbridge frontend for plugin API requests.
+   * Override this method in your plugin platform to handle frontend interactions.
+   *
+   * @param {string} method - HTTP method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+   * @param {string} [path] - Optional resource identifier (e.g. 'devices', 'devices/42')
+   * @param {Record<string, unknown>} [query] - Optional query string parameters (e.g. { type: 'light', online: 'true' })
+   * @param {unknown} [body] - Optional request body (for POST, PUT, PATCH)
+   * @returns {Promise<unknown>} - A JSON-serializable value, or undefined to respond with 404
+   */
+  async onFetch(method: string, path?: string, query?: Record<string, unknown>, body?: unknown): Promise<unknown> {
+    this.log.debug(`onFetch called: method=${method} path=${path ?? 'none'} query=${query ? JSON.stringify(query) : 'none'} body=${body ? JSON.stringify(body) : 'none'}`);
+    return undefined;
+  }
+
+  /**
    * Called when the plugin config has been updated.
    *
    * @param {PlatformConfig} config The new plugin config.

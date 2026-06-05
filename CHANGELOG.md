@@ -55,12 +55,70 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.8.0] - 2026-06-05
+
+### Breaking changes
+
+- [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](https://matterbridge.io/Matter-1.5.1.html).
+- [matter]: Update to matter.js 0.17.1. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
+- [matter]: Enable `tcp` transport with `udp` preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.
+
+### Development Breaking changes
+
+- [matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.
+- [endpoint]: Since the cluster clients have been added to each device type, instead of `addRequiredClusterServers()` call `addRequiredClusters()` (3.8.0 only) to add both required server clusters and required client clusters.
+
+### Development
+
+- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API.
+
+### Added
+
+- [plugins]: The plugins can have their own frontend in /apps/frontend/build. It will be served by the Matterbridge express app under /plugins/plugin-name. (https://github.com/Luligu/matterbridge/issues/561).
+- [plugins]: The plugin frontend can fetch from the platform with a full REST API: /plugins/plugin-name/api/:path. It will call platform.onFetch(method: string, path?: string, query?: Record<string, unknown>, body?: unknown) (for an example check matterbridge-test). (https://github.com/Luligu/matterbridge/issues/561).
+- [bindingServer]: Add `getEndpoint(clusterId: ClusterId): Endpoint | undefined` to `MatterbridgeBindingServer` to look up the bound remote endpoint for a given client cluster ID.
+- [endpoint]: Add `addClusterClients(clientList: ClusterId[])` helper and chainable `MatterbridgeEndpoint` method to require `MatterbridgeBindingServer` with the given client cluster list. Safe to call multiple times — subsequent calls merge the new IDs into the existing list without duplicates.
+- [endpoint]: Add `addRequiredClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all required client clusters declared by the endpoint's device types.
+- [endpoint]: Add `addOptionalClusterClients()` helper and chainable `MatterbridgeEndpoint` method to collect and register all optional client clusters declared by the endpoint's device types.
+- [endpoint]: Add `addRequiredClusters()` chainable `MatterbridgeEndpoint` method that calls both `addRequiredClusterServers()` and `addRequiredClusterClients()` in one step.
+- [endpoint]: Add `createDefaultBindingClusterServer(clientList: ClusterId[])` chainable `MatterbridgeEndpoint` method as the standard `createDefault*` helper for the Binding cluster.
+- [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
+- [deviceTypes]: Add `requiredClientClusters` and `optionalClientClusters` to the device type definitions for: `OTAProvider`, `deviceEnergyManagement`, `onOffLight`, `dimmableLight`, `colorTemperatureLight`, `extendedColorLight`, `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `waterValve`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `thermostatDevice`, `heatPump`, `cameraController`.
+- [codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.
+
+### Changed
+
+- [package]: Update dependencies.
+- [package]: Bump `node-ansi-logger` to v.3.3.0-dev-20260524-cac9dd5.
+- [package]: Bump `node-persist-manager` to v.2.1.0-dev-20260524-6a6019a.
+- [package]: Refactor `jest-utils` and `vitest-utils` packages.
+- [package]: Add exports for `jest-utils` and `vitest-utils` packages.
+- [package]: Bump `@eslint/json` to v.2.0.0.
+- [package]: Bump `@vitest/eslint-plugin` to v.1.6.19.
+- [package]: Bump `eslint-plugin-prettier` to v.5.5.6.
+- [package]: Bump `npm-check-updates` to v.22.2.1.
+- [package]: Bump `typescript-eslint` to v.8.60.1.
+- [oxlint]: Bump `oxlint` config to v.1.0.2.
+- [oxfmt]: Bump `oxfmt` config to v.1.0.2.
+- [jest]: Bump `jest` config to v.2.0.2.
+- [vitest]: Bump `vitest` config to v.2.0.5.
+- [eslint]: Bump `eslint` config to v.2.0.5.
+- [eslint]: Bump `devcontainer` config to v.1.0.1.
+- [claude]: Move CLAUDE.md in the repo root.
+- [claude]: Add .claude/settings.json with permissions configuration.
+
+### Fixed
+
+- [frontend]: Fix value of port discriminator and passcode shown on Settings/Matter settings on the frontend.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.7.10] - 2026-05-22
 
 ### Development
 
 - [matter]: Update [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
-- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js%200.17.md).
+- [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
 
 ### Added
 
@@ -70,7 +128,6 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [package]: Update dependencies.
-
 - [package]: Bump `eslint` to v.10.4.0.
 - [package]: Bump `@types/node` to v.25.9.1.
 - [package]: Bump `ts-jest` to v.29.4.11.

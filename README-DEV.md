@@ -211,6 +211,10 @@ git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbr
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 ```
 
@@ -221,6 +225,10 @@ git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/m
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 ```
 
@@ -371,7 +379,7 @@ const device = new MatterbridgeEndpoint([contactSensor, powerSource], { id: 'Ent
   .createDefaultBasicInformationClusterServer('My entry door', '0123456789')
   .createDefaultBooleanStateClusterServer(true)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+  .addRequiredClusters(); // Always better to call it at the end of the chain to add all the not already created but required clusters (server and client).
 ```
 
 In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.
@@ -390,6 +398,50 @@ All default cluster helpers are available as methods of MatterbridgeEndpoint.
 The mode=`server` property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.
 
 The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.
+
+## How to use cluster clients
+
+Some Matter device types act as **controllers** rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called **client clusters**.
+
+Other devices like OnOffLight have an **optional cluster client** OccupancySensor that, when bound to another endpoint (local or remote), allows to turn the light on and off following the OccupancySensor status.
+
+Matterbridge exposes client cluster support through `MatterbridgeBindingServer`. When required on an endpoint it:
+
+1. Registers the given cluster IDs in the Binding cluster's `clientList` state.
+2. Syncs those IDs into the Descriptor cluster's `clientList` attribute so the fabric sees them.
+3. Reacts to established bindings and — for client-kind bindings — enables auto-subscription on the remote node.
+
+### Adding client clusters explicitly
+
+Use `createDefaultBindingClusterServer(clientList)` when you know exactly which cluster IDs to advertise:
+
+```typescript
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { closureController } from 'matterbridge';
+
+const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
+  .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
+  .addRequiredClusters();
+
+await this.registerDevice(device);
+```
+
+`createDefaultBindingClusterServer` delegates to `addClusterClients` and is safe to call multiple times — each call merges the new IDs into the existing list without duplicates. Use `addClusterClients(clientList)` directly when you need to add client clusters after the initial chain.
+
+### Adding client clusters from the device type definition
+
+Each `DeviceTypeDefinition` carries `requiredClientClusters` and `optionalClientClusters` lists, taken directly from the Matter specification. Use these helpers to populate the binding automatically from the device type:
+
+```typescript
+import { closureController } from 'matterbridge';
+
+const device = new MatterbridgeEndpoint(closureController, { id: 'MyClosureController' })
+  .addRequiredClusterServers()
+  .addRequiredClusterClients() // adds ClosureControl.id (required by closureController)
+  .addOptionalClusterClients(); // adds Identify, Groups, ClosureDimension (optional)
+
+await this.registerDevice(device);
+```
 
 ## MatterbridgeEndpoint single class devices
 

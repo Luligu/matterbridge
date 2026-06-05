@@ -324,6 +324,10 @@
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 </code></pre>
 <p>If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).</p>
@@ -331,6 +335,10 @@ npm link --no-fund --no-audit
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
+cd apps/frontend
+npm install --no-fund --no-audit
+npm run build
+cd ../..
 npm link --no-fund --no-audit
 </code></pre>
 <p>Always keep your local instance of matterbridge up to date.</p>
@@ -414,7 +422,7 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
   .createDefaultBasicInformationClusterServer(&#39;My entry door&#39;, &#39;0123456789&#39;)
   .createDefaultBooleanStateClusterServer(true)
   .createDefaultPowerSourceReplaceableBatteryClusterServer(75)
-  .addRequiredClusterServers(); // Always better to call it at the end of the chain to add all the not already created but required clusters.
+  .addRequiredClusters(); // Always better to call it at the end of the chain to add all the not already created but required clusters (server and client).
 </code></pre>
 <p>In the above example we create a contact sensor device type with also a power source device type feature replaceble battery.</p>
 <p>All device types are defined in src\matterbridgeDeviceTypes.ts and taken from the &#39;Matter-1.4.2-Device-Library-Specification.pdf&#39;.</p>
@@ -428,6 +436,38 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 </ul>
 <p>The mode=<code>server</code> property of MatterbridgeEndpointOptions, allows to create an independent (not bridged) Matter device with its server node. In this case the bridge mode is not relevant.</p>
 <p>The mode=<code>matter</code> property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.</p>
+<h2 id="how-to-use-cluster-clients">How to use cluster clients</h2>
+<p>Some Matter device types act as <strong>controllers</strong> rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called <strong>client clusters</strong>.</p>
+<p>Other devices like OnOffLight have an <strong>optional cluster client</strong> OccupancySensor that, when bound to another endpoint (local or remote), allows to turn the light on and off following the OccupancySensor status.</p>
+<p>Matterbridge exposes client cluster support through <code>MatterbridgeBindingServer</code>. When required on an endpoint it:</p>
+<ol>
+<li>Registers the given cluster IDs in the Binding cluster&#39;s <code>clientList</code> state.</li>
+<li>Syncs those IDs into the Descriptor cluster&#39;s <code>clientList</code> attribute so the fabric sees them.</li>
+<li>Reacts to established bindings and — for client-kind bindings — enables auto-subscription on the remote node.</li>
+</ol>
+<h3 id="adding-client-clusters-explicitly">Adding client clusters explicitly</h3>
+<p>Use <code>createDefaultBindingClusterServer(clientList)</code> when you know exactly which cluster IDs to advertise:</p>
+<pre><code class="language-typescript">import { ClosureControl } from &#39;@matter/types/clusters/closure-control&#39;;
+import { closureController } from &#39;matterbridge&#39;;
+
+const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
+  .createDefaultBindingClusterServer([ClosureControl.id]) // advertises ClosureControl as a client cluster
+  .addRequiredClusters();
+
+await this.registerDevice(device);
+</code></pre>
+<p><code>createDefaultBindingClusterServer</code> delegates to <code>addClusterClients</code> and is safe to call multiple times — each call merges the new IDs into the existing list without duplicates. Use <code>addClusterClients(clientList)</code> directly when you need to add client clusters after the initial chain.</p>
+<h3 id="adding-client-clusters-from-the-device-type-definition">Adding client clusters from the device type definition</h3>
+<p>Each <code>DeviceTypeDefinition</code> carries <code>requiredClientClusters</code> and <code>optionalClientClusters</code> lists, taken directly from the Matter specification. Use these helpers to populate the binding automatically from the device type:</p>
+<pre><code class="language-typescript">import { closureController } from &#39;matterbridge&#39;;
+
+const device = new MatterbridgeEndpoint(closureController, { id: &#39;MyClosureController&#39; })
+  .addRequiredClusterServers()
+  .addRequiredClusterClients() // adds ClosureControl.id (required by closureController)
+  .addOptionalClusterClients(); // adds Identify, Groups, ClosureDimension (optional)
+
+await this.registerDevice(device);
+</code></pre>
 <h2 id="matterbridgeendpoint-single-class-devices">MatterbridgeEndpoint single class devices</h2>
 <p>For the device types listed below there are single class provided to createa a fully functional device.</p>
 <p>For a working example refer to the &#39;matterbridge-example-dynamic-platform&#39;.</p>

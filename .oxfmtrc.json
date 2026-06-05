@@ -1,3 +1,6 @@
+// .oxfmtrc.json 1.0.2
+
+// This Oxfmt configuration is designed for a TypeScript project using ESM modules.
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": [
@@ -11,10 +14,10 @@
     "**/temp/**",
     "**/jest/**",
     "**/node_modules/**",
-    "**/scripts/**",
     "**/screenshots/**",
     "vendor/**",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "eslint.config.js"
   ],
   "printWidth": 180,
   "tabWidth": 2,

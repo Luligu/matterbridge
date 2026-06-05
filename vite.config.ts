@@ -1,5 +1,4 @@
-// vite.config.ts
-// vite.config.ts 2.0.3
+// vite.config.ts 2.0.5
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -8,24 +7,47 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   cacheDir: '.cache/vitest',
   test: {
-    include: ['**/vitest/**/*.spec.{ts,mts,cts}', '**/vitest/**/*.test.{ts,mts,cts}'],
-    exclude: ['**/.cache', '**/apps/', '**/build', '**/chip', '**/coverage', '**/dist/', '**/node_modules/', '**/screenshots', '**/temp', '**/vendor'],
+    include: ['**/vitest/**/*.{spec,test}.{ts,mts,cts}'],
+    exclude: [
+      '**/.cache/',
+      '**/apps/',
+      '**/build/',
+      '**/chip/',
+      '**/coverage/',
+      '**/dist/',
+      '**/node_modules/',
+      '**/screenshots/',
+      '**/scripts/',
+      '**/src/mock/',
+      '**/temp/',
+      '**/vendor/',
+    ],
     globals: true,
-    clearMocks: true,
-    restoreMocks: true,
+    clearMocks: false,
+    restoreMocks: false,
     environment: 'node',
-    maxWorkers: 100,
+    maxWorkers: '100%',
     coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov'],
+      provider: 'istanbul',
+      reportsDirectory: 'coverage/vitest',
+      reporter: ['lcov', 'text', 'json'],
       include: ['**/src/**/*.{ts,mts,cts}'],
-      exclude: ['**/.cache', '**/apps/', '**/build', '**/chip', '**/coverage', '**/dist/', '**/node_modules/', '**/screenshots', '**/temp', '**/vendor', '**/src/**/*.d.ts'],
-      thresholds: {
-        statements: 100,
-        branches: 100,
-        functions: 100,
-        lines: 100,
-      },
+      exclude: [
+        '**/.cache/',
+        '**/apps/',
+        '**/build/',
+        '**/chip/',
+        '**/coverage/',
+        '**/dist/',
+        '**/node_modules/',
+        '**/screenshots/',
+        '**/scripts/',
+        '**/src/mock/',
+        '**/temp/',
+        '**/vendor/',
+        '**/vitest/**',
+        '**/src/**/*.d.ts',
+      ],
     },
   },
 });

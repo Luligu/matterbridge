@@ -45,7 +45,15 @@ import {
   WaterHeaterModeServer,
   WindowCoveringServer,
 } from '@matter/node/behaviors';
-import { ContactSensorDevice, OccupancySensorDevice, OccupancySensorDeviceDefinition, OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices';
+import {
+  ContactSensorDevice,
+  OccupancySensorDevice,
+  OccupancySensorDeviceDefinition,
+  OnOffLightSwitchDevice,
+  OnOffLightSwitchRequirements,
+  OnOffPlugInUnitDevice,
+  OnOffPlugInUnitDeviceDefinition,
+} from '@matter/node/devices';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { FabricManager } from '@matter/protocol';
 import {
@@ -63,6 +71,7 @@ import {
   IdentifyCluster,
   LevelControlCluster,
   OccupancySensing,
+  OnOff,
   OnOffCluster,
   PowerSource,
   RvcCleanMode,
@@ -95,7 +104,7 @@ import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServ
 import { Evse, MatterbridgeEnergyEvseServer } from './devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { WaterHeater } from './devices/waterHeater.js';
-import { flushAsync } from './jestutils/jestFlushAsync.js';
+import { flushAsync } from './jestutils/flushAsync.js';
 import {
   createMatterbridgeEnvironment,
   destroyMatterbridgeEnvironment,
@@ -115,6 +124,7 @@ import {
   occupancySensor,
   onOffLight,
   onOffOutlet,
+  onOffSwitch,
   smokeCoAlarm,
   thermostatDevice,
   waterHeater,
@@ -676,6 +686,7 @@ describe('Matterbridge ' + NAME, () => {
         expect(oldState).toEqual({ occupied: false });
         expect(context).toBeDefined();
         expect(context?.offline).toBe(true);
+        expect(context?.fabric).toBeUndefined();
         if (newState.occupied && !oldState.occupied && context?.offline) {
           resolve();
         }
@@ -1430,5 +1441,43 @@ describe('Matterbridge ' + NAME, () => {
     jest.clearAllMocks();
     await evse.invokeBehaviorCommand('energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
+  });
+
+  test('onOffSwitch device type matches OnOffLightSwitchDevice requirements', () => {
+    const device = new MatterbridgeEndpoint(onOffSwitch, { id: 'SwitchTypeCheck' });
+
+    // Extracts sorted numeric cluster IDs from a SupportedBehaviors or requirements map.
+    const clusterIds = (behaviors: Record<string, any>): number[] =>
+      Object.values(behaviors)
+        .map((b) => b?.cluster?.id)
+        .filter((id): id is number => id !== undefined)
+        .sort((a: number, b: number) => a - b);
+
+    // deviceType and deviceRevision must match
+    expect(device.type.deviceType).toBe(OnOffLightSwitchDevice.deviceType);
+    expect(device.type.deviceRevision).toBe(OnOffLightSwitchDevice.deviceRevision);
+
+    const mbServerMandatory = clusterIds((device.type as any).requirements?.server?.mandatory ?? {});
+    const mjServerMandatory = clusterIds(OnOffLightSwitchRequirements.server.mandatory);
+    // matter.js: server mandatory = [Identify] only.
+    // Matterbridge: server mandatory = [Identify, OnOff] — OnOff is also kept as a server cluster
+    // so that bridge plugins receive OnOff commands directly.
+    expect(mjServerMandatory).toEqual([Identify.id]);
+    expect(mbServerMandatory).toContain(Identify.id);
+    expect(mbServerMandatory).toContain(OnOff.id);
+
+    const mbClientMandatory = clusterIds((device.type as any).requirements?.client?.mandatory ?? {});
+    const mjClientMandatory = clusterIds(OnOffLightSwitchRequirements.client.mandatory);
+    // client mandatory must match matter.js: [Identify, OnOff]
+    expect(mbClientMandatory).toEqual(mjClientMandatory);
+
+    const mbClientOptional = clusterIds((device.type as any).requirements?.client?.optional ?? {});
+    const mjClientOptional = clusterIds(OnOffLightSwitchRequirements.client.optional);
+    // client optional must match matter.js: [Groups, ScenesManagement]
+    expect(mbClientOptional).toEqual(mjClientOptional);
+
+    // MutableEndpoint auto-merges requirements.client.mandatory into clientClusters
+    const mbClientClusters = clusterIds(device.type.clientClusters as Record<string, any>);
+    expect(mbClientClusters).toEqual(expect.arrayContaining(mjClientMandatory));
   });
 });

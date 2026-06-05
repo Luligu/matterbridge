@@ -31,6 +31,8 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { RoboticVacuumCleaner } from '../devices/roboticVacuumCleaner.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
+import { addDevice } from '../jestutils/jestMatterTest.js';
+import { loggerLogSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import {
   getEnhancedMoveToHueAndSaturationRequest,
   getEnhancedMoveToHueRequest,
@@ -40,9 +42,7 @@ import {
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
-} from '../jestutils/jestMatterRequest.js';
-import { addDevice } from '../jestutils/jestMatterTest.js';
-import { loggerLogSpy, setupTest } from '../jestutils/jestSetupTest.js';
+} from '../jestutils/matterRequest.js';
 import { Matterbridge } from '../matterbridge.js';
 import {
   airPurifier,

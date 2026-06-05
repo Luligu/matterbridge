@@ -160,8 +160,9 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="acknowledgements">Acknowledgements</h2>
-<p>The project is build on top of <a href="https://github.com/matter-js/matter.js">matter.js</a>.</p>
-<p>A special thanks to Apollon77 for his incredible work.</p>
+<p>This project is built on top of <a href="https://github.com/matter-js/matter.js">matter.js</a>.</p>
+<p>A heartfelt thank you to <a href="https://github.com/Apollon77">Apollon77</a> for his incredible and foundational work on matter.js.</p>
+<p>A very special thank you to my friend <a href="https://github.com/tammeryousef1006">Tamer Salah</a> — without his invaluable daily support since day one, we would not be where we are today.</p>
 <h2 id="discord">Discord</h2>
 <p>Join us in the Matterbridge <a href="https://discord.gg/QX58CDe6hd">Discord group</a> created by <a href="https://github.com/tammeryousef1006">Tamer</a>.</p>
 <h2 id="videos">Videos</h2>
@@ -575,6 +576,92 @@ While Amazon has expanded support to include core categories like lighting, plug
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120">
 </a><p>Thank you for your support!</p>
+<h1 id="package-structure">Package structure</h1>
+<p>Matterbridge is published as an npm <strong>monorepo</strong>. The package you install, <code>matterbridge</code>, is a thin top-level package that depends on and re-exports a set of focused <code>@matterbridge/*</code> packages. Each scoped package is also published independently to npm, shares the same version, and is released together with the others.</p>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>npm package</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>(root)</td>
+<td><code>matterbridge</code></td>
+<td>Matterbridge — the package end users install; aggregates and re-exports the public API.</td>
+</tr>
+<tr>
+<td><code>packages/core</code></td>
+<td><code>@matterbridge/core</code></td>
+<td>Core bridge engine: Matterbridge runtime, frontend/backend servers, Matter endpoints, clusters, behaviors and device classes.</td>
+</tr>
+<tr>
+<td><code>packages/thread</code></td>
+<td><code>@matterbridge/thread</code></td>
+<td>Node.js <code>worker_threads</code> manager and background worker tasks (update checks, command spawning, archiving).</td>
+</tr>
+<tr>
+<td><code>packages/dgram</code></td>
+<td><code>@matterbridge/dgram</code></td>
+<td>UDP datagram networking: multicast/unicast sockets, mDNS and CoAP.</td>
+</tr>
+<tr>
+<td><code>packages/utils</code></td>
+<td><code>@matterbridge/utils</code></td>
+<td>General-purpose utilities (validation, network, command line, error handling).</td>
+</tr>
+<tr>
+<td><code>packages/types</code></td>
+<td><code>@matterbridge/types</code></td>
+<td>Shared TypeScript types and constants.</td>
+</tr>
+<tr>
+<td><code>packages/jest-utils</code></td>
+<td><code>@matterbridge/jest-utils</code></td>
+<td>Jest test-environment setup helpers.</td>
+</tr>
+<tr>
+<td><code>packages/vitest-utils</code></td>
+<td><code>@matterbridge/vitest-utils</code></td>
+<td>Vitest test-environment setup helpers.</td>
+</tr>
+</tbody></table>
+<h2 id="imports-graph">Imports graph</h2>
+<p>Runtime dependencies between the published packages.</p>
+<pre><code class="language-mermaid">graph TD
+  matterbridge[&quot;matterbridge&quot;]
+  core[&quot;@matterbridge/core&quot;]
+  thread[&quot;@matterbridge/thread&quot;]
+  dgram[&quot;@matterbridge/dgram&quot;]
+  utils[&quot;@matterbridge/utils&quot;]
+  types[&quot;@matterbridge/types&quot;]
+  jestutils[&quot;@matterbridge/jest-utils&quot;]
+  vitestutils[&quot;@matterbridge/vitest-utils&quot;]
+
+  matterbridge --&gt; core
+  matterbridge --&gt; jestutils
+  matterbridge --&gt; vitestutils
+
+  core --&gt; thread
+  core --&gt; dgram
+  core --&gt; utils
+  core --&gt; types
+
+  thread --&gt; utils
+  thread --&gt; types
+  dgram --&gt; utils
+  jestutils --&gt; types
+  vitestutils --&gt; types
+</code></pre>
+<p>The graph is acyclic and layered:</p>
+<ul>
+<li><strong>Foundation (no internal dependencies):</strong> <code>@matterbridge/types</code>, <code>@matterbridge/utils</code>.</li>
+<li><strong>Networking &amp; workers:</strong> <code>@matterbridge/dgram</code> (→ <code>utils</code>), <code>@matterbridge/thread</code> (→ <code>utils</code>, <code>types</code>).</li>
+<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> (→ <code>types</code>).</li>
+<li><strong>Core:</strong> <code>@matterbridge/core</code> (→ <code>dgram</code>, <code>thread</code>, <code>utils</code>, <code>types</code>).</li>
+<li><strong>Top level:</strong> <code>matterbridge</code> declares all scoped packages as direct dependencies; <code>core</code> pulls in the rest transitively.</li>
+</ul>
 <h1 id="licensing">Licensing</h1>
 <p>Matterbridge is licensed under the <a href="./LICENSE">Apache License 2.0</a>.</p>
   <script>

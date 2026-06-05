@@ -89,7 +89,7 @@ Quality P = Reportable: means the attribute is intended to support interval or c
 
 (2) Thermostat cluster is revision 10 (not 9 like in xml).
 
-(3) Occupancy revision 7 is likely a typo in spec.
+(3) Occupancy revision 7 is likely a typo in spec. We decided to keep it to 6.
 
 ## New Cluster Types
 
