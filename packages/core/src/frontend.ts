@@ -66,6 +66,7 @@ import {
 } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
+import { logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
@@ -82,7 +83,6 @@ import type { Matterbridge } from './matterbridge.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import type { Plugin } from './pluginManager.js';
-import { logError } from './utils/export.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // eslint-disable-next-line no-console

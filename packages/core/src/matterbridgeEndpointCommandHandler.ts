@@ -553,64 +553,6 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
-  /*
-  'DoorLock.setPinCode': {
-    command: 'setPinCode'; // PIN not USR
-    request: DoorLock.SetPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getPinCode': {
-    command: 'getPinCode'; // PIN not USR
-    request: DoorLock.GetPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearPinCode': {
-    command: 'clearPinCode'; // PIN not USR
-    request: DoorLock.ClearPinCodeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearAllPinCodes': {
-    command: 'clearAllPinCodes'; // PIN not USR
-    request: {};
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setUserStatus': {
-    command: 'setUserStatus'; // PIN not USR
-    request: DoorLock.SetUserStatusRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getUserStatus': {
-    command: 'getUserStatus'; // PIN not USR
-    request: DoorLock.GetUserStatusRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setUserType': {
-    command: 'setUserType'; // PIN not USR
-    request: DoorLock.SetUserTypeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getUserType': {
-    command: 'getUserType'; // PIN not USR
-    request: DoorLock.GetUserTypeRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  */
   'DoorLock.setUser': {
     command: 'setUser'; // USR
     request: DoorLock.SetUserRequest;
