@@ -86,6 +86,17 @@ if [ -n "$FRONTEND_BIND" ]; then
   ARGS="$ARGS --bind $FRONTEND_BIND"
 fi
 
+# Clean up stale matter.js lock files before starting.
+# In s6-rc, PID 1 is the init process (not Matterbridge), so a lock file that records
+# PID 1 from a previous standard-Docker run is never considered stale by matter.js — it
+# calls process.kill(1,0) which always succeeds.  Remove any such locks now; s6-rc
+# guarantees a single service instance so this is unconditionally safe.
+MATTER_STORAGE="$HOME_DIR/.matterbridge/matterstorage"
+if [ -d "$MATTER_STORAGE" ]; then
+  find "$MATTER_STORAGE" -name "matter.lock" -delete 2>/dev/null || true
+  find "$MATTER_STORAGE" -name "matter.pid"  -delete 2>/dev/null || true
+fi
+
 # Start Matterbridge
 echo "🚀 Starting Matterbridge with args: $ARGS"
 echo " "
