@@ -403,6 +403,8 @@ The mode=`matter` property of MatterbridgeEndpointOptions, allows to create a (n
 
 Some Matter device types act as **controllers** rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called **client clusters**.
 
+Other devices like OnOffLight have an **optional cluster client** OccupancySensor that, when bound to another endpoint (local or remote), allows to turn the light on and off following the OccupancySensor status.
+
 Matterbridge exposes client cluster support through `MatterbridgeBindingServer`. When required on an endpoint it:
 
 1. Registers the given cluster IDs in the Binding cluster's `clientList` state.

@@ -62,7 +62,11 @@ These classes will run as threads in the next releases:
 - [matter]: Update to Matter 1.5.1. See [Matter 1.5.1 changes from 1.4.2](https://matterbridge.io/Matter-1.5.1.html).
 - [matter]: Update to matter.js 0.17.1. See [Matter.js 0.17 changes from 0.16](https://matterbridge.io/Matter.js-0.17.html).
 - [matter]: Enable `tcp` transport with `udp` preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.
-- [endpoint]: Since the cluster clients have been added to each device type, instead of `addRequiredClusterServers()` call `addRequiredClusters()` to add both required server clusters and required client clusters.
+
+### Development Breaking changes
+
+- [matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.
+- [endpoint]: Since the cluster clients have been added to each device type, instead of `addRequiredClusterServers()` call `addRequiredClusters()` (3.8.0 only) to add both required server clusters and required client clusters.
 
 ### Development
 
@@ -100,7 +104,6 @@ These classes will run as threads in the next releases:
 - [vitest]: Bump `vitest` config to v.2.0.5.
 - [eslint]: Bump `eslint` config to v.2.0.5.
 - [eslint]: Bump `devcontainer` config to v.1.0.1.
-
 - [claude]: Move CLAUDE.md in the repo root.
 - [claude]: Add .claude/settings.json with permissions configuration.
 

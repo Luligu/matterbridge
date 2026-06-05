@@ -438,6 +438,7 @@ Here you can store your plugin configuration (see matterbridge-zigbee2mqtt for e
 <p>The mode=<code>matter</code> property of MatterbridgeEndpointOptions, allows to create a (not bridged) Matter device that is added to the Matterbridge server node alongside the aggregator.</p>
 <h2 id="how-to-use-cluster-clients">How to use cluster clients</h2>
 <p>Some Matter device types act as <strong>controllers</strong> rather than servers. They consume clusters that are implemented on remote endpoints (e.g. a Closure Controller that drives a Closure device). These are called <strong>client clusters</strong>.</p>
+<p>Other devices like OnOffLight have an <strong>optional cluster client</strong> OccupancySensor that, when bound to another endpoint (local or remote), allows to turn the light on and off following the OccupancySensor status.</p>
 <p>Matterbridge exposes client cluster support through <code>MatterbridgeBindingServer</code>. When required on an endpoint it:</p>
 <ol>
 <li>Registers the given cluster IDs in the Binding cluster&#39;s <code>clientList</code> state.</li>

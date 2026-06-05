@@ -1,6 +1,6 @@
-# Matter.js 0.17
+# Matter.js 0.17.x
 
-This file summarizes the [matter.js 0.17](https://github.com/matter-js/matter.js/blob/main/CHANGELOG.md) deltas compared with matter.js 0.16.11.
+This file summarizes the [matter.js 0.17.x](https://github.com/matter-js/matter.js/blob/main/CHANGELOG.md) deltas compared with matter.js 0.16.11.
 
 It focuses only on the changes that matter for Matterbridge.
 
