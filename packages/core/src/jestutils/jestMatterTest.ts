@@ -354,8 +354,9 @@ export async function createServerNode(
       vendorId: VendorId(0xfff1),
       vendorName: 'Matterbridge',
       productId: 0x8000,
-      productName: 'Matterbridge ' + NAME,
-      nodeLabel: NAME + 'ServerNode',
+      productName: ('Matterbridge ' + NAME).slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
+      productLabel: ('Label ' + NAME).slice(0, 64), // truncate to 64 chars to satisfy BasicInformation cluster constraints
+      nodeLabel: (NAME + 'ServerNode').slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
       hardwareVersion: 1,
       softwareVersion: 1,
       reachable: true,

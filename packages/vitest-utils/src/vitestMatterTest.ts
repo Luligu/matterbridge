@@ -29,6 +29,10 @@ import { inspect } from 'node:util';
 // @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
+import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
@@ -131,7 +135,6 @@ export async function destroyTestEnvironment(): Promise<void> {
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
 export async function getMatterbridge(): Promise<PlatformMatterbridge> {
-  const { vi } = await import('vitest');
   const matterbridge: PlatformMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
@@ -174,22 +177,78 @@ export async function getMatterbridge(): Promise<PlatformMatterbridge> {
     aggregatorProductId: 0x8000,
     aggregatorProductName: 'Matterbridge Vitest',
   };
-  const injectedFunctions = {
-    addBridgedEndpoint: vi.fn(async () => {
-      return Promise.resolve(true);
-    }),
-    removeBridgedEndpoint: vi.fn(async () => {
-      return Promise.resolve(true);
-    }),
-    removeAllBridgedEndpoints: vi.fn(async () => {
-      return Promise.resolve(true);
-    }),
-    addVirtualEndpoint: vi.fn(async () => {
-      return Promise.resolve(true);
-    }),
-  };
-  return { ...matterbridge, ...injectedFunctions } as unknown as PlatformMatterbridge;
+  return matterbridge;
 }
+
+/** Add a bridged endpoint */
+const addBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+  await aggregator.add(device);
+  // await addDevice(aggregator, device);
+  return Promise.resolve(true);
+});
+
+/** Remove a bridged endpoint */
+const removeBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+  await device.delete();
+  // await deleteDevice(aggregator, device);
+  return Promise.resolve(true);
+});
+
+/** Remove all bridged endpoints */
+const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay: number = 0) => {
+  for (const device of aggregator.parts) {
+    await device.delete();
+    // await deleteDevice(aggregator, device);
+  }
+  return Promise.resolve(true);
+});
+
+/** Add a virtual endpoint */
+const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
+  const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
+    id: name.replaceAll(' ', '') + ':' + type,
+    bridgedDeviceBasicInformation: {
+      vendorId: VendorId(0xfff1),
+      vendorName: 'Matterbridge',
+      productName: 'Matterbridge Virtual Device',
+      nodeLabel: name.slice(0, 32),
+      softwareVersion: 20000,
+      softwareVersionString: '2.0.0',
+    },
+    onOff: { onOff: false },
+  });
+
+  // Set up an event listener for when the `onOff` state changes.
+  device.events.onOff.onOff$Changed.on((value) => {
+    // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
+    if (value) {
+      void callback().catch(/* istanbul ignore next */ () => {});
+      void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+    }
+  });
+
+  // Add the created device to the given endpoint.
+  await aggregator.add(device);
+  // await addDevice(aggregator, device);
+
+  // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
+  if (type === 'mounted_switch') {
+    await device.act(async (agent) => {
+      const descriptor = await agent.load(DescriptorServer);
+      descriptor.addDeviceTypes('OnOffPlugInUnit');
+    });
+  }
+
+  // Initially set the state of the virtual device's `OnOffServer` to false (off).
+  await device.setStateOf(OnOffServer, { onOff: false });
+
+  return device;
+});
+
+export const addBridgedEndpointMatterbridgeSpy = addBridgedEndpoint;
+export const removeBridgedEndpointMatterbridgeSpy = removeBridgedEndpoint;
+export const removeAllBridgedEndpointsMatterbridgeSpy = removeAllBridgedEndpoints;
+export const addVirtualEndpointMatterbridgeSpy = addVirtualEndpoint;
 
 /**
  * Inject matterbridge platform for testing.
@@ -207,16 +266,7 @@ export function addMatterbridge(platform: object): void {
   expect(platform).toBeDefined();
   // Setup the platform MatterNode helpers
   // @ts-expect-error - setMatterNode is intentionally private
-  platform.setMatterNode(
-    // @ts-expect-error - the methods are injected in getMatterbridge()
-    platform.matterbridge.addBridgedEndpoint,
-    // @ts-expect-error - the methods are injected in getMatterbridge()
-    platform.matterbridge.removeBridgedEndpoint,
-    // @ts-expect-error - the methods are injected in getMatterbridge()
-    platform.matterbridge.removeAllBridgedEndpoints,
-    // @ts-expect-error - the methods are injected in getMatterbridge()
-    platform.matterbridge.addVirtualEndpoint,
-  );
+  platform.setMatterNode(addBridgedEndpoint, removeBridgedEndpoint, removeAllBridgedEndpoints, addVirtualEndpoint);
 }
 
 /**
@@ -388,7 +438,8 @@ export async function createServerNode(
       vendorName: 'Matterbridge',
       productId: 0x8000,
       productName: ('Matterbridge ' + NAME).slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
-      nodeLabel: NAME + 'ServerNode',
+      productLabel: ('Label ' + NAME).slice(0, 64), // truncate to 64 chars to satisfy BasicInformation cluster constraints
+      nodeLabel: (NAME + 'ServerNode').slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
       hardwareVersion: 1,
       softwareVersion: 1,
       reachable: true,

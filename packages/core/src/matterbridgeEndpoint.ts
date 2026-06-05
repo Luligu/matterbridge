@@ -2865,11 +2865,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    */
   async setWindowCoveringTargetAsCurrentAndStopped() {
-    const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
+    const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
     if (isValidNumber(position, 0, 10000)) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
       await this.setAttribute(
-        WindowCovering.Cluster.id,
+        WindowCovering,
         'operationalStatus',
         {
           global: WindowCovering.MovementStatus.Stopped,
@@ -2880,10 +2880,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
     }
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
-    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
-      const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', this.log);
+    if (this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+      const position = this.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths', this.log);
       if (isValidNumber(position, 0, 10000)) {
-        await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
+        await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', position, this.log);
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
@@ -2897,10 +2897,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    */
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
+    await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
+    await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
     await this.setAttribute(
-      WindowCovering.Cluster.id,
+      WindowCovering,
       'operationalStatus',
       {
         global: status,
@@ -2919,7 +2919,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
     await this.setAttribute(
-      WindowCovering.Cluster.id,
+      WindowCovering,
       'operationalStatus',
       {
         global: status,
@@ -2937,7 +2937,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {WindowCovering.MovementStatus | undefined} The movement status of the window covering, or undefined if not available.
    */
   getWindowCoveringStatus(): WindowCovering.MovementStatus | undefined {
-    const status = this.getAttribute(WindowCovering.Cluster.id, 'operationalStatus', this.log);
+    const status = this.getAttribute(WindowCovering, 'operationalStatus', this.log);
     if (isValidObject(status, 3) && 'global' in status && typeof status.global === 'number') {
       this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
       return status.global;
@@ -2951,12 +2951,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [tiltPosition] - The tilt position to set, specified as a number.
    */
   async setWindowCoveringTargetAndCurrentPosition(liftPosition: number, tiltPosition?: number) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', liftPosition, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', liftPosition, this.log);
+    await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', liftPosition, this.log);
+    await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', liftPosition, this.log);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
-    if (tiltPosition && this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
+    if (tiltPosition && this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+      await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${tiltPosition} and targetPositionTiltPercent100ths: ${tiltPosition}.`);
     }
   }
