@@ -35,6 +35,7 @@ describe('ConfigPluginDialog debug paths', () => {
     description: 'Debug test plugin',
     author: 'Test Author',
     enabled: true,
+    private: false,
     configJson: {
       name: 'matterbridge-debug-test',
       type: 'DynamicPlatform',

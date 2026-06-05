@@ -76,8 +76,11 @@ jobs:
         run: npm publish --tag latest --access public || true
         working-directory: apps/frontend
 
-      - name: Test matterbridge
+      - name: Run matterbridge Jest tests
         run: npm run test -- --testTimeout=30000
+
+      - name: Run matterbridge Vitest tests
+        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |
@@ -233,8 +236,11 @@ jobs:
           npm publish --tag dev --access public || true
           npm version "${BASE}" --no-git-tag-version --ignore-scripts
 
-      - name: Test matterbridge
+      - name: Run matterbridge Jest tests
         run: npm run test -- --testTimeout=30000
+
+      - name: Run matterbridge Vitest tests
+        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |

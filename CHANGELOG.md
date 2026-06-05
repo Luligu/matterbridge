@@ -55,6 +55,27 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.8.1] - Dev branch
+
+### Added
+
+- [s6-rc]: Delete matter.js storage locks before starting in the s6-rc and s6-rc-legacy docker images.
+
+### Changed
+
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `marked` to v.18.0.5.
+- [matterbridge]: Bump `npm-check-updates` to v.22.2.2.
+
+- [frontend]: Update dependencies.
+- [frontend]: Bump `@rjsf` to v.6.6.1.
+- [frontend]: Bump `react` to v.19.2.7.
+- [frontend]: Bump `react-router` to v.7.17.0.
+- [frontend]: Bump `vite` to v.8.0.16.
+- [frontend]: Bump `vitest` to v.4.1.8.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.8.0] - 2026-06-05
 
 ### Breaking changes
