@@ -30,7 +30,6 @@ export const pluginIgnoreList = [
   'matterbridge-plugin-template', // standard template repository - someone published on hist name!!!!!!!
   'matterbridge-dyson', // my package
   'matterbridge-tuya', // my package
-  'matterbridge-mqtt', // my package
   'matterbridge-matter', // my package
   'matterbridge-automations', // my package
   'matterbridge-securitysystem', // empty place holder
