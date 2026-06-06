@@ -57,6 +57,10 @@ These classes will run as threads in the next releases:
 
 ## [3.8.1] - Dev branch
 
+### Development Breaking Changes
+
+- [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
+
 ### Added
 
 - [s6-rc]: Delete matter.js storage locks before starting the s6-rc and s6-rc-legacy docker images.
@@ -68,6 +72,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `marked` to v.18.0.5.
 - [matterbridge]: Bump `npm-check-updates` to v.22.2.2.
 
+- [frontend]: Bump `frontend` version to v.3.4.17.
 - [frontend]: Update dependencies.
 - [frontend]: Bump `@rjsf` to v.6.6.1.
 - [frontend]: Bump `react` to v.19.2.7.

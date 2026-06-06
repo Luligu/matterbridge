@@ -735,7 +735,6 @@ describe('Matterbridge ' + NAME, () => {
       offlineState = context.offline;
     };
     device.subscribeAttribute('booleanState', 'stateValue', listener, device.log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`is in the ${BLUE}inactive${db} state`));
 
     await add(device);
     console.log('subscribeAttribute without await: add(device)', newState);
@@ -787,13 +786,13 @@ describe('Matterbridge ' + NAME, () => {
       offlineState = context.offline;
     };
 
-    expect(await device.subscribeAttribute('booleanStateXX', 'stateValue', listener, device.log)).toBe(false);
+    device.subscribeAttribute('booleanStateXX', 'stateValue', listener, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute ${hk}stateValue${er} error: cluster not found on endpoint`));
 
-    expect(await device.subscribeAttribute('booleanState', 'stateValueXX', listener, device.log)).toBe(false);
+    device.subscribeAttribute('booleanState', 'stateValueXX', listener, device.log);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeAttribute error: Attribute ${hk}stateValueXX${er} not found on Cluster`));
 
-    expect(await device.subscribeAttribute('booleanState', 'stateValue', listener, device.log)).toBe(true);
+    expect(device.subscribeAttribute('booleanState', 'stateValue', listener, device.log)).toBe(device);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint `));
 
     await device.setAttribute(BooleanStateCluster, 'stateValue', false, device.log);

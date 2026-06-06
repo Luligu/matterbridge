@@ -56,7 +56,7 @@ import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, Sanitize
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
-import { inspectError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { isValidNumber, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 import { wait, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger module
@@ -72,7 +72,6 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
-import { getErrorMessage } from './utils/export.js';
 
 /**
  * Represents the Matter events.
@@ -1329,7 +1328,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         this.log.debug(
           `Subscribing to endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
         );
-        await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+        device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
           if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
           this.log.debug(
             `Bridged endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,
@@ -1357,7 +1356,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           this.log.debug(
             `Subscribing to child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
           );
-          await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+          child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
             if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
             this.log.debug(
               `Bridged child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,

@@ -228,11 +228,11 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         behaviorOfflineState = context.offline;
       };
 
-      const subscribeFromBehavior: boolean = await device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
-      expect(subscribeFromBehavior).toBe(true);
+      const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
+      expect(subscribeFromBehavior).toBe(device);
 
       let serverState: boolean | undefined;
-      const subscribeFromServer: boolean = await device.subscribeAttribute(
+      const subscribeFromServer: MatterbridgeEndpoint = device.subscribeAttribute(
         BooleanStateServer,
         'stateValue',
         (newValue: boolean) => {
@@ -240,10 +240,10 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         },
         device.log,
       );
-      expect(subscribeFromServer).toBe(true);
+      expect(subscribeFromServer).toBe(device);
 
       let clusterState: boolean | undefined;
-      const subscribeFromCluster: boolean = await device.subscribeAttribute(
+      const subscribeFromCluster: MatterbridgeEndpoint = device.subscribeAttribute(
         BooleanState.Cluster,
         'stateValue',
         (newValue: boolean) => {
@@ -251,10 +251,10 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         },
         device.log,
       );
-      expect(subscribeFromCluster).toBe(true);
+      expect(subscribeFromCluster).toBe(device);
 
       let clusterIdState: boolean | undefined;
-      const subscribeFromClusterId: boolean = await device.subscribeAttribute(
+      const subscribeFromClusterId: MatterbridgeEndpoint = device.subscribeAttribute(
         BooleanState.Cluster.id,
         'stateValue',
         (newValue) => {
@@ -262,10 +262,10 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         },
         device.log,
       );
-      expect(subscribeFromClusterId).toBe(true);
+      expect(subscribeFromClusterId).toBe(device);
 
       let stringState: boolean | undefined;
-      const subscribeFromString: boolean = await device.subscribeAttribute(
+      const subscribeFromString: MatterbridgeEndpoint = device.subscribeAttribute(
         'BooleanState',
         'stateValue',
         (newValue) => {
@@ -273,7 +273,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         },
         device.log,
       );
-      expect(subscribeFromString).toBe(true);
+      expect(subscribeFromString).toBe(device);
 
       await device.setAttribute(BooleanState.Cluster, 'stateValue', false, device.log);
       expect(behaviorState).toBe(false);
@@ -298,11 +298,11 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for typed cluster listener values
         device.subscribeAttribute(BooleanState.Cluster, 'stateValue', (newValue: string, oldValue: string, context: ActionContext) => {}, device.log);
         // @ts-expect-error intentional type-check guard for typed return value
-        const invalidSubscribeType: Promise<string> = device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
+        const invalidSubscribeType: string = device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed server return value
-        const invalidServerSubscribeType: Promise<string> = device.subscribeAttribute(BooleanStateServer, 'stateValue', behaviorListener, device.log);
+        const invalidServerSubscribeType: string = device.subscribeAttribute(BooleanStateServer, 'stateValue', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidClusterSubscribeType: Promise<string> = device.subscribeAttribute(BooleanState.Cluster, 'stateValue', behaviorListener, device.log);
+        const invalidClusterSubscribeType: string = device.subscribeAttribute(BooleanState.Cluster, 'stateValue', behaviorListener, device.log);
         void invalidSubscribeType;
         void invalidServerSubscribeType;
         void invalidClusterSubscribeType;

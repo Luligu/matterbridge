@@ -3309,7 +3309,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     for (const sub of subscriptions) {
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
         this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
-        await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+        device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
           this.log.debug(
             `Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
           );
@@ -3322,7 +3322,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(
             `Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
           );
-          await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+          child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
             this.log.debug(
               `Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
             );

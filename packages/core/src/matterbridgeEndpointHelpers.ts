@@ -1005,32 +1005,25 @@ export async function updateAttribute(
  * @param {string} attribute - The name of the attribute to subscribe to.
  * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
- * @returns {boolean} - A boolean indicating whether the subscription was successful.
+ * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
  *
  * @remarks The listener function (cannot be async) will receive three parameters:
  * - `newValue`: The new value of the attribute.
  * - `oldValue`: The old value of the attribute.
  * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
  */
-export async function subscribeAttribute(
+export function subscribeAttribute(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   attribute: string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   listener: (newValue: any, oldValue: any, context: ActionContext) => void,
   log?: AnsiLogger,
-): Promise<boolean> {
+): MatterbridgeEndpoint {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
     endpoint.log.error(`subscribeAttribute ${hk}${attribute}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
-    return false;
-  }
-
-  if (endpoint.construction.status !== Lifecycle.Status.Active) {
-    endpoint.log.debug(
-      `subscribeAttribute ${hk}${clusterName}.${attribute}${db}: Endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} is in the ${BLUE}${endpoint.construction.status}${db} state`,
-    );
-    await endpoint.construction.ready;
+    return endpoint;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1040,11 +1033,13 @@ export async function subscribeAttribute(
     endpoint.log.error(
       `subscribeAttribute error: Attribute ${hk}${attribute.replace('$Changed', '')}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
     );
-    return false;
+    return endpoint;
   }
   events[clusterName][attribute].on(listener);
-  log?.info(`${db}Subscribed endpoint ${or}${endpoint.id}${db}:${or}${endpoint.number}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`);
-  return true;
+  log?.info(
+    `${db}Subscribed endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`,
+  );
+  return endpoint;
 }
 
 /**

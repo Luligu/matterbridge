@@ -1762,6 +1762,7 @@ describe('Matterbridge ' + NAME, () => {
       },
       device.log,
     );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint`));
 
     jest.clearAllMocks();
     await device.triggerEvent(BooleanStateConfiguration.Cluster.id, 'stateChange', { stateValue: true });
@@ -1784,7 +1785,6 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue')).toBe(false);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint`));
     await device.setAttribute(BooleanState.Cluster.id, 'stateValue', true);
     expect(called).toBe(true);
 

@@ -893,7 +893,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -901,15 +901,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -919,12 +919,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(
+  subscribeAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(
     cluster: T,
     attribute: A,
     listener: (newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -932,7 +932,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -940,15 +940,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -958,12 +958,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
+  subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
     listener: (newValue: ClusterAttributesOf<T>[A], oldValue: ClusterAttributesOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -971,7 +971,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -979,15 +979,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -997,13 +997,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute(
+  subscribeAttribute(
     cluster: ClusterId | string,
     attribute: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -1011,7 +1011,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -1019,15 +1019,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOffCluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -1037,14 +1037,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute(
+  subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     attribute: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean> {
-    return await subscribeAttribute(this, cluster, attribute, listener, log);
+  ): MatterbridgeEndpoint {
+    return subscribeAttribute(this, cluster, attribute, listener, log);
   }
   /* eslint-enable @typescript-eslint/unified-signatures */
 
