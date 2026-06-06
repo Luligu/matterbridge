@@ -184,14 +184,12 @@ export async function getMatterbridge(): Promise<PlatformMatterbridge> {
 /** Add a bridged endpoint */
 const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
   await aggregator.add(device);
-  // await addDevice(aggregator, device);
   return Promise.resolve(true);
 });
 
 /** Remove a bridged endpoint */
 const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
   await device.delete();
-  // await deleteDevice(aggregator, device);
   return Promise.resolve(true);
 });
 
@@ -199,7 +197,6 @@ const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoin
 const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: number = 0) => {
   for (const device of aggregator.parts) {
     await device.delete();
-    // await deleteDevice(aggregator, device);
   }
   return Promise.resolve(true);
 });
@@ -230,7 +227,6 @@ const addVirtualEndpoint = jest.fn(async (pluginName: string, name: string, type
 
   // Add the created device to the given endpoint.
   await aggregator.add(device);
-  // await addDevice(aggregator, device);
 
   // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
   if (type === 'mounted_switch') {

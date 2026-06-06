@@ -60,6 +60,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [s6-rc]: Delete matter.js storage locks before starting the s6-rc and s6-rc-legacy docker images.
+- [test-utils]: Add matter methods in jest-utils and vites-utils packages.
 
 ### Changed
 
