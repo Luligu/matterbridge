@@ -1,4 +1,4 @@
-// VS Code settings v. 1.0.1
+// VS Code settings v. 1.0.2
 {
   "eslint.enable": true,
   "prettier.enable": true,
@@ -7,6 +7,7 @@
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "terminal.integrated.scrollback": 10000,
   "editor.tabSize": 2,
+  "editor.rulers": [180],
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
@@ -27,6 +28,7 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
   "files.watcherExclude": {
     "**/build/**": true,
     "**/.cache/**": true,
@@ -41,6 +43,7 @@
   },
   "git.autofetch": true,
   "git.autoRepositoryDetection": false,
+  // VS Code's Copilot Chat extension settings
   "chat.useCustomizationsInParentRepositories": false,
   "chat.useClaudeMdFile": true,
   "chat.instructionsFilesLocations": {

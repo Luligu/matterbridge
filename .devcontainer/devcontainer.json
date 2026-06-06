@@ -1,4 +1,4 @@
-// .devcontainer/devcontainer.json v. 1.0.1
+// .devcontainer/devcontainer.json v. 1.0.2
 
 // This file defines the development container configuration for Matterbridge.
 
@@ -95,6 +95,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "js/ts.tsdk.promptToUseWorkspaceVersion": false,
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
+        "editor.rulers": [180],
         "editor.formatOnSave": true,
         "editor.defaultFormatter": "dbaeumer.vscode-eslint",
         "[javascript]": { "editor.defaultFormatter": "dbaeumer.vscode-eslint" },
@@ -115,6 +116,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "files.eol": "\n",
         "files.insertFinalNewline": true,
         "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
         "files.watcherExclude": {
           "**/build/**": true,
           "**/.cache/**": true,
