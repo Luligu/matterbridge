@@ -1082,7 +1082,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Sets the state of the provided cluster on a given endpoint.
    *
    * @param {ClusterType} cluster - The cluster to set.
-   * @param {ClusterType.AttributeValues<T>} value - The state to set for the cluster.
+   * @param {Partial<ClusterAttributesOf<T>>} value - The partial state to set for the cluster.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
    *
@@ -1100,6 +1100,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * await device.setCluster(OnOffServer, { onOff: true })
    * await device.setCluster(OnOffCluster, { onOff: true })
    * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * await device.setCluster(OnOff, { onOff: true })
    * ```
    * Not typed overloads:
    * ```typescript
@@ -1108,7 +1109,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
-  async setCluster<T extends ClusterType>(cluster: T, value: ClusterAttributesOf<T>, log?: AnsiLogger): Promise<boolean>;
+  async setCluster<T extends ClusterType>(cluster: T, value: Partial<ClusterAttributesOf<T>>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *

@@ -59,7 +59,7 @@ These classes will run as threads in the next releases:
 
 ### Added
 
-- [s6-rc]: Delete matter.js storage locks before starting in the s6-rc and s6-rc-legacy docker images.
+- [s6-rc]: Delete matter.js storage locks before starting the s6-rc and s6-rc-legacy docker images.
 
 ### Changed
 
@@ -73,6 +73,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `react-router` to v.7.17.0.
 - [frontend]: Bump `vite` to v.8.0.16.
 - [frontend]: Bump `vitest` to v.4.1.8.
+
+### Fixed
+
+- [setCluster]: Allow partial in setCluster() ClusterType overload.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

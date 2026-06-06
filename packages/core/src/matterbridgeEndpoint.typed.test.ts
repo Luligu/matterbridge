@@ -25,15 +25,18 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
+import { OnOffServer } from '@matter/main/behaviors/on-off';
 import { ActionContext } from '@matter/node';
 import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
+import { OnOffBehavior } from '@matter/node/behaviors/on-off';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from './jestutils/jestMatterTest.js';
 import { setupTest } from './jestutils/jestSetupTest.js';
-import { genericSwitch, rainSensor, thermostatDevice } from './matterbridgeDeviceTypes.js';
+import { genericSwitch, onOffOutlet, rainSensor, thermostatDevice } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { internalFor } from './matterbridgeEndpointHelpers.js';
 
@@ -382,7 +385,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         device.setCluster(BooleanStateBehavior, {}, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type server cluster missing payload property overload
         device.setCluster(BooleanStateServer, {}, device.log);
-        // @ts-expect-error intentional type-check guard for ClusterType cluster missing payload property overload
         device.setCluster(BooleanState.Cluster, {}, device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidSetClusterType: Promise<string> = device.setCluster(BooleanStateBehavior, { stateValue: true }, device.log);
@@ -390,6 +392,60 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         const invalidServerSetClusterType: Promise<string> = device.setCluster(BooleanStateServer, { stateValue: true }, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
         const invalidTypedSetClusterType: Promise<string> = device.setCluster(BooleanState.Cluster, { stateValue: true }, device.log);
+        void invalidSetClusterType;
+        void invalidServerSetClusterType;
+        void invalidTypedSetClusterType;
+      }
+    } finally {
+      await deleteDevice(aggregator, device);
+    }
+  });
+
+  test('setCluster type checks with OnOff', async () => {
+    const device = new MatterbridgeEndpoint(onOffOutlet, { id: 'OnOffOutletSetClusterTypeCheck', number: EndpointNumber(1001) }, true);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBe(true);
+    try {
+      const setFromBehavior: boolean = await device.setCluster(OnOffBehavior, { onOff: true }, device.log);
+      expect(setFromBehavior).toBe(true);
+      expect(device.getAttribute(OnOffBehavior, 'onOff', device.log)).toBe(true);
+
+      const setFromServer: boolean = await device.setCluster(OnOffServer, { onOff: false }, device.log);
+      expect(setFromServer).toBe(true);
+      expect(device.getAttribute(OnOffServer, 'onOff', device.log)).toBe(false);
+
+      const setFromCluster: boolean = await device.setCluster(OnOff, { onOff: true }, device.log);
+      expect(setFromCluster).toBe(true);
+      expect(device.getAttribute(OnOff, 'onOff', device.log)).toBe(true);
+
+      const setFromClusterId: boolean = await device.setCluster(OnOff.id, { onOff: false }, device.log);
+      expect(setFromClusterId).toBe(true);
+      expect(device.getAttribute(OnOff.id, 'onOff', device.log)).toBe(false);
+
+      const setFromString: boolean = await device.setCluster('OnOff', { onOff: true }, device.log);
+      expect(setFromString).toBe(true);
+      expect(device.getAttribute('OnOff', 'onOff', device.log)).toBe(true);
+
+      if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // @ts-expect-error intentional type-check guard for Behavior.Type cluster payload overload
+        device.setCluster(OnOffBehavior, { onOff: 'true' }, device.log);
+        // @ts-expect-error intentional type-check guard for Behavior.Type server cluster payload overload
+        device.setCluster(OnOffServer, { onOff: 'true' }, device.log);
+        // @ts-expect-error intentional type-check guard for ClusterType cluster payload overload
+        device.setCluster(OnOffCluster, { onOff: 'true' }, device.log);
+        // @ts-expect-error intentional type-check guard for Behavior.Type cluster missing payload property overload
+        device.setCluster(OnOffBehavior, {}, device.log);
+        // @ts-expect-error intentional type-check guard for Behavior.Type server cluster missing payload property overload
+        device.setCluster(OnOffServer, {}, device.log);
+        device.setCluster(OnOff, {}, device.log);
+        // @ts-expect-error intentional type-check guard for typed return value
+        const invalidSetClusterType: Promise<string> = device.setCluster(OnOffBehavior, { onOff: true }, device.log);
+        // @ts-expect-error intentional type-check guard for typed server return value
+        const invalidServerSetClusterType: Promise<string> = device.setCluster(OnOffServer, { onOff: true }, device.log);
+        // @ts-expect-error intentional type-check guard for typed cluster return value
+        const invalidTypedSetClusterType: Promise<string> = device.setCluster(OnOff.Cluster, { onOff: true }, device.log);
         void invalidSetClusterType;
         void invalidServerSetClusterType;
         void invalidTypedSetClusterType;
