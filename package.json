@@ -301,7 +301,7 @@
     "@matterbridge/types": "3.8.1",
     "@matterbridge/utils": "3.8.1",
     "@matterbridge/vitest-utils": "3.8.1",
-    "node-ansi-logger": "3.3.0-dev-20260524-cac9dd5",
+    "node-ansi-logger": "3.3.0-dev-20260607-585945a",
     "node-persist-manager": "2.1.0-dev-20260524-6a6019a"
   },
   "devDependencies": {

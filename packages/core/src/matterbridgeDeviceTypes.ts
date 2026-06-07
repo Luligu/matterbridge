@@ -255,7 +255,7 @@ export const DeviceTypeDefinition = ({
   optionalClientClusters,
 });
 
-// Chapter 1. Base device types
+/** Chapter 1. Base Device Types */
 
 export const baseDevice = DeviceTypeDefinition({
   name: 'MA-baseDevice',
@@ -268,7 +268,7 @@ export const baseDevice = DeviceTypeDefinition({
   optionalServerClusters: [Binding.id, FixedLabel.id, UserLabel.id],
 });
 
-// Chapter 2. Utility device types
+/** Chapter 2. Utility Device Types  */
 
 export const rootNode = DeviceTypeDefinition({
   name: 'MA-rootNode',
@@ -335,8 +335,8 @@ export const OTAProvider = DeviceTypeDefinition({
     attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
     device, including the endpoints supporting the application device types, i.e. the full-family
     pattern defined in the System Model specification.
-  ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported 
-    on the same endpoint (following application device type rules). Endpoint composition 
+  ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported
+    on the same endpoint (following application device type rules). Endpoint composition
     SHALL conform to the application device type(s) definition.
  */
 export const bridgedNode = DeviceTypeDefinition({
@@ -398,7 +398,7 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
 
 /** Chapter 3. Application Device Types */
 
-/** Chapter 4. Lighting device types */
+/** Chapter 4. Lighting Device Types */
 
 /**
  * Element Requirements:
@@ -501,7 +501,7 @@ export const extendedColorLight = DeviceTypeDefinition({
   optionalClientClusters: [OccupancySensing.id],
 });
 
-// Chapter 5. Smart plugs/Outlets and other Actuators device types
+/** Chapter 5. Smart plugs/Outlets and other Actuators */
 
 /**
  * An On/Off Plug-in Unit is a device that provides power to another device that is plugged into it, and
@@ -705,7 +705,7 @@ export const irrigationSystem = DeviceTypeDefinition({
   optionalClientClusters: [FlowMeasurement.id],
 });
 
-// Chapter 6. Switches and Controls device types
+/** Chapter 6. Switches and Controls Device Types */
 
 // Custom device types with server cluster instead of client clusters (not working in Alexa)
 export const onOffSwitch = DeviceTypeDefinition({
@@ -760,7 +760,7 @@ export const genericSwitch = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Chapter 7. Sensor device types
+// Chapter 7. Sensor Device Types
 
 /**
  * Closed or contact: state true
@@ -943,7 +943,7 @@ export const soilSensor = DeviceTypeDefinition({
   optionalServerClusters: [TemperatureMeasurement.id],
 });
 
-// Chapter 8. Closures device types
+/** Chapter 8. Entry Control Device Types */
 
 /**
  * A Door Lock is a device used to secure a door. It is possible to actuate a door lock either by means of a manual or a remote method.
@@ -1048,7 +1048,7 @@ export const closureController = DeviceTypeDefinition({
   optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
 });
 
-// Chapter 9. HVAC device types
+/** Chapter 9. HVAC Device Types */
 
 /**
  * A Thermostat device is capable of having either built-in or separate sensors for temperature,
@@ -1139,7 +1139,7 @@ export const airPurifier = DeviceTypeDefinition({
   optionalServerClusters: [Groups.id, OnOff.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
 });
 
-// Chapter 10. Media Device Types
+/** Chapter 10. Media Device Types */
 
 /**
  * 10.2. A Basic Video Player has playback controls (play, pause, etc.) and keypad remote controls (up, down, number input),
@@ -1236,7 +1236,7 @@ export const speakerDevice = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Chapter 11. Generic Device Types
+/** Chapter 11. Generic Device Types */
 
 export const modeSelect = DeviceTypeDefinition({
   name: 'MA-modeselect',
@@ -1292,7 +1292,7 @@ export const aggregator = DeviceTypeDefinition({
 
 export const bridge = aggregator;
 
-// Chapter 12. Robotic Device Types
+/** Chapter 12. Robotic Device Types */
 
 /**
  * A Robotic Vacuum Cleaner is a device that is capable of cleaning floors and other surfaces
@@ -1329,7 +1329,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
   optionalServerClusters: [RvcCleanMode.id, ServiceArea.id],
 });
 
-// Chapter 13. Appliances device types
+/** Chapter 13. Appliances Device Types */
 
 /**
  * Cluster Restrictions:
@@ -1642,7 +1642,7 @@ export const microwaveOven = DeviceTypeDefinition({
   optionalServerClusters: [Identify.id, FanControl.id],
 });
 
-// Chapter 14. Energy Device Types
+/** Chapter 14. Energy Device Types */
 
 /**
  * An EVSE (Electric Vehicle Supply Equipment) is a device that allows an EV (Electric Vehicle) to be
@@ -1938,7 +1938,9 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-// Chapter 16. Camera Device Types
+/** Chapter 15. Network Infrastructure Device Types */
+
+/** Chapter 16. Camera Device Types */
 
 /**
  * 16.1. Camera Device Type
