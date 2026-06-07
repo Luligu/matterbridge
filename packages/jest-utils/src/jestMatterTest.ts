@@ -135,20 +135,20 @@ export async function destroyTestEnvironment(): Promise<void> {
  *
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export async function getMatterbridge(): Promise<PlatformMatterbridge> {
+export function getMatterbridge(): PlatformMatterbridge {
   const matterbridge: PlatformMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
       macAddress: 'aa:bb:cc:dd:ee:ff',
-      ipv4Address: '',
-      ipv6Address: '',
-      osRelease: 'xx.xx.xx.xx.xx.xx',
-      nodeVersion: '22.1.10',
+      ipv4Address: '192.168.68.100',
+      ipv6Address: 'fd78:cbf8:4939:46e2:51b2:2163:7f88:c33d',
+      nodeVersion: '24.16.0',
       hostname: 'matterbridge',
       user: 'jest',
       osType: 'Linux',
+      osRelease: '6.8.0-xxxx',
       osPlatform: 'linux',
-      osArch: 'x64',
+      osArch: 'arm64',
       totalMemory: '0 B',
       freeMemory: '0 B',
       systemUptime: '0s',
@@ -183,63 +183,77 @@ export async function getMatterbridge(): Promise<PlatformMatterbridge> {
 
 /** Add a bridged endpoint */
 const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
-  await aggregator.add(device);
-  return Promise.resolve(true);
+  try {
+    await aggregator.add(device);
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
+  }
 });
 
 /** Remove a bridged endpoint */
 const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
-  await device.delete();
-  return Promise.resolve(true);
+  try {
+    await device.delete();
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
+  }
 });
 
 /** Remove all bridged endpoints */
 const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: number = 0) => {
-  for (const device of aggregator.parts) {
-    await device.delete();
+  try {
+    for (const device of aggregator.parts) {
+      await device.delete();
+    }
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
   }
-  return Promise.resolve(true);
 });
 
 /** Add a virtual endpoint */
 const addVirtualEndpoint = jest.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
-  const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
-    id: name.replaceAll(' ', '') + ':' + type,
-    bridgedDeviceBasicInformation: {
-      vendorId: VendorId(0xfff1),
-      vendorName: 'Matterbridge',
-      productName: 'Matterbridge Virtual Device',
-      nodeLabel: name.slice(0, 32),
-      softwareVersion: 20000,
-      softwareVersionString: '2.0.0',
-    },
-    onOff: { onOff: false },
-  });
+  try {
+    const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
+      id: name.replaceAll(' ', '') + ':' + type,
+      bridgedDeviceBasicInformation: {
+        vendorId: VendorId(0xfff1),
+        vendorName: 'Matterbridge',
+        productName: 'Matterbridge Virtual Device',
+        nodeLabel: name.slice(0, 32),
+        softwareVersion: 20000,
+        softwareVersionString: '2.0.0',
+      },
+      onOff: { onOff: false },
+    });
 
-  // Set up an event listener for when the `onOff` state changes.
-  device.events.onOff.onOff$Changed.on((value) => {
-    // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
-    if (value) {
-      void callback().catch(/* istanbul ignore next */ () => {});
-      void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
-    }
-  });
+    // Set up an event listener for when the `onOff` state changes.
+    device.events.onOff.onOff$Changed.on((value) => {
+      // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
+      if (value) {
+        void callback().catch(/* istanbul ignore next */ () => {});
+        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+      }
+    });
 
-  // Add the created device to the given endpoint.
-  await aggregator.add(device);
+    // Add the created device to the aggregator.
+    await aggregator.add(device);
 
-  // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
-  if (type === 'mounted_switch') {
+    // Add the OnOffPlugInUnit to MountedOnOffControlDevice (Matter 1.4.2 specs added this (new case of superset) for legacy controllers to recognize the mounted switch).
     await device.act(async (agent) => {
       const descriptor = await agent.load(DescriptorServer);
       descriptor.addDeviceTypes('OnOffPlugInUnit');
     });
+
+    // Initially set the state of the virtual device's `OnOffServer` to false (off).
+    await device.setStateOf(OnOffServer, { onOff: false });
+
+    return Promise.resolve(true);
+  } catch (error) {
+    return Promise.reject(error);
   }
-
-  // Initially set the state of the virtual device's `OnOffServer` to false (off).
-  await device.setStateOf(OnOffServer, { onOff: false });
-
-  return device;
 });
 
 export const addBridgedEndpointMatterbridgeSpy = addBridgedEndpoint;
