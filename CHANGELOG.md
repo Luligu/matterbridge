@@ -69,8 +69,11 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `matter.js` to v.0.17.2-alpha.0-20260606-610f30128.
 - [matterbridge]: Bump `marked` to v.18.0.5.
-- [matterbridge]: Bump `npm-check-updates` to v.22.2.2.
+- [matterbridge]: Bump `npm-check-updates` to v.22.2.3.
+- [matterbridge]: Bump `@types/node` to v.25.9.2.
+- [matterbridge]: Bump `eslint-plugin-jsdoc` to v.63.0.2.
 
 - [frontend]: Bump `frontend` version to v.3.4.17.
 - [frontend]: Update dependencies.
