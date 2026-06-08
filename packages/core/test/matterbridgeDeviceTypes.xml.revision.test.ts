@@ -37,6 +37,8 @@ import {
   onOffSwitch,
   dimmableSwitch,
   colorTemperatureSwitch,
+  controlBridge,
+  pumpController,
   genericSwitch,
   // Sensors
   contactSensor,
@@ -46,6 +48,7 @@ import {
   pressureSensor,
   flowSensor,
   humiditySensor,
+  onOffSensor,
   smokeCoAlarm,
   airQualitySensor,
   waterFreezeDetector,
@@ -227,6 +230,8 @@ if (!hasXmlDir) {
       ['onOffSwitch', onOffSwitch],
       ['dimmableSwitch', dimmableSwitch],
       ['colorTemperatureSwitch', colorTemperatureSwitch],
+      ['controlBridge', controlBridge],
+      ['pumpController', pumpController],
       ['genericSwitch', genericSwitch],
 
       // Sensors
@@ -237,6 +242,7 @@ if (!hasXmlDir) {
       ['pressureSensor', pressureSensor],
       ['flowSensor', flowSensor],
       ['humiditySensor', humiditySensor],
+      ['onOffSensor', onOffSensor],
       ['smokeCoAlarm', smokeCoAlarm],
       ['airQualitySensor', airQualitySensor],
       ['waterFreezeDetector', waterFreezeDetector],

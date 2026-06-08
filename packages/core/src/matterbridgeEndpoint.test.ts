@@ -990,9 +990,9 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(onOffSwitch, { id: 'OnOffSwitch1' });
     expect(device).toBeDefined();
     device.addRequiredClusters();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'onOff', 'binding']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'binding']);
     expect(device.hasClusterServer(IdentifyServer)).toBe(true);
-    expect(device.hasClusterServer(OnOffServer)).toBe(true);
+    expect(device.hasClusterServer(OnOffServer)).toBe(false);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
     const clientList = (device.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: number[] })?.clientList ?? [];
     expect(clientList).toContain(Identify.Cluster.id);

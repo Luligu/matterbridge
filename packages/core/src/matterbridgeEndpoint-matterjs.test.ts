@@ -1464,7 +1464,7 @@ describe('Matterbridge ' + NAME, () => {
     // so that bridge plugins receive OnOff commands directly.
     expect(mjServerMandatory).toEqual([Identify.id]);
     expect(mbServerMandatory).toContain(Identify.id);
-    expect(mbServerMandatory).toContain(OnOff.id);
+    expect(mbServerMandatory).not.toContain(OnOff.id);
 
     const mbClientMandatory = clusterIds((device.type as any).requirements?.client?.mandatory ?? {});
     const mjClientMandatory = clusterIds(OnOffLightSwitchRequirements.client.mandatory);

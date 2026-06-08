@@ -39,6 +39,8 @@ import {
   onOffSwitch,
   dimmableSwitch,
   colorTemperatureSwitch,
+  controlBridge,
+  pumpController,
   genericSwitch,
   // Sensors
   contactSensor,
@@ -48,6 +50,7 @@ import {
   pressureSensor,
   flowSensor,
   humiditySensor,
+  onOffSensor,
   smokeCoAlarm,
   airQualitySensor,
   waterFreezeDetector,
@@ -168,6 +171,8 @@ describe('Matterbridge device types', () => {
     { name: 'onOffSwitch', device: onOffSwitch, def: devices.OnOffLightSwitchDeviceDefinition },
     { name: 'dimmableSwitch', device: dimmableSwitch, def: devices.DimmerSwitchDeviceDefinition },
     { name: 'colorTemperatureSwitch', device: colorTemperatureSwitch, def: devices.ColorDimmerSwitchDeviceDefinition },
+    { name: 'controlBridge', device: controlBridge, def: devices.ControlBridgeDeviceDefinition },
+    { name: 'pumpController', device: pumpController, def: devices.PumpControllerDeviceDefinition },
     { name: 'genericSwitch', device: genericSwitch, def: devices.GenericSwitchDeviceDefinition },
 
     // Sensors
@@ -178,6 +183,7 @@ describe('Matterbridge device types', () => {
     { name: 'pressureSensor', device: pressureSensor, def: devices.PressureSensorDeviceDefinition },
     { name: 'flowSensor', device: flowSensor, def: devices.FlowSensorDeviceDefinition },
     { name: 'humiditySensor', device: humiditySensor, def: devices.HumiditySensorDeviceDefinition },
+    { name: 'onOffSensor', device: onOffSensor, def: devices.OnOffSensorDeviceDefinition },
     { name: 'smokeCoAlarm', device: smokeCoAlarm, def: devices.SmokeCoAlarmDeviceDefinition },
     { name: 'airQualitySensor', device: airQualitySensor, def: devices.AirQualitySensorDeviceDefinition },
     { name: 'waterFreezeDetector', device: waterFreezeDetector, def: devices.WaterFreezeDetectorDeviceDefinition },

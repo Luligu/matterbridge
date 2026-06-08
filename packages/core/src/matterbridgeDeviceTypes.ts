@@ -218,6 +218,9 @@ export interface DeviceTypeDefinition {
   optionalServerClusters: ClusterId[];
   requiredClientClusters: ClusterId[];
   optionalClientClusters: ClusterId[];
+  requiredDeviceTypes?: DeviceTypeDefinition[]; // For device types that require another device types to be present on the endpoint
+  requiredServerClustersOneOf?: ClusterId[]; // Clusters that require this device type to be present on the endpoint
+  composedOf?: DeviceTypeDefinition[]; // For composed device types, the list of device types that compose it
 }
 
 export const DeviceTypeDefinition = ({
@@ -231,6 +234,9 @@ export const DeviceTypeDefinition = ({
   optionalServerClusters = [],
   requiredClientClusters = [],
   optionalClientClusters = [],
+  requiredDeviceTypes = [],
+  requiredServerClustersOneOf = [],
+  composedOf = [],
 }: {
   name: string;
   deviceName: string;
@@ -242,6 +248,9 @@ export const DeviceTypeDefinition = ({
   optionalServerClusters?: ClusterId[];
   requiredClientClusters?: ClusterId[];
   optionalClientClusters?: ClusterId[];
+  requiredDeviceTypes?: DeviceTypeDefinition[];
+  requiredServerClustersOneOf?: ClusterId[];
+  composedOf?: DeviceTypeDefinition[];
 }): DeviceTypeDefinition => ({
   name,
   deviceName,
@@ -253,10 +262,25 @@ export const DeviceTypeDefinition = ({
   optionalServerClusters,
   requiredClientClusters,
   optionalClientClusters,
+  requiredDeviceTypes,
+  requiredServerClustersOneOf,
+  composedOf,
 });
 
 /** Chapter 1. Base Device Types */
 
+/**
+ * 1.1. Base Device Type
+ *
+ * 1.1.7. Cluster Requirements
+ * 0x001D Descriptor Server M
+ * 0x001E Binding Server Simple & Client
+ * 0x0040 Fixed Label Server O
+ * 0x0041 User Label Server O
+ *
+ * 1.1.8. Element Requirements
+ * 0x001D Descriptor Feature TagList Duplicate
+ */
 export const baseDevice = DeviceTypeDefinition({
   name: 'MA-baseDevice',
   deviceName: 'Base Device Type',
@@ -270,6 +294,11 @@ export const baseDevice = DeviceTypeDefinition({
 
 /** Chapter 2. Utility Device Types  */
 
+/**
+ * 2.1. Root Node Device Type
+ *
+ * This defines conformance for a root node endpoint.
+ */
 export const rootNode = DeviceTypeDefinition({
   name: 'MA-rootNode',
   deviceName: 'Root Node',
@@ -279,8 +308,15 @@ export const rootNode = DeviceTypeDefinition({
   revision: 4,
   requiredServerClusters: [], // Intentionally left empty to avoid imports
   optionalServerClusters: [], // Intentionally left empty to avoid imports
+  requiredClientClusters: [], // Intentionally left empty to avoid imports
+  optionalClientClusters: [], // Intentionally left empty to avoid imports
 });
 
+/**
+ * 2.2. Power Source Device Type
+ *
+ * A Power Source device type provides information about the source of power.
+ */
 export const powerSource = DeviceTypeDefinition({
   name: 'MA-powerSource',
   deviceName: 'Power Source',
@@ -292,6 +328,11 @@ export const powerSource = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+/**
+ * 2.3. OTA Requestor Device Type
+ *
+ * An OTA Requestor is a device that is capable of receiving an OTA software update.
+ */
 export const OTARequestor = DeviceTypeDefinition({
   name: 'MA-OTARequestor',
   deviceName: 'OTA Requestor',
@@ -305,6 +346,12 @@ export const OTARequestor = DeviceTypeDefinition({
   optionalClientClusters: [],
 });
 
+/**
+ * 2.4. OTA Provider Device Type
+ *
+ * An OTA Provider is a node that is capable of providing an OTA software update to other nodes on
+ * the same fabric.
+ */
 export const OTAProvider = DeviceTypeDefinition({
   name: 'MA-OTAProvider',
   deviceName: 'OTA Provider',
@@ -319,25 +366,30 @@ export const OTAProvider = DeviceTypeDefinition({
 });
 
 /**
-  2.5.3. Conditions
-  Please see the Base Device Type definition for conformance tags.
-  This device type SHALL only be used for Nodes which have a device type of Bridge.
- 
-  2.5.5. Cluster Requirements
-  Each endpoint supporting this device type SHALL include these clusters based on the conformance
-  defined below.
-  -  0x0039 Bridged Device Basic Information Server
- 
-  2.5.6. Endpoint Composition
-  • A Bridged Node endpoint SHALL support one of the following composition patterns:
-  ◦ Separate Endpoints: All application device types are supported on separate endpoints, and
-    not on the Bridged Node endpoint. The Bridged Node endpoint’s Descriptor cluster PartsList
-    attribute SHALL indicate a list of all endpoints representing the functionality of the bridged
-    device, including the endpoints supporting the application device types, i.e. the full-family
-    pattern defined in the System Model specification.
-  ◦ One Endpoint: Both the Bridged Node and one or more application device types are supported
-    on the same endpoint (following application device type rules). Endpoint composition
-    SHALL conform to the application device type(s) definition.
+ * 2.5. Bridged Node Device Type
+ *
+ * This defines conformance for a Bridged Node root endpoint. This endpoint is akin to a "read me
+ * first" endpoint that describes itself and any other endpoints that make up the Bridged Node. A
+ * Bridged Node endpoint represents a device on a foreign network, but is not the root endpoint of the
+ * bridge itself.
+ *
+ * 2.5.4. Device Type Requirements
+ * This device type SHALL only be indicated on endpoints which are listed in the Descriptor cluster
+ * PartsList of another endpoint with an Aggregator device type.
+ *
+ * 2.5.6. Endpoint Composition
+ *
+ * • A Bridged Node endpoint SHALL support one of the following composition patterns:
+ *
+ * - Separate Endpoints: All application device types are supported on separate descendant endpoints,
+ * and SHALL NOT be hosted on the Bridged Node endpoint. The Bridged Node endpoint’s
+ * Descriptor cluster PartsList attribute SHALL indicate a list of all endpoints representing the
+ * functionality of the bridged device, including the endpoints supporting the application device
+ * types, i.e. the full-family pattern defined in the System Model specification.
+ *
+ * - One Endpoint: Both the Bridged Node and one or more application device types are supported
+ * on the same endpoint (following application device type rules). The PartsList attribute in the
+ * Descriptor cluster SHALL be empty.
  */
 export const bridgedNode = DeviceTypeDefinition({
   name: 'MA-bridgedNode',
@@ -351,15 +403,15 @@ export const bridgedNode = DeviceTypeDefinition({
 });
 
 /**
+ * 2.6. Electrical Sensor Device Type
+ *
  * An Electrical Sensor device measures the electrical power and/or energy being imported and/or
  * exported.
- * It is a utility device type that provides information about the electrical power and/or energy
- * consumption and generation.
  *
- *  2.6.3. Device Type Requirements
- *  Electrical measurements made by either the Electrical Power Measurement cluster, the Electrical
- *  Energy Measurement cluster, or both SHALL apply to the endpoints indicated by the Power Topology
- *  cluster.
+ * 2.6.3. Cluster Requirements
+ * Electrical measurements made by either the Electrical Power Measurement cluster,
+ * the Electrical Energy Measurement cluster, or both SHALL apply to the endpoints
+ * indicated by the Power Topology cluster.
  */
 export const electricalSensor = DeviceTypeDefinition({
   name: 'MA-electricalSensor',
@@ -370,13 +422,16 @@ export const electricalSensor = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [PowerTopology.id],
   optionalServerClusters: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
+  requiredServerClustersOneOf: [ElectricalPowerMeasurement.id, ElectricalEnergyMeasurement.id],
 });
 
 /**
+ * 2.7. Device Energy Management
+ *
  * A Device Energy Management device provides reporting and optionally adjustment of the electrical
  * power planned on being consumed or produced by the device.
  *
- * Element Requirements:
+ * 2.7.5. Element Requirements:
  * - Device Energy Management Feature PowerAdjustment [ControllableESA].a+
  * - Device Energy Management Feature StartTimeAdjustment [ControllableESA].a+
  * - Device Energy Management Feature Pausable [ControllableESA].a+
@@ -401,15 +456,18 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
 /** Chapter 4. Lighting Device Types */
 
 /**
+ * 4.1. On/Off Light Device Type
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
  * - On/Off Feature Lighting
  * - Level Control Feature OnOff
  * - Level Control Feature Lighting
- * - Level Control Attribute CurrentLevel 1 to 254
- * - Level Control Attribute MinLevel 1
- * - Level Control Attribute MaxLevel 254
+ * - Level Control Attribute CurrentLevel 1 to 254 Optional
+ * - Level Control Attribute MinLevel 1 Optional
+ * - Level Control Attribute MaxLevel 254 Optional
+ * - Scenes Management Command CopyScene
  */
 export const onOffLight = DeviceTypeDefinition({
   name: 'MA-onofflight',
@@ -425,6 +483,8 @@ export const onOffLight = DeviceTypeDefinition({
 });
 
 /**
+ * 4.2. Dimmable Light Device Type
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -434,6 +494,7 @@ export const onOffLight = DeviceTypeDefinition({
  * - Level Control Attribute CurrentLevel 1 to 254
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
+ * - Scenes Management Command CopyScene
  */
 export const dimmableLight = DeviceTypeDefinition({
   name: 'MA-dimmablelight',
@@ -449,6 +510,8 @@ export const dimmableLight = DeviceTypeDefinition({
 });
 
 /**
+ * 4.3. Color Temperature Light Device Type
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -458,6 +521,7 @@ export const dimmableLight = DeviceTypeDefinition({
  * - Level Control Attribute CurrentLevel 1 to 254
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
+ * - Scenes Management Command CopyScene
  * - Color Control Feature ColorTemperature
  * - Color Control Attribute RemainingTime
  */
@@ -475,6 +539,8 @@ export const colorTemperatureLight = DeviceTypeDefinition({
 });
 
 /**
+ * 4.4. Extended Color Light Device Type
+ *
  * Element Requirements:
  * - Identify Command TriggerEffect
  * - Scenes Management Command CopyScene
@@ -484,6 +550,10 @@ export const colorTemperatureLight = DeviceTypeDefinition({
  * - Level Control Attribute CurrentLevel 1 to 254
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
+ * - Scenes Management Command CopyScene
+ * - Color Control Feature HueSaturation Optional
+ * - Color Control Feature EnhancedHue Optional
+ * - Color Control Feature ColorLoop Optional
  * - Color Control Feature XY
  * - Color Control Feature ColorTemperature
  * - Color Control Attribute RemainingTime
@@ -504,13 +574,15 @@ export const extendedColorLight = DeviceTypeDefinition({
 /** Chapter 5. Smart plugs/Outlets and other Actuators */
 
 /**
+ * 5.1. On/Off Plug-in Unit Device Type
+ *
  * An On/Off Plug-in Unit is a device that provides power to another device that is plugged into it, and
  * is capable of switching that provided power on or off.
  * The Mounted On/Off Control (added in Matter 1.4) has identical cluster requirements as the On/Off
  * Plug-In Unit, and is marked as superset of this device type (since Matter 1.4.2). For devices intended
  * to be mounted permanently, the Mounted On/Off Control device type SHALL be used, with the
  * On/Off Plug-In Unit device type optionally added in the DeviceTypeList of the Descriptor cluster in
- * addition to the On/Off Plug-In Unit device type (see [ref_MountedOnOffControlServerGuidance]).
+ * addition to the On/Off Plug-In Unit device type.
  *
  * Element Requirements:
  * - Identify Command TriggerEffect
@@ -518,9 +590,10 @@ export const extendedColorLight = DeviceTypeDefinition({
  * - On/Off Feature Lighting
  * - Level Control Feature OnOff
  * - Level Control Feature Lighting
- * - Level Control Attribute CurrentLevel 1 to 254
- * - Level Control Attribute MinLevel 1
- * - Level Control Attribute MaxLevel 254
+ * - Level Control Attribute CurrentLevel 1 to 254 Optional
+ * - Level Control Attribute MinLevel 1 Optional
+ * - Level Control Attribute MaxLevel 254 Optional
+ * - Scenes Management Command CopyScene
  */
 export const onOffOutlet = DeviceTypeDefinition({
   name: 'MA-onoffpluginunit',
@@ -536,6 +609,8 @@ export const onOffOutlet = DeviceTypeDefinition({
 });
 
 /**
+ * 5.2. Dimmable Plug-In Unit Device Type
+ *
  * A Dimmable Plug-In Unit is a device that provides power to another device that is plugged into it,
  * and is capable of being switched on or off and have its level adjusted. The Dimmable Plug-in Unit is
  * typically used to control a conventional non-communicating light through its mains connection
@@ -544,7 +619,7 @@ export const onOffOutlet = DeviceTypeDefinition({
  * the Dimmable Plug-In Unit, and is marked as a superset of this device type (since Matter 1.4.2). For
  * devices intended to be mounted permanently, the Mounted Dimmable Load Control device type
  * SHALL be used, with the Dimmable Plug-In Unit device type optionally added to the DeviceTypeList
- * of the Descriptor cluster in addition to the Mounted Dimmable Load Control device type (see [ref_MountedDimmableLoadControlServerGuidance]).
+ * of the Descriptor cluster in addition to the Mounted Dimmable Load Control device type.
  *
  * Element Requirements:
  * - Identify Command TriggerEffect
@@ -570,15 +645,18 @@ export const dimmableOutlet = DeviceTypeDefinition({
 });
 
 /**
+ * 5.3. Mounted On/Off Control Device Type
+ *
  * A Mounted On/Off Control is a fixed device that provides power to another device that is plugged
  * into it, and is capable of switching that provided power on or off.
  * This device type is intended for any wall-mounted or hardwired load controller, while On/Off Plugin
- * Unit is intended only for smart plugs and other power switching devices that are not permaMatter
- * Device Library Specification R1.4.2 Connectivity Standards Alliance Document 23-27351 July 16, 2025
- * Copyright © Connectivity Standards Alliance, Inc. All rights reserved. Page 53
- * nently connected, and which can be unplugged from their power source.
+ * Unit is intended only for smart plugs and other power switching devices that are not permanently
+ * connected, and which can be unplugged from their power source.
  *
- * It is a simple device type that does not require any client clusters. As per matter 1.4.2 it should be added also on/Off Plug-In Unit for backward compatibility.
+ * Since this device type was added in Matter 1.4, for endpoints using this device type
+ * it is RECOMMENDED to add the subset device type On/Off Plug-in Unit to the DeviceTypeList
+ * of the Descriptor cluster on the same endpoint for backward compatibility
+ * with existing clients.
  *
  * Element Requirements:
  * - Identify Command TriggerEffect
@@ -589,6 +667,7 @@ export const dimmableOutlet = DeviceTypeDefinition({
  * - Level Control Attribute CurrentLevel 1 to 254
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
+ * - Scenes Management Command CopyScene
  */
 export const onOffMountedSwitch = DeviceTypeDefinition({
   name: 'MA-onoffmountedswitch',
@@ -604,6 +683,8 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
 });
 
 /**
+ * 5.4. Mounted Dimmable Load Control Device Type
+ *
  * A Mounted Dimmable Load Control is a fixed device that provides power to a load connected to it,
  * and is capable of being switched on or off and have its level adjusted. The Mounted Dimmable Load
  * Control is typically used to control a conventional non-communicating light through its mains connection
@@ -612,7 +693,10 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
  * while Dimmable Plug-In Unit is intended only for dimmer-capable smart plugs that are not permanently
  * connected, and which can be unplugged from their power source.
  *
- * It is a simple device type that does not require any client clusters. As per matter 1.4.2 it should be added also dimmable Plug-In Unit for backward compatibility.
+ * Since this device type was added in Matter 1.4, for endpoints using this device type
+ * it is RECOMMENDED to add the subset device type Dimmable Plug-In Unit to the
+ * DeviceTypeList of the Descriptor cluster on the same endpoint for backward compatibility
+ * with existing clients.
  *
  * Element Requirements:
  * - Identify Command TriggerEffect
@@ -623,6 +707,7 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
  * - Level Control Attribute CurrentLevel 1 to 254
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
+ * - Scenes Management Command CopyScene
  */
 export const dimmableMountedSwitch = DeviceTypeDefinition({
   name: 'MA-dimmablemountedswitch',
@@ -638,6 +723,11 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
 });
 
 /**
+ * 5.5. Pump Device Type
+ *
+ * A Pump device is a pump that may have variable speed. It may have optional built-in sensors and a
+ * regulation mechanism. It is typically used for pumping fluids like water.
+ *
  *  Remark:
  *  On/Off Cluster:
  *    - Off If the pump is powered on, store the current level then immediately power it off.
@@ -663,6 +753,12 @@ export const pumpDevice = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id, OccupancySensing.id],
 });
+
+/**
+ * 5.6. Water Valve Device Type
+ *
+ * This defines conformance to the Water Valve device type.
+ */
 
 export const waterValve = DeviceTypeDefinition({
   name: 'MA-waterValve',
@@ -703,11 +799,20 @@ export const irrigationSystem = DeviceTypeDefinition({
   optionalServerClusters: [Identify.id, OperationalState.id, FlowMeasurement.id],
   requiredClientClusters: [],
   optionalClientClusters: [FlowMeasurement.id],
+  composedOf: [waterValve],
 });
 
 /** Chapter 6. Switches and Controls Device Types */
 
-// Custom device types with server cluster instead of client clusters (not working in Alexa)
+/**
+ * 6.1. On/Off Light Switch Device type
+ *
+ * An On/Off Light Switch is a controller device that, when bound to a lighting device such as an
+ * On/Off Light, is capable of being used to switch the device on or off.
+ *
+ * @remarks
+ * The OnOff server cluster (extraneous for Matter spec) need to be added manually to Have Apple Home show the correct behavior.
+ */
 export const onOffSwitch = DeviceTypeDefinition({
   name: 'MA-onoffswitch',
   deviceName: 'OnOff Light Switch',
@@ -715,13 +820,19 @@ export const onOffSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 3,
-  requiredServerClusters: [Identify.id, OnOff.id],
+  requiredServerClusters: [Identify.id],
   optionalServerClusters: [],
   requiredClientClusters: [Identify.id, OnOff.id],
   optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
-// Custom device types with server cluster instead of client clusters (not working in Alexa)
+/**
+ * 6.2. Dimmer Switch Device Type
+ *
+ * A Dimmer Switch is a controller device that, when bound to a lighting device such as a Dimmable
+ * Light, is capable of being used to switch the device on or off and adjust the intensity of the light
+ * being emitted.
+ */
 export const dimmableSwitch = DeviceTypeDefinition({
   name: 'MA-dimmableswitch',
   deviceName: 'Dimmer Switch',
@@ -729,13 +840,18 @@ export const dimmableSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 3,
-  requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id],
+  requiredServerClusters: [Identify.id],
   optionalServerClusters: [],
   requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id],
   optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
-// Custom device types with server cluster instead of client clusters (not working in Alexa)
+/**
+ * 6.3. Color Dimmer Switch Device Type
+ *
+ * A Color Dimmer Switch is a controller device that, when bound to a lighting device such as an
+ * Extended Color Light, is capable of being used to adjust the color of the light being emitted.
+ */
 export const colorTemperatureSwitch = DeviceTypeDefinition({
   name: 'MA-colortemperatureswitch',
   deviceName: 'Color Dimmer Switch',
@@ -743,12 +859,56 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 3,
-  requiredServerClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
+  requiredServerClusters: [Identify.id],
   optionalServerClusters: [],
   requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
 
+/**
+ * 6.4. Control Bridge Device Type
+ *
+ * A Control Bridge is a controller device that, when bound to a lighting device such as an Extended
+ * Color Light, is capable of being used to switch the device on or off, adjust the intensity of the light
+ * being emitted and adjust the color of the light being emitted. In addition, a Control Bridge device is
+ * capable of being used for setting scenes.
+ */
+export const controlBridge = DeviceTypeDefinition({
+  name: 'MA-controlbridge',
+  deviceName: 'Control Bridge',
+  code: 0x0840,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 3,
+  requiredServerClusters: [Identify.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [Identify.id, Groups.id, ScenesManagement.id, OnOff.id, LevelControl.id, ColorControl.id],
+  optionalClientClusters: [IlluminanceMeasurement.id, OccupancySensing.id],
+});
+
+/**
+ * 6.5. Pump Controller Device Type
+ *
+ * A Pump Controller device is capable of configuring and controlling a Pump device.
+ */
+export const pumpController = DeviceTypeDefinition({
+  name: 'MA-pumpcontroller',
+  deviceName: 'Pump Controller',
+  code: 0x0304,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 4,
+  requiredServerClusters: [Identify.id],
+  optionalServerClusters: [],
+  requiredClientClusters: [OnOff.id, PumpConfigurationAndControl.id],
+  optionalClientClusters: [Identify.id, Groups.id, LevelControl.id, ScenesManagement.id, TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id],
+});
+
+/**
+ * 6.6. Generic Switch Device Type
+ *
+ * This defines conformance for the Generic Switch device type.
+ */
 export const genericSwitch = DeviceTypeDefinition({
   name: 'MA-genericswitch',
   deviceName: 'Generic Switch',
@@ -763,6 +923,8 @@ export const genericSwitch = DeviceTypeDefinition({
 // Chapter 7. Sensor Device Types
 
 /**
+ * 7.1. Contact Sensor Device Type
+ *
  * Closed or contact: state true
  * Open or no contact: state false
  */
@@ -777,6 +939,9 @@ export const contactSensor = DeviceTypeDefinition({
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
 
+/**
+ * 7.2. Light Sensor Device Type
+ */
 export const lightSensor = DeviceTypeDefinition({
   name: 'MA-lightsensor',
   deviceName: 'Light Sensor',
@@ -787,6 +952,9 @@ export const lightSensor = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, IlluminanceMeasurement.id],
 });
 
+/**
+ * 7.3. Occupancy Sensor Device Type
+ */
 export const occupancySensor = DeviceTypeDefinition({
   name: 'MA-occupancysensor',
   deviceName: 'Occupancy Sensor',
@@ -799,6 +967,8 @@ export const occupancySensor = DeviceTypeDefinition({
 });
 
 /**
+ * 7.4. Temperature Sensor Device Type
+ *
  * Element Requirements:
  * - Thermostat User Interface Configuration Attribute KeypadLockout O
  */
@@ -813,6 +983,9 @@ export const temperatureSensor = DeviceTypeDefinition({
   optionalServerClusters: [ThermostatUserInterfaceConfiguration.id],
 });
 
+/**
+ * 7.5. Pressure Sensor Device Type
+ */
 export const pressureSensor = DeviceTypeDefinition({
   name: 'MA-pressuresensor',
   deviceName: 'Pressure Sensor',
@@ -823,6 +996,9 @@ export const pressureSensor = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, PressureMeasurement.id],
 });
 
+/**
+ * 7.6. Flow Sensor Device Type
+ */
 export const flowSensor = DeviceTypeDefinition({
   name: 'MA-flowsensor',
   deviceName: 'Flow Sensor',
@@ -833,6 +1009,9 @@ export const flowSensor = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, FlowMeasurement.id],
 });
 
+/**
+ * 7.7. Humidity Sensor Device Type
+ */
 export const humiditySensor = DeviceTypeDefinition({
   name: 'MA-humiditysensor',
   deviceName: 'Humidity Sensor',
@@ -844,6 +1023,28 @@ export const humiditySensor = DeviceTypeDefinition({
 });
 
 /**
+ * 7.8. On/Off Sensor Device Type
+ *
+ * An On/Off Sensor is a measurement and sensing device that, when bound to a lighting device such
+ * as a Dimmable Light, is capable of being used to switch the device on or off.
+ */
+export const onOffSensor = DeviceTypeDefinition({
+  name: 'MA-onoffsensor',
+  deviceName: 'OnOff Sensor',
+  code: 0x0850,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 3,
+  requiredServerClusters: [Identify.id],
+  requiredClientClusters: [Identify.id, OnOff.id],
+  optionalClientClusters: [Groups.id, LevelControl.id, ColorControl.id, ScenesManagement.id],
+});
+
+/**
+ * 7.9. Smoke CO Alarm Device Type
+ *
+ * A Smoke CO Alarm device is capable of sensing smoke, carbon monoxide or both.
+ *
  * Device Type Requirements:
  * - 0x0011 Power Source min 1 M
  */
@@ -856,8 +1057,15 @@ export const smokeCoAlarm = DeviceTypeDefinition({
   revision: 1,
   requiredServerClusters: [Identify.id, SmokeCoAlarm.id],
   optionalServerClusters: [Groups.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, CarbonMonoxideConcentrationMeasurement.id],
+  requiredDeviceTypes: [powerSource],
 });
 
+/**
+ * 7.10. Air Quality Sensor Device Type
+ *
+ * An air quality sensor is a device designed to monitor and measure various parameters related to
+ * the quality of ambient air in indoor or outdoor environments.
+ */
 export const airQualitySensor = DeviceTypeDefinition({
   name: 'MA-airQualitySensor',
   deviceName: 'Air Quality Sensor',
@@ -883,6 +1091,12 @@ export const airQualitySensor = DeviceTypeDefinition({
 });
 
 /**
+ * 7.11. Water Freeze Detector Device Type
+ *
+ * Boolean State:
+ * - true Water could potentially freeze in the current ambient conditions
+ * - false Water is very unlikely to freeze in the current ambient conditions
+ *
  * Element Requirements:
  * - Boolean State Event StateChange M
  */
@@ -898,6 +1112,12 @@ export const waterFreezeDetector = DeviceTypeDefinition({
 });
 
 /**
+ * 7.12. Water Leak Detector Device Type
+ *
+ * Boolean State:
+ * - true Water leak detected
+ * - false No water leak detected
+ *
  * Element Requirements:
  * - Boolean State Event StateChange M
  */
@@ -913,6 +1133,12 @@ export const waterLeakDetector = DeviceTypeDefinition({
 });
 
 /**
+ * 7.13. Rain Sensor Device Type
+ *
+ * Boolean State:
+ * - true Rain detected
+ * - false No rain detected
+ *
  * Element Requirements:
  * - Boolean State Event StateChange M
  */
@@ -946,13 +1172,14 @@ export const soilSensor = DeviceTypeDefinition({
 /** Chapter 8. Entry Control Device Types */
 
 /**
+ * 8.1. Door Lock Device Type
+ *
  * A Door Lock is a device used to secure a door. It is possible to actuate a door lock either by means of a manual or a remote method.
  *
- * Element Requirements:
- *
- * - AccessControl Attribute Extension
- * - DoorLock Feature User
- * - DoorLock Attribute AlarmMask
+ * 8.1.4. Condition Requirements
+ * - Root 0x0016 Root Node ACLExtensionCond M
+ * - Root 0x0016 Root Node TimeSyncCond O
+ * - Root 0x0016 Root Node TimeSyncWithClientCond O
  */
 export const doorLockDevice = DeviceTypeDefinition({
   name: 'MA-doorLock',

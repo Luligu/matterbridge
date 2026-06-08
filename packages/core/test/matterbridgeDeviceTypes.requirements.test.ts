@@ -34,6 +34,8 @@ import {
   onOffSwitch,
   dimmableSwitch,
   colorTemperatureSwitch,
+  controlBridge,
+  pumpController,
   genericSwitch,
   // Sensors
   contactSensor,
@@ -43,6 +45,7 @@ import {
   pressureSensor,
   flowSensor,
   humiditySensor,
+  onOffSensor,
   smokeCoAlarm,
   airQualitySensor,
   waterFreezeDetector,
@@ -154,6 +157,8 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'onOffSwitch', mb: onOffSwitch, md: devices.OnOffLightSwitchDeviceDefinition },
   { name: 'dimmableSwitch', mb: dimmableSwitch, md: devices.DimmerSwitchDeviceDefinition },
   { name: 'colorTemperatureSwitch', mb: colorTemperatureSwitch, md: devices.ColorDimmerSwitchDeviceDefinition },
+  { name: 'controlBridge', mb: controlBridge, md: devices.ControlBridgeDeviceDefinition },
+  { name: 'pumpController', mb: pumpController, md: devices.PumpControllerDeviceDefinition },
   { name: 'genericSwitch', mb: genericSwitch, md: devices.GenericSwitchDeviceDefinition },
 
   // Sensors
@@ -164,6 +169,7 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'pressureSensor', mb: pressureSensor, md: devices.PressureSensorDeviceDefinition },
   { name: 'flowSensor', mb: flowSensor, md: devices.FlowSensorDeviceDefinition },
   { name: 'humiditySensor', mb: humiditySensor, md: devices.HumiditySensorDeviceDefinition },
+  { name: 'onOffSensor', mb: onOffSensor, md: devices.OnOffSensorDeviceDefinition },
   { name: 'smokeCoAlarm', mb: smokeCoAlarm, md: devices.SmokeCoAlarmDeviceDefinition },
   { name: 'airQualitySensor', mb: airQualitySensor, md: devices.AirQualitySensorDeviceDefinition },
   { name: 'waterFreezeDetector', mb: waterFreezeDetector, md: devices.WaterFreezeDetectorDeviceDefinition },
@@ -326,29 +332,6 @@ describe('Matterbridge device cluster mappings', () => {
       'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
       'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
-      // TODO: onOffSwitch / dimmableSwitch / colorTemperatureSwitch expose client clusters also as server clusters for Apple Home compatibility.
-      //       The following plugins rely on these device types (only .code is accessed, no cluster-list reads):
-      //
-      //       Plugin                              File                   Device type(s)              Usage
-      //       ----------------------------------  ---------------------  --------------------------  ---------------------------------------------------
-      //       matterbridge-security               module.ts:112          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
-      //       matterbridge-example-dyn-platform   module.ts:428          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
-      //       matterbridge-webhooks               module.ts:125          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
-      //       matterbridge-zigbee2mqtt            entity.ts:1009         onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
-      //       matterbridge-zigbee2mqtt            entity.ts:1062         onOffSwitch                 deviceType = onOffSwitch  (selection)
-      //       matterbridge-zigbee2mqtt            entity.ts:1275         onOffSwitch                 deviceType: onOffSwitch   (feature map entry)
-      //       matterbridge-zigbee2mqtt            entity.ts:1276         dimmableSwitch              deviceType: dimmableSwitch (feature map entry)
-      //       matterbridge-zigbee2mqtt            entity.ts:1277-1279    colorTemperatureSwitch      deviceType: colorTemperatureSwitch (feature map entries)
-      //       matterbridge-zigbee2mqtt            entity.ts:1669         onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
-      //       matterbridge-zigbee2mqtt            entity.ts:1670         dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:992   onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:993   onOffSwitch, colorTemperatureSwitch     deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:994   dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
-      //       matterbridge-shelly                 platform.ts:875        onOffSwitch                 deviceType = onOffSwitch  (selection)
-      //       matterbridge-test                   module.ts:144          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, ...])
-      'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Added extraneous server clusters for Apple Home compatibility
-      'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Added extraneous server clusters for Apple Home compatibility
-      'colorTemperatureSwitch: required mismatch -> mb=[3,6,8,768] md=[3]', // Added extraneous server clusters for Apple Home compatibility
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
