@@ -59,6 +59,7 @@ import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-c
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
 import { SwitchServer } from '@matter/node/behaviors/switch';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
@@ -94,7 +95,7 @@ import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/the
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
-import { Semtag } from '@matter/types/globals';
+import { MeasurementAccuracy, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { inspectError } from '@matterbridge/utils/error';
 import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
@@ -160,6 +161,7 @@ import {
   getDefaultPowerSourceWiredClusterServer,
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
+  getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   invokeBehaviorCommand,
   lowercaseFirstLetter,
@@ -4213,6 +4215,21 @@ export class MatterbridgeEndpoint extends Endpoint {
       OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared),
       getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax),
     );
+    return this;
+  }
+
+  /**
+   * Creates a default SoilMeasurement cluster server.
+   *
+   * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percentage x 100. Default is null.
+   * @param {MeasurementAccuracy} soilMoistureMeasurementLimits - The measurement limits for the soil moisture measurement. Default is a range of 0% to 100% with an accuracy of 1%.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks The default value for the soil moisture measurement is null, indicating that the measurement is invalid.
+   * The soil moisture measurement limits are set to a range of 0% to 100% with an accuracy of 1%, which is a common configuration for soil moisture sensors.
+   */
+  createDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue: number | null = null, soilMoistureMeasurementLimits?: MeasurementAccuracy): this {
+    this.behaviors.require(SoilMeasurementServer, getDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue, soilMoistureMeasurementLimits));
     return this;
   }
 

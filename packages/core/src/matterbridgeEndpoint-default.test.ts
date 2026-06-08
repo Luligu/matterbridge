@@ -43,6 +43,7 @@ import {
   Pm10ConcentrationMeasurementServer,
   Pm25ConcentrationMeasurementServer,
   RadonConcentrationMeasurementServer,
+  SoilMeasurementServer,
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
@@ -82,6 +83,7 @@ import {
   ResourceMonitoring,
   ScenesManagement,
   SmokeCoAlarm,
+  SoilMeasurement,
   Switch,
   TemperatureMeasurement,
   Thermostat,
@@ -122,6 +124,7 @@ import {
   pumpDevice,
   rainSensor,
   smokeCoAlarm,
+  soilSensor,
   temperatureSensor,
   thermostatDevice,
   waterFreezeDetector,
@@ -2125,6 +2128,20 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(OccupancySensing.Cluster.id, 'occupancy')).toEqual({ occupied: true });
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultSoilMeasurementClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(soilSensor, { id: 'SoilSensor' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultSoilMeasurementClusterServer(50);
+    expect(device.hasClusterServer(SoilMeasurementServer)).toBe(true);
+    expect(device.hasAttributeServer(SoilMeasurementServer, 'soilMoistureMeasuredValue')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(SoilMeasurement, 'soilMoistureMeasuredValue')).toEqual(50);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

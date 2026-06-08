@@ -40,6 +40,7 @@ import {
   getDefaultPowerSourceReplaceableBatteryClusterServer,
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
+  getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   getSemtag,
   getSnapshot,
@@ -126,6 +127,7 @@ describe('Options helpers', () => {
     expect(getDefaultIlluminanceMeasurementClusterServer()).toBeDefined();
     expect(getDefaultFlowMeasurementClusterServer()).toBeDefined();
     expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
+    expect(getDefaultSoilMeasurementClusterServer()).toBeDefined();
   });
 
   test('internalFor returns the live behavior internal state for every overload shape', async () => {

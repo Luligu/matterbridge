@@ -70,6 +70,7 @@ import { PumpConfigurationAndControlClient, PumpConfigurationAndControlServer } 
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementClient, RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementClient, ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
 import { SwitchServer } from '@matter/node/behaviors/switch';
 import { TemperatureMeasurementClient, TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { ThermostatClient } from '@matter/node/behaviors/thermostat';
@@ -119,6 +120,7 @@ import { RadonConcentrationMeasurement } from '@matter/types/clusters/radon-conc
 import { RelativeHumidityMeasurement } from '@matter/types/clusters/relative-humidity-measurement';
 import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
@@ -127,7 +129,7 @@ import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, NodeId, VendorId } from '@matter/types/datatype';
-import { MeasurementType, Semtag } from '@matter/types/globals';
+import { MeasurementAccuracy, MeasurementType, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { isValidArray } from '@matterbridge/utils/validate';
@@ -449,6 +451,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === FlowMeasurement.id) return FlowMeasurementServer;
   if (clusterId === IlluminanceMeasurement.id) return IlluminanceMeasurementServer;
   if (clusterId === OccupancySensing.id) return OccupancySensingServer;
+  if (clusterId === SoilMeasurement.id) return SoilMeasurementServer;
   if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
   if (clusterId === CarbonMonoxideConcentrationMeasurement.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === CarbonDioxideConcentrationMeasurement.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -693,6 +696,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(FlowMeasurement.id)) endpoint.createDefaultFlowMeasurementClusterServer();
   if (serverList.includes(IlluminanceMeasurement.id)) endpoint.createDefaultIlluminanceMeasurementClusterServer();
   if (serverList.includes(OccupancySensing.id)) endpoint.createDefaultOccupancySensingClusterServer();
+  if (serverList.includes(SoilMeasurement.id)) endpoint.createDefaultSoilMeasurementClusterServer();
   if (serverList.includes(AirQuality.id)) endpoint.createDefaultAirQualityClusterServer();
   if (serverList.includes(CarbonMonoxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
   if (serverList.includes(CarbonDioxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
@@ -1679,5 +1683,28 @@ export function getDefaultOccupancySensingClusterServer(occupied = false, holdTi
     pirUnoccupiedToOccupiedThreshold: 1,
     holdTime,
     holdTimeLimits: { holdTimeMin, holdTimeMax, holdTimeDefault: holdTime },
+  });
+}
+
+/**
+ * Get the default SoilMeasurement cluster server options.
+ *
+ * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percentage x 100. Default is null.
+ * @param {MeasurementAccuracy} soilMoistureMeasurementLimits - The measurement limits for the soil moisture measurement. Default is a range of 0% to 100% with an accuracy of 1%.
+ * @returns {Behavior.Options<MatterbridgeSoilMeasurementServer>} - The default options for the SoilMeasurement cluster server.
+ *
+ * @remarks The default value for the soil moisture measurement is null, indicating that the measurement is invalid.
+ * The soil moisture measurement limits are set to a range of 0% to 100% with an accuracy of 1%, which is a common configuration for soil moisture sensors.
+ */
+export function getDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue: number | null = null, soilMoistureMeasurementLimits?: MeasurementAccuracy) {
+  return optionsFor(SoilMeasurementServer, {
+    soilMoistureMeasuredValue,
+    soilMoistureMeasurementLimits: soilMoistureMeasurementLimits ?? {
+      measurementType: MeasurementType.SoilMoisture,
+      measured: true,
+      minMeasuredValue: 0,
+      maxMeasuredValue: 100,
+      accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 1 }], // Default accuracy range of 1 unit
+    },
   });
 }
