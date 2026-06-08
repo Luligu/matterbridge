@@ -417,51 +417,51 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
  */
 export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type {
   // Map ClusterId to Server Behavior.Type
-  if (clusterId === PowerSource.Cluster.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
-  if (clusterId === UserLabel.Cluster.id) return UserLabelServer;
-  if (clusterId === FixedLabel.Cluster.id) return FixedLabelServer;
-  if (clusterId === BasicInformation.Cluster.id) return BasicInformationServer;
-  if (clusterId === BridgedDeviceBasicInformation.Cluster.id) return BridgedDeviceBasicInformationServer;
-  if (clusterId === Identify.Cluster.id) return MatterbridgeIdentifyServer;
-  if (clusterId === Groups.Cluster.id) return GroupsServer;
-  if (clusterId === ScenesManagement.Cluster.id) return ScenesManagementServer;
-  if (clusterId === OnOff.Cluster.id) return MatterbridgeOnOffServer.with('Lighting');
-  if (clusterId === LevelControl.Cluster.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
-  if (clusterId === ColorControl.Cluster.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.Cluster.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
-  if (clusterId === Thermostat.Cluster.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
-  if (clusterId === FanControl.Cluster.id) return MatterbridgeFanControlServer;
-  if (clusterId === DoorLock.Cluster.id) return MatterbridgeDoorLockServer;
-  if (clusterId === ModeSelect.Cluster.id) return MatterbridgeModeSelectServer;
-  if (clusterId === ValveConfigurationAndControl.Cluster.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
-  if (clusterId === PumpConfigurationAndControl.Cluster.id) return PumpConfigurationAndControlServer.with('ConstantSpeed');
-  if (clusterId === SmokeCoAlarm.Cluster.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
-  if (clusterId === Switch.Cluster.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
-  if (clusterId === OperationalState.Cluster.id) return MatterbridgeOperationalStateServer;
-  if (clusterId === BooleanState.Cluster.id) return BooleanStateServer.enable({ events: { stateChange: true } });
-  if (clusterId === BooleanStateConfiguration.Cluster.id) return MatterbridgeBooleanStateConfigurationServer;
-  if (clusterId === PowerTopology.Cluster.id) return PowerTopologyServer.with('TreeTopology');
-  if (clusterId === ElectricalPowerMeasurement.Cluster.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
-  if (clusterId === ElectricalEnergyMeasurement.Cluster.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
-  if (clusterId === TemperatureMeasurement.Cluster.id) return TemperatureMeasurementServer;
-  if (clusterId === RelativeHumidityMeasurement.Cluster.id) return RelativeHumidityMeasurementServer;
-  if (clusterId === PressureMeasurement.Cluster.id) return PressureMeasurementServer;
-  if (clusterId === FlowMeasurement.Cluster.id) return FlowMeasurementServer;
-  if (clusterId === IlluminanceMeasurement.Cluster.id) return IlluminanceMeasurementServer;
-  if (clusterId === OccupancySensing.Cluster.id) return OccupancySensingServer;
-  if (clusterId === AirQuality.Cluster.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
-  if (clusterId === CarbonMonoxideConcentrationMeasurement.Cluster.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === CarbonDioxideConcentrationMeasurement.Cluster.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === NitrogenDioxideConcentrationMeasurement.Cluster.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === OzoneConcentrationMeasurement.Cluster.id) return OzoneConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === FormaldehydeConcentrationMeasurement.Cluster.id) return FormaldehydeConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm1ConcentrationMeasurement.Cluster.id) return Pm1ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm25ConcentrationMeasurement.Cluster.id) return Pm25ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === Pm10ConcentrationMeasurement.Cluster.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === RadonConcentrationMeasurement.Cluster.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
-  if (clusterId === DeviceEnergyManagement.Cluster.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
-  if (clusterId === DeviceEnergyManagementMode.Cluster.id) return MatterbridgeDeviceEnergyManagementModeServer;
+  if (clusterId === PowerSource.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
+  if (clusterId === UserLabel.id) return UserLabelServer;
+  if (clusterId === FixedLabel.id) return FixedLabelServer;
+  if (clusterId === BasicInformation.id) return BasicInformationServer;
+  if (clusterId === BridgedDeviceBasicInformation.id) return BridgedDeviceBasicInformationServer;
+  if (clusterId === Identify.id) return MatterbridgeIdentifyServer;
+  if (clusterId === Groups.id) return GroupsServer;
+  if (clusterId === ScenesManagement.id) return ScenesManagementServer;
+  if (clusterId === OnOff.id) return MatterbridgeOnOffServer.with('Lighting');
+  if (clusterId === LevelControl.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
+  if (clusterId === ColorControl.id) return MatterbridgeColorControlServer;
+  if (clusterId === WindowCovering.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === Thermostat.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+  if (clusterId === FanControl.id) return MatterbridgeFanControlServer;
+  if (clusterId === DoorLock.id) return MatterbridgeDoorLockServer;
+  if (clusterId === ModeSelect.id) return MatterbridgeModeSelectServer;
+  if (clusterId === ValveConfigurationAndControl.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
+  if (clusterId === PumpConfigurationAndControl.id) return PumpConfigurationAndControlServer.with('ConstantSpeed');
+  if (clusterId === SmokeCoAlarm.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
+  if (clusterId === Switch.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
+  if (clusterId === OperationalState.id) return MatterbridgeOperationalStateServer;
+  if (clusterId === BooleanState.id) return BooleanStateServer.enable({ events: { stateChange: true } });
+  if (clusterId === BooleanStateConfiguration.id) return MatterbridgeBooleanStateConfigurationServer;
+  if (clusterId === PowerTopology.id) return PowerTopologyServer.with('TreeTopology');
+  if (clusterId === ElectricalPowerMeasurement.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
+  if (clusterId === ElectricalEnergyMeasurement.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
+  if (clusterId === TemperatureMeasurement.id) return TemperatureMeasurementServer;
+  if (clusterId === RelativeHumidityMeasurement.id) return RelativeHumidityMeasurementServer;
+  if (clusterId === PressureMeasurement.id) return PressureMeasurementServer;
+  if (clusterId === FlowMeasurement.id) return FlowMeasurementServer;
+  if (clusterId === IlluminanceMeasurement.id) return IlluminanceMeasurementServer;
+  if (clusterId === OccupancySensing.id) return OccupancySensingServer;
+  if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
+  if (clusterId === CarbonMonoxideConcentrationMeasurement.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === CarbonDioxideConcentrationMeasurement.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === NitrogenDioxideConcentrationMeasurement.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === OzoneConcentrationMeasurement.id) return OzoneConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === FormaldehydeConcentrationMeasurement.id) return FormaldehydeConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm1ConcentrationMeasurement.id) return Pm1ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm25ConcentrationMeasurement.id) return Pm25ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === Pm10ConcentrationMeasurement.id) return Pm10ConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === RadonConcentrationMeasurement.id) return RadonConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
+  if (clusterId === DeviceEnergyManagement.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
+  if (clusterId === DeviceEnergyManagementMode.id) return MatterbridgeDeviceEnergyManagementModeServer;
 
   return MatterbridgeIdentifyServer;
 }
@@ -666,46 +666,46 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
  * @param {ClusterId[]} serverList - The list of cluster IDs to add.
  */
 export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]) {
-  if (serverList.includes(PowerSource.Cluster.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
-  if (serverList.includes(Identify.Cluster.id)) endpoint.createDefaultIdentifyClusterServer();
-  if (serverList.includes(Groups.Cluster.id)) endpoint.createDefaultGroupsClusterServer();
-  if (serverList.includes(ScenesManagement.Cluster.id)) endpoint.createDefaultScenesManagementClusterServer();
-  if (serverList.includes(OnOff.Cluster.id)) endpoint.createDefaultOnOffClusterServer();
-  if (serverList.includes(LevelControl.Cluster.id)) endpoint.createDefaultLevelControlClusterServer();
-  if (serverList.includes(ColorControl.Cluster.id)) endpoint.createDefaultColorControlClusterServer();
-  if (serverList.includes(WindowCovering.Cluster.id)) endpoint.createDefaultWindowCoveringClusterServer();
-  if (serverList.includes(Thermostat.Cluster.id)) endpoint.createDefaultThermostatClusterServer();
-  if (serverList.includes(FanControl.Cluster.id)) endpoint.createDefaultFanControlClusterServer();
-  if (serverList.includes(DoorLock.Cluster.id)) endpoint.createDefaultDoorLockClusterServer();
-  if (serverList.includes(ValveConfigurationAndControl.Cluster.id)) endpoint.createDefaultValveConfigurationAndControlClusterServer();
-  if (serverList.includes(PumpConfigurationAndControl.Cluster.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
-  if (serverList.includes(SmokeCoAlarm.Cluster.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
-  if (serverList.includes(Switch.Cluster.id)) endpoint.createDefaultSwitchClusterServer();
-  if (serverList.includes(OperationalState.Cluster.id)) endpoint.createDefaultOperationalStateClusterServer();
-  if (serverList.includes(BooleanState.Cluster.id)) endpoint.createDefaultBooleanStateClusterServer();
-  if (serverList.includes(BooleanStateConfiguration.Cluster.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
-  if (serverList.includes(PowerTopology.Cluster.id)) endpoint.createDefaultPowerTopologyClusterServer();
-  if (serverList.includes(ElectricalPowerMeasurement.Cluster.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
-  if (serverList.includes(ElectricalEnergyMeasurement.Cluster.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
-  if (serverList.includes(TemperatureMeasurement.Cluster.id)) endpoint.createDefaultTemperatureMeasurementClusterServer();
-  if (serverList.includes(RelativeHumidityMeasurement.Cluster.id)) endpoint.createDefaultRelativeHumidityMeasurementClusterServer();
-  if (serverList.includes(PressureMeasurement.Cluster.id)) endpoint.createDefaultPressureMeasurementClusterServer();
-  if (serverList.includes(FlowMeasurement.Cluster.id)) endpoint.createDefaultFlowMeasurementClusterServer();
-  if (serverList.includes(IlluminanceMeasurement.Cluster.id)) endpoint.createDefaultIlluminanceMeasurementClusterServer();
-  if (serverList.includes(OccupancySensing.Cluster.id)) endpoint.createDefaultOccupancySensingClusterServer();
-  if (serverList.includes(AirQuality.Cluster.id)) endpoint.createDefaultAirQualityClusterServer();
-  if (serverList.includes(CarbonMonoxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(CarbonDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(NitrogenDioxideConcentrationMeasurement.Cluster.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
-  if (serverList.includes(OzoneConcentrationMeasurement.Cluster.id)) endpoint.createDefaultOzoneConcentrationMeasurementClusterServer();
-  if (serverList.includes(FormaldehydeConcentrationMeasurement.Cluster.id)) endpoint.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm1ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm1ConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm25ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm25ConcentrationMeasurementClusterServer();
-  if (serverList.includes(Pm10ConcentrationMeasurement.Cluster.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
-  if (serverList.includes(RadonConcentrationMeasurement.Cluster.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
-  if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.Cluster.id)) endpoint.createDefaultTvocMeasurementClusterServer();
-  if (serverList.includes(DeviceEnergyManagement.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
-  if (serverList.includes(DeviceEnergyManagementMode.Cluster.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
+  if (serverList.includes(PowerSource.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
+  if (serverList.includes(Identify.id)) endpoint.createDefaultIdentifyClusterServer();
+  if (serverList.includes(Groups.id)) endpoint.createDefaultGroupsClusterServer();
+  if (serverList.includes(ScenesManagement.id)) endpoint.createDefaultScenesManagementClusterServer();
+  if (serverList.includes(OnOff.id)) endpoint.createDefaultOnOffClusterServer();
+  if (serverList.includes(LevelControl.id)) endpoint.createDefaultLevelControlClusterServer();
+  if (serverList.includes(ColorControl.id)) endpoint.createDefaultColorControlClusterServer();
+  if (serverList.includes(WindowCovering.id)) endpoint.createDefaultWindowCoveringClusterServer();
+  if (serverList.includes(Thermostat.id)) endpoint.createDefaultThermostatClusterServer();
+  if (serverList.includes(FanControl.id)) endpoint.createDefaultFanControlClusterServer();
+  if (serverList.includes(DoorLock.id)) endpoint.createDefaultDoorLockClusterServer();
+  if (serverList.includes(ValveConfigurationAndControl.id)) endpoint.createDefaultValveConfigurationAndControlClusterServer();
+  if (serverList.includes(PumpConfigurationAndControl.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
+  if (serverList.includes(SmokeCoAlarm.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
+  if (serverList.includes(Switch.id)) endpoint.createDefaultSwitchClusterServer();
+  if (serverList.includes(OperationalState.id)) endpoint.createDefaultOperationalStateClusterServer();
+  if (serverList.includes(BooleanState.id)) endpoint.createDefaultBooleanStateClusterServer();
+  if (serverList.includes(BooleanStateConfiguration.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
+  if (serverList.includes(PowerTopology.id)) endpoint.createDefaultPowerTopologyClusterServer();
+  if (serverList.includes(ElectricalPowerMeasurement.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
+  if (serverList.includes(ElectricalEnergyMeasurement.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
+  if (serverList.includes(TemperatureMeasurement.id)) endpoint.createDefaultTemperatureMeasurementClusterServer();
+  if (serverList.includes(RelativeHumidityMeasurement.id)) endpoint.createDefaultRelativeHumidityMeasurementClusterServer();
+  if (serverList.includes(PressureMeasurement.id)) endpoint.createDefaultPressureMeasurementClusterServer();
+  if (serverList.includes(FlowMeasurement.id)) endpoint.createDefaultFlowMeasurementClusterServer();
+  if (serverList.includes(IlluminanceMeasurement.id)) endpoint.createDefaultIlluminanceMeasurementClusterServer();
+  if (serverList.includes(OccupancySensing.id)) endpoint.createDefaultOccupancySensingClusterServer();
+  if (serverList.includes(AirQuality.id)) endpoint.createDefaultAirQualityClusterServer();
+  if (serverList.includes(CarbonMonoxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
+  if (serverList.includes(CarbonDioxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
+  if (serverList.includes(NitrogenDioxideConcentrationMeasurement.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
+  if (serverList.includes(OzoneConcentrationMeasurement.id)) endpoint.createDefaultOzoneConcentrationMeasurementClusterServer();
+  if (serverList.includes(FormaldehydeConcentrationMeasurement.id)) endpoint.createDefaultFormaldehydeConcentrationMeasurementClusterServer();
+  if (serverList.includes(Pm1ConcentrationMeasurement.id)) endpoint.createDefaultPm1ConcentrationMeasurementClusterServer();
+  if (serverList.includes(Pm25ConcentrationMeasurement.id)) endpoint.createDefaultPm25ConcentrationMeasurementClusterServer();
+  if (serverList.includes(Pm10ConcentrationMeasurement.id)) endpoint.createDefaultPm10ConcentrationMeasurementClusterServer();
+  if (serverList.includes(RadonConcentrationMeasurement.id)) endpoint.createDefaultRadonConcentrationMeasurementClusterServer();
+  if (serverList.includes(TotalVolatileOrganicCompoundsConcentrationMeasurement.id)) endpoint.createDefaultTvocMeasurementClusterServer();
+  if (serverList.includes(DeviceEnergyManagement.id)) endpoint.createDefaultDeviceEnergyManagementClusterServer();
+  if (serverList.includes(DeviceEnergyManagementMode.id)) endpoint.createDefaultDeviceEnergyManagementModeClusterServer();
 }
 
 /**
@@ -790,7 +790,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
  * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
-  if (!endpoint.hasClusterServer(FixedLabel.Cluster.id)) {
+  if (!endpoint.hasClusterServer(FixedLabel.id)) {
     endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(FixedLabelServer, {
       labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
@@ -798,11 +798,11 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
     return;
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-  let labelList = endpoint.getAttribute(FixedLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  let labelList = endpoint.getAttribute(FixedLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
-    await endpoint.setAttribute(FixedLabel.Cluster.id, 'labelList', labelList, endpoint.log);
+    await endpoint.setAttribute(FixedLabel.id, 'labelList', labelList, endpoint.log);
   }
 }
 
@@ -814,7 +814,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
  * @param {string} value - The value of the label. Max 16 characters.
  */
 export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
-  if (!endpoint.hasClusterServer(UserLabel.Cluster.id)) {
+  if (!endpoint.hasClusterServer(UserLabel.id)) {
     endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(UserLabelServer, {
       labelList: [{ label: label.substring(0, 16), value: value.substring(0, 16) }],
@@ -822,11 +822,11 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
     return;
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
-  let labelList = endpoint.getAttribute(UserLabel.Cluster.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  let labelList = endpoint.getAttribute(UserLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
-    await endpoint.setAttribute(UserLabel.Cluster.id, 'labelList', labelList, endpoint.log);
+    await endpoint.setAttribute(UserLabel.id, 'labelList', labelList, endpoint.log);
   }
 }
 
@@ -1221,9 +1221,9 @@ export function getDefaultPowerSourceBatteryClusterServer(
 /**
  * Get the default power source replaceable battery cluster server options.
  *
- * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+ * @param {number | null} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
  * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
- * @param {number} batVoltage - The battery voltage (default: 1500).
+ * @param {number | null} batVoltage - The battery voltage (default: 1500).
  * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
  * @param {number} batQuantity - The quantity of the battery (default: 1).
  * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
@@ -1237,9 +1237,9 @@ export function getDefaultPowerSourceBatteryClusterServer(
  * - batQuantity: The quantity of the battery is a fixed attribute that indicates how many batteries are present in the device.
  */
 export function getDefaultPowerSourceReplaceableBatteryClusterServer(
-  batPercentRemaining: number = 100,
+  batPercentRemaining: number | null = 100,
   batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-  batVoltage: number = 1500,
+  batVoltage: number | null = 1500,
   batReplacementDescription: string = 'Battery type',
   batQuantity: number = 1,
   batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
@@ -1252,7 +1252,7 @@ export function getDefaultPowerSourceReplaceableBatteryClusterServer(
     endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
     // Battery feature attributes
     batVoltage,
-    batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+    batPercentRemaining: batPercentRemaining !== null ? Math.min(Math.max(batPercentRemaining * 2, 0), 200) : null,
     batChargeLevel,
     batReplacementNeeded: false,
     batReplaceability,
@@ -1266,9 +1266,9 @@ export function getDefaultPowerSourceReplaceableBatteryClusterServer(
 /**
  * Creates a default power source rechargeable battery cluster server.
  *
- * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+ * @param {number | null} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
  * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
- * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
+ * @param {number | null} [batVoltage] - The battery voltage in mV (default: 1500).
  * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
  * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source rechargeable battery cluster server.
  *
@@ -1278,9 +1278,9 @@ export function getDefaultPowerSourceReplaceableBatteryClusterServer(
  * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
  */
 export function getDefaultPowerSourceRechargeableBatteryClusterServer(
-  batPercentRemaining: number = 100,
+  batPercentRemaining: number | null = 100,
   batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-  batVoltage: number = 1500,
+  batVoltage: number | null = 1500,
   batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
 ) {
   return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable), {
@@ -1291,7 +1291,7 @@ export function getDefaultPowerSourceRechargeableBatteryClusterServer(
     endpointList: [], // Will be filled by the MatterbridgePowerSourceServer
     // Battery feature attributes
     batVoltage,
-    batPercentRemaining: Math.min(Math.max(batPercentRemaining * 2, 0), 200),
+    batPercentRemaining: batPercentRemaining !== null ? Math.min(Math.max(batPercentRemaining * 2, 0), 200) : null,
     batTimeRemaining: null, // Indicates the estimated time in seconds before the battery will no longer be able to provide power to the Node
     batChargeLevel,
     batReplacementNeeded: false,

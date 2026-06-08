@@ -86,6 +86,7 @@ These classes will run as threads in the next releases:
 ### Fixed
 
 - [setCluster]: Allow partial in setCluster() ClusterType overload.
+- [powerSource]: Fix type of batPercentRemaining and batVoltage attributes.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

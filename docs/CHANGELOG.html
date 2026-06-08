@@ -176,6 +176,10 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="381-dev-branch">[3.8.1] - Dev branch</h2>
+<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<ul>
+<li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[s6-rc]: Delete matter.js storage locks before starting the s6-rc and s6-rc-legacy docker images.</li>
@@ -185,9 +189,17 @@
 <ul>
 <li><p>[matterbridge]: Update dependencies.</p>
 </li>
+<li><p>[matterbridge]: Bump <code>matter.js</code> to v.0.17.2-alpha.0-20260606-610f30128.</p>
+</li>
 <li><p>[matterbridge]: Bump <code>marked</code> to v.18.0.5.</p>
 </li>
-<li><p>[matterbridge]: Bump <code>npm-check-updates</code> to v.22.2.2.</p>
+<li><p>[matterbridge]: Bump <code>npm-check-updates</code> to v.22.2.3.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>@types/node</code> to v.25.9.2.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>eslint-plugin-jsdoc</code> to v.63.0.2.</p>
+</li>
+<li><p>[frontend]: Bump <code>frontend</code> version to v.3.4.17.</p>
 </li>
 <li><p>[frontend]: Update dependencies.</p>
 </li>
@@ -205,6 +217,7 @@
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[setCluster]: Allow partial in setCluster() ClusterType overload.</li>
+<li>[powerSource]: Fix type of batPercentRemaining and batVoltage attributes.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="380-2026-06-05">[3.8.0] - 2026-06-05</h2>
@@ -214,7 +227,7 @@
 <li>[matter]: Update to matter.js 0.17.1. See <a href="https://matterbridge.io/Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
 <li>[matter]: Enable <code>tcp</code> transport with <code>udp</code> preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.</li>
 </ul>
-<h3 id="development-breaking-changes">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-1">Development Breaking changes</h3>
 <ul>
 <li>[matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.</li>
 <li>[endpoint]: Since the cluster clients have been added to each device type, instead of <code>addRequiredClusterServers()</code> call <code>addRequiredClusters()</code> (3.8.0 only) to add both required server clusters and required client clusters.</li>
@@ -329,7 +342,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="378-2026-05-09">[3.7.8] - 2026-05-09</h2>
-<h3 id="development-breaking-changes-1">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-2">Development Breaking Changes</h3>
 <ul>
 <li>[bin]: Remove mb-run bin. It will be replaced by mb-run package.</li>
 <li>[matter]: Add the matter.js renamed Semantic Tag Namespaces in <a href="Matter.js%200.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
@@ -1096,7 +1109,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="340-2025-11-26">[3.4.0] - 2025-11-26</h2>
-<h3 id="development-breaking-changes-2">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-3">Development Breaking Changes</h3>
 <p>Removed the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).</li>
@@ -1127,7 +1140,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="338-2025-11-15">[3.3.8] - 2025-11-15</h2>
-<h3 id="development-breaking-changes-3">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-4">Development Breaking Changes</h3>
 <p>This will be the last release with the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).</li>
@@ -1719,7 +1732,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="312-2025-07-06">[3.1.2] - 2025-07-06</h2>
-<h3 id="development-breaking-changes-4">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
@@ -1736,7 +1749,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="311-2025-07-04">[3.1.1] - 2025-07-04</h2>
-<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>

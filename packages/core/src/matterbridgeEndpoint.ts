@@ -2000,9 +2000,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source replaceable battery cluster server.
    *
-   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+   * @param {number | null} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} batVoltage - The battery voltage (default: 1500).
+   * @param {number | null} batVoltage - The battery voltage (default: 1500).
    * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
    * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
@@ -2016,9 +2016,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - batQuantity: The quantity of the battery is a fixed attribute that indicates how many batteries are present in the device.
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(
-    batPercentRemaining: number = 100,
+    batPercentRemaining: number | null = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: number = 1500,
+    batVoltage: number | null = 1500,
     batReplacementDescription: string = 'Battery type',
     batQuantity: number = 1,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
@@ -2033,9 +2033,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source rechargeable battery cluster server.
    *
-   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+   * @param {number | null} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
+   * @param {number | null} [batVoltage] - The battery voltage in mV (default: 1500).
    * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -2045,9 +2045,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(
-    batPercentRemaining: number = 100,
+    batPercentRemaining: number | null = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: number = 1500,
+    batVoltage: number | null = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
     this.behaviors.require(
