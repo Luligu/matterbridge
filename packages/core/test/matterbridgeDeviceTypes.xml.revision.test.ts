@@ -13,8 +13,8 @@ import {
   // Utility
   rootNode,
   powerSource,
-  OTARequestor,
-  OTAProvider,
+  otaRequestor,
+  otaProvider,
   bridgedNode,
   electricalSensor,
   deviceEnergyManagement,
@@ -27,16 +27,16 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / outlets / mounted controls
-  onOffOutlet,
-  dimmableOutlet,
-  onOffMountedSwitch,
-  dimmableMountedSwitch,
-  pumpDevice,
+  onOffPluginUnit,
+  dimmablePluginUnit,
+  mountedOnOffControl,
+  mountedDimmableLoadControl,
+  pump,
   waterValve,
   // Switches & controls
-  onOffSwitch,
-  dimmableSwitch,
-  colorTemperatureSwitch,
+  onOffLightSwitch,
+  dimmerSwitch,
+  colorDimmerSwitch,
   controlBridge,
   pumpController,
   genericSwitch,
@@ -55,23 +55,29 @@ import {
   waterLeakDetector,
   rainSensor,
   // Closures
-  doorLockDevice,
-  coverDevice,
+  doorLock,
+  doorLockController,
+  windowCovering,
+  windowCoveringController,
   // HVAC
-  thermostatDevice,
-  fanDevice,
+  thermostat,
+  thermostatController,
+  fan,
   airPurifier,
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
   speakerDevice,
+  contentApp,
+  castingVideoClient,
+  videoRemoteControl,
   // Generic device types
   modeSelect,
   // Appliances & complex devices
   roboticVacuumCleaner,
   laundryWasher,
   refrigerator,
-  airConditioner,
+  roomAirConditioner,
   temperatureControlledCabinetCooler,
   temperatureControlledCabinetHeater,
   dishwasher,
@@ -122,6 +128,12 @@ const XML_DEVICE_TYPES_DIR = path.join('chip', '1.5.1', 'xml', 'device_types');
 const XML_REVISION_OVERRIDES = new Map<number, number>([
   [0x0141, 2], // audioDoorbell: XML says 1, spec says 2
   [0x0148, 2], // doorbell: XML says 1, spec says 2
+]);
+
+// Device type codes where the chip/1.5.1 XML has an incorrect name.
+// The override value is the Matterbridge canonical name.
+const XML_DEVICE_NAME_OVERRIDES = new Map<number, string>([
+  [0x010b, 'Dimmable Plugin Unit'], // dimmablePluginUnit: XML says Dimmable PlugIn Unit
 ]);
 
 // Aggregator (and bridge which aliases it) intentionally uses DeviceClasses.Dynamic in
@@ -204,8 +216,8 @@ if (!hasXmlDir) {
       // Utility endpoint types
       ['rootNode', rootNode],
       ['powerSource', powerSource],
-      ['OTARequestor', OTARequestor],
-      ['OTAProvider', OTAProvider],
+      ['otaRequestor', otaRequestor],
+      ['otaProvider', otaProvider],
       ['bridgedNode', bridgedNode],
       ['electricalSensor', electricalSensor],
       ['deviceEnergyManagement', deviceEnergyManagement],
@@ -219,17 +231,17 @@ if (!hasXmlDir) {
       ['extendedColorLight', extendedColorLight],
 
       // Smart plugs / outlets / mounted controls
-      ['onOffOutlet', onOffOutlet],
-      ['dimmableOutlet', dimmableOutlet],
-      ['onOffMountedSwitch', onOffMountedSwitch],
-      ['dimmableMountedSwitch', dimmableMountedSwitch],
-      ['pumpDevice', pumpDevice],
+      ['onOffPluginUnit', onOffPluginUnit],
+      ['dimmablePluginUnit', dimmablePluginUnit],
+      ['mountedOnOffControl', mountedOnOffControl],
+      ['mountedDimmableLoadControl', mountedDimmableLoadControl],
+      ['pump', pump],
       ['waterValve', waterValve],
 
       // Switches & controls
-      ['onOffSwitch', onOffSwitch],
-      ['dimmableSwitch', dimmableSwitch],
-      ['colorTemperatureSwitch', colorTemperatureSwitch],
+      ['onOffLightSwitch', onOffLightSwitch],
+      ['dimmerSwitch', dimmerSwitch],
+      ['colorDimmerSwitch', colorDimmerSwitch],
       ['controlBridge', controlBridge],
       ['pumpController', pumpController],
       ['genericSwitch', genericSwitch],
@@ -250,18 +262,24 @@ if (!hasXmlDir) {
       ['rainSensor', rainSensor],
 
       // Closures
-      ['doorLockDevice', doorLockDevice],
-      ['coverDevice', coverDevice],
+      ['doorLock', doorLock],
+      ['doorLockController', doorLockController],
+      ['windowCovering', windowCovering],
+      ['windowCoveringController', windowCoveringController],
 
       // HVAC
-      ['thermostatDevice', thermostatDevice],
-      ['fanDevice', fanDevice],
+      ['thermostat', thermostat],
+      ['thermostatController', thermostatController],
+      ['fan', fan],
       ['airPurifier', airPurifier],
 
       // Media
       ['basicVideoPlayer', basicVideoPlayer],
       ['castingVideoPlayer', castingVideoPlayer],
       ['speakerDevice', speakerDevice],
+      ['contentApp', contentApp],
+      ['castingVideoClient', castingVideoClient],
+      ['videoRemoteControl', videoRemoteControl],
 
       // Generic device types
       ['modeSelect', modeSelect],
@@ -270,7 +288,7 @@ if (!hasXmlDir) {
       ['roboticVacuumCleaner', roboticVacuumCleaner],
       ['laundryWasher', laundryWasher],
       ['refrigerator', refrigerator],
-      ['airConditioner', airConditioner],
+      ['roomAirConditioner', roomAirConditioner],
       ['temperatureControlledCabinetCooler', temperatureControlledCabinetCooler],
       ['temperatureControlledCabinetHeater', temperatureControlledCabinetHeater],
       ['dishwasher', dishwasher],
@@ -318,7 +336,7 @@ if (!hasXmlDir) {
       }
       expect(mb.code).toBe(xmlInfo.id);
       expect(mb.revision).toBe(XML_REVISION_OVERRIDES.get(mb.code) ?? xmlInfo.revision);
-      expect(mb.deviceName).toBe(xmlInfo.name.replace(/[/-]/g, ''));
+      expect(mb.deviceName).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[/-]/g, ''));
       expect(mb.deviceClass).toBe(DEVICE_CLASS_OVERRIDES.get(mb.code) ?? XML_CLASS_TO_DEVICE_CLASS[xmlInfo.class ?? '']);
       expect(mb.deviceScope).toBe(XML_SCOPE_TO_DEVICE_SCOPE[xmlInfo.scope ?? '']);
     });

@@ -32,6 +32,7 @@ import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { ApplicationBasic } from '@matter/types/clusters/application-basic';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
 import { Binding } from '@matter/types/clusters/binding';
@@ -51,6 +52,7 @@ import { CommissionerControl } from '@matter/types/clusters/commissioner-control
 import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
 import { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
+import { ContentAppObserver } from '@matter/types/clusters/content-app-observer';
 import { ContentControl } from '@matter/types/clusters/content-control';
 import { ContentLauncher } from '@matter/types/clusters/content-launcher';
 import { Descriptor } from '@matter/types/clusters/descriptor';
@@ -281,8 +283,8 @@ export const DeviceTypeDefinition = ({
  * 1.1.8. Element Requirements
  * 0x001D Descriptor Feature TagList Duplicate
  */
-export const baseDevice = DeviceTypeDefinition({
-  name: 'MA-baseDevice',
+export const baseDeviceType = DeviceTypeDefinition({
+  name: 'MA-baseDeviceType',
   deviceName: 'Base Device Type',
   code: 0x0000,
   deviceClass: DeviceClasses.Simple,
@@ -333,8 +335,8 @@ export const powerSource = DeviceTypeDefinition({
  *
  * An OTA Requestor is a device that is capable of receiving an OTA software update.
  */
-export const OTARequestor = DeviceTypeDefinition({
-  name: 'MA-OTARequestor',
+export const otaRequestor = DeviceTypeDefinition({
+  name: 'MA-otaRequestor',
   deviceName: 'OTA Requestor',
   code: 0x0012,
   deviceClass: DeviceClasses.Utility,
@@ -352,8 +354,8 @@ export const OTARequestor = DeviceTypeDefinition({
  * An OTA Provider is a node that is capable of providing an OTA software update to other nodes on
  * the same fabric.
  */
-export const OTAProvider = DeviceTypeDefinition({
-  name: 'MA-OTAProvider',
+export const otaProvider = DeviceTypeDefinition({
+  name: 'MA-otaProvider',
   deviceName: 'OTA Provider',
   code: 0x0014,
   deviceClass: DeviceClasses.Utility,
@@ -470,7 +472,7 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
  * - Scenes Management Command CopyScene
  */
 export const onOffLight = DeviceTypeDefinition({
-  name: 'MA-onofflight',
+  name: 'MA-onOffLight',
   deviceName: 'OnOff Light',
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
@@ -497,7 +499,7 @@ export const onOffLight = DeviceTypeDefinition({
  * - Scenes Management Command CopyScene
  */
 export const dimmableLight = DeviceTypeDefinition({
-  name: 'MA-dimmablelight',
+  name: 'MA-dimmableLight',
   deviceName: 'Dimmable Light',
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
@@ -526,7 +528,7 @@ export const dimmableLight = DeviceTypeDefinition({
  * - Color Control Attribute RemainingTime
  */
 export const colorTemperatureLight = DeviceTypeDefinition({
-  name: 'MA-colortemperaturelight',
+  name: 'MA-colorTemperatureLight',
   deviceName: 'Color Temperature Light',
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
@@ -559,7 +561,7 @@ export const colorTemperatureLight = DeviceTypeDefinition({
  * - Color Control Attribute RemainingTime
  */
 export const extendedColorLight = DeviceTypeDefinition({
-  name: 'MA-extendedcolorlight',
+  name: 'MA-extendedColorLight',
   deviceName: 'Extended Color Light',
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
@@ -595,8 +597,8 @@ export const extendedColorLight = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254 Optional
  * - Scenes Management Command CopyScene
  */
-export const onOffOutlet = DeviceTypeDefinition({
-  name: 'MA-onoffpluginunit',
+export const onOffPluginUnit = DeviceTypeDefinition({
+  name: 'MA-onOffPluginUnit',
   deviceName: 'OnOff Plugin Unit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
@@ -607,6 +609,11 @@ export const onOffOutlet = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
+
+/**
+ * @deprecated Use {@link onOffPluginUnit} instead.
+ */
+export const onOffOutlet = onOffPluginUnit;
 
 /**
  * 5.2. Dimmable Plug-In Unit Device Type
@@ -631,9 +638,9 @@ export const onOffOutlet = DeviceTypeDefinition({
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
  */
-export const dimmableOutlet = DeviceTypeDefinition({
-  name: 'MA-dimmablepluginunit',
-  deviceName: 'Dimmable PlugIn Unit',
+export const dimmablePluginUnit = DeviceTypeDefinition({
+  name: 'MA-dimmablePluginUnit',
+  deviceName: 'Dimmable Plugin Unit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -643,6 +650,11 @@ export const dimmableOutlet = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
+
+/**
+ * @deprecated Use {@link dimmablePluginUnit} instead.
+ */
+export const dimmableOutlet = dimmablePluginUnit;
 
 /**
  * 5.3. Mounted On/Off Control Device Type
@@ -669,8 +681,8 @@ export const dimmableOutlet = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254
  * - Scenes Management Command CopyScene
  */
-export const onOffMountedSwitch = DeviceTypeDefinition({
-  name: 'MA-onoffmountedswitch',
+export const mountedOnOffControl = DeviceTypeDefinition({
+  name: 'MA-mountedOnOffControl',
   deviceName: 'Mounted OnOff Control',
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
@@ -681,6 +693,11 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
+
+/**
+ * @deprecated Use {@link mountedOnOffControl} instead.
+ */
+export const onOffMountedSwitch = mountedOnOffControl;
 
 /**
  * 5.4. Mounted Dimmable Load Control Device Type
@@ -709,8 +726,8 @@ export const onOffMountedSwitch = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254
  * - Scenes Management Command CopyScene
  */
-export const dimmableMountedSwitch = DeviceTypeDefinition({
-  name: 'MA-dimmablemountedswitch',
+export const mountedDimmableLoadControl = DeviceTypeDefinition({
+  name: 'MA-mountedDimmableLoadControl',
   deviceName: 'Mounted Dimmable Load Control',
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
@@ -721,6 +738,11 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
+
+/**
+ * @deprecated Use {@link mountedDimmableLoadControl} instead.
+ */
+export const dimmableMountedSwitch = mountedDimmableLoadControl;
 
 /**
  * 5.5. Pump Device Type
@@ -741,7 +763,7 @@ export const dimmableMountedSwitch = DeviceTypeDefinition({
  *    1–200   Level / 2 (0.5–100.0%)  Pump setpoint in percent
  *    201–255 100.0%                  Pump setpoint is 100.0%
  */
-export const pumpDevice = DeviceTypeDefinition({
+export const pump = DeviceTypeDefinition({
   name: 'MA-pump',
   deviceName: 'Pump',
   code: 0x303,
@@ -753,6 +775,11 @@ export const pumpDevice = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id, OccupancySensing.id],
 });
+
+/**
+ * @deprecated Use {@link pump} instead.
+ */
+export const pumpDevice = pump;
 
 /**
  * 5.6. Water Valve Device Type
@@ -813,8 +840,8 @@ export const irrigationSystem = DeviceTypeDefinition({
  * @remarks
  * The OnOff server cluster (extraneous for Matter spec) need to be added manually to Have Apple Home show the correct behavior.
  */
-export const onOffSwitch = DeviceTypeDefinition({
-  name: 'MA-onoffswitch',
+export const onOffLightSwitch = DeviceTypeDefinition({
+  name: 'MA-onOffLightSwitch',
   deviceName: 'OnOff Light Switch',
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
@@ -827,14 +854,19 @@ export const onOffSwitch = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link onOffLightSwitch} instead.
+ */
+export const onOffSwitch = onOffLightSwitch;
+
+/**
  * 6.2. Dimmer Switch Device Type
  *
  * A Dimmer Switch is a controller device that, when bound to a lighting device such as a Dimmable
  * Light, is capable of being used to switch the device on or off and adjust the intensity of the light
  * being emitted.
  */
-export const dimmableSwitch = DeviceTypeDefinition({
-  name: 'MA-dimmableswitch',
+export const dimmerSwitch = DeviceTypeDefinition({
+  name: 'MA-dimmerSwitch',
   deviceName: 'Dimmer Switch',
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
@@ -847,13 +879,18 @@ export const dimmableSwitch = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link dimmerSwitch} instead.
+ */
+export const dimmableSwitch = dimmerSwitch;
+
+/**
  * 6.3. Color Dimmer Switch Device Type
  *
  * A Color Dimmer Switch is a controller device that, when bound to a lighting device such as an
  * Extended Color Light, is capable of being used to adjust the color of the light being emitted.
  */
-export const colorTemperatureSwitch = DeviceTypeDefinition({
-  name: 'MA-colortemperatureswitch',
+export const colorDimmerSwitch = DeviceTypeDefinition({
+  name: 'MA-colorDimmerSwitch',
   deviceName: 'Color Dimmer Switch',
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
@@ -866,6 +903,11 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link colorDimmerSwitch} instead.
+ */
+export const colorTemperatureSwitch = colorDimmerSwitch;
+
+/**
  * 6.4. Control Bridge Device Type
  *
  * A Control Bridge is a controller device that, when bound to a lighting device such as an Extended
@@ -874,7 +916,7 @@ export const colorTemperatureSwitch = DeviceTypeDefinition({
  * capable of being used for setting scenes.
  */
 export const controlBridge = DeviceTypeDefinition({
-  name: 'MA-controlbridge',
+  name: 'MA-controlBridge',
   deviceName: 'Control Bridge',
   code: 0x0840,
   deviceClass: DeviceClasses.Simple,
@@ -892,7 +934,7 @@ export const controlBridge = DeviceTypeDefinition({
  * A Pump Controller device is capable of configuring and controlling a Pump device.
  */
 export const pumpController = DeviceTypeDefinition({
-  name: 'MA-pumpcontroller',
+  name: 'MA-pumpController',
   deviceName: 'Pump Controller',
   code: 0x0304,
   deviceClass: DeviceClasses.Simple,
@@ -910,7 +952,7 @@ export const pumpController = DeviceTypeDefinition({
  * This defines conformance for the Generic Switch device type.
  */
 export const genericSwitch = DeviceTypeDefinition({
-  name: 'MA-genericswitch',
+  name: 'MA-genericSwitch',
   deviceName: 'Generic Switch',
   code: 0x000f,
   deviceClass: DeviceClasses.Simple,
@@ -929,7 +971,7 @@ export const genericSwitch = DeviceTypeDefinition({
  * Open or no contact: state false
  */
 export const contactSensor = DeviceTypeDefinition({
-  name: 'MA-contactsensor',
+  name: 'MA-contactSensor',
   deviceName: 'Contact Sensor',
   code: 0x0015,
   deviceClass: DeviceClasses.Simple,
@@ -943,7 +985,7 @@ export const contactSensor = DeviceTypeDefinition({
  * 7.2. Light Sensor Device Type
  */
 export const lightSensor = DeviceTypeDefinition({
-  name: 'MA-lightsensor',
+  name: 'MA-lightSensor',
   deviceName: 'Light Sensor',
   code: 0x0106,
   deviceClass: DeviceClasses.Simple,
@@ -956,7 +998,7 @@ export const lightSensor = DeviceTypeDefinition({
  * 7.3. Occupancy Sensor Device Type
  */
 export const occupancySensor = DeviceTypeDefinition({
-  name: 'MA-occupancysensor',
+  name: 'MA-occupancySensor',
   deviceName: 'Occupancy Sensor',
   code: 0x0107,
   deviceClass: DeviceClasses.Simple,
@@ -973,7 +1015,7 @@ export const occupancySensor = DeviceTypeDefinition({
  * - Thermostat User Interface Configuration Attribute KeypadLockout O
  */
 export const temperatureSensor = DeviceTypeDefinition({
-  name: 'MA-tempsensor',
+  name: 'MA-temperatureSensor',
   deviceName: 'Temperature Sensor',
   code: 0x0302,
   deviceClass: DeviceClasses.Simple,
@@ -987,7 +1029,7 @@ export const temperatureSensor = DeviceTypeDefinition({
  * 7.5. Pressure Sensor Device Type
  */
 export const pressureSensor = DeviceTypeDefinition({
-  name: 'MA-pressuresensor',
+  name: 'MA-pressureSensor',
   deviceName: 'Pressure Sensor',
   code: 0x0305,
   deviceClass: DeviceClasses.Simple,
@@ -1000,7 +1042,7 @@ export const pressureSensor = DeviceTypeDefinition({
  * 7.6. Flow Sensor Device Type
  */
 export const flowSensor = DeviceTypeDefinition({
-  name: 'MA-flowsensor',
+  name: 'MA-flowSensor',
   deviceName: 'Flow Sensor',
   code: 0x0306,
   deviceClass: DeviceClasses.Simple,
@@ -1013,7 +1055,7 @@ export const flowSensor = DeviceTypeDefinition({
  * 7.7. Humidity Sensor Device Type
  */
 export const humiditySensor = DeviceTypeDefinition({
-  name: 'MA-humiditysensor',
+  name: 'MA-humiditySensor',
   deviceName: 'Humidity Sensor',
   code: 0x0307,
   deviceClass: DeviceClasses.Simple,
@@ -1029,7 +1071,7 @@ export const humiditySensor = DeviceTypeDefinition({
  * as a Dimmable Light, is capable of being used to switch the device on or off.
  */
 export const onOffSensor = DeviceTypeDefinition({
-  name: 'MA-onoffsensor',
+  name: 'MA-onOffSensor',
   deviceName: 'OnOff Sensor',
   code: 0x0850,
   deviceClass: DeviceClasses.Simple,
@@ -1181,7 +1223,7 @@ export const soilSensor = DeviceTypeDefinition({
  * - Root 0x0016 Root Node TimeSyncCond O
  * - Root 0x0016 Root Node TimeSyncWithClientCond O
  */
-export const doorLockDevice = DeviceTypeDefinition({
+export const doorLock = DeviceTypeDefinition({
   name: 'MA-doorLock',
   deviceName: 'Door Lock',
   code: 0xa,
@@ -1192,7 +1234,36 @@ export const doorLockDevice = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
-export const coverDevice = DeviceTypeDefinition({
+/**
+ * @deprecated Use {@link doorLock} instead.
+ */
+export const doorLockDevice = doorLock;
+
+/**
+ * 8.2. Door Lock Controller Device Type
+ *
+ * A Door Lock Controller is a device capable of controlling a door lock.
+ *
+ * 8.2.4. Condition Requirements
+ * - Root 0x0016 Root Node TimeSyncCond O
+ */
+export const doorLockController = DeviceTypeDefinition({
+  name: 'MA-doorLockController',
+  deviceName: 'Door Lock Controller',
+  code: 0x00b,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 3,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+  requiredClientClusters: [DoorLock.id],
+  optionalClientClusters: [Groups.id, ScenesManagement.id],
+});
+
+/**
+ * 8.3. Window Covering Device Type
+ */
+export const windowCovering = DeviceTypeDefinition({
   name: 'MA-windowCovering',
   deviceName: 'Window Covering',
   code: 0x202,
@@ -1204,9 +1275,38 @@ export const coverDevice = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link windowCovering} instead.
+ */
+export const coverDevice = windowCovering;
+
+/**
+ * 8.4. Window Covering Controller Device Type
+ *
+ * A Window Covering Controller is a device that controls an automatic window covering.
+ */
+export const windowCoveringController = DeviceTypeDefinition({
+  name: 'MA-windowCoveringController',
+  deviceName: 'Window Covering Controller',
+  code: 0x203,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 4,
+  requiredServerClusters: [],
+  optionalServerClusters: [Identify.id],
+  requiredClientClusters: [WindowCovering.id],
+  optionalClientClusters: [Identify.id, Groups.id],
+});
+
+/**
  * 8.5. Closure Device Type
  *
- * A Closure device provides actuator control over an endpoint.
+ * A Closure is an element that seals an opening (such as a window, door, cabinet, wall, facade, ceiling,
+ * or roof). It MAY contain one or more instances of a Closure Panel device type on separate child endpoints
+ * of the Closure parent. Each Closure Panel is a sub-component of a Closure, capable of some
+ * change in state, primarily through a movement.
+ *
+ * A Closure is a composed device type that MAY include additional device types on separate child
+ * endpoints.
  *
  * Device Type Requirements:
  * - 0x000A Door Lock O
@@ -1231,7 +1331,12 @@ export const closure = DeviceTypeDefinition({
 /**
  * 8.6. Closure Panel Device Type
  *
- * A Closure Panel device provides dimension information for an endpoint.
+ * A Closure Panel SHALL ONLY exist as a part (child) of a Closure device type. It represents a single
+ * panel aspect (e.g. position of a blind, tilt of slats, etc) within that Closure.
+ * This panel can be used to express the following:
+ * • Translation : panel translates along one axis
+ * • Rotation : panel rotates around an axis of rotation
+ * • Modulation : panel modifies its aspect to modulate a flow
  *
  * Element Requirements:
  * - Descriptor Feature TagList M
@@ -1278,6 +1383,8 @@ export const closureController = DeviceTypeDefinition({
 /** Chapter 9. HVAC Device Types */
 
 /**
+ * 9.1. Thermostat Device Type
+ *
  * A Thermostat device is capable of having either built-in or separate sensors for temperature,
  * humidity or occupancy. It allows the desired temperature to be set either remotely or locally. The
  * thermostat is capable of sending heating and/or cooling requirement notifications to a heating/cooling
@@ -1285,7 +1392,7 @@ export const closureController = DeviceTypeDefinition({
  * heating or cooling unit directly.
  *
  */
-export const thermostatDevice = DeviceTypeDefinition({
+export const thermostat = DeviceTypeDefinition({
   name: 'MA-thermostat',
   deviceName: 'Thermostat',
   code: 0x301,
@@ -1299,7 +1406,19 @@ export const thermostatDevice = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link thermostatDevice} instead.
+ */
+export const thermostatDevice = thermostat;
+
+/**
+ * 9.2. Fan Device Type
+ *
  * A Fan device is typically standalone or mounted on a ceiling or wall and is used to circulate air in a room.
+ *
+ * A fan MAY expose elements of its functionality through one or more additional device types on different
+ * endpoints. All devices used in compositions SHALL adhere to the disambiguation requirements
+ * of the System Model. Other device types, not explicitly listed in the table, MAY also be
+ * included in device compositions but are not considered part of the core functionality of the device.
  *
  * Device Type Requirements:
  * - 0x0301 Thermostat O
@@ -1319,7 +1438,7 @@ export const thermostatDevice = DeviceTypeDefinition({
  * would be set to Off, and the SpeedCurrent and PercentCurrent set to zero, without changing FanMode,
  * SpeedSetting and PercentSetting.
  */
-export const fanDevice = DeviceTypeDefinition({
+export const fan = DeviceTypeDefinition({
   name: 'MA-fan',
   deviceName: 'Fan',
   code: 0x2b,
@@ -1331,9 +1450,21 @@ export const fanDevice = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link fan} instead.
+ */
+export const fanDevice = fan;
+
+/**
+ * 9.3. Air Purifier Device Type
+ *
  * An Air Purifier is a standalone device that is designed to clean the air in a room.
  * It is a device that has a fan to control the air speed while it is operating. Optionally, it can report on
  * the condition of its filters.
+ *
+ * An Air Purifier MAY expose elements of its functionality through one or more additional device types on different
+ * endpoints. All devices used in compositions SHALL adhere to the disambiguation requirements
+ * of the System Model. Other device types, not explicitly listed in the table, MAY also be
+ * included in device compositions but are not considered part of the core functionality of the device.
  *
  * Device Type Requirements:
  * - 0x002C Air Quality Sensor O
@@ -1366,10 +1497,30 @@ export const airPurifier = DeviceTypeDefinition({
   optionalServerClusters: [Groups.id, OnOff.id, HepaFilterMonitoring.id, ActivatedCarbonFilterMonitoring.id],
 });
 
+/**
+ * 9.4. Thermostat Controller Device Type
+ *
+ * A Thermostat Controller is a device capable of controlling a Thermostat.
+ */
+export const thermostatController = DeviceTypeDefinition({
+  name: 'MA-thermostatController',
+  deviceName: 'Thermostat Controller',
+  code: 0x030a,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 1,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+  requiredClientClusters: [Thermostat.id],
+  optionalClientClusters: [Identify.id, Groups.id, ScenesManagement.id],
+});
+
 /** Chapter 10. Media Device Types */
 
 /**
- * 10.2. A Basic Video Player has playback controls (play, pause, etc.) and keypad remote controls (up, down, number input),
+ * 10.2. Basic Video Player Device Type
+ *
+ * A Basic Video Player has playback controls (play, pause, etc.) and keypad remote controls (up, down, number input),
  * but is not able to launch arbitrary content applications. It is a commissionable node.
  *
  * Required server clusters (minimum features per spec):
@@ -1399,7 +1550,9 @@ export const basicVideoPlayer = DeviceTypeDefinition({
 });
 
 /**
- * 10.3. A Casting Video Player supports Basic Video Player features and content launching features.
+ * 10.3. Casting Video Player Device Type
+ *
+ * A Casting Video Player supports Basic Video Player features and content launching features.
  * It is a Commissioner and can launch Content Apps (Content Launcher cluster) and optionally expose
  * an Application Launcher cluster when acting as a Content App Platform.
  *
@@ -1447,12 +1600,14 @@ export const castingVideoPlayer = DeviceTypeDefinition({
 });
 
 /**
- * 10.4. A Speaker device type controls the speaker.
+ * 10.4. Speaker Device Type
+ *
+ * A Speaker device type controls the speaker.
  * unmute/mute, the On/Off cluster SHALL be used. A value of TRUE for the OnOff attribute
  * SHALL represent the volume on (not muted) state, while a value of FALSE SHALL represent the volume
  * off (muted) state. For volume level control, the Level cluster SHALL be used.
  */
-export const speakerDevice = DeviceTypeDefinition({
+export const speaker = DeviceTypeDefinition({
   name: 'MA-speaker',
   deviceName: 'Speaker',
   code: 0x0022,
@@ -1463,10 +1618,104 @@ export const speakerDevice = DeviceTypeDefinition({
   optionalServerClusters: [],
 });
 
+/**
+ * @deprecated Use {@link speaker} instead.
+ */
+export const speakerDevice = speaker;
+
+/**
+ * 10.5. Content App Device Type
+ *
+ * A Content App is usually an application built by a Content Provider and exists as a separate
+ * endpoint on a Casting Video Player with a Content App Platform.
+ *
+ * Element Requirements:
+ * - Application Launcher Feature ApplicationPlatform X
+ */
+export const contentApp = DeviceTypeDefinition({
+  name: 'MA-contentApp',
+  deviceName: 'Content App',
+  code: 0x0024,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 2,
+  requiredServerClusters: [KeypadInput.id, ApplicationLauncher.id, ApplicationBasic.id],
+  optionalServerClusters: [Channel.id, TargetNavigator.id, MediaPlayback.id, ContentLauncher.id, AccountLogin.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [ContentAppObserver.id],
+});
+
+/**
+ * 10.6. Casting Video Client Device Type
+ *
+ * A Casting Video Client is a commissionable node which extends the Video Remote Control features
+ * with the ability to initiate content launching. It is often associated with a Content App built by a
+ * specific Content Provider.
+ */
+export const castingVideoClient = DeviceTypeDefinition({
+  name: 'MA-castingVideoClient',
+  deviceName: 'Casting Video Client',
+  code: 0x0029,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 2,
+  requiredServerClusters: [],
+  optionalServerClusters: [ContentAppObserver.id],
+  requiredClientClusters: [OnOff.id, KeypadInput.id, ContentLauncher.id, ApplicationBasic.id],
+  optionalClientClusters: [
+    LevelControl.id,
+    Messages.id,
+    WakeOnLan.id,
+    Channel.id,
+    TargetNavigator.id,
+    MediaPlayback.id,
+    MediaInput.id,
+    LowPower.id,
+    AudioOutput.id,
+    ApplicationLauncher.id,
+    AccountLogin.id,
+    ContentControl.id,
+  ],
+});
+
+/**
+ * 10.7. Video Remote Control Device Type
+ *
+ * A Video Remote Control is a commissionable node used to control basic features including, at a minimum,
+ * the ability to initiate keypad navigation and media playback.
+ */
+export const videoRemoteControl = DeviceTypeDefinition({
+  name: 'MA-videoRemoteControl',
+  deviceName: 'Video Remote Control',
+  code: 0x002a,
+  deviceClass: DeviceClasses.Simple,
+  deviceScope: DeviceScopes.Endpoint,
+  revision: 2,
+  requiredServerClusters: [],
+  optionalServerClusters: [],
+  requiredClientClusters: [OnOff.id, MediaPlayback.id, KeypadInput.id],
+  optionalClientClusters: [
+    LevelControl.id,
+    WakeOnLan.id,
+    Channel.id,
+    TargetNavigator.id,
+    MediaInput.id,
+    LowPower.id,
+    ContentLauncher.id,
+    AudioOutput.id,
+    ApplicationLauncher.id,
+    AccountLogin.id,
+    ContentControl.id,
+  ],
+});
+
 /** Chapter 11. Generic Device Types */
 
+/**
+ * 11.1. Mode Select Device Type
+ */
 export const modeSelect = DeviceTypeDefinition({
-  name: 'MA-modeselect',
+  name: 'MA-modeSelect',
   deviceName: 'Mode Select',
   code: 0x27,
   deviceClass: DeviceClasses.Simple,
@@ -1476,6 +1725,8 @@ export const modeSelect = DeviceTypeDefinition({
 });
 
 /**
+ * 11.2. Aggregator Device Type
+ *
  * This device type aggregates endpoints as a collection. Clusters on the endpoint indicating this
  * device type provide functionality for the collection of descendant endpoints present in the PartsList
  * of the endpoint’s descriptor, for example the Actions cluster.
@@ -1522,6 +1773,8 @@ export const bridge = aggregator;
 /** Chapter 12. Robotic Device Types */
 
 /**
+ * 12.1. Robotic Vacuum Cleaner Device Type
+ *
  * A Robotic Vacuum Cleaner is a device that is capable of cleaning floors and other surfaces
  * in a home or office environment. It is typically a mobile device that can navigate around
  * obstacles and can be controlled remotely.
@@ -1546,7 +1799,7 @@ export const bridge = aggregator;
  *
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
-  name: 'MA-roboticvacuumcleaner',
+  name: 'MA-roboticVacuumCleaner',
   deviceName: 'Robotic Vacuum Cleaner',
   code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
@@ -1559,6 +1812,8 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
 /** Chapter 13. Appliances Device Types */
 
 /**
+ * 13.1. Laundry Washer Device Type
+ *
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
@@ -1570,7 +1825,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  * - Operational State Event OperationCompletion M
  */
 export const laundryWasher = DeviceTypeDefinition({
-  name: 'MA-laundrywasher',
+  name: 'MA-laundryWasher',
   deviceName: 'Laundry Washer',
   code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
@@ -1581,6 +1836,8 @@ export const laundryWasher = DeviceTypeDefinition({
 });
 
 /**
+ * 13.2. Refrigerator Device Type
+ *
  * A refrigerator represents a device that contains one or more cabinets that are capable of chilling or freezing food.
  * A Refrigerator SHALL be composed of at least one endpoint with the Temperature Controlled Cabinet device type.
  * A Refrigerator SHALL have the Cooler condition applied to at least one endpoint containing the Temperature Control Cluster.
@@ -1604,6 +1861,8 @@ export const refrigerator = DeviceTypeDefinition({
 });
 
 /**
+ * 13.3. Room Air Conditioner Device Type
+ *
  * A Room Air Conditioner is a device with the primary function of controlling the air temperature in a single room.
  *
  * Device Type Requirements:
@@ -1622,8 +1881,8 @@ export const refrigerator = DeviceTypeDefinition({
  *  - Fan Control                     SpeedSetting        null
  *  - Fan Control                     PercentSetting      null
  */
-export const airConditioner = DeviceTypeDefinition({
-  name: 'MA-airConditioner',
+export const roomAirConditioner = DeviceTypeDefinition({
+  name: 'MA-roomAirConditioner',
   deviceName: 'Room Air Conditioner',
   code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
@@ -1643,6 +1902,13 @@ export const airConditioner = DeviceTypeDefinition({
 });
 
 /**
+ * @deprecated Use {@link roomAirConditioner} instead.
+ */
+export const airConditioner = roomAirConditioner;
+
+/**
+ * 13.4. Temperature Controlled Cabinet Device Type
+ *
  * A Temperature Controlled Cabinet only exists composed as part of another device type. It represents
  * a single cabinet that is capable of having its temperature controlled. Such a cabinet may be
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
@@ -1667,7 +1933,7 @@ export const airConditioner = DeviceTypeDefinition({
  * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
-  name: 'MA-temperaturecontrolledcabinetcooler',
+  name: 'MA-temperatureControlledCabinetCooler',
   deviceName: 'Temperature Controlled Cabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
@@ -1678,6 +1944,8 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
 });
 
 /**
+ * 13.4. Temperature Controlled Cabinet Device Type
+ *
  * A Temperature Controlled Cabinet only exists composed as part of another device type. It represents
  * a single cabinet that is capable of having its temperature controlled. Such a cabinet may be
  * chilling or freezing food, for example as part of a refrigerator, freezer, wine chiller, or other similar
@@ -1703,7 +1971,7 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
-  name: 'MA-temperaturecontrolledcabinetheater',
+  name: 'MA-temperatureControlledCabinetHeater',
   deviceName: 'Temperature Controlled Cabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
@@ -1714,6 +1982,12 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
 });
 
 /**
+ * 13.5. Dishwasher Device Type
+ *
+ * A dishwasher is a device that is generally installed in residential homes and is capable of washing
+ * dishes, cutlery, and other items associate with food preparation and consumption. The device can
+ * be permanently installed or portable and can have variety of filling and draining methods.
+ *
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
@@ -1736,6 +2010,8 @@ export const dishwasher = DeviceTypeDefinition({
 });
 
 /**
+ * 13.6. Laundry Dryer Device Type
+ *
  * Cluster Restrictions:
  * On/Off Cluster: the DF (Dead Front) feature is required
  * Operational State Event OperationCompletion
@@ -1747,7 +2023,7 @@ export const dishwasher = DeviceTypeDefinition({
  * - Operational State Event OperationCompletion M
  */
 export const laundryDryer = DeviceTypeDefinition({
-  name: 'MA-laundrydryer',
+  name: 'MA-laundryDryer',
   deviceName: 'Laundry Dryer',
   code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
@@ -1758,6 +2034,8 @@ export const laundryDryer = DeviceTypeDefinition({
 });
 
 /**
+ * 13.7. Cook Surface Device Type
+ *
  * A Cook Surface device type represents a heating object on a cooktop or other similar device. It
  * SHALL only be used when composed as part of another device type (cooktop).
  *
@@ -1771,7 +2049,7 @@ export const laundryDryer = DeviceTypeDefinition({
  * - Temperature Control Feature TemperatureNumber X
  */
 export const cookSurface = DeviceTypeDefinition({
-  name: 'MA-cooksurface',
+  name: 'MA-cookSurface',
   deviceName: 'Cook Surface',
   code: 0x77, // 119
   deviceClass: DeviceClasses.Simple,
@@ -1782,6 +2060,8 @@ export const cookSurface = DeviceTypeDefinition({
 });
 
 /**
+ * 13.8. Cooktop Device Type
+ *
  * A cooktop is a cooking surface that heats food either by transferring currents from an electromagnetic
  * field located below the glass surface directly to the magnetic induction cookware placed
  * above or through traditional gas or electric burners.
@@ -1808,6 +2088,8 @@ export const cooktop = DeviceTypeDefinition({
 });
 
 /**
+ * 13.9. Oven Device Type
+ *
  * An oven represents a device that contains one or more cabinets, and optionally a single cooktop, that are all capable of heating food.
  * An oven is always defined via endpoint composition.
  * Conditions:
@@ -1828,6 +2110,8 @@ export const oven = DeviceTypeDefinition({
 });
 
 /**
+ * 13.10. Extractor Hood Device Type
+ *
  * An Extractor Hood is a device that is generally installed above a cooking surface in residential kitchens.
  * Additional device types not listed in this table MAY also be included in device compositions.
  * Device Type Requirements:
@@ -1840,7 +2124,7 @@ export const oven = DeviceTypeDefinition({
  * - 0x0202 Fan Control Feature AirflowDirection X
  */
 export const extractorHood = DeviceTypeDefinition({
-  name: 'MA-extractorhood',
+  name: 'MA-extractorHood',
   deviceName: 'Extractor Hood',
   code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
@@ -1851,6 +2135,8 @@ export const extractorHood = DeviceTypeDefinition({
 });
 
 /**
+ * 13.11. Microwave Oven Device Type
+ *
  * A Microwave Oven is a device with the primary function of heating foods and beverages using a magnetron.
  * A Microwave Oven is a device which at a minimum is capable of being started and stopped and of setting a power level.
  * A Microwave Oven MAY also support additional capabilities via endpoint composition.
@@ -1859,7 +2145,7 @@ export const extractorHood = DeviceTypeDefinition({
  * Operational State Event OperationCompletion
  */
 export const microwaveOven = DeviceTypeDefinition({
-  name: 'MA-microwaveoven',
+  name: 'MA-microwaveOven',
   deviceName: 'Microwave Oven',
   code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
@@ -1872,6 +2158,8 @@ export const microwaveOven = DeviceTypeDefinition({
 /** Chapter 14. Energy Device Types */
 
 /**
+ * 14.1. EVSE Device Type
+ *
  * An EVSE (Electric Vehicle Supply Equipment) is a device that allows an EV (Electric Vehicle) to be
  * connected to the mains electricity supply to allow it to be charged (or discharged in case of Vehicle
  * to Grid / Vehicle to Home applications).
@@ -1902,6 +2190,8 @@ export const evse = DeviceTypeDefinition({
 });
 
 /**
+ * 14.2. Water Heater Device Type
+ *
  * A water heater is a device that is generally installed in properties to heat water for showers, baths etc.
  * A Water Heater is always defined via endpoint composition.
  *
@@ -1935,7 +2225,7 @@ export const evse = DeviceTypeDefinition({
  * NOT also include an additional instance of any one of these tag types.
  */
 export const waterHeater = DeviceTypeDefinition({
-  name: 'MA-waterheater',
+  name: 'MA-waterHeater',
   deviceName: 'Water Heater',
   code: 0x050f,
   deviceClass: DeviceClasses.Simple,
@@ -1946,6 +2236,8 @@ export const waterHeater = DeviceTypeDefinition({
 });
 
 /**
+ * 14.3. Solar Power Device Type
+ *
  * A Solar Power device is a device that allows a solar panel array, which can optionally be comprised
  * of a set parallel strings of solar panels, and its associated controller and, if appropriate, inverter, to
  * be monitored and controlled by an Energy Management System.
@@ -1974,7 +2266,7 @@ export const waterHeater = DeviceTypeDefinition({
  * - 0x0302 Temperature Sensor 0x001D Descriptor Feature TagList M
  */
 export const solarPower = DeviceTypeDefinition({
-  name: 'MA-solarpower',
+  name: 'MA-solarPower',
   deviceName: 'Solar Power',
   code: 0x0017,
   deviceClass: DeviceClasses.Simple,
@@ -1985,6 +2277,8 @@ export const solarPower = DeviceTypeDefinition({
 });
 
 /**
+ * 14.4. Battery Storage Device Type
+ *
  * A Battery Storage device is a device that allows a DC battery, which can optionally be comprised of
  * a set parallel strings of battery packs and associated controller, and an AC inverter, to be monitored
  * and controlled by an Energy Management System in order to manage the peaks and troughs of supply
@@ -2005,7 +2299,7 @@ export const solarPower = DeviceTypeDefinition({
  * See 14.4.5.1. Cluster Requirements on Composing Device Types
  */
 export const batteryStorage = DeviceTypeDefinition({
-  name: 'MA-batterystorage',
+  name: 'MA-batteryStorage',
   deviceName: 'Battery Storage',
   code: 0x0018,
   deviceClass: DeviceClasses.Simple,
@@ -2016,6 +2310,8 @@ export const batteryStorage = DeviceTypeDefinition({
 });
 
 /**
+ * 14.5. Heat Pump Device Type
+ *
  * A Heat Pump device is a device that uses electrical energy to heat either spaces or water tanks using
  * ground, water or air as the heat source. These typically can heat the air or can pump water via central
  * heating radiators or underfloor heating systems. It is typical to also heat hot water and store
@@ -2039,7 +2335,7 @@ export const batteryStorage = DeviceTypeDefinition({
  * See 14.5.5.1. Cluster Requirements on Composing Device Types
  */
 export const heatPump = DeviceTypeDefinition({
-  name: 'MA-heatpump',
+  name: 'MA-heatPump',
   deviceName: 'Heat Pump',
   code: 0x0309,
   deviceClass: DeviceClasses.Simple,

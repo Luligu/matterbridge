@@ -60,14 +60,15 @@ These classes will run as threads in the next releases:
 ### Development Breaking Changes
 
 - [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
-- [conformance]: Remove from `onOffSwitch`, `dimmableSwitch` and `colorTemperatureSwitch` the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch.
+- [conformance]: Remove from `onOffSwitch`, `dimmableSwitch` and `colorTemperatureSwitch` the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().
+- [deviceTypes]: All device types name follow the Matter canonical name. Old names are deprecated and resolve to the new names.
 
 ### Added
 
 - [s6-rc]: Delete `matter.js storage locks` before starting the s6-rc and s6-rc-legacy docker images.
 - [test-utils]: Add matter methods in `jest-utils` and `vites-utils` packages.
 - [soilMeasurement]: Add `createDefaultSoilMeasurementClusterServer()` endpoint helper.
-- [deviceTypes]: Add `controlBridge` and `pumpController` device types.
+- [deviceTypes]: Add `controlBridge`, `pumpController`, `windowCoveringController`, `thermostatController`, `contentApp`, `castingVideoClient`, `videoRemoteControl` device types.
 
 ### Changed
 

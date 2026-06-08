@@ -179,14 +179,15 @@
 <h3 id="development-breaking-changes">Development Breaking Changes</h3>
 <ul>
 <li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
-<li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch.</li>
+<li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().</li>
+<li>[deviceTypes]: All device types name follow the Matter canonical name. Old names are deprecated and resolve to the new names.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[s6-rc]: Delete <code>matter.js storage locks</code> before starting the s6-rc and s6-rc-legacy docker images.</li>
 <li>[test-utils]: Add matter methods in <code>jest-utils</code> and <code>vites-utils</code> packages.</li>
 <li>[soilMeasurement]: Add <code>createDefaultSoilMeasurementClusterServer()</code> endpoint helper.</li>
-<li>[deviceTypes]: Add <code>controlBridge</code> and <code>pumpController</code> device types.</li>
+<li>[deviceTypes]: Add <code>controlBridge</code>, <code>pumpController</code>, <code>windowCoveringController</code>, <code>thermostatController</code>, <code>contentApp</code>, <code>castingVideoClient</code>, <code>videoRemoteControl</code> device types.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
