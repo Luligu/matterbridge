@@ -597,8 +597,8 @@ export const extendedColorLight = DeviceTypeDefinition({
  * - Level Control Attribute MaxLevel 254 Optional
  * - Scenes Management Command CopyScene
  */
-export const onOffPluginUnit = DeviceTypeDefinition({
-  name: 'MA-onOffPluginUnit',
+export const onOffPlugInUnit = DeviceTypeDefinition({
+  name: 'MA-onOffPlugInUnit',
   deviceName: 'OnOff Plugin Unit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
@@ -611,9 +611,9 @@ export const onOffPluginUnit = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link onOffPluginUnit} instead.
+ * @deprecated Use {@link onOffPlugInUnit} instead.
  */
-export const onOffOutlet = onOffPluginUnit;
+export const onOffOutlet = onOffPlugInUnit;
 
 /**
  * 5.2. Dimmable Plug-In Unit Device Type
@@ -638,8 +638,8 @@ export const onOffOutlet = onOffPluginUnit;
  * - Level Control Attribute MinLevel 1
  * - Level Control Attribute MaxLevel 254
  */
-export const dimmablePluginUnit = DeviceTypeDefinition({
-  name: 'MA-dimmablePluginUnit',
+export const dimmablePlugInUnit = DeviceTypeDefinition({
+  name: 'MA-dimmablePlugInUnit',
   deviceName: 'Dimmable Plugin Unit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
@@ -652,9 +652,9 @@ export const dimmablePluginUnit = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link dimmablePluginUnit} instead.
+ * @deprecated Use {@link dimmablePlugInUnit} instead.
  */
-export const dimmableOutlet = dimmablePluginUnit;
+export const dimmableOutlet = dimmablePlugInUnit;
 
 /**
  * 5.3. Mounted On/Off Control Device Type

@@ -27,8 +27,8 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / outlets / mounted controls
-  onOffPluginUnit,
-  dimmablePluginUnit,
+  onOffPlugInUnit,
+  dimmablePlugInUnit,
   mountedOnOffControl,
   mountedDimmableLoadControl,
   pump,
@@ -231,8 +231,8 @@ if (!hasXmlDir) {
       ['extendedColorLight', extendedColorLight],
 
       // Smart plugs / outlets / mounted controls
-      ['onOffPluginUnit', onOffPluginUnit],
-      ['dimmablePluginUnit', dimmablePluginUnit],
+      ['onOffPlugInUnit', onOffPlugInUnit],
+      ['dimmablePlugInUnit', dimmablePlugInUnit],
       ['mountedOnOffControl', mountedOnOffControl],
       ['mountedDimmableLoadControl', mountedDimmableLoadControl],
       ['pump', pump],

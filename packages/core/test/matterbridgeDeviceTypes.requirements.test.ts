@@ -24,8 +24,8 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / actuators
-  onOffPluginUnit,
-  dimmablePluginUnit,
+  onOffPlugInUnit,
+  dimmablePlugInUnit,
   mountedOnOffControl,
   mountedDimmableLoadControl,
   pump,
@@ -152,8 +152,8 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'extendedColorLight', mb: extendedColorLight, md: devices.ExtendedColorLightDeviceDefinition },
 
   // Smart plugs / outlets / mounted controls
-  { name: 'onOffPluginUnit', mb: onOffPluginUnit, md: devices.OnOffPlugInUnitDeviceDefinition },
-  { name: 'dimmablePluginUnit', mb: dimmablePluginUnit, md: devices.DimmablePlugInUnitDeviceDefinition },
+  { name: 'onOffPlugInUnit', mb: onOffPlugInUnit, md: devices.OnOffPlugInUnitDeviceDefinition },
+  { name: 'dimmablePlugInUnit', mb: dimmablePlugInUnit, md: devices.DimmablePlugInUnitDeviceDefinition },
   { name: 'mountedOnOffControl', mb: mountedOnOffControl, md: devices.MountedOnOffControlDeviceDefinition },
   { name: 'mountedDimmableLoadControl', mb: mountedDimmableLoadControl, md: devices.MountedDimmableLoadControlDeviceDefinition },
   { name: 'pump', mb: pump, md: devices.PumpDeviceDefinition },

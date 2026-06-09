@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 - [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
 - [conformance]: Remove from `onOffSwitch`, `dimmableSwitch` and `colorTemperatureSwitch` the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().
 - [deviceTypes]: All device types name follow the Matter canonical name. Old names are deprecated and resolve to the new names.
+- [deprecation]: Add a list of [deprecation notices](README-DEV.md#deprecation-list).
 
 ### Added
 

@@ -29,8 +29,8 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / actuators
-  onOffPluginUnit,
-  dimmablePluginUnit,
+  onOffPlugInUnit,
+  dimmablePlugInUnit,
   mountedOnOffControl,
   mountedDimmableLoadControl,
   pump,
@@ -166,8 +166,8 @@ describe('Matterbridge device types', () => {
     { name: 'extendedColorLight', device: extendedColorLight, def: devices.ExtendedColorLightDeviceDefinition },
 
     // Smart plugs / actuators
-    { name: 'onOffPluginUnit', device: onOffPluginUnit, def: devices.OnOffPlugInUnitDeviceDefinition },
-    { name: 'dimmablePluginUnit', device: dimmablePluginUnit, def: devices.DimmablePlugInUnitDeviceDefinition },
+    { name: 'onOffPlugInUnit', device: onOffPlugInUnit, def: devices.OnOffPlugInUnitDeviceDefinition },
+    { name: 'dimmablePlugInUnit', device: dimmablePlugInUnit, def: devices.DimmablePlugInUnitDeviceDefinition },
     { name: 'mountedOnOffControl', device: mountedOnOffControl, def: devices.MountedOnOffControlDeviceDefinition },
     { name: 'mountedDimmableLoadControl', device: mountedDimmableLoadControl, def: devices.MountedDimmableLoadControlDeviceDefinition },
     { name: 'pump', device: pump, def: devices.PumpDeviceDefinition },
