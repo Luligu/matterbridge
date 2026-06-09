@@ -631,7 +631,7 @@ export class MatterbridgePlatform {
       if (!device.deviceTypes.has(bridgedNode.code)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no bridgedNode device type. Adding it...`);
         device.deviceTypes.set(bridgedNode.code, bridgedNode);
-        const options = device.getClusterServerOptions(Descriptor.Cluster.id);
+        const options = device.getClusterServerOptions(Descriptor.id);
         // istanbul ignore else
         if (options) {
           const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
@@ -644,7 +644,7 @@ export class MatterbridgePlatform {
 
       // If the device is a bridged device, we add the BridgedDeviceBasicInformation cluster
       // istanbul ignore else
-      if (!device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) {
+      if (!device.hasClusterServer(BridgedDeviceBasicInformation.id)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no BridgedDeviceBasicInformation cluster. Adding it...`);
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
           device.deviceName,

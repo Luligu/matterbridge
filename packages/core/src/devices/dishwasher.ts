@@ -159,7 +159,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
       command: 'changeToMode',
       request,
       cluster: DishwasherModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DishwasherMode.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DishwasherMode)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

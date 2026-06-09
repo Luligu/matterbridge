@@ -68,7 +68,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       command: 'upOrOpen',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -90,7 +90,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       command: 'downOrClose',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -112,7 +112,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       command: 'stopMotion',
       request: {},
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -136,7 +136,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       command: 'goToLiftPercentage',
       request,
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -160,7 +160,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       command: 'goToTiltPercentage',
       request,
       cluster: WindowCoveringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

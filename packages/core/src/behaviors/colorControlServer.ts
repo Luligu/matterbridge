@@ -50,7 +50,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'moveToHue',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -72,7 +72,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'enhancedMoveToHue',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -92,7 +92,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'moveToSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -114,7 +114,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'moveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -136,7 +136,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'enhancedMoveToHueAndSaturation',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -158,7 +158,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'moveToColor',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -180,7 +180,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       command: 'moveToColorTemperature',
       request,
       cluster: ColorControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

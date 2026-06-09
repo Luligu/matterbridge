@@ -70,15 +70,15 @@ describe('Matterbridge ' + NAME, () => {
     device = new BatteryStorage('Battery Storage Test Device', 'BS123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('BatteryStorageTestDevice-BS123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
 
-    expect(device.getChildEndpointByName('Battery')).toBeDefined();
-    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointByName('Battery')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointById('Battery')).toBeDefined();
+    expect(device.getChildEndpointById('Battery')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('Battery')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('Battery')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
   });
 
   test('add a battery storage device', async () => {

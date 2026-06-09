@@ -49,7 +49,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       command: 'enableDisableAlarm',
       request,
       cluster: BooleanStateConfigurationServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

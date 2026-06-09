@@ -45,7 +45,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       command: 'changeToMode',
       request,
       cluster: ModeSelectServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ModeSelect.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ModeSelect)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

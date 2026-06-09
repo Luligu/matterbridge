@@ -47,7 +47,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       command: 'moveTo',
       request,
       cluster: ClosureControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -70,7 +70,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       command: 'stop',
       request: {},
       cluster: ClosureControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 

@@ -19,9 +19,18 @@ describe('Matterbridge ' + NAME, () => {
     jest.restoreAllMocks();
   });
 
-  test('has stable id and required attributes', () => {
+  test('has the expected cluster identity', () => {
     expect(SoilMeasurement.id).toBe(0x0430);
+    expect(SoilMeasurement.name).toBe('SoilMeasurement');
+    expect(SoilMeasurement.revision).toBe(1);
+  });
+
+  test('exposes the expected attributes', () => {
     expect(SoilMeasurement.attributes).toHaveProperty('soilMoistureMeasurementLimits');
     expect(SoilMeasurement.attributes).toHaveProperty('soilMoistureMeasuredValue');
+  });
+
+  test('has no feature selection helpers', () => {
+    expect(SoilMeasurement.features).toEqual({});
   });
 });

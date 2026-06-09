@@ -34,6 +34,7 @@ import EventEmitter from 'node:events';
 import fs, { unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { type ProcessEventMap } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 
@@ -262,10 +263,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private systemCheckTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
-  private sigintHandler: NodeJS.SignalsListener | undefined;
-  private sigtermHandler: NodeJS.SignalsListener | undefined;
-  private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
-  private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
+  private sigintHandler: ((...args: ProcessEventMap['SIGINT']) => void) | undefined;
+  private sigtermHandler: ((...args: ProcessEventMap['SIGTERM']) => void) | undefined;
+  private exceptionHandler: ((...args: ProcessEventMap['uncaughtException']) => void) | undefined;
+  private rejectionHandler: ((...args: ProcessEventMap['unhandledRejection']) => void) | undefined;
 
   /** Matter environment default */
   private readonly environment = Environment.default;

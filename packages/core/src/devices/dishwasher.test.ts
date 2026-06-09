@@ -75,13 +75,13 @@ describe('Matterbridge ' + NAME, () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(DishwasherMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(DishwasherAlarm.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
+    expect(device.hasClusterServer(TemperatureControl.id)).toBeTruthy();
   });
 
   test('add a dishwasher device', async () => {
@@ -227,13 +227,13 @@ describe('Matterbridge ' + NAME, () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DishwasherAlarm.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(DishwasherMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(DishwasherAlarm.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
+    expect(device.hasClusterServer(TemperatureControl.id)).toBeTruthy();
   });
 
   test('add a dishwasher device with number temperature control', async () => {

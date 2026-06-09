@@ -45,7 +45,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       command: 'moveToLevel',
       request,
       cluster: LevelControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -65,7 +65,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       command: 'moveToLevelWithOnOff',
       request,
       cluster: LevelControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

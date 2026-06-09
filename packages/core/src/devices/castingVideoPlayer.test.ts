@@ -74,11 +74,11 @@ describe('Matterbridge ' + NAME, () => {
     device = new CastingVideoPlayer('CastingVideoPlayer Test Device', 'CVP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('CastingVideoPlayerTestDevice-CVP123456');
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(MediaPlayback.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(KeypadInput.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ContentLauncher.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(MediaPlayback.id)).toBeTruthy();
+    expect(device.hasClusterServer(KeypadInput.id)).toBeTruthy();
+    expect(device.hasClusterServer(ContentLauncher.id)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'powerSource', 'onOff', 'mediaPlayback', 'keypadInput', 'contentLauncher']);
   });
 

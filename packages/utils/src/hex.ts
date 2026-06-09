@@ -91,7 +91,7 @@ export function hexToBuffer(hex: string): Uint8Array {
 
   // Convert each pair of hex characters into a byte
   for (let i = 0; i < length; i++) {
-    result[i] = parseInt(cleaned.substr(i * 2, 2), 16);
+    result[i] = parseInt(cleaned.slice(i * 2, i * 2 + 2), 16);
   }
 
   // Return the resulting Uint8Array

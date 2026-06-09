@@ -24,7 +24,7 @@ import {
   stopServerNode,
 } from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
-import { speakerDevice } from '../matterbridgeDeviceTypes.js';
+import { speaker } from '../matterbridgeDeviceTypes.js';
 import { Speaker } from './speaker.js';
 
 // Setup the test environment
@@ -57,7 +57,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create the server node', async () => {
-    await createServerNode(MATTER_PORT, speakerDevice.code);
+    await createServerNode(MATTER_PORT, speaker.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -67,15 +67,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     expect(device.id).toBe('LivingRoomSpeaker-SPK123456');
 
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LevelControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(LevelControl.id)).toBeTruthy();
   });
 
   test('create speaker device (custom states)', async () => {
     const custom = new Speaker('Bedroom Speaker', 'SPK654321', true, 10);
     expect(custom.id).toBe('BedroomSpeaker-SPK654321');
-    expect(custom.getClusterServerOptions(OnOff.Cluster.id)).toEqual({ onOff: false });
-    expect(custom.getClusterServerOptions(LevelControl.Cluster.id)).toEqual({
+    expect(custom.getClusterServerOptions(OnOff.id)).toEqual({ onOff: false });
+    expect(custom.getClusterServerOptions(LevelControl.id)).toEqual({
       currentLevel: 10,
       onLevel: null,
       options: {
@@ -96,7 +96,7 @@ describe('Matterbridge ' + NAME, () => {
     ];
     for (const [input, expected] of cases) {
       const s = new Speaker(`Clamp ${input}`, `V${expected}`, false, input as any);
-      const level = s.getClusterServerOptions(LevelControl.Cluster.id) as any;
+      const level = s.getClusterServerOptions(LevelControl.id) as any;
       expect(level && level.currentLevel).toBe(expected);
     }
   });
@@ -106,18 +106,18 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('check attributes after adding speaker to server', async () => {
-    expect(device.getAttribute(OnOff.Cluster.id, 'onOff')).toBe(true); // unmuted
-    expect(device.getAttribute(LevelControl.Cluster.id, 'currentLevel')).toBe(128);
+    expect(device.getAttribute(OnOff.id, 'onOff')).toBe(true); // unmuted
+    expect(device.getAttribute(LevelControl.id, 'currentLevel')).toBe(128);
   });
 
   test('mute / volume helpers', async () => {
     // toggle mute
     await device.setMuted(true);
     expect(device.isMuted()).toBe(true);
-    expect(device.getAttribute(OnOff.Cluster.id, 'onOff')).toBe(false);
+    expect(device.getAttribute(OnOff.id, 'onOff')).toBe(false);
     await device.setMuted(false);
     expect(device.isMuted()).toBe(false);
-    expect(device.getAttribute(OnOff.Cluster.id, 'onOff')).toBe(true);
+    expect(device.getAttribute(OnOff.id, 'onOff')).toBe(true);
 
     // volume adjustments & clamping
     await device.setVolume(200);

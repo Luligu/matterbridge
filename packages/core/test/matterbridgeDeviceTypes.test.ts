@@ -69,7 +69,7 @@ import {
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
-  speakerDevice,
+  speaker,
   contentApp,
   castingVideoClient,
   videoRemoteControl,
@@ -211,7 +211,7 @@ describe('Matterbridge device types', () => {
     // Media
     { name: 'basicVideoPlayer', device: basicVideoPlayer, def: devices.BasicVideoPlayerDeviceDefinition },
     { name: 'castingVideoPlayer', device: castingVideoPlayer, def: devices.CastingVideoPlayerDeviceDefinition },
-    { name: 'speakerDevice', device: speakerDevice, def: devices.SpeakerDeviceDefinition },
+    { name: 'speaker', device: speaker, def: devices.SpeakerDeviceDefinition },
     { name: 'contentApp', device: contentApp, def: devices.ContentAppDeviceDefinition },
     { name: 'castingVideoClient', device: castingVideoClient, def: devices.CastingVideoClientDeviceDefinition },
     { name: 'videoRemoteControl', device: videoRemoteControl, def: devices.VideoRemoteControlDeviceDefinition },

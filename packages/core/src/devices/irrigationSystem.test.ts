@@ -79,24 +79,24 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getChildEndpointByOriginalId('Zone 3')).toBeDefined();
     expect(device.getChildEndpointByOriginalId('Zone 4')).toBeDefined();
 
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(FlowMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
+    expect(device.hasClusterServer(FlowMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
     // Default behavior: wired power source and NOT a single-zone valve endpoint
-    expect(device.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
-    expect(device.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeFalsy();
+    expect(device.getClusterServerOptions(PowerSource.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
+    expect(device.hasClusterServer(ValveConfigurationAndControl.id)).toBeFalsy();
 
     // Cover option paths
-    expect(device.getClusterServerOptions(OperationalState.Cluster.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
-    expect(device.getClusterServerOptions(FlowMeasurement.Cluster.id)).toMatchObject({ measuredValue: 123 });
+    expect(device.getClusterServerOptions(OperationalState.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
+    expect(device.getClusterServerOptions(FlowMeasurement.id)).toMatchObject({ measuredValue: 123 });
 
     // Cover default paths
     const defaultDevice = new IrrigationSystem('Irrigation System Default Device', 'IR000000');
-    expect(defaultDevice.getClusterServerOptions(OperationalState.Cluster.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Stopped });
-    expect(defaultDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
-    expect(defaultDevice.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeFalsy();
+    expect(defaultDevice.getClusterServerOptions(OperationalState.id)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Stopped });
+    expect(defaultDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({ description: 'AC Power', wiredCurrentType: PowerSource.WiredCurrentType.Ac });
+    expect(defaultDevice.hasClusterServer(ValveConfigurationAndControl.id)).toBeFalsy();
   });
 
   test('create a single zone battery irrigation system device', async () => {
@@ -104,14 +104,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(singleZoneBatteryDevice).toBeDefined();
     expect(singleZoneBatteryDevice.id).toBe('IrrigationSystemSingleZone-IRBAT001');
 
-    expect(singleZoneBatteryDevice.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(singleZoneBatteryDevice.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
-    expect(singleZoneBatteryDevice.hasClusterServer(FlowMeasurement.Cluster.id)).toBeTruthy();
-    expect(singleZoneBatteryDevice.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(singleZoneBatteryDevice.hasClusterServer(ValveConfigurationAndControl.Cluster.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(OperationalState.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(FlowMeasurement.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(ValveConfigurationAndControl.id)).toBeTruthy();
 
-    expect(singleZoneBatteryDevice.getClusterServerOptions(FlowMeasurement.Cluster.id)).toMatchObject({ measuredValue: 45 });
-    expect(singleZoneBatteryDevice.getClusterServerOptions(PowerSource.Cluster.id)).toMatchObject({
+    expect(singleZoneBatteryDevice.getClusterServerOptions(FlowMeasurement.id)).toMatchObject({ measuredValue: 45 });
+    expect(singleZoneBatteryDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({
       description: 'Primary battery',
       batChargeLevel: PowerSource.BatChargeLevel.Ok,
     });

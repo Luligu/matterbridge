@@ -631,18 +631,21 @@ The properties of the schema file shall correspond to the properties of the conf
 | `speakerDevice`          | `speaker`                    |
 | `airConditioner`         | `roomAirConditioner`         |
 
-### Cluster namespace members
+### Common namespace tag aliases
 
-| Deprecated symbol           | Replacement        |
-| --------------------------- | ------------------ |
-| `SoilMeasurement.Cluster`   | `SoilMeasurement`  |
-| `SoilMeasurement.Complete`  | `SoilMeasurement`  |
-| `ClosureDimension.Cluster`  | `ClosureDimension` |
-| `ClosureDimension.Complete` | `ClosureDimension` |
-| `ClosureDimension.with()`   | `ClosureDimension` |
-| `ClosureControl.Cluster`    | `ClosureControl`   |
-| `ClosureControl.Complete`   | `ClosureControl`   |
-| `ClosureControl.with()`     | `ClosureControl`   |
+| Deprecated symbol      | Replacement                  |
+| ---------------------- | ---------------------------- |
+| `AreaNamespaceTag`     | `CommonAreaNamespaceTag`     |
+| `ClosureTag`           | `CommonClosureTag`           |
+| `CompassDirectionTag`  | `CommonCompassDirectionTag`  |
+| `CompassLocationTag`   | `CommonCompassLocationTag`   |
+| `DirectionTag`         | `CommonDirectionTag`         |
+| `LandmarkNamespaceTag` | `CommonLandmarkNamespaceTag` |
+| `LevelTag`             | `CommonLevelTag`             |
+| `LocationTag`          | `CommonLocationTag`          |
+| `NumberTag`            | `CommonNumberTag`            |
+| `PositionTag`          | `CommonPositionTag`          |
+| `RelativePositionTag`  | `CommonRelativePositionTag`  |
 
 ### Methods and interfaces
 

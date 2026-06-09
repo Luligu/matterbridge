@@ -104,7 +104,7 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
@@ -147,7 +147,7 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {

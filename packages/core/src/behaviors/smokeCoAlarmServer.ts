@@ -43,7 +43,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       command: 'selfTestRequest',
       request: {},
       cluster: SmokeCoAlarmServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof SmokeCoAlarm.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof SmokeCoAlarm)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

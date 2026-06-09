@@ -156,9 +156,9 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
     // Logger.get('AggregatorNode').info(aggregator);
     expect(aggregator.parts.get('UpdateMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
-    expect(aggregator.parts.get('UpdateMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.Cluster.id, OnOff.Cluster.id]);
+    expect(aggregator.parts.get('UpdateMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.id, OnOff.id]);
     expect(aggregator.parts.get('RestartMatterbridge:switch')?.behaviors.has(BindingServer)).toBeTruthy();
-    expect(aggregator.parts.get('RestartMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.Cluster.id, OnOff.Cluster.id]);
+    expect(aggregator.parts.get('RestartMatterbridge:switch')?.stateOf(DescriptorServer).clientList).toEqual([Identify.id, OnOff.id]);
   });
 
   test('add all the mounted-switch virtual devices', async () => {

@@ -67,7 +67,7 @@ import {
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
-  speakerDevice,
+  speaker,
   contentApp,
   castingVideoClient,
   videoRemoteControl,
@@ -133,7 +133,7 @@ const XML_REVISION_OVERRIDES = new Map<number, number>([
 // Device type codes where the chip/1.5.1 XML has an incorrect name.
 // The override value is the Matterbridge canonical name.
 const XML_DEVICE_NAME_OVERRIDES = new Map<number, string>([
-  [0x010b, 'Dimmable Plugin Unit'], // dimmablePluginUnit: XML says Dimmable PlugIn Unit
+  [0x010a, 'OnOff PlugIn Unit'], // onOffPlugInUnit: XML says OnOff Plugin Unit
 ]);
 
 // Aggregator (and bridge which aliases it) intentionally uses DeviceClasses.Dynamic in
@@ -276,7 +276,7 @@ if (!hasXmlDir) {
       // Media
       ['basicVideoPlayer', basicVideoPlayer],
       ['castingVideoPlayer', castingVideoPlayer],
-      ['speakerDevice', speakerDevice],
+      ['speaker', speaker],
       ['contentApp', contentApp],
       ['castingVideoClient', castingVideoClient],
       ['videoRemoteControl', videoRemoteControl],

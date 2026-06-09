@@ -47,7 +47,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       command: 'open',
       request,
       cluster: ValveConfigurationAndControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -70,7 +70,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends ValveConfigu
       command: 'close',
       request: {},
       cluster: ValveConfigurationAndControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

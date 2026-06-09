@@ -99,10 +99,6 @@ export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.
   readonly attributes: ClusterType.AttributeObjects<SoilMeasurement.Attributes>;
   readonly features: Record<string, never>;
   readonly Typing: SoilMeasurement;
-  /** @deprecated Use {@link SoilMeasurement}. */
-  readonly Cluster: ClusterType.WithCompat<typeof SoilMeasurement, SoilMeasurement>;
-  /** @deprecated Use {@link SoilMeasurement}. */
-  readonly Complete: typeof SoilMeasurement;
 };
 
 export interface SoilMeasurement extends ClusterTyping {

@@ -353,12 +353,6 @@ export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterTyp
   readonly SetTargetRequest: new (value?: Partial<ClosureDimension.SetTargetRequest>) => ClosureDimension.SetTargetRequest;
   readonly StepRequest: new (value?: Partial<ClosureDimension.StepRequest>) => ClosureDimension.StepRequest;
   readonly Typing: ClosureDimension;
-  /** @deprecated Use {@link ClosureDimension}. */
-  readonly Cluster: ClusterType.WithCompat<typeof ClosureDimension, ClosureDimension>;
-  /** @deprecated Use {@link ClosureDimension}. */
-  readonly Complete: typeof ClosureDimension;
-  /** @deprecated Use {@link ClosureDimension}. */
-  with(...features: ClosureDimension.Feature[]): typeof ClosureDimension;
 };
 
 export interface ClosureDimension extends ClusterTyping {

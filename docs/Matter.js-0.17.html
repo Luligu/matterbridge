@@ -210,15 +210,47 @@ type BaseWiredAttrs = PowerSource.BaseAttributes &amp; PowerSource.WiredAttribut
 </tr>
 </tbody></table>
 <ul>
-<li>Matterbridge re export the old namespace tags.</li>
+<li>Matterbridge re export the old namespace tags as deprecated for compatibility with existing code.</li>
 </ul>
+<h2 id="the-clustertype-deprecation-mostly-cosmetic">The ClusterType &quot;deprecation&quot; (mostly cosmetic)</h2>
+<p>In your editor you will see <code>ClusterType</code> shown with a strikethrough almost everywhere it is used (imports, type annotations, our own helper types). This looks alarming, but in almost every case it is a false alarm. Here is what is really going on.</p>
+<h3 id="why-everything-looks-deprecated">Why everything looks deprecated</h3>
+<p><code>ClusterType</code> is not one thing. It is a single name that matter.js declares three times and merges together:</p>
+<ul>
+<li>a <strong>function</strong> <code>ClusterType(...)</code> you can call,</li>
+<li>an <strong>interface</strong> <code>ClusterType</code> you can use as a type,</li>
+<li>a <strong>namespace</strong> <code>ClusterType</code> that holds sub-types like <code>ClusterType.Attribute</code>.</li>
+</ul>
+<p>In the 0.17 refactor matter.js marked <strong>one</strong> of those declarations as deprecated: the old <code>ClusterType(options)</code> function that took a hand-written options bag (the replacement is <code>ClusterType(model)</code>).</p>
+<p>TypeScript has a rule: if <strong>any</strong> declaration of a merged name is deprecated, the editor draws the strikethrough on <strong>every</strong> use of that name — even when you are only using the parts that are perfectly current. So the strikethrough you see on the <code>ClusterType</code> interface and on <code>ClusterType.Attribute</code> is &quot;bleeding&quot; from the deprecated function. It is a display artifact, not a real warning about your code.</p>
+<h3 id="what-is-actually-deprecated-vs-what-is-fine">What is actually deprecated vs. what is fine</h3>
+<p>Deprecated (avoid in new code):</p>
+<ul>
+<li><code>ClusterType(options)</code> — the old options-bag factory. Use <code>ClusterType(model)</code> instead.</li>
+<li><code>ClusterType.AttributeValues&lt;T&gt;</code> and <code>ClusterType.CommandsOf&lt;T&gt;</code> — kept only for external compatibility.</li>
+<li><code>ClusterType.WithCompat&lt;...&gt;</code> — explicitly <strong>scheduled for removal in matter.js 0.18</strong>.</li>
+<li>the whole <code>RetiredClusterType</code> namespace.</li>
+</ul>
+<p>Not deprecated (current API, safe to keep using):</p>
+<ul>
+<li>the <code>ClusterType</code> interface and <code>ClusterTyping</code>,</li>
+<li><code>ClusterType.Attribute</code>, <code>.Command</code>, <code>.Event</code>, <code>.Concrete</code>, <code>.Feature</code>,</li>
+<li><code>ClusterType.AttributeObjects</code>, <code>.CommandObjects</code>, <code>.EventObjects</code>, <code>.Features</code>,</li>
+<li>the new <code>ClusterType(model)</code> factory overload.</li>
+</ul>
+<h3 id="what-matterbridge-actually-relies-on">What Matterbridge actually relies on</h3>
+<ul>
+<li>Using <code>ClusterType</code> as a <strong>type</strong> (for example <code>Behavior.Type | ClusterType | ClusterId | string</code> in the endpoint and helper signatures, or <code>ClusterType.Attribute&lt;infer JsType&gt;</code> in our typed-attribute helpers) is fine. It uses only the non-deprecated interface/namespace; the strikethrough there is pure cosmetic bleed.</li>
+</ul>
+<h3 id="takeaway">Takeaway</h3>
+<p>The <code>ClusterType</code> strikethrough is mostly noise caused by how TypeScript marks merged declarations. The current type-level API is fine to keep using.</p>
 <h2 id="custom-clusters">Custom clusters</h2>
 <p>The way to create custom cluster in matter.js has changed.</p>
 <p>In matter.js there are no more typescript source files for cluster types: they are generated. The memory usage has dropped by around 20%-50% that is great.</p>
 <p>I will leave (without exporting them) the three Matter 1.5.1 cluster I created for testing like example of custom clusters.</p>
 <h2 id="implementation-plan">Implementation plan</h2>
-<p>I plan to release matter.js 0.17.0 in Matterbridge 3.8.0.</p>
-<p>At that point, all plugins should require Matterbridge 3.8.0 and make the refactor eventually required.</p>
+<p>Matterbridge 3.8.0 has been published with matter.js 0.17.1.</p>
+<p>All plugins should require Matterbridge 3.8.0 and make the refactor eventually required.</p>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

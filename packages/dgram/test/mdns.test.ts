@@ -114,7 +114,7 @@ describe('Mdns', () => {
       const entry = 'test';
       const rdata = mdns.encodeTxtRdata([entry]);
       expect(rdata[0]).toBe(Buffer.from(entry, 'utf8').length);
-      expect(rdata.slice(1).toString('utf8')).toBe(entry);
+      expect(rdata.subarray(1).toString('utf8')).toBe(entry);
     });
 
     it('should encode multiple entries in sequence', () => {
@@ -136,7 +136,7 @@ describe('Mdns', () => {
       const rdata = mdns.encodeTxtRdata([entry]);
 
       expect(rdata[0]).toBe(bytes.length);
-      expect(rdata.slice(1).equals(bytes)).toBe(true);
+      expect(rdata.subarray(1).equals(bytes)).toBe(true);
     });
 
     it('should allow an empty string entry', () => {
@@ -150,7 +150,7 @@ describe('Mdns', () => {
       const rdata = mdns.encodeTxtRdata([entry]);
 
       expect(rdata[0]).toBe(255);
-      expect(rdata.slice(1).toString('utf8')).toBe(entry);
+      expect(rdata.subarray(1).toString('utf8')).toBe(entry);
     });
 
     it('should throw if any entry exceeds 255 bytes', () => {
@@ -177,7 +177,7 @@ describe('Mdns', () => {
       expect(decodedTarget.newOffset).toBe(rdata.length);
 
       const expectedTarget = mdns.encodeDnsName(target);
-      expect(rdata.slice(6).equals(expectedTarget)).toBe(true);
+      expect(rdata.subarray(6).equals(expectedTarget)).toBe(true);
     });
   });
 

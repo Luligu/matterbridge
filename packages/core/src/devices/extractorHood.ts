@@ -79,23 +79,23 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     );
 
     this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {
-      if (context.offline === true) return;
+      if (context.fabric === undefined) return;
       this.log.info(`Fan control fanMode attribute changed: ${newValue}`);
     });
 
     this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context) => {
-      if (context.offline === true) return;
+      if (context.fabric === undefined) return;
       this.log.info(`Fan control percentSetting attribute changed: ${newValue}`);
       void this.setAttribute('fanControl', 'percentCurrent', newValue, this.log).catch(/* istanbul ignore next */ () => {});
     });
 
     this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
-      if (context.offline === true) return;
+      if (context.fabric === undefined) return;
       this.log.info(`Hepa filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
 
     this.subscribeAttribute('activatedCarbonFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {
-      if (context.offline === true) return;
+      if (context.fabric === undefined) return;
       this.log.info(`Activated carbon filter monitoring lastChangedTime attribute changed: ${newValue}`);
     });
   }

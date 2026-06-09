@@ -64,7 +64,7 @@ import {
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
-  speakerDevice,
+  speaker,
   contentApp,
   castingVideoClient,
   videoRemoteControl,
@@ -197,7 +197,7 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   // Media
   { name: 'basicVideoPlayer', mb: basicVideoPlayer, md: devices.BasicVideoPlayerDeviceDefinition },
   { name: 'castingVideoPlayer', mb: castingVideoPlayer, md: devices.CastingVideoPlayerDeviceDefinition },
-  { name: 'speakerDevice', mb: speakerDevice, md: devices.SpeakerDeviceDefinition },
+  { name: 'speaker', mb: speaker, md: devices.SpeakerDeviceDefinition },
   { name: 'contentApp', mb: contentApp, md: devices.ContentAppDeviceDefinition },
   { name: 'castingVideoClient', mb: castingVideoClient, md: devices.CastingVideoClientDeviceDefinition },
   { name: 'videoRemoteControl', mb: videoRemoteControl, md: devices.VideoRemoteControlDeviceDefinition },

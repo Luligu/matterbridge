@@ -49,7 +49,47 @@ PowerSource.BaseAttributes & PowerSource.WiredAttributes: what a wired power sou
 | `PositionTag`               | `CommonPositionTag`          |
 | `RelativePositionTag`       | `CommonRelativePositionTag`  |
 
-- Matterbridge re export the old namespace tags.
+- Matterbridge re export the old namespace tags as deprecated for compatibility with existing code.
+
+## The ClusterType "deprecation" (mostly cosmetic)
+
+In your editor you will see `ClusterType` shown with a strikethrough almost everywhere it is used (imports, type annotations, our own helper types). This looks alarming, but in almost every case it is a false alarm. Here is what is really going on.
+
+### Why everything looks deprecated
+
+`ClusterType` is not one thing. It is a single name that matter.js declares three times and merges together:
+
+- a **function** `ClusterType(...)` you can call,
+- an **interface** `ClusterType` you can use as a type,
+- a **namespace** `ClusterType` that holds sub-types like `ClusterType.Attribute`.
+
+In the 0.17 refactor matter.js marked **one** of those declarations as deprecated: the old `ClusterType(options)` function that took a hand-written options bag (the replacement is `ClusterType(model)`).
+
+TypeScript has a rule: if **any** declaration of a merged name is deprecated, the editor draws the strikethrough on **every** use of that name — even when you are only using the parts that are perfectly current. So the strikethrough you see on the `ClusterType` interface and on `ClusterType.Attribute` is "bleeding" from the deprecated function. It is a display artifact, not a real warning about your code.
+
+### What is actually deprecated vs. what is fine
+
+Deprecated (avoid in new code):
+
+- `ClusterType(options)` — the old options-bag factory. Use `ClusterType(model)` instead.
+- `ClusterType.AttributeValues<T>` and `ClusterType.CommandsOf<T>` — kept only for external compatibility.
+- `ClusterType.WithCompat<...>` — explicitly **scheduled for removal in matter.js 0.18**.
+- the whole `RetiredClusterType` namespace.
+
+Not deprecated (current API, safe to keep using):
+
+- the `ClusterType` interface and `ClusterTyping`,
+- `ClusterType.Attribute`, `.Command`, `.Event`, `.Concrete`, `.Feature`,
+- `ClusterType.AttributeObjects`, `.CommandObjects`, `.EventObjects`, `.Features`,
+- the new `ClusterType(model)` factory overload.
+
+### What Matterbridge actually relies on
+
+- Using `ClusterType` as a **type** (for example `Behavior.Type | ClusterType | ClusterId | string` in the endpoint and helper signatures, or `ClusterType.Attribute<infer JsType>` in our typed-attribute helpers) is fine. It uses only the non-deprecated interface/namespace; the strikethrough there is pure cosmetic bleed.
+
+### Takeaway
+
+The `ClusterType` strikethrough is mostly noise caused by how TypeScript marks merged declarations. The current type-level API is fine to keep using.
 
 ## Custom clusters
 
@@ -61,6 +101,6 @@ I will leave (without exporting them) the three Matter 1.5.1 cluster I created f
 
 ## Implementation plan
 
-I plan to release matter.js 0.17.0 in Matterbridge 3.8.0.
+Matterbridge 3.8.0 has been published with matter.js 0.17.1.
 
-At that point, all plugins should require Matterbridge 3.8.0 and make the refactor eventually required.
+All plugins should require Matterbridge 3.8.0 and make the refactor eventually required.

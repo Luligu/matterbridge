@@ -43,7 +43,7 @@ import { hasParameter } from '@matterbridge/utils/cli';
 
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { doorLockDevice } from './matterbridgeDeviceTypes.js';
+import { doorLock } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 /**
@@ -133,7 +133,7 @@ export async function addVirtualDevice(
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
   // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
   if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
-    const lockUserPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_user_pin' });
+    const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
     lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
       'Matterbridge User Pin Lock',
       'sn_system_lock',

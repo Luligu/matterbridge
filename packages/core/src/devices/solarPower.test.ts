@@ -70,11 +70,11 @@ describe('Matterbridge ' + NAME, () => {
     device = new SolarPower('Solar Power Test Device', 'SP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('SolarPowerTestDevice-SP123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
     device.addPanel('Solar Panel 1', CommonNumberTag.One);
     device.addPanel('Solar Panel 2', CommonNumberTag.Two);
     device.addPanel('Solar Panel 3', CommonNumberTag.Three);

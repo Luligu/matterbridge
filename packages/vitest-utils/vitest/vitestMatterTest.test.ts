@@ -2,7 +2,7 @@ const NAME = 'VitestHelpersMatterjs';
 const MATTER_PORT = 9800;
 
 import { ServerNode } from '@matter/node';
-import { bridge, MatterbridgeAccessoryPlatform, MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffOutlet } from '@matterbridge/core';
+import { bridge, MatterbridgeAccessoryPlatform, MatterbridgeDynamicPlatform, MatterbridgeEndpoint, onOffPlugInUnit } from '@matterbridge/core';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 import { vi } from 'vitest';
 
@@ -125,13 +125,13 @@ describe('Matter.js test environment', () => {
   });
 
   test('should add a device to a matter.js server node', async () => {
-    deviceServer = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' });
+    deviceServer = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet1' });
     deviceServer.addRequiredClusters();
     expect(await addDevice(server, deviceServer)).toBeTruthy();
   });
 
   test('should add a device to a matter.js aggregator node', async () => {
-    deviceAggregator = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet2' });
+    deviceAggregator = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet2' });
     deviceAggregator.addRequiredClusters();
     expect(await addDevice(aggregator, deviceAggregator)).toBeTruthy();
   });

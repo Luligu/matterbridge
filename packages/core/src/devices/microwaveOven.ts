@@ -160,7 +160,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       command: 'setCookingParameters',
       request,
       cluster: MicrowaveOvenControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -213,7 +213,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       command: 'addMoreTime',
       request,
       cluster: MicrowaveOvenControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof MicrowaveOvenControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     if (request.timeToAdd !== undefined && request.timeToAdd > 0 && this.state.cookTime + request.timeToAdd <= this.state.maxCookTime) {

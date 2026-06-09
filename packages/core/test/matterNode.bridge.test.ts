@@ -26,7 +26,7 @@ import { DeviceManager } from '../src/deviceManager.js';
 import { closeServerNodeStores } from '../src/jestutils/jestMatterTest.js';
 import { originalProcessArgv, setupTest } from '../src/jestutils/jestSetupTest.js';
 import type { Matterbridge } from '../src/matterbridge.js';
-import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffOutlet, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { bridgedNode, flowSensor, humiditySensor, occupancySensor, onOffPlugInUnit, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
@@ -264,7 +264,7 @@ describe('MatterNode bridge', () => {
 
   test('Stress test adding and removing bridged endpoints in bridge mode not started', async () => {
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
-      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+      const outlet = new MatterbridgeEndpoint([onOffPlugInUnit, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
         .addRequiredClusterServers();
@@ -291,7 +291,7 @@ describe('MatterNode bridge', () => {
   test('Stress test adding and removing bridged endpoints in bridge mode started', async () => {
     expect(deviceManager.length).toBe(2);
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
-      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+      const outlet = new MatterbridgeEndpoint([onOffPlugInUnit, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
         .addRequiredClusterServers();
@@ -310,7 +310,7 @@ describe('MatterNode bridge', () => {
   test('Stress test adding and removing all bridged endpoints in bridge mode started', async () => {
     expect(deviceManager.length).toBe(2);
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
-      const outlet = new MatterbridgeEndpoint([onOffOutlet, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
+      const outlet = new MatterbridgeEndpoint([onOffPlugInUnit, bridgedNode, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBridgedDeviceBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
         .addRequiredClusterServers();

@@ -78,7 +78,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@ma
 import { UserLabelServer } from '@matter/node/behaviors/user-label';
 import { WindowCoveringClient } from '@matter/node/behaviors/window-covering';
 // @matter types
-import { ClusterType, getClusterNameById } from '@matter/types/cluster';
+import { type ClusterType, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BasicInformation } from '@matter/types/clusters/basic-information';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
@@ -529,6 +529,8 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
+ *
+ * @deprecated Used ONLY in Jest tests.
  */
 export async function invokeBehaviorCommand(
   endpoint: MatterbridgeEndpoint,

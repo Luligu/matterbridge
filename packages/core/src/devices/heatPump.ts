@@ -26,7 +26,7 @@ import { CommonAreaNamespaceTag, CommonNumberTag, PowerSourceTag } from '@matter
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 // Matterbridge
-import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostatDevice } from '../matterbridgeDeviceTypes.js';
+import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostat } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
@@ -93,7 +93,7 @@ export class HeatPump extends MatterbridgeEndpoint {
       .addRequiredClusterServers();
 
     // Add the Living thermostat for the heat pump.
-    this.addChildDeviceType('LivingThermostat', thermostatDevice, {
+    this.addChildDeviceType('LivingThermostat', thermostat, {
       tagList: [getSemtag(CommonNumberTag.One, 'LivingThermostat'), getSemtag(CommonAreaNamespaceTag.LivingRoom)],
     })
       .createDefaultThermostatClusterServer()
@@ -105,7 +105,7 @@ export class HeatPump extends MatterbridgeEndpoint {
       );
 
     // Add the Bedroom thermostat for the heat pump.
-    this.addChildDeviceType('BedroomThermostat', thermostatDevice, {
+    this.addChildDeviceType('BedroomThermostat', thermostat, {
       tagList: [getSemtag(CommonNumberTag.Two, 'BedroomThermostat'), getSemtag(CommonAreaNamespaceTag.Bedroom)],
     })
       .createDefaultThermostatClusterServer()

@@ -599,7 +599,7 @@ export const extendedColorLight = DeviceTypeDefinition({
  */
 export const onOffPlugInUnit = DeviceTypeDefinition({
   name: 'MA-onOffPlugInUnit',
-  deviceName: 'OnOff Plugin Unit',
+  deviceName: 'OnOff PlugIn Unit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -640,7 +640,7 @@ export const onOffOutlet = onOffPlugInUnit;
  */
 export const dimmablePlugInUnit = DeviceTypeDefinition({
   name: 'MA-dimmablePlugInUnit',
-  deviceName: 'Dimmable Plugin Unit',
+  deviceName: 'Dimmable PlugIn Unit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1406,7 +1406,7 @@ export const thermostat = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link thermostatDevice} instead.
+ * @deprecated Use {@link thermostat} instead.
  */
 export const thermostatDevice = thermostat;
 

@@ -26,7 +26,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 
 // matterbridge
-import { speakerDevice } from '../matterbridgeDeviceTypes.js';
+import { speaker } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 /**
@@ -62,7 +62,7 @@ export class Speaker extends MatterbridgeEndpoint {
     if (volume < 1) volume = 1;
     if (volume > 254) volume = 254;
 
-    super([speakerDevice], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([speaker], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Speaker');
     // On/Off used for mute state (TRUE => unmuted) - using no features
     this.createOnOffClusterServer(!muted);
@@ -80,7 +80,7 @@ export class Speaker extends MatterbridgeEndpoint {
    * @returns {Promise<void>} Resolves when attribute is updated.
    */
   async setMuted(muted: boolean): Promise<void> {
-    await this.setAttribute(OnOff.Cluster.id, 'onOff', !muted);
+    await this.setAttribute(OnOff.id, 'onOff', !muted);
   }
 
   /**
@@ -89,7 +89,7 @@ export class Speaker extends MatterbridgeEndpoint {
    * @returns {boolean} TRUE when muted, FALSE when unmuted.
    */
   isMuted(): boolean {
-    return !this.getAttribute(OnOff.Cluster.id, 'onOff');
+    return !this.getAttribute(OnOff.id, 'onOff');
   }
 
   /**
@@ -107,7 +107,7 @@ export class Speaker extends MatterbridgeEndpoint {
     if (!Number.isFinite(level)) return;
     if (level < 1) level = 1;
     if (level > 254) level = 254;
-    await this.setAttribute(LevelControl.Cluster, 'currentLevel', level);
+    await this.setAttribute(LevelControl, 'currentLevel', level);
   }
 
   /**
@@ -116,6 +116,6 @@ export class Speaker extends MatterbridgeEndpoint {
    * @returns {number | null| undefined} Current level (1..254).
    */
   getVolume(): number | null | undefined {
-    return this.getAttribute(LevelControl.Cluster, 'currentLevel');
+    return this.getAttribute(LevelControl, 'currentLevel');
   }
 }

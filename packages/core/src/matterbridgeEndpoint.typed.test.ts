@@ -36,7 +36,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 
 import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from './jestutils/jestMatterTest.js';
 import { setupTest } from './jestutils/jestSetupTest.js';
-import { genericSwitch, onOffOutlet, rainSensor, thermostatDevice } from './matterbridgeDeviceTypes.js';
+import { genericSwitch, onOffPlugInUnit, rainSensor, thermostat } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { internalFor } from './matterbridgeEndpointHelpers.js';
 
@@ -65,17 +65,17 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     device.createDefaultBooleanStateClusterServer(true);
     expect(await addDevice(aggregator, device)).toBe(true);
     try {
-      await device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+      await device.setAttribute(BooleanState, 'stateValue', true, device.log);
 
       const stateFromBehavior: boolean | undefined = device.getAttribute(BooleanStateBehavior, 'stateValue', device.log);
       const stateFromServer: boolean | undefined = device.getAttribute(BooleanStateServer, 'stateValue', device.log);
-      const stateFromCluster: boolean | undefined = device.getAttribute(BooleanState.Cluster, 'stateValue', device.log);
-      const stateFromClusterId = device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log);
+      const stateFromCluster: boolean | undefined = device.getAttribute(BooleanState, 'stateValue', device.log);
+      const stateFromClusterId = device.getAttribute(BooleanState.id, 'stateValue', device.log);
       const stateFromString = device.getAttribute('BooleanState', 'stateValue', device.log);
 
       expect(device.hasAttributeServer(BooleanStateBehavior, 'stateValue')).toBe(true);
       expect(device.hasAttributeServer(BooleanStateServer, 'stateValue')).toBe(true);
-      expect(device.hasAttributeServer(BooleanState.Cluster, 'stateValue')).toBe(true);
+      expect(device.hasAttributeServer(BooleanState, 'stateValue')).toBe(true);
       expect(stateFromBehavior).toBe(true);
       expect(stateFromServer).toBe(true);
       expect(stateFromCluster).toBe(true);
@@ -87,13 +87,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       // @ts-expect-error intentional type-check guard for Behavior.Type server overload
       device.getAttribute(BooleanStateServer, 'stateValueXX', device.log);
       // @ts-expect-error intentional type-check guard for ClusterType overload
-      device.getAttribute(BooleanState.Cluster, 'stateValueXX', device.log);
+      device.getAttribute(BooleanState, 'stateValueXX', device.log);
       // @ts-expect-error intentional type-check guard for typed return value
       const invalidStateType: string | undefined = device.getAttribute(BooleanStateBehavior, 'stateValue', device.log);
       // @ts-expect-error intentional type-check guard for typed server return value
       const invalidServerStateType: string | undefined = device.getAttribute(BooleanStateServer, 'stateValue', device.log);
       // @ts-expect-error intentional type-check guard for typed cluster return value
-      const invalidClusterStateType: string | undefined = device.getAttribute(BooleanState.Cluster, 'stateValue', device.log);
+      const invalidClusterStateType: string | undefined = device.getAttribute(BooleanState, 'stateValue', device.log);
       void invalidStateType;
       void invalidServerStateType;
       void invalidClusterStateType;
@@ -117,13 +117,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       expect(setFromServer).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
 
-      const setFromCluster: boolean = await device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+      const setFromCluster: boolean = await device.setAttribute(BooleanState, 'stateValue', true, device.log);
       expect(setFromCluster).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState, 'stateValue', device.log)).toBe(true);
 
-      const setFromClusterId: boolean = await device.setAttribute(BooleanState.Cluster.id, 'stateValue', false, device.log);
+      const setFromClusterId: boolean = await device.setAttribute(BooleanState.id, 'stateValue', false, device.log);
       expect(setFromClusterId).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanState.id, 'stateValue', device.log)).toBe(false);
 
       const setFromString: boolean = await device.setAttribute('BooleanState', 'stateValue', true, device.log);
       expect(setFromString).toBe(true);
@@ -135,19 +135,19 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type server overload
         device.setAttribute(BooleanStateServer, 'stateValueXX', true, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType overload
-        device.setAttribute(BooleanState.Cluster, 'stateValueXX', true, device.log);
+        device.setAttribute(BooleanState, 'stateValueXX', true, device.log);
         // @ts-expect-error intentional type-check guard for typed value
         device.setAttribute(BooleanStateBehavior, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed server value
         device.setAttribute(BooleanStateServer, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed cluster value
-        device.setAttribute(BooleanState.Cluster, 'stateValue', 'true', device.log);
+        device.setAttribute(BooleanState, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidSetType: Promise<string> = device.setAttribute(BooleanStateBehavior, 'stateValue', true, device.log);
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerSetType: Promise<string> = device.setAttribute(BooleanStateServer, 'stateValue', true, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidClusterSetType: Promise<string> = device.setAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+        const invalidClusterSetType: Promise<string> = device.setAttribute(BooleanState, 'stateValue', true, device.log);
         void invalidSetType;
         void invalidServerSetType;
         void invalidClusterSetType;
@@ -172,13 +172,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       expect(updateFromServer).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
 
-      const updateFromCluster: boolean = await device.updateAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+      const updateFromCluster: boolean = await device.updateAttribute(BooleanState, 'stateValue', true, device.log);
       expect(updateFromCluster).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState, 'stateValue', device.log)).toBe(true);
 
-      const updateFromClusterId: boolean = await device.updateAttribute(BooleanState.Cluster.id, 'stateValue', false, device.log);
+      const updateFromClusterId: boolean = await device.updateAttribute(BooleanState.id, 'stateValue', false, device.log);
       expect(updateFromClusterId).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanState.id, 'stateValue', device.log)).toBe(false);
 
       const updateFromString: boolean = await device.updateAttribute('BooleanState', 'stateValue', true, device.log);
       expect(updateFromString).toBe(true);
@@ -190,19 +190,19 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type server overload
         device.updateAttribute(BooleanStateServer, 'stateValueXX', true, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType overload
-        device.updateAttribute(BooleanState.Cluster, 'stateValueXX', true, device.log);
+        device.updateAttribute(BooleanState, 'stateValueXX', true, device.log);
         // @ts-expect-error intentional type-check guard for typed value
         device.updateAttribute(BooleanStateBehavior, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed server value
         device.updateAttribute(BooleanStateServer, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed cluster value
-        device.updateAttribute(BooleanState.Cluster, 'stateValue', 'true', device.log);
+        device.updateAttribute(BooleanState, 'stateValue', 'true', device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidUpdateType: Promise<string> = device.updateAttribute(BooleanStateBehavior, 'stateValue', true, device.log);
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerUpdateType: Promise<string> = device.updateAttribute(BooleanStateServer, 'stateValue', true, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidClusterUpdateType: Promise<string> = device.updateAttribute(BooleanState.Cluster, 'stateValue', true, device.log);
+        const invalidClusterUpdateType: Promise<string> = device.updateAttribute(BooleanState, 'stateValue', true, device.log);
         void invalidUpdateType;
         void invalidServerUpdateType;
         void invalidClusterUpdateType;
@@ -225,7 +225,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       const behaviorListener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
         behaviorState = newValue;
         behaviorOldState = oldValue;
-        behaviorOfflineState = context.offline;
+        behaviorOfflineState = context?.fabric === undefined;
       };
 
       const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
@@ -244,7 +244,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
 
       let clusterState: boolean | undefined;
       const subscribeFromCluster: MatterbridgeEndpoint = device.subscribeAttribute(
-        BooleanState.Cluster,
+        BooleanState,
         'stateValue',
         (newValue: boolean) => {
           clusterState = newValue;
@@ -255,7 +255,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
 
       let clusterIdState: boolean | undefined;
       const subscribeFromClusterId: MatterbridgeEndpoint = device.subscribeAttribute(
-        BooleanState.Cluster.id,
+        BooleanState.id,
         'stateValue',
         (newValue) => {
           clusterIdState = newValue as boolean;
@@ -275,7 +275,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       );
       expect(subscribeFromString).toBe(device);
 
-      await device.setAttribute(BooleanState.Cluster, 'stateValue', false, device.log);
+      await device.setAttribute(BooleanState, 'stateValue', false, device.log);
       expect(behaviorState).toBe(false);
       expect(behaviorOldState).toBe(true);
       expect(behaviorOfflineState).toBe(true);
@@ -290,19 +290,19 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type server overload
         device.subscribeAttribute(BooleanStateServer, 'stateValueXX', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType overload
-        device.subscribeAttribute(BooleanState.Cluster, 'stateValueXX', behaviorListener, device.log);
+        device.subscribeAttribute(BooleanState, 'stateValueXX', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed listener values
         device.subscribeAttribute(BooleanStateBehavior, 'stateValue', (newValue: string, oldValue: string, context: ActionContext) => {}, device.log);
         // @ts-expect-error intentional type-check guard for typed server listener values
         device.subscribeAttribute(BooleanStateServer, 'stateValue', (newValue: string, oldValue: string, context: ActionContext) => {}, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster listener values
-        device.subscribeAttribute(BooleanState.Cluster, 'stateValue', (newValue: string, oldValue: string, context: ActionContext) => {}, device.log);
+        device.subscribeAttribute(BooleanState, 'stateValue', (newValue: string, oldValue: string, context: ActionContext) => {}, device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidSubscribeType: string = device.subscribeAttribute(BooleanStateBehavior, 'stateValue', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerSubscribeType: string = device.subscribeAttribute(BooleanStateServer, 'stateValue', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidClusterSubscribeType: string = device.subscribeAttribute(BooleanState.Cluster, 'stateValue', behaviorListener, device.log);
+        const invalidClusterSubscribeType: string = device.subscribeAttribute(BooleanState, 'stateValue', behaviorListener, device.log);
         void invalidSubscribeType;
         void invalidServerSubscribeType;
         void invalidClusterSubscribeType;
@@ -321,8 +321,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     try {
       const clusterFromBehavior: { stateValue: boolean } | undefined = device.getCluster(BooleanStateBehavior, device.log);
       const clusterFromServer: { stateValue: boolean } | undefined = device.getCluster(BooleanStateServer, device.log);
-      const clusterFromCluster: { stateValue: boolean } | undefined = device.getCluster(BooleanState.Cluster, device.log);
-      const clusterFromClusterId = device.getCluster(BooleanState.Cluster.id, device.log);
+      const clusterFromCluster: { stateValue: boolean } | undefined = device.getCluster(BooleanState, device.log);
+      const clusterFromClusterId = device.getCluster(BooleanState.id, device.log);
       const clusterFromString = device.getCluster('BooleanState', device.log);
 
       expect(clusterFromBehavior?.stateValue).toBe(true);
@@ -337,7 +337,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerClusterType: { stateValue: string } | undefined = device.getCluster(BooleanStateServer, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidTypedClusterType: { stateValue: string } | undefined = device.getCluster(BooleanState.Cluster, device.log);
+        const invalidTypedClusterType: { stateValue: string } | undefined = device.getCluster(BooleanState, device.log);
         void invalidClusterType;
         void invalidServerClusterType;
         void invalidTypedClusterType;
@@ -362,13 +362,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       expect(setFromServer).toBe(true);
       expect(device.getAttribute(BooleanStateServer, 'stateValue', device.log)).toBe(false);
 
-      const setFromCluster: boolean = await device.setCluster(BooleanState.Cluster, { stateValue: true }, device.log);
+      const setFromCluster: boolean = await device.setCluster(BooleanState, { stateValue: true }, device.log);
       expect(setFromCluster).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster, 'stateValue', device.log)).toBe(true);
+      expect(device.getAttribute(BooleanState, 'stateValue', device.log)).toBe(true);
 
-      const setFromClusterId: boolean = await device.setCluster(BooleanState.Cluster.id, { stateValue: false }, device.log);
+      const setFromClusterId: boolean = await device.setCluster(BooleanState.id, { stateValue: false }, device.log);
       expect(setFromClusterId).toBe(true);
-      expect(device.getAttribute(BooleanState.Cluster.id, 'stateValue', device.log)).toBe(false);
+      expect(device.getAttribute(BooleanState.id, 'stateValue', device.log)).toBe(false);
 
       const setFromString: boolean = await device.setCluster('BooleanState', { stateValue: true }, device.log);
       expect(setFromString).toBe(true);
@@ -380,18 +380,18 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type server cluster payload overload
         device.setCluster(BooleanStateServer, { stateValue: 'true' }, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType cluster payload overload
-        device.setCluster(BooleanState.Cluster, { stateValue: 'true' }, device.log);
+        device.setCluster(BooleanState, { stateValue: 'true' }, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type cluster missing payload property overload
         device.setCluster(BooleanStateBehavior, {}, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type server cluster missing payload property overload
         device.setCluster(BooleanStateServer, {}, device.log);
-        device.setCluster(BooleanState.Cluster, {}, device.log);
+        device.setCluster(BooleanState, {}, device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidSetClusterType: Promise<string> = device.setCluster(BooleanStateBehavior, { stateValue: true }, device.log);
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerSetClusterType: Promise<string> = device.setCluster(BooleanStateServer, { stateValue: true }, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidTypedSetClusterType: Promise<string> = device.setCluster(BooleanState.Cluster, { stateValue: true }, device.log);
+        const invalidTypedSetClusterType: Promise<string> = device.setCluster(BooleanState, { stateValue: true }, device.log);
         void invalidSetClusterType;
         void invalidServerSetClusterType;
         void invalidTypedSetClusterType;
@@ -402,7 +402,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
   });
 
   test('setCluster type checks with OnOff', async () => {
-    const device = new MatterbridgeEndpoint(onOffOutlet, { id: 'OnOffOutletSetClusterTypeCheck', number: EndpointNumber(1001) }, true);
+    const device = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'OnOffOutletSetClusterTypeCheck', number: EndpointNumber(1001) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.addRequiredClusterServers();
@@ -434,7 +434,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type server cluster payload overload
         device.setCluster(OnOffServer, { onOff: 'true' }, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType cluster payload overload
-        device.setCluster(OnOffCluster, { onOff: 'true' }, device.log);
+        device.setCluster(OnOff, { onOff: 'true' }, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type cluster missing payload property overload
         device.setCluster(OnOffBehavior, {}, device.log);
         // @ts-expect-error intentional type-check guard for Behavior.Type server cluster missing payload property overload
@@ -445,7 +445,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for typed server return value
         const invalidServerSetClusterType: Promise<string> = device.setCluster(OnOffServer, { onOff: true }, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidTypedSetClusterType: Promise<string> = device.setCluster(OnOff.Cluster, { onOff: true }, device.log);
+        const invalidTypedSetClusterType: Promise<string> = device.setCluster(OnOff, { onOff: true }, device.log);
         void invalidSetClusterType;
         void invalidServerSetClusterType;
         void invalidTypedSetClusterType;
@@ -456,7 +456,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
   });
 
   test('internalFor type checks', async () => {
-    const device = new MatterbridgeEndpoint(thermostatDevice, { id: 'ThermostatInternalTypeCheck', number: EndpointNumber(906) }, true);
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermostatInternalTypeCheck', number: EndpointNumber(906) }, true);
     expect(device).toBeDefined();
     device.createDefaultThermostatClusterServer();
     device.addRequiredClusterServers();
@@ -465,8 +465,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       type ThermostatInternal = InstanceType<(typeof ThermostatServer)['Internal']>;
 
       const internalFromBehavior = await internalFor(device, ThermostatServer);
-      const internalFromCluster: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat.Complete);
-      const internalFromClusterId: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat.Cluster.id);
+      const internalFromCluster: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat);
+      const internalFromClusterId: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, Thermostat.id);
       const internalFromString: ThermostatInternal | undefined = await internalFor<ThermostatInternal>(device, 'Thermostat');
 
       expect(internalFromBehavior).toBeDefined();
@@ -517,10 +517,10 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       });
       await invokeTriggerFromBehavior;
 
-      const invokeFromCluster: Promise<void> = device.invokeBehaviorCommand(Identify.Cluster, 'identify', { identifyTime: 5 });
+      const invokeFromCluster: Promise<void> = device.invokeBehaviorCommand(Identify, 'identify', { identifyTime: 5 });
       await invokeFromCluster;
 
-      const invokeTriggerFromCluster: Promise<void> = device.invokeBehaviorCommand(Identify.Cluster, 'triggerEffect', {
+      const invokeTriggerFromCluster: Promise<void> = device.invokeBehaviorCommand(Identify, 'triggerEffect', {
         effectIdentifier: Identify.EffectIdentifier.Blink,
         effectVariant: Identify.EffectVariant.Default,
       });
@@ -569,20 +569,10 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       );
       expect(triggerFromBehavior).toBe(true);
 
-      const triggerFromCluster: boolean = await device.triggerEvent(
-        Switch.Cluster.with(
-          Switch.Feature.MomentarySwitch,
-          Switch.Feature.MomentarySwitchRelease,
-          Switch.Feature.MomentarySwitchLongPress,
-          Switch.Feature.MomentarySwitchMultiPress,
-        ),
-        'initialPress',
-        { newPosition: 1 },
-        device.log,
-      );
+      const triggerFromCluster: boolean = await device.triggerEvent(Switch, 'initialPress', { newPosition: 1 }, device.log);
       expect(triggerFromCluster).toBe(true);
 
-      const triggerFromClusterId: boolean = await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, device.log);
+      const triggerFromClusterId: boolean = await device.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 }, device.log);
       expect(triggerFromClusterId).toBe(true);
 
       const triggerFromString: boolean = await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 }, device.log);
@@ -609,13 +599,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for Behavior.Type payload overload
         device.triggerEvent(SwitchServer, 'initialPress', { previousPosition: 1 }, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType event overload
-        device.triggerEvent(Switch.Cluster, 'identify', { identifyTime: 5 }, device.log);
+        device.triggerEvent(Switch, 'identify', { identifyTime: 5 }, device.log);
         // @ts-expect-error intentional type-check guard for ClusterType payload overload
-        device.triggerEvent(Switch.Cluster, 'initialPress', { previousPosition: 1 }, device.log);
+        device.triggerEvent(Switch, 'initialPress', { previousPosition: 1 }, device.log);
         // @ts-expect-error intentional type-check guard for typed return value
         const invalidTriggerType: Promise<string> = device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 }, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
-        const invalidClusterTriggerType: Promise<string> = device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 }, device.log);
+        const invalidClusterTriggerType: Promise<string> = device.triggerEvent(Switch, 'initialPress', { newPosition: 1 }, device.log);
         void invalidTriggerType;
         void invalidClusterTriggerType;
       }

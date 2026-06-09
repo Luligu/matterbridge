@@ -48,7 +48,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'powerAdjustRequest',
       request,
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -65,7 +65,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'cancelPowerAdjustRequest',
       request: {},
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
