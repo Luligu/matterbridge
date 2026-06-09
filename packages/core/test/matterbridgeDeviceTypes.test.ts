@@ -11,10 +11,15 @@ import { jest } from '@jest/globals';
 import * as devices from '@matter/node/devices';
 // @matter endpoints
 import * as endpoints from '@matter/node/endpoints';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 import { setupTest } from '../src/jestutils/jestSetupTest.js';
 import {
   DeviceTypeDefinition,
+  getSupportedCluster,
+  getSupportedDeviceType,
+  supportedClusters,
+  supportedDeviceTypes,
   // Utility device types
   rootNode,
   powerSource,
@@ -287,5 +292,24 @@ describe('Matterbridge device types', () => {
     expect(dt.deviceClass).toBe(DeviceClasses.Node);
     expect(dt.deviceScope).toBe(DeviceScopes.Node);
     expect(dt.revision).toBe(3);
+  });
+
+  test('should get supported device types by string or number key', () => {
+    expect.hasAssertions();
+    expect(supportedDeviceTypes).toContain(rootNode);
+    expect(getSupportedDeviceType(rootNode.code)).toBe(rootNode);
+    expect(getSupportedDeviceType(rootNode.name)).toBe(rootNode);
+    expect(getSupportedDeviceType(rootNode.deviceName)).toBe(rootNode);
+    expect(getSupportedDeviceType(0xffff)).toBeUndefined();
+    expect(getSupportedDeviceType('Unknown Device Type')).toBeUndefined();
+  });
+
+  test('should get supported clusters by string or number key', () => {
+    expect.hasAssertions();
+    expect(supportedClusters).toContain(OnOff);
+    expect(getSupportedCluster(OnOff.id)).toBe(OnOff);
+    expect(getSupportedCluster(OnOff.name)).toBe(OnOff);
+    expect(getSupportedCluster(0xffff)).toBeUndefined();
+    expect(getSupportedCluster('UnknownCluster')).toBeUndefined();
   });
 });

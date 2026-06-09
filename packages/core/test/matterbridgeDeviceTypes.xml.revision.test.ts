@@ -133,7 +133,7 @@ const XML_REVISION_OVERRIDES = new Map<number, number>([
 // Device type codes where the chip/1.5.1 XML has an incorrect name.
 // The override value is the Matterbridge canonical name.
 const XML_DEVICE_NAME_OVERRIDES = new Map<number, string>([
-  [0x010a, 'OnOff PlugIn Unit'], // onOffPlugInUnit: XML says OnOff Plugin Unit
+  [0x010a, 'OnOffPlugInUnit'], // onOffPlugInUnit: XML says OnOff Plugin Unit
 ]);
 
 // Aggregator (and bridge which aliases it) intentionally uses DeviceClasses.Dynamic in
@@ -336,7 +336,7 @@ if (!hasXmlDir) {
       }
       expect(mb.code).toBe(xmlInfo.id);
       expect(mb.revision).toBe(XML_REVISION_OVERRIDES.get(mb.code) ?? xmlInfo.revision);
-      expect(mb.deviceName).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[/-]/g, ''));
+      expect(mb.deviceName).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[\s/-]/g, ''));
       expect(mb.deviceClass).toBe(DEVICE_CLASS_OVERRIDES.get(mb.code) ?? XML_CLASS_TO_DEVICE_CLASS[xmlInfo.class ?? '']);
       expect(mb.deviceScope).toBe(XML_SCOPE_TO_DEVICE_SCOPE[xmlInfo.scope ?? '']);
     });

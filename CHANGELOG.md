@@ -73,6 +73,7 @@ These classes will run as threads in the next releases:
 - [soilMeasurement]: Add `createDefaultSoilMeasurementClusterServer()` endpoint helper.
 - [deviceTypes]: Add `controlBridge`, `pumpController`, `windowCoveringController`, `thermostatController`, `contentApp`, `castingVideoClient`, `videoRemoteControl` device types.
 - [eslint]: Enforce `@typescript-eslint/no-deprecated` rule.
+- [register]: Add getSupportedDeviceType() and getSupportedCluster().
 
 ### Changed
 
