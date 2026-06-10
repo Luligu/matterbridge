@@ -132,7 +132,7 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matter/main": "0.17.2-alpha.0-20260609-97109a2d3",
+    "@matter/main": "0.17.2",
     "@matterbridge/dgram": "3.8.1",
     "@matterbridge/thread": "3.8.1",
     "@matterbridge/types": "3.8.1",
