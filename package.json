@@ -293,13 +293,13 @@
     "@eslint/js": "10.0.1"
   },
   "dependencies": {
-    "@matterbridge/core": "3.8.1",
-    "@matterbridge/dgram": "3.8.1",
-    "@matterbridge/jest-utils": "3.8.1",
-    "@matterbridge/thread": "3.8.1",
-    "@matterbridge/types": "3.8.1",
-    "@matterbridge/utils": "3.8.1",
-    "@matterbridge/vitest-utils": "3.8.1",
+    "@matterbridge/core": "3.9.0",
+    "@matterbridge/dgram": "3.9.0",
+    "@matterbridge/jest-utils": "3.9.0",
+    "@matterbridge/thread": "3.9.0",
+    "@matterbridge/types": "3.9.0",
+    "@matterbridge/utils": "3.9.0",
+    "@matterbridge/vitest-utils": "3.9.0",
     "node-ansi-logger": "3.3.0-dev-20260607-585945a",
     "node-persist-manager": "2.1.0-dev-20260524-6a6019a"
   },
