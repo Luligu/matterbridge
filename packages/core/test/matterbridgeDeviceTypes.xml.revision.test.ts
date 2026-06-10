@@ -327,7 +327,7 @@ if (!hasXmlDir) {
       ['doorbell', doorbell],
     ];
 
-    test.each(cases)('Device type %s matches Matter 1.5.1 XML (id, revision, deviceName, deviceClass, deviceScope)', async (display, mb) => {
+    test.each(cases)('Device type %s matches Matter 1.5.1 XML (id, revision, name, deviceClass, deviceScope)', async (display, mb) => {
       const xmlInfo = xmlIndex.get(mb.code);
       if (!xmlInfo) {
         // eslint-disable-next-line no-console
@@ -336,7 +336,7 @@ if (!hasXmlDir) {
       }
       expect(mb.code).toBe(xmlInfo.id);
       expect(mb.revision).toBe(XML_REVISION_OVERRIDES.get(mb.code) ?? xmlInfo.revision);
-      expect(mb.deviceName).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[\s/-]/g, ''));
+      expect(mb.name).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[\s/-]/g, ''));
       expect(mb.deviceClass).toBe(DEVICE_CLASS_OVERRIDES.get(mb.code) ?? XML_CLASS_TO_DEVICE_CLASS[xmlInfo.class ?? '']);
       expect(mb.deviceScope).toBe(XML_SCOPE_TO_DEVICE_SCOPE[xmlInfo.scope ?? '']);
     });

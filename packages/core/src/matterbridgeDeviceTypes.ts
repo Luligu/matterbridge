@@ -211,24 +211,34 @@ export enum DeviceScopes {
 }
 
 export interface DeviceTypeDefinition {
+  /** Human-readable name of the device type (e.g. `OnOffLight`). */
   name: string;
-  deviceName: string;
+  /** Device type code as defined in the Matter Device Library specification. */
   code: DeviceTypeId;
+  /** Classification of the device type (Node, Utility, Simple, Dynamic, ...). */
   deviceClass: DeviceClasses;
+  /** Scope of the device type: endpoint or node. */
   deviceScope: DeviceScopes;
+  /** Revision of the device type as defined in the Matter Device Library specification. */
   revision: number;
+  /** Server clusters that are mandatory on the endpoint for this device type. */
   requiredServerClusters: ClusterId[];
+  /** Server clusters that are optional on the endpoint for this device type. */
   optionalServerClusters: ClusterId[];
+  /** Client clusters that are mandatory on the endpoint for this device type. */
   requiredClientClusters: ClusterId[];
+  /** Client clusters that are optional on the endpoint for this device type. */
   optionalClientClusters: ClusterId[];
-  requiredDeviceTypes?: DeviceTypeDefinition[]; // For device types that require another device types to be present on the endpoint
-  requiredServerClustersOneOf?: ClusterId[]; // Clusters that require this device type to be present on the endpoint
-  composedOf?: DeviceTypeDefinition[]; // For composed device types, the list of device types that compose it
+  /** Device types that must also be present on the endpoint for this device type. */
+  requiredDeviceTypes?: DeviceTypeDefinition[];
+  /** Server clusters of which at least one must be present on the endpoint for this device type. */
+  requiredServerClustersOneOf?: ClusterId[];
+  /** For composed device types, the device types that compose it. */
+  composedOf?: DeviceTypeDefinition[];
 }
 
 export const DeviceTypeDefinition = ({
   name,
-  deviceName,
   code,
   deviceClass,
   deviceScope,
@@ -242,7 +252,6 @@ export const DeviceTypeDefinition = ({
   composedOf = [],
 }: {
   name: string;
-  deviceName: string;
   code: number;
   deviceClass: DeviceClasses;
   deviceScope: DeviceScopes;
@@ -256,7 +265,6 @@ export const DeviceTypeDefinition = ({
   composedOf?: DeviceTypeDefinition[];
 }): DeviceTypeDefinition => ({
   name,
-  deviceName,
   code: DeviceTypeId(code),
   deviceClass,
   deviceScope,
@@ -285,8 +293,7 @@ export const DeviceTypeDefinition = ({
  * 0x001D Descriptor Feature TagList Duplicate
  */
 export const baseDeviceType = DeviceTypeDefinition({
-  name: 'MA-baseDeviceType',
-  deviceName: 'BaseDeviceType',
+  name: 'BaseDeviceType',
   code: 0x0000,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -303,8 +310,7 @@ export const baseDeviceType = DeviceTypeDefinition({
  * This defines conformance for a root node endpoint.
  */
 export const rootNode = DeviceTypeDefinition({
-  name: 'MA-rootNode',
-  deviceName: 'RootNode',
+  name: 'RootNode',
   code: 0x0016,
   deviceClass: DeviceClasses.Node,
   deviceScope: DeviceScopes.Node,
@@ -321,8 +327,7 @@ export const rootNode = DeviceTypeDefinition({
  * A Power Source device type provides information about the source of power.
  */
 export const powerSource = DeviceTypeDefinition({
-  name: 'MA-powerSource',
-  deviceName: 'PowerSource',
+  name: 'PowerSource',
   code: 0x0011,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Node,
@@ -337,8 +342,7 @@ export const powerSource = DeviceTypeDefinition({
  * An OTA Requestor is a device that is capable of receiving an OTA software update.
  */
 export const otaRequestor = DeviceTypeDefinition({
-  name: 'MA-otaRequestor',
-  deviceName: 'OTARequestor',
+  name: 'OTARequestor',
   code: 0x0012,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Node,
@@ -356,8 +360,7 @@ export const otaRequestor = DeviceTypeDefinition({
  * the same fabric.
  */
 export const otaProvider = DeviceTypeDefinition({
-  name: 'MA-otaProvider',
-  deviceName: 'OTAProvider',
+  name: 'OTAProvider',
   code: 0x0014,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Node,
@@ -395,8 +398,7 @@ export const otaProvider = DeviceTypeDefinition({
  * Descriptor cluster SHALL be empty.
  */
 export const bridgedNode = DeviceTypeDefinition({
-  name: 'MA-bridgedNode',
-  deviceName: 'BridgedNode',
+  name: 'BridgedNode',
   code: 0x0013,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Endpoint,
@@ -417,8 +419,7 @@ export const bridgedNode = DeviceTypeDefinition({
  * indicated by the Power Topology cluster.
  */
 export const electricalSensor = DeviceTypeDefinition({
-  name: 'MA-electricalSensor',
-  deviceName: 'ElectricalSensor',
+  name: 'ElectricalSensor',
   code: 0x0510,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Endpoint,
@@ -442,8 +443,7 @@ export const electricalSensor = DeviceTypeDefinition({
  * - Device Energy Management Feature ConstraintBasedAdjustment [ControllableESA].a+
  */
 export const deviceEnergyManagement = DeviceTypeDefinition({
-  name: 'MA-deviceEnergyManagement',
-  deviceName: 'DeviceEnergyManagement',
+  name: 'DeviceEnergyManagement',
   code: 0x050d,
   deviceClass: DeviceClasses.Utility,
   deviceScope: DeviceScopes.Endpoint,
@@ -473,8 +473,7 @@ export const deviceEnergyManagement = DeviceTypeDefinition({
  * - Scenes Management Command CopyScene
  */
 export const onOffLight = DeviceTypeDefinition({
-  name: 'MA-onOffLight',
-  deviceName: 'OnOffLight',
+  name: 'OnOffLight',
   code: 0x0100,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -500,8 +499,7 @@ export const onOffLight = DeviceTypeDefinition({
  * - Scenes Management Command CopyScene
  */
 export const dimmableLight = DeviceTypeDefinition({
-  name: 'MA-dimmableLight',
-  deviceName: 'DimmableLight',
+  name: 'DimmableLight',
   code: 0x0101,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -529,8 +527,7 @@ export const dimmableLight = DeviceTypeDefinition({
  * - Color Control Attribute RemainingTime
  */
 export const colorTemperatureLight = DeviceTypeDefinition({
-  name: 'MA-colorTemperatureLight',
-  deviceName: 'ColorTemperatureLight',
+  name: 'ColorTemperatureLight',
   code: 0x010c,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -562,8 +559,7 @@ export const colorTemperatureLight = DeviceTypeDefinition({
  * - Color Control Attribute RemainingTime
  */
 export const extendedColorLight = DeviceTypeDefinition({
-  name: 'MA-extendedColorLight',
-  deviceName: 'ExtendedColorLight',
+  name: 'ExtendedColorLight',
   code: 0x010d,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -599,8 +595,7 @@ export const extendedColorLight = DeviceTypeDefinition({
  * - Scenes Management Command CopyScene
  */
 export const onOffPlugInUnit = DeviceTypeDefinition({
-  name: 'MA-onOffPlugInUnit',
-  deviceName: 'OnOffPlugInUnit',
+  name: 'OnOffPlugInUnit',
   code: 0x010a,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -640,8 +635,7 @@ export const onOffOutlet = onOffPlugInUnit;
  * - Level Control Attribute MaxLevel 254
  */
 export const dimmablePlugInUnit = DeviceTypeDefinition({
-  name: 'MA-dimmablePlugInUnit',
-  deviceName: 'DimmablePlugInUnit',
+  name: 'DimmablePlugInUnit',
   code: 0x010b,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -683,8 +677,7 @@ export const dimmableOutlet = dimmablePlugInUnit;
  * - Scenes Management Command CopyScene
  */
 export const mountedOnOffControl = DeviceTypeDefinition({
-  name: 'MA-mountedOnOffControl',
-  deviceName: 'MountedOnOffControl',
+  name: 'MountedOnOffControl',
   code: 0x010f,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -728,8 +721,7 @@ export const onOffMountedSwitch = mountedOnOffControl;
  * - Scenes Management Command CopyScene
  */
 export const mountedDimmableLoadControl = DeviceTypeDefinition({
-  name: 'MA-mountedDimmableLoadControl',
-  deviceName: 'MountedDimmableLoadControl',
+  name: 'MountedDimmableLoadControl',
   code: 0x0110,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -765,8 +757,7 @@ export const dimmableMountedSwitch = mountedDimmableLoadControl;
  *    201–255 100.0%                  Pump setpoint is 100.0%
  */
 export const pump = DeviceTypeDefinition({
-  name: 'MA-pump',
-  deviceName: 'Pump',
+  name: 'Pump',
   code: 0x303,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -789,8 +780,7 @@ export const pumpDevice = pump;
  */
 
 export const waterValve = DeviceTypeDefinition({
-  name: 'MA-waterValve',
-  deviceName: 'WaterValve',
+  name: 'WaterValve',
   code: 0x42,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -817,8 +807,7 @@ export const waterValve = DeviceTypeDefinition({
  * - 0x0042 Water Valve                 min 1         M
  */
 export const irrigationSystem = DeviceTypeDefinition({
-  name: 'MA-irrigationSystem',
-  deviceName: 'IrrigationSystem',
+  name: 'IrrigationSystem',
   code: 0x0040,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -842,8 +831,7 @@ export const irrigationSystem = DeviceTypeDefinition({
  * The OnOff server cluster (extraneous for Matter spec) need to be added manually to Have Apple Home show the correct behavior.
  */
 export const onOffLightSwitch = DeviceTypeDefinition({
-  name: 'MA-onOffLightSwitch',
-  deviceName: 'OnOffLightSwitch',
+  name: 'OnOffLightSwitch',
   code: 0x0103,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -867,8 +855,7 @@ export const onOffSwitch = onOffLightSwitch;
  * being emitted.
  */
 export const dimmerSwitch = DeviceTypeDefinition({
-  name: 'MA-dimmerSwitch',
-  deviceName: 'DimmerSwitch',
+  name: 'DimmerSwitch',
   code: 0x0104,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -891,8 +878,7 @@ export const dimmableSwitch = dimmerSwitch;
  * Extended Color Light, is capable of being used to adjust the color of the light being emitted.
  */
 export const colorDimmerSwitch = DeviceTypeDefinition({
-  name: 'MA-colorDimmerSwitch',
-  deviceName: 'ColorDimmerSwitch',
+  name: 'ColorDimmerSwitch',
   code: 0x0105,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -917,8 +903,7 @@ export const colorTemperatureSwitch = colorDimmerSwitch;
  * capable of being used for setting scenes.
  */
 export const controlBridge = DeviceTypeDefinition({
-  name: 'MA-controlBridge',
-  deviceName: 'ControlBridge',
+  name: 'ControlBridge',
   code: 0x0840,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -935,8 +920,7 @@ export const controlBridge = DeviceTypeDefinition({
  * A Pump Controller device is capable of configuring and controlling a Pump device.
  */
 export const pumpController = DeviceTypeDefinition({
-  name: 'MA-pumpController',
-  deviceName: 'PumpController',
+  name: 'PumpController',
   code: 0x0304,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -953,8 +937,7 @@ export const pumpController = DeviceTypeDefinition({
  * This defines conformance for the Generic Switch device type.
  */
 export const genericSwitch = DeviceTypeDefinition({
-  name: 'MA-genericSwitch',
-  deviceName: 'GenericSwitch',
+  name: 'GenericSwitch',
   code: 0x000f,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -972,8 +955,7 @@ export const genericSwitch = DeviceTypeDefinition({
  * Open or no contact: state false
  */
 export const contactSensor = DeviceTypeDefinition({
-  name: 'MA-contactSensor',
-  deviceName: 'ContactSensor',
+  name: 'ContactSensor',
   code: 0x0015,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -986,8 +968,7 @@ export const contactSensor = DeviceTypeDefinition({
  * 7.2. Light Sensor Device Type
  */
 export const lightSensor = DeviceTypeDefinition({
-  name: 'MA-lightSensor',
-  deviceName: 'LightSensor',
+  name: 'LightSensor',
   code: 0x0106,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -999,8 +980,7 @@ export const lightSensor = DeviceTypeDefinition({
  * 7.3. Occupancy Sensor Device Type
  */
 export const occupancySensor = DeviceTypeDefinition({
-  name: 'MA-occupancySensor',
-  deviceName: 'OccupancySensor',
+  name: 'OccupancySensor',
   code: 0x0107,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1016,8 +996,7 @@ export const occupancySensor = DeviceTypeDefinition({
  * - Thermostat User Interface Configuration Attribute KeypadLockout O
  */
 export const temperatureSensor = DeviceTypeDefinition({
-  name: 'MA-temperatureSensor',
-  deviceName: 'TemperatureSensor',
+  name: 'TemperatureSensor',
   code: 0x0302,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1030,8 +1009,7 @@ export const temperatureSensor = DeviceTypeDefinition({
  * 7.5. Pressure Sensor Device Type
  */
 export const pressureSensor = DeviceTypeDefinition({
-  name: 'MA-pressureSensor',
-  deviceName: 'PressureSensor',
+  name: 'PressureSensor',
   code: 0x0305,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1043,8 +1021,7 @@ export const pressureSensor = DeviceTypeDefinition({
  * 7.6. Flow Sensor Device Type
  */
 export const flowSensor = DeviceTypeDefinition({
-  name: 'MA-flowSensor',
-  deviceName: 'FlowSensor',
+  name: 'FlowSensor',
   code: 0x0306,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1056,8 +1033,7 @@ export const flowSensor = DeviceTypeDefinition({
  * 7.7. Humidity Sensor Device Type
  */
 export const humiditySensor = DeviceTypeDefinition({
-  name: 'MA-humiditySensor',
-  deviceName: 'HumiditySensor',
+  name: 'HumiditySensor',
   code: 0x0307,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1072,8 +1048,7 @@ export const humiditySensor = DeviceTypeDefinition({
  * as a Dimmable Light, is capable of being used to switch the device on or off.
  */
 export const onOffSensor = DeviceTypeDefinition({
-  name: 'MA-onOffSensor',
-  deviceName: 'OnOffSensor',
+  name: 'OnOffSensor',
   code: 0x0850,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1092,8 +1067,7 @@ export const onOffSensor = DeviceTypeDefinition({
  * - 0x0011 Power Source min 1 M
  */
 export const smokeCoAlarm = DeviceTypeDefinition({
-  name: 'MA-smokeCoAlarm',
-  deviceName: 'SmokeCOAlarm',
+  name: 'SmokeCOAlarm',
   code: 0x0076,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1110,8 +1084,7 @@ export const smokeCoAlarm = DeviceTypeDefinition({
  * the quality of ambient air in indoor or outdoor environments.
  */
 export const airQualitySensor = DeviceTypeDefinition({
-  name: 'MA-airQualitySensor',
-  deviceName: 'AirQualitySensor',
+  name: 'AirQualitySensor',
   code: 0x002c,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1144,8 +1117,7 @@ export const airQualitySensor = DeviceTypeDefinition({
  * - Boolean State Event StateChange M
  */
 export const waterFreezeDetector = DeviceTypeDefinition({
-  name: 'MA-waterFreezeDetector',
-  deviceName: 'WaterFreezeDetector',
+  name: 'WaterFreezeDetector',
   code: 0x0041,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1165,8 +1137,7 @@ export const waterFreezeDetector = DeviceTypeDefinition({
  * - Boolean State Event StateChange M
  */
 export const waterLeakDetector = DeviceTypeDefinition({
-  name: 'MA-waterLeakDetector',
-  deviceName: 'WaterLeakDetector',
+  name: 'WaterLeakDetector',
   code: 0x0043,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1186,8 +1157,7 @@ export const waterLeakDetector = DeviceTypeDefinition({
  * - Boolean State Event StateChange M
  */
 export const rainSensor = DeviceTypeDefinition({
-  name: 'MA-rainSensor',
-  deviceName: 'RainSensor',
+  name: 'RainSensor',
   code: 0x0044,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1202,8 +1172,7 @@ export const rainSensor = DeviceTypeDefinition({
  * A Soil Sensor device reports measurements of soil values, such as moisture and (optionally) temperature.
  */
 export const soilSensor = DeviceTypeDefinition({
-  name: 'MA-soilSensor',
-  deviceName: 'SoilSensor',
+  name: 'SoilSensor',
   code: 0x0045,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1225,8 +1194,7 @@ export const soilSensor = DeviceTypeDefinition({
  * - Root 0x0016 Root Node TimeSyncWithClientCond O
  */
 export const doorLock = DeviceTypeDefinition({
-  name: 'MA-doorLock',
-  deviceName: 'DoorLock',
+  name: 'DoorLock',
   code: 0xa,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1249,8 +1217,7 @@ export const doorLockDevice = doorLock;
  * - Root 0x0016 Root Node TimeSyncCond O
  */
 export const doorLockController = DeviceTypeDefinition({
-  name: 'MA-doorLockController',
-  deviceName: 'DoorLockController',
+  name: 'DoorLockController',
   code: 0x00b,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1265,8 +1232,7 @@ export const doorLockController = DeviceTypeDefinition({
  * 8.3. Window Covering Device Type
  */
 export const windowCovering = DeviceTypeDefinition({
-  name: 'MA-windowCovering',
-  deviceName: 'WindowCovering',
+  name: 'WindowCovering',
   code: 0x202,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1286,8 +1252,7 @@ export const coverDevice = windowCovering;
  * A Window Covering Controller is a device that controls an automatic window covering.
  */
 export const windowCoveringController = DeviceTypeDefinition({
-  name: 'MA-windowCoveringController',
-  deviceName: 'WindowCoveringController',
+  name: 'WindowCoveringController',
   code: 0x203,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1319,8 +1284,7 @@ export const windowCoveringController = DeviceTypeDefinition({
  *   (exactly one tag from Closure namespace 0x44; no tag from ClosurePanel namespace 0x45)
  */
 export const closure = DeviceTypeDefinition({
-  name: 'MA-closure',
-  deviceName: 'Closure',
+  name: 'Closure',
   code: 0x0230,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1344,8 +1308,7 @@ export const closure = DeviceTypeDefinition({
  *   (exactly one tag from ClosurePanel namespace 0x45; no tag from Closure namespace 0x44)
  */
 export const closurePanel = DeviceTypeDefinition({
-  name: 'MA-closurePanel',
-  deviceName: 'ClosurePanel',
+  name: 'ClosurePanel',
   code: 0x0231,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1369,8 +1332,7 @@ export const closurePanel = DeviceTypeDefinition({
  * - 0x0105 Closure Dimension   client       O
  */
 export const closureController = DeviceTypeDefinition({
-  name: 'MA-closureController',
-  deviceName: 'ClosureController',
+  name: 'ClosureController',
   code: 0x023e,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1394,8 +1356,7 @@ export const closureController = DeviceTypeDefinition({
  *
  */
 export const thermostat = DeviceTypeDefinition({
-  name: 'MA-thermostat',
-  deviceName: 'Thermostat',
+  name: 'Thermostat',
   code: 0x301,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1440,8 +1401,7 @@ export const thermostatDevice = thermostat;
  * SpeedSetting and PercentSetting.
  */
 export const fan = DeviceTypeDefinition({
-  name: 'MA-fan',
-  deviceName: 'Fan',
+  name: 'Fan',
   code: 0x2b,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1488,8 +1448,7 @@ export const fanDevice = fan;
  *
  */
 export const airPurifier = DeviceTypeDefinition({
-  name: 'MA-airPurifier',
-  deviceName: 'AirPurifier',
+  name: 'AirPurifier',
   code: 0x2d,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1504,8 +1463,7 @@ export const airPurifier = DeviceTypeDefinition({
  * A Thermostat Controller is a device capable of controlling a Thermostat.
  */
 export const thermostatController = DeviceTypeDefinition({
-  name: 'MA-thermostatController',
-  deviceName: 'ThermostatController',
+  name: 'ThermostatController',
   code: 0x030a,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1540,8 +1498,7 @@ export const thermostatController = DeviceTypeDefinition({
  * - Content Control (parental or content access control)
  */
 export const basicVideoPlayer = DeviceTypeDefinition({
-  name: 'MA-basicVideoPlayer',
-  deviceName: 'BasicVideoPlayer',
+  name: 'BasicVideoPlayer',
   code: 0x0028,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1579,8 +1536,7 @@ export const basicVideoPlayer = DeviceTypeDefinition({
  * - Application Launcher Feature ApplicationPlatform M
  */
 export const castingVideoPlayer = DeviceTypeDefinition({
-  name: 'MA-castingVideoPlayer',
-  deviceName: 'CastingVideoPlayer',
+  name: 'CastingVideoPlayer',
   code: 0x0023,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1609,8 +1565,7 @@ export const castingVideoPlayer = DeviceTypeDefinition({
  * off (muted) state. For volume level control, the Level cluster SHALL be used.
  */
 export const speaker = DeviceTypeDefinition({
-  name: 'MA-speaker',
-  deviceName: 'Speaker',
+  name: 'Speaker',
   code: 0x0022,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1634,8 +1589,7 @@ export const speakerDevice = speaker;
  * - Application Launcher Feature ApplicationPlatform X
  */
 export const contentApp = DeviceTypeDefinition({
-  name: 'MA-contentApp',
-  deviceName: 'ContentApp',
+  name: 'ContentApp',
   code: 0x0024,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1654,8 +1608,7 @@ export const contentApp = DeviceTypeDefinition({
  * specific Content Provider.
  */
 export const castingVideoClient = DeviceTypeDefinition({
-  name: 'MA-castingVideoClient',
-  deviceName: 'CastingVideoClient',
+  name: 'CastingVideoClient',
   code: 0x0029,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1686,8 +1639,7 @@ export const castingVideoClient = DeviceTypeDefinition({
  * the ability to initiate keypad navigation and media playback.
  */
 export const videoRemoteControl = DeviceTypeDefinition({
-  name: 'MA-videoRemoteControl',
-  deviceName: 'VideoRemoteControl',
+  name: 'VideoRemoteControl',
   code: 0x002a,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1716,8 +1668,7 @@ export const videoRemoteControl = DeviceTypeDefinition({
  * 11.1. Mode Select Device Type
  */
 export const modeSelect = DeviceTypeDefinition({
-  name: 'MA-modeSelect',
-  deviceName: 'ModeSelect',
+  name: 'ModeSelect',
   code: 0x27,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1759,8 +1710,7 @@ export const modeSelect = DeviceTypeDefinition({
  * that wish to be notified of such changes SHOULD monitor changes of these attributes.
  */
 export const aggregator = DeviceTypeDefinition({
-  name: 'MA-aggregator',
-  deviceName: 'Aggregator',
+  name: 'Aggregator',
   code: 0x000e,
   deviceClass: DeviceClasses.Dynamic,
   deviceScope: DeviceScopes.Endpoint,
@@ -1800,8 +1750,7 @@ export const bridge = aggregator;
  *
  */
 export const roboticVacuumCleaner = DeviceTypeDefinition({
-  name: 'MA-roboticVacuumCleaner',
-  deviceName: 'RoboticVacuumCleaner',
+  name: 'RoboticVacuumCleaner',
   code: 0x74, // 116
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1826,8 +1775,7 @@ export const roboticVacuumCleaner = DeviceTypeDefinition({
  * - Operational State Event OperationCompletion M
  */
 export const laundryWasher = DeviceTypeDefinition({
-  name: 'MA-laundryWasher',
-  deviceName: 'LaundryWasher',
+  name: 'LaundryWasher',
   code: 0x73, // 115
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1851,8 +1799,7 @@ export const laundryWasher = DeviceTypeDefinition({
  * - Refrigerator And Temperature Controlled Cabinet Mode Attribute StartUpMode X
  */
 export const refrigerator = DeviceTypeDefinition({
-  name: 'MA-refrigerator',
-  deviceName: 'Refrigerator',
+  name: 'Refrigerator',
   code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1883,8 +1830,7 @@ export const refrigerator = DeviceTypeDefinition({
  *  - Fan Control                     PercentSetting      null
  */
 export const roomAirConditioner = DeviceTypeDefinition({
-  name: 'MA-roomAirConditioner',
-  deviceName: 'RoomAirConditioner',
+  name: 'RoomAirConditioner',
   code: 0x72, // 114
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1934,8 +1880,7 @@ export const airConditioner = roomAirConditioner;
  * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
-  name: 'MA-temperatureControlledCabinetCooler',
-  deviceName: 'TemperatureControlledCabinet',
+  name: 'TemperatureControlledCabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -1972,8 +1917,7 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
  * - Temperature Control Feature TemperatureLevel X
  */
 export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
-  name: 'MA-temperatureControlledCabinetHeater',
-  deviceName: 'TemperatureControlledCabinet',
+  name: 'TemperatureControlledCabinet',
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2000,8 +1944,7 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
  * - Operational State Event OperationCompletion M
  */
 export const dishwasher = DeviceTypeDefinition({
-  name: 'MA-dishwasher',
-  deviceName: 'Dishwasher',
+  name: 'Dishwasher',
   code: 0x75, // 117
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2024,8 +1967,7 @@ export const dishwasher = DeviceTypeDefinition({
  * - Operational State Event OperationCompletion M
  */
 export const laundryDryer = DeviceTypeDefinition({
-  name: 'MA-laundryDryer',
-  deviceName: 'LaundryDryer',
+  name: 'LaundryDryer',
   code: 0x7c, // 124
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2050,8 +1992,7 @@ export const laundryDryer = DeviceTypeDefinition({
  * - Temperature Control Feature TemperatureNumber X
  */
 export const cookSurface = DeviceTypeDefinition({
-  name: 'MA-cookSurface',
-  deviceName: 'CookSurface',
+  name: 'CookSurface',
   code: 0x77, // 119
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2078,8 +2019,7 @@ export const cookSurface = DeviceTypeDefinition({
  * - On/Off Feature OffOnly M
  */
 export const cooktop = DeviceTypeDefinition({
-  name: 'MA-cooktop',
-  deviceName: 'Cooktop',
+  name: 'Cooktop',
   code: 0x78, // 120
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2100,8 +2040,7 @@ export const cooktop = DeviceTypeDefinition({
  * - 0x0078 Cooktop max 1 Optional
  */
 export const oven = DeviceTypeDefinition({
-  name: 'MA-oven',
-  deviceName: 'Oven',
+  name: 'Oven',
   code: 0x7b, // 123
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2125,8 +2064,7 @@ export const oven = DeviceTypeDefinition({
  * - 0x0202 Fan Control Feature AirflowDirection X
  */
 export const extractorHood = DeviceTypeDefinition({
-  name: 'MA-extractorHood',
-  deviceName: 'ExtractorHood',
+  name: 'ExtractorHood',
   code: 0x7a, // 122
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2146,8 +2084,7 @@ export const extractorHood = DeviceTypeDefinition({
  * Operational State Event OperationCompletion
  */
 export const microwaveOven = DeviceTypeDefinition({
-  name: 'MA-microwaveOven',
-  deviceName: 'MicrowaveOven',
+  name: 'MicrowaveOven',
   code: 0x79, // 121
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2180,8 +2117,7 @@ export const microwaveOven = DeviceTypeDefinition({
  * support the Power Forecast Reporting (PFR) feature.
  */
 export const evse = DeviceTypeDefinition({
-  name: 'MA-evse',
-  deviceName: 'EnergyEVSE',
+  name: 'EnergyEVSE',
   code: 0x050c,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2226,8 +2162,7 @@ export const evse = DeviceTypeDefinition({
  * NOT also include an additional instance of any one of these tag types.
  */
 export const waterHeater = DeviceTypeDefinition({
-  name: 'MA-waterHeater',
-  deviceName: 'WaterHeater',
+  name: 'WaterHeater',
   code: 0x050f,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2267,8 +2202,7 @@ export const waterHeater = DeviceTypeDefinition({
  * - 0x0302 Temperature Sensor 0x001D Descriptor Feature TagList M
  */
 export const solarPower = DeviceTypeDefinition({
-  name: 'MA-solarPower',
-  deviceName: 'SolarPower',
+  name: 'SolarPower',
   code: 0x0017,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2300,8 +2234,7 @@ export const solarPower = DeviceTypeDefinition({
  * See 14.4.5.1. Cluster Requirements on Composing Device Types
  */
 export const batteryStorage = DeviceTypeDefinition({
-  name: 'MA-batteryStorage',
-  deviceName: 'BatteryStorage',
+  name: 'BatteryStorage',
   code: 0x0018,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2336,8 +2269,7 @@ export const batteryStorage = DeviceTypeDefinition({
  * See 14.5.5.1. Cluster Requirements on Composing Device Types
  */
 export const heatPump = DeviceTypeDefinition({
-  name: 'MA-heatPump',
-  deviceName: 'HeatPump',
+  name: 'HeatPump',
   code: 0x0309,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2368,8 +2300,7 @@ export const heatPump = DeviceTypeDefinition({
  * - 0x0514 Electrical Meter           min 1         [ElectricalEnergy].a+
  */
 export const meterReferencePoint = DeviceTypeDefinition({
-  name: 'MA-meterReferencePoint',
-  deviceName: 'MeterReferencePoint',
+  name: 'MeterReferencePoint',
   code: 0x0512,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2399,8 +2330,7 @@ export const meterReferencePoint = DeviceTypeDefinition({
  * - Commodity Tariff Commodity namespace (0x0D) Tag ElectricalEnergy (0x00) M
  */
 export const electricalEnergyTariff = DeviceTypeDefinition({
-  name: 'MA-electricalEnergyTariff',
-  deviceName: 'ElectricalEnergyTariff',
+  name: 'ElectricalEnergyTariff',
   code: 0x0513,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2429,8 +2359,7 @@ export const electricalEnergyTariff = DeviceTypeDefinition({
  * - 0x0B07 Commodity Metering   server       P, M
  */
 export const electricalMeter = DeviceTypeDefinition({
-  name: 'MA-electricalMeter',
-  deviceName: 'ElectricalMeter',
+  name: 'ElectricalMeter',
   code: 0x0514,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2452,8 +2381,7 @@ export const electricalMeter = DeviceTypeDefinition({
  * - 0x0B06 Meter Identification  server       M
  */
 export const electricalUtilityMeter = DeviceTypeDefinition({
-  name: 'MA-electricalUtilityMeter',
-  deviceName: 'ElectricalUtilityMeter',
+  name: 'ElectricalUtilityMeter',
   code: 0x0511,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2497,8 +2425,7 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  * - Camera AV Stream Management Feature Snapshot M
  */
 export const camera = DeviceTypeDefinition({
-  name: 'MA-camera',
-  deviceName: 'Camera',
+  name: 'Camera',
   code: 0x0142,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2524,8 +2451,7 @@ export const camera = DeviceTypeDefinition({
  * - 0x0142 Camera           1             M
  */
 export const floodlightCamera = DeviceTypeDefinition({
-  name: 'MA-floodlightCamera',
-  deviceName: 'FloodlightCamera',
+  name: 'FloodlightCamera',
   code: 0x0144,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2549,8 +2475,7 @@ export const floodlightCamera = DeviceTypeDefinition({
  * - 0x0148 Doorbell    min 1         M
  */
 export const videoDoorbell = DeviceTypeDefinition({
-  name: 'MA-videoDoorbell',
-  deviceName: 'VideoDoorbell',
+  name: 'VideoDoorbell',
   code: 0x0143,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2588,8 +2513,7 @@ export const videoDoorbell = DeviceTypeDefinition({
  * - Generic Switch (0x000F) Switch Feature MomentarySwitch M
  */
 export const intercom = DeviceTypeDefinition({
-  name: 'MA-intercom',
-  deviceName: 'Intercom',
+  name: 'Intercom',
   code: 0x0140,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2626,8 +2550,7 @@ export const intercom = DeviceTypeDefinition({
  * - Camera AV Stream Management Feature Video X
  */
 export const audioDoorbell = DeviceTypeDefinition({
-  name: 'MA-audioDoorbell',
-  deviceName: 'AudioDoorbell',
+  name: 'AudioDoorbell',
   code: 0x0141,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2664,8 +2587,7 @@ export const audioDoorbell = DeviceTypeDefinition({
  * - Camera AV Stream Management Feature Audio X
  */
 export const snapshotCamera = DeviceTypeDefinition({
-  name: 'MA-snapshotCamera',
-  deviceName: 'SnapshotCamera',
+  name: 'SnapshotCamera',
   code: 0x0145,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2691,8 +2613,7 @@ export const snapshotCamera = DeviceTypeDefinition({
  * - There are no cluster element overrides.
  */
 export const chime = DeviceTypeDefinition({
-  name: 'MA-chime',
-  deviceName: 'Chime',
+  name: 'Chime',
   code: 0x0146,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2723,8 +2644,7 @@ export const chime = DeviceTypeDefinition({
  * - 0x0802 TLS Client Management                        client       O
  */
 export const cameraController = DeviceTypeDefinition({
-  name: 'MA-cameraController',
-  deviceName: 'CameraController',
+  name: 'CameraController',
   code: 0x0147,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2757,8 +2677,7 @@ export const cameraController = DeviceTypeDefinition({
  * - 0x0556 Chime       client       M
  */
 export const doorbell = DeviceTypeDefinition({
-  name: 'MA-doorbell',
-  deviceName: 'Doorbell',
+  name: 'Doorbell',
   code: 0x0148,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
@@ -2878,15 +2797,13 @@ export const supportedDeviceTypes: DeviceTypeDefinition[] = [
 ];
 
 /**
- * Gets a supported device type by device type name, device name, or numeric device type id.
+ * Gets a supported device type by device type name or numeric device type id.
  *
- * @param {string | number} key - The device type name, device name, or numeric device type id to search for.
+ * @param {string | number} key - The device type name or numeric device type id to search for.
  * @returns {DeviceTypeDefinition | undefined} The supported device type definition, or undefined when not found.
  */
 export const getSupportedDeviceType = (key: string | number): DeviceTypeDefinition | undefined =>
-  typeof key === 'number'
-    ? supportedDeviceTypes.find((deviceType) => deviceType.code === key)
-    : supportedDeviceTypes.find((deviceType) => deviceType.name === key || deviceType.deviceName === key);
+  typeof key === 'number' ? supportedDeviceTypes.find((deviceType) => deviceType.code === key) : supportedDeviceTypes.find((deviceType) => deviceType.name === key);
 
 /**
  * List of supported clusters.

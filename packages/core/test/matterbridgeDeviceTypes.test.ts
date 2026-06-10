@@ -279,15 +279,13 @@ describe('Matterbridge device types', () => {
 
   test('DeviceTypeDefinition', () => {
     const dt = DeviceTypeDefinition({
-      name: 'MA-rootNode',
-      deviceName: 'Root Node',
+      name: 'RootNode',
       code: 0x0016,
       deviceClass: DeviceClasses.Node,
       deviceScope: DeviceScopes.Node,
       revision: 3,
     });
-    expect(dt.name).toBe('MA-rootNode');
-    expect(dt.deviceName).toBe('Root Node');
+    expect(dt.name).toBe('RootNode');
     expect(dt.code).toBe(0x0016);
     expect(dt.deviceClass).toBe(DeviceClasses.Node);
     expect(dt.deviceScope).toBe(DeviceScopes.Node);
@@ -299,7 +297,6 @@ describe('Matterbridge device types', () => {
     expect(supportedDeviceTypes).toContain(rootNode);
     expect(getSupportedDeviceType(rootNode.code)).toBe(rootNode);
     expect(getSupportedDeviceType(rootNode.name)).toBe(rootNode);
-    expect(getSupportedDeviceType(rootNode.deviceName)).toBe(rootNode);
     expect(getSupportedDeviceType(0xffff)).toBeUndefined();
     expect(getSupportedDeviceType('Unknown Device Type')).toBeUndefined();
   });

@@ -346,7 +346,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     // Convert the first DeviceTypeDefinition to an EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
-      name: firstDefinition.name.replace('-', '_'),
+      name: firstDefinition.name,
       deviceType: firstDefinition.code,
       deviceRevision: firstDefinition.revision,
       // @ts-expect-error we don't import an entire module for DeviceClassification
