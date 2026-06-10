@@ -80,6 +80,8 @@ const jestConfig = {
     '/packages/core/src/matterNode', // Not released yet, so ignore for now
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
+    // Vitest specific paths to ignore
+    '/packages/core/src/matterbridgeFactory.ts',
   ],
   // Use all available CPU cores for running tests
   maxWorkers: '100%',
