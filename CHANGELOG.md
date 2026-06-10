@@ -57,6 +57,10 @@ These classes will run as threads in the next releases:
 
 ## [3.9.0] - Dev branch
 
+### New plugin
+
+- [plugins]: A new plugin is now available [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt).
+
 ### Development Breaking Changes
 
 - [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
@@ -86,8 +90,10 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `marked` to v.18.0.5.
 - [matterbridge]: Bump `npm-check-updates` to v.22.2.3.
 - [matterbridge]: Bump `@types/node` to v.25.9.2.
+- [matterbridge]: Bump `@vitest/eslint-plugin` to v.1.6.19.
 - [matterbridge]: Bump `eslint-plugin-jsdoc` to v.63.0.2.
 - [matterbridge]: Bump `eslint-plugin-n` to v.18.1.0.
+- [matterbridge]: Bump `prettier` to v.3.8.4.
 - [matterbridge]: Bump `typescript-eslint` to v.8.61.0.
 
 - [frontend]: Bump `frontend` version to v.3.4.17.
