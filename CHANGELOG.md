@@ -55,13 +55,14 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.8.1] - Dev branch
+## [3.9.0] - Dev branch
 
 ### Development Breaking Changes
 
 - [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
 - [conformance]: Remove from `onOffSwitch`, `dimmableSwitch` and `colorTemperatureSwitch` the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().
-- [deviceTypes]: All device type names follow the Matter canonical name. Old names are deprecated and resolve to the new names.
+- [deviceTypes]: All exported device type names follow the Matter canonical name. Old exported names are deprecated and resolve to the new names. The import name is camel case.
+- [deviceTypes]: In all device type the property name changed to the canonical Matter name (e.g. MA-onOffLight => OnOffLight). The name property is Pascal case and follow the Matter canonical name (without "-" and "/").
 - [deprecation]: Add a list of [deprecation notices](README-DEV.md#deprecation-list).
 - [matter]: Update [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
 - [matter]: Update [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
@@ -73,7 +74,8 @@ These classes will run as threads in the next releases:
 - [soilMeasurement]: Add `createDefaultSoilMeasurementClusterServer()` endpoint helper.
 - [deviceTypes]: Add `controlBridge`, `pumpController`, `windowCoveringController`, `thermostatController`, `contentApp`, `castingVideoClient`, `videoRemoteControl` device types.
 - [eslint]: Enforce `@typescript-eslint/no-deprecated` rule.
-- [register]: Add getSupportedDeviceType() and getSupportedCluster().
+- [register]: Add `getSupportedDeviceType()` and `getSupportedCluster()` register helpers. See matterbridge-mqtt plugin for an example.
+- [factory]: Add `createClusterServer()` and `getServerBehaviorFromClusterId()` generic factory helpers. See matterbridge-mqtt plugin for an example.
 
 ### Changed
 
@@ -118,7 +120,7 @@ These classes will run as threads in the next releases:
 
 ### Development
 
-- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API.
+- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API. See matterbridge-mqtt plugin for an example.
 
 ### Added
 

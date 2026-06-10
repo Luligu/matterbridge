@@ -390,7 +390,8 @@ export function getBehaviourTypesFromClusterServerIds(clusterServerList: Cluster
   // Map Server ClusterId to Behavior.Type
   const behaviorTypes: Behavior.Type[] = [];
   clusterServerList.forEach((clusterId) => {
-    behaviorTypes.push(getBehaviourTypeFromClusterServerId(clusterId));
+    const behaviorType = getBehaviourTypeFromClusterServerId(clusterId);
+    if (behaviorType) behaviorTypes.push(behaviorType);
   });
   return behaviorTypes;
 }
@@ -415,9 +416,9 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
  * Maps a ClusterId to a Behavior.Type for server clusters.
  *
  * @param {ClusterId} clusterId - The ClusterId to map.
- * @returns {Behavior.Type} The corresponding Behavior.Type for the given ClusterId.
+ * @returns {Behavior.Type | undefined} The corresponding Behavior.Type, or undefined if not found.
  */
-export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type {
+export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type | undefined {
   // Map ClusterId to Server Behavior.Type
   if (clusterId === PowerSource.id) return PowerSourceServer.with(PowerSource.Feature.Wired);
   if (clusterId === UserLabel.id) return UserLabelServer;
@@ -465,8 +466,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === DeviceEnergyManagement.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
   if (clusterId === DeviceEnergyManagementMode.id) return MatterbridgeDeviceEnergyManagementModeServer;
-
-  return MatterbridgeIdentifyServer;
+  return undefined;
 }
 
 /**

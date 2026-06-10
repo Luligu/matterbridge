@@ -175,12 +175,13 @@
 <li>all plugins in bridge mode;</li>
 <li>each plugin in childbridge mode;</li>
 </ul>
-<h2 id="381-dev-branch">[3.8.1] - Dev branch</h2>
+<h2 id="390-dev-branch">[3.9.0] - Dev branch</h2>
 <h3 id="development-breaking-changes">Development Breaking Changes</h3>
 <ul>
 <li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
 <li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().</li>
-<li>[deviceTypes]: All device type names follow the Matter canonical name. Old names are deprecated and resolve to the new names.</li>
+<li>[deviceTypes]: All exported device type names follow the Matter canonical name. Old exported names are deprecated and resolve to the new names. The import name is camel case.</li>
+<li>[deviceTypes]: In all device type the property name changed from MA-onOffLight to OnOffLight. The name property is Pascal case and follow the Matter canonical name (without &quot;-&quot; and &quot;/&quot;).</li>
 <li>[deprecation]: Add a list of <a href="README-DEV.html#deprecation-list">deprecation notices</a>.</li>
 <li>[matter]: Update <a href="Matter-1.5.1.html">Matter 1.5.1 changes from 1.4.2</a>.</li>
 <li>[matter]: Update <a href="Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
@@ -192,7 +193,8 @@
 <li>[soilMeasurement]: Add <code>createDefaultSoilMeasurementClusterServer()</code> endpoint helper.</li>
 <li>[deviceTypes]: Add <code>controlBridge</code>, <code>pumpController</code>, <code>windowCoveringController</code>, <code>thermostatController</code>, <code>contentApp</code>, <code>castingVideoClient</code>, <code>videoRemoteControl</code> device types.</li>
 <li>[eslint]: Enforce <code>@typescript-eslint/no-deprecated</code> rule.</li>
-<li>[register]: Add getSupportedDeviceType() and getSupportedCluster().</li>
+<li>[register]: Add <code>getSupportedDeviceType()</code> and <code>getSupportedCluster()</code> register helpers. See matterbridge-mqtt plugin for an example.</li>
+<li>[factory]: Add <code>createClusterServer()</code> and <code>getServerBehaviorFromClusterId()</code> generic factory helpers. See matterbridge-mqtt plugin for an example.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -251,7 +253,7 @@
 </ul>
 <h3 id="development">Development</h3>
 <ul>
-<li>[logger]: The <code>node-ansi-logger</code> package integrates now a chainable ANSI tagged template styling API.</li>
+<li>[logger]: The <code>node-ansi-logger</code> package integrates now a chainable ANSI tagged template styling API. See matterbridge-mqtt plugin for an example.</li>
 </ul>
 <h3 id="added-1">Added</h3>
 <ul>
