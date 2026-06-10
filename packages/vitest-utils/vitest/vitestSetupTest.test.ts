@@ -47,5 +47,15 @@ describe('Vitest Helpers', () => {
     await setDebug(false);
     expect(loggerLogSpy.getMockImplementation()).toBeDefined();
     expect(consoleLogSpy.getMockImplementation()).toBeDefined();
+    expect(consoleDebugSpy.getMockImplementation()).toBeDefined();
+    expect(consoleInfoSpy.getMockImplementation()).toBeDefined();
+    expect(consoleWarnSpy.getMockImplementation()).toBeDefined();
+    expect(consoleErrorSpy.getMockImplementation()).toBeDefined();
+    log.log(LogLevel.INFO, 'Test setup completed');
+    console.log('Test setup completed');
+    console.debug('Test setup completed');
+    console.info('Test setup completed');
+    console.warn('Test setup completed');
+    console.error('Test setup completed');
   });
 });

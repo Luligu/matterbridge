@@ -39,14 +39,14 @@ Update the first-line path comment to match the new file location.
 
 ### 2. Imports
 
-| Jest | Vitest |
-| --- | --- |
-| `import { jest } from '@jest/globals';` | delete (use global `vi`) |
-| `import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';` | `import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';` |
-| `import { addDevice } from './jestutils/jestMatterTest.js';` | `import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';` |
-| `import { ... } from './jestutils/jestMatterbridgeTest.js';` | covered by `@matterbridge/vitest-utils/matter` (see lifecycle below) |
-| `import { foo } from './foo.js';` (source under test) | `import { foo } from '../src/foo.js';` |
-| `import { Endpoint, ServerNode } from '@matter/node';` + `AggregatorEndpoint` (only used for the local `server`/`aggregator` types) | delete — `server` and `aggregator` are imported live bindings from `@matterbridge/vitest-utils/matter` |
+| Jest                                                                                                                                | Vitest                                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `import { jest } from '@jest/globals';`                                                                                             | delete (use global `vi`)                                                                                                                                                                        |
+| `import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';`                                                           | `import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';`                                                                                                                         |
+| `import { addDevice } from './jestutils/jestMatterTest.js';`                                                                        | `import { addDevice, aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';` |
+| `import { ... } from './jestutils/jestMatterbridgeTest.js';`                                                                        | covered by `@matterbridge/vitest-utils/matter` (see lifecycle below)                                                                                                                            |
+| `import { foo } from './foo.js';` (source under test)                                                                               | `import { foo } from '../src/foo.js';`                                                                                                                                                          |
+| `import { Endpoint, ServerNode } from '@matter/node';` + `AggregatorEndpoint` (only used for the local `server`/`aggregator` types) | delete — `server` and `aggregator` are imported live bindings from `@matterbridge/vitest-utils/matter`                                                                                          |
 
 Other imports (`@matter/types/...`, `node-ansi-logger`, etc.) stay as-is. Keep ESLint import group ordering: node builtins, externals (including `@matterbridge/vitest-utils*`), then relative `../src/...`.
 
@@ -118,9 +118,9 @@ Tests that don't use a Matter server node at all keep just `setupTest(NAME, fals
 
 ## Checklist before finishing
 
-- [ ] File under `packages/<pkg>/vitest/`, source imports use `../src/`.
-- [ ] No `@jest/globals`, no `jest.` references, no `path`/`HOMEDIR`/`process.argv` boilerplate left.
-- [ ] No `import { describe, ... } from 'vitest'` (globals are on); type-only vitest imports are fine.
-- [ ] `server`/`aggregator` come from `@matterbridge/vitest-utils/matter`, not local variables.
-- [ ] Unique `MATTER_PORT`; timeouts preserved; test bodies untouched.
-- [ ] `npm run test:vitest -- <file>` passes.
+- File under `packages/<pkg>/vitest/`, source imports use `../src/`.
+- No `@jest/globals`, no `jest.` references, no `path`/`HOMEDIR`/`process.argv` boilerplate left.
+- No `import { describe, ... } from 'vitest'` (globals are on); type-only vitest imports are fine.
+- `server`/`aggregator` come from `@matterbridge/vitest-utils/matter`, not local variables.
+- Unique `MATTER_PORT`; timeouts preserved; test bodies untouched.
+- `npm run test:vitest -- <file>` passes.
