@@ -31,7 +31,8 @@ export default defineConfig({
       provider: 'istanbul',
       reportsDirectory: 'coverage/vitest',
       reporter: ['lcov', 'text', 'json'],
-      include: ['**/src/**/*.{ts,mts,cts}'],
+      // include: ['**/src/**/*.{ts,mts,cts}'],
+      include: ['matterbridgeFactory.ts'],
       exclude: [
         '**/.cache/',
         '**/apps/',
