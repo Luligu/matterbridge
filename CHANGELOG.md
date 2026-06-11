@@ -95,6 +95,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `eslint-plugin-n` to v.18.1.0.
 - [matterbridge]: Bump `prettier` to v.3.8.4.
 - [matterbridge]: Bump `typescript-eslint` to v.8.61.0.
+- [matterbridge]: Remove npm-check-updates shx packages.
 
 - [frontend]: Bump `frontend` version to v.3.4.17.
 - [frontend]: Update dependencies.
