@@ -103,6 +103,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `react-router` to v.7.17.0.
 - [frontend]: Bump `vite` to v.8.0.16.
 - [frontend]: Bump `vitest` to v.4.1.8.
+- [frontend]: Remove cross-env npm-check-updates shx packages.
 
 ### Fixed
 
