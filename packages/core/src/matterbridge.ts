@@ -2640,12 +2640,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
-  private async createServerNode(
-    storageContext: StorageContext,
-    port: number = 5540,
-    passcode: number = 20242025,
-    discriminator: number = 3850,
-  ): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  // prettier-ignore
+  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
