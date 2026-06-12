@@ -2640,8 +2640,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
-  // prettier-ignore
-  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  private async createServerNode(
+    storageContext: StorageContext,
+    port: number = 5540,
+    passcode: number = 20242025,
+    discriminator: number = 3850,
+  ): Promise<ServerNode<ServerNode.RootEndpoint>> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -2667,7 +2671,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Validate the discriminator
-    if (discriminator < 0 || discriminator > 0xFFF) {
+    if (discriminator < 0 || discriminator > 0xfff) {
       this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
@@ -2761,7 +2765,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         const pairingData = ManualPairingCodeCodec.decode(manualPairingCode);
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-        this.log.notice(`Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`);
+        this.log.notice(
+          `Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`,
+        );
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned.`);
         this.advertisingNodes.delete(storeId);
