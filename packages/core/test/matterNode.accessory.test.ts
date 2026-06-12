@@ -26,7 +26,7 @@ import { NodeStorageManager } from 'node-persist-manager';
 import { DeviceManager } from '../src/deviceManager.js';
 import { loggerInfoSpy, originalProcessArgv, setupTest } from '../src/jestutils/jestSetupTest.js';
 import type { Matterbridge } from '../src/matterbridge.js';
-import { bridgedNode, occupancySensor, onOffOutlet, powerSource, pressureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { bridgedNode, occupancySensor, onOffPlugInUnit, powerSource, pressureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { PluginManager } from '../src/pluginManager.js';
@@ -175,7 +175,7 @@ describe('MatterNode accessory', () => {
   test('Stress test adding and removing bridged endpoints in bridge mode not started', async () => {
     expect(deviceManager.length).toBe(0);
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
-      const outlet = new MatterbridgeEndpoint([onOffOutlet, powerSource], { id: `Outlet ${i}` }, true)
+      const outlet = new MatterbridgeEndpoint([onOffPlugInUnit, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
         .addRequiredClusterServers();
@@ -201,7 +201,7 @@ describe('MatterNode accessory', () => {
   test('Stress test adding and removing bridged endpoints in bridge mode started', async () => {
     expect(deviceManager.length).toBe(1);
     for (let i = 1; i <= STRESS_TEST_ITERATIONS; i++) {
-      const outlet = new MatterbridgeEndpoint([onOffOutlet, powerSource], { id: `Outlet ${i}` }, true)
+      const outlet = new MatterbridgeEndpoint([onOffPlugInUnit, powerSource], { id: `Outlet ${i}` }, true)
         .createDefaultBasicInformationClusterServer(`Outlet ${i}`, `OUTLET1234567890-${i}`)
         .createDefaultPowerSourceBatteryClusterServer()
         .addRequiredClusterServers();

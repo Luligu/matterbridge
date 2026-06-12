@@ -3,17 +3,10 @@
 const NAME = 'ClosureControlCluster';
 
 import { jest } from '@jest/globals';
+import { ThreeLevelAuto } from '@matter/types/globals';
 
 import { setupTest } from '../jestutils/jestSetupTest.js';
 import { ClosureControl } from './closure-control.js';
-
-type ClusterWithSupportedFeatures = {
-  supportedFeatures?: Record<string, boolean>;
-};
-
-function getSupportedFeatures(cluster: object): Record<string, boolean> {
-  return (cluster as ClusterWithSupportedFeatures).supportedFeatures ?? {};
-}
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -27,59 +20,65 @@ describe('Matterbridge ' + NAME, () => {
     jest.restoreAllMocks();
   });
 
-  test('has the expected cluster id', () => {
+  test('has the expected cluster identity', () => {
     expect(ClosureControl.id).toBe(0x0104);
+    expect(ClosureControl.name).toBe('ClosureControl');
+    expect(ClosureControl.revision).toBe(1);
   });
 
-  test('allows an empty feature selection', () => {
-    const cluster = ClosureControl.with();
-
-    expect(cluster.id).toBe(ClosureControl.id);
-    expect(getSupportedFeatures(cluster)).toEqual({});
-  });
-
-  test('retains CountdownTime even when Instantaneous is selected', () => {
-    const ps = ClosureControl.with(ClosureControl.Feature.Positioning);
-    expect(ps.attributes).toHaveProperty('countdownTime');
-    expect(getSupportedFeatures(ps)).toEqual({ positioning: true });
-
-    const psIs = ClosureControl.with(ClosureControl.Feature.Positioning, ClosureControl.Feature.Instantaneous);
-    expect(psIs.attributes).toHaveProperty('countdownTime');
-    expect(getSupportedFeatures(psIs)).toEqual({ positioning: true, instantaneous: true });
-  });
-
-  test('retains Stop and MovementCompleted when Instantaneous is selected', () => {
-    const notIs = ClosureControl.with(ClosureControl.Feature.MotionLatching);
-    expect(notIs.commands).toHaveProperty('stop');
-    expect(notIs.events).toHaveProperty('movementCompleted');
-
-    const isEnabled = ClosureControl.with(ClosureControl.Feature.MotionLatching, ClosureControl.Feature.Instantaneous);
-    expect(isEnabled.commands).toHaveProperty('stop');
-    expect(isEnabled.events).toHaveProperty('movementCompleted');
-  });
-
-  test('allows combinations that were previously validated locally', () => {
-    expect(getSupportedFeatures(ClosureControl.with(ClosureControl.Feature.Calibration))).toEqual({ calibration: true });
-    expect(getSupportedFeatures(ClosureControl.with(ClosureControl.Feature.Speed))).toEqual({ speed: true });
-    expect(getSupportedFeatures(ClosureControl.with(ClosureControl.Feature.Positioning, ClosureControl.Feature.Speed, ClosureControl.Feature.Instantaneous))).toEqual({
-      positioning: true,
-      speed: true,
-      instantaneous: true,
+  test('exposes the expected feature constants', () => {
+    expect(ClosureControl.Feature).toEqual({
+      Positioning: 'Positioning',
+      MotionLatching: 'MotionLatching',
+      Instantaneous: 'Instantaneous',
+      Speed: 'Speed',
+      Ventilation: 'Ventilation',
+      Pedestrian: 'Pedestrian',
+      Calibration: 'Calibration',
+      Protection: 'Protection',
+      ManuallyOperable: 'ManuallyOperable',
     });
+
+    expect(new ClosureControl.FeatureMap({ positioning: true, motionLatching: true })).toEqual({ positioning: true, motionLatching: true });
   });
 
-  test('allows positioning-only features when MotionLatching is selected without Positioning', () => {
-    expect(getSupportedFeatures(ClosureControl.with(ClosureControl.Feature.MotionLatching, ClosureControl.Feature.Ventilation))).toEqual({
-      motionLatching: true,
-      ventilation: true,
-    });
+  test('exposes the expected attributes', () => {
+    expect(ClosureControl.attributes).toHaveProperty('countdownTime');
+    expect(ClosureControl.attributes).toHaveProperty('mainState');
+    expect(ClosureControl.attributes).toHaveProperty('currentErrorList');
+    expect(ClosureControl.attributes).toHaveProperty('overallCurrentState');
+    expect(ClosureControl.attributes).toHaveProperty('overallTargetState');
+    expect(ClosureControl.attributes).toHaveProperty('latchControlModes');
   });
 
-  test('creates a new namespace for repeated feature selections', () => {
-    const first = ClosureControl.with(ClosureControl.Feature.Positioning, ClosureControl.Feature.Ventilation);
-    const second = ClosureControl.with(ClosureControl.Feature.Ventilation, ClosureControl.Feature.Positioning, ClosureControl.Feature.Ventilation);
+  test('exposes the expected commands and events', () => {
+    expect(ClosureControl.commands).toHaveProperty('stop');
+    expect(ClosureControl.commands).toHaveProperty('moveTo');
+    expect(ClosureControl.commands).toHaveProperty('calibrate');
+    expect(ClosureControl.events).toHaveProperty('operationalError');
+    expect(ClosureControl.events).toHaveProperty('movementCompleted');
+    expect(ClosureControl.events).toHaveProperty('engageStateChanged');
+    expect(ClosureControl.events).toHaveProperty('secureStateChanged');
+  });
 
-    expect(second).not.toBe(first);
-    expect(getSupportedFeatures(second)).toEqual(getSupportedFeatures(first));
+  test('exposes the expected enum constants', () => {
+    expect(ClosureControl.ClosureError.PhysicallyBlocked).toBe(0);
+    expect(ClosureControl.CurrentPosition.FullyOpened).toBe(1);
+    expect(ClosureControl.MainState.SetupRequired).toBe(7);
+    expect(ClosureControl.TargetPosition.MoveToSignaturePosition).toBe(4);
+  });
+
+  test('creates expected struct and bitmap values', () => {
+    expect(new ClosureControl.LatchControlModes({ remoteLatching: true })).toEqual({ remoteLatching: true });
+    expect(new ClosureControl.OverallCurrentState({ secureState: null })).toEqual({ secureState: null });
+    expect(new ClosureControl.OverallTargetState({ position: ClosureControl.TargetPosition.MoveToFullyOpen })).toEqual({ position: ClosureControl.TargetPosition.MoveToFullyOpen });
+    expect(new ClosureControl.MoveToRequest({ speed: ThreeLevelAuto.Auto })).toEqual({ speed: ThreeLevelAuto.Auto });
+    expect(
+      new ClosureControl.OperationalErrorEvent({
+        errorState: [ClosureControl.ClosureError.MaintenanceRequired],
+      }),
+    ).toEqual({ errorState: [ClosureControl.ClosureError.MaintenanceRequired] });
+    expect(new ClosureControl.EngageStateChangedEvent({ engageValue: true })).toEqual({ engageValue: true });
+    expect(new ClosureControl.SecureStateChangedEvent({ secureValue: false })).toEqual({ secureValue: false });
   });
 });

@@ -296,8 +296,8 @@ describe('Matterbridge frontend', () => {
     };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
-      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { wired: true };
-      if (cluster === PowerSource.Cluster.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
+      if (cluster === PowerSource.id && attribute === 'featureMap') return { wired: true };
+      if (cluster === PowerSource.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ac');
     expect((frontend as any).getBatteryLevel(device)).toBeUndefined();
@@ -312,23 +312,23 @@ describe('Matterbridge frontend', () => {
     };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
-      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return 120;
+      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return 120;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
     expect((frontend as any).getBatteryLevel(device)).toBe(60);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
-      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return undefined;
+      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return undefined;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
     expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
-      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.Cluster.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.Cluster.id && attribute === 'batPercentRemaining') return 120;
+      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
+      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
+      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return 120;
     });
 
     // Not wired nor battery
@@ -341,7 +341,7 @@ describe('Matterbridge frontend', () => {
     };
     device.hasClusterServer = jest.fn(() => true);
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
-      if (cluster === PowerSource.Cluster.id && attribute === 'featureMap') return {};
+      if (cluster === PowerSource.id && attribute === 'featureMap') return {};
     });
     expect((frontend as any).getPowerSource(device)).toBe(undefined);
     expect((frontend as any).getBatteryLevel(device)).toBe(undefined);

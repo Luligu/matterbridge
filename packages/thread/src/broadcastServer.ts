@@ -23,8 +23,9 @@
  */
 
 // istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mBroadcastServer loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BroadcastServer loaded.\u001B[40;0m');
 
 import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';

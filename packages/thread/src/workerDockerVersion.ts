@@ -22,6 +22,11 @@
  * limitations under the License.
  */
 
+// istanbul ignore next -- Loader logs are not relevant for coverage
+// prettier-ignore
+// eslint-disable-next-line no-console
+if (process.argv.includes('--loader')) console.log('\u001B[35m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] DockerVersion loaded.\u001B[40;0m');
+
 import { readFileSync } from 'node:fs';
 
 import { DockerBuildConfig } from '@matterbridge/types';

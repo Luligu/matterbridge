@@ -573,6 +573,170 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>It is possible to add a different default schema file.</p>
 <p>The schema file is loaded from the root of the plugin package. The file must be named &#39;[PLUGIN-NAME].schema.json&#39; (i.e. &#39;matterbridge-test.schema.json&#39;).</p>
 <p>The properties of the schema file shall correspond to the properties of the config file.</p>
+<h2 id="deprecation-list">Deprecation list</h2>
+<blockquote>
+<p><strong>Scheduled removal:</strong> all symbols listed below will be removed in <strong>matterbridge 3.10.0</strong>.</p>
+</blockquote>
+<h3 id="behavior-server-classes">Behavior / Server classes</h3>
+<table>
+<thead>
+<tr>
+<th>Deprecated symbol</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MatterbridgeEnhancedColorControlServer</code></td>
+<td><code>MatterbridgeColorControlServer</code> with the <code>EnhancedHue</code> feature</td>
+</tr>
+<tr>
+<td><code>MatterbridgePresetThermostatServer</code></td>
+<td><code>MatterbridgeThermostatServer</code> with the <code>Presets</code> feature</td>
+</tr>
+<tr>
+<td><code>MatterbridgeLiftWindowCoveringServer</code></td>
+<td><code>MatterbridgeWindowCoveringServer</code> with <code>Lift</code> + <code>PositionAwareLift</code> features</td>
+</tr>
+<tr>
+<td><code>MatterbridgeLiftTiltWindowCoveringServer</code></td>
+<td><code>MatterbridgeWindowCoveringServer</code> with <code>Lift</code>, <code>PositionAwareLift</code>, <code>Tilt</code> + <code>PositionAwareTilt</code> features</td>
+</tr>
+</tbody></table>
+<h3 id="device-type-aliases">Device type aliases</h3>
+<table>
+<thead>
+<tr>
+<th>Deprecated symbol</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>onOffOutlet</code></td>
+<td><code>onOffPlugInUnit</code></td>
+</tr>
+<tr>
+<td><code>dimmableOutlet</code></td>
+<td><code>dimmablePlugInUnit</code></td>
+</tr>
+<tr>
+<td><code>onOffMountedSwitch</code></td>
+<td><code>mountedOnOffControl</code></td>
+</tr>
+<tr>
+<td><code>dimmableMountedSwitch</code></td>
+<td><code>mountedDimmableLoadControl</code></td>
+</tr>
+<tr>
+<td><code>pumpDevice</code></td>
+<td><code>pump</code></td>
+</tr>
+<tr>
+<td><code>onOffSwitch</code></td>
+<td><code>onOffLightSwitch</code></td>
+</tr>
+<tr>
+<td><code>dimmableSwitch</code></td>
+<td><code>dimmerSwitch</code></td>
+</tr>
+<tr>
+<td><code>colorTemperatureSwitch</code></td>
+<td><code>colorDimmerSwitch</code></td>
+</tr>
+<tr>
+<td><code>doorLockDevice</code></td>
+<td><code>doorLock</code></td>
+</tr>
+<tr>
+<td><code>coverDevice</code></td>
+<td><code>windowCovering</code></td>
+</tr>
+<tr>
+<td><code>thermostatDevice</code></td>
+<td><code>thermostat</code></td>
+</tr>
+<tr>
+<td><code>fanDevice</code></td>
+<td><code>fan</code></td>
+</tr>
+<tr>
+<td><code>speakerDevice</code></td>
+<td><code>speaker</code></td>
+</tr>
+<tr>
+<td><code>airConditioner</code></td>
+<td><code>roomAirConditioner</code></td>
+</tr>
+</tbody></table>
+<h3 id="common-namespace-tag-aliases">Common namespace tag aliases</h3>
+<table>
+<thead>
+<tr>
+<th>Deprecated symbol</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AreaNamespaceTag</code></td>
+<td><code>CommonAreaNamespaceTag</code></td>
+</tr>
+<tr>
+<td><code>ClosureTag</code></td>
+<td><code>CommonClosureTag</code></td>
+</tr>
+<tr>
+<td><code>CompassDirectionTag</code></td>
+<td><code>CommonCompassDirectionTag</code></td>
+</tr>
+<tr>
+<td><code>CompassLocationTag</code></td>
+<td><code>CommonCompassLocationTag</code></td>
+</tr>
+<tr>
+<td><code>DirectionTag</code></td>
+<td><code>CommonDirectionTag</code></td>
+</tr>
+<tr>
+<td><code>LandmarkNamespaceTag</code></td>
+<td><code>CommonLandmarkNamespaceTag</code></td>
+</tr>
+<tr>
+<td><code>LevelTag</code></td>
+<td><code>CommonLevelTag</code></td>
+</tr>
+<tr>
+<td><code>LocationTag</code></td>
+<td><code>CommonLocationTag</code></td>
+</tr>
+<tr>
+<td><code>NumberTag</code></td>
+<td><code>CommonNumberTag</code></td>
+</tr>
+<tr>
+<td><code>PositionTag</code></td>
+<td><code>CommonPositionTag</code></td>
+</tr>
+<tr>
+<td><code>RelativePositionTag</code></td>
+<td><code>CommonRelativePositionTag</code></td>
+</tr>
+</tbody></table>
+<h3 id="methods-and-interfaces">Methods and interfaces</h3>
+<table>
+<thead>
+<tr>
+<th>Deprecated symbol</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MatterbridgeEndpoint.getChildEndpointByName()</code></td>
+<td><code>getChildEndpointById()</code> or <code>getChildEndpointByOriginalId()</code></td>
+</tr>
+<tr>
+<td><code>MatterbridgeEndpointCommands</code> interface</td>
+<td><code>CommandHandlers</code></td>
+</tr>
+</tbody></table>
 <h1 id="frequently-asked-questions">Frequently asked questions</h1>
 <h2 id="why-plugins-cannot-install-matterbridge-as-a-dependency-devdependency-or-peerdependency">Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency</h2>
 <p>There must be one and only one instance of Matterbridge and matter.js in the node_modules directory.</p>

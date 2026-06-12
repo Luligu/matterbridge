@@ -33,6 +33,7 @@ describe('ConfigPluginDialog', () => {
     description: 'Test plugin',
     author: 'Test Author',
     enabled: true,
+    private: false,
     configJson: {
       name: 'matterbridge-test',
       type: 'DynamicPlatform',

@@ -70,11 +70,11 @@ describe('Matterbridge ' + NAME, () => {
     device = new HeatPump('Heat Pump Test Device', 'HP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('HeatPumpTestDevice-HP123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
   });
 
   test('add a heat pump device', async () => {

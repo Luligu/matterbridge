@@ -38,7 +38,7 @@ describe('Tracker', () => {
   });
 
   test('does not print loader banner when loader flag missing', async () => {
-    process.argv.push('-loader');
+    process.argv.push('--loader');
 
     await import('../src/tracker.js');
 

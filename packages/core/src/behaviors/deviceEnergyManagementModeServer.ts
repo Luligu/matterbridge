@@ -49,7 +49,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       command: 'changeToMode',
       request,
       cluster: DeviceEnergyManagementModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

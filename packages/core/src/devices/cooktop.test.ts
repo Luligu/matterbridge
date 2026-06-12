@@ -73,9 +73,9 @@ describe('Matterbridge ' + NAME, () => {
     device = new Cooktop('Cooktop Test Device', 'CT123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('CooktopTestDevice-CT123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'fixedLabel']);
 
     surface1 = device.addSurface('Surface Top Left', [
@@ -84,9 +84,9 @@ describe('Matterbridge ' + NAME, () => {
     ]);
     expect(surface1).toBeDefined();
     expect(surface1.id).toBe('SurfaceTopLeft');
-    expect(surface1.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(surface1.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
-    expect(surface1.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
+    expect(surface1.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(surface1.hasClusterServer(TemperatureControl.id)).toBeTruthy();
+    expect(surface1.hasClusterServer(TemperatureMeasurement.id)).toBeTruthy();
     expect(surface1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'onOff']);
 
     surface2 = device.addSurface('Surface Top Right', [
@@ -95,9 +95,9 @@ describe('Matterbridge ' + NAME, () => {
     ]);
     expect(surface2).toBeDefined();
     expect(surface2.id).toBe('SurfaceTopRight');
-    expect(surface2.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(surface2.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
-    expect(surface2.hasClusterServer(TemperatureMeasurement.Cluster.id)).toBeTruthy();
+    expect(surface2.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(surface2.hasClusterServer(TemperatureControl.id)).toBeTruthy();
+    expect(surface2.hasClusterServer(TemperatureMeasurement.id)).toBeTruthy();
     expect(surface2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'onOff']);
   });
 

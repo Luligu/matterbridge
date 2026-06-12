@@ -46,7 +46,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       command: 'selectAreas',
       request,
       cluster: ServiceAreaServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

@@ -6,20 +6,20 @@
     <title>Matterbridge - Matter Plugin Manager</title>
     <meta name="description" content="Matterbridge is a Matter plugin manager that allows you to have all your Matter devices up and running in minutes.">
     <link rel="icon" type="image/svg+xml" href="matterbridge.svg">
-    
+
     <!-- Open Graph / Social Media Meta Tags -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Matterbridge - Matter Plugin Manager">
     <meta property="og:description" content="Matterbridge is a Matter plugin manager that allows you to have all your Matter devices up and running in minutes.">
     <meta property="og:image" content="https://matterbridge.io/assets/matterbridge.svg">
     <meta property="og:url" content="https://matterbridge.io/">
-    
+
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Matterbridge - Matter Plugin Manager">
     <meta name="twitter:description" content="Matterbridge is a Matter plugin manager that allows you to have all your Matter devices up and running in minutes.">
     <meta name="twitter:image" content="https://matterbridge.io/assets/matterbridge.svg">
-    
+
     <style>
         :root {
             --primary-color: #2563eb;
@@ -34,26 +34,26 @@
             --warning: #f59e0b;
             --error: #ef4444;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             color: var(--text-primary);
             background-color: var(--background);
         }
-        
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 2rem;
         }
-        
+
         /* Header */
         header {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -62,7 +62,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         header::before {
             content: '';
             position: absolute;
@@ -73,13 +73,13 @@
             background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="2" fill="rgba(255,255,255,0.1)"/></svg>') repeat;
             opacity: 0.3;
         }
-        
+
         .hero {
             text-align: center;
             position: relative;
             z-index: 1;
         }
-        
+
         .logo-container {
             display: flex;
             align-items: center;
@@ -87,20 +87,20 @@
             gap: 1rem;
             margin-bottom: 2rem;
         }
-        
+
         .logo {
             width: 80px;
             height: 80px;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
         }
-        
+
         .hero h1 {
             font-size: 3.5rem;
             font-weight: 700;
             margin-bottom: 1rem;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-        
+
         .hero .subtitle {
             font-size: 1.25rem;
             margin-bottom: 2rem;
@@ -109,14 +109,14 @@
             margin-left: auto;
             margin-right: auto;
         }
-        
+
         .hero-buttons {
             display: flex;
             gap: 1rem;
             justify-content: center;
             flex-wrap: wrap;
         }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -128,29 +128,29 @@
             transition: all 0.2s ease;
             border: 2px solid transparent;
         }
-        
+
         .btn-primary {
             background: white;
             color: var(--primary-color);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
         }
-        
+
         .btn-secondary {
             background: transparent;
             color: white;
             border-color: white;
         }
-        
+
         .btn-secondary:hover {
             background: white;
             color: var(--primary-color);
         }
-        
+
         /* Navigation */
         nav {
             background: var(--surface);
@@ -161,14 +161,14 @@
             z-index: 100;
             backdrop-filter: blur(10px);
         }
-        
+
         .nav-container {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
             gap: 2rem;
         }
-        
+
         .nav-link {
             color: var(--text-primary);
             text-decoration: none;
@@ -177,22 +177,22 @@
             border-radius: 0.375rem;
             transition: all 0.2s ease;
         }
-        
+
         .nav-link:hover {
             background: var(--primary-color);
             color: white;
             transform: translateY(-1px);
         }
-        
+
         /* Main Content */
         main {
             padding: 4rem 0;
         }
-        
+
         .section {
             margin-bottom: 4rem;
         }
-        
+
         .section h2 {
             font-size: 2.5rem;
             font-weight: 700;
@@ -200,7 +200,7 @@
             color: var(--primary-color);
             text-align: center;
         }
-        
+
         .section p {
             font-size: 1.125rem;
             color: var(--text-secondary);
@@ -208,7 +208,7 @@
             max-width: 800px;
             margin: 0 auto 2rem;
         }
-        
+
         /* Features Grid */
         .features-grid {
             display: grid;
@@ -216,7 +216,7 @@
             gap: 2rem;
             margin-top: 3rem;
         }
-        
+
         .feature-card {
             background: var(--surface);
             padding: 2rem;
@@ -225,13 +225,13 @@
             transition: all 0.3s ease;
             text-align: center;
         }
-        
+
         .feature-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
             border-color: var(--primary-color);
         }
-        
+
         .feature-icon {
             width: 60px;
             height: 60px;
@@ -244,21 +244,21 @@
             font-size: 1.5rem;
             color: white;
         }
-        
+
         .feature-card h3 {
             font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
             color: var(--text-primary);
         }
-        
+
         .feature-card p {
             color: var(--text-secondary);
             text-align: left;
             font-size: 1rem;
             margin: 0;
         }
-        
+
         /* Stats Section */
         .stats {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -266,26 +266,26 @@
             padding: 4rem 0;
             text-align: center;
         }
-        
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2rem;
             margin-top: 2rem;
         }
-        
+
         .stat-item h3 {
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
-        
+
         .stat-item p {
             opacity: 0.9;
             font-size: 1rem;
             margin: 0;
         }
-        
+
         /* Plugins Section */
         .plugins-grid {
             display: grid;
@@ -293,7 +293,7 @@
             gap: 1.5rem;
             margin-top: 3rem;
         }
-        
+
         .plugin-card {
             background: white;
             border: 1px solid var(--border);
@@ -301,12 +301,12 @@
             overflow: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .plugin-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
         }
-        
+
         .plugin-header {
             padding: 1.5rem;
             background: var(--surface);
@@ -314,36 +314,36 @@
             align-items: center;
             gap: 1rem;
         }
-        
+
         .plugin-logo {
             width: 40px;
             height: 40px;
             border-radius: 0.5rem;
         }
-        
+
         .plugin-content {
             padding: 1.5rem;
         }
-        
+
         .plugin-content h3 {
             font-size: 1.125rem;
             font-weight: 600;
             margin-bottom: 0.5rem;
         }
-        
+
         .plugin-content p {
             color: var(--text-secondary);
             font-size: 0.875rem;
             margin-bottom: 1rem;
             text-align: left;
         }
-        
+
         /* Installation Section */
         .installation {
             background: var(--surface);
             padding: 4rem 0;
         }
-        
+
         .code-block {
             background: #1f2937;
             color: #f9fafb;
@@ -387,7 +387,7 @@
             color: #10b981;
             font-weight: bold;
         }
-        
+
         /* Footer */
         footer {
             background: var(--text-primary);
@@ -395,7 +395,7 @@
             padding: 3rem 0 2rem;
             text-align: center;
         }
-        
+
         .footer-content {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -403,13 +403,13 @@
             margin-bottom: 2rem;
             text-align: left;
         }
-        
+
         .footer-section h3 {
             font-size: 1.125rem;
             font-weight: 600;
             margin-bottom: 1rem;
         }
-        
+
         .footer-section a {
             color: #d1d5db;
             text-decoration: none;
@@ -417,43 +417,43 @@
             margin-bottom: 0.5rem;
             transition: color 0.2s ease;
         }
-        
+
         .footer-section a:hover {
             color: white;
         }
-        
+
         .footer-bottom {
             border-top: 1px solid #374151;
             padding-top: 2rem;
             text-align: center;
             color: #9ca3af;
         }
-        
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
             }
-            
+
             .hero h1 {
                 font-size: 2.5rem;
             }
-            
+
             .nav-container {
                 gap: 1rem;
             }
-            
+
             .hero-buttons {
                 flex-direction: column;
                 align-items: center;
             }
-            
+
             .features-grid,
             .plugins-grid {
                 grid-template-columns: 1fr;
             }
         }
-        
+
         /* Animations */
         @keyframes fadeInUp {
             from {
@@ -465,12 +465,12 @@
                 transform: translateY(0);
             }
         }
-        
+
         .feature-card,
         .plugin-card {
             animation: fadeInUp 0.6s ease forwards;
         }
-        
+
         .feature-card:nth-child(2) { animation-delay: 0.1s; }
         .feature-card:nth-child(3) { animation-delay: 0.2s; }
         .feature-card:nth-child(4) { animation-delay: 0.3s; }
@@ -525,38 +525,38 @@
             <div class="container">
                 <h2>Why Choose Matterbridge?</h2>
                 <p>Matterbridge simplifies Matter device management with powerful features designed for both developers and users.</p>
-                
+
                 <div class="features-grid">
                     <div class="feature-card">
                         <div class="feature-icon">🔌</div>
                         <h3>Easy Plugin System</h3>
                         <p>Simply pair Matterbridge once, and it will load all your registered plugins. No need to pair each device individually.</p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <div class="feature-icon">🏠</div>
                         <h3>Universal Compatibility</h3>
                         <p>Works with Apple Home, Google Home, Amazon Alexa, SmartThings, <a href="https://www.home-assistant.io/">Home Assistant</a>, <a href="https://gladysassistant.com/">Gladys Assistant</a> and any other Matter-compatible platform.</p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <div class="feature-icon">⚡</div>
                         <h3>Lightweight & Fast</h3>
                         <p>Runs on machines with as little as 512MB RAM. Perfect for Raspberry Pi and other low-power devices.</p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <div class="feature-icon">🌐</div>
                         <h3>Web Frontend</h3>
                         <p>Manage your devices through an intuitive web interface. Monitor logs, configure settings, and control devices easily.</p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <div class="feature-icon">🔧</div>
                         <h3>Developer Friendly</h3>
                         <p>Built on matter.js with comprehensive APIs. Easily port Homebridge plugins or create new ones from scratch.</p>
                     </div>
-                    
+
                     <div class="feature-card">
                         <div class="feature-icon">🐳</div>
                         <h3>Docker Ready</h3>
@@ -591,7 +591,7 @@
                         <p>Official Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>40+</h3>
+                        <h3>50+</h3>
                         <p>Community Plugins</p>
                     </div>
                     <div class="stat-item">
@@ -610,7 +610,7 @@
             <div class="container">
                 <h2>Quick Install</h2>
                 <p>Get Matterbridge running in minutes with these simple commands.</p>
-                
+
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Node.js Install</h3>
                 <div class="code-block" id="copy-npm" style="position:relative;">
                   npm install -g matterbridge --omit=dev
@@ -639,7 +639,7 @@
                 <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
                     For more installation options, including running as a system service, see the <a href="https://matterbridge.io/README.html#advanced-configurations" target="_blank">Advanced Configurations</a> section.
                 </p>
-                
+
                 <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Install</h3>
                 <div class="code-block" id="copy-docker" style="position:relative;">
                   docker pull luligu/matterbridge:latest && docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always -d luligu/matterbridge:latest
@@ -660,7 +660,7 @@
                   <span style="display:inline-block;margin-left:1.5em;">http://&lt;your-host-ipv4-address&gt;:8283</span><br>
                   <span style="display:inline-block;margin-left:1.5em;">http://[&lt;your-host-ipv6-address&gt;]:8283</span>
                 </div>
-               
+
                 <div style="text-align: center; margin-top: 2rem;">
                     <a href="https://matterbridge.io/README.html" class="btn btn-primary">📖 Full Installation Guide</a>
                 </div>
@@ -671,7 +671,7 @@
             <div class="container">
                 <h2>Popular Plugins</h2>
                 <p>Extend Matterbridge with our growing collection of official and community plugins.</p>
-                
+
                 <div class="plugins-grid">
                     <div class="plugin-card">
                         <div class="plugin-header">
@@ -683,7 +683,7 @@
                             <a href="https://github.com/Luligu/matterbridge-shelly" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
                     <div class="plugin-card">
                         <div class="plugin-header">
                             <img src="Zigbee2MQTT.svg" alt="Zigbee2MQTT" class="plugin-logo">
@@ -694,7 +694,7 @@
                             <a href="https://github.com/Luligu/matterbridge-zigbee2mqtt" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
                     <div class="plugin-card">
                         <div class="plugin-header">
                             <img src="HomeAssistant.svg" alt="Home Assistant" class="plugin-logo">
@@ -705,7 +705,7 @@
                             <a href="https://github.com/Luligu/matterbridge-hass" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
                     <div class="plugin-card">
                         <div class="plugin-header">
                             <img src="Somfy.svg" alt="Somfy" class="plugin-logo">
@@ -716,7 +716,7 @@
                             <a href="https://github.com/Luligu/matterbridge-somfy-tahoma" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
                     <div class="plugin-card">
                         <div class="plugin-header">
                             <img src="matterbridge.svg" alt="Matterbridge Webhooks" class="plugin-logo">
@@ -727,7 +727,7 @@
                             <a href="https://github.com/Luligu/matterbridge-webhooks" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
                     <div class="plugin-card">
                         <div class="plugin-header">
                             <img src="matterbridge.svg" alt="Matterbridge BTHome" class="plugin-logo">
@@ -749,9 +749,20 @@
                             <a href="https://github.com/Luligu/matterbridge-security" class="btn btn-primary">Learn More</a>
                         </div>
                     </div>
-                    
+
+                    <div class="plugin-card">
+                        <div class="plugin-header">
+                            <img src="matterbridge.svg" alt="Matterbridge MQTT" class="plugin-logo">
+                            <h3>MQTT Plugin</h3>
+                        </div>
+                        <div class="plugin-content">
+                            <p>Allows you to create Matter devices using only MQTT.</p>
+                            <a href="https://github.com/Luligu/matterbridge-mqtt" class="btn btn-primary">Learn More</a>
+                        </div>
+                    </div>
+
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 3rem;">
                     <a href="https://matterbridge.io/README.html#plugins" class="btn btn-primary">🔌 View All Plugins</a>
                     <a href="https://matterbridge.io/README-DEV.html" class="btn btn-primary">🛠️ Create Your Own</a>
@@ -771,7 +782,7 @@
                     <a href="https://matterbridge.io/README-SERVICE.html">Service Configuration</a>
                     <a href="https://matterbridge.io/README-NGINX.html">Nginx Setup</a>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Community</h3>
                     <a href="https://github.com/Luligu/matterbridge">GitHub Repository</a>
@@ -779,7 +790,7 @@
                     <a href="https://github.com/Luligu/matterbridge/issues">Issue Tracker</a>
                     <a href="https://discord.gg/QX58CDe6hd">Discord Server</a>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Resources</h3>
                     <a href="https://www.npmjs.com/package/matterbridge">NPM Package</a>
@@ -788,7 +799,7 @@
                     <a href="https://codecov.io/gh/Luligu/matterbridge">Code Coverage</a>
                     <a href="https://www.buymeacoffee.com/luligugithub">Support Development</a>
                 </div>
-                
+
                 <div class="footer-section">
                     <h3>Connect</h3>
                     <a href="https://matterbridge.io/README.html#videos">YouTube</a>
@@ -796,7 +807,7 @@
                     <a href="https://matterbridge.io/README.html#press">Press Coverage</a>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 Matterbridge. Licensed under Apache-2.0. Built with ❤️ by <a href="https://github.com/Luligu" style="color: #3b82f6;">Luligu</a>.</p>
             </div>

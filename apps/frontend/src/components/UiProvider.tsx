@@ -12,7 +12,7 @@ import { SnackbarKey, useSnackbar } from 'notistack';
 
 // Frontend
 import { ConfirmCancelForm } from './ConfirmCancelForm';
-import { InstallProgressDialog } from './InstallProgressDialog ';
+import { InstallProgressDialog } from './InstallProgressDialog';
 import { MbfLsk } from '../utils/localStorage';
 import { debug } from '../App';
 // const debug = true;

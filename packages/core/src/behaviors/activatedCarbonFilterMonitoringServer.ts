@@ -44,7 +44,7 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
       command: 'resetCondition',
       request: {},
       cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

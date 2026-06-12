@@ -22,27 +22,24 @@ echo "Node.js version: $(node -v)"
 echo "Npm version: $(npm -v)"
 echo ""
 
-echo "1 - Installing optional updates and scripts packages..."
-npm install --global --no-fund --no-audit shx 
-
-echo "2 - Creating directories..."
+echo "1 - Creating directories..."
 mkdir -p /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 
-echo "3 - Cleaning up workspace..."
+echo "2 - Cleaning up workspace..."
 npm run deepClean || true
 
-echo "4 - Setting ownership of directories..."
+echo "3 - Setting ownership of directories..."
 ls .
 sudo chown -R node:node .cache node_modules apps/frontend/node_modules /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 sudo chmod +x bin/*.js
 
-echo "5 - Installing dependencies..."
+echo "4 - Installing dependencies..."
 npm install --no-fund --no-audit
 
-echo "6 - Building the package..."
-npm run build
+echo "5 - Building the package..."
+npm run build:tsgo
 
-echo "7 - Building the frontend package..."
+echo "6 - Building the frontend package..."
 cd apps/frontend
 # Uncomment if you want to reset the frontend before building
 # sudo rm -rf build coverage node_modules
@@ -50,10 +47,10 @@ npm install --no-fund --no-audit
 npm run build
 cd ../..
 
-echo "8 - Linking the package globally..."
+echo "7 - Linking the package globally..."
 sudo npm link --no-fund --no-audit
 
-echo "9 - Checking for outdated packages..."
+echo "8 - Checking for outdated packages..."
 npm outdated || true
 
-echo "10 - Setup completed!"
+echo "9 - Setup completed!"

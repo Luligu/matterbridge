@@ -312,12 +312,6 @@ export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Co
   readonly EngageStateChangedEvent: new (value?: Partial<ClosureControl.EngageStateChangedEvent>) => ClosureControl.EngageStateChangedEvent;
   readonly SecureStateChangedEvent: new (value?: Partial<ClosureControl.SecureStateChangedEvent>) => ClosureControl.SecureStateChangedEvent;
   readonly Typing: ClosureControl;
-  /** @deprecated Use {@link ClosureControl}. */
-  readonly Cluster: ClusterType.WithCompat<typeof ClosureControl, ClosureControl>;
-  /** @deprecated Use {@link ClosureControl}. */
-  readonly Complete: typeof ClosureControl;
-  /** @deprecated Use {@link ClosureControl}. */
-  with(...features: ClosureControl.Feature[]): typeof ClosureControl;
 };
 
 export interface ClosureControl extends ClusterTyping {

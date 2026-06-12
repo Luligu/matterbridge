@@ -48,11 +48,10 @@ import {
   airPurifier,
   bridge,
   contactSensor,
-  coverDevice,
   deviceEnergyManagement,
-  doorLockDevice,
+  doorLock,
   extendedColorLight,
-  fanDevice,
+  fan,
   genericSwitch,
   laundryWasher,
   lightSensor,
@@ -62,8 +61,9 @@ import {
   powerSource,
   smokeCoAlarm,
   temperatureSensor,
-  thermostatDevice,
+  thermostat,
   waterValve,
+  windowCovering,
 } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { type CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
@@ -88,8 +88,8 @@ describe('Server clusters and behaviors', () => {
   let coverLift: MatterbridgeEndpoint;
   let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
-  let fan: MatterbridgeEndpoint;
-  let thermostat: MatterbridgeEndpoint;
+  let vent: MatterbridgeEndpoint;
+  let thermo: MatterbridgeEndpoint;
   let thermostatPreset: MatterbridgeEndpoint;
   let valve: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
@@ -110,7 +110,7 @@ describe('Server clusters and behaviors', () => {
   ];
 
   function createPresetThermostatEndpoint(id: string) {
-    const endpoint = new MatterbridgeEndpoint(thermostatDevice, { id });
+    const endpoint = new MatterbridgeEndpoint(thermostat, { id });
     endpoint.createDefaultPresetsThermostatClusterServer(
       23,
       21,
@@ -209,7 +209,7 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, poweredDevice)).toBeTruthy();
     jest.spyOn(notReadyChild.lifecycle, 'isReady', 'get').mockReturnValue(false);
     await Promise.resolve(constructionCallbacks.at(-1)?.());
-    expect(poweredDevice.getAttribute(PowerSource.Cluster.id, 'endpointList')).toEqual([
+    expect(poweredDevice.getAttribute(PowerSource.id, 'endpointList')).toEqual([
       poweredDevice.number,
       ...poweredDevice.parts.filter((endpoint) => endpoint.lifecycle.isReady).map((endpoint) => endpoint.number),
     ]);
@@ -234,14 +234,14 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Device type: coverLift', async () => {
-    coverLift = new MatterbridgeEndpoint(coverDevice, { id: 'coverLift' });
+    coverLift = new MatterbridgeEndpoint(windowCovering, { id: 'coverLift' });
     coverLift.addRequiredClusterServers();
     expect(coverLift).toBeDefined();
     expect(await addDevice(aggregator, coverLift)).toBeTruthy();
   });
 
   test('Device type: coverLiftTilt', async () => {
-    coverLiftTilt = new MatterbridgeEndpoint(coverDevice, { id: 'coverLiftTilt' });
+    coverLiftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'coverLiftTilt' });
     coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
@@ -249,7 +249,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Device type: doorLock', async () => {
-    lock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLock' });
+    lock = new MatterbridgeEndpoint(doorLock, { id: 'doorLock' });
     lock.addRequiredClusterServers();
     expect(lock).toBeDefined();
     expect(await addDevice(aggregator, lock)).toBeTruthy();
@@ -261,19 +261,19 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Device type: fan', async () => {
-    fan = new MatterbridgeEndpoint(fanDevice, { id: 'fan' });
-    fan.createDefaultActivatedCarbonFilterMonitoringClusterServer();
-    fan.createDefaultHepaFilterMonitoringClusterServer();
-    fan.addRequiredClusterServers();
-    expect(fan).toBeDefined();
-    expect(await addDevice(aggregator, fan)).toBeTruthy();
+    vent = new MatterbridgeEndpoint(fan, { id: 'fan' });
+    vent.createDefaultActivatedCarbonFilterMonitoringClusterServer();
+    vent.createDefaultHepaFilterMonitoringClusterServer();
+    vent.addRequiredClusterServers();
+    expect(vent).toBeDefined();
+    expect(await addDevice(aggregator, vent)).toBeTruthy();
   });
 
   test('Device type: thermostat', async () => {
-    thermostat = new MatterbridgeEndpoint(thermostatDevice, { id: 'thermostat' });
-    thermostat.addRequiredClusterServers();
-    expect(thermostat).toBeDefined();
-    expect(await addDevice(aggregator, thermostat)).toBeTruthy();
+    thermo = new MatterbridgeEndpoint(thermostat, { id: 'thermostat' });
+    thermo.addRequiredClusterServers();
+    expect(thermo).toBeDefined();
+    expect(await addDevice(aggregator, thermo)).toBeTruthy();
   });
 
   test('Device type: thermostatPreset', async () => {
@@ -350,32 +350,32 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Identify server', async () => {
-    await expectCommand(light, Identify.Cluster, 'identify', { identifyTime: 1 }, (data) => {
-      expect(data.cluster).toBe(Identify.Cluster.name.toLowerCase());
+    await expectCommand(light, Identify, 'identify', { identifyTime: 1 }, (data) => {
+      expect(data.cluster).toBe(Identify.name.toLowerCase());
       expect(data.attributes.identifyTime).toBe(0);
       expect(data.attributes.identifyType).toBe(Identify.IdentifyType.None);
     });
-    await light.invokeBehaviorCommand(Identify.Cluster, 'identify', { identifyTime: 0 }); // Turn off identify mode
+    await light.invokeBehaviorCommand(Identify, 'identify', { identifyTime: 0 }); // Turn off identify mode
 
-    await expectCommand(light, Identify.Cluster, 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: Identify.EffectVariant.Default }, (data) => {
-      expect(data.cluster).toBe(Identify.Cluster.name.toLowerCase());
+    await expectCommand(light, Identify, 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Blink, effectVariant: Identify.EffectVariant.Default }, (data) => {
+      expect(data.cluster).toBe(Identify.name.toLowerCase());
       expect(data.attributes.identifyTime).toBe(0);
       expect(data.attributes.identifyType).toBe(Identify.IdentifyType.None);
     });
   });
 
   test('OnOff server', async () => {
-    await expectCommand(light, OnOff.Cluster, 'on', undefined, (data) => {
+    await expectCommand(light, OnOff, 'on', undefined, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
     });
 
-    await expectCommand(light, OnOff.Cluster, 'off', undefined, (data) => {
+    await expectCommand(light, OnOff, 'off', undefined, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(true);
     });
 
-    await expectCommand(light, OnOff.Cluster, 'toggle', undefined, (data) => {
+    await expectCommand(light, OnOff, 'toggle', undefined, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
     });
@@ -383,13 +383,13 @@ describe('Server clusters and behaviors', () => {
 
   test('LevelControl server', async () => {
     const moveToLevelRequest = getMoveToLevelRequest(100, 5, false);
-    await expectCommand(light, LevelControl.Cluster, 'moveToLevel', moveToLevelRequest, (data) => {
+    await expectCommand(light, LevelControl, 'moveToLevel', moveToLevelRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(254);
     });
 
     const moveToLevelWithOnOffRequest = getMoveToLevelRequest(150, 3, false);
-    await expectCommand(light, LevelControl.Cluster, 'moveToLevelWithOnOff', moveToLevelWithOnOffRequest, (data) => {
+    await expectCommand(light, LevelControl, 'moveToLevelWithOnOff', moveToLevelWithOnOffRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(100);
     });
@@ -397,27 +397,27 @@ describe('Server clusters and behaviors', () => {
 
   test('ColorControl server', async () => {
     const moveToHueRequest = getMoveToHueRequest(180, 0, false);
-    await expectCommand(light, ColorControl.Cluster, 'moveToHue', moveToHueRequest, (data) => {
+    await expectCommand(light, ColorControl, 'moveToHue', moveToHueRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
     const moveToSaturationRequest = getMoveToSaturationRequest(100, 0, false);
-    await expectCommand(light, ColorControl.Cluster, 'moveToSaturation', moveToSaturationRequest, (data) => {
+    await expectCommand(light, ColorControl, 'moveToSaturation', moveToSaturationRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
     const moveToHueAndSaturationRequest = getMoveToHueAndSaturationRequest(180, 100, 0, false);
-    await expectCommand(light, ColorControl.Cluster, 'moveToHueAndSaturation', moveToHueAndSaturationRequest, (data) => {
+    await expectCommand(light, ColorControl, 'moveToHueAndSaturation', moveToHueAndSaturationRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
     const moveToColorRequest = getMoveToColorRequest(30000, 30000, 0, false);
-    await expectCommand(light, ColorControl.Cluster, 'moveToColor', moveToColorRequest, (data) => {
+    await expectCommand(light, ColorControl, 'moveToColor', moveToColorRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
     const moveToColorTemperatureRequest = getMoveToColorTemperatureRequest(250, 0, false);
-    await expectCommand(light, ColorControl.Cluster, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
+    await expectCommand(light, ColorControl, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
   });
@@ -433,18 +433,18 @@ describe('Server clusters and behaviors', () => {
       currentY: number;
       colorTemperatureMireds: number;
     }) => {
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'colorMode')).toBe(expected.colorMode);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'enhancedColorMode')).toBe(expected.enhancedColorMode);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'currentHue')).toBe(expected.currentHue);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'enhancedCurrentHue')).toBe(expected.enhancedCurrentHue);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'currentSaturation')).toBe(expected.currentSaturation);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'currentX')).toBe(expected.currentX);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'currentY')).toBe(expected.currentY);
-      expect(enhancedLight.getAttribute(ColorControl.Cluster.id, 'colorTemperatureMireds')).toBe(expected.colorTemperatureMireds);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'colorMode')).toBe(expected.colorMode);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'enhancedColorMode')).toBe(expected.enhancedColorMode);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'currentHue')).toBe(expected.currentHue);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'enhancedCurrentHue')).toBe(expected.enhancedCurrentHue);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'currentSaturation')).toBe(expected.currentSaturation);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'currentX')).toBe(expected.currentX);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'currentY')).toBe(expected.currentY);
+      expect(enhancedLight.getAttribute(ColorControl.id, 'colorTemperatureMireds')).toBe(expected.colorTemperatureMireds);
     };
 
     const moveToHueRequest = getMoveToHueRequest(180, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'moveToHue', moveToHueRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'moveToHue', moveToHueRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
     expectEnhancedColorAttributes({
@@ -459,7 +459,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const enhancedMoveToHueRequest = getEnhancedMoveToHueRequest(32000, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'enhancedMoveToHue', enhancedMoveToHueRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'enhancedMoveToHue', enhancedMoveToHueRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
       expect(data.attributes.enhancedCurrentHue).toBe(0);
     });
@@ -475,7 +475,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const moveToSaturationRequest = getMoveToSaturationRequest(100, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'moveToSaturation', moveToSaturationRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'moveToSaturation', moveToSaturationRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
     expectEnhancedColorAttributes({
@@ -490,7 +490,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const moveToHueAndSaturationRequest = getMoveToHueAndSaturationRequest(180, 100, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'moveToHueAndSaturation', moveToHueAndSaturationRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'moveToHueAndSaturation', moveToHueAndSaturationRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
     expectEnhancedColorAttributes({
@@ -505,7 +505,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const enhancedMoveToHueAndSaturationRequest = getEnhancedMoveToHueAndSaturationRequest(32000, 100, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'enhancedMoveToHueAndSaturation', enhancedMoveToHueAndSaturationRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'enhancedMoveToHueAndSaturation', enhancedMoveToHueAndSaturationRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
       expect(data.attributes.enhancedCurrentHue).toBe(32000);
     });
@@ -521,7 +521,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const moveToColorRequest = getMoveToColorRequest(30000, 30000, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'moveToColor', moveToColorRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'moveToColor', moveToColorRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
     expectEnhancedColorAttributes({
@@ -536,7 +536,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const moveToColorTemperatureRequest = getMoveToColorTemperatureRequest(250, 0, false);
-    await expectCommand(enhancedLight, ColorControl.Cluster, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
+    await expectCommand(enhancedLight, ColorControl, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
     expectEnhancedColorAttributes({
@@ -557,12 +557,12 @@ describe('Server clusters and behaviors', () => {
       currentPositionLiftPercent100ths: number;
       targetPositionLiftPercent100ths: number;
     }) => {
-      expect(coverLift.getAttribute(WindowCovering.Cluster.id, 'operationalStatus')).toEqual(expected.operationalStatus);
-      expect(coverLift.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(expected.currentPositionLiftPercent100ths);
-      expect(coverLift.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(expected.targetPositionLiftPercent100ths);
+      expect(coverLift.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual(expected.operationalStatus);
+      expect(coverLift.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBe(expected.currentPositionLiftPercent100ths);
+      expect(coverLift.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBe(expected.targetPositionLiftPercent100ths);
     };
 
-    await expectCommand(coverLift, WindowCovering.Cluster, 'upOrOpen', undefined, (data) => {
+    await expectCommand(coverLift, WindowCovering, 'upOrOpen', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
@@ -571,7 +571,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionLiftPercent100ths: 0,
     });
 
-    await expectCommand(coverLift, WindowCovering.Cluster, 'downOrClose', undefined, (data) => {
+    await expectCommand(coverLift, WindowCovering, 'downOrClose', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
@@ -580,7 +580,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionLiftPercent100ths: 10000,
     });
 
-    await expectCommand(coverLift, WindowCovering.Cluster, 'stopMotion', undefined, (data) => {
+    await expectCommand(coverLift, WindowCovering, 'stopMotion', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
@@ -589,7 +589,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionLiftPercent100ths: 10000,
     });
 
-    await expectCommand(coverLift, WindowCovering.Cluster, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
+    await expectCommand(coverLift, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftCoverAttributes({
@@ -607,14 +607,14 @@ describe('Server clusters and behaviors', () => {
       currentPositionTiltPercent100ths: number;
       targetPositionTiltPercent100ths: number;
     }) => {
-      expect(coverLiftTilt.getAttribute(WindowCovering.Cluster.id, 'operationalStatus')).toEqual(expected.operationalStatus);
-      expect(coverLiftTilt.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths')).toBe(expected.currentPositionLiftPercent100ths);
-      expect(coverLiftTilt.getAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths')).toBe(expected.targetPositionLiftPercent100ths);
-      expect(coverLiftTilt.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')).toBe(expected.currentPositionTiltPercent100ths);
-      expect(coverLiftTilt.getAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths')).toBe(expected.targetPositionTiltPercent100ths);
+      expect(coverLiftTilt.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual(expected.operationalStatus);
+      expect(coverLiftTilt.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBe(expected.currentPositionLiftPercent100ths);
+      expect(coverLiftTilt.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBe(expected.targetPositionLiftPercent100ths);
+      expect(coverLiftTilt.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(expected.currentPositionTiltPercent100ths);
+      expect(coverLiftTilt.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(expected.targetPositionTiltPercent100ths);
     };
 
-    await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'upOrOpen', undefined, (data) => {
+    await expectCommand(coverLiftTilt, WindowCovering, 'upOrOpen', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
@@ -625,7 +625,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionTiltPercent100ths: 0,
     });
 
-    await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'downOrClose', undefined, (data) => {
+    await expectCommand(coverLiftTilt, WindowCovering, 'downOrClose', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
@@ -636,7 +636,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionTiltPercent100ths: 10000,
     });
 
-    await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'stopMotion', undefined, (data) => {
+    await expectCommand(coverLiftTilt, WindowCovering, 'stopMotion', undefined, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
@@ -647,7 +647,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionTiltPercent100ths: 10000,
     });
 
-    await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
+    await expectCommand(coverLiftTilt, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
@@ -658,7 +658,7 @@ describe('Server clusters and behaviors', () => {
       targetPositionTiltPercent100ths: 10000,
     });
 
-    await expectCommand(coverLiftTilt, WindowCovering.Cluster, 'goToTiltPercentage', { tiltPercent100thsValue: 5000 }, (data) => {
+    await expectCommand(coverLiftTilt, WindowCovering, 'goToTiltPercentage', { tiltPercent100thsValue: 5000 }, (data) => {
       expect(data.cluster).toBe('windowCovering');
     });
     expectLiftTiltCoverAttributes({
@@ -671,106 +671,106 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('DoorLock server', async () => {
-    expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
     expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBeTruthy();
     expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('lockDoor')).toBeTruthy();
     expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockDoor')).toBeTruthy();
     expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockWithTimeout')).toBeTruthy();
 
-    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.unlockDoor', {}, (data) => {
+    await expectCommand(lock, DoorLock, 'DoorLock.unlockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
-    expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+    expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
 
-    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.lockDoor', {}, (data) => {
+    await expectCommand(lock, DoorLock, 'DoorLock.lockDoor', {}, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
-    expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Locked);
+    expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
 
-    await expectCommand(lock, DoorLock.Cluster, 'DoorLock.unlockWithTimeout', { timeout: 5 }, (data) => {
+    await expectCommand(lock, DoorLock, 'DoorLock.unlockWithTimeout', { timeout: 5 }, (data) => {
       expect(data.cluster).toBe('doorLock');
     });
-    expect(lock.getCluster(DoorLock.Cluster)?.lockState).toBe(DoorLock.LockState.Unlocked);
+    expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
   });
 
   test('FanControl server', async () => {
     const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    fan.addCommandHandler('step', async (data) => {
+    vent.addCommandHandler('step', async (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(0);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
-    expect(stepCalls[0]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(10);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
+    expect(stepCalls[0]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 100);
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
-    expect(stepCalls[1]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(10);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
+    expect(stepCalls[1]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 100);
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
-    expect(stepCalls[2]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(0);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
+    expect(stepCalls[2]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 20);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
-    expect(stepCalls[3]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(10);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
+    expect(stepCalls[3]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
-    expect(stepCalls[4]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(100);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
+    expect(stepCalls[4]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 0);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 0);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
-    expect(stepCalls[5]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(100);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
+    expect(stepCalls[5]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 20);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true });
-    expect(stepCalls[6]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(10);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true });
+    expect(stepCalls[6]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
 
-    await fan.setAttribute(FanControl.Cluster.id, 'percentCurrent', 30);
+    await vent.setAttribute(FanControl.id, 'percentCurrent', 30);
 
-    await fan.invokeBehaviorCommand('fanControl', 'step', { direction: 99 as FanControl.StepDirection, wrap: false, lowestOff: false });
-    expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: fan, request: { direction: 99, wrap: false, lowestOff: false } });
-    expect(fan.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(30);
+    await vent.invokeBehaviorCommand('fanControl', 'step', { direction: 99 as FanControl.StepDirection, wrap: false, lowestOff: false });
+    expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: 99, wrap: false, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(30);
   });
 
   test('Thermostat server', async () => {
     const setBothRequest = { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 };
     const setHeatRequest = { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 };
     const setCoolRequest = { mode: Thermostat.SetpointRaiseLowerMode.Cool, amount: 5 };
-    const initialThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
+    const initialThermostatCluster = thermo.getCluster(MatterbridgeThermostatServer);
 
     expect(initialThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2100, occupiedCoolingSetpoint: 2500 });
     const thermostatBehavior = MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, Thermostat.Feature.Cooling, Thermostat.Feature.AutoMode);
-    expect((thermostat.stateOf(thermostatBehavior) as any).acceptedCommandList).toEqual([0]);
-    expect((thermostat.stateOf(thermostatBehavior) as any).generatedCommandList).toEqual([]);
+    expect((thermo.stateOf(thermostatBehavior) as any).acceptedCommandList).toEqual([0]);
+    expect((thermo.stateOf(thermostatBehavior) as any).generatedCommandList).toEqual([]);
 
-    await expectCommand(thermostat, Thermostat.Cluster, 'setpointRaiseLower', setBothRequest, (data) => {
+    await expectCommand(thermo, Thermostat, 'setpointRaiseLower', setBothRequest, (data) => {
       expect(data.cluster).toBe('thermostat');
     });
 
-    let updatedThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
+    let updatedThermostatCluster = thermo.getCluster(MatterbridgeThermostatServer);
 
     expect(updatedThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2150, occupiedCoolingSetpoint: 2550 });
 
-    await thermostat.invokeBehaviorCommand('Thermostat', 'setpointRaiseLower', setHeatRequest);
-    updatedThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
+    await thermo.invokeBehaviorCommand('Thermostat', 'setpointRaiseLower', setHeatRequest);
+    updatedThermostatCluster = thermo.getCluster(MatterbridgeThermostatServer);
 
     expect(updatedThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2200, occupiedCoolingSetpoint: 2550 });
 
-    await thermostat.invokeBehaviorCommand('Thermostat', 'setpointRaiseLower', setCoolRequest);
+    await thermo.invokeBehaviorCommand('Thermostat', 'setpointRaiseLower', setCoolRequest);
 
-    updatedThermostatCluster = thermostat.getCluster(MatterbridgeThermostatServer);
+    updatedThermostatCluster = thermo.getCluster(MatterbridgeThermostatServer);
 
     expect(updatedThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2200, occupiedCoolingSetpoint: 2600 });
   });
@@ -872,7 +872,7 @@ describe('Server clusters and behaviors', () => {
 
     expectPresetThermostatAttributes(Uint8Array.from([0]));
 
-    await expectCommand(thermostatPreset, Thermostat.Cluster, 'setpointRaiseLower', setHeatRequest, (data) => {
+    await expectCommand(thermostatPreset, Thermostat, 'setpointRaiseLower', setHeatRequest, (data) => {
       expect(data.cluster).toBe('thermostat');
     });
 
@@ -922,12 +922,12 @@ describe('Server clusters and behaviors', () => {
       openDuration: number | null;
       remainingDuration: number | null;
     }) => {
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'currentState')).toBe(expected.currentState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'targetState')).toBe(expected.targetState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'currentLevel')).toBe(expected.currentLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'targetLevel')).toBe(expected.targetLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'openDuration')).toBe(expected.openDuration);
-      expect(valve.getAttribute(ValveConfigurationAndControl.Cluster.id, 'remainingDuration')).toBe(expected.remainingDuration);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(expected.currentState);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(expected.targetState);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentLevel')).toBe(expected.currentLevel);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetLevel')).toBe(expected.targetLevel);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'openDuration')).toBe(expected.openDuration);
+      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'remainingDuration')).toBe(expected.remainingDuration);
     };
 
     expectValveAttributes({
@@ -940,7 +940,7 @@ describe('Server clusters and behaviors', () => {
     });
 
     const openRequest = { targetLevel: 50, openDuration: 60 };
-    await expectCommand(valve, ValveConfigurationAndControl.Cluster, 'open', openRequest, (data) => {
+    await expectCommand(valve, ValveConfigurationAndControl, 'open', openRequest, (data) => {
       expect(data.cluster).toBe('valveConfigurationAndControl');
     });
     expectValveAttributes({
@@ -952,8 +952,8 @@ describe('Server clusters and behaviors', () => {
       remainingDuration: null,
     });
 
-    await valve.setAttribute(ValveConfigurationAndControl.Cluster.id, 'defaultOpenDuration', null);
-    await valve.invokeBehaviorCommand(ValveConfigurationAndControl.Cluster, 'open', {});
+    await valve.setAttribute(ValveConfigurationAndControl.id, 'defaultOpenDuration', null);
+    await valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'open', {});
     expectValveAttributes({
       currentState: ValveConfigurationAndControl.ValveState.Open,
       targetState: ValveConfigurationAndControl.ValveState.Open,
@@ -963,7 +963,7 @@ describe('Server clusters and behaviors', () => {
       remainingDuration: null,
     });
 
-    await expectCommand(valve, ValveConfigurationAndControl.Cluster, 'close', undefined, (data) => {
+    await expectCommand(valve, ValveConfigurationAndControl, 'close', undefined, (data) => {
       expect(data.cluster).toBe('valveConfigurationAndControl');
     });
     expectValveAttributes({
@@ -977,62 +977,62 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('SmokeCoAlarm server', async () => {
-    expect(smoke.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
-    expect(smoke.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
 
-    await expectCommand(smoke, SmokeCoAlarm.Cluster, 'selfTestRequest', undefined, (data) => {
+    await expectCommand(smoke, SmokeCoAlarm, 'selfTestRequest', undefined, (data) => {
       expect(data.cluster).toBe('smokeCoAlarm');
     });
 
-    expect(smoke.getAttribute(SmokeCoAlarm.Cluster.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
-    expect(smoke.getAttribute(SmokeCoAlarm.Cluster.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
   });
 
   test('BooleanStateConfiguration server', async () => {
     const enableDisableAlarmRequest = { alarmsToEnableDisable: { audible: true, visual: true } };
 
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
 
-    await expectCommand(contact, BooleanStateConfiguration.Cluster, 'enableDisableAlarm', enableDisableAlarmRequest, (data) => {
+    await expectCommand(contact, BooleanStateConfiguration, 'enableDisableAlarm', enableDisableAlarmRequest, (data) => {
       expect(data.cluster).toBe('booleanStateConfiguration');
     });
 
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
-    expect(contact.getAttribute(BooleanStateConfiguration.Cluster.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
   });
 
   test('ModeSelect server', async () => {
-    expect(mode.getAttribute(ModeSelect.Cluster.id, 'currentMode')).toBe(0);
+    expect(mode.getAttribute(ModeSelect.id, 'currentMode')).toBe(0);
 
-    await expectCommand(mode, ModeSelect.Cluster, 'changeToMode', { newMode: 1 }, (data) => {
+    await expectCommand(mode, ModeSelect, 'changeToMode', { newMode: 1 }, (data) => {
       expect(data.cluster).toBe('modeSelect');
     });
 
-    expect(mode.getAttribute(ModeSelect.Cluster.id, 'currentMode')).toBe(1);
+    expect(mode.getAttribute(ModeSelect.id, 'currentMode')).toBe(1);
   });
 
   test('HepaFilterMonitoring server', async () => {
-    expect(purifier.getAttribute(HepaFilterMonitoring.Cluster.id, 'condition')).toBe(40);
-    expect(purifier.getAttribute(HepaFilterMonitoring.Cluster.id, 'lastChangedTime')).toBeNull();
+    expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(40);
+    expect(purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBeNull();
 
-    await purifier.invokeBehaviorCommand(HepaFilterMonitoring.Cluster, 'resetCondition');
+    await purifier.invokeBehaviorCommand(HepaFilterMonitoring, 'resetCondition');
 
-    expect(purifier.getAttribute(HepaFilterMonitoring.Cluster.id, 'condition')).toBe(100);
-    expect(typeof purifier.getAttribute(HepaFilterMonitoring.Cluster.id, 'lastChangedTime')).toBe('number');
+    expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(100);
+    expect(typeof purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBe('number');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeHepaFilterMonitoringServer: resetCondition called');
   });
 
   test('ActivatedCarbonFilterMonitoring server', async () => {
-    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'condition')).toBe(30);
-    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'lastChangedTime')).toBeNull();
+    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(30);
+    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'lastChangedTime')).toBeNull();
 
-    await purifier.invokeBehaviorCommand(ActivatedCarbonFilterMonitoring.Cluster, 'resetCondition');
+    await purifier.invokeBehaviorCommand(ActivatedCarbonFilterMonitoring, 'resetCondition');
 
-    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'condition')).toBe(100);
-    expect(typeof purifier.getAttribute(ActivatedCarbonFilterMonitoring.Cluster.id, 'lastChangedTime')).toBe('number');
+    expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(100);
+    expect(typeof purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'lastChangedTime')).toBe('number');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called');
   });
 
@@ -1044,13 +1044,13 @@ describe('Server clusters and behaviors', () => {
       cancelCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'esaType')).toBe(DeviceEnergyManagement.EsaType.Other);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'absMinPower')).toBe(-3000);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'absMaxPower')).toBe(2000);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'esaType')).toBe(DeviceEnergyManagement.EsaType.Other);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-3000);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(2000);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
-    await expectCommand(energyManagement, DeviceEnergyManagement.Cluster, 'powerAdjustRequest', powerAdjustRequest, (data) => {
+    await expectCommand(energyManagement, DeviceEnergyManagement, 'powerAdjustRequest', powerAdjustRequest, (data) => {
       expect(data.cluster).toBe('deviceEnergyManagement');
     });
     expect(loggerLogSpy).toHaveBeenCalledWith(
@@ -1061,7 +1061,7 @@ describe('Server clusters and behaviors', () => {
     await energyManagement.invokeBehaviorCommand('deviceEnergyManagement', 'cancelPowerAdjustRequest');
     expect(cancelCalls[0]).toEqual({ cluster: 'deviceEnergyManagement', endpoint: energyManagement, request: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called');
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
   });
 
   test('DeviceEnergyManagementMode server', async () => {
@@ -1070,27 +1070,27 @@ describe('Server clusters and behaviors', () => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
-    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.Cluster.id, 'currentMode')).toBe(1);
-    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.Cluster.id, 'supportedModes')).toHaveLength(5);
+    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(1);
+    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'supportedModes')).toHaveLength(5);
 
-    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode.Cluster, 'changeToMode', { newMode: 0 });
+    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 0 });
     expect(modeCalls[0]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 0 } });
-    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.Cluster.id, 'currentMode')).toBe(1);
+    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0');
 
-    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode.Cluster, 'changeToMode', { newMode: 1 });
+    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 1 });
     expect(modeCalls[1]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 1 } });
-    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.Cluster.id, 'currentMode')).toBe(1);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.OptOut);
+    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(1);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.OptOut);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
       'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)',
     );
 
-    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode.Cluster, 'changeToMode', { newMode: 5 });
+    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 5 });
     expect(modeCalls[2]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 5 } });
-    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.Cluster.id, 'currentMode')).toBe(5);
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(5);
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 5 => Full Energy Management');
 
     const originalHas = energyManagement.behaviors.has.bind(energyManagement.behaviors);
@@ -1100,20 +1100,20 @@ describe('Server clusters and behaviors', () => {
       return originalHas(behavior);
     });
 
-    await energyManagement.setAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState', DeviceEnergyManagement.OptOutState.NoOptOut);
-    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode.Cluster, 'changeToMode', { newMode: 1 });
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    await energyManagement.setAttribute(DeviceEnergyManagement.id, 'optOutState', DeviceEnergyManagement.OptOutState.NoOptOut);
+    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 1 });
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
-    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode.Cluster, 'changeToMode', { newMode: 5 });
-    expect(energyManagement.getAttribute(DeviceEnergyManagement.Cluster.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 5 });
+    expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
     hasSpy.mockRestore();
   });
 
   test('OperationalState server', async () => {
     const expectOperationalStateAttributes = (expectedState: number) => {
-      expect(washer.getAttribute(OperationalState.Cluster.id, 'operationalState')).toBe(expectedState);
-      expect(washer.getAttribute(OperationalState.Cluster.id, 'operationalError')).toEqual({
+      expect(washer.getAttribute(OperationalState.id, 'operationalState')).toBe(expectedState);
+      expect(washer.getAttribute(OperationalState.id, 'operationalError')).toEqual({
         errorStateId: OperationalState.ErrorState.NoError,
         errorStateDetails: 'Fully operational',
       });
@@ -1121,38 +1121,38 @@ describe('Server clusters and behaviors', () => {
 
     expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
 
-    await expectCommand(washer, OperationalState.Cluster, 'start', undefined, (data) => {
+    await expectCommand(washer, OperationalState, 'start', undefined, (data) => {
       expect(data.cluster).toBe('operationalState');
     });
     expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
 
-    await expectCommand(washer, OperationalState.Cluster, 'pause', undefined, (data) => {
+    await expectCommand(washer, OperationalState, 'pause', undefined, (data) => {
       expect(data.cluster).toBe('operationalState');
     });
     expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Paused);
 
-    await expectCommand(washer, OperationalState.Cluster, 'resume', undefined, (data) => {
+    await expectCommand(washer, OperationalState, 'resume', undefined, (data) => {
       expect(data.cluster).toBe('operationalState');
     });
     expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
 
-    await expectCommand(washer, OperationalState.Cluster, 'stop', undefined, (data) => {
+    await expectCommand(washer, OperationalState, 'stop', undefined, (data) => {
       expect(data.cluster).toBe('operationalState');
     });
     expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
   });
 
   test('ServiceArea server', async () => {
-    expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([]);
-    expect(rvc.getAttribute(ServiceArea.Cluster.id, 'currentArea')).toBe(1);
-    expect(rvc.getAttribute(ServiceArea.Cluster.id, 'supportedAreas')).toHaveLength(4);
+    expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([]);
+    expect(rvc.getAttribute(ServiceArea.id, 'currentArea')).toBe(1);
+    expect(rvc.getAttribute(ServiceArea.id, 'supportedAreas')).toHaveLength(4);
 
-    await expectCommand(rvc, ServiceArea.Cluster, 'selectAreas', { newAreas: [1, 2] }, (data) => {
+    await expectCommand(rvc, ServiceArea, 'selectAreas', { newAreas: [1, 2] }, (data) => {
       expect(data.cluster).toBe('serviceArea');
     });
-    expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
+    expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2]);
 
-    await rvc.invokeBehaviorCommand(ServiceArea.Cluster, 'selectAreas', { newAreas: [0, 5] });
-    expect(rvc.getAttribute(ServiceArea.Cluster.id, 'selectedAreas')).toEqual([1, 2]);
+    await rvc.invokeBehaviorCommand(ServiceArea, 'selectAreas', { newAreas: [0, 5] });
+    expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2]);
   });
 });

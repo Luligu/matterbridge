@@ -58,8 +58,9 @@ import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger'
 import { Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32mBackendExpress loaded.\u001B[40;0m');
+if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BackendExpress loaded.\u001B[40;0m');
 
 /**
  * Class representing an Express application for frontend connections.
@@ -79,6 +80,7 @@ export class BackendExpress {
   });
 
   expressApp: express.Application | undefined;
+  serverFetchTimeout = 5000; // 5 seconds
 
   /**
    * Create a new BackendExpress instance.
@@ -556,6 +558,69 @@ export class BackendExpress {
         res.status(500).send(`Error uploading or installing plugin package ${escapeHtml(filename)}`);
       }
     });
+
+    /* / Plugin frontend routes
+    // prettier-ignore
+    const plugins = (await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins' }, this.serverFetchTimeout)).result.plugins;
+
+    for (const plugin of plugins.filter((p) => p.enabled && !p.error)) {
+      const { existsSync } = await import('node:fs');
+      // istanbul ignore next cause is under development and will be tested in the future
+      if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
+        this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
+
+        // Unified API route handler for GET, POST, PUT, PATCH, DELETE
+        const apiHandler = async (req: import('express').Request, res: import('express').Response) => {
+          const method = req.method.toUpperCase();
+          const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
+          const query = req.query;
+          const body = req.body;
+          this.log.debug(`The frontend sent ${bgHex('#0ba7bc').bold.white` ${method} `} ${bgHex('#0b6a2b').bold.italic.white` /plugins/${plugin.name}/api/${path ?? ''} `}`);
+
+          if (!plugin.platform) {
+            this.log.error(`The platform for plugin ${plg}${plugin.name}${er} is not running`);
+            res.status(503).json({ error: `Plugin ${plugin.name} platform is not running` });
+            return;
+          }
+
+          try {
+            const value = await plugin.platform.onFetch(method, path, query, body);
+            if (value === undefined) {
+              this.log.warn(`MatterbridgePlatform.onFetch returned undefined for plugin ${plg}${plugin.name}${wr} method ${method} path ${path}`);
+              res.status(404).json({ error: `Not found in plugin ${plugin.name}` });
+              return;
+            }
+            if (method === 'DELETE') res.status(204).send();
+            else res.json(value);
+          } catch (error) {
+            logError(this.log, `MatterbridgePlatform.onFetch threw an error for plugin ${plg}${plugin.name}${er}`, error);
+            res.status(500).json({ error: `Internal error in plugin ${plugin.name}` });
+          }
+        };
+
+        // Parse JSON request bodies for all plugin API routes so onFetch receives the body for POST/PUT/PATCH (no-op for GET/DELETE without a body)
+        this.expressApp.use(`/plugins/${plugin.name}/api`, express.json());
+
+        // GET    /api/:path? — read collection or single resource, query for filters
+        // POST   /api/:path? — create, data in body
+        // PUT    /api/:path? — full replace of resource
+        // PATCH  /api/:path? — partial update of resource
+        // DELETE /api/:path? — delete resource
+        this.expressApp.get(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.post(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.put(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.patch(`/plugins/${plugin.name}/api/:path`, apiHandler);
+        this.expressApp.delete(`/plugins/${plugin.name}/api/:path`, apiHandler);
+
+        // SPA fallback: serve the plugin's index.html for unmatched GET requests only (Express 5 syntax)
+        this.expressApp.get(`/plugins/${plugin.name}/{*splat}`, (_req, res) => {
+          this.log.warn(`The plugin frontend sent /plugins/${plugin.name}/index.html (plugin SPA fallback)`);
+          res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
+        });
+      }
+    }
+    */
 
     // Fallback for routing (must be the last route)
     this.expressApp.use((req, res) => {

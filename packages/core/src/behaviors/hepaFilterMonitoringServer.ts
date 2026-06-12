@@ -44,7 +44,7 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
       command: 'resetCondition',
       request: {},
       cluster: MatterbridgeHepaFilterMonitoringServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof HepaFilterMonitoring.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof HepaFilterMonitoring)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

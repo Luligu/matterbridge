@@ -77,13 +77,13 @@ describe('Matterbridge ' + NAME, () => {
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryWasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryDryerControls.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryWasherMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryDryerControls.id)).toBeTruthy();
+    expect(device.hasClusterServer(TemperatureControl.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
   });
 
   test('add a laundry dryer device', async () => {
@@ -250,13 +250,13 @@ describe('Matterbridge ' + NAME, () => {
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryWasherMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(LaundryDryerControls.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(TemperatureControl.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryWasherMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(LaundryDryerControls.id)).toBeTruthy();
+    expect(device.hasClusterServer(TemperatureControl.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
   });
 
   test('add a laundry dryer device with number temperature control', async () => {

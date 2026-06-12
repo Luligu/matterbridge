@@ -67,7 +67,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       command: 'setpointRaiseLower',
       request,
       cluster: ThermostatServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -89,7 +89,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       command: 'setActivePresetRequest',
       request,
       cluster: ThermostatServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

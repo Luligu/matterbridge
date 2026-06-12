@@ -411,8 +411,8 @@ describe('MatterNode', () => {
       .createDefaultBridgedDeviceBasicInformationClusterServer('Climate sensor', 'CLIMATE1234567890')
       .createDefaultPowerSourceBatteryClusterServer()
       .addRequiredClusterServers();
-    device.addChildDeviceTypeWithClusterServer('Temperature sensor child', temperatureSensor, [Identify.Cluster.id, TemperatureMeasurement.Cluster.id]);
-    device.addChildDeviceTypeWithClusterServer('Humidity sensor child', humiditySensor, [Identify.Cluster.id, RelativeHumidityMeasurement.Cluster.id]);
+    device.addChildDeviceTypeWithClusterServer('Temperature sensor child', temperatureSensor, [Identify.id, TemperatureMeasurement.id]);
+    device.addChildDeviceTypeWithClusterServer('Humidity sensor child', humiditySensor, [Identify.id, RelativeHumidityMeasurement.id]);
     device.plugin = 'matterbridge-mock1';
 
     // Test adding to unknown plugin
@@ -457,13 +457,13 @@ describe('MatterNode', () => {
     expect(device.lifecycle.isReady).toBe(true);
     expect(deviceManager.length).toBe(1);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Added endpoint`));
-    expect(await device.setAttribute(PressureMeasurement.Cluster.id, 'measuredValue', 1000)).toBeTruthy();
-    expect(device.getChildEndpointByName('Temperature sensor child')).toBeUndefined(); // Test getChildEndpointByName with name with spaces
-    expect(device.getChildEndpointByName('Humidity sensor child')).toBeUndefined(); // Test getChildEndpointByName with name with spaces
+    expect(await device.setAttribute(PressureMeasurement.id, 'measuredValue', 1000)).toBeTruthy();
+    expect(device.getChildEndpointById('Temperature sensor child')).toBeUndefined(); // Test getChildEndpointByName with name with spaces
+    expect(device.getChildEndpointById('Humidity sensor child')).toBeUndefined(); // Test getChildEndpointByName with name with spaces
     expect(device.getChildEndpointByOriginalId('Temperature sensor child')).toBeDefined(); // Test getChildEndpointByName with originalId
     expect(device.getChildEndpointByOriginalId('Humidity sensor child')).toBeDefined(); // Test getChildEndpointByName with originalId
-    expect(await device.getChildEndpointByOriginalId('Temperature sensor child')?.setAttribute(TemperatureMeasurement.Cluster.id, 'measuredValue', 2850)).toBeTruthy();
-    expect(await device.getChildEndpointByOriginalId('Humidity sensor child')?.setAttribute(RelativeHumidityMeasurement.Cluster.id, 'measuredValue', 5500)).toBeTruthy();
+    expect(await device.getChildEndpointByOriginalId('Temperature sensor child')?.setAttribute(TemperatureMeasurement.id, 'measuredValue', 2850)).toBeTruthy();
+    expect(await device.getChildEndpointByOriginalId('Humidity sensor child')?.setAttribute(RelativeHumidityMeasurement.id, 'measuredValue', 5500)).toBeTruthy();
 
     await closeServerNodeStores(matter.serverNode);
     /*

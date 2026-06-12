@@ -43,7 +43,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'on',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -61,7 +61,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'off',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -79,7 +79,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'toggle',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

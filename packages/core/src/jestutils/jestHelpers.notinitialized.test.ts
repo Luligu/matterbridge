@@ -6,7 +6,7 @@ import { Endpoint, ServerNode } from '@matter/node';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 import { Matterbridge } from '../matterbridge.js';
-import { onOffOutlet } from '../matterbridgeDeviceTypes.js';
+import { onOffPlugInUnit } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import {
   addMatterbridgePlatform,
@@ -110,7 +110,7 @@ describe('Matterbridge not initialized test environment', () => {
   });
 
   test('should add a device to the server node', async () => {
-    deviceServer = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' });
+    deviceServer = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet1' });
     deviceServer.addRequiredClusterServers();
     expect(await addDevice(server, deviceServer)).toBeTruthy();
     const state = deviceServer.state;
@@ -119,7 +119,7 @@ describe('Matterbridge not initialized test environment', () => {
   });
 
   test('should add a device to the aggregator node', async () => {
-    deviceAggregator = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet2' });
+    deviceAggregator = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet2' });
     deviceAggregator.addRequiredClusterServers();
     expect(await addDevice(aggregator, deviceAggregator)).toBeTruthy();
     const state = deviceAggregator.state;

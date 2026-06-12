@@ -23,8 +23,9 @@
  */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgePlatform loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgePlatform loaded.\u001B[40;0m');
 
 // Node.js modules
 import path from 'node:path';
@@ -631,7 +632,7 @@ export class MatterbridgePlatform {
       if (!device.deviceTypes.has(bridgedNode.code)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no bridgedNode device type. Adding it...`);
         device.deviceTypes.set(bridgedNode.code, bridgedNode);
-        const options = device.getClusterServerOptions(Descriptor.Cluster.id);
+        const options = device.getClusterServerOptions(Descriptor.id);
         // istanbul ignore else
         if (options) {
           const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
@@ -644,7 +645,7 @@ export class MatterbridgePlatform {
 
       // If the device is a bridged device, we add the BridgedDeviceBasicInformation cluster
       // istanbul ignore else
-      if (!device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) {
+      if (!device.hasClusterServer(BridgedDeviceBasicInformation.id)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no BridgedDeviceBasicInformation cluster. Adding it...`);
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
           device.deviceName,

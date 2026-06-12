@@ -47,7 +47,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       command: 'setTarget',
       request,
       cluster: ClosureDimensionServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureDimension.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureDimension)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
@@ -69,7 +69,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       command: 'step',
       request,
       cluster: ClosureDimensionServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureDimension.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureDimension)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 

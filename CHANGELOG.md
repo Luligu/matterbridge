@@ -55,6 +55,66 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.9.0] - 2026-06-12
+
+### New plugin
+
+- [plugins]: A new plugin is now available [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt).
+
+### Development Breaking Changes
+
+- [subscribeAttribute]: The `subscribeAttribute()` method is now synchronous and returns `MatterbridgeEndpoint` for chaining instead of `Promise<boolean>`.
+- [conformance]: Remove from `onOffSwitch`, `dimmableSwitch` and `colorTemperatureSwitch` the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().
+- [deviceTypes]: All exported device type names follow the Matter canonical name. Old exported names are deprecated and resolve to the new names. The import name is camel case.
+- [deviceTypes]: In all device type the property name changed to the canonical Matter name (e.g. MA-onOffLight => OnOffLight). The name property is Pascal case and follow the Matter canonical name (without "-" and "/").
+- [deprecation]: Add the list of [deprecation notices](README-DEV.md#deprecation-list).
+- [matter]: Update doc [Matter 1.5.1 changes from 1.4.2](Matter-1.5.1.md).
+- [matter]: Update doc [Matter.js 0.17 changes from 0.16](Matter.js-0.17.md).
+
+### Added
+
+- [s6-rc]: Delete `matter.js storage locks` before starting the s6-rc and s6-rc-legacy docker images.
+- [test-utils]: Add matter methods in `jest-utils` and `vites-utils` packages.
+- [soilMeasurement]: Add `createDefaultSoilMeasurementClusterServer()` endpoint helper.
+- [deviceTypes]: Add `controlBridge`, `pumpController`, `windowCoveringController`, `thermostatController`, `contentApp`, `castingVideoClient`, `videoRemoteControl` device types.
+- [eslint]: Enforce `@typescript-eslint/no-deprecated` rule.
+- [register]: Add `getSupportedDeviceType()` and `getSupportedCluster()` register helpers. See [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt) plugin for an example.
+- [factory]: Add `createClusterServer()` and `getServerBehaviorFromClusterId()` generic factory helpers. See [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt) plugin for an example.
+- [frontend]: Add plugin frontend button in the UI when a plugin has a frontend. Try [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt) for an example.
+
+### Changed
+
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `matter.js` to v.0.17.2-alpha.0-20260606-610f30128.
+- [matterbridge]: Bump `matter.js` to v.0.17.2-alpha.0-20260609-97109a2d3.
+- [matterbridge]: Bump `matter.js` to v.0.17.2.
+- [matterbridge]: Bump `marked` to v.18.0.5.
+- [matterbridge]: Bump `npm-check-updates` to v.22.2.3.
+- [matterbridge]: Bump `@types/node` to v.25.9.2.
+- [matterbridge]: Bump `@vitest/eslint-plugin` to v.1.6.19.
+- [matterbridge]: Bump `eslint-plugin-jsdoc` to v.63.0.2.
+- [matterbridge]: Bump `eslint-plugin-n` to v.18.1.0.
+- [matterbridge]: Bump `prettier` to v.3.8.4.
+- [matterbridge]: Bump `typescript-eslint` to v.8.61.0.
+- [matterbridge]: Remove npm-check-updates shx packages.
+
+- [frontend]: Bump `frontend` version to v.3.4.17.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `@rjsf` to v.6.6.1.
+- [frontend]: Bump `react` to v.19.2.7.
+- [frontend]: Bump `react-router` to v.7.17.0.
+- [frontend]: Bump `vite` to v.8.0.16.
+- [frontend]: Bump `vitest` to v.4.1.8.
+- [frontend]: Remove cross-env npm-check-updates shx packages.
+- [frontend]: Made dialogs full screen on mobile.
+
+### Fixed
+
+- [setCluster]: Allow partial in setCluster() ClusterType overload.
+- [powerSource]: Fix type of batPercentRemaining and batVoltage attributes in PowerSource enpoint helpers.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.8.0] - 2026-06-05
 
 ### Breaking changes
@@ -70,7 +130,7 @@ These classes will run as threads in the next releases:
 
 ### Development
 
-- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API.
+- [logger]: The `node-ansi-logger` package integrates now a chainable ANSI tagged template styling API. See matterbridge-mqtt plugin for an example.
 
 ### Added
 

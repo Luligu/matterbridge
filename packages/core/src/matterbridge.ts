@@ -23,8 +23,9 @@
  */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Matterbridge loaded.\u001B[40;0m');
 
 // @matter
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -34,6 +35,7 @@ import EventEmitter from 'node:events';
 import fs, { unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { type ProcessEventMap } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 
@@ -262,10 +264,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private systemCheckTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
-  private sigintHandler: NodeJS.SignalsListener | undefined;
-  private sigtermHandler: NodeJS.SignalsListener | undefined;
-  private exceptionHandler: NodeJS.UncaughtExceptionListener | undefined;
-  private rejectionHandler: NodeJS.UnhandledRejectionListener | undefined;
+  private sigintHandler: ((...args: ProcessEventMap['SIGINT']) => void) | undefined;
+  private sigtermHandler: ((...args: ProcessEventMap['SIGTERM']) => void) | undefined;
+  private exceptionHandler: ((...args: ProcessEventMap['uncaughtException']) => void) | undefined;
+  private rejectionHandler: ((...args: ProcessEventMap['unhandledRejection']) => void) | undefined;
 
   /** Matter environment default */
   private readonly environment = Environment.default;
@@ -2658,18 +2660,18 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
     this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
-    // Validate the passcode   
-    if(passcode < 0 || passcode > 99999999) {
+    // Validate the passcode
+    if (passcode < 0 || passcode > 99999999) {
       this.log.warn(`Invalid passcode ${passcode} for server node ${storeId}. Passcode must be between 0 and 99999999. Generating a random passcode...`);
       passcode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
     }
 
     // Validate the discriminator
-    if(discriminator < 0 || discriminator > 0xFFF) {
+    if (discriminator < 0 || discriminator > 0xfff) {
       this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
-    
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
@@ -2759,7 +2761,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         const pairingData = ManualPairingCodeCodec.decode(manualPairingCode);
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
-        this.log.notice(`Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`);
+        this.log.notice(
+          `Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`,
+        );
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned.`);
         this.advertisingNodes.delete(storeId);
@@ -3309,7 +3313,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     for (const sub of subscriptions) {
       if (device.hasAttributeServer(sub.cluster, sub.attribute)) {
         this.log.debug(`Subscribing to endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`);
-        await device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+        device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
           this.log.debug(
             `Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
           );
@@ -3322,7 +3326,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(
             `Subscribing to child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changes...`,
           );
-          await child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
+          child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
             this.log.debug(
               `Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
             );

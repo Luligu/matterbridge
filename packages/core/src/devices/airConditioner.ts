@@ -26,7 +26,7 @@ import { FanControl } from '@matter/types/clusters/fan-control';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 
 // Matterbridge
-import { airConditioner, powerSource } from '../matterbridgeDeviceTypes.js';
+import { powerSource, roomAirConditioner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 /**
@@ -121,7 +121,7 @@ export class AirConditioner extends MatterbridgeEndpoint {
       percentSetting = 0,
       percentCurrent = 0,
     } = options;
-    super([airConditioner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([roomAirConditioner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Air Conditioner');
     this.createDefaultPowerSourceWiredClusterServer();

@@ -84,7 +84,7 @@ describe('Matterbridge ' + NAME, () => {
     device = new Evse('EVSE Test Device', 'EVSE12456');
     expect(device).toBeDefined();
     expect(device.id).toBe('EVSETestDevice-EVSE12456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
     expect(device.hasClusterServer(EnergyEvseServer)).toBeTruthy();
     expect(device.hasClusterServer(EnergyEvseModeServer)).toBeTruthy();
     expect(device.hasClusterServer(TemperatureMeasurementServer)).toBeTruthy();
@@ -92,11 +92,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(ElectricalPowerMeasurementServer)).toBeFalsy();
     expect(device.hasClusterServer(ElectricalEnergyMeasurementServer)).toBeFalsy();
     expect(device.hasClusterServer(DeviceEnergyManagementServer)).toBeFalsy();
-    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
   });
 
   test('createDefaultEnergyEvseClusterServer argument normalization and chaining', () => {

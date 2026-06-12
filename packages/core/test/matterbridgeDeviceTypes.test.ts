@@ -11,15 +11,20 @@ import { jest } from '@jest/globals';
 import * as devices from '@matter/node/devices';
 // @matter endpoints
 import * as endpoints from '@matter/node/endpoints';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 import { setupTest } from '../src/jestutils/jestSetupTest.js';
 import {
   DeviceTypeDefinition,
+  getSupportedCluster,
+  getSupportedDeviceType,
+  supportedClusters,
+  supportedDeviceTypes,
   // Utility device types
   rootNode,
   powerSource,
-  OTARequestor,
-  OTAProvider,
+  otaRequestor,
+  otaProvider,
   bridgedNode,
   electricalSensor,
   deviceEnergyManagement,
@@ -29,16 +34,18 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / actuators
-  onOffOutlet,
-  dimmableOutlet,
-  onOffMountedSwitch,
-  dimmableMountedSwitch,
-  pumpDevice,
+  onOffPlugInUnit,
+  dimmablePlugInUnit,
+  mountedOnOffControl,
+  mountedDimmableLoadControl,
+  pump,
   waterValve,
   // Switches and Controls
-  onOffSwitch,
-  dimmableSwitch,
-  colorTemperatureSwitch,
+  onOffLightSwitch,
+  dimmerSwitch,
+  colorDimmerSwitch,
+  controlBridge,
+  pumpController,
   genericSwitch,
   // Sensors
   contactSensor,
@@ -48,22 +55,29 @@ import {
   pressureSensor,
   flowSensor,
   humiditySensor,
+  onOffSensor,
   smokeCoAlarm,
   airQualitySensor,
   waterFreezeDetector,
   waterLeakDetector,
   rainSensor,
   // Closures
-  doorLockDevice,
-  coverDevice,
+  doorLock,
+  doorLockController,
+  windowCovering,
+  windowCoveringController,
   // HVAC
-  thermostatDevice,
-  fanDevice,
+  thermostat,
+  thermostatController,
+  fan,
   airPurifier,
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
-  speakerDevice,
+  speaker,
+  contentApp,
+  castingVideoClient,
+  videoRemoteControl,
   // Generic Device Types
   modeSelect,
   aggregator,
@@ -72,7 +86,7 @@ import {
   roboticVacuumCleaner,
   laundryWasher,
   refrigerator,
-  airConditioner,
+  roomAirConditioner,
   temperatureControlledCabinetCooler,
   temperatureControlledCabinetHeater,
   dishwasher,
@@ -144,8 +158,8 @@ describe('Matterbridge device types', () => {
     // Utility device types (endpoints) - revision only
     { name: 'rootNode', device: rootNode, def: endpoints.RootEndpointDefinition },
     { name: 'powerSource', device: powerSource, def: endpoints.PowerSourceEndpointDefinition },
-    { name: 'OTARequestor', device: OTARequestor, def: endpoints.OtaRequestorEndpointDefinition },
-    { name: 'OTAProvider', device: OTAProvider, def: endpoints.OtaProviderEndpointDefinition },
+    { name: 'otaRequestor', device: otaRequestor, def: endpoints.OtaRequestorEndpointDefinition },
+    { name: 'otaProvider', device: otaProvider, def: endpoints.OtaProviderEndpointDefinition },
     { name: 'bridgedNode', device: bridgedNode, def: endpoints.BridgedNodeEndpointDefinition },
     { name: 'electricalSensor', device: electricalSensor, def: endpoints.ElectricalSensorEndpointDefinition },
     { name: 'deviceEnergyManagement', device: deviceEnergyManagement, def: endpoints.DeviceEnergyManagementEndpointDefinition },
@@ -157,17 +171,19 @@ describe('Matterbridge device types', () => {
     { name: 'extendedColorLight', device: extendedColorLight, def: devices.ExtendedColorLightDeviceDefinition },
 
     // Smart plugs / actuators
-    { name: 'onOffOutlet', device: onOffOutlet, def: devices.OnOffPlugInUnitDeviceDefinition },
-    { name: 'dimmableOutlet', device: dimmableOutlet, def: devices.DimmablePlugInUnitDeviceDefinition },
-    { name: 'onOffMountedSwitch', device: onOffMountedSwitch, def: devices.MountedOnOffControlDeviceDefinition },
-    { name: 'dimmableMountedSwitch', device: dimmableMountedSwitch, def: devices.MountedDimmableLoadControlDeviceDefinition },
-    { name: 'pumpDevice', device: pumpDevice, def: devices.PumpDeviceDefinition },
+    { name: 'onOffPlugInUnit', device: onOffPlugInUnit, def: devices.OnOffPlugInUnitDeviceDefinition },
+    { name: 'dimmablePlugInUnit', device: dimmablePlugInUnit, def: devices.DimmablePlugInUnitDeviceDefinition },
+    { name: 'mountedOnOffControl', device: mountedOnOffControl, def: devices.MountedOnOffControlDeviceDefinition },
+    { name: 'mountedDimmableLoadControl', device: mountedDimmableLoadControl, def: devices.MountedDimmableLoadControlDeviceDefinition },
+    { name: 'pump', device: pump, def: devices.PumpDeviceDefinition },
     { name: 'waterValve', device: waterValve, def: devices.WaterValveDeviceDefinition },
 
     // Switches and Controls
-    { name: 'onOffSwitch', device: onOffSwitch, def: devices.OnOffLightSwitchDeviceDefinition },
-    { name: 'dimmableSwitch', device: dimmableSwitch, def: devices.DimmerSwitchDeviceDefinition },
-    { name: 'colorTemperatureSwitch', device: colorTemperatureSwitch, def: devices.ColorDimmerSwitchDeviceDefinition },
+    { name: 'onOffLightSwitch', device: onOffLightSwitch, def: devices.OnOffLightSwitchDeviceDefinition },
+    { name: 'dimmerSwitch', device: dimmerSwitch, def: devices.DimmerSwitchDeviceDefinition },
+    { name: 'colorDimmerSwitch', device: colorDimmerSwitch, def: devices.ColorDimmerSwitchDeviceDefinition },
+    { name: 'controlBridge', device: controlBridge, def: devices.ControlBridgeDeviceDefinition },
+    { name: 'pumpController', device: pumpController, def: devices.PumpControllerDeviceDefinition },
     { name: 'genericSwitch', device: genericSwitch, def: devices.GenericSwitchDeviceDefinition },
 
     // Sensors
@@ -178,6 +194,7 @@ describe('Matterbridge device types', () => {
     { name: 'pressureSensor', device: pressureSensor, def: devices.PressureSensorDeviceDefinition },
     { name: 'flowSensor', device: flowSensor, def: devices.FlowSensorDeviceDefinition },
     { name: 'humiditySensor', device: humiditySensor, def: devices.HumiditySensorDeviceDefinition },
+    { name: 'onOffSensor', device: onOffSensor, def: devices.OnOffSensorDeviceDefinition },
     { name: 'smokeCoAlarm', device: smokeCoAlarm, def: devices.SmokeCoAlarmDeviceDefinition },
     { name: 'airQualitySensor', device: airQualitySensor, def: devices.AirQualitySensorDeviceDefinition },
     { name: 'waterFreezeDetector', device: waterFreezeDetector, def: devices.WaterFreezeDetectorDeviceDefinition },
@@ -185,18 +202,24 @@ describe('Matterbridge device types', () => {
     { name: 'rainSensor', device: rainSensor, def: devices.RainSensorDeviceDefinition },
 
     // Closures
-    { name: 'doorLockDevice', device: doorLockDevice, def: devices.DoorLockDeviceDefinition },
-    { name: 'coverDevice', device: coverDevice, def: devices.WindowCoveringDeviceDefinition },
+    { name: 'doorLock', device: doorLock, def: devices.DoorLockDeviceDefinition },
+    { name: 'doorLockController', device: doorLockController, def: devices.DoorLockControllerDeviceDefinition },
+    { name: 'windowCovering', device: windowCovering, def: devices.WindowCoveringDeviceDefinition },
+    { name: 'windowCoveringController', device: windowCoveringController, def: devices.WindowCoveringControllerDeviceDefinition },
 
     // HVAC
-    { name: 'thermostatDevice', device: thermostatDevice, def: devices.ThermostatDeviceDefinition },
-    { name: 'fanDevice', device: fanDevice, def: devices.FanDeviceDefinition },
+    { name: 'thermostat', device: thermostat, def: devices.ThermostatDeviceDefinition },
+    { name: 'thermostatController', device: thermostatController, def: devices.ThermostatControllerDeviceDefinition },
+    { name: 'fan', device: fan, def: devices.FanDeviceDefinition },
     { name: 'airPurifier', device: airPurifier, def: devices.AirPurifierDeviceDefinition },
 
     // Media
     { name: 'basicVideoPlayer', device: basicVideoPlayer, def: devices.BasicVideoPlayerDeviceDefinition },
     { name: 'castingVideoPlayer', device: castingVideoPlayer, def: devices.CastingVideoPlayerDeviceDefinition },
-    { name: 'speakerDevice', device: speakerDevice, def: devices.SpeakerDeviceDefinition },
+    { name: 'speaker', device: speaker, def: devices.SpeakerDeviceDefinition },
+    { name: 'contentApp', device: contentApp, def: devices.ContentAppDeviceDefinition },
+    { name: 'castingVideoClient', device: castingVideoClient, def: devices.CastingVideoClientDeviceDefinition },
+    { name: 'videoRemoteControl', device: videoRemoteControl, def: devices.VideoRemoteControlDeviceDefinition },
 
     // Generic Device Types
     { name: 'modeSelect', device: modeSelect, def: devices.ModeSelectDeviceDefinition },
@@ -207,7 +230,7 @@ describe('Matterbridge device types', () => {
     { name: 'roboticVacuumCleaner', device: roboticVacuumCleaner, def: devices.RoboticVacuumCleanerDeviceDefinition },
     { name: 'laundryWasher', device: laundryWasher, def: devices.LaundryWasherDeviceDefinition },
     { name: 'refrigerator', device: refrigerator, def: devices.RefrigeratorDeviceDefinition },
-    { name: 'airConditioner', device: airConditioner, def: devices.RoomAirConditionerDeviceDefinition },
+    { name: 'roomAirConditioner', device: roomAirConditioner, def: devices.RoomAirConditionerDeviceDefinition },
     { name: 'temperatureControlledCabinetCooler', device: temperatureControlledCabinetCooler, def: devices.TemperatureControlledCabinetDeviceDefinition },
     { name: 'temperatureControlledCabinetHeater', device: temperatureControlledCabinetHeater, def: devices.TemperatureControlledCabinetDeviceDefinition },
     { name: 'dishwasher', device: dishwasher, def: devices.DishwasherDeviceDefinition },
@@ -256,18 +279,34 @@ describe('Matterbridge device types', () => {
 
   test('DeviceTypeDefinition', () => {
     const dt = DeviceTypeDefinition({
-      name: 'MA-rootNode',
-      deviceName: 'Root Node',
+      name: 'RootNode',
       code: 0x0016,
       deviceClass: DeviceClasses.Node,
       deviceScope: DeviceScopes.Node,
       revision: 3,
     });
-    expect(dt.name).toBe('MA-rootNode');
-    expect(dt.deviceName).toBe('Root Node');
+    expect(dt.name).toBe('RootNode');
     expect(dt.code).toBe(0x0016);
     expect(dt.deviceClass).toBe(DeviceClasses.Node);
     expect(dt.deviceScope).toBe(DeviceScopes.Node);
     expect(dt.revision).toBe(3);
+  });
+
+  test('should get supported device types by string or number key', () => {
+    expect.hasAssertions();
+    expect(supportedDeviceTypes).toContain(rootNode);
+    expect(getSupportedDeviceType(rootNode.code)).toBe(rootNode);
+    expect(getSupportedDeviceType(rootNode.name)).toBe(rootNode);
+    expect(getSupportedDeviceType(0xffff)).toBeUndefined();
+    expect(getSupportedDeviceType('Unknown Device Type')).toBeUndefined();
+  });
+
+  test('should get supported clusters by string or number key', () => {
+    expect.hasAssertions();
+    expect(supportedClusters).toContain(OnOff);
+    expect(getSupportedCluster(OnOff.id)).toBe(OnOff);
+    expect(getSupportedCluster(OnOff.name)).toBe(OnOff);
+    expect(getSupportedCluster(0xffff)).toBeUndefined();
+    expect(getSupportedCluster('UnknownCluster')).toBeUndefined();
   });
 });

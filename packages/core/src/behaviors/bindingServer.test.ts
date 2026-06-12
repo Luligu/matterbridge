@@ -30,7 +30,7 @@ import {
 import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '../jestutils/jestSetupTest.js';
 import { BindingServer } from '../matter/behaviors.js';
 import { getClusterNameById } from '../matter/types.js';
-import { bridgedNode, occupancySensor, onOffLight, onOffOutlet, onOffSwitch } from '../matterbridgeDeviceTypes.js';
+import { bridgedNode, occupancySensor, onOffLight, onOffLightSwitch, onOffPlugInUnit } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { lowercaseFirstLetter } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';
@@ -74,10 +74,10 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Device type: onOffSwitch', async () => {
-    device = new MatterbridgeEndpoint(onOffSwitch, { id: 'onOffSwitch' });
+    device = new MatterbridgeEndpoint(onOffLightSwitch, { id: 'onOffSwitch' });
     expect(device).toBeDefined();
     device.behaviors.require(MatterbridgeBindingServer, {
-      clientList: [Identify.Cluster.id, OnOff.Cluster.id],
+      clientList: [Identify.id, OnOff.id],
     });
     device.behaviors.require(MatterbridgeIdentifyServer, {
       identifyTime: 5,
@@ -101,8 +101,8 @@ describe('Client clusters and behaviors', () => {
     expect(device.behaviors.supported['identify']).toBeDefined();
     expect(device.behaviors.supported['onOff']).toBeDefined();
     expect(device.stateOf(MatterbridgeIdentifyServer).identifyTime).toBe(5);
-    expect(device.stateOf(DescriptorServer).clientList).toContain(Identify.Cluster.id);
-    expect(device.stateOf(DescriptorServer).clientList).toContain(OnOff.Cluster.id);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(Identify.id);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(OnOff.id);
     await device.setStateOf(MatterbridgeBindingServer, { binding: [{ node: NodeId(1), endpoint: EndpointNumber(1) }] });
 
     Logger.get('client').notice('Device behaviors:\n', device);
@@ -278,7 +278,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('add onOffOutlet', async () => {
-    const endpoint = new MatterbridgeEndpoint(onOffOutlet, { id: 'OnOffOutlet' }).addRequiredClusters().addClusterClients([OccupancySensing.id]);
+    const endpoint = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'OnOffOutlet' }).addRequiredClusters().addClusterClients([OccupancySensing.id]);
     expect(endpoint).toBeDefined();
     expect(await matterbridge.aggregatorNode?.add(endpoint)).toBeDefined();
     await endpoint.construction.ready;

@@ -9,7 +9,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 
 // Frontend
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { MbfLsk } from '../utils/localStorage';
@@ -27,7 +27,7 @@ interface InstallProgressDialogProps {
 }
 
 export const InstallProgressDialog = ({ open, output, title, _command, _packageName, onInstall, onClose }: InstallProgressDialogProps) => {
-  const { installAutoExit, setInstallAutoExit } = useContext(UiContext);
+  const { installAutoExit, mobile, setInstallAutoExit } = useContext(UiContext);
   // Ref to access the log <ul> element for auto-scrolling.
   const endOfMessagesRef = useRef<HTMLLIElement>(null);
 
@@ -57,7 +57,16 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
         onClose();
       }}
       slotProps={{
-        paper: { sx: { width: '70vw', maxWidth: '70vw', height: '70vw', maxHeight: '70vh', overflow: 'hidden' } },
+        paper: {
+          sx: {
+            width: enableMobile && mobile ? '100vw' : '75vw',
+            maxWidth: enableMobile && mobile ? '100vw' : '75vw',
+            height: enableMobile && mobile ? '100vh' : '75vw',
+            maxHeight: enableMobile && mobile ? '100vh' : '75vh',
+            margin: enableMobile && mobile ? '0px' : undefined,
+            overflow: 'hidden',
+          },
+        },
       }}
     >
       <DialogTitle>

@@ -154,7 +154,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'disable',
       request: {},
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
@@ -178,7 +178,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'enableCharging',
       request,
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
@@ -252,7 +252,7 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
       command: 'changeToMode',
       request,
       cluster: EnergyEvseModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvseMode.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvseMode)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);

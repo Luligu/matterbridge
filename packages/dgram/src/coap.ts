@@ -236,12 +236,12 @@ export class Coap extends Multicast {
     let offset = 4;
 
     // Parse token if present.
-    let token = Buffer.alloc(0);
+    let token: Buffer = Buffer.alloc(0);
     if (tokenLength > 0) {
       if (msg.length < offset + tokenLength) {
         throw new Error('Message too short for the token length specified');
       }
-      token = msg.slice(offset, offset + tokenLength);
+      token = msg.subarray(offset, offset + tokenLength);
       offset += tokenLength;
     }
 
@@ -300,7 +300,7 @@ export class Coap extends Multicast {
       if (offset + length > msg.length) {
         throw new Error('Option length exceeds message length');
       }
-      const optionValue = msg.slice(offset, offset + length);
+      const optionValue = msg.subarray(offset, offset + length);
       offset += length;
 
       options.push({
@@ -310,7 +310,7 @@ export class Coap extends Multicast {
     }
 
     // Parse payload if any remains.
-    const payload = offset < msg.length ? msg.slice(offset) : undefined;
+    const payload = offset < msg.length ? msg.subarray(offset) : undefined;
 
     return {
       version,

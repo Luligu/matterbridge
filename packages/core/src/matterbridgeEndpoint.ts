@@ -26,8 +26,9 @@
 /* eslint-disable jsdoc/reject-function-type */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpoint loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpoint loaded.\u001B[40;0m');
 
 // @matter/general
 import { AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
@@ -59,12 +60,13 @@ import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-c
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
 import { SwitchServer } from '@matter/node/behaviors/switch';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 // @matter/types
-import { ClusterType, type ClusterTyping, getClusterNameById } from '@matter/types/cluster';
+import { type ClusterType, type ClusterTyping, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
@@ -94,7 +96,7 @@ import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/the
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
-import { Semtag } from '@matter/types/globals';
+import { MeasurementAccuracy, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { inspectError } from '@matterbridge/utils/error';
 import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
@@ -160,6 +162,7 @@ import {
   getDefaultPowerSourceWiredClusterServer,
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
+  getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   invokeBehaviorCommand,
   lowercaseFirstLetter,
@@ -344,7 +347,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
     // Convert the first DeviceTypeDefinition to an EndpointType.Options
     const deviceTypeDefinitionV8: EndpointType.Options = {
-      name: firstDefinition.name.replace('-', '_'),
+      name: firstDefinition.name,
       deviceType: firstDefinition.code,
       deviceRevision: firstDefinition.revision,
       // @ts-expect-error we don't import an entire module for DeviceClassification
@@ -464,9 +467,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * if(device.hasClusterServer(OnOffBehavior)) ...
    * if(device.hasClusterServer(OnOffServer)) ...
-   * if(device.hasClusterServer(OnOffCluster)) ...
-   * if(device.hasClusterServer(OnOff.Cluster)) ...
-   * if(device.hasClusterServer(OnOff.Cluster.id)) ...
+   * if(device.hasClusterServer(OnOff)) ...
+   * if(device.hasClusterServer(OnOff.id)) ...
    * if(device.hasClusterServer('OnOff')) ...
    * ```
    * The last has the advantage of being able to check for clusters without imports. Just use the name found in the Matter specs.
@@ -490,9 +492,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * if(device.hasAttributeServer(OnOffBehavior, 'onOff')) ...
    * if(device.hasAttributeServer(OnOffServer, 'onOff')) ...
-   * if(device.hasAttributeServer(OnOffCluster, 'onOff')) ...
-   * if(device.hasAttributeServer(OnOff.Cluster, 'onOff')) ...
-   * if(device.hasAttributeServer(OnOff.Cluster.id, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff, 'onOff')) ...
+   * if(device.hasAttributeServer(OnOff.id, 'onOff')) ...
    * if(device.hasAttributeServer('OnOff', 'onOff')) ...
    * ```
    * The last has the advantage of being able to check for clusters attributes without imports. Just use the names found in the Matter specs.
@@ -534,12 +535,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getAttribute(OnOffBehavior, 'onOff')
    * device.getAttribute(OnOffServer, 'onOff')
-   * device.getAttribute(OnOffCluster, 'onOff')
-   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff, 'onOff')
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute(OnOff.id, 'onOff')
    * device.getAttribute('OnOff', 'onOff')
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
@@ -549,9 +549,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Retrieves the value of the provided attribute from the given cluster.
    *
    * @param {ClusterType} cluster - The cluster to retrieve the attribute from.
-   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute to retrieve.
+   * @param {keyof ClusterAttributesOf<T>} attribute - The name of the attribute to retrieve.
    * @param {AnsiLogger} [log] - Optional logger for error and info messages.
-   * @returns {ClusterType.AttributeValues<T>[A] | undefined} The value of the attribute, or undefined if the attribute is not found.
+   * @returns {ClusterAttributesOf<T>[A] | undefined} The value of the attribute, or undefined if the attribute is not found.
    *
    * @example
    *
@@ -561,12 +561,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getAttribute(OnOffBehavior, 'onOff')
    * device.getAttribute(OnOffServer, 'onOff')
-   * device.getAttribute(OnOffCluster, 'onOff')
-   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff, 'onOff')
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute(OnOff.id, 'onOff')
    * device.getAttribute('OnOff', 'onOff')
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
@@ -588,12 +587,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getAttribute(OnOffBehavior, 'onOff')
    * device.getAttribute(OnOffServer, 'onOff')
-   * device.getAttribute(OnOffCluster, 'onOff')
-   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff, 'onOff')
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute(OnOff.id, 'onOff')
    * device.getAttribute('OnOff', 'onOff')
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
@@ -616,12 +614,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getAttribute(OnOffBehavior, 'onOff')
    * device.getAttribute(OnOffServer, 'onOff')
-   * device.getAttribute(OnOffCluster, 'onOff')
-   * device.getAttribute(OnOff.Cluster, 'onOff')
+   * device.getAttribute(OnOff, 'onOff')
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getAttribute(OnOff.Cluster.id, 'onOff')
+   * device.getAttribute(OnOff.id, 'onOff')
    * device.getAttribute('OnOff', 'onOff')
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
@@ -649,12 +646,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setAttribute(OnOffBehavior, 'onOff', true)
    * await device.setAttribute(OnOffServer, 'onOff', true)
-   * await device.setAttribute(OnOffCluster, 'onOff', true)
-   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute(OnOff.id, 'onOff', true)
    * await device.setAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
@@ -664,8 +660,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Sets the value of an attribute on a cluster server.
    *
    * @param {ClusterType} clusterId - The ID of the cluster.
-   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute.
-   * @param {ClusterType.AttributeValues<T>[A]} value - The value to set for the attribute.
+   * @param {keyof ClusterAttributesOf<T>} attribute - The name of the attribute.
+   * @param {ClusterAttributesOf<T>[A]} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging errors and information.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
    *
@@ -677,12 +673,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setAttribute(OnOffBehavior, 'onOff', true)
    * await device.setAttribute(OnOffServer, 'onOff', true)
-   * await device.setAttribute(OnOffCluster, 'onOff', true)
-   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute(OnOff.id, 'onOff', true)
    * await device.setAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
@@ -710,12 +705,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setAttribute(OnOffBehavior, 'onOff', true)
    * await device.setAttribute(OnOffServer, 'onOff', true)
-   * await device.setAttribute(OnOffCluster, 'onOff', true)
-   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute(OnOff.id, 'onOff', true)
    * await device.setAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
@@ -739,12 +733,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setAttribute(OnOffBehavior, 'onOff', true)
    * await device.setAttribute(OnOffServer, 'onOff', true)
-   * await device.setAttribute(OnOffCluster, 'onOff', true)
-   * await device.setAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.setAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.setAttribute(OnOff.id, 'onOff', true)
    * await device.setAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
@@ -776,12 +769,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.updateAttribute(OnOffBehavior, 'onOff', true)
    * await device.updateAttribute(OnOffServer, 'onOff', true)
-   * await device.updateAttribute(OnOffCluster, 'onOff', true)
-   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute(OnOff.id, 'onOff', true)
    * await device.updateAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
@@ -791,8 +783,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Update the value of an attribute on a cluster server only if the value is different.
    *
    * @param {ClusterType} cluster - The cluster to set the attribute on.
-   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute.
-   * @param {ClusterType.AttributeValues<T>[A]} value - The value to set for the attribute.
+   * @param {keyof ClusterAttributesOf<T>} attribute - The name of the attribute.
+   * @param {ClusterAttributesOf<T>[A]} value - The value to set for the attribute.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the update. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the attribute was successfully set.
    *
@@ -804,12 +796,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.updateAttribute(OnOffBehavior, 'onOff', true)
    * await device.updateAttribute(OnOffServer, 'onOff', true)
-   * await device.updateAttribute(OnOffCluster, 'onOff', true)
-   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute(OnOff.id, 'onOff', true)
    * await device.updateAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
@@ -837,12 +828,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.updateAttribute(OnOffBehavior, 'onOff', true)
    * await device.updateAttribute(OnOffServer, 'onOff', true)
-   * await device.updateAttribute(OnOffCluster, 'onOff', true)
-   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute(OnOff.id, 'onOff', true)
    * await device.updateAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
@@ -866,12 +856,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.updateAttribute(OnOffBehavior, 'onOff', true)
    * await device.updateAttribute(OnOffServer, 'onOff', true)
-   * await device.updateAttribute(OnOffCluster, 'onOff', true)
-   * await device.updateAttribute(OnOff.Cluster, 'onOff', true)
+   * await device.updateAttribute(OnOff, 'onOff', true)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.updateAttribute(OnOff.Cluster.id, 'onOff', true)
+   * await device.updateAttribute(OnOff.id, 'onOff', true)
    * await device.updateAttribute('OnOff', 'onOff', true)
    * ```
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
@@ -893,7 +882,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {keyof Behavior.StateOf<T>} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -901,15 +890,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOff, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -919,20 +907,20 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(
+  subscribeAttribute<T extends Behavior.Type, A extends keyof Behavior.StateOf<T>>(
     cluster: T,
     attribute: A,
     listener: (newValue: Behavior.StateOf<T>[A], oldValue: Behavior.StateOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
    * @param {ClusterType} cluster - The cluster to subscribe the attribute to.
-   * @param {keyof ClusterType.AttributeValues<T>} attribute - The name of the attribute to subscribe to.
-   * @param {(newValue: ClusterType.AttributeValues<T>[A], oldValue: ClusterType.AttributeValues<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
+   * @param {keyof ClusterAttributesOf<T>} attribute - The name of the attribute to subscribe to.
+   * @param {(newValue: ClusterAttributesOf<T>[A], oldValue: ClusterAttributesOf<T>[A], context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -940,15 +928,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOff, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -958,12 +945,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
+  subscribeAttribute<T extends ClusterType, A extends keyof ClusterAttributesOf<T>>(
     cluster: T,
     attribute: A,
     listener: (newValue: ClusterAttributesOf<T>[A], oldValue: ClusterAttributesOf<T>[A], context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -971,7 +958,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -979,15 +966,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOff, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -997,13 +983,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute(
+  subscribeAttribute(
     cluster: ClusterId | string,
     attribute: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean>;
+  ): MatterbridgeEndpoint;
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -1011,7 +997,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} attribute - The name of the attribute to subscribe to.
    * @param {(newValue: any, oldValue: any, context: ActionContext) => void} listener - A callback function that will be called when the attribute value changes. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
-   * @returns {Promise<boolean>} - A boolean indicating whether the subscription was successful.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
    *
    * @example
    *
@@ -1019,15 +1005,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * Typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffServer, 'onOff', listener)
-   * await device.subscribeAttribute(OnOffCluster, 'onOff', listener)
-   * await device.subscribeAttribute(OnOff.Cluster, 'onOff', listener)
+   * device.subscribeAttribute(OnOffBehavior, 'onOff', listener)
+   * device.subscribeAttribute(OnOffServer, 'onOff', listener)
+   * device.subscribeAttribute(OnOff, 'onOff', listener)
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.subscribeAttribute(OnOff.Cluster.id, 'onOff', listener)
-   * await device.subscribeAttribute('OnOff', 'onOff', listener)
+   * device.subscribeAttribute(OnOff.id, 'onOff', listener)
+   * device.subscribeAttribute('OnOff', 'onOff', listener)
    * ```
    * The last has the advantage of being able to subscribe to cluster attributes without imports. Just use the names found in the Matter specs.
    *
@@ -1037,14 +1022,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `oldValue`: The old value of the attribute.
    * - `context`: The action context, which includes information about the action that triggered the change. For locally generated changes, Matter.js provides a local actor context where `context.fabric === undefined`; `context.offline === true` is still available but deprecated upstream.
    */
-  async subscribeAttribute(
+  subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     attribute: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
-  ): Promise<boolean> {
-    return await subscribeAttribute(this, cluster, attribute, listener, log);
+  ): MatterbridgeEndpoint {
+    return subscribeAttribute(this, cluster, attribute, listener, log);
   }
   /* eslint-enable @typescript-eslint/unified-signatures */
 
@@ -1068,12 +1053,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setCluster(OnOffBehavior, { onOff: true })
    * await device.setCluster(OnOffServer, { onOff: true })
-   * await device.setCluster(OnOffCluster, { onOff: true })
-   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * await device.setCluster(OnOff, { onOff: true })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster(OnOff.id, { onOff: true })
    * await device.setCluster('OnOff', { onOff: true })
    * ```
    */
@@ -1082,7 +1066,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Sets the state of the provided cluster on a given endpoint.
    *
    * @param {ClusterType} cluster - The cluster to set.
-   * @param {ClusterType.AttributeValues<T>} value - The state to set for the cluster.
+   * @param {Partial<ClusterAttributesOf<T>>} value - The partial state to set for the cluster.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the set. Errors are logged to the endpoint logger.
    * @returns {Promise<boolean>} - A promise that resolves to a boolean indicating whether the cluster was successfully set.
    *
@@ -1098,17 +1082,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setCluster(OnOffBehavior, { onOff: true })
    * await device.setCluster(OnOffServer, { onOff: true })
-   * await device.setCluster(OnOffCluster, { onOff: true })
-   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * await device.setCluster(OnOff, { onOff: true })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster(OnOff.id, { onOff: true })
    * await device.setCluster('OnOff', { onOff: true })
    * ```
    */
   // eslint-disable-next-line @typescript-eslint/unified-signatures
-  async setCluster<T extends ClusterType>(cluster: T, value: ClusterAttributesOf<T>, log?: AnsiLogger): Promise<boolean>;
+  async setCluster<T extends ClusterType>(cluster: T, value: Partial<ClusterAttributesOf<T>>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
    *
@@ -1129,12 +1112,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setCluster(OnOffBehavior, { onOff: true })
    * await device.setCluster(OnOffServer, { onOff: true })
-   * await device.setCluster(OnOffCluster, { onOff: true })
-   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * await device.setCluster(OnOff, { onOff: true })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster(OnOff.id, { onOff: true })
    * await device.setCluster('OnOff', { onOff: true })
    * ```
    */
@@ -1159,12 +1141,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * await device.setCluster(OnOffBehavior, { onOff: true })
    * await device.setCluster(OnOffServer, { onOff: true })
-   * await device.setCluster(OnOffCluster, { onOff: true })
-   * await device.setCluster(OnOff.Cluster, { onOff: true })
+   * await device.setCluster(OnOff, { onOff: true })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.setCluster(OnOff.Cluster.id, { onOff: true })
+   * await device.setCluster(OnOff.id, { onOff: true })
    * await device.setCluster('OnOff', { onOff: true })
    * ```
    */
@@ -1195,12 +1176,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getCluster(OnOffBehavior)
    * device.getCluster(OnOffServer)
-   * device.getCluster(OnOffCluster)
-   * device.getCluster(OnOff.Cluster)
+   * device.getCluster(OnOff)
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster(OnOff.id)
    * device.getCluster('OnOff')
    * ```
    */
@@ -1210,7 +1190,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {ClusterType} cluster - The cluster to retrieve the state from.
    * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
-   * @returns {ClusterType.AttributeValues<T> | undefined} The state of the cluster, or undefined if the cluster is not found.
+   * @returns {ClusterAttributesOf<T> | undefined} The state of the cluster, or undefined if the cluster is not found.
    *
    * @remarks Requires matterbridge version 3.6.0 or higher.
    *
@@ -1224,12 +1204,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getCluster(OnOffBehavior)
    * device.getCluster(OnOffServer)
-   * device.getCluster(OnOffCluster)
-   * device.getCluster(OnOff.Cluster)
+   * device.getCluster(OnOff)
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster(OnOff.id)
    * device.getCluster('OnOff')
    * ```
    */
@@ -1253,12 +1232,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getCluster(OnOffBehavior)
    * device.getCluster(OnOffServer)
-   * device.getCluster(OnOffCluster)
-   * device.getCluster(OnOff.Cluster)
+   * device.getCluster(OnOff)
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster(OnOff.id)
    * device.getCluster('OnOff')
    * ```
    */
@@ -1282,12 +1260,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```typescript
    * device.getCluster(OnOffBehavior)
    * device.getCluster(OnOffServer)
-   * device.getCluster(OnOffCluster)
-   * device.getCluster(OnOff.Cluster)
+   * device.getCluster(OnOff)
    * ```
    * Not typed overloads:
    * ```typescript
-   * device.getCluster(OnOff.Cluster.id)
+   * device.getCluster(OnOff.id)
    * device.getCluster('OnOff')
    * ```
    */
@@ -1314,11 +1291,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Typed overloads:
    * ```typescript
    * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
-   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch, 'initialPress', { newPosition: 1 })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 })
    * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
    * ```
    * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
@@ -1340,11 +1317,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Typed overloads:
    * ```typescript
    * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
-   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch, 'initialPress', { newPosition: 1 })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 })
    * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
    * ```
    * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
@@ -1367,11 +1344,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Typed overloads:
    * ```typescript
    * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
-   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch, 'initialPress', { newPosition: 1 })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 })
    * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
    * ```
    * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
@@ -1398,11 +1375,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Typed overloads:
    * ```typescript
    * await device.triggerEvent(SwitchServer, 'initialPress', { newPosition: 1 })
-   * await device.triggerEvent(Switch.Cluster, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch, 'initialPress', { newPosition: 1 })
    * ```
    * Not typed overloads:
    * ```typescript
-   * await device.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 })
+   * await device.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 })
    * await device.triggerEvent('Switch', 'initialPress', { newPosition: 1 })
    * ```
    * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
@@ -1711,7 +1688,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceType: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
-    let child = this.getChildEndpointByName(endpointName);
+    let child = this.getChildEndpointById(endpointName);
     if (child) {
       this.log.debug(`****- endpoint ${CYAN}${endpointName}${db} already added!`);
       alreadyAdded = true;
@@ -1777,7 +1754,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): MatterbridgeEndpoint {
     this.log.debug(`addChildDeviceTypeWithClusterServer: ${CYAN}${endpointName}${db}`);
     let alreadyAdded = false;
-    let child = this.getChildEndpointByName(endpointName);
+    let child = this.getChildEndpointById(endpointName);
     if (child) {
       this.log.debug(`****- endpoint ${CYAN}${endpointName}${db} already added!`);
       alreadyAdded = true;
@@ -1913,8 +1890,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       clusterServersId: [],
     };
     Object.keys(device.behaviors.supported).forEach((behaviorName) => {
-      if (behaviorName === 'bridgedDeviceBasicInformation') serialized.clusterServersId.push(BridgedDeviceBasicInformation.Cluster.id);
-      if (behaviorName === 'powerSource') serialized.clusterServersId.push(PowerSource.Cluster.id);
+      if (behaviorName === 'bridgedDeviceBasicInformation') serialized.clusterServersId.push(BridgedDeviceBasicInformation.id);
+      if (behaviorName === 'powerSource') serialized.clusterServersId.push(PowerSource.id);
       // serialized.clusterServersId.push(this.behaviors.supported[behaviorName]cluster.id);
     });
     return serialized;
@@ -1937,7 +1914,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     device.productId = serializedDevice.productId;
     device.productName = serializedDevice.productName;
     for (const clusterId of serializedDevice.clusterServersId) {
-      if (clusterId === BridgedDeviceBasicInformation.Cluster.id)
+      if (clusterId === BridgedDeviceBasicInformation.id)
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
           serializedDevice.deviceName,
           serializedDevice.serialNumber,
@@ -1945,7 +1922,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           serializedDevice.vendorName ?? 'Matterbridge',
           serializedDevice.productName ?? 'Matterbridge device',
         );
-      else if (clusterId === PowerSource.Cluster.id) device.createDefaultPowerSourceWiredClusterServer();
+      else if (clusterId === PowerSource.id) device.createDefaultPowerSourceWiredClusterServer();
       // else addClusterServerFromList(device, [clusterId]);
     }
     return device;
@@ -1999,9 +1976,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source replaceable battery cluster server.
    *
-   * @param {number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+   * @param {number | null} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} batVoltage - The battery voltage (default: 1500).
+   * @param {number | null} batVoltage - The battery voltage (default: 1500).
    * @param {string} batReplacementDescription - The description of the battery replacement (default: 'Battery type').
    * @param {number} batQuantity - The quantity of the battery (default: 1).
    * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.UserReplaceable).
@@ -2015,9 +1992,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - batQuantity: The quantity of the battery is a fixed attribute that indicates how many batteries are present in the device.
    */
   createDefaultPowerSourceReplaceableBatteryClusterServer(
-    batPercentRemaining: number = 100,
+    batPercentRemaining: number | null = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: number = 1500,
+    batVoltage: number | null = 1500,
     batReplacementDescription: string = 'Battery type',
     batQuantity: number = 1,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.UserReplaceable,
@@ -2032,9 +2009,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source rechargeable battery cluster server.
    *
-   * @param {number} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
+   * @param {number | null} [batPercentRemaining] - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {number} [batVoltage] - The battery voltage in mV (default: 1500).
+   * @param {number | null} [batVoltage] - The battery voltage in mV (default: 1500).
    * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -2044,9 +2021,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(
-    batPercentRemaining: number = 100,
+    batPercentRemaining: number | null = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: number = 1500,
+    batVoltage: number | null = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
     this.behaviors.require(
@@ -2747,8 +2724,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async configureColorControlMode(colorMode: ColorControl.ColorMode) {
     if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
-      await this.setAttribute(ColorControl.Cluster.id, 'colorMode', colorMode, this.log);
-      await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode as unknown as ColorControl.EnhancedColorMode, this.log);
+      await this.setAttribute(ColorControl.id, 'colorMode', colorMode, this.log);
+      await this.setAttribute(ColorControl.id, 'enhancedColorMode', colorMode as unknown as ColorControl.EnhancedColorMode, this.log);
     }
   }
 
@@ -2762,12 +2739,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   async configureEnhancedColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
     if (isValidNumber(colorMode, ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation, ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation)) {
       await this.setAttribute(
-        ColorControl.Cluster.id,
+        ColorControl.id,
         'colorMode',
         colorMode === ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation ? ColorControl.ColorMode.CurrentHueAndCurrentSaturation : colorMode,
         this.log,
       );
-      await this.setAttribute(ColorControl.Cluster.id, 'enhancedColorMode', colorMode, this.log);
+      await this.setAttribute(ColorControl.id, 'enhancedColorMode', colorMode, this.log);
     }
   }
 
@@ -2865,11 +2842,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    */
   async setWindowCoveringTargetAsCurrentAndStopped() {
-    const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', this.log);
+    const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
     if (isValidNumber(position, 0, 10000)) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', position, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
       await this.setAttribute(
-        WindowCovering.Cluster.id,
+        WindowCovering,
         'operationalStatus',
         {
           global: WindowCovering.MovementStatus.Stopped,
@@ -2880,10 +2857,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       );
     }
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
-    if (this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
-      const position = this.getAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', this.log);
+    if (this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+      const position = this.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths', this.log);
       if (isValidNumber(position, 0, 10000)) {
-        await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', position, this.log);
+        await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', position, this.log);
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
@@ -2897,10 +2874,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    */
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', current, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', target, this.log);
+    await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
+    await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
     await this.setAttribute(
-      WindowCovering.Cluster.id,
+      WindowCovering,
       'operationalStatus',
       {
         global: status,
@@ -2919,7 +2896,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
     await this.setAttribute(
-      WindowCovering.Cluster.id,
+      WindowCovering,
       'operationalStatus',
       {
         global: status,
@@ -2937,7 +2914,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {WindowCovering.MovementStatus | undefined} The movement status of the window covering, or undefined if not available.
    */
   getWindowCoveringStatus(): WindowCovering.MovementStatus | undefined {
-    const status = this.getAttribute(WindowCovering.Cluster.id, 'operationalStatus', this.log);
+    const status = this.getAttribute(WindowCovering, 'operationalStatus', this.log);
     if (isValidObject(status, 3) && 'global' in status && typeof status.global === 'number') {
       this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
       return status.global;
@@ -2951,12 +2928,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [tiltPosition] - The tilt position to set, specified as a number.
    */
   async setWindowCoveringTargetAndCurrentPosition(liftPosition: number, tiltPosition?: number) {
-    await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionLiftPercent100ths', liftPosition, this.log);
-    await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionLiftPercent100ths', liftPosition, this.log);
+    await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', liftPosition, this.log);
+    await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', liftPosition, this.log);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
-    if (tiltPosition && this.hasAttributeServer(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths')) {
-      await this.setAttribute(WindowCovering.Cluster.id, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
-      await this.setAttribute(WindowCovering.Cluster.id, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
+    if (tiltPosition && this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+      await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${tiltPosition} and targetPositionTiltPercent100ths: ${tiltPosition}.`);
     }
   }
@@ -3966,57 +3943,57 @@ export class MatterbridgeEndpoint extends Endpoint {
       return false;
     }
     if (['Single', 'Double', 'Long'].includes(event)) {
-      if (!this.hasClusterServer(Switch.Cluster.id) || (this.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).momentarySwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).momentarySwitch === false) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with MomentarySwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }
       if (event === 'Single') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.SinglePress${db}`);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 0, log);
         if (featuresFor(this, 'Switch').momentarySwitchRelease) {
-          await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-          await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-          await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
+          await this.triggerEvent(Switch.id, 'shortRelease', { previousPosition: 1 }, log);
+          await this.setAttribute(Switch.id, 'currentPosition', 0, log);
+          await this.triggerEvent(Switch.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 1 }, log);
         }
       }
       if (event === 'Double') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.DoublePress${db}`);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.triggerEvent(Switch.Cluster.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'shortRelease', { previousPosition: 1 }, log);
-        await this.triggerEvent(Switch.Cluster.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 }, log);
+        await this.triggerEvent(Switch.id, 'multiPressOngoing', { newPosition: 1, currentNumberOfPressesCounted: 2 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.id, 'shortRelease', { previousPosition: 1 }, log);
+        await this.triggerEvent(Switch.id, 'multiPressComplete', { previousPosition: 1, totalNumberOfPressesCounted: 2 }, log);
       }
       if (event === 'Long') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.LongPress${db}`);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        await this.triggerEvent(Switch.Cluster.id, 'initialPress', { newPosition: 1 }, log);
-        await this.triggerEvent(Switch.Cluster.id, 'longPress', { newPosition: 1 }, log);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'longRelease', { previousPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.id, 'initialPress', { newPosition: 1 }, log);
+        await this.triggerEvent(Switch.id, 'longPress', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.id, 'longRelease', { previousPosition: 1 }, log);
       }
     }
     if (['Press', 'Release'].includes(event)) {
-      if (!this.hasClusterServer(Switch.Cluster.id) || (this.getAttribute(Switch.Cluster.id, 'featureMap') as Record<string, boolean>).latchingSwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).latchingSwitch === false) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }
       if (event === 'Press') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Press${db}`);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 1, log);
-        await this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 1 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 1, log);
+        await this.triggerEvent(Switch.id, 'switchLatched', { newPosition: 1 }, log);
       }
       if (event === 'Release') {
         log?.info(`${db}Trigger endpoint ${or}${this.id}:${this.number}${db} event ${hk}Switch.Release${db}`);
-        await this.setAttribute(Switch.Cluster.id, 'currentPosition', 0, log);
-        await this.triggerEvent(Switch.Cluster.id, 'switchLatched', { newPosition: 0 }, log);
+        await this.setAttribute(Switch.id, 'currentPosition', 0, log);
+        await this.triggerEvent(Switch.id, 'switchLatched', { newPosition: 0 }, log);
       }
     }
     return true;
@@ -4212,6 +4189,21 @@ export class MatterbridgeEndpoint extends Endpoint {
       OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared),
       getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax),
     );
+    return this;
+  }
+
+  /**
+   * Creates a default SoilMeasurement cluster server.
+   *
+   * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percentage x 100. Default is null.
+   * @param {MeasurementAccuracy} soilMoistureMeasurementLimits - The measurement limits for the soil moisture measurement. Default is a range of 0% to 100% with an accuracy of 1%.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks The default value for the soil moisture measurement is null, indicating that the measurement is invalid.
+   * The soil moisture measurement limits are set to a range of 0% to 100% with an accuracy of 1%, which is a common configuration for soil moisture sensors.
+   */
+  createDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue: number | null = null, soilMoistureMeasurementLimits?: MeasurementAccuracy): this {
+    this.behaviors.require(SoilMeasurementServer, getDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue, soilMoistureMeasurementLimits));
     return this;
   }
 

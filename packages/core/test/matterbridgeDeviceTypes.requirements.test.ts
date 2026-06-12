@@ -13,8 +13,8 @@ import {
   // Utility
   rootNode,
   powerSource,
-  OTARequestor,
-  OTAProvider,
+  otaRequestor,
+  otaProvider,
   bridgedNode,
   electricalSensor,
   deviceEnergyManagement,
@@ -24,16 +24,18 @@ import {
   colorTemperatureLight,
   extendedColorLight,
   // Smart plugs / actuators
-  onOffOutlet,
-  dimmableOutlet,
-  onOffMountedSwitch,
-  dimmableMountedSwitch,
-  pumpDevice,
+  onOffPlugInUnit,
+  dimmablePlugInUnit,
+  mountedOnOffControl,
+  mountedDimmableLoadControl,
+  pump,
   waterValve,
   // Switches & controls
-  onOffSwitch,
-  dimmableSwitch,
-  colorTemperatureSwitch,
+  onOffLightSwitch,
+  dimmerSwitch,
+  colorDimmerSwitch,
+  controlBridge,
+  pumpController,
   genericSwitch,
   // Sensors
   contactSensor,
@@ -43,22 +45,29 @@ import {
   pressureSensor,
   flowSensor,
   humiditySensor,
+  onOffSensor,
   smokeCoAlarm,
   airQualitySensor,
   waterFreezeDetector,
   waterLeakDetector,
   rainSensor,
   // Closures
-  doorLockDevice,
-  coverDevice,
+  doorLock,
+  doorLockController,
+  windowCovering,
+  windowCoveringController,
   // HVAC
-  thermostatDevice,
-  fanDevice,
+  thermostat,
+  thermostatController,
+  fan,
   airPurifier,
   // Media
   basicVideoPlayer,
   castingVideoPlayer,
-  speakerDevice,
+  speaker,
+  contentApp,
+  castingVideoClient,
+  videoRemoteControl,
   // Generic device types
   modeSelect,
   aggregator,
@@ -67,7 +76,7 @@ import {
   roboticVacuumCleaner,
   laundryWasher,
   refrigerator,
-  airConditioner,
+  roomAirConditioner,
   temperatureControlledCabinetCooler,
   temperatureControlledCabinetHeater,
   dishwasher,
@@ -128,8 +137,8 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   // Utility endpoint types (use endpoints definitions)
   { name: 'rootNode', mb: rootNode, md: endpoints.RootEndpointDefinition },
   { name: 'powerSource', mb: powerSource, md: endpoints.PowerSourceEndpointDefinition },
-  { name: 'OTARequestor', mb: OTARequestor, md: endpoints.OtaRequestorEndpointDefinition },
-  { name: 'OTAProvider', mb: OTAProvider, md: endpoints.OtaProviderEndpointDefinition },
+  { name: 'otaRequestor', mb: otaRequestor, md: endpoints.OtaRequestorEndpointDefinition },
+  { name: 'otaProvider', mb: otaProvider, md: endpoints.OtaProviderEndpointDefinition },
   { name: 'bridgedNode', mb: bridgedNode, md: endpoints.BridgedNodeEndpointDefinition },
   { name: 'electricalSensor', mb: electricalSensor, md: endpoints.ElectricalSensorEndpointDefinition },
   { name: 'deviceEnergyManagement', mb: deviceEnergyManagement, md: endpoints.DeviceEnergyManagementEndpointDefinition },
@@ -143,17 +152,19 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'extendedColorLight', mb: extendedColorLight, md: devices.ExtendedColorLightDeviceDefinition },
 
   // Smart plugs / outlets / mounted controls
-  { name: 'onOffOutlet', mb: onOffOutlet, md: devices.OnOffPlugInUnitDeviceDefinition },
-  { name: 'dimmableOutlet', mb: dimmableOutlet, md: devices.DimmablePlugInUnitDeviceDefinition },
-  { name: 'onOffMountedSwitch', mb: onOffMountedSwitch, md: devices.MountedOnOffControlDeviceDefinition },
-  { name: 'dimmableMountedSwitch', mb: dimmableMountedSwitch, md: devices.MountedDimmableLoadControlDeviceDefinition },
-  { name: 'pumpDevice', mb: pumpDevice, md: devices.PumpDeviceDefinition },
+  { name: 'onOffPlugInUnit', mb: onOffPlugInUnit, md: devices.OnOffPlugInUnitDeviceDefinition },
+  { name: 'dimmablePlugInUnit', mb: dimmablePlugInUnit, md: devices.DimmablePlugInUnitDeviceDefinition },
+  { name: 'mountedOnOffControl', mb: mountedOnOffControl, md: devices.MountedOnOffControlDeviceDefinition },
+  { name: 'mountedDimmableLoadControl', mb: mountedDimmableLoadControl, md: devices.MountedDimmableLoadControlDeviceDefinition },
+  { name: 'pump', mb: pump, md: devices.PumpDeviceDefinition },
   { name: 'waterValve', mb: waterValve, md: devices.WaterValveDeviceDefinition },
 
   // Switches & controls
-  { name: 'onOffSwitch', mb: onOffSwitch, md: devices.OnOffLightSwitchDeviceDefinition },
-  { name: 'dimmableSwitch', mb: dimmableSwitch, md: devices.DimmerSwitchDeviceDefinition },
-  { name: 'colorTemperatureSwitch', mb: colorTemperatureSwitch, md: devices.ColorDimmerSwitchDeviceDefinition },
+  { name: 'onOffLightSwitch', mb: onOffLightSwitch, md: devices.OnOffLightSwitchDeviceDefinition },
+  { name: 'dimmerSwitch', mb: dimmerSwitch, md: devices.DimmerSwitchDeviceDefinition },
+  { name: 'colorDimmerSwitch', mb: colorDimmerSwitch, md: devices.ColorDimmerSwitchDeviceDefinition },
+  { name: 'controlBridge', mb: controlBridge, md: devices.ControlBridgeDeviceDefinition },
+  { name: 'pumpController', mb: pumpController, md: devices.PumpControllerDeviceDefinition },
   { name: 'genericSwitch', mb: genericSwitch, md: devices.GenericSwitchDeviceDefinition },
 
   // Sensors
@@ -164,6 +175,7 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'pressureSensor', mb: pressureSensor, md: devices.PressureSensorDeviceDefinition },
   { name: 'flowSensor', mb: flowSensor, md: devices.FlowSensorDeviceDefinition },
   { name: 'humiditySensor', mb: humiditySensor, md: devices.HumiditySensorDeviceDefinition },
+  { name: 'onOffSensor', mb: onOffSensor, md: devices.OnOffSensorDeviceDefinition },
   { name: 'smokeCoAlarm', mb: smokeCoAlarm, md: devices.SmokeCoAlarmDeviceDefinition },
   { name: 'airQualitySensor', mb: airQualitySensor, md: devices.AirQualitySensorDeviceDefinition },
   { name: 'waterFreezeDetector', mb: waterFreezeDetector, md: devices.WaterFreezeDetectorDeviceDefinition },
@@ -171,18 +183,24 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'rainSensor', mb: rainSensor, md: devices.RainSensorDeviceDefinition },
 
   // Closures
-  { name: 'doorLockDevice', mb: doorLockDevice, md: devices.DoorLockDeviceDefinition },
-  { name: 'coverDevice', mb: coverDevice, md: devices.WindowCoveringDeviceDefinition },
+  { name: 'doorLock', mb: doorLock, md: devices.DoorLockDeviceDefinition },
+  { name: 'doorLockController', mb: doorLockController, md: devices.DoorLockControllerDeviceDefinition },
+  { name: 'windowCovering', mb: windowCovering, md: devices.WindowCoveringDeviceDefinition },
+  { name: 'windowCoveringController', mb: windowCoveringController, md: devices.WindowCoveringControllerDeviceDefinition },
 
   // HVAC
-  { name: 'thermostatDevice', mb: thermostatDevice, md: devices.ThermostatDeviceDefinition },
-  { name: 'fanDevice', mb: fanDevice, md: devices.FanDeviceDefinition },
+  { name: 'thermostat', mb: thermostat, md: devices.ThermostatDeviceDefinition },
+  { name: 'thermostatController', mb: thermostatController, md: devices.ThermostatControllerDeviceDefinition },
+  { name: 'fan', mb: fan, md: devices.FanDeviceDefinition },
   { name: 'airPurifier', mb: airPurifier, md: devices.AirPurifierDeviceDefinition },
 
   // Media
   { name: 'basicVideoPlayer', mb: basicVideoPlayer, md: devices.BasicVideoPlayerDeviceDefinition },
   { name: 'castingVideoPlayer', mb: castingVideoPlayer, md: devices.CastingVideoPlayerDeviceDefinition },
-  { name: 'speakerDevice', mb: speakerDevice, md: devices.SpeakerDeviceDefinition },
+  { name: 'speaker', mb: speaker, md: devices.SpeakerDeviceDefinition },
+  { name: 'contentApp', mb: contentApp, md: devices.ContentAppDeviceDefinition },
+  { name: 'castingVideoClient', mb: castingVideoClient, md: devices.CastingVideoClientDeviceDefinition },
+  { name: 'videoRemoteControl', mb: videoRemoteControl, md: devices.VideoRemoteControlDeviceDefinition },
 
   // Generic device types
   { name: 'modeSelect', mb: modeSelect, md: devices.ModeSelectDeviceDefinition },
@@ -191,7 +209,7 @@ const entries: Array<{ name: string; mb: any; md: any }> = [
   { name: 'roboticVacuumCleaner', mb: roboticVacuumCleaner, md: devices.RoboticVacuumCleanerDeviceDefinition },
   { name: 'laundryWasher', mb: laundryWasher, md: devices.LaundryWasherDeviceDefinition },
   { name: 'refrigerator', mb: refrigerator, md: devices.RefrigeratorDeviceDefinition },
-  { name: 'airConditioner', mb: airConditioner, md: devices.RoomAirConditionerDeviceDefinition },
+  { name: 'roomAirConditioner', mb: roomAirConditioner, md: devices.RoomAirConditionerDeviceDefinition },
   { name: 'temperatureControlledCabinetCooler', mb: temperatureControlledCabinetCooler, md: devices.TemperatureControlledCabinetDeviceDefinition },
   { name: 'temperatureControlledCabinetHeater', mb: temperatureControlledCabinetHeater, md: devices.TemperatureControlledCabinetDeviceDefinition },
   { name: 'dishwasher', mb: dishwasher, md: devices.DishwasherDeviceDefinition },
@@ -326,29 +344,6 @@ describe('Matterbridge device cluster mappings', () => {
       'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
       'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
-      // TODO: onOffSwitch / dimmableSwitch / colorTemperatureSwitch expose client clusters also as server clusters for Apple Home compatibility.
-      //       The following plugins rely on these device types (only .code is accessed, no cluster-list reads):
-      //
-      //       Plugin                              File                   Device type(s)              Usage
-      //       ----------------------------------  ---------------------  --------------------------  ---------------------------------------------------
-      //       matterbridge-security               module.ts:112          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
-      //       matterbridge-example-dyn-platform   module.ts:428          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
-      //       matterbridge-webhooks               module.ts:125          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode])
-      //       matterbridge-zigbee2mqtt            entity.ts:1009         onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, powerSource])
-      //       matterbridge-zigbee2mqtt            entity.ts:1062         onOffSwitch                 deviceType = onOffSwitch  (selection)
-      //       matterbridge-zigbee2mqtt            entity.ts:1275         onOffSwitch                 deviceType: onOffSwitch   (feature map entry)
-      //       matterbridge-zigbee2mqtt            entity.ts:1276         dimmableSwitch              deviceType: dimmableSwitch (feature map entry)
-      //       matterbridge-zigbee2mqtt            entity.ts:1277-1279    colorTemperatureSwitch      deviceType: colorTemperatureSwitch (feature map entries)
-      //       matterbridge-zigbee2mqtt            entity.ts:1669         onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
-      //       matterbridge-zigbee2mqtt            entity.ts:1670         dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:992   onOffSwitch, dimmableSwitch deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:993   onOffSwitch, colorTemperatureSwitch     deviceTypesMap .code comparisons
-      //       matterbridge-hass                   mutableDevice.ts:994   dimmableSwitch, colorTemperatureSwitch  deviceTypesMap .code comparisons
-      //       matterbridge-shelly                 platform.ts:875        onOffSwitch                 deviceType = onOffSwitch  (selection)
-      //       matterbridge-test                   module.ts:144          onOffSwitch                 new MatterbridgeEndpoint([onOffSwitch, bridgedNode, ...])
-      'onOffSwitch: required mismatch -> mb=[3,6] md=[3]', // Added extraneous server clusters for Apple Home compatibility
-      'dimmableSwitch: required mismatch -> mb=[3,6,8] md=[3]', // Added extraneous server clusters for Apple Home compatibility
-      'colorTemperatureSwitch: required mismatch -> mb=[3,6,8,768] md=[3]', // Added extraneous server clusters for Apple Home compatibility
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js

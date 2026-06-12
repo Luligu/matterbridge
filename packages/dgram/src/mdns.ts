@@ -632,7 +632,7 @@ export class Mdns extends Multicast {
       while (offset < end) {
         const txtLen = msg[offset];
         offset++;
-        const txt = msg.slice(offset, offset + txtLen).toString('utf8');
+        const txt = msg.subarray(offset, offset + txtLen).toString('utf8');
         txtStrings.push(txt);
         offset += txtLen;
       }
@@ -653,12 +653,12 @@ export class Mdns extends Multicast {
       offset = srvTargetResult.newOffset;
     } else if (type === DnsRecordType.A) {
       // A record (type 1): an IPv4 address stored in 4 bytes.
-      const ipBytes = msg.slice(offset, offset + 4);
+      const ipBytes = msg.subarray(offset, offset + 4);
       data = Array.from(ipBytes).join('.');
       offset += 4;
     } else if (type === DnsRecordType.AAAA) {
       // AAAA record (type 28): IPv6 address stored in 16 bytes.
-      const ipBytes = msg.slice(offset, offset + 16);
+      const ipBytes = msg.subarray(offset, offset + 16);
       // Convert the 16 bytes into an IPv6 address string (colon-separated)
       const ipv6Parts: string[] = [];
       for (let i = 0; i < 16; i += 2) {
@@ -676,7 +676,7 @@ export class Mdns extends Multicast {
 
       // Calculate the remaining length for the type bit maps.
       const bitmapLength = rdlength - nextDomainLength;
-      const bitmapData = msg.slice(offset, offset + bitmapLength);
+      const bitmapData = msg.subarray(offset, offset + bitmapLength);
       const types: string[] = [];
       let bitmapOffset = 0;
 
@@ -702,7 +702,7 @@ export class Mdns extends Multicast {
       offset += bitmapLength;
     } else {
       // Fall back
-      data = msg.slice(offset, offset + rdlength).toString('hex');
+      data = msg.subarray(offset, offset + rdlength).toString('hex');
       offset += rdlength;
     }
 

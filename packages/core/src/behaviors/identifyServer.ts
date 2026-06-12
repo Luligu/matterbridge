@@ -45,7 +45,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       command: 'identify',
       request,
       cluster: IdentifyServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -65,7 +65,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       command: 'triggerEffect',
       request,
       cluster: IdentifyServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Identify)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

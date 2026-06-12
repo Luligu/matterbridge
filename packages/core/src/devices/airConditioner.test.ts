@@ -29,7 +29,7 @@ import {
 } from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
-import { airConditioner } from '../matterbridgeDeviceTypes.js';
+import { roomAirConditioner } from '../matterbridgeDeviceTypes.js';
 import { featuresFor } from '../matterbridgeEndpointHelpers.js';
 import { AirConditioner } from './airConditioner.js';
 
@@ -63,7 +63,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create the server node', async () => {
-    await createServerNode(MATTER_PORT, airConditioner.code);
+    await createServerNode(MATTER_PORT, roomAirConditioner.code);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -74,13 +74,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.id).toBe('AirConditionerTestDevice-AC123456');
 
     // Cluster servers existence
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
     expect(featuresFor(device, 'Identify')).toEqual({});
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
     expect(featuresFor(device, 'PowerSource')).toEqual({ battery: false, rechargeable: false, replaceable: false, wired: true });
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeTruthy(); // Dead Front On/Off cluster
+    expect(device.hasClusterServer(OnOff.id)).toBeTruthy(); // Dead Front On/Off cluster
     expect(featuresFor(device, 'OnOff')).toEqual({ deadFrontBehavior: true, lighting: false, offOnly: false }); // Dead Front On/Off cluster
-    expect(device.hasClusterServer(Thermostat.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Thermostat.id)).toBeTruthy();
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
@@ -91,9 +91,9 @@ describe('Matterbridge ' + NAME, () => {
       presets: false,
       setback: false,
     });
-    expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.id)).toBeTruthy();
     expect(featuresFor(device, 'ThermostatUserInterfaceConfiguration')).toEqual({});
-    expect(device.hasClusterServer(FanControl.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(FanControl.id)).toBeTruthy();
     expect(featuresFor(device, 'FanControl')).toEqual({ airflowDirection: false, auto: true, multiSpeed: false, rocking: false, step: true, wind: false });
     expect(device.getAllClusterServerNames()).toEqual([
       'descriptor',
@@ -111,7 +111,7 @@ describe('Matterbridge ' + NAME, () => {
     const custom = new AirConditioner('Bedroom AC', 'AC654321', { localTemperature: 30, percentSetting: 40 });
     expect(custom).toBeDefined();
     expect(custom.id).toBe('BedroomAC-AC654321');
-    expect(custom.getClusterServerOptions(Thermostat.Cluster.id)).toEqual({
+    expect(custom.getClusterServerOptions(Thermostat.id)).toEqual({
       absMaxCoolSetpointLimit: 5000,
       absMaxHeatSetpointLimit: 5000,
       absMinCoolSetpointLimit: 0,
@@ -138,12 +138,12 @@ describe('Matterbridge ' + NAME, () => {
         heatStage2: false,
       },
     });
-    expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.Cluster.id)).toEqual({
+    expect(custom.getClusterServerOptions(ThermostatUserInterfaceConfiguration.id)).toEqual({
       keypadLockout: 0,
       scheduleProgrammingVisibility: 0,
       temperatureDisplayMode: 0,
     });
-    expect(custom.getClusterServerOptions(FanControl.Cluster.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
+    expect(custom.getClusterServerOptions(FanControl.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
     expect(await addDevice(aggregator, custom)).toBeTruthy();
     expect(custom.getAllClusterServerNames()).toEqual([
       'descriptor',
@@ -174,44 +174,44 @@ describe('Matterbridge ' + NAME, () => {
 
   test('fan control attributes check', async () => {
     // Presence
-    expect(device.hasAttributeServer(FanControl.Cluster, 'percentSetting')).toBe(true);
-    expect(device.hasAttributeServer(FanControl.Cluster, 'percentCurrent')).toBe(true);
-    expect(device.hasAttributeServer(FanControl.Cluster, 'fanMode')).toBe(true);
-    expect(device.hasAttributeServer(FanControl.Cluster, 'fanModeSequence')).toBe(true);
+    expect(device.hasAttributeServer(FanControl, 'percentSetting')).toBe(true);
+    expect(device.hasAttributeServer(FanControl, 'percentCurrent')).toBe(true);
+    expect(device.hasAttributeServer(FanControl, 'fanMode')).toBe(true);
+    expect(device.hasAttributeServer(FanControl, 'fanModeSequence')).toBe(true);
     // Default values from constructor (0,0)
-    expect(device.getAttribute(FanControl.Cluster.id, 'percentSetting')).toBe(0);
-    expect(device.getAttribute(FanControl.Cluster.id, 'percentCurrent')).toBe(0);
-    expect(device.getAttribute(FanControl.Cluster.id, 'fanMode')).toBe(FanControl.FanMode.Off);
-    expect(device.getAttribute(FanControl.Cluster.id, 'fanModeSequence')).toBe(FanControl.FanModeSequence.OffLowMedHighAuto);
+    expect(device.getAttribute(FanControl.id, 'percentSetting')).toBe(0);
+    expect(device.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
+    expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    expect(device.getAttribute(FanControl.id, 'fanModeSequence')).toBe(FanControl.FanModeSequence.OffLowMedHighAuto);
   });
 
   test('thermostat attributes check', async () => {
     // Presence
-    expect(device.hasClusterServer(Thermostat.Cluster.id)).toBe(true);
-    expect(device.hasClusterServer(Thermostat.Cluster.with(Thermostat.Feature.AutoMode, Thermostat.Feature.Cooling, Thermostat.Feature.Heating))).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'localTemperature')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'occupiedCoolingSetpoint')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'minSetpointDeadBand')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'minHeatSetpointLimit')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'maxHeatSetpointLimit')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'minCoolSetpointLimit')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'systemMode')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(true);
-    expect(device.hasAttributeServer(Thermostat.Cluster.id, 'thermostatRunningState')).toBe(true);
+    expect(device.hasClusterServer(Thermostat.id)).toBe(true);
+    expect(device.hasClusterServer(Thermostat)).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'localTemperature')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedHeatingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedCoolingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'minSetpointDeadBand')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'minHeatSetpointLimit')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'maxHeatSetpointLimit')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'minCoolSetpointLimit')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'maxCoolSetpointLimit')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'systemMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'thermostatRunningMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'thermostatRunningState')).toBe(true);
     // Default values (scaled by 100 for temperatures and 10 for minSetpointDeadBand)
-    expect(device.getAttribute(Thermostat.Cluster.id, 'localTemperature')).toBe(2300);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedHeatingSetpoint')).toBe(2100);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'occupiedCoolingSetpoint')).toBe(2500);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'minSetpointDeadBand')).toBe(10);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'minHeatSetpointLimit')).toBe(0);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'maxHeatSetpointLimit')).toBe(5000);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'minCoolSetpointLimit')).toBe(0);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'maxCoolSetpointLimit')).toBe(5000);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'systemMode')).toBe(1);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningMode')).toBe(0);
-    expect(device.getAttribute(Thermostat.Cluster.id, 'thermostatRunningState')).toEqual({
+    expect(device.getAttribute(Thermostat.id, 'localTemperature')).toBe(2300);
+    expect(device.getAttribute(Thermostat.id, 'occupiedHeatingSetpoint')).toBe(2100);
+    expect(device.getAttribute(Thermostat.id, 'occupiedCoolingSetpoint')).toBe(2500);
+    expect(device.getAttribute(Thermostat.id, 'minSetpointDeadBand')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'minHeatSetpointLimit')).toBe(0);
+    expect(device.getAttribute(Thermostat.id, 'maxHeatSetpointLimit')).toBe(5000);
+    expect(device.getAttribute(Thermostat.id, 'minCoolSetpointLimit')).toBe(0);
+    expect(device.getAttribute(Thermostat.id, 'maxCoolSetpointLimit')).toBe(5000);
+    expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(1);
+    expect(device.getAttribute(Thermostat.id, 'thermostatRunningMode')).toBe(0);
+    expect(device.getAttribute(Thermostat.id, 'thermostatRunningState')).toEqual({
       cool: false,
       coolStage2: false,
       fan: false,
@@ -224,14 +224,14 @@ describe('Matterbridge ' + NAME, () => {
 
   test('thermostat UI configuration attributes check', async () => {
     // Presence
-    expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.Cluster.id)).toBe(true);
-    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(true);
-    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'keypadLockout')).toBe(true);
-    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.Cluster.id, 'scheduleProgrammingVisibility')).toBe(true);
+    expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.id)).toBe(true);
+    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.id, 'temperatureDisplayMode')).toBe(true);
+    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.id, 'keypadLockout')).toBe(true);
+    expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.id, 'scheduleProgrammingVisibility')).toBe(true);
     // Default values
-    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.Cluster.id, 'temperatureDisplayMode')).toBe(0);
-    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.Cluster.id, 'keypadLockout')).toBe(0);
-    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.Cluster.id, 'scheduleProgrammingVisibility')).toBe(0);
+    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.id, 'temperatureDisplayMode')).toBe(0);
+    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.id, 'keypadLockout')).toBe(0);
+    expect(device.getAttribute(ThermostatUserInterfaceConfiguration.id, 'scheduleProgrammingVisibility')).toBe(0);
   });
 
   test('device forEachAttribute', async () => {

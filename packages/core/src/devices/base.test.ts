@@ -70,11 +70,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     expect(device.id).toBe('OnOffLight');
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'onOff', 'groups', 'scenesManagement']);
-    expect(device.hasClusterServer(Descriptor.Cluster)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster)).toBeTruthy();
-    expect(device.hasClusterServer(LevelControl.Cluster)).toBeFalsy();
-    expect(device.hasClusterServer(Groups.Cluster)).toBeTruthy();
-    expect(device.hasClusterServer(ScenesManagement.Cluster)).toBeTruthy();
+    expect(device.hasClusterServer(Descriptor)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff)).toBeTruthy();
+    expect(device.hasClusterServer(LevelControl)).toBeFalsy();
+    expect(device.hasClusterServer(Groups)).toBeTruthy();
+    expect(device.hasClusterServer(ScenesManagement)).toBeTruthy();
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 

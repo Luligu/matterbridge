@@ -599,6 +599,61 @@ The schema file is loaded from the root of the plugin package. The file must be 
 
 The properties of the schema file shall correspond to the properties of the config file.
 
+## Deprecation list
+
+> **Scheduled removal:** all symbols listed below will be removed in **matterbridge 3.10.0**.
+
+### Behavior / Server classes
+
+| Deprecated symbol                          | Replacement                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `MatterbridgeEnhancedColorControlServer`   | `MatterbridgeColorControlServer` with the `EnhancedHue` feature                                            |
+| `MatterbridgePresetThermostatServer`       | `MatterbridgeThermostatServer` with the `Presets` feature                                                  |
+| `MatterbridgeLiftWindowCoveringServer`     | `MatterbridgeWindowCoveringServer` with `Lift` + `PositionAwareLift` features                              |
+| `MatterbridgeLiftTiltWindowCoveringServer` | `MatterbridgeWindowCoveringServer` with `Lift`, `PositionAwareLift`, `Tilt` + `PositionAwareTilt` features |
+
+### Device type aliases
+
+| Deprecated symbol        | Replacement                  |
+| ------------------------ | ---------------------------- |
+| `onOffOutlet`            | `onOffPlugInUnit`            |
+| `dimmableOutlet`         | `dimmablePlugInUnit`         |
+| `onOffMountedSwitch`     | `mountedOnOffControl`        |
+| `dimmableMountedSwitch`  | `mountedDimmableLoadControl` |
+| `pumpDevice`             | `pump`                       |
+| `onOffSwitch`            | `onOffLightSwitch`           |
+| `dimmableSwitch`         | `dimmerSwitch`               |
+| `colorTemperatureSwitch` | `colorDimmerSwitch`          |
+| `doorLockDevice`         | `doorLock`                   |
+| `coverDevice`            | `windowCovering`             |
+| `thermostatDevice`       | `thermostat`                 |
+| `fanDevice`              | `fan`                        |
+| `speakerDevice`          | `speaker`                    |
+| `airConditioner`         | `roomAirConditioner`         |
+
+### Common namespace tag aliases
+
+| Deprecated symbol      | Replacement                  |
+| ---------------------- | ---------------------------- |
+| `AreaNamespaceTag`     | `CommonAreaNamespaceTag`     |
+| `ClosureTag`           | `CommonClosureTag`           |
+| `CompassDirectionTag`  | `CommonCompassDirectionTag`  |
+| `CompassLocationTag`   | `CommonCompassLocationTag`   |
+| `DirectionTag`         | `CommonDirectionTag`         |
+| `LandmarkNamespaceTag` | `CommonLandmarkNamespaceTag` |
+| `LevelTag`             | `CommonLevelTag`             |
+| `LocationTag`          | `CommonLocationTag`          |
+| `NumberTag`            | `CommonNumberTag`            |
+| `PositionTag`          | `CommonPositionTag`          |
+| `RelativePositionTag`  | `CommonRelativePositionTag`  |
+
+### Methods and interfaces
+
+| Deprecated symbol                               | Replacement                                                  |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| `MatterbridgeEndpoint.getChildEndpointByName()` | `getChildEndpointById()` or `getChildEndpointByOriginalId()` |
+| `MatterbridgeEndpointCommands` interface        | `CommandHandlers`                                            |
+
 # Frequently asked questions
 
 ## Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency

@@ -26,8 +26,9 @@
 /* eslint-disable jsdoc/reject-any-type */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridgeEndpointTypes loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpointCommandHandler loaded.\u001B[40;0m');
 
 // @matter
 import { HandlerFunction } from '@matter/general';
@@ -268,14 +269,14 @@ export type CommandHandlerDataMap = {
     command: 'identify';
     request: Identify.IdentifyRequest;
     cluster: 'identify';
-    attributes: ClusterAttributeValues<(typeof Identify.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof Identify)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'Identify.triggerEffect': {
     command: 'triggerEffect';
     request: Identify.TriggerEffectRequest;
     cluster: 'identify';
-    attributes: ClusterAttributeValues<(typeof Identify.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof Identify)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -288,28 +289,28 @@ export type CommandHandlerDataMap = {
     command: 'on';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
-    attributes: ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.off': {
     command: 'off';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
-    attributes: ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.toggle': {
     command: 'toggle';
     request: {}; // TlvNoArguments
     cluster: 'onOff';
-    attributes: ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OnOff.offWithEffect': {
     command: 'offWithEffect';
     request: OnOff.OffWithEffectRequest;
     cluster: 'onOff';
-    attributes: ClusterAttributeValues<(typeof OnOff.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -320,14 +321,14 @@ export type CommandHandlerDataMap = {
     command: 'moveToLevel';
     request: LevelControl.MoveToLevelRequest;
     cluster: 'levelControl';
-    attributes: ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'LevelControl.moveToLevelWithOnOff': {
     command: 'moveToLevelWithOnOff';
     request: LevelControl.MoveToLevelRequest;
     cluster: 'levelControl';
-    attributes: ClusterAttributeValues<(typeof LevelControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -351,105 +352,105 @@ export type CommandHandlerDataMap = {
     command: 'moveToColor';
     request: ColorControl.MoveToColorRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveColor': {
     command: 'moveColor';
     request: ColorControl.MoveColorRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepColor': {
     command: 'stepColor';
     request: ColorControl.StepColorRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToHue': {
     command: 'moveToHue';
     request: ColorControl.MoveToHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveHue': {
     command: 'moveHue';
     request: ColorControl.MoveHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepHue': {
     command: 'stepHue';
     request: ColorControl.StepHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveToHue': {
     command: 'enhancedMoveToHue';
     request: ColorControl.EnhancedMoveToHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveHue': {
     command: 'enhancedMoveHue';
     request: ColorControl.EnhancedMoveHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedStepHue': {
     command: 'enhancedStepHue';
     request: ColorControl.EnhancedStepHueRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToSaturation': {
     command: 'moveToSaturation';
     request: ColorControl.MoveToSaturationRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveSaturation': {
     command: 'moveSaturation';
     request: ColorControl.MoveSaturationRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.stepSaturation': {
     command: 'stepSaturation';
     request: ColorControl.StepSaturationRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToHueAndSaturation': {
     command: 'moveToHueAndSaturation';
     request: ColorControl.MoveToHueAndSaturationRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.enhancedMoveToHueAndSaturation': {
     command: 'enhancedMoveToHueAndSaturation';
     request: ColorControl.EnhancedMoveToHueAndSaturationRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ColorControl.moveToColorTemperature': {
     command: 'moveToColorTemperature';
     request: ColorControl.MoveToColorTemperatureRequest;
     cluster: 'colorControl';
-    attributes: ClusterAttributeValues<(typeof ColorControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -463,35 +464,35 @@ export type CommandHandlerDataMap = {
     command: 'upOrOpen';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
-    attributes: ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WindowCovering)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.downOrClose': {
     command: 'downOrClose';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
-    attributes: ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WindowCovering)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.stopMotion': {
     command: 'stopMotion';
     request: {}; // TlvNoArguments
     cluster: 'windowCovering';
-    attributes: ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WindowCovering)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.goToLiftPercentage': {
     command: 'goToLiftPercentage';
     request: WindowCovering.GoToLiftPercentageRequest;
     cluster: 'windowCovering';
-    attributes: ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WindowCovering)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'WindowCovering.goToTiltPercentage': {
     command: 'goToTiltPercentage';
     request: WindowCovering.GoToTiltPercentageRequest;
     cluster: 'windowCovering';
-    attributes: ClusterAttributeValues<(typeof WindowCovering.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WindowCovering)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -501,14 +502,14 @@ export type CommandHandlerDataMap = {
     command: 'moveTo';
     request: ClosureControl.MoveToRequest;
     cluster: 'closureControl';
-    attributes: ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ClosureControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ClosureControl.stop': {
     command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'closureControl';
-    attributes: ClusterAttributeValues<(typeof ClosureControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ClosureControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -518,14 +519,14 @@ export type CommandHandlerDataMap = {
     command: 'setTarget';
     request: ClosureDimension.SetTargetRequest;
     cluster: 'closureDimension';
-    attributes: ClusterAttributeValues<(typeof ClosureDimension.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ClosureDimension)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ClosureDimension.step': {
     command: 'step';
     request: ClosureDimension.StepRequest;
     cluster: 'closureDimension';
-    attributes: ClusterAttributeValues<(typeof ClosureDimension.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ClosureDimension)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -536,63 +537,63 @@ export type CommandHandlerDataMap = {
     command: 'lockDoor'; // Base command
     request: DoorLock.LockDoorRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.unlockDoor': {
     command: 'unlockDoor'; // Base command
     request: DoorLock.UnlockDoorRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.unlockWithTimeout': {
     command: 'unlockWithTimeout'; // Base command
     request: DoorLock.UnlockWithTimeoutRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.setUser': {
     command: 'setUser'; // USR
     request: DoorLock.SetUserRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.getUser': {
     command: 'getUser'; // USR
     request: DoorLock.GetUserRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.clearUser': {
     command: 'clearUser'; // USR
     request: DoorLock.ClearUserRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.setCredential': {
     command: 'setCredential'; // USR
     request: DoorLock.SetCredentialRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.getCredentialStatus': {
     command: 'getCredentialStatus'; // USR
     request: DoorLock.GetCredentialStatusRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DoorLock.clearCredential': {
     command: 'clearCredential'; // USR
     request: DoorLock.ClearCredentialRequest;
     cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -603,14 +604,14 @@ export type CommandHandlerDataMap = {
     command: 'setpointRaiseLower';
     request: Thermostat.SetpointRaiseLowerRequest;
     cluster: 'thermostat';
-    attributes: ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'Thermostat.setActivePresetRequest': {
     command: 'setActivePresetRequest';
     request: Thermostat.SetActivePresetRequest;
     cluster: 'thermostat';
-    attributes: ClusterAttributeValues<(typeof Thermostat.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -620,7 +621,7 @@ export type CommandHandlerDataMap = {
     command: 'step';
     request: FanControl.StepRequest;
     cluster: 'fanControl';
-    attributes: ClusterAttributeValues<(typeof FanControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof FanControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -630,7 +631,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeSelect.ChangeToModeRequest;
     cluster: 'modeSelect';
-    attributes: ClusterAttributeValues<(typeof ModeSelect.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ModeSelect)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -639,7 +640,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'dishwasherMode';
-    attributes: ClusterAttributeValues<(typeof DishwasherMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DishwasherMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -648,7 +649,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'laundryWasherMode';
-    attributes: ClusterAttributeValues<(typeof LaundryWasherMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof LaundryWasherMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -657,7 +658,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'energyEvseMode';
-    attributes: ClusterAttributeValues<(typeof EnergyEvseMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvseMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -666,7 +667,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'rvcRunMode';
-    attributes: ClusterAttributeValues<(typeof RvcRunMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof RvcRunMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -675,7 +676,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'rvcCleanMode';
-    attributes: ClusterAttributeValues<(typeof RvcCleanMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof RvcCleanMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -684,7 +685,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'waterHeaterMode';
-    attributes: ClusterAttributeValues<(typeof WaterHeaterMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WaterHeaterMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -693,7 +694,7 @@ export type CommandHandlerDataMap = {
     command: 'changeToMode';
     request: ModeBase.ChangeToModeRequest;
     cluster: 'deviceEnergyManagementMode';
-    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagementMode.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagementMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -704,14 +705,14 @@ export type CommandHandlerDataMap = {
     command: 'open';
     request: ValveConfigurationAndControl.OpenRequest;
     cluster: 'valveConfigurationAndControl';
-    attributes: ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'ValveConfigurationAndControl.close': {
     command: 'close';
     request: {}; // TlvNoArguments
     cluster: 'valveConfigurationAndControl';
-    attributes: ClusterAttributeValues<(typeof ValveConfigurationAndControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -722,14 +723,14 @@ export type CommandHandlerDataMap = {
     command: 'suppressAlarm';
     request: BooleanStateConfiguration.SuppressAlarmRequest;
     cluster: 'booleanStateConfiguration';
-    attributes: ClusterAttributeValues<(typeof BooleanStateConfiguration.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'BooleanStateConfiguration.enableDisableAlarm': {
     command: 'enableDisableAlarm';
     request: BooleanStateConfiguration.EnableDisableAlarmRequest;
     cluster: 'booleanStateConfiguration';
-    attributes: ClusterAttributeValues<(typeof BooleanStateConfiguration.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -739,7 +740,7 @@ export type CommandHandlerDataMap = {
     command: 'selfTestRequest';
     request: {}; // TlvNoArguments
     cluster: 'smokeCoAlarm';
-    attributes: ClusterAttributeValues<(typeof SmokeCoAlarm.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof SmokeCoAlarm)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -749,7 +750,7 @@ export type CommandHandlerDataMap = {
     command: 'resetCounts';
     request: {}; // TlvNoArguments
     cluster: 'threadNetworkDiagnostics';
-    attributes: ClusterAttributeValues<(typeof ThreadNetworkDiagnostics.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ThreadNetworkDiagnostics)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -761,21 +762,21 @@ export type CommandHandlerDataMap = {
     command: 'setUtcTime';
     request: TimeSynchronization.SetUtcTimeRequest;
     cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'TimeSynchronization.setTimeZone': {
     command: 'setTimeZone';
     request: TimeSynchronization.SetTimeZoneRequest;
     cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'TimeSynchronization.setDstOffset': {
     command: 'setDstOffset';
     request: TimeSynchronization.SetDstOffsetRequest;
     cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -788,28 +789,28 @@ export type CommandHandlerDataMap = {
     command: 'pauseRequest';
     request: DeviceEnergyManagement.PauseRequest;
     cluster: 'deviceEnergyManagement';
-    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.resumeRequest': {
     command: 'resumeRequest';
     request: {}; // TlvNoArguments
     cluster: 'deviceEnergyManagement';
-    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.powerAdjustRequest': {
     command: 'powerAdjustRequest';
     request: DeviceEnergyManagement.PowerAdjustRequest;
     cluster: 'deviceEnergyManagement';
-    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'DeviceEnergyManagement.cancelPowerAdjustRequest': {
     command: 'cancelPowerAdjustRequest';
     request: {}; // TlvNoArguments
     cluster: 'deviceEnergyManagement';
-    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -822,28 +823,28 @@ export type CommandHandlerDataMap = {
     command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
-    attributes: ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.stop': {
     command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
-    attributes: ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.start': {
     command: 'start';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
-    attributes: ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'OperationalState.resume': {
     command: 'resume';
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
-    attributes: ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof OperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -853,21 +854,21 @@ export type CommandHandlerDataMap = {
     command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
-    attributes: ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof RvcOperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'RvcOperationalState.resume': {
     command: 'resume';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
-    attributes: ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof RvcOperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'RvcOperationalState.goHome': {
     command: 'goHome';
     request: {}; // TlvNoArguments
     cluster: 'rvcOperationalState';
-    attributes: ClusterAttributeValues<(typeof RvcOperationalState.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof RvcOperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -877,7 +878,7 @@ export type CommandHandlerDataMap = {
     command: 'selectAreas';
     request: ServiceArea.SelectAreasRequest;
     cluster: 'serviceArea';
-    attributes: ClusterAttributeValues<(typeof ServiceArea.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ServiceArea)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -888,14 +889,14 @@ export type CommandHandlerDataMap = {
     command: 'boost';
     request: WaterHeaterManagement.BoostRequest;
     cluster: 'waterHeaterManagement';
-    attributes: ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'WaterHeaterManagement.cancelBoost': {
     command: 'cancelBoost';
     request: {}; // TlvNoArguments
     cluster: 'waterHeaterManagement';
-    attributes: ClusterAttributeValues<(typeof WaterHeaterManagement.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -909,35 +910,35 @@ export type CommandHandlerDataMap = {
     command: 'enableCharging';
     request: EnergyEvse.EnableChargingRequest;
     cluster: 'energyEvse';
-    attributes: ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.disable': {
     command: 'disable';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
-    attributes: ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.setTargets': {
     command: 'setTargets';
     request: EnergyEvse.SetTargetsRequest;
     cluster: 'energyEvse';
-    attributes: ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.getTargets': {
     command: 'getTargets';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
-    attributes: ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'EnergyEvse.clearTargets': {
     command: 'clearTargets';
     request: {}; // TlvNoArguments
     cluster: 'energyEvse';
-    attributes: ClusterAttributeValues<(typeof EnergyEvse.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -947,7 +948,7 @@ export type CommandHandlerDataMap = {
     command: 'setTemperature';
     request: TemperatureControl.SetTemperatureRequest;
     cluster: 'temperatureControl';
-    attributes: ClusterAttributeValues<(typeof TemperatureControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof TemperatureControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -958,14 +959,14 @@ export type CommandHandlerDataMap = {
     command: 'setCookingParameters';
     request: MicrowaveOvenControl.SetCookingParametersRequest;
     cluster: 'microwaveOvenControl';
-    attributes: ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MicrowaveOvenControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MicrowaveOvenControl.addMoreTime': {
     command: 'addMoreTime';
     request: MicrowaveOvenControl.AddMoreTimeRequest;
     cluster: 'microwaveOvenControl';
-    attributes: ClusterAttributeValues<(typeof MicrowaveOvenControl.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MicrowaveOvenControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -979,49 +980,49 @@ export type CommandHandlerDataMap = {
     command: 'pause';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.stop': {
     command: 'stop';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.play': {
     command: 'play';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.previous': {
     command: 'previous';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.next': {
     command: 'next';
     request: {}; // TlvNoArguments
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.skipForward': {
     command: 'skipForward';
     request: MediaPlayback.SkipForwardRequest;
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
   'MediaPlayback.skipBackward': {
     command: 'skipBackward';
     request: MediaPlayback.SkipBackwardRequest;
     cluster: 'mediaPlayback';
-    attributes: ClusterAttributeValues<(typeof MediaPlayback.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof MediaPlayback)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -1041,7 +1042,7 @@ export type CommandHandlerDataMap = {
     command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'resourceMonitoring';
-    attributes: ClusterAttributeValues<(typeof ResourceMonitoring.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ResourceMonitoring)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -1050,7 +1051,7 @@ export type CommandHandlerDataMap = {
     command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'hepaFilterMonitoring';
-    attributes: ClusterAttributeValues<(typeof HepaFilterMonitoring.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof HepaFilterMonitoring)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -1059,7 +1060,7 @@ export type CommandHandlerDataMap = {
     command: 'resetCondition';
     request: {}; // TlvNoArguments
     cluster: 'activatedCarbonFilterMonitoring';
-    attributes: ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring.Complete)['attributes']>;
+    attributes: ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 };

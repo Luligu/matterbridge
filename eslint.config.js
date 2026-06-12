@@ -101,6 +101,7 @@ export default defineConfig([
       'no-redeclare': 'off', // Disable no-redeclare for TypeScript files since TypeScript already checks for redeclarations
       'no-undef': 'off', // Disable no-undef for TypeScript files since TypeScript already checks for undefined variables
       'no-unused-vars': 'off', // Disable base rule for unused variables and use the TypeScript-specific rule instead
+      '@typescript-eslint/no-deprecated': ['warn', { allow: ['ClusterType', 'invokeBehaviorCommand', 'invokeSubscribeHandler'] }], // Warn on usage of deprecated APIs
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

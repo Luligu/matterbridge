@@ -22,9 +22,8 @@
  */
 
 // @matter
-import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
-import { type MeasurementAccuracy, MeasurementType } from '@matter/types/globals';
+import { type MeasurementAccuracy } from '@matter/types/globals';
 
 // Matterbridge
 import { powerSource, soilSensor } from '../matterbridgeDeviceTypes.js';
@@ -62,17 +61,7 @@ export class SoilSensor extends MatterbridgeEndpoint {
     } else {
       this.createDefaultPowerSourceWiredClusterServer();
     }
-
-    this.behaviors.require(SoilMeasurementServer, {
-      soilMoistureMeasurementLimits: options.soilMoistureMeasurementLimits ?? {
-        measurementType: MeasurementType.SoilMoisture,
-        measured: true,
-        minMeasuredValue: 0,
-        maxMeasuredValue: 100,
-        accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 1 }],
-      },
-      soilMoistureMeasuredValue: options.soilMoistureMeasuredValue ?? null,
-    });
+    this.createDefaultSoilMeasurementClusterServer(options.soilMoistureMeasuredValue, options.soilMoistureMeasurementLimits);
     if (options.temperatureMeasuredValue !== undefined) this.createDefaultTemperatureMeasurementClusterServer(options.temperatureMeasuredValue);
   }
 

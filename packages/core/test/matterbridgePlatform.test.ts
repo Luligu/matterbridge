@@ -914,7 +914,7 @@ describe('Matterbridge platform', () => {
     expect(device.hasClusterServer('BridgedDeviceBasicInformation')).toBeFalsy();
     await platform.registerDevice(device);
     expect(device.deviceTypes.has(bridgedNode.code)).toBeTruthy();
-    expect(device.getClusterServerOptions(Descriptor.Cluster.id)?.deviceTypeList).toEqual([
+    expect(device.getClusterServerOptions(Descriptor.id)?.deviceTypeList).toEqual([
       { deviceType: 17, revision: 1 },
       { deviceType: 19, revision: 3 },
     ]);

@@ -55,7 +55,7 @@ import { installPluginSpy, uninstallPluginSpy } from './jestutils/jestPluginMana
 import { loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
 import { logKeepAlives } from './jestutils/logKeepAlives.js';
 import { Matterbridge } from './matterbridge.js';
-import { onOffLight, onOffOutlet, onOffSwitch, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { onOffLight, onOffLightSwitch, onOffPlugInUnit, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { Plugin } from './pluginManager.js';
 
@@ -252,7 +252,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('create an switch device: Switch 1 for plugin matterbridge-mock1', async () => {
-    const device = new MatterbridgeEndpoint(onOffSwitch);
+    const device = new MatterbridgeEndpoint(onOffLightSwitch);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
     device.createDefaultGroupsClusterServer();
@@ -280,7 +280,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('create an outlet device: Outlet 1 for plugin matterbridge-mock3', async () => {
-    const device = new MatterbridgeEndpoint(onOffOutlet);
+    const device = new MatterbridgeEndpoint(onOffPlugInUnit);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer(0, Identify.IdentifyType.None);
     device.createDefaultGroupsClusterServer();

@@ -23,8 +23,9 @@
  */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge helpers loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeHelpers loaded.\u001B[40;0m');
 
 // @matter module
 import { Endpoint } from '@matter/node';
@@ -43,7 +44,7 @@ import { hasParameter } from '@matterbridge/utils/cli';
 
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { doorLockDevice } from './matterbridgeDeviceTypes.js';
+import { doorLock } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 /**
@@ -133,7 +134,7 @@ export async function addVirtualDevice(
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
   // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
   if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
-    const lockUserPin = new MatterbridgeEndpoint(doorLockDevice, { id: 'door_lock_user_pin' });
+    const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
     lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
       'Matterbridge User Pin Lock',
       'sn_system_lock',

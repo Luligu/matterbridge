@@ -75,9 +75,9 @@ describe('Matterbridge ' + NAME, () => {
     device = new Oven('Oven Test Device', 'OV123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('OvenTestDevice-OV123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
 
     cabinet1 = device.addCabinet('Oven Test Cabinet Top', [
@@ -85,8 +85,8 @@ describe('Matterbridge ' + NAME, () => {
     ]);
     expect(cabinet1).toBeDefined();
     expect(cabinet1.id).toBe('OvenTestCabinetTop');
-    expect(cabinet1.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
-    expect(cabinet1.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
+    expect(cabinet1.hasClusterServer(OvenMode.id)).toBeTruthy();
+    expect(cabinet1.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
 
     cabinet2 = device.addCabinet(
@@ -109,8 +109,8 @@ describe('Matterbridge ' + NAME, () => {
     );
     expect(cabinet2).toBeDefined();
     expect(cabinet2.id).toBe('OvenTestCabinetBottom');
-    expect(cabinet2.hasClusterServer(OvenMode.Cluster.id)).toBeTruthy();
-    expect(cabinet2.hasClusterServer(OvenCavityOperationalState.Cluster.id)).toBeTruthy();
+    expect(cabinet2.hasClusterServer(OvenMode.id)).toBeTruthy();
+    expect(cabinet2.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
   });
 

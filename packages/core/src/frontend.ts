@@ -85,8 +85,9 @@ import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpe
 import type { Plugin } from './pluginManager.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32mFrontend loaded.\u001B[40;0m');
+if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Frontend loaded.\u001B[40;0m');
 
 /**
  * Represents the Frontend events.
@@ -1103,6 +1104,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
         };
 
+        // Parse JSON request bodies for all plugin API routes so onFetch receives the body for POST/PUT/PATCH (no-op for GET/DELETE without a body)
+        this.expressApp.use(`/plugins/${plugin.name}/api`, express.json());
+
         // GET    /api/:path? — read collection or single resource, query for filters
         // POST   /api/:path? — create, data in body
         // PUT    /api/:path? — full replace of resource
@@ -1309,7 +1313,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private getReachability(device: MatterbridgeEndpoint): boolean {
     if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
-    if (device.hasClusterServer(BridgedDeviceBasicInformation.Cluster.id)) return device.getAttribute(BridgedDeviceBasicInformation.Cluster.id, 'reachable') as boolean;
+    if (device.hasClusterServer(BridgedDeviceBasicInformation.id)) return device.getAttribute(BridgedDeviceBasicInformation.id, 'reachable') as boolean;
     if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined)
       return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
@@ -1327,24 +1331,24 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
     const powerSource = (device: MatterbridgeEndpoint) => {
-      const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
+      const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
       if (featureMap.wired) {
-        const wiredCurrentType = device.getAttribute(PowerSource.Cluster.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
+        const wiredCurrentType = device.getAttribute(PowerSource.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
         return ['ac', 'dc'][wiredCurrentType] as 'ac' | 'dc' | undefined;
       }
       if (featureMap.battery) {
-        const batChargeLevel = device.getAttribute(PowerSource.Cluster.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
+        const batChargeLevel = device.getAttribute(PowerSource.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
         return ['ok', 'warning', 'critical'][batChargeLevel] as 'ok' | 'warning' | 'critical' | undefined;
       }
       return;
     };
 
     // Root endpoint
-    if (endpoint.hasClusterServer(PowerSource.Cluster.id)) return powerSource(endpoint);
+    if (endpoint.hasClusterServer(PowerSource.id)) return powerSource(endpoint);
     // Child endpoints
     for (const child of endpoint.getChildEndpoints()) {
       // istanbul ignore else
-      if (child.hasClusterServer(PowerSource.Cluster.id)) return powerSource(child);
+      if (child.hasClusterServer(PowerSource.id)) return powerSource(child);
     }
   }
 
@@ -1359,20 +1363,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
     const batteryLevel = (device: MatterbridgeEndpoint) => {
-      const featureMap = device.getAttribute(PowerSource.Cluster.id, 'featureMap') as Record<string, boolean>;
+      const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
       if (featureMap.battery) {
-        const batChargeLevel = device.getAttribute(PowerSource.Cluster.id, 'batPercentRemaining') as number | undefined;
+        const batChargeLevel = device.getAttribute(PowerSource.id, 'batPercentRemaining') as number | undefined;
         return isValidNumber(batChargeLevel) ? batChargeLevel / 2 : undefined;
       }
       return undefined;
     };
 
     // Root endpoint
-    if (endpoint.hasClusterServer(PowerSource.Cluster.id)) return batteryLevel(endpoint);
+    if (endpoint.hasClusterServer(PowerSource.id)) return batteryLevel(endpoint);
     // Child endpoints
     for (const child of endpoint.getChildEndpoints()) {
       // istanbul ignore else
-      if (child.hasClusterServer(PowerSource.Cluster.id)) return batteryLevel(child);
+      if (child.hasClusterServer(PowerSource.id)) return batteryLevel(child);
     }
   }
 
@@ -1519,6 +1523,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         schemaJson: plugin.schemaJson,
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
+        frontendPath: plugin.frontendPath,
         // Childbridge mode specific data
         matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
       });

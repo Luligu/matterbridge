@@ -45,7 +45,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       command: 'step',
       request,
       cluster: FanControlServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof FanControl.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof FanControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

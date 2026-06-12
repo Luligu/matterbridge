@@ -72,12 +72,12 @@ describe('Matterbridge ' + NAME, () => {
     device = new MicrowaveOven('Microwave Oven Test Device', 'MW123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('MicrowaveOvenTestDevice-MW123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
-    expect(device.hasClusterServer(MicrowaveOvenMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(MicrowaveOvenControl.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OperationalState.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
+    expect(device.hasClusterServer(MicrowaveOvenMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(MicrowaveOvenControl.id)).toBeTruthy();
+    expect(device.hasClusterServer(OperationalState.id)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'operationalState', 'microwaveOvenMode', 'microwaveOvenControl']);
   });
 

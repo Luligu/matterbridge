@@ -74,9 +74,9 @@ describe('Matterbridge ' + NAME, () => {
     device = new Refrigerator('Refrigerator Test Device', 'RF123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('RefrigeratorTestDevice-RF123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(OnOff.Cluster.id)).toBeFalsy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
     expect(device.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -86,8 +86,8 @@ describe('Matterbridge ' + NAME, () => {
       'refrigeratorAndTemperatureControlledCabinetMode',
       'refrigeratorAlarm',
     ]);
-    expect(device.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(RefrigeratorAlarm.id)).toBeTruthy();
 
     cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
@@ -95,8 +95,8 @@ describe('Matterbridge ' + NAME, () => {
     ]);
     expect(cabinet1).toBeDefined();
     expect(cabinet1.id).toBe('RefrigeratorTestCabinetTop');
-    expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeFalsy();
-    expect(cabinet1.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeFalsy();
+    expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeFalsy();
+    expect(cabinet1.hasClusterServer(RefrigeratorAlarm.id)).toBeFalsy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
 
     cabinet2 = device.addCabinet(
@@ -112,8 +112,8 @@ describe('Matterbridge ' + NAME, () => {
     );
     expect(cabinet2).toBeDefined();
     expect(cabinet2.id).toBe('FreezerTestCabinetBottom');
-    expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.Cluster.id)).toBeFalsy();
-    expect(cabinet2.hasClusterServer(RefrigeratorAlarm.Cluster.id)).toBeFalsy();
+    expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeFalsy();
+    expect(cabinet2.hasClusterServer(RefrigeratorAlarm.id)).toBeFalsy();
     expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
   });
 

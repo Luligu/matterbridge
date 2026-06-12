@@ -1,10 +1,14 @@
 // React
-import { useContext, useEffect, useState, useRef, useCallback, memo } from 'react';
+import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
 
 // @mui/material
 import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 
 // @mui/icons-material
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -19,10 +23,11 @@ import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatte
 
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
+import { UiContext } from './UiProvider';
 import { Connecting } from './Connecting';
 import { getQRColor } from '../utils/getQRColor';
 import MbfTable, { MbfTableColumn } from './MbfTable';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
 import { MbfWindow } from './MbfWindow';
 // const debug = true;
 
@@ -86,6 +91,7 @@ interface HomeDevicesProps {
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
+  const { mobile } = useContext(UiContext);
 
   // States
   const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
@@ -95,6 +101,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [devices, setDevices] = useState<ApiDevicesWithSelected[]>([]);
   const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table show these ones, mix of devices and selectDevices
+  const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -185,7 +192,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           )}
           {mixedDevice.configUrl ? (
             <Tooltip title='Open the configuration page' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton onClick={() => window.open(mixedDevice.configUrl, '_blank')} aria-label='Open config url' sx={{ margin: 0, padding: 0 }}>
+              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label='Open config url' sx={{ margin: 0, padding: 0 }}>
                 <SettingsIcon fontSize='small' />
               </IconButton>
             </Tooltip>
@@ -407,21 +414,102 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     }
   };
 
+  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/), show it in the dialog iframe, otherwise open it in a new tab.
+  const handleConfigUrl = (device: MixedApiDevices) => {
+    if (debug) console.log('handleConfigUrl device:', device.name, 'configUrl:', device.configUrl);
+    if (!device.configUrl) return;
+    if (device.configUrl.startsWith('/plugins/')) {
+      setSelectedDeviceFrontend({ name: device.name, path: device.configUrl });
+    } else {
+      window.open(device.configUrl, '_blank');
+    }
+  };
+
+  const handleDeviceFrontendLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
+    const iframeDocument = event.currentTarget.contentDocument;
+    if (!iframeDocument?.head) return;
+
+    const computedStyle = getComputedStyle(document.body);
+    const primaryColor = computedStyle.getPropertyValue('--primary-color').trim() || '#0d6efd';
+    const backgroundColor = computedStyle.getPropertyValue('--div-bg-color').trim() || '#111111';
+
+    iframeDocument.getElementById('matterbridge-plugin-scrollbar-style')?.remove();
+    const style = iframeDocument.createElement('style');
+    style.id = 'matterbridge-plugin-scrollbar-style';
+    style.textContent = `
+      html,
+      body {
+        background-color: ${backgroundColor};
+        scrollbar-width: thin;
+        scrollbar-color: ${primaryColor} ${backgroundColor};
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: ${primaryColor};
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: ${backgroundColor};
+      }
+    `;
+    iframeDocument.head.appendChild(style);
+  };
+
   if (debug) console.log('HomeDevices rendering...');
   if (!online) {
     return <Connecting />;
   }
   return (
-    <MbfWindow style={{ flex: '1 1 auto' }}>
-      <MbfTable
-        name='Devices'
-        getRowKey={getRowKey}
-        rows={mixedDevices}
-        columns={devicesColumns}
-        footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${devices.length.toString()}/${mixedDevices.length.toString()}`}
-        footerRight={restart ? 'Restart required' : ''}
-      />
-    </MbfWindow>
+    <>
+      <MbfWindow style={{ flex: '1 1 auto' }}>
+        <MbfTable
+          name='Devices'
+          getRowKey={getRowKey}
+          rows={mixedDevices}
+          columns={devicesColumns}
+          footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${devices.length.toString()}/${mixedDevices.length.toString()}`}
+          footerRight={restart ? 'Restart required' : ''}
+        />
+      </MbfWindow>
+      <Dialog
+        open={selectedDeviceFrontend !== null}
+        onClose={() => setSelectedDeviceFrontend(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: enableMobile && mobile ? '100vw' : '75vw',
+              height: enableMobile && mobile ? '100vh' : '75vh',
+              maxWidth: enableMobile && mobile ? '100vw' : '75vw',
+              maxHeight: enableMobile && mobile ? '100vh' : '75vh',
+              margin: enableMobile && mobile ? '0px' : undefined,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              backgroundColor: 'var(--div-bg-color)',
+            },
+          },
+        }}
+      >
+        <DialogContent style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, padding: '0px', margin: '0px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)' }}>
+          {selectedDeviceFrontend && (
+            <iframe
+              title={`${selectedDeviceFrontend.name} frontend`}
+              src={selectedDeviceFrontend.path}
+              onLoad={handleDeviceFrontendLoad}
+              style={{ display: 'block', flex: '1 1 auto', width: '100%', height: '100%', border: 'none', backgroundColor: 'var(--div-bg-color)' }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ flex: '0 0 auto', justifyContent: 'center' }}>
+          <Button onClick={() => setSelectedDeviceFrontend(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 

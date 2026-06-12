@@ -66,7 +66,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'lockDoor',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -91,7 +91,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'unlockDoor',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -117,7 +117,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'unlockWithTimeout',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -141,7 +141,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'setUser',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -162,7 +162,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'getUser',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -189,7 +189,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'clearUser',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -214,7 +214,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'setCredential',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -237,7 +237,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'getCredentialStatus',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -262,7 +262,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       command: 'clearCredential',
       request,
       cluster: DoorLockServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

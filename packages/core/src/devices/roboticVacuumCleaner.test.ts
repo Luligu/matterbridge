@@ -73,12 +73,12 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('RVCTestDevice-RVC123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(RvcRunMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(RvcCleanMode.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(RvcOperationalState.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ServiceArea.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcRunMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcCleanMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcOperationalState.id)).toBeTruthy();
+    expect(device.hasClusterServer(ServiceArea.id)).toBeTruthy();
   });
 
   test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {

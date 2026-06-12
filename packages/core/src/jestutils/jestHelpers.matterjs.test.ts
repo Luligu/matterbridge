@@ -5,7 +5,7 @@ import { jest } from '@jest/globals';
 import { ServerNode } from '@matter/node';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { bridge, onOffOutlet } from '../matterbridgeDeviceTypes.js';
+import { bridge, onOffPlugInUnit } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { flushAsync } from './flushAsync.js';
 import {
@@ -90,13 +90,13 @@ describe('Matter.js test environment', () => {
   });
 
   test('should add a device to a matter.js server node', async () => {
-    deviceServer = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet1' });
+    deviceServer = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet1' });
     deviceServer.addRequiredClusterServers();
     expect(await addDevice(server, deviceServer)).toBeTruthy();
   });
 
   test('should add a device to a matter.js aggregator node', async () => {
-    deviceAggregator = new MatterbridgeEndpoint(onOffOutlet, { id: 'outlet2' });
+    deviceAggregator = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'outlet2' });
     deviceAggregator.addRequiredClusterServers();
     expect(await addDevice(aggregator, deviceAggregator)).toBeTruthy();
   });

@@ -57,7 +57,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'pause',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -81,7 +81,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'stop',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -105,7 +105,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'start',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -129,7 +129,7 @@ export class MatterbridgeOperationalStateServer extends OperationalStateServer {
       command: 'resume',
       request: {},
       cluster: OperationalStateServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState.Complete)['attributes']>,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

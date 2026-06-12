@@ -1,4 +1,5 @@
 // src/devices/extractorHood.test.ts
+
 /* eslint-disable jest/no-standalone-expect */
 
 const NAME = 'ExtractorHood';
@@ -77,11 +78,11 @@ describe('Matterbridge ' + NAME, () => {
     device = new ExtractorHood('Extractor Hood Test Device', 'EH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('ExtractorHoodTestDevice-EH123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(FanControl.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(HepaFilterMonitoring.Cluster.id)).toBeTruthy();
-    expect(device.hasClusterServer(ActivatedCarbonFilterMonitoring.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(FanControl.id)).toBeTruthy();
+    expect(device.hasClusterServer(HepaFilterMonitoring.id)).toBeTruthy();
+    expect(device.hasClusterServer(ActivatedCarbonFilterMonitoring.id)).toBeTruthy();
   });
 
   test('add an extractor hood device', async () => {

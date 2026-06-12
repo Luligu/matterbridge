@@ -15,7 +15,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from '../jestutils/jestMatterbridgeTest.js';
 import { addDevice } from '../jestutils/jestMatterTest.js';
 import { setupTest } from '../jestutils/jestSetupTest.js';
-import { doorLockDevice } from '../matterbridgeDeviceTypes.js';
+import { doorLock } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 
@@ -25,7 +25,7 @@ await setupTest(NAME, false);
 describe('Client clusters and behaviors', () => {
   let server: ServerNode<ServerNode.RootEndpoint>;
   let aggregator: Endpoint<AggregatorEndpoint>;
-  let doorLock: MatterbridgeEndpoint;
+  let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
 
   function supportedDoorLockServer() {
@@ -56,82 +56,82 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Create doorLockDevice', async () => {
-    doorLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'doorLockDevice' });
-    expect(doorLock).toBeDefined();
-    doorLock.createDefaultDoorLockClusterServer();
-    doorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, doorLock)).toBeDefined();
-    expect(doorLock.behaviors.has(MatterbridgeDoorLockServer.with())).toBe(true);
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
+    lock = new MatterbridgeEndpoint(doorLock, { id: 'doorLockDevice' });
+    expect(lock).toBeDefined();
+    lock.createDefaultDoorLockClusterServer();
+    lock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, lock)).toBeDefined();
+    expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBe(true);
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
   });
 
   test('Lock and unlock', async () => {
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'lockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
   });
 
   test('Lock, unlock and lockWithTimeout with actuator disabled', async () => {
-    await doorLock.setAttribute(DoorLock.Complete, 'actuatorEnabled', false);
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'lockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockWithTimeout', { timeout: 1 });
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
-    await doorLock.setAttribute(DoorLock.Complete, 'actuatorEnabled', true);
+    await lock.setAttribute(DoorLock, 'actuatorEnabled', false);
+    await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.setAttribute(DoorLock, 'actuatorEnabled', true);
   });
 
   test('Auto relock', async () => {
-    await doorLock.setAttribute(DoorLock.Complete, 'autoRelockTime', 1); // Set autoRelockTime to 1 second
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    await lock.setAttribute(DoorLock, 'autoRelockTime', 1); // Set autoRelockTime to 1 second
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
     await wait(1000); // Wait for autoRelockTime to trigger
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
-    await doorLock.setAttribute(DoorLock.Complete, 'autoRelockTime', 0); // Set autoRelockTime to 0 (disabled)
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.setAttribute(DoorLock, 'autoRelockTime', 0); // Set autoRelockTime to 0 (disabled)
   });
 
   test('Unlock with timeout', async () => {
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockWithTimeout', { timeout: 1 });
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
     await wait(1000); // Wait for unlockWithTimeout to trigger
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
   });
 
   test('Unlock commands without timeout scheduling', async () => {
-    await doorLock.setAttribute(DoorLock.Complete, 'autoRelockTime', 0);
+    await lock.setAttribute(DoorLock, 'autoRelockTime', 0);
 
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
     await wait(1100);
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
 
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'unlockWithTimeout', { timeout: 1 });
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+    await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
     await wait(1100);
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
 
-    await doorLock.invokeBehaviorCommand(DoorLock.Complete, 'lockDoor', {});
-    expect(doorLock.getAttribute(DoorLock.Complete, 'lockState')).toBe(DoorLock.LockState.Locked);
+    await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
+    expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
   });
 
   test('Create userPinDoorLock device', async () => {
-    userPinDoorLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'userPinDoorLock' });
+    userPinDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'userPinDoorLock' });
     expect(userPinDoorLock).toBeDefined();
     userPinDoorLock.createUserPinDoorLockClusterServer();
     userPinDoorLock.addRequiredClusterServers();
     expect(await addDevice(aggregator, userPinDoorLock)).toBeDefined();
     expect(userPinDoorLock.behaviors.has(userPinDoorLock.behaviors.supported.doorLock)).toBe(true);
-    expect(userPinDoorLock.getAttribute(DoorLock.Complete, 'requirePinForRemoteOperation')).toBe(undefined);
-    expect(userPinDoorLock.getAttribute(DoorLock.Complete, 'numberOfTotalUsersSupported')).toBe(10);
+    expect(userPinDoorLock.getAttribute(DoorLock, 'requirePinForRemoteOperation')).toBe(undefined);
+    expect(userPinDoorLock.getAttribute(DoorLock, 'numberOfTotalUsersSupported')).toBe(10);
   });
 
   test('User PIN set and modify user', async () => {
     const lockUserChange = jest.fn();
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setUser', {
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Add,
       userIndex: 1,
       userName: 'Guest',
@@ -142,7 +142,7 @@ describe('Client clusters and behaviors', () => {
     });
     const createdUser = await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setUser', {
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Modify,
       userIndex: 1,
       userName: 'Guest Updated',
@@ -194,7 +194,7 @@ describe('Client clusters and behaviors', () => {
     const updatedPin = Buffer.from('5678');
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setCredential', {
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
       operationType: DoorLock.DataOperationType.Add,
       credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
       credentialData: initialPin,
@@ -206,7 +206,7 @@ describe('Client clusters and behaviors', () => {
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setCredential', {
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
       operationType: DoorLock.DataOperationType.Modify,
       credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
       credentialData: updatedPin,
@@ -214,7 +214,7 @@ describe('Client clusters and behaviors', () => {
       userStatus: null,
       userType: null,
     });
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearCredential', { credential: null });
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
     const clearedCredential = await userPinDoorLock.act((agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
@@ -260,7 +260,7 @@ describe('Client clusters and behaviors', () => {
     const lockUserChange = jest.fn();
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearUser', { userIndex: 1 });
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 1 });
     const clearedUser = await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
 
     expect(clearedUser).toMatchObject({
@@ -304,7 +304,7 @@ describe('Client clusters and behaviors', () => {
 
     expect(await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 7 }))).toEqual(handlerResponse);
 
-    await expect(userPinDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearUser', { userIndex: 0 })).rejects.toThrow('Invalid user index');
+    await expect(userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 0 })).rejects.toThrow('Invalid user index');
 
     const credentialStatus = await userPinDoorLock.act((agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
@@ -313,14 +313,14 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('DoorLock covers null/default user fields and clear all users', async () => {
-    const branchDoorLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'branchDoorLockUsers' });
+    const branchDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'branchDoorLockUsers' });
     branchDoorLock.createUserPinDoorLockClusterServer();
     branchDoorLock.addRequiredClusterServers();
     expect(await addDevice(aggregator, branchDoorLock)).toBeDefined();
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setUser', {
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Add,
       userIndex: 2,
       userName: null,
@@ -339,7 +339,7 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearUser', { userIndex: 0xfffe });
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 0xfffe });
 
     expect(await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getUser({ userIndex: 2 }))).toMatchObject({
       userIndex: 2,
@@ -354,14 +354,14 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('DoorLock covers empty credential logging and specific credential clear', async () => {
-    const branchDoorLock = new MatterbridgeEndpoint(doorLockDevice, { id: 'branchDoorLockCredentials' });
+    const branchDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'branchDoorLockCredentials' });
     branchDoorLock.createUserPinDoorLockClusterServer();
     branchDoorLock.addRequiredClusterServers();
     expect(await addDevice(aggregator, branchDoorLock)).toBeDefined();
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setCredential', {
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
       operationType: DoorLock.DataOperationType.Add,
       credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 },
       credentialData: Buffer.alloc(0),
@@ -377,7 +377,7 @@ describe('Client clusters and behaviors', () => {
       userIndex: null,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setUser', {
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Add,
       userIndex: 3,
       userName: 'Specific Credential User',
@@ -387,7 +387,7 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'setCredential', {
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
       operationType: DoorLock.DataOperationType.Add,
       credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
       credentialData: Buffer.from('2468'),
@@ -403,7 +403,7 @@ describe('Client clusters and behaviors', () => {
       userIndex: 3,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock.Complete, 'clearCredential', {
+    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', {
       credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
     });
 

@@ -22,7 +22,7 @@ import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
 import { addDevice } from './jestutils/jestMatterTest.js';
 import { log, loggerWarnSpy, setupTest } from './jestutils/jestSetupTest.js';
-import { closureController, doorLockDevice, irrigationSystem, temperatureSensor } from './matterbridgeDeviceTypes.js';
+import { closureController, doorLock, irrigationSystem, temperatureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -40,6 +40,7 @@ import {
   getDefaultPowerSourceReplaceableBatteryClusterServer,
   getDefaultPressureMeasurementClusterServer,
   getDefaultRelativeHumidityMeasurementClusterServer,
+  getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
   getSemtag,
   getSnapshot,
@@ -126,10 +127,11 @@ describe('Options helpers', () => {
     expect(getDefaultIlluminanceMeasurementClusterServer()).toBeDefined();
     expect(getDefaultFlowMeasurementClusterServer()).toBeDefined();
     expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
+    expect(getDefaultSoilMeasurementClusterServer()).toBeDefined();
   });
 
   test('internalFor returns the live behavior internal state for every overload shape', async () => {
-    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'DoorLockHelper' });
+    device = new MatterbridgeEndpoint(doorLock, { id: 'DoorLockHelper' });
     device.behaviors.require(
       MatterbridgeDoorLockServer.with().enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
@@ -156,8 +158,8 @@ describe('Options helpers', () => {
 
     // expect(internalFromBehavior.enableTimeout).toBe(true);
 
-    const internalFromCluster = await internalFor(device, DoorLock.Cluster);
-    const internalFromClusterId = await internalFor(device, DoorLock.Cluster.id);
+    const internalFromCluster = await internalFor(device, DoorLock);
+    const internalFromClusterId = await internalFor(device, DoorLock.id);
     const internalFromString = await internalFor(device, 'DoorLock');
 
     expect(internalFromCluster).toBe(internalFromBehavior);
@@ -168,8 +170,8 @@ describe('Options helpers', () => {
     internalFromBehavior.enableTimeout = false;
 
     expect((await internalFor(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
-    expect((await internalFor(device, DoorLock.Cluster))?.enableTimeout).toBe(false);
-    expect((await internalFor(device, DoorLock.Cluster.id))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.id))?.enableTimeout).toBe(false);
     expect((await internalFor(device, 'DoorLock'))?.enableTimeout).toBe(false);
     */
   });
@@ -339,8 +341,8 @@ describe('Options helpers', () => {
     expect(behavior1).toMatchObject({ measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     jest.clearAllMocks();
 
-    expect(await device.setCluster(TemperatureMeasurement.Cluster, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
-    const clustertype = device.getCluster(TemperatureMeasurement.Cluster, log);
+    expect(await device.setCluster(TemperatureMeasurement, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    const clustertype = device.getCluster(TemperatureMeasurement, log);
     expect(clustertype?.measuredValue).toBe(2000);
     expect(clustertype).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     jest.clearAllMocks();
@@ -368,7 +370,7 @@ describe('Options helpers', () => {
   });
 
   test('addClusterClients with empty list is a no-op', async () => {
-    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsEmpty' });
+    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsEmpty' });
     device.addClusterClients([]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     await addDevice(aggregator, device);
@@ -376,7 +378,7 @@ describe('Options helpers', () => {
   });
 
   test('addClusterClients with unknown cluster log message', async () => {
-    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsUnknown' });
+    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsUnknown' });
     device.addClusterClients([0xffff as ClusterId]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
     await addDevice(aggregator, device);
@@ -385,7 +387,7 @@ describe('Options helpers', () => {
   });
 
   test('addClusterClients called twice merges clientList without duplicates', async () => {
-    device = new MatterbridgeEndpoint(doorLockDevice, { id: 'ClusterClientsMerge' });
+    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsMerge' });
     device.addClusterClients([ClosureControl.id]);
     device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
     await addDevice(aggregator, device);

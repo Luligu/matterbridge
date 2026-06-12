@@ -84,30 +84,30 @@ describe('Matterbridge Water Heater', () => {
     );
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
     expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
-    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
   });
 
   test('create a water heater device with no parameter', async () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
-    expect(device.hasClusterServer(Identify.Cluster.id)).toBeTruthy();
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
     expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
     expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
-    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.Cluster.id)).toBeTruthy();
-    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.Cluster.id)).toBeTruthy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
   });
 
   test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
