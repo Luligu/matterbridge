@@ -181,7 +181,7 @@ export function getMatterbridge(): PlatformMatterbridge {
 }
 
 /** Add a bridged endpoint */
-const addBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+export const addBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
   try {
     await aggregator.add(device);
     return Promise.resolve(true);
@@ -191,7 +191,7 @@ const addBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) =>
 });
 
 /** Remove a bridged endpoint */
-const removeBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+export const removeBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
   try {
     await device.delete();
     return Promise.resolve(true);
@@ -201,7 +201,7 @@ const removeBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint)
 });
 
 /** Remove all bridged endpoints */
-const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay: number = 0) => {
+export const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay: number = 0) => {
   try {
     for (const device of aggregator.parts) {
       await device.delete();
@@ -213,7 +213,7 @@ const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay: numbe
 });
 
 /** Add a virtual endpoint */
-const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
+export const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
   try {
     const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
       id: name.replaceAll(' ', '') + ':' + type,

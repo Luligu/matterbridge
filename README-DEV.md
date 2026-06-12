@@ -601,7 +601,7 @@ The properties of the schema file shall correspond to the properties of the conf
 
 ## Deprecation list
 
-> **Scheduled removal:** all symbols listed below will be removed in **matterbridge 3.9.0**.
+> **Scheduled removal:** all symbols listed below will be removed in **matterbridge 3.10.0**.
 
 ### Behavior / Server classes
 

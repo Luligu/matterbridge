@@ -182,7 +182,7 @@ export function getMatterbridge(): PlatformMatterbridge {
 }
 
 /** Add a bridged endpoint */
-const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
+export const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
   try {
     await aggregator.add(device);
     return Promise.resolve(true);
@@ -192,7 +192,7 @@ const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) 
 });
 
 /** Remove a bridged endpoint */
-const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
+export const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
   try {
     await device.delete();
     return Promise.resolve(true);
@@ -202,7 +202,7 @@ const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoin
 });
 
 /** Remove all bridged endpoints */
-const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: number = 0) => {
+export const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: number = 0) => {
   try {
     for (const device of aggregator.parts) {
       await device.delete();
@@ -214,7 +214,7 @@ const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: num
 });
 
 /** Add a virtual endpoint */
-const addVirtualEndpoint = jest.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
+export const addVirtualEndpoint = jest.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
   try {
     const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
       id: name.replaceAll(' ', '') + ':' + type,

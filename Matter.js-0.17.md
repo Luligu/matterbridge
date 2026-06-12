@@ -103,4 +103,6 @@ I will leave (without exporting them) the three Matter 1.5.1 cluster I created f
 
 Matterbridge 3.8.0 has been published with matter.js 0.17.1.
 
-All plugins should require Matterbridge 3.8.0 and make the refactor eventually required.
+Matterbridge 3.9.0 has been published with matter.js 0.17.2.
+
+All plugins should require Matterbridge 3.8.0 or 3.9.0 and make the refactor eventually required.
