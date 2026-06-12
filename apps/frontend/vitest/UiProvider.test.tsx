@@ -36,7 +36,7 @@ vi.mock('../src/components/ConfirmCancelForm', () => ({
     ) : null,
 }));
 
-vi.mock('../src/components/InstallProgressDialog ', () => ({
+vi.mock('../src/components/InstallProgressDialog', () => ({
   InstallProgressDialog: ({ open, title, _command, _packageName, output, onClose }: { open: boolean; title: string; _command: string; _packageName: string; output: string; onClose: () => void }) =>
     open ? (
       <div data-testid='install-progress-dialog'>
