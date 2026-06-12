@@ -1,9 +1,13 @@
 // React
-import { useContext, useEffect, useState, useRef, memo } from 'react';
+import { useContext, useEffect, useState, useRef, memo, type SyntheticEvent } from 'react';
 
 // @mui/material
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
 
 // @mui/icons-material
 import Favorite from '@mui/icons-material/Favorite';
@@ -16,6 +20,7 @@ import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import LanguageIcon from '@mui/icons-material/Language';
 
 // Backend
 import { ApiPlugin, MatterbridgeInformation, SystemInformation, WsMessageApiResponse } from '../utils/backendShared';
@@ -28,7 +33,7 @@ import { StatusIndicator } from './StatusIndicator';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { getQRColor } from '../utils/getQRColor';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
 import { MbfWindow } from './MbfWindow';
 // const debug = true;
 
@@ -41,13 +46,14 @@ interface HomePluginsProps {
 function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
-  const { showConfirmCancelDialog } = useContext(UiContext);
+  const { mobile, showConfirmCancelDialog } = useContext(UiContext);
   // Refs
   const uniqueId = useRef(getUniqueId());
   // States
   const [_systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
+  const [selectedPluginFrontend, setSelectedPluginFrontend] = useState<{ name: string; path: string } | null>(null);
 
   const pluginsColumns: MbfTableColumn<ApiPlugin>[] = [
     {
@@ -177,6 +183,15 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               <HistoryOutlinedIcon />
             </IconButton>
           </Tooltip>
+
+          {plugin.enabled && plugin.frontendPath && (
+            <Tooltip title='Open the plugin frontend' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleFrontendPlugin(plugin)} size='small'>
+                <LanguageIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+
           {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip title={`Update the plugin to the latest version v.${plugin.latestVersion}`} slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdatePlugin(plugin)} size='small'>
@@ -375,6 +390,47 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     if (plugin.changelog) window.open(plugin.changelog, '_blank');
   };
 
+  const handleFrontendPlugin = (plugin: ApiPlugin) => {
+    const pluginFrontendPath = `/plugins/${plugin.name}`;
+    if (debug) console.log('handleFrontendPlugin plugin:', plugin.name, 'frontend:', plugin.frontendPath, 'path:', pluginFrontendPath);
+    if (plugin.frontendPath) setSelectedPluginFrontend({ name: plugin.name, path: pluginFrontendPath });
+  };
+
+  const handlePluginFrontendLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
+    const iframeDocument = event.currentTarget.contentDocument;
+    if (!iframeDocument?.head) return;
+
+    const computedStyle = getComputedStyle(document.body);
+    const primaryColor = computedStyle.getPropertyValue('--primary-color').trim() || '#0d6efd';
+    const backgroundColor = computedStyle.getPropertyValue('--div-bg-color').trim() || '#111111';
+
+    iframeDocument.getElementById('matterbridge-plugin-scrollbar-style')?.remove();
+    const style = iframeDocument.createElement('style');
+    style.id = 'matterbridge-plugin-scrollbar-style';
+    style.textContent = `
+      html,
+      body {
+        background-color: ${backgroundColor};
+        scrollbar-width: thin;
+        scrollbar-color: ${primaryColor} ${backgroundColor};
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: ${primaryColor};
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: ${backgroundColor};
+      }
+    `;
+    iframeDocument.head.appendChild(style);
+  };
+
   // ConfigPluginDialog
   const [selectedPlugin, setSelectedPlugin] = useState<ApiPlugin>();
   const [openConfigPluginDialog, setOpenConfigPluginDialog] = useState(false);
@@ -400,12 +456,47 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     return <Connecting />;
   }
   return (
-    <MbfWindow>
-      {/* Config plugin dialog */}
-      {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
+    <>
+      <MbfWindow>
+        {/* Config plugin dialog */}
+        {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
 
-      <MbfTable<ApiPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
-    </MbfWindow>
+        <MbfTable<ApiPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
+      </MbfWindow>
+      <Dialog
+        open={selectedPluginFrontend !== null}
+        onClose={() => setSelectedPluginFrontend(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              width: enableMobile && mobile ? '100vw' : '75vw',
+              height: enableMobile && mobile ? '100vh' : '75vh',
+              maxWidth: enableMobile && mobile ? '100vw' : '75vw',
+              maxHeight: enableMobile && mobile ? '100vh' : '75vh',
+              margin: enableMobile && mobile ? '0px' : undefined,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              backgroundColor: 'var(--div-bg-color)',
+            },
+          },
+        }}
+      >
+        <DialogContent style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, padding: '0px', margin: '0px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)' }}>
+          {selectedPluginFrontend && (
+            <iframe
+              title={`${selectedPluginFrontend.name} frontend`}
+              src={selectedPluginFrontend.path}
+              onLoad={handlePluginFrontendLoad}
+              style={{ display: 'block', flex: '1 1 auto', width: '100%', height: '100%', border: 'none', backgroundColor: 'var(--div-bg-color)' }}
+            />
+          )}
+        </DialogContent>
+        <DialogActions sx={{ flex: '0 0 auto', justifyContent: 'center' }}>
+          <Button onClick={() => setSelectedPluginFrontend(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }
 

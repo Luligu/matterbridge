@@ -80,6 +80,7 @@ These classes will run as threads in the next releases:
 - [eslint]: Enforce `@typescript-eslint/no-deprecated` rule.
 - [register]: Add `getSupportedDeviceType()` and `getSupportedCluster()` register helpers. See matterbridge-mqtt plugin for an example.
 - [factory]: Add `createClusterServer()` and `getServerBehaviorFromClusterId()` generic factory helpers. See matterbridge-mqtt plugin for an example.
+- [frontend]: Add plugin frontend button in the UI when a plugin has a frontend. Try [matterbridge-mqtt](https://github.com/Luligu/matterbridge-mqtt) for an example.
 
 ### Changed
 
@@ -105,6 +106,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `vite` to v.8.0.16.
 - [frontend]: Bump `vitest` to v.4.1.8.
 - [frontend]: Remove cross-env npm-check-updates shx packages.
+- [frontend]: Made dialogs full screen on mobile.
 
 ### Fixed
 

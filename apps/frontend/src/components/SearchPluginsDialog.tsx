@@ -1,5 +1,5 @@
 // React
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 /*
   NPM fetch map (SearchPluginsDialog)
@@ -45,7 +45,8 @@ import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import { pluginIgnoreList } from './HomeInstallAddPlugins';
 import MbfTable, { MbfTableColumn } from './MbfTable';
 import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
+import { debug, enableMobile } from '../App';
+import { UiContext } from './UiProvider';
 // const debug = true;
 
 type TotalsCacheEntry = { total: number; asOf: string };
@@ -181,6 +182,7 @@ interface SearchPluginsDialogProps {
 }
 
 export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: SearchPluginsDialogProps) => {
+  const { mobile } = useContext(UiContext);
   const [pluginName, setPluginName] = useState('');
   const selectedPluginNameRef = useRef('');
   const hasFetchedRef = useRef(false);
@@ -868,10 +870,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       slotProps={{
         paper: {
           sx: {
-            width: '75vw',
-            height: '75vh',
-            maxWidth: '75vw',
-            maxHeight: '75vh',
+            width: enableMobile && mobile ? '100vw' : '75vw',
+            height: enableMobile && mobile ? '100vh' : '75vh',
+            maxWidth: enableMobile && mobile ? '100vw' : '75vw',
+            maxHeight: enableMobile && mobile ? '100vh' : '75vh',
+            margin: enableMobile && mobile ? '0px' : undefined,
             display: 'flex',
             flexDirection: 'column',
           },

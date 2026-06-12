@@ -1103,6 +1103,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           }
         };
 
+        // Parse JSON request bodies for all plugin API routes so onFetch receives the body for POST/PUT/PATCH (no-op for GET/DELETE without a body)
+        this.expressApp.use(`/plugins/${plugin.name}/api`, express.json());
+
         // GET    /api/:path? — read collection or single resource, query for filters
         // POST   /api/:path? — create, data in body
         // PUT    /api/:path? — full replace of resource
@@ -1519,6 +1522,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         schemaJson: plugin.schemaJson,
         hasWhiteList: plugin.configJson?.whiteList !== undefined,
         hasBlackList: plugin.configJson?.blackList !== undefined,
+        frontendPath: plugin.frontendPath,
         // Childbridge mode specific data
         matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
       });
