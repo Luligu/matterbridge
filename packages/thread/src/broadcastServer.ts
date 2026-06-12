@@ -41,7 +41,7 @@ import type {
 } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logError } from '@matterbridge/utils/error';
-import { AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
 
 interface BroadcastServerEvents {
   broadcast_message: [msg: WorkerMessage];

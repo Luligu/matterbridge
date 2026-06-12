@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-import { AddressInfo } from 'node:net';
+import { type AddressInfo } from 'node:net';
 
 import { Coap, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';

@@ -41,7 +41,7 @@ describe('Validation Functions', () => {
     });
 
     test('invalid numbers and types', () => {
-      expect(isValidNumber(NaN)).toBe(false);
+      expect(isValidNumber(Number.NaN)).toBe(false);
       expect(isValidNumber(Infinity)).toBe(false);
       expect(isValidNumber(null)).toBe(false);
       expect(isValidNumber(undefined)).toBe(false);

@@ -5,8 +5,8 @@ const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type Endpoint, type ServerNode } from '@matter/node';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { StatusResponse } from '@matter/types/common';
 import { wait } from '@matterbridge/utils/wait';
@@ -23,7 +23,7 @@ import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 await setupTest(NAME, false);
 
 describe('Client clusters and behaviors', () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
@@ -140,7 +140,7 @@ describe('Client clusters and behaviors', () => {
       userType: DoorLock.UserType.UnrestrictedUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
-    const createdUser = await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
+    const createdUser = await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Modify,
@@ -151,7 +151,7 @@ describe('Client clusters and behaviors', () => {
       userType: DoorLock.UserType.ScheduleRestrictedUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
-    const modifiedUser = await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
+    const modifiedUser = await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
 
     expect(createdUser).toMatchObject({
       userIndex: 1,
@@ -202,7 +202,7 @@ describe('Client clusters and behaviors', () => {
       userStatus: DoorLock.UserStatus.OccupiedEnabled,
       userType: DoorLock.UserType.UnrestrictedUser,
     });
-    const createdCredential = await userPinDoorLock.act((agent) =>
+    const createdCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
 
@@ -215,7 +215,7 @@ describe('Client clusters and behaviors', () => {
       userType: null,
     });
     await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
-    const clearedCredential = await userPinDoorLock.act((agent) =>
+    const clearedCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
 
@@ -261,7 +261,7 @@ describe('Client clusters and behaviors', () => {
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
     await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 1 });
-    const clearedUser = await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
+    const clearedUser = await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
 
     expect(clearedUser).toMatchObject({
       userIndex: 1,
@@ -285,7 +285,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('DoorLock getter delegation and validation', async () => {
-    await expect(userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 0 }))).rejects.toThrow('Invalid user index');
+    await expect(userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 0 }))).rejects.toThrow('Invalid user index');
 
     const handlerResponse: DoorLock.GetUserResponse = {
       userIndex: 7,
@@ -302,11 +302,11 @@ describe('Client clusters and behaviors', () => {
 
     userPinDoorLock.addCommandHandler('DoorLock.getUser', async () => handlerResponse);
 
-    expect(await userPinDoorLock.act((agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 7 }))).toEqual(handlerResponse);
+    expect(await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 7 }))).toEqual(handlerResponse);
 
     await expect(userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 0 })).rejects.toThrow('Invalid user index');
 
-    const credentialStatus = await userPinDoorLock.act((agent) =>
+    const credentialStatus = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
     expect(credentialStatus).toMatchObject({ credentialExists: false, userIndex: null });
@@ -330,7 +330,7 @@ describe('Client clusters and behaviors', () => {
       credentialRule: null,
     });
 
-    expect(await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getUser({ userIndex: 2 }))).toMatchObject({
+    expect(await branchDoorLock.act(async (agent) => agent.get(branchDoorLockServer).getUser({ userIndex: 2 }))).toMatchObject({
       userIndex: 2,
       userName: '',
       userUniqueId: null,
@@ -341,7 +341,7 @@ describe('Client clusters and behaviors', () => {
 
     await branchDoorLock.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 0xfffe });
 
-    expect(await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getUser({ userIndex: 2 }))).toMatchObject({
+    expect(await branchDoorLock.act(async (agent) => agent.get(branchDoorLockServer).getUser({ userIndex: 2 }))).toMatchObject({
       userIndex: 2,
       userName: null,
       userUniqueId: null,
@@ -371,7 +371,9 @@ describe('Client clusters and behaviors', () => {
     });
 
     expect(
-      await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 } })),
+      await branchDoorLock.act(async (agent) =>
+        agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 } }),
+      ),
     ).toMatchObject({
       credentialExists: false,
       userIndex: null,
@@ -397,7 +399,9 @@ describe('Client clusters and behaviors', () => {
     });
 
     expect(
-      await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 } })),
+      await branchDoorLock.act(async (agent) =>
+        agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 } }),
+      ),
     ).toMatchObject({
       credentialExists: true,
       userIndex: 3,
@@ -408,7 +412,9 @@ describe('Client clusters and behaviors', () => {
     });
 
     expect(
-      await branchDoorLock.act((agent) => agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 } })),
+      await branchDoorLock.act(async (agent) =>
+        agent.get(branchDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 } }),
+      ),
     ).toMatchObject({
       credentialExists: false,
       userIndex: null,

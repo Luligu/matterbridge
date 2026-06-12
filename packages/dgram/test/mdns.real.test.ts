@@ -8,12 +8,12 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import { RemoteInfo } from 'node:dgram';
+import { type RemoteInfo } from 'node:dgram';
 
 import { jest } from '@jest/globals';
 import { getMacAddress } from '@matterbridge/utils';
 
-import { DnsClass, DnsRecordType, Mdns, MdnsMessage } from '../src/mdns.js';
+import { DnsClass, DnsRecordType, Mdns, type MdnsMessage } from '../src/mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from '../src/multicast.js';
 import { setupTest } from './jestSetupTest.js';
 

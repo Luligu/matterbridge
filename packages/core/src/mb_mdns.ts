@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-import { AddressInfo } from 'node:net';
+import { type AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';

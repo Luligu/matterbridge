@@ -28,7 +28,7 @@
  * @returns {string} - The formatted timestamp.
  */
 export function formatTimeStamp(timestamp: number): string {
-  return `${new Date(timestamp).toLocaleString()}`;
+  return new Date(timestamp).toLocaleString();
 }
 
 /**

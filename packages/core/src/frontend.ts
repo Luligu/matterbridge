@@ -36,7 +36,7 @@ import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/pro
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { CommissioningOptions } from '@matter/types/commissioning';
-import { EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -232,7 +232,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'manager_spawn_response':
-          if (msg.result && msg.result.packageCommand === 'install') {
+          if (msg.result?.packageCommand === 'install') {
             this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
             if (msg.result.success) {
               this.restartRequired = true;
@@ -245,7 +245,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.wssSendSnackbarMessage(`Package ${msg.result.packageName} not installed`, 10, 'error');
             }
           }
-          if (msg.result && msg.result.packageCommand === 'uninstall') {
+          if (msg.result?.packageCommand === 'uninstall') {
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
             if (msg.result.success) {
               this.restartRequired = true;
@@ -261,8 +261,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           break;
         case 'manager_archive_response':
           if (
-            msg.result &&
-            msg.result.success &&
+            msg.result?.success &&
             isValidString(msg.result.command) &&
             isValidString(msg.result.archivePath) &&
             isValidArray(msg.result.sourcePaths) &&
@@ -964,7 +963,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         if (error) {
-          this.log.error(`Error downloading file ${`matterbridge.${NODE_STORAGE_DIR}.zip`}: ${error instanceof Error ? error.message : error}`);
+          this.log.error(`Error downloading file matterbridge.${NODE_STORAGE_DIR}.zip: ${error instanceof Error ? error.message : error}`);
           res.status(500).send('Error downloading the matterbridge storage file');
         } else {
           this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
@@ -1314,8 +1313,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
     if (device.hasClusterServer(BridgedDeviceBasicInformation.id)) return device.getAttribute(BridgedDeviceBasicInformation.id, 'reachable') as boolean;
-    if (device.mode === 'server' && device.serverNode && device.serverNode.state.basicInformation.reachable !== undefined)
-      return device.serverNode.state.basicInformation.reachable;
+    if (device.mode === 'server' && device.serverNode?.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
     return false;
   }
@@ -1368,7 +1366,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const batChargeLevel = device.getAttribute(PowerSource.id, 'batPercentRemaining') as number | undefined;
         return isValidNumber(batChargeLevel) ? batChargeLevel / 2 : undefined;
       }
-      return undefined;
+      return;
     };
 
     // Root endpoint
@@ -1427,11 +1425,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
 
-      const modeClusters = ['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode'];
-      if (modeClusters.includes(clusterName) && attributeName === 'supportedModes') {
+      const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode']);
+      if (modeClusters.has(clusterName) && attributeName === 'supportedModes') {
         supportedModes = attributeValue as { label: string; mode: number }[];
       }
-      if (modeClusters.includes(clusterName) && attributeName === 'currentMode') {
+      if (modeClusters.has(clusterName) && attributeName === 'currentMode') {
         const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
         if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
       }
@@ -1580,7 +1578,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     const endpoint = this.matterbridge.devices
       .array()
       .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
-    if (!endpoint || !endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
+    if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(
         `getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
       );
@@ -1654,7 +1652,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   async generateDiagnostic(): Promise<void> {
     this.log.debug('Generating diagnostic...');
-    const serverNodes: ServerNode<ServerNode.RootEndpoint>[] = [];
+    const serverNodes: ServerNode[] = [];
     // istanbul ignore else
     if (this.matterbridge.bridgeMode === 'bridge') {
       if (this.matterbridge.serverNode) serverNodes.push(this.matterbridge.serverNode);
@@ -2031,7 +2029,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' });
           return;
         }
-        let serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+        let serverNode: ServerNode | undefined;
         if (data.params.id === 'Matterbridge') serverNode = this.matterbridge.serverNode;
         else
           serverNode =
@@ -2065,7 +2063,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertising: true } });
         }
         if (data.params.removeFabric) {
-          const fabricIndex = FabricIndex(data.params.removeFabric as number);
+          const fabricIndex = FabricIndex(data.params.removeFabric);
           const fabricManager = serverNode.env.get(FabricManager);
           if (fabricManager.has(fabricIndex)) await fabricManager.for(fabricIndex).leave();
           this.log.debug(`*Removed fabric index ${data.params.removeFabric} for node ${data.params.id}`);
@@ -2140,7 +2138,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
         plugin.platform
-          ?.onAction(data.params.action, data.params.value as string | undefined, data.params.id as string | undefined, data.params.formData as unknown as PlatformConfig)
+          ?.onAction(data.params.action, data.params.value, data.params.id, data.params.formData as unknown as PlatformConfig)
           .then(() => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
             return;
@@ -2282,7 +2280,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             break;
           case 'setmatterport':
             // eslint-disable-next-line no-case-declarations
-            const port = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
+            const port = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
             if (isValidNumber(port, 5540, 5600)) {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
               this.matterbridge.port = this.matterbridge.initialPort = port;
@@ -2301,7 +2299,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             break;
           case 'setmatterdiscriminator':
             // eslint-disable-next-line no-case-declarations
-            const discriminator = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
+            const discriminator = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
             if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
               this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = discriminator;
@@ -2326,8 +2324,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             break;
           case 'setmatterpasscode':
             // eslint-disable-next-line no-case-declarations
-            const passcode = isValidString(data.params.value) ? parseInt(data.params.value) : 0;
-            if (isValidNumber(passcode, 1, 99999998) && CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode) === false) {
+            const passcode = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
+            if (isValidNumber(passcode, 1, 99999998) && !CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode)) {
               this.matterbridge.passcode = this.matterbridge.initialPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
@@ -2551,7 +2549,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug('Sending a restart required message to all connected clients');
     this.restartRequired = true;
     this.fixedRestartRequired = fixed;
-    if (snackbar === true) this.wssSendSnackbarMessage(`Restart required`, 0);
+    if (snackbar) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
@@ -2565,7 +2563,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart not required message to all connected clients');
     this.restartRequired = false;
-    if (snackbar === true) this.wssSendCloseSnackbarMessage(`Restart required`);
+    if (snackbar) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }

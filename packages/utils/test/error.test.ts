@@ -8,7 +8,7 @@
  */
 
 import { jest } from '@jest/globals';
-import { AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger } from 'node-ansi-logger';
 
 import { getErrorMessage, inspectError, logError } from '../src/error.js';
 import { setupTest } from './jestSetupTest.js';

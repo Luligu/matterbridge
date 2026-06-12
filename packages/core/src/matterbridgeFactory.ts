@@ -28,9 +28,9 @@
 if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeFactory loaded.\u001B[40;0m');
 
 // @matter
-import { Behavior, ClusterBehavior } from '@matter/node';
+import { type Behavior, ClusterBehavior } from '@matter/node';
 import { getClusterNameById } from '@matter/types/cluster';
-import { ClusterId } from '@matter/types/datatype';
+import { type ClusterId } from '@matter/types/datatype';
 // AnsiLogger module
 import { db, hk } from 'node-ansi-logger';
 

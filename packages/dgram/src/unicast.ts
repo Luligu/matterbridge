@@ -22,8 +22,8 @@
  */
 
 // Node.js imports
-import { RemoteInfo } from 'node:dgram';
-import { AddressInfo } from 'node:net';
+import { type RemoteInfo } from 'node:dgram';
+import { type AddressInfo } from 'node:net';
 
 // AnsiLogger imports
 import { BLUE, db } from 'node-ansi-logger';

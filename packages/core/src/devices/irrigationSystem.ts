@@ -21,12 +21,12 @@
  * limitations under the License.
  */
 
-import { AtLeastOne } from '@matter/general';
+import { type AtLeastOne } from '@matter/general';
 import { CommonLocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
-import { Semtag } from '@matter/types/globals';
+import { type Semtag } from '@matter/types/globals';
 
-import { DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
+import { type DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 

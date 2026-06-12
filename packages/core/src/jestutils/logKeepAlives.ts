@@ -25,7 +25,7 @@
 
 import { inspect } from 'node:util';
 
-import { AnsiLogger, rs } from 'node-ansi-logger';
+import { type AnsiLogger, rs } from 'node-ansi-logger';
 
 /**
  * Summarize live libuv handles/requests inside a process.

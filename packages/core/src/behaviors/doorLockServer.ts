@@ -26,7 +26,7 @@ import { DoorLockServer } from '@matter/node/behaviors/door-lock';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

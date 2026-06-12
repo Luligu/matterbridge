@@ -16,8 +16,8 @@ import url from 'node:url';
 
 import { jest } from '@jest/globals';
 import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { SessionsBehavior } from '@matter/node';
-import { ExposedFabricInformation } from '@matter/protocol';
+import { type SessionsBehavior } from '@matter/node';
+import { type ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
@@ -416,7 +416,7 @@ describe('MatterNode', () => {
     device.plugin = 'matterbridge-mock1';
 
     // Test adding to unknown plugin
-    await expect(() => matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    await expect(async () => matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error adding bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(0);
@@ -426,7 +426,7 @@ describe('MatterNode', () => {
     const saved = matter.aggregatorNode; // Save aggregator node
     matter.aggregatorNode = undefined;
     expect(await matter.pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
-    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(async () => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.aggregatorNode = saved; // Restore aggregator node
@@ -437,7 +437,7 @@ describe('MatterNode', () => {
     const savedServer = matter.serverNode; // Save server node
     matter.serverNode = undefined;
     device.mode = 'matter';
-    await expect(() => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(async () => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.serverNode = savedServer; // Restore server node
@@ -480,7 +480,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(1);
 
     // Test removing from unknown plugin
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    await expect(async () => matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -488,7 +488,7 @@ describe('MatterNode', () => {
     // Test removing when no aggregator node
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(async () => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -521,7 +521,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(2);
 
     // Test removing from unknown plugin
-    await expect(() => matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
+    await expect(async () => matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
       `Error removing all bridged endpoints for plugin ${plg}matterbridge-unknown${er}: plugin not found`,
     );
     expect(deviceManager.length).toBe(2);
@@ -787,7 +787,7 @@ describe('MatterNode', () => {
   });
 
   test('Get VendorId name', () => {
-    expect((matter as any).getVendorIdName(undefined)).toBe('');
+    expect((matter as any).getVendorIdName()).toBe('');
     expect((matter as any).getVendorIdName(4937)).toContain('AppleHome');
     expect((matter as any).getVendorIdName(4996)).toContain('AppleKeyChain');
     expect((matter as any).getVendorIdName(4362)).toContain('SmartThings');

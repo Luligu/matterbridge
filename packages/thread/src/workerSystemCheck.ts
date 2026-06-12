@@ -87,8 +87,8 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
       for (const detail of interfaceDetails || []) {
         if (detail.internal) foundInternal = true;
         if (!detail.internal) foundExternal = true;
-        if (detail.family === 'IPv4' && !detail.internal && foundIpv4 === false) foundIpv4 = true;
-        if (detail.family === 'IPv6' && !detail.internal && foundIpv6 === false) foundIpv6 = true;
+        if (detail.family === 'IPv4' && !detail.internal && !foundIpv4) foundIpv4 = true;
+        if (detail.family === 'IPv6' && !detail.internal && !foundIpv6) foundIpv6 = true;
       }
     }
     if (!foundInternal) {

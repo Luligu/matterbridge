@@ -35,7 +35,7 @@ import {
 } from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { extractorHood } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { invokeSubscribeHandler } from '../matterbridgeEndpointHelpers.js';
 import { ExtractorHood } from './extractorHood.js';
 

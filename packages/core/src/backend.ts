@@ -208,7 +208,7 @@ export class Backend extends EventEmitter<BackendEvents> {
             socket.destroy();
           }
         }
-        return undefined;
+        return;
       });
 
       this.httpServer.on('error', (error: Error) => {
@@ -352,7 +352,7 @@ export class Backend extends EventEmitter<BackendEvents> {
             socket.destroy();
           }
         }
-        return undefined;
+        return;
       });
 
       this.httpsServer.on('error', (error: Error) => {

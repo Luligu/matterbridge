@@ -84,7 +84,7 @@ describe('Dgram', () => {
     dgram.send(message, '127.0.0.1', 12345);
 
     expect(sendSpy).toHaveBeenCalledWith(message, 0, message.length, 12345, '127.0.0.1', expect.any(Function));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent a message to ${BLUE}${'127.0.0.1'}${db}:${BLUE}${12345}${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent a message to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -291,7 +291,7 @@ describe('Dgram', () => {
       .spyOn(os, 'networkInterfaces')
       .mockReturnValue({ eth0: [{ address: '192.168.1.120', family: 'IPv4', internal: false, netmask: '255.255.255.0', mac: '00:00:00:00:00:00', cidr: null }] });
     dgram.getIpv4InterfaceAddress('NoName');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "${'NoName'}" not found. Using first external IPv4 interface.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "NoName" not found. Using first external IPv4 interface.`);
 
     expect(dgram.getInterfacesNames()).toEqual(['eth0']);
 
@@ -342,7 +342,7 @@ describe('Dgram', () => {
         ],
     });
     const info = dgram.getIpv6InterfaceAddress('NoName');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "${'NoName'}" not found. Using first external IPv6 interface.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Interface "NoName" not found. Using first external IPv6 interface.`);
 
     expect(dgram.getInterfacesNames()).toEqual(['eth0']);
 
@@ -738,7 +738,7 @@ describe('Dgram', () => {
     dgram.listNetworkInterfaces();
 
     expect(loggerDebugSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
-    const detailLine = loggerDebugSpy.mock.calls.find(([message]) => typeof message === 'string' && message.includes('127.0.0.1'))?.[0] as string | undefined;
+    const detailLine = loggerDebugSpy.mock.calls.find(([message]) => typeof message === 'string' && message.includes('127.0.0.1'))?.[0];
     expect(detailLine).toBeDefined();
     expect(detailLine).toContain('internal');
     expect(detailLine).not.toContain('MAC:');

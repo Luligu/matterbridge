@@ -9,8 +9,8 @@ import { appendFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
-import { Endpoint, ServerNode } from '@matter/node';
+import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, type StorageContext } from '@matter/general';
+import { Endpoint, type ServerNode } from '@matter/node';
 import {
   BooleanStateConfigurationServer,
   BooleanStateServer,
@@ -54,7 +54,7 @@ import {
   OnOffPlugInUnitDevice,
   OnOffPlugInUnitDeviceDefinition,
 } from '@matter/node/devices';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { FabricManager } from '@matter/protocol';
 import {
   ColorControl,
@@ -135,7 +135,7 @@ import { getAttributeId, getClusterId } from './matterbridgeEndpointHelpers.js';
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
   let context: StorageContext;

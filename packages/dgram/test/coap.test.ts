@@ -12,7 +12,7 @@ import dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 
-import { Coap, COAP_OPTION_URI_PATH, CoapMessage, COIOT_OPTION_DEVID, COIOT_OPTION_SERIAL, COIOT_OPTION_VALIDITY } from '../src/coap.js';
+import { Coap, COAP_OPTION_URI_PATH, type CoapMessage, COIOT_OPTION_DEVID, COIOT_OPTION_SERIAL, COIOT_OPTION_VALIDITY } from '../src/coap.js';
 import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT } from '../src/multicast.js';
 import { setupTest } from './jestSetupTest.js';
 

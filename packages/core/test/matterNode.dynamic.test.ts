@@ -242,7 +242,7 @@ describe('MatterNode dynamic', () => {
     // Remove with no aggregator to test that code path
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(async () => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
     );
     matter.aggregatorNode = savedAggregator; // Restore aggregator node

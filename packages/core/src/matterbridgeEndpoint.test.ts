@@ -29,7 +29,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { Lifecycle } from '@matter/general';
-import { ActionContext, Endpoint, ServerNode } from '@matter/node';
+import { type ActionContext, type Endpoint, type ServerNode } from '@matter/node';
 import {
   BooleanStateBehavior,
   BooleanStateServer,
@@ -50,7 +50,7 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber } from '@matter/types';
 import {
   BooleanState,
@@ -110,7 +110,7 @@ import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId,
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 

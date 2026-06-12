@@ -32,7 +32,7 @@ jest.unstable_mockModule('node:http', async () => {
   return {
     ...originalModule,
     createServer: jest.fn((...args) => {
-      return (originalModule.createServer as typeof originalModule.createServer)(...(args as any));
+      return originalModule.createServer(...(args as any));
     }),
   };
 });
@@ -65,7 +65,7 @@ const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.pro
 const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
 const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
 const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
-  return Promise.resolve(undefined) as any;
+  return Promise.resolve() as any;
 });
 
 // Spy on Frontend methods
@@ -135,8 +135,8 @@ describe('Matterbridge frontend', () => {
   }, 60000);
 
   test('broadcast handler', async () => {
-    startSpy.mockImplementationOnce(() => Promise.resolve());
-    stopSpy.mockImplementationOnce(() => Promise.resolve());
+    startSpy.mockImplementationOnce(async () => Promise.resolve());
+    stopSpy.mockImplementationOnce(async () => Promise.resolve());
     broadcastServerIsWorkerRequestSpy.mockImplementationOnce(() => false);
     await (frontend as any).broadcastMsgHandler({} as any);
     broadcastServerIsWorkerResponseSpy.mockImplementationOnce(() => false);
@@ -321,7 +321,7 @@ describe('Matterbridge frontend', () => {
     device.getAttribute = jest.fn((cluster: number, attribute: string) => {
       if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
       if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return undefined;
+      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return;
     });
     expect((frontend as any).getPowerSource(device)).toBe('ok');
     expect((frontend as any).getBatteryLevel(device)).toBe(undefined);

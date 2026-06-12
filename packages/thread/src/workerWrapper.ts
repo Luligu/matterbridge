@@ -78,13 +78,13 @@ export class WorkerWrapper {
         .then(({ Tracker }) => {
           this.tracker = new Tracker(`Thread${this.name}`, this.debug, this.verbose);
           this.tracker.start();
-          return undefined;
+          return;
         })
         // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
         .catch((err) => {
           // eslint-disable-next-line no-console
           if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker`, err);
-          return undefined;
+          return;
         });
     }
     // Initialize logger

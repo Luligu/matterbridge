@@ -87,7 +87,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create speaker device (volume clamping cases)', () => {
     const cases: Array<[any, number]> = [
-      [NaN, 128], // not finite -> default 128
+      [Number.NaN, 128], // not finite -> default 128
       [Infinity, 128], // not finite -> default 128
       [-5, 1], // below min -> clamp to 1
       [0, 1], // zero -> clamp to 1
@@ -95,9 +95,9 @@ describe('Matterbridge ' + NAME, () => {
       [5000, 254], // far above max -> clamp to 254
     ];
     for (const [input, expected] of cases) {
-      const s = new Speaker(`Clamp ${input}`, `V${expected}`, false, input as any);
+      const s = new Speaker(`Clamp ${input}`, `V${expected}`, false, input);
       const level = s.getClusterServerOptions(LevelControl.id) as any;
-      expect(level && level.currentLevel).toBe(expected);
+      expect(level?.currentLevel).toBe(expected);
     }
   });
 
@@ -133,7 +133,7 @@ describe('Matterbridge ' + NAME, () => {
     await device.setVolume(100);
     expect(device.getVolume()).toBe(100);
     // attempt to set NaN -> should be ignored and remain 100
-    await device.setVolume(NaN);
+    await device.setVolume(Number.NaN);
     expect(device.getVolume()).toBe(100);
   });
 

@@ -26,7 +26,7 @@ import path from 'node:path';
 
 import { jest } from '@jest/globals';
 import { OnOffServer } from '@matter/main/behaviors/on-off';
-import { ActionContext } from '@matter/node';
+import { type ActionContext } from '@matter/node';
 import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
 import { OnOffBehavior } from '@matter/node/behaviors/on-off';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';

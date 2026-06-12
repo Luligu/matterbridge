@@ -36,8 +36,8 @@ jest.unstable_mockModule('node:https', () => {
   return { get: mockedGet };
 });
 
-import { ClientRequest, IncomingMessage } from 'node:http';
-import { get, RequestOptions } from 'node:https';
+import { type ClientRequest, type IncomingMessage } from 'node:http';
+import { type get, type RequestOptions } from 'node:https';
 import { PassThrough } from 'node:stream';
 
 import { jest } from '@jest/globals';

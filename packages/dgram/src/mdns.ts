@@ -22,15 +22,16 @@
  */
 
 // Node.js imports
-import dgram from 'node:dgram';
+import type dgram from 'node:dgram';
 
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
 // AnsiLogger imports
-import { AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
+import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
 // matterbridge
 import { Multicast } from './multicast.js';
+
 export enum DnsRecordType {
   A = 1,
   NS = 2,
@@ -575,7 +576,7 @@ export class Mdns extends Multicast {
       const groups = [...leftParts, ...Array(missing).fill('0'), ...rightParts];
       return Buffer.from(
         groups.flatMap((g) => {
-          const word = parseInt(g, 16);
+          const word = Number.parseInt(g, 16);
           if (!Number.isFinite(word) || word < 0 || word > 0xffff) {
             throw new Error(`Invalid IPv6 group: ${g}`);
           }
@@ -589,7 +590,7 @@ export class Mdns extends Multicast {
     return Buffer.from(
       groups.flatMap((g) => {
         if (!g) throw new Error(`Invalid IPv6 group: ${g}`);
-        const word = parseInt(g, 16);
+        const word = Number.parseInt(g, 16);
         if (!Number.isFinite(word) || word < 0 || word > 0xffff) throw new Error(`Invalid IPv6 group: ${g}`);
         return [(word >> 8) & 0xff, word & 0xff];
       }),
@@ -1049,8 +1050,8 @@ export class Mdns extends Multicast {
     const deviceResponseArray = Array.from(this.deviceResponses.entries());
     // Sort the array by numeric value of the IP address
     deviceResponseArray.sort(([addressA], [addressB]) => {
-      const partsA = addressA.split(/[:.]/).map((part) => parseInt(part, 16));
-      const partsB = addressB.split(/[:.]/).map((part) => parseInt(part, 16));
+      const partsA = addressA.split(/[:.]/).map((part) => Number.parseInt(part, 16));
+      const partsB = addressB.split(/[:.]/).map((part) => Number.parseInt(part, 16));
       for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
         const diff = (partsA[i] || 0) - (partsB[i] || 0);
         if (diff !== 0) return diff;

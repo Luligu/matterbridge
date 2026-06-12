@@ -32,7 +32,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 // @matterbridge
-import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
+import { Tracker, type TrackerSnapshot } from '@matterbridge/utils/tracker';
 
 export type GenerateHistoryPageOptions = {
   /**

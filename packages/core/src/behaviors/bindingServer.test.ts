@@ -6,14 +6,14 @@ const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
 import { Logger } from '@matter/general';
-import { ClusterBehavior, Endpoint } from '@matter/main/node';
-import { BindingResolution } from '@matter/node/behaviors/binding';
+import { type ClusterBehavior, Endpoint } from '@matter/main/node';
+import { type BindingResolution } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { EndpointNumber, FabricIndex, NodeId } from '@matter/types';
-import { Binding } from '@matter/types/clusters/binding';
+import { type Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -109,7 +109,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('MatterbridgeBindingServer established event - server kind does not call node.set', async () => {
-    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue();
     const resolution: BindingResolution = {
       kind: 'server',
       entry: { node: NodeId(1), endpoint: EndpointNumber(1) } as Binding.Target,
@@ -125,7 +125,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('MatterbridgeBindingServer established event - client kind calls node.set with autoSubscribe', async () => {
-    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const mockNodeSet = jest.fn<() => Promise<void>>().mockResolvedValue();
     const resolution: BindingResolution = {
       kind: 'client',
       entry: { node: NodeId(2), endpoint: EndpointNumber(2) } as Binding.Target,
@@ -168,7 +168,7 @@ describe('Client clusters and behaviors', () => {
 
     await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
     await device.act((agent) => {
-      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const binding = agent.get(MatterbridgeBindingServer);
       expect(binding.getEndpoint(OnOff.id)).toBe(device);
       expect(binding.getEndpoint(Identify.id)).toBeUndefined();
     });
@@ -243,13 +243,13 @@ describe('Client clusters and behaviors', () => {
 
     // getEndpoint must return the sensor and no node.set must have been called
     await light.act((agent) => {
-      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const binding = agent.get(MatterbridgeBindingServer);
       expect(binding.getEndpoint(OccupancySensing.id)).toBe(sensor);
     });
 
     // Read the sensor occupancy state directly through the bound endpoint (no wire transport)
     await light.act((agent) => {
-      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const binding = agent.get(MatterbridgeBindingServer);
       const boundSensor = binding.getEndpoint(OccupancySensing.id);
       expect(boundSensor?.stateOf(OccupancySensingServer).occupancy.occupied).toBe(false);
     });
@@ -258,7 +258,7 @@ describe('Client clusters and behaviors', () => {
     // pendingUpdate tracks the setAttribute promise so the test can await it after each trigger.
     let pendingUpdate: Promise<boolean> = Promise.resolve(false);
     await light.act((agent) => {
-      const binding = agent.get(MatterbridgeBindingServer) as MatterbridgeBindingServer;
+      const binding = agent.get(MatterbridgeBindingServer);
       const boundSensor = binding.getEndpoint(OccupancySensing.id);
       if (!boundSensor) throw new Error('bound sensor not found');
       boundSensor.eventsOf(OccupancySensingServer).occupancy$Changed.on((newValue) => {

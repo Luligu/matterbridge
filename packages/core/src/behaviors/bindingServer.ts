@@ -24,11 +24,11 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { Endpoint } from '@matter/main/node';
-import { BindingBehavior, BindingResolution, BindingServer } from '@matter/node/behaviors/binding';
+import { type Endpoint } from '@matter/main/node';
+import { BindingBehavior, type BindingResolution, BindingServer } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { ClusterId } from '@matter/types';
-import { Binding } from '@matter/types/clusters/binding';
+import { type ClusterId } from '@matter/types';
+import { type Binding } from '@matter/types/clusters/binding';
 import { debugStringify, nt } from 'node-ansi-logger';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';

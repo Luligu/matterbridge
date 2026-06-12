@@ -23,15 +23,15 @@
  */
 
 // @matter
-import { EndpointNumber } from '@matter/types/datatype';
+import { type EndpointNumber } from '@matter/types/datatype';
 // AnsiLogger
-import { LogLevel } from 'node-ansi-logger';
+import { type LogLevel } from 'node-ansi-logger';
 
 // matterbridge
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
-import { ThreadNames, WorkerData } from './workerTypes.js';
+import { type ThreadNames, type WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';

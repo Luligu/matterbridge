@@ -56,7 +56,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? (previousTarget as ClosureControl.OverallTargetState).speed ?? ThreeLevelAuto.Auto,
+      speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.overallTargetState = nextTarget;

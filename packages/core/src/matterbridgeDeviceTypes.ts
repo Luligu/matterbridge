@@ -137,7 +137,7 @@ import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transpor
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ZoneManagement } from '@matter/types/clusters/zone-management';
-import { ClusterId, DeviceTypeId } from '@matter/types/datatype';
+import { type ClusterId, DeviceTypeId } from '@matter/types/datatype';
 
 /*
 import { ClosureControl } from './clusters/closure-control.js';

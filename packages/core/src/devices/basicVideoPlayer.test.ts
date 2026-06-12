@@ -31,7 +31,7 @@ import {
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 // Matterbridge
 import { basicVideoPlayer } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { BasicVideoPlayer } from './basicVideoPlayer.js';
 
 // Setup the test environment

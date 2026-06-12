@@ -34,7 +34,7 @@ import { createHash } from 'node:crypto';
 
 // @matter
 import { Lifecycle } from '@matter/general';
-import { ActionContext, Behavior, ClusterBehavior, Endpoint } from '@matter/node';
+import { type ActionContext, type Behavior, ClusterBehavior, type Endpoint } from '@matter/node';
 // @matter behaviors
 import { AirQualityServer } from '@matter/node/behaviors/air-quality';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
@@ -129,13 +129,13 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/t
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId, NodeId, VendorId } from '@matter/types/datatype';
-import { MeasurementAccuracy, MeasurementType, Semtag } from '@matter/types/globals';
+import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
+import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
+import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
@@ -155,8 +155,8 @@ import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.j
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import { type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { type CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 
 /**
  *  Capitalizes the first letter of a string.
@@ -282,7 +282,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * The mfgCode field shall be used only if the Semtag is from a manufacturer-specific namespace, and shall be set to the manufacturer code of the device.
  * Don't set the mfgCode field for standard namespaces: the global namespaceId already provides uniqueness.
  */
-export function getSemtag(semtag: Semtag, label: string | null | undefined = undefined, mfgCode: VendorId | null = null): Semtag {
+export function getSemtag(semtag: Semtag, label?: string | null, mfgCode: VendorId | null = null): Semtag {
   if (label !== undefined && label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
 
   if (label === undefined) return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag };

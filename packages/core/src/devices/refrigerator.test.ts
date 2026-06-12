@@ -30,7 +30,7 @@ import {
 } from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { refrigerator } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from './refrigerator.js';
 
 // Setup the test environment
@@ -394,7 +394,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultRefrigeratorAlarmClusterServer normalizes different parameters', () => {
-    const requireSpy = jest.spyOn(device.behaviors as any, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(device.behaviors as any, 'require').mockImplementation(() => {});
 
     expect(device.createDefaultRefrigeratorAlarmClusterServer(device)).toBe(device);
     expect(requireSpy).toHaveBeenNthCalledWith(1, expect.any(Function), {

@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { ThreadNames } from '@matterbridge/types';
+import { type ThreadNames } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 type MockedParentPort = {
@@ -85,7 +85,7 @@ describe('WorkerWrapper', () => {
     }));
 
     const { WorkerWrapper } = await import('../src/workerWrapper.js');
-    const waitImmediate = () => new Promise<void>((resolve) => setImmediate(resolve));
+    const waitImmediate = async () => new Promise<void>((resolve) => setImmediate(resolve));
 
     return {
       WorkerWrapper,

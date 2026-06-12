@@ -12,9 +12,9 @@ import { Frontend } from '../src/frontend.js';
 import { flushAsync } from '../src/jestutils/flushAsync.js';
 import { plugins, startMatterbridge, stopMatterbridge } from '../src/jestutils/jestMatterbridgeTest.js';
 import { originalProcessArgv, setupTest } from '../src/jestutils/jestSetupTest.js';
-import { MatterbridgeAccessoryPlatform } from '../src/matterbridgeAccessoryPlatform.js';
-import { MatterbridgeDynamicPlatform } from '../src/matterbridgeDynamicPlatform.js';
-import { PlatformSchema } from '../src/matterbridgePlatform.js';
+import { type MatterbridgeAccessoryPlatform } from '../src/matterbridgeAccessoryPlatform.js';
+import { type MatterbridgeDynamicPlatform } from '../src/matterbridgeDynamicPlatform.js';
+import { type PlatformSchema } from '../src/matterbridgePlatform.js';
 
 const wssSendRestartRequired = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
 

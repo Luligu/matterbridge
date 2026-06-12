@@ -119,7 +119,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     expect((matterbridge as any).passcode).toBe(PASSCODE + 1);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR + 1);
 
-    if (!matterbridge.serverNode?.lifecycle.isOnline === true) {
+    if (!matterbridge.serverNode?.lifecycle.isOnline) {
       await new Promise((resolve) => {
         matterbridge.once('online', resolve);
       });

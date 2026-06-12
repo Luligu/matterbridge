@@ -35,7 +35,7 @@ import { closeMdnsInstance, destroyInstance } from './jestutils/jestMatterbridge
 import { loggerLogSpy, setupTest } from './jestutils/jestSetupTest.js';
 import { logKeepAlives } from './jestutils/logKeepAlives.js';
 import { Matterbridge } from './matterbridge.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

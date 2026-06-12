@@ -100,7 +100,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultEnergyEvseClusterServer argument normalization and chaining', () => {
-    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => {});
     // Call with all parameters
     device.createDefaultEnergyEvseClusterServer(EnergyEvse.State.PluggedInCharging, EnergyEvse.SupplyState.ChargingEnabled, EnergyEvse.FaultState.NoError);
     expect(requireSpy).toHaveBeenCalledWith(

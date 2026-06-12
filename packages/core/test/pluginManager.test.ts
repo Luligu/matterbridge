@@ -45,7 +45,7 @@ import { addPluginSpy } from '../src/jestutils/jestPluginManagerSpy.js';
 import { loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '../src/jestutils/jestSetupTest.js';
 import { logKeepAlives } from '../src/jestutils/logKeepAlives.js';
 import { Matterbridge } from '../src/matterbridge.js';
-import { MatterbridgePlatform } from '../src/matterbridgePlatform.js';
+import { type MatterbridgePlatform } from '../src/matterbridgePlatform.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
 
 // Setup the test environment

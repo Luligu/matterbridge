@@ -26,7 +26,7 @@
 import { promises as fs } from 'node:fs';
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger } from 'node-ansi-logger';
 
 /**
  * Creates a directory at the specified path if it doesn't already exist.

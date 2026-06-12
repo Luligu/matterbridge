@@ -51,5 +51,6 @@
     ".claude/rules": true,
     "~/.copilot/instructions": false,
     "~/.claude/rules": false
-  }
+  },
+  "typescript.native-preview.tsdk": "node_modules\\@typescript\\native-preview"
 }

@@ -32,7 +32,7 @@ if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().to
 import fs from 'node:fs';
 import path, { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { Worker, WorkerOptions } from 'node:worker_threads';
+import { Worker, type WorkerOptions } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';

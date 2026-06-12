@@ -20,11 +20,11 @@ import {
   NODE_STORAGE_DIR,
   type SharedMatterbridge,
 } from '@matterbridge/types';
-import express from 'express';
+import type express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
-import { Backend } from '../src/backend.js';
+import { type Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
 import { setupTest } from '../src/jestutils/jestSetupTest.js';
 
@@ -77,9 +77,9 @@ describe('BackendExpress', () => {
 
   const MAX_CAPTURE_BYTES = 32 * 1024;
 
-  const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const delay = async (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-  const makeRequest = (reqPath: string, method: string, body?: unknown) => {
+  const makeRequest = async (reqPath: string, method: string, body?: unknown) => {
     return new Promise<{
       status: number;
       body: any;
@@ -172,7 +172,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeGetRequestAndAbort = (reqPath: string) => {
+  const makeGetRequestAndAbort = async (reqPath: string) => {
     return new Promise<{ status: number }>((resolve) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' }, (res) => {
         const status = res.statusCode || 0;
@@ -185,7 +185,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeGetRequestAndAbortEarly = (reqPath: string) => {
+  const makeGetRequestAndAbortEarly = async (reqPath: string) => {
     return new Promise<void>((resolve) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' });
 
@@ -200,7 +200,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeGetRequestAndDrain = (reqPath: string) => {
+  const makeGetRequestAndDrain = async (reqPath: string) => {
     return new Promise<{ status: number; headers: http.IncomingHttpHeaders; bytes: number }>((resolve, reject) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' }, (res) => {
         let bytes = 0;
@@ -216,7 +216,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeMultipartRequest = (reqPath: string, filename: string, fileContent: Buffer) => {
+  const makeMultipartRequest = async (reqPath: string, filename: string, fileContent: Buffer) => {
     return new Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const preamble = Buffer.from(
@@ -262,7 +262,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeMultipartRequestWithoutFile = (reqPath: string, filename: string) => {
+  const makeMultipartRequestWithoutFile = async (reqPath: string, filename: string) => {
     return new Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const payload = Buffer.from([`--${boundary}`, `Content-Disposition: form-data; name="filename"`, '', filename, `--${boundary}--`, ''].join('\r\n'), 'utf8');

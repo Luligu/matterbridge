@@ -8,7 +8,7 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import dgram from 'node:dgram';
+import type dgram from 'node:dgram';
 
 import { jest } from '@jest/globals';
 

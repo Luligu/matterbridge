@@ -183,7 +183,7 @@ describe('mb_mdns', () => {
   test('mbMdnsMain uses default exit and log handlers for help', () => {
     process.argv = ['node', 'mb_mdns', '--help'];
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as any);
+    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
     expect(mbMdnsMain()).toBeUndefined();
     expect(consoleLogSpy).toHaveBeenCalledWith(getMbMdnsHelpText());
@@ -217,7 +217,7 @@ describe('mb_mdns', () => {
     sendMdnsQuery(mdns as unknown as never);
 
     const questions = mdns.sendQuery.mock.calls[0][0] as Array<{ unicastResponse: boolean }>;
-    expect(questions.every((question) => question.unicastResponse === false)).toBe(true);
+    expect(questions.every((question) => !question.unicastResponse)).toBe(true);
   });
 
   test('advertiseMatterbridgeService falls back to the first eligible interface and logs send errors', () => {

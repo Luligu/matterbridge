@@ -66,8 +66,8 @@ import path from 'node:path';
 
 // @matter
 import { Environment, RuntimeService } from '@matter/general';
-import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { type Endpoint, type ServerNode } from '@matter/node';
+import { type AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
 // @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
@@ -85,7 +85,7 @@ import { flushAsync } from './flushAsync.js';
 import { assertAllEndpointNumbersPersisted, createTestEnvironment, flushAllEndpointNumberPersistence } from './jestMatterTest.js';
 import { HOMEDIR, loggerLogSpy, originalProcessArgv } from './jestSetupTest.js';
 
-let server: ServerNode<ServerNode.RootEndpoint>;
+let server: ServerNode;
 let aggregator: Endpoint<AggregatorEndpoint>;
 
 export let matterbridge: Matterbridge;
@@ -296,7 +296,7 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
   matterbridge = await Matterbridge.loadInstance(false);
   expect(matterbridge).toBeDefined();
   expect(matterbridge).toBeInstanceOf(Matterbridge);
-  matterbridge.matterbridgeVersion = '3.9.0';
+  matterbridge.matterbridgeVersion = '3.9.1';
   matterbridge.bridgeMode = 'bridge';
   matterbridge.rootDirectory = path.join(HOMEDIR);
   matterbridge.homeDirectory = path.join(HOMEDIR);
@@ -338,7 +338,7 @@ export async function createMatterbridgeEnvironment(): Promise<Matterbridge> {
  * await startMatterbridgeEnvironment(MATTER_PORT, MATTER_CREATE_ONLY);
  * ```
  */
-export async function startMatterbridgeEnvironment(port: number = 5540, createOnly: boolean = false): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startMatterbridgeEnvironment(port: number = 5540, createOnly: boolean = false): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the node storage
   matterbridge.nodeStorage = new NodeStorageManager({
     dir: path.join(matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),

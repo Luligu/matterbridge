@@ -26,7 +26,7 @@ process.argv = [
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Endpoint, ServerNode } from '@matter/node';
+import { type Endpoint, type ServerNode } from '@matter/node';
 import {
   AirQualityServer,
   BooleanStateServer,
@@ -47,7 +47,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -146,7 +146,7 @@ import {
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
   beforeAll(async () => {

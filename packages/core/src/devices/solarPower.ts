@@ -25,7 +25,7 @@
 // Imports from @matter
 import { PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { Semtag } from '@matter/types/globals';
+import { type Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { deviceEnergyManagement, electricalSensor, powerSource, solarPower } from '../matterbridgeDeviceTypes.js';

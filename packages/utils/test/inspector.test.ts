@@ -86,7 +86,7 @@ describe('Inspector', () => {
         throw new Error('unsupported options');
       })
       // Fallback call without args
-      .mockImplementationOnce(() => undefined);
+      .mockImplementationOnce(() => {});
     (global as any).gc = gc;
 
     const inspector = new Inspector('Inspector', true, false);
@@ -184,11 +184,11 @@ describe('Inspector', () => {
           }
           return true;
         },
-        end: (cb?: () => void) => cb && cb(),
+        end: (cb?: () => void) => cb?.(),
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
@@ -222,7 +222,7 @@ describe('Inspector', () => {
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -265,11 +265,11 @@ describe('Inspector', () => {
           onError = fn;
         },
         write: () => true,
-        end: (cb?: () => void) => cb && cb(),
+        end: (cb?: () => void) => cb?.(),
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     const errorSpy = jest.spyOn(inspector['log'], 'error');
@@ -471,7 +471,7 @@ describe('Inspector', () => {
           writes.push(c);
           return true;
         },
-        end: (cb?: () => void) => cb && cb(),
+        end: (cb?: () => void) => cb?.(),
       }),
       writeFileSync: () => {},
     }));
@@ -505,11 +505,11 @@ describe('Inspector', () => {
           writes.push(c);
           return true;
         },
-        end: (cb?: () => void) => cb && cb(),
+        end: (cb?: () => void) => cb?.(),
       }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
@@ -542,10 +542,10 @@ describe('Inspector', () => {
     jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: ErrSession }));
     jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
-      createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
+      createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb?.() }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false) as any;
     await inspector.start();
@@ -576,10 +576,10 @@ describe('Inspector', () => {
     jest.unstable_mockModule('node:inspector', () => ({ default: {}, Session: StopErrSession }));
     jest.unstable_mockModule('node:fs', () => ({
       mkdirSync: (_p: string) => {},
-      createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb && cb() }),
+      createWriteStream: () => ({ once: () => {}, write: () => true, end: (cb?: () => void) => cb?.() }),
       writeFileSync: () => {},
     }));
-    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => undefined }));
+    jest.unstable_mockModule('../src/commandLine.js', () => ({ getIntParameter: () => {} }));
     const { Inspector } = await import('../src/inspector.js');
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();
@@ -613,7 +613,7 @@ describe('Inspector', () => {
     }));
 
     jest.unstable_mockModule('../src/commandLine.js', () => ({
-      getIntParameter: () => undefined,
+      getIntParameter: () => {},
     }));
 
     const { Inspector } = await import('../src/inspector.js');

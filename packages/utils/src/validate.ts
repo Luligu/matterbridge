@@ -159,9 +159,9 @@ export function parseVersionString(versionString: string): number | undefined {
   if (!match) return undefined;
 
   const [, majorStr, minorStr, patchStr] = match;
-  const major = parseInt(majorStr, 10);
-  const minor = parseInt(minorStr, 10);
-  const patch = parseInt(patchStr, 10);
+  const major = Number.parseInt(majorStr, 10);
+  const minor = Number.parseInt(minorStr, 10);
+  const patch = Number.parseInt(patchStr, 10);
 
   if ([major, minor, patch].some((n) => !Number.isFinite(n)) || major > 99 || minor > 99 || patch > 99) {
     return undefined;

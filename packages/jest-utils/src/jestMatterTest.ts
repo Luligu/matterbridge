@@ -46,7 +46,7 @@ import { flushAsync } from './flushAsync.js';
 import { HOMEDIR, NAME } from './jestSetupTest.js';
 
 export let environment: Environment;
-export let server: ServerNode<ServerNode.RootEndpoint>;
+export let server: ServerNode;
 export let aggregator: Endpoint<AggregatorEndpoint>;
 
 /**
@@ -166,10 +166,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.9.0',
-    matterbridgeLatestVersion: '3.9.0',
-    matterbridgeDevVersion: '3.9.0',
-    frontendVersion: '3.9.0',
+    matterbridgeVersion: '3.9.1',
+    matterbridgeLatestVersion: '3.9.1',
+    matterbridgeDevVersion: '3.9.1',
+    frontendVersion: '3.9.1',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -316,12 +316,12 @@ export async function flushAllEndpointNumberPersistence(
  * @param {Endpoint} endpoint The endpoint to find the root server for.
  * @returns {ServerNode<ServerNode.RootEndpoint>} The root ServerNode of the given endpoint.
  */
-function getRootServerNode(endpoint: Endpoint): ServerNode<ServerNode.RootEndpoint> {
-  let current = endpoint as Endpoint;
+function getRootServerNode(endpoint: Endpoint): ServerNode {
+  let current = endpoint;
   while (current.owner) {
-    current = current.owner as Endpoint;
+    current = current.owner;
   }
-  return current as ServerNode<ServerNode.RootEndpoint>;
+  return current as ServerNode;
 }
 
 /**
@@ -424,7 +424,7 @@ export async function createServerNode(
   ticks: number = 1,
   microTurns: number = 1,
   pause: number = 10,
-): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 
@@ -527,7 +527,7 @@ export async function createServerNode(
  * await destroyTestEnvironment();
  * ```
  */
-export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
     // istanbul ignore next
@@ -684,12 +684,7 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * expect(await addDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function addDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
@@ -732,12 +727,7 @@ export async function addDevice(
  * expect(await deleteDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function deleteDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();

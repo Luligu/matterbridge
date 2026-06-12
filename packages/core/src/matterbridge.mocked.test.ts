@@ -12,13 +12,15 @@ const originalWaitModule = await import('../../utils/src/wait.js');
 jest.unstable_mockModule('@matterbridge/utils/wait', async () => {
   return {
     ...originalWaitModule,
-    waiter: jest.fn((name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
-      return Promise.resolve(true); // Mock the waiter function to resolve immediately
-    }),
-    wait: jest.fn((timeout: number = 1000, name?: string, debug: boolean = false) => {
+    waiter: jest.fn(
+      async (name: string, check: () => boolean, exitWithReject: boolean = false, resolveTimeout: number = 5000, resolveInterval: number = 500, debug: boolean = false) => {
+        return Promise.resolve(true); // Mock the waiter function to resolve immediately
+      },
+    ),
+    wait: jest.fn(async (timeout: number = 1000, name?: string, debug: boolean = false) => {
       return Promise.resolve(); // Mock the wait function to resolve immediately
     }),
-    withTimeout: jest.fn((promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
+    withTimeout: jest.fn(async (promise: Promise<any>, timeoutMillisecs: number = 10000, reThrow: boolean = true) => {
       return Promise.resolve(); // Mock the withTimeout function to resolve immediately
     }),
   };
@@ -33,7 +35,7 @@ const originalNpmPrefixModule = await import('../../utils/src/npmPrefix.js');
 jest.unstable_mockModule('@matterbridge/utils/npm-prefix', async () => {
   return {
     ...originalNpmPrefixModule,
-    getGlobalNodeModules: jest.fn(() => Promise.resolve('usr/local/lib/node_modules')),
+    getGlobalNodeModules: jest.fn(async () => Promise.resolve('usr/local/lib/node_modules')),
   };
 });
 const npmPrefixModule = await import('@matterbridge/utils/npm-prefix');
@@ -44,7 +46,7 @@ const originalNetworkModule = await import('../../utils/src/network.js');
 jest.unstable_mockModule('@matterbridge/utils/network', async () => {
   return {
     ...originalNetworkModule,
-    logInterfaces: jest.fn(() => undefined),
+    logInterfaces: jest.fn(() => {}),
   };
 });
 const networkModule = await import('@matterbridge/utils/network');
@@ -53,7 +55,7 @@ const logInterfacesMock = networkModule.logInterfaces as jest.MockedFunction<typ
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('@matterbridge/thread', () => ({
   createESMWorker: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
+    return; // Mock the createESMWorker function to return immediately
   }),
 }));
 const workerModule = await import('@matterbridge/thread');
@@ -73,7 +75,7 @@ const childprocessModule = await import('node:child_process');
 const execSyncMock = childprocessModule.execSync as jest.MockedFunction<typeof childprocessModule.execSync>;
 
 // eslint-disable-next-line n/no-unsupported-features/node-builtins
-import fs, { cpSync, existsSync, mkdirSync, PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import fs, { cpSync, existsSync, mkdirSync, type PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -302,10 +304,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() with pairing.json', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -384,10 +386,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger debug', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -418,10 +420,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger info', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -452,10 +454,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger notice', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -484,10 +486,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger warn', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -516,10 +518,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger error', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -548,10 +550,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logger fatal', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     process.argv = [
@@ -580,10 +582,10 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() mdnsinterface', async () => {
-    const logNodeSpy = jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementation(() => {
+    const logNodeSpy = jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementation(async () => {
       return Promise.resolve();
     });
-    const parseCommandLineSpy = jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementation(() => {
+    const parseCommandLineSpy = jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementation(async () => {
       return Promise.resolve();
     });
 
@@ -938,7 +940,7 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     await (matterbridge as any).initialize();
@@ -950,7 +952,7 @@ describe('Matterbridge mocked', () => {
 
     // Reset the process.argv to simulate reset of not registered plugin
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     await (matterbridge as any).initialize();
@@ -961,7 +963,7 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() update', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
@@ -976,10 +978,10 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() registerProcessHandlers and matter file logger', async () => {
-    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(() => {
+    jest.spyOn(matterbridge as any, 'parseCommandLine').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
@@ -1128,7 +1130,7 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Getting global node_modules directory...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Error: Test error for getGlobalNodeModules'));
 
-    getGlobalNodeModulesMock.mockImplementation(() => {
+    getGlobalNodeModulesMock.mockImplementation(async () => {
       return Promise.resolve('usr/local/lib/node_modules');
     });
   }, 10000);

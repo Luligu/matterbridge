@@ -22,9 +22,9 @@ const { getShelly, postShelly } = await import('./shelly.js');
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Endpoint, ServerNode } from '@matter/node';
+import { type Endpoint, type ServerNode } from '@matter/node';
 import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { setDebug } from '@matterbridge/jest-utils';
@@ -57,7 +57,7 @@ const updateProcessSpy = jest.spyOn(Matterbridge.prototype, 'updateProcess').moc
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + HOMEDIR, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: Endpoint;
 
@@ -103,7 +103,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
     await new Promise<void>((resolve) => {
       const listener = (value: boolean) => {
-        if (value === true) {
+        if (value) {
           (device as any).events.onOff.onOff$Changed.off(listener);
           resolve();
         }
@@ -190,7 +190,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
     await new Promise<void>((resolve) => {
       const listener = (value: boolean) => {
-        if (value === true) {
+        if (value) {
           (restartDevice as any).events.onOff.onOff$Changed.off(listener);
           resolve();
         }
@@ -205,7 +205,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
     matterbridge.restartMode = 'service';
     await new Promise<void>((resolve) => {
       const listener = (value: boolean) => {
-        if (value === true) {
+        if (value) {
           (restartDevice as any).events.onOff.onOff$Changed.off(listener);
           resolve();
         }
@@ -226,7 +226,7 @@ describe('Matterbridge ' + HOMEDIR, () => {
 
     await new Promise<void>((resolve) => {
       const listener = (value: boolean) => {
-        if (value === true) {
+        if (value) {
           (updateDevice as any).events.onOff.onOff$Changed.off(listener);
           resolve();
         }

@@ -10,12 +10,12 @@ process.argv = ['node', 'matterbridge.js', '--frontend', '0', '--port', MATTER_P
 import path from 'node:path';
 
 import { jest } from '@jest/globals';
-import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type Endpoint, type ServerNode } from '@matter/node';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { ClusterId } from '@matter/types/datatype';
+import { type ClusterId } from '@matter/types/datatype';
 import { LogLevel } from 'node-ansi-logger';
 
 import { createMatterbridgeEnvironment, destroyMatterbridgeEnvironment, startMatterbridgeEnvironment, stopMatterbridgeEnvironment } from './jestutils/jestMatterbridgeTest.js';
@@ -30,7 +30,7 @@ import { camelCase, createClusterServer, getServerBehaviorFromClusterId, pascalC
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
   beforeAll(async () => {

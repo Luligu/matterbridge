@@ -67,7 +67,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   constructor(
     name: string,
     serial: string,
-    mode: 'server' | 'matter' | undefined = undefined,
+    mode?: 'server' | 'matter',
     currentRunMode?: number,
     supportedRunModes?: RvcRunMode.ModeOption[],
     currentCleanMode?: number,

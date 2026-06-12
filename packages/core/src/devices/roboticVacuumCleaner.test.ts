@@ -82,7 +82,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
   });
 
   test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {
-    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => {});
     // Call with all parameters
     device.createDefaultRvcOperationalStateClusterServer(
       ['Phase1', 'Phase2'],
@@ -119,7 +119,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
   });
 
   test('createDefaultServiceAreaClusterServer argument normalization and chaining', () => {
-    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => {});
     // Call with all parameters
     const supportedAreas: ServiceArea.Area[] = [];
     const selectedAreas: number[] = [];

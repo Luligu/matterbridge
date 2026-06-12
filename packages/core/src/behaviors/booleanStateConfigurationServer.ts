@@ -25,7 +25,7 @@
 import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

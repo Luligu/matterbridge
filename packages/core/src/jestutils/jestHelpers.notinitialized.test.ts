@@ -3,7 +3,7 @@ const MATTER_PORT = 9700;
 
 import { jest } from '@jest/globals';
 import { Endpoint, ServerNode } from '@matter/node';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 
 import { Matterbridge } from '../matterbridge.js';
 import { onOffPlugInUnit } from '../matterbridgeDeviceTypes.js';
@@ -22,7 +22,7 @@ import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consol
 process.argv.push('--debug');
 
 describe('Matterbridge not initialized test environment', () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
   let deviceServer: MatterbridgeEndpoint;

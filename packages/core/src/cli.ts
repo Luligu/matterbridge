@@ -35,7 +35,7 @@ import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatUptime } from '@matterbridge/utils/format';
 import { Inspector } from '@matterbridge/utils/inspector';
-import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
+import { Tracker, type TrackerSnapshot } from '@matterbridge/utils/tracker';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -133,14 +133,14 @@ function registerHandlers() {
   log.debug('Registering event handlers...');
   // istanbul ignore next cause registerHandlers is called only if instance is defined
   if (!instance) return;
-  instance.on('shutdown', () => shutdown());
-  instance.on('restart', () => restart());
-  instance.on('update', () => update());
+  instance.on('shutdown', async () => shutdown());
+  instance.on('restart', async () => restart());
+  instance.on('update', async () => update());
   instance.on('startmemorycheck', () => start());
   instance.on('stopmemorycheck', () => stop());
-  instance.on('startinspector', () => startInspector());
-  instance.on('stopinspector', () => stopInspector());
-  instance.on('takeheapsnapshot', () => takeHeapSnapshot());
+  instance.on('startinspector', async () => startInspector());
+  instance.on('stopinspector', async () => stopInspector());
+  instance.on('takeheapsnapshot', async () => takeHeapSnapshot());
   instance.on('triggergarbagecollection', () => triggerGarbageCollection());
   log.debug('Registered event handlers');
 }

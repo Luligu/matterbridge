@@ -25,7 +25,7 @@
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

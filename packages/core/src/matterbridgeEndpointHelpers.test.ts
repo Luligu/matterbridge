@@ -5,16 +5,16 @@ const MATTER_PORT = 11300;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { CommonNumberTag, Endpoint, PowerSourceTag, ServerNode } from '@matter/node';
+import { CommonNumberTag, type Endpoint, PowerSourceTag, type ServerNode } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { ClusterId } from '@matter/types/datatype';
+import { type ClusterId } from '@matter/types/datatype';
 import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
@@ -52,7 +52,7 @@ import {
 await setupTest(NAME, false);
 
 describe('Options helpers', () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
   let device: MatterbridgeEndpoint;
 

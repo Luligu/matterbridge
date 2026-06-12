@@ -22,10 +22,10 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
+import { type MaybePromise } from '@matter/general';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import { Semtag } from '@matter/types';
+import { type Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 

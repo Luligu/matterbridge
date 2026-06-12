@@ -23,7 +23,7 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger } from 'node-ansi-logger';
 
 import { getErrorMessage } from './error.js';
 

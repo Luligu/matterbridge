@@ -241,7 +241,7 @@ describe('MatterNode accessory', () => {
     // Remove with no server to test that code path
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(() => matter.removeBridgedEndpoint('matterbridge-mock4', device)).rejects.toThrow(
+    await expect(async () => matter.removeBridgedEndpoint('matterbridge-mock4', device)).rejects.toThrow(
       `Error removing endpoint ${plg}matterbridge-mock4${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): server node not found`,
     );
     matter.serverNode = savedServer; // Restore server node

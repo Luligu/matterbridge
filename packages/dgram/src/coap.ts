@@ -22,7 +22,7 @@
  */
 
 // Node.js imports
-import dgram from 'node:dgram';
+import type dgram from 'node:dgram';
 
 // @matterbridge
 import { getErrorMessage } from '@matterbridge/utils/error';

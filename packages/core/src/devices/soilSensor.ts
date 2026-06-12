@@ -23,7 +23,7 @@
 
 // @matter
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
-import { type MeasurementAccuracy } from '@matter/types/globals';
+import type { MeasurementAccuracy } from '@matter/types/globals';
 
 // Matterbridge
 import { powerSource, soilSensor } from '../matterbridgeDeviceTypes.js';

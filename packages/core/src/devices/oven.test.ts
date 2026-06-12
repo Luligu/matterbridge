@@ -31,7 +31,7 @@ import {
 } from '../jestutils/jestMatterTest.js';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '../jestutils/jestSetupTest.js';
 import { oven } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from './oven.js';
 
 // Setup the test environment
@@ -388,7 +388,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultOvenCavityOperationalStateClusterServer normalizes different parameters', () => {
-    const requireSpy = jest.spyOn(cabinet1.behaviors as any, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(cabinet1.behaviors as any, 'require').mockImplementation(() => {});
 
     expect(device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1)).toBe(cabinet1);
     expect(requireSpy).toHaveBeenNthCalledWith(1, MatterbridgeOvenCavityOperationalStateServer, {

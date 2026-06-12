@@ -62,7 +62,7 @@ export interface Plugin extends ApiPlugin {
   /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
   nodeContext?: NodeStorage;
   storageContext?: StorageContext;
-  serverNode?: ServerNode<ServerNode.RootEndpoint>;
+  serverNode?: ServerNode;
   aggregatorNode?: EndpointNode<AggregatorEndpoint>;
   device?: MatterbridgeEndpoint;
   platform?: MatterbridgePlatform;
@@ -373,7 +373,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'manager_spawn_response':
-          if (msg.result && msg.result.packageCommand === 'install') {
+          if (msg.result?.packageCommand === 'install') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             if (!msg.result.success) {
               this.log.error(`Failed to install package ${plg}${msg.result.packageName}${er}`);
@@ -409,14 +409,14 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
               }
             }
           }
-          if (msg.result && msg.result.packageCommand === 'uninstall') {
+          if (msg.result?.packageCommand === 'uninstall') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             if (msg.result.success) {
               // istanbul ignore else
               if (this.has(msg.result.packageName)) {
                 const plugin = this.get(msg.result.packageName);
                 // istanbul ignore else
-                if (plugin && plugin.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
+                if (plugin?.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
                 await this.remove(msg.result.packageName);
               }
               this.log.info(`Uninstalled plugin ${plg}${msg.result.packageName}${db} successfully`);

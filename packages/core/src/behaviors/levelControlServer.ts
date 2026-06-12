@@ -23,9 +23,9 @@
  */
 
 import { LevelControlServer } from '@matter/node/behaviors/level-control';
-import { LevelControl } from '@matter/types/clusters/level-control';
+import { type LevelControl } from '@matter/types/clusters/level-control';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

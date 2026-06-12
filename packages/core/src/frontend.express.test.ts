@@ -53,7 +53,7 @@ const broadcastServerBroadcastMessageHandlerSpy = jest.spyOn(BroadcastServer.pro
 const broadcastServerRequestSpy = jest.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
 const broadcastServerRespondSpy = jest.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
 const broadcastServerFetchSpy = jest.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
-  return Promise.resolve(undefined) as any;
+  return Promise.resolve() as any;
 });
 
 // Setup the test environment
@@ -74,7 +74,7 @@ describe('Matterbridge frontend express with http', () => {
     jest.restoreAllMocks();
   });
 
-  const makeRequest = (path: string, method: string, body?: any) => {
+  const makeRequest = async (path: string, method: string, body?: any) => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const data = body ? JSON.stringify(body) : null;
       const req = http.request(
@@ -110,7 +110,7 @@ describe('Matterbridge frontend express with http', () => {
     });
   };
 
-  const makeMultipartRequest = (path: string, filename: string, fileContent: Buffer) => {
+  const makeMultipartRequest = async (path: string, filename: string, fileContent: Buffer) => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const formData = [
@@ -153,7 +153,7 @@ describe('Matterbridge frontend express with http', () => {
     });
   };
 
-  const makeMultipartRequestWithoutFile = (path: string, filename: string) => {
+  const makeMultipartRequestWithoutFile = async (path: string, filename: string) => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const formData = [`--${boundary}`, `Content-Disposition: form-data; name="filename"`, '', filename, `--${boundary}--`, ''].join('\r\n');
@@ -380,7 +380,7 @@ describe('Matterbridge frontend express with http', () => {
       if (typeof filePath === 'string' && filePath.endsWith(MATTERBRIDGE_DIAGNOSTIC_FILE)) {
         throw new Error('Test diagnostic read error');
       }
-      return Reflect.apply(fs.readFile, fs, [filePath, ...args]) as ReturnType<typeof fs.readFile>;
+      return Reflect.apply(fs.readFile, fs, [filePath, ...args]);
     }) as typeof nodeFs.promises.readFile);
 
     try {

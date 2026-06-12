@@ -44,7 +44,7 @@ jobs:
         run: npm ci --no-fund --no-audit
 
       - name: Build matterbridge for production
-        run: npm run buildProduction
+        run: tsc --build tsconfig.build.production.json --verbose
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
@@ -196,7 +196,7 @@ jobs:
         run: npm ci --no-fund --no-audit
 
       - name: Build matterbridge for production
-        run: npm run buildProduction
+        run: tsc --build tsconfig.build.production.json --verbose
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .

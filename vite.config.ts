@@ -32,7 +32,7 @@ export default defineConfig({
       reportsDirectory: 'coverage/vitest',
       reporter: ['lcov', 'text', 'json'],
       // include: ['**/src/**/*.{ts,mts,cts}'],
-      include: ['packages/vitest-utils/src/**/*.{ts,mts,cts}', 'packages/core/src/matterbridgeFactory.ts'],
+      include: ['packages/vitest-utils/src/**/*.{ts,mts,cts}', 'packages/core/src/matterbridgeFactory.ts', 'packages/utils/src/**/*.{ts,mts,cts}'],
       exclude: [
         '**/.cache/',
         '**/apps/',

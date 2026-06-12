@@ -33,7 +33,7 @@ import path from 'node:path';
 // @matter
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
-import { EndpointNumber } from '@matter/types/datatype';
+import { type EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
@@ -41,13 +41,13 @@ import { hasParameter } from '@matterbridge/utils/cli';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // Node AnsiLogger module
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, er, type LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
-import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // matterbridge
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgeEndpoint, type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
 
 // Module-private brand
@@ -1041,7 +1041,7 @@ export class MatterbridgePlatform {
         this.log.debug(`Setting endpoint number for device ${CYAN}${device.uniqueId}${db} to ${CYAN}${device.maybeNumber}${db}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
-      for (const child of device.getChildEndpoints() as MatterbridgeEndpoint[]) {
+      for (const child of device.getChildEndpoints()) {
         if (!child.maybeId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + child.id) && endpointMap.get(device.uniqueId + separator + child.id) !== child.maybeNumber) {
           this.log.warn(

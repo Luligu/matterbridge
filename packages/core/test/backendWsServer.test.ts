@@ -11,7 +11,7 @@ import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
-import { Backend } from '../src/backend.js';
+import { type Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
 import { isWorkerRequestBroadcastServerSpy } from '../src/jestutils/jestBroadcastServerSpy.js';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '../src/jestutils/jestSetupTest.js';

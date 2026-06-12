@@ -5,9 +5,9 @@ const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
 import { jest } from '@jest/globals';
-import { Endpoint, ServerNode } from '@matter/node';
+import { type Endpoint, type ServerNode } from '@matter/node';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -66,7 +66,7 @@ import {
   windowCovering,
 } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
+import type { CommandHandlers } from '../matterbridgeEndpointCommandHandler.js';
 import { internalFor } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeDoorLockServer } from './doorLockServer.js';
 import { MatterbridgeThermostatServer } from './thermostatServer.js';
@@ -79,7 +79,7 @@ jest.spyOn(Matterbridge.prototype as any, 'backupMatterStorage').mockImplementat
 await setupTest(NAME, false);
 
 describe('Server clusters and behaviors', () => {
-  let server: ServerNode<ServerNode.RootEndpoint>;
+  let server: ServerNode;
   let aggregator: Endpoint<AggregatorEndpoint>;
 
   let light: MatterbridgeEndpoint;

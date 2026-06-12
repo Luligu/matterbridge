@@ -25,7 +25,7 @@
 import { ColorControlServer } from '@matter/node/behaviors/color-control';
 import { ColorControl } from '@matter/types/clusters/color-control';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

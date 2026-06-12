@@ -29,7 +29,7 @@ if (process.argv.includes('--loader')) console.log('\u001B[35m[' + new Date().to
 
 import { readFileSync } from 'node:fs';
 
-import { DockerBuildConfig } from '@matterbridge/types';
+import { type DockerBuildConfig } from '@matterbridge/types';
 import { inspectError } from '@matterbridge/utils/error';
 import { debugStringify, LogLevel } from 'node-ansi-logger';
 
@@ -58,14 +58,14 @@ export default new WorkerWrapper('DockerVersion', async (worker) => {
     const errorMessage = inspectError(worker.log, `Failed to check docker version`, error);
     worker.logger(LogLevel.ERROR, errorMessage);
   }
-  if (dockerBuildConfig && dockerBuildConfig.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest) {
+  if (dockerBuildConfig?.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest) {
     worker.logger(
       LogLevel.WARN,
       `You are using the v.${dockerBuildConfig.version} latest Docker image. Please pull the latest Docker image v.${dockerVersionLatest} and recreate the container to apply it.`,
     );
     worker.snackBar(`A new Docker image is available: v.${dockerVersionLatest}. Pull the latest Docker image and recreate the container to apply it.`, 0, 'info');
   }
-  if (dockerBuildConfig && dockerBuildConfig.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev) {
+  if (dockerBuildConfig?.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev) {
     worker.logger(
       LogLevel.WARN,
       `You are using the v.${dockerBuildConfig.version} dev Docker image. Please pull the dev Docker image v.${dockerVersionDev} and recreate the container to apply it.`,

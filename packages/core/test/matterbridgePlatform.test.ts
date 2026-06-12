@@ -27,15 +27,15 @@ import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSen
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from '../src/matterbridgePlatform.js';
 
-jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint').mockImplementation(async (pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked addBridgedEndpoint: ${pluginName} ${device.name}`);
   return Promise.resolve();
 });
-jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint').mockImplementation((pluginName: string, device: MatterbridgeEndpoint) => {
+jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint').mockImplementation(async (pluginName: string, device: MatterbridgeEndpoint) => {
   // console.log(`Mocked removeBridgedEndpoint: ${pluginName} ${device.name}`);
   return Promise.resolve();
 });
-jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints').mockImplementation((pluginName: string) => {
+jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints').mockImplementation(async (pluginName: string) => {
   // console.log(`Mocked removeAllBridgedEndpoint: ${pluginName}`);
   return Promise.resolve();
 });
@@ -84,7 +84,7 @@ describe('Matterbridge platform', () => {
       unregisterOnShutdown: false,
     });
     // Should not be registered until setMatterNode is called
-    expect(await platform.registerVirtualDevice('Virtual', 'switch', () => Promise.resolve())).toBe(false);
+    expect(await platform.registerVirtualDevice('Virtual', 'switch', async () => Promise.resolve())).toBe(false);
 
     // Add the platform to the Matterbridge environment
     addMatterbridgePlatform(platform, 'test');

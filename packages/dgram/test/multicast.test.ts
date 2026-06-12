@@ -9,7 +9,7 @@
  */
 
 import { Socket } from 'node:dgram';
-import { AddressInfo } from 'node:net';
+import { type AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { jest } from '@jest/globals';

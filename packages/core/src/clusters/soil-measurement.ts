@@ -26,8 +26,8 @@
 
 import { AttributeElement, ClusterElement, ClusterModel, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
-import { type ClusterId } from '@matter/types/datatype';
-import { type MeasurementAccuracy } from '@matter/types/globals';
+import type { ClusterId } from '@matter/types/datatype';
+import type { MeasurementAccuracy } from '@matter/types/globals';
 
 // Create the cluster definition and model for the SoilMeasurement cluster.
 export const SoilMeasurementDefinition = ClusterElement(

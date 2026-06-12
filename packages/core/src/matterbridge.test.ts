@@ -68,7 +68,7 @@ describe('Matterbridge', () => {
   requestBroadcastServerSpy.mockImplementation(() => {});
   respondBroadcastServerSpy.mockImplementation(() => {});
   fetchBroadcastServerSpy.mockImplementation(async () => {
-    return Promise.resolve(undefined) as any;
+    return Promise.resolve() as any;
   });
 
   beforeEach(async () => {
@@ -196,7 +196,7 @@ describe('Matterbridge', () => {
     matterbridge.plugins.clear();
     await matterbridge.plugins.saveToStorage();
 
-    if (!matterbridge.serverNode?.lifecycle.isOnline === true) {
+    if (!matterbridge.serverNode?.lifecycle.isOnline) {
       await new Promise((resolve) => {
         matterbridge.once('online', resolve);
       });
@@ -513,7 +513,7 @@ describe('Matterbridge', () => {
   });
 
   test('getVendorIdName', () => {
-    expect((matterbridge as any).getVendorIdName(undefined)).toBe('');
+    expect((matterbridge as any).getVendorIdName()).toBe('');
     expect((matterbridge as any).getVendorIdName(4937)).toContain('AppleHome');
     expect((matterbridge as any).getVendorIdName(4996)).toContain('AppleKeyChain');
     expect((matterbridge as any).getVendorIdName(4362)).toContain('SmartThings');

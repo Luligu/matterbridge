@@ -24,7 +24,7 @@ async function runWorkerCheckUpdates(options: RunOptions) {
     ? jest.fn(async () => {
         throw new Error('checkUpdates failed');
       })
-    : jest.fn(async () => undefined);
+    : jest.fn(async () => {});
 
   const inspectError = jest.fn(() => 'inspected error');
 

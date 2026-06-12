@@ -38,7 +38,7 @@ process.env['MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS'] = '10';
 // Mock the createESMWorker from workers module before importing it
 jest.unstable_mockModule('./helpers.js', () => ({
   addVirtualDevice: jest.fn(() => {
-    return undefined; // Mock the createESMWorker function to return immediately
+    return; // Mock the createESMWorker function to return immediately
   }),
 }));
 const helpersModule = await import('./helpers.js');
@@ -59,7 +59,7 @@ import { loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from
 import { Matterbridge } from './matterbridge.js';
 import { pressureSensor } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { PluginManager } from './pluginManager.js';
+import { type PluginManager } from './pluginManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

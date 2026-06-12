@@ -62,8 +62,8 @@ describe('deepCopy', () => {
     expect(copy).toEqual(map);
     expect(copy).not.toBe(map);
     // Mutate nested value
-    (copy.get('b') as any).nested = 99;
-    expect((map.get('b') as any).nested).toBe(2);
+    copy.get('b').nested = 99;
+    expect(map.get('b').nested).toBe(2);
   });
 
   test('deep copies Map keys and values when keys are objects', () => {
@@ -84,8 +84,8 @@ describe('deepCopy', () => {
     expect(copy).toEqual(set);
     expect(copy).not.toBe(set);
     // Mutate an object inside set
-    const originalObj = Array.from(set)[1] as any;
-    const copiedObj = Array.from(copy)[1] as any;
+    const originalObj = Array.from(set)[1];
+    const copiedObj = Array.from(copy)[1];
     copiedObj.x = 99;
     expect(originalObj.x).toBe(2);
   });

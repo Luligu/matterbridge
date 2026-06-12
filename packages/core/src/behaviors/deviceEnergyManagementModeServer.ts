@@ -28,7 +28,7 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

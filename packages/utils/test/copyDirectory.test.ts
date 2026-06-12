@@ -21,7 +21,7 @@ jest.unstable_mockModule('node:fs', async () => ({
   },
 }));
 
-jest.unstable_mockModule('node:path', () =>
+jest.unstable_mockModule('node:path', async () =>
   Promise.resolve({
     __esModule: true,
     default: {
@@ -63,9 +63,9 @@ describe('copyDirectory', () => {
 
   test('successfully copies flat directory', async () => {
     // Setup: one file
-    fakeMkdir.mockResolvedValue(undefined);
+    fakeMkdir.mockResolvedValue();
     fakeReaddir.mockResolvedValue([makeDirent('a.txt', true, false)]);
-    fakeCopyFile.mockResolvedValue(undefined);
+    fakeCopyFile.mockResolvedValue();
 
     const result = await copyDirectory('src', 'dest');
     expect(result).toBe(true);
@@ -76,12 +76,12 @@ describe('copyDirectory', () => {
 
   test('recursively copies nested directories', async () => {
     // Outer dir contains a subdir and a file
-    fakeMkdir.mockResolvedValue(undefined);
+    fakeMkdir.mockResolvedValue();
     fakeReaddir
       .mockResolvedValueOnce([makeDirent('sub', false, true), makeDirent('f.txt', true, false)])
       // For recursive call on subdir
       .mockResolvedValueOnce([makeDirent('inner.txt', true, false)]);
-    fakeCopyFile.mockResolvedValue(undefined);
+    fakeCopyFile.mockResolvedValue();
 
     const result = await copyDirectory('src', 'dest');
     expect(result).toBe(true);
@@ -107,7 +107,7 @@ describe('copyDirectory', () => {
   });
 
   test('returns false if readdir throws', async () => {
-    fakeMkdir.mockResolvedValue(undefined);
+    fakeMkdir.mockResolvedValue();
     fakeReaddir.mockRejectedValue(new Error('fail-read'));
 
     const result = await copyDirectory('src', 'dest');
@@ -117,7 +117,7 @@ describe('copyDirectory', () => {
   });
 
   test('ignores non-file, non-directory entries', async () => {
-    fakeMkdir.mockResolvedValue(undefined);
+    fakeMkdir.mockResolvedValue();
     fakeReaddir.mockResolvedValue([{ name: 'weird', isFile: () => false, isDirectory: () => false }]);
 
     const result = await copyDirectory('src', 'dest');

@@ -82,7 +82,7 @@ export async function waiter(
  * @param {boolean} debug - Whether to enable debug logging. Default is false.
  * @returns {Promise<void>} A Promise that resolves after the specified timeout.
  */
-export function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
+export async function wait(timeout: number = 1000, name?: string, debug: boolean = false): Promise<void> {
   const log = new AnsiLogger({ logName: 'Wait', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   if (debug) log.debug(`Wait "${name}" started...`);
 
@@ -102,7 +102,7 @@ export function wait(timeout: number = 1000, name?: string, debug: boolean = fal
  * @param {boolean} [reThrow] - Optional. If true, the promise will rethrow the original promise and will reject on timeout. Default is true.
  * @returns {Promise<T>} A new promise that resolves or rejects based on the original promise and the timeout.
  */
-export function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 10000, reThrow: boolean = true): Promise<T> {
+export async function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: number = 10000, reThrow: boolean = true): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => {
       if (reThrow) {

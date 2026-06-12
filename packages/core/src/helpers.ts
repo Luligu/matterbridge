@@ -37,7 +37,7 @@ import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-c
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';

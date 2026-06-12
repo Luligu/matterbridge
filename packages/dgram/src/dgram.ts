@@ -24,7 +24,7 @@
 // Node.js imports
 import dgram from 'node:dgram';
 import EventEmitter from 'node:events';
-import { AddressInfo } from 'node:net';
+import { type AddressInfo } from 'node:net';
 import os from 'node:os';
 
 // @matterbridge

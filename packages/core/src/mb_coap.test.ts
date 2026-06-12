@@ -130,7 +130,7 @@ describe('mb_coap', () => {
   test('mbCoapMain uses default exit and log handlers for help', () => {
     process.argv = ['node', 'mb_coap', '--help'];
     const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => undefined) as any);
+    const processExitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
     expect(mbCoapMain()).toBeUndefined();
     expect(consoleLogSpy).toHaveBeenCalledWith(getMbCoapHelpText());

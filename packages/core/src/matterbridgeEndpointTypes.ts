@@ -28,8 +28,8 @@
 if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpointTypes loaded.\u001B[40;0m');
 
 // @matter
-import { ClusterId, EndpointNumber } from '@matter/types/datatype';
-import { Semtag } from '@matter/types/globals';
+import type { ClusterId, EndpointNumber } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
 
 // matterbridge
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';

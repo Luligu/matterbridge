@@ -111,7 +111,7 @@ describe('Matterbridge Water Heater', () => {
   });
 
   test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
-    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => undefined);
+    const requireSpy = jest.spyOn(device.behaviors, 'require').mockImplementation(() => {});
     // Call with all parameters
     device.createDefaultWaterHeaterManagementClusterServer(
       { immersionElement1: true, immersionElement2: true },

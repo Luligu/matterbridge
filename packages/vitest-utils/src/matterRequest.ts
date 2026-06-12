@@ -22,7 +22,7 @@
  */
 
 import { ColorControl } from '@matter/types/clusters/color-control';
-import { LevelControl } from '@matter/types/clusters/level-control';
+import { type LevelControl } from '@matter/types/clusters/level-control';
 
 /**
  * Build a Matter LevelControl `MoveToLevelRequest` payload.

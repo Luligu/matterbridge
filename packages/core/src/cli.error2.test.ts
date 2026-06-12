@@ -15,7 +15,7 @@ const loadInstance = jest.spyOn(Matterbridge, 'loadInstance').mockImplementation
   return undefined as never; // Simulate an error by returning undefined
 });
 
-const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+const exit = jest.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {
   return undefined as never; // Prevent actual exit during tests
 });
 

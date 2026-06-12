@@ -22,7 +22,7 @@
  */
 
 // Imports from @matter
-import { Semtag } from '@matter/types';
+import { type Semtag } from '@matter/types';
 
 // Matterbridge
 import { cookSurface, cooktop, powerSource } from '../matterbridgeDeviceTypes.js';

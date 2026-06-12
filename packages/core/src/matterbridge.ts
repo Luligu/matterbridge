@@ -35,20 +35,20 @@ import EventEmitter from 'node:events';
 import fs, { unlinkSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { type ProcessEventMap } from 'node:process';
+import type { ProcessEventMap } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 
 // @matter
 import {
   Crypto,
-  Diagnostic,
+  type Diagnostic,
   Environment,
   LogFormat as MatterLogFormat,
   Logger,
   LogLevel as MatterLogLevel,
-  StorageContext,
-  StorageManager,
+  type StorageContext,
+  type StorageManager,
   StorageService,
   UINT16_MAX,
   UINT32_MAX,
@@ -56,7 +56,7 @@ import {
 import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceCertification, ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { type DeviceCertification, type ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
@@ -104,7 +104,7 @@ import {
   zb,
 } from 'node-ansi-logger';
 // NodeStorage module
-import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // matterbridge
 import { DeviceManager } from './deviceManager.js';
@@ -112,7 +112,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { Plugin, PluginManager } from './pluginManager.js';
+import { type Plugin, PluginManager } from './pluginManager.js';
 
 /**
  * Represents the Matterbridge events.
@@ -303,7 +303,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   certification: DeviceCertification.Configuration | undefined;
 
   /** Matter server node in bridge mode */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  serverNode: ServerNode | undefined;
   /** Matter aggregator node in bridge mode */
   aggregatorNode: Endpoint<AggregatorEndpoint> | undefined;
   aggregatorVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
@@ -315,7 +315,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   aggregatorUniqueId = getParameter('uniqueId');
 
   /** Matter controller node in controller mode */
-  controllerNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  controllerNode: ServerNode | undefined;
   controllerVendorId = VendorId(getIntParameter('vendorId') ?? 0xfff1);
   controllerVendorName = getParameter('vendorName') ?? 'Matterbridge';
   controllerProductId = getIntParameter('productId') ?? 0x8000;
@@ -453,30 +453,30 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         case 'matterbridge_start_plugin_server':
           {
             const plugin = this.plugins.get(msg.params.pluginName);
-            if (plugin && plugin.serverNode) await this.startServerNode(plugin.serverNode);
+            if (plugin?.serverNode) await this.startServerNode(plugin.serverNode);
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;
         case 'matterbridge_stop_plugin_server':
           {
             const plugin = this.plugins.get(msg.params.pluginName);
-            if (plugin && plugin.serverNode) await this.stopServerNode(plugin.serverNode);
-            if (plugin && plugin.serverNode) plugin.serverNode = undefined;
+            if (plugin?.serverNode) await this.stopServerNode(plugin.serverNode);
+            if (plugin?.serverNode) plugin.serverNode = undefined;
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;
         case 'matterbridge_start_device_server':
           {
             const device = this.devices.get(msg.params.deviceUniqueId);
-            if (device && device.serverNode) await this.startServerNode(device.serverNode);
+            if (device?.serverNode) await this.startServerNode(device.serverNode);
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;
         case 'matterbridge_stop_device_server':
           {
             const device = this.devices.get(msg.params.deviceUniqueId);
-            if (device && device.serverNode) await this.stopServerNode(device.serverNode);
-            if (device && device.serverNode) device.serverNode = undefined;
+            if (device?.serverNode) await this.stopServerNode(device.serverNode);
+            if (device?.serverNode) device.serverNode = undefined;
             this.server.respond({ ...msg, result: { success: true } });
           }
           break;
@@ -490,7 +490,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       switch (msg.type) {
         case 'manager_spawn_response':
           // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
-          if (msg.result && msg.result.success && msg.result.packageCommand === 'install') {
+          if (msg.result?.success && msg.result.packageCommand === 'install') {
             const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
             if (packageName === 'matterbridge') {
               this.log.info('Matterbridge has been updated. Full restart required.');
@@ -584,7 +584,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (!(await this.nodeStorage.healthCheck())) this.log.error('Node storage manager health check failed');
       this.log.debug('Creating node storage context for matterbridge');
       this.nodeContext = await this.nodeStorage.createStorage('matterbridge');
-      const keys = (await this.nodeStorage.keys()) as string[];
+      const keys = await this.nodeStorage.keys();
       for (const key of keys) {
         this.log.debug(`Checking node storage manager key: ${CYAN}${key}${db}`);
         await this.nodeStorage.get(key);
@@ -813,7 +813,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('mdnsinterface')) {
       this.mdnsInterface = getParameter('mdnsinterface');
     } else {
-      this.mdnsInterface = await this.nodeContext.get<string>('mattermdnsinterface', undefined);
+      this.mdnsInterface = await this.nodeContext.get<string>('mattermdnsinterface');
       if (this.mdnsInterface === '') this.mdnsInterface = undefined;
     }
     // Validate mdnsInterface
@@ -832,14 +832,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('ipv4address')) {
       this.ipv4Address = getParameter('ipv4address');
     } else {
-      this.ipv4Address = await this.nodeContext.get<string>('matteripv4address', undefined);
+      this.ipv4Address = await this.nodeContext.get<string>('matteripv4address');
       if (this.ipv4Address === '') this.ipv4Address = undefined;
     }
     // Validate ipv4address
     if (this.ipv4Address) {
       let isValid = false;
       for (const [ifaceName, ifaces] of availableAddresses) {
-        if (ifaces && ifaces.find((iface) => iface.address === this.ipv4Address)) {
+        if (ifaces?.find((iface) => iface.address === this.ipv4Address)) {
           this.log.info(`Using ipv4address ${CYAN}${this.ipv4Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
@@ -856,23 +856,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('ipv6address')) {
       this.ipv6Address = getParameter('ipv6address');
     } else {
-      this.ipv6Address = await this.nodeContext?.get<string>('matteripv6address', undefined);
+      this.ipv6Address = await this.nodeContext?.get<string>('matteripv6address');
       if (this.ipv6Address === '') this.ipv6Address = undefined;
     }
     // Validate ipv6address
     if (this.ipv6Address) {
       let isValid = false;
       for (const [ifaceName, ifaces] of availableAddresses) {
-        if (ifaces && ifaces.find((iface) => (iface.scopeid === undefined || iface.scopeid === 0) && iface.address === this.ipv6Address)) {
+        if (ifaces?.find((iface) => (iface.scopeid === undefined || iface.scopeid === 0) && iface.address === this.ipv6Address)) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
         }
         /* istanbul ignore next */
-        if (
-          ifaces &&
-          ifaces.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)
-        ) {
+        if (ifaces?.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
           break;
@@ -1482,10 +1479,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.plugins.logLevel = logLevel;
     let pluginDebug = false;
     for (const plugin of this.plugins) {
-      if (!plugin.platform || !plugin.platform.log || !plugin.platform.config) continue;
-      if (plugin.platform.config.debug === true) pluginDebug = true;
-      plugin.platform.log.logLevel = plugin.platform.config.debug === true ? LogLevel.DEBUG : logLevel;
-      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug === true ? LogLevel.DEBUG : logLevel);
+      if (!plugin.platform?.log || !plugin.platform.config) continue;
+      if (plugin.platform.config.debug) pluginDebug = true;
+      plugin.platform.log.logLevel = plugin.platform.config.debug ? LogLevel.DEBUG : logLevel;
+      await plugin.platform.onChangeLoggerLevel(plugin.platform.config.debug ? LogLevel.DEBUG : logLevel);
     }
     // Set the global logger callback for the WebSocketServer to the common minimum logLevel
     let callbackLogLevel = LogLevel.NOTICE;
@@ -2640,8 +2637,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [discriminator] - The discriminator for the server node. Defaults to 3850.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint>>} A promise that resolves to the created server node.
    */
-  // prettier-ignore
-  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode<ServerNode.RootEndpoint>> {
+  private async createServerNode(storageContext: StorageContext, port: number = 5540, passcode: number = 20242025, discriminator: number = 3850): Promise<ServerNode> {
     const storeId = await storageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -2837,7 +2833,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {ServerNode} [serverNode] - The server node to start.
    * @returns {ApiMatter} The sanitized data of the server node.
    */
-  getServerNodeData(serverNode: ServerNode<ServerNode.RootEndpoint>): ApiMatter {
+  getServerNodeData(serverNode: ServerNode): ApiMatter {
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
@@ -2894,7 +2890,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async createAggregatorNode(storageContext: StorageContext): Promise<Endpoint<AggregatorEndpoint>> {
     this.log.notice(`Creating ${await storageContext.get<string>('storeId')} aggregator...`);
-    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: `${await storageContext.get<string>('storeId')}` });
+    const aggregatorNode = new Endpoint(AggregatorEndpoint, { id: await storageContext.get<string>('storeId') });
     this.log.info(`Created ${await storageContext.get<string>('storeId')} aggregator`);
     return aggregatorNode;
   }
@@ -3258,7 +3254,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
   private async subscribeAttributeChanged(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
-    if (!plugin || !device || !device.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
+    if (!plugin || !device?.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.info(`Subscribing attributes for endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) plugin ${plg}${plugin.name}${nf}`);
     // Subscribe to the reachable$Changed event of the BasicInformationServer cluster server of the server node in childbridge mode
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {

@@ -22,7 +22,7 @@
  */
 
 // Node.js imports
-import { AddressInfo } from 'node:net';
+import { type AddressInfo } from 'node:net';
 import os from 'node:os';
 
 // AnsiLogger imports

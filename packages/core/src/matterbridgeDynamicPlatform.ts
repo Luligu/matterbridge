@@ -30,7 +30,7 @@ if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().to
 // @matterbridge
 import type { PlatformConfig, PlatformMatterbridge } from '@matterbridge/types';
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger } from 'node-ansi-logger';
 
 // matterbridge
 import { MatterbridgePlatform } from './matterbridgePlatform.js';

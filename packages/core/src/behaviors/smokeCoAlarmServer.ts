@@ -25,7 +25,7 @@
 import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

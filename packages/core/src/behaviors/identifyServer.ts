@@ -23,9 +23,9 @@
  */
 
 import { IdentifyServer } from '@matter/node/behaviors/identify';
-import { Identify } from '@matter/types/clusters/identify';
+import { type Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

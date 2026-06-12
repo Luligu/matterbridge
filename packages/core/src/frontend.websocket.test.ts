@@ -222,7 +222,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Loaded plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Started plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Configured plugin/));
-    if (!plugin || !plugin.configJson) return;
+    if (!plugin?.configJson) return;
     plugin.configJson.whiteList = [];
     plugin.configJson.blackList = [];
   });
@@ -234,7 +234,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Loaded plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Started plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Configured plugin/));
-    if (!plugin || !plugin.configJson) return;
+    if (!plugin?.configJson) return;
     plugin.configJson.whiteList = [];
     plugin.configJson.blackList = [];
   });
@@ -246,7 +246,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Loaded plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Started plugin/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringMatching(/^Configured plugin/));
-    if (!plugin || !plugin.configJson) return;
+    if (!plugin?.configJson) return;
     plugin.configJson.whiteList = [];
     plugin.configJson.blackList = [];
   });
@@ -989,7 +989,7 @@ describe('Matterbridge frontend', () => {
     const plugin = matterbridge.plugins.get('matterbridge-mock2');
     expect(plugin).toBeDefined();
     expect(plugin?.platform).toBeDefined();
-    if (!plugin || !plugin.platform) return;
+    if (!plugin?.platform) return;
     jest.spyOn(plugin.platform, 'onAction').mockImplementationOnce(async () => {
       throw new Error('Test error in action');
     });

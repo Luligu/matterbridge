@@ -55,7 +55,7 @@ import multer from 'multer';
 import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 // matterbridge
-import { Backend } from './backend.js';
+import { type Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // prettier-ignore

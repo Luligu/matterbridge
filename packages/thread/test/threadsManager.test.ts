@@ -374,7 +374,7 @@ describe('ThreadsManager', () => {
 
         expect(result).toBe(true);
 
-        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default as any;
+        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
         expect(imported.workerData).toEqual({ ok: true, payload: 'value' });
         expect(imported.callbackCalledWith).toBe(imported);
         expect(imported.destroyCalledWith).toBe(true);
@@ -401,7 +401,7 @@ describe('ThreadsManager', () => {
 
         expect(result).toBe(false);
 
-        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default as any;
+        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
         expect(imported.workerData).toBeUndefined();
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
@@ -487,7 +487,7 @@ describe('ThreadsManager', () => {
 
       try {
         const customMarker = `--custom-argv-${Date.now()}`;
-        const worker = manager.createESMWorker('CustomWorker', tempWorkerPath, { a: 1 }, [customMarker], { ...process.env, FOO: 'BAR' }, undefined);
+        const worker = manager.createESMWorker('CustomWorker', tempWorkerPath, { a: 1 }, [customMarker], { ...process.env, FOO: 'BAR' });
 
         const message = await new Promise<any>((resolve, reject) => {
           worker.once('message', resolve);
@@ -622,12 +622,12 @@ describe('ThreadsManager', () => {
       expect(threadInfo.runCount).toBeUndefined();
 
       // 'online' should update lastStarted
-      (threadInfo.worker as any).emit('online');
+      threadInfo.worker.emit('online');
       expect(threadInfo.lastStarted).toBe(1000);
       expect(threadInfo.runCount).toBe(1);
 
       // 'exit' should compute duration from the online timestamp
-      (threadInfo.worker as any).emit('exit', 0);
+      threadInfo.worker.emit('exit', 0);
       expect(threadInfo.lastStopped).toBe(2000);
       expect(threadInfo.lastDuration).toBe(1000);
       expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted);
@@ -670,7 +670,7 @@ describe('ThreadsManager', () => {
       expect(threadInfo.worker).toBeDefined();
       expect(threadInfo.errorCount).toBeUndefined();
 
-      (threadInfo.worker as any).emit('messageerror');
+      threadInfo.worker.emit('messageerror');
 
       expect(threadInfo.errorCount).toBe(1);
       expect(errorSpy).toHaveBeenCalled();
@@ -711,7 +711,7 @@ describe('ThreadsManager', () => {
       const threadInfo = threads.find((t) => t.name === 'TestWorker');
       expect(threadInfo.worker).toBeDefined();
 
-      (threadInfo.worker as any).emit('message', { type: 'log', logLevel: LogLevel.INFO, message: 'from worker' });
+      threadInfo.worker.emit('message', { type: 'log', logLevel: LogLevel.INFO, message: 'from worker' });
 
       expect(createSpy).toHaveBeenCalled();
       expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'from worker');
@@ -795,7 +795,7 @@ describe('ThreadsManager', () => {
       expect(threadInfo.errorCount).toBeUndefined();
       expect(threadInfo.worker).toBeDefined();
 
-      (threadInfo.worker as any).emit('error', new Error('boom'));
+      threadInfo.worker.emit('error', new Error('boom'));
       expect(threadInfo.lastStopped).toBeDefined();
       expect(threadInfo.lastDuration).toBeDefined();
       expect(threadInfo.errorCount).toBe(1);

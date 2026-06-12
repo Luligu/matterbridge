@@ -213,7 +213,7 @@ describe('MatterNode bridge', () => {
     // Test no server node
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(() => matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
+    await expect(async () => matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterdevicetest${er}:${dev}${tmpSensor.deviceName}${er} (${zb}${tmpSensor.name}${er})`,
     );
     matter.serverNode = savedServer;

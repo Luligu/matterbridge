@@ -43,7 +43,7 @@ describe('zipjs', () => {
   });
 
   afterAll(async () => {
-    await Promise.all(tempDirectories.map((directory) => rm(directory, { recursive: true, force: true })));
+    await Promise.all(tempDirectories.map(async (directory) => rm(directory, { recursive: true, force: true })));
     jest.restoreAllMocks();
   });
 

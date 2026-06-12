@@ -23,7 +23,7 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
+import { type MaybePromise } from '@matter/general';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';

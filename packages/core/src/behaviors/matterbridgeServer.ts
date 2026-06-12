@@ -25,9 +25,9 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 
 import { Behavior } from '@matter/node';
-import { AnsiLogger } from 'node-ansi-logger';
+import { type AnsiLogger } from 'node-ansi-logger';
 
-import { CommandHandler } from '../matterbridgeEndpointCommandHandler.js';
+import { type CommandHandler } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
  * Base behavior providing a logger and command dispatch for Matterbridge endpoints.

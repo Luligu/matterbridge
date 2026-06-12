@@ -47,7 +47,7 @@ import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 
 import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { Backend } from './backend.js';
+import { type Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
 // prettier-ignore

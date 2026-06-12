@@ -7,7 +7,7 @@ const MATTER_CREATE_ONLY = true;
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { ClusterId } from '@matter/types/datatype';
+import { type ClusterId } from '@matter/types/datatype';
 import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,

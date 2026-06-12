@@ -26,7 +26,7 @@ import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
-import { OperationalState } from '@matter/types/clusters/operational-state';
+import { type OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -140,7 +140,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   protected handleOnOffChange(onOff: boolean) {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     // istanbul ignore else
-    if (onOff === false) {
+    if (!onOff) {
       device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;
     }

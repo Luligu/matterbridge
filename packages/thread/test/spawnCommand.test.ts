@@ -10,7 +10,7 @@ jest.unstable_mockModule('node:child_process', async () => {
     ...originalModule,
     spawn: jest.fn((command: string, args: string[], options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>) => {
       // console.error('spawn called with command:', command);
-      return (originalModule.spawn as typeof originalModule.spawn)(command, args, options);
+      return originalModule.spawn(command, args, options);
     }),
   };
 });

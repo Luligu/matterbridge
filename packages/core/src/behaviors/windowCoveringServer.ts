@@ -22,10 +22,10 @@
  * limitations under the License.
  */
 
-import { WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
+import { type WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

@@ -14,7 +14,7 @@ jest.unstable_mockModule('node:child_process', () => {
   return { exec: mockedExec };
 });
 
-import { ChildProcess, exec, ExecException } from 'node:child_process';
+import { type ChildProcess, type exec, type ExecException } from 'node:child_process';
 
 import { jest } from '@jest/globals';
 

@@ -23,7 +23,7 @@
  */
 
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import { EndpointNumber } from '@matter/types/datatype';
+import { type EndpointNumber } from '@matter/types/datatype';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

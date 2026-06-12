@@ -140,7 +140,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Playing;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -159,7 +159,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.Paused;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -178,7 +178,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff === true) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
     return { status: MediaPlayback.Status.Success };
   }
 

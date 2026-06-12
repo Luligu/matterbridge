@@ -109,9 +109,9 @@ describe('Tracker', () => {
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester');
 
-    const gcMock: (...args: any[]) => any = jest.fn(() => undefined);
+    const gcMock: (...args: any[]) => any = jest.fn(() => {});
     global.gc = ((arg?: unknown) => {
-      return gcMock(arg as any) as any;
+      return gcMock(arg as any);
     }) as any;
 
     const results: Array<[string, string]> = [];
@@ -129,10 +129,10 @@ describe('Tracker', () => {
 
     const gcMock: (...args: any[]) => any = jest.fn((arg?: unknown) => {
       if (arg !== undefined) throw new Error('no args supported');
-      return undefined;
+      return;
     });
     global.gc = ((arg?: unknown) => {
-      return gcMock(arg as any) as any;
+      return gcMock(arg as any);
     }) as any;
 
     const results: Array<[string, string]> = [];

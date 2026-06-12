@@ -23,9 +23,9 @@
  */
 
 import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { type ModeSelect } from '@matter/types/clusters/mode-select';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

@@ -31,9 +31,9 @@
 if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpoint loaded.\u001B[40;0m');
 
 // @matter/general
-import { AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { type AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
-import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
+import { type ActionContext, type Behavior, Endpoint, type EndpointType, MutableEndpoint, type ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
 import { AirQualityServer } from '@matter/node/behaviors/air-quality';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
@@ -74,14 +74,14 @@ import { ColorControl } from '@matter/types/clusters/color-control';
 import { ConcentrationMeasurement } from '@matter/types/clusters/concentration-measurement';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { type DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { Identify } from '@matter/types/clusters/identify';
 import { LevelControl } from '@matter/types/clusters/level-control';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
+import { type ModeSelect } from '@matter/types/clusters/mode-select';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
@@ -95,8 +95,8 @@ import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
-import { MeasurementAccuracy, Semtag } from '@matter/types/globals';
+import { type ClusterId, type EndpointNumber, VendorId } from '@matter/types/datatype';
+import { type MeasurementAccuracy, type Semtag } from '@matter/types/globals';
 // @matterbridge
 import { inspectError } from '@matterbridge/utils/error';
 import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
@@ -124,8 +124,14 @@ import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import { type DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import {
+  CommandHandler,
+  type CommandHandlerData,
+  type CommandHandlerExecutionResult,
+  type CommandHandlerFunction,
+  type CommandHandlers,
+} from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterClients,
   addClusterServers,
@@ -172,7 +178,7 @@ import {
   triggerEvent,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+import { type MatterbridgeEndpointOptions, type SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
@@ -272,7 +278,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   mode: 'server' | 'matter' | undefined = undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  serverNode: ServerNode | undefined;
 
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
@@ -423,7 +429,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.log = new AnsiLogger({
       logName: this.originalId ?? 'MatterbridgeEndpoint',
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
-      logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel,
+      logLevel: debug ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel,
     });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
@@ -1844,7 +1850,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {Endpoint | undefined} The child endpoint with the specified originalId, or undefined if not found.
    */
   getChildEndpointByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
-    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId) as MatterbridgeEndpoint | undefined;
+    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId);
   }
 
   /**
@@ -3943,7 +3949,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       return false;
     }
     if (['Single', 'Double', 'Long'].includes(event)) {
-      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).momentarySwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || !(this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).momentarySwitch) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with MomentarySwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }
@@ -3981,7 +3987,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     if (['Press', 'Release'].includes(event)) {
-      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).latchingSwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || !(this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).latchingSwitch) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }

@@ -105,7 +105,7 @@ describe('Matterbridge matterjs', () => {
   });
 
   test('backupMatterStorage fails for undefined values', async () => {
-    await (matterbridge as any).backupMatterStorage(undefined, undefined);
+    await (matterbridge as any).backupMatterStorage();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating matter node storage backup`), expect.any(Error));
   });
 
