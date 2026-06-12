@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/.git/**",
+    "apps/**",
+    "**/build/**",
+    "chip/**",
+    "**/coverage/**",
+    "**/dist/**",
+    "**/temp/**",
+    "**/jest/**",
+    "**/node_modules/**",
+    "**/scripts/**",
+    "**/screenshots/**",
+    "vendor/**",
+    "**/package-lock.json"
+  ]
+}

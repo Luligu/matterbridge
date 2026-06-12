@@ -58,8 +58,9 @@ import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger'
 import { Backend } from './backend.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32mBackendExpress loaded.\u001B[40;0m');
+if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BackendExpress loaded.\u001B[40;0m');
 
 /**
  * Class representing an Express application for frontend connections.

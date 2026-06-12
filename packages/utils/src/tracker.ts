@@ -25,7 +25,8 @@
 /* eslint-disable no-console */
 
 // istanbul ignore next line - loader/debug/verbose flags are only used for development and testing, not in production
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mTracker loaded.\u001B[40;0m');
+// prettier-ignore
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Tracker loaded.\u001B[40;0m');
 
 import EventEmitter from 'node:events';
 import os from 'node:os';
@@ -203,6 +204,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         const idleDelta = cur.idle - prev.idle;
         const busyDelta = cur.user - prev.user + (cur.nice - prev.nice) + (cur.sys - prev.sys) + (cur.irq - prev.irq);
         const totalDelta = busyDelta + idleDelta;
+        // istanbul ignore else
         if (totalDelta <= 0) return 0;
         // istanbul ignore next cause is practically impossible to hit this branch
         return busyDelta / totalDelta;

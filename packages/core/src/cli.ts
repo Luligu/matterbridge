@@ -26,7 +26,8 @@
 /* eslint-disable n/no-process-exit */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mCli loaded.\u001B[40;0m');
+// prettier-ignore
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Cli loaded.\u001B[40;0m');
 
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
@@ -268,7 +269,7 @@ async function version(): Promise<void> {
  */
 function help(): void {
   console.log(`
-  Usage: matterbridge [options] [command] 
+  Usage: matterbridge [options] [command]
 
     Commands:
       --help:                  show the help
@@ -284,7 +285,7 @@ function help(): void {
       --list:                  list the registered plugins
       --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       --logstorage:            log the node storage
-      --systemcheck:           perform a system check (check Node.js version and network interfaces) 
+      --systemcheck:           perform a system check (check Node.js version and network interfaces)
 
     Reset Commands:
       --reset:                 remove the commissioning for Matterbridge (bridge mode and childbridge mode). Shutdown Matterbridge before using it!
@@ -320,7 +321,7 @@ function help(): void {
       --homedir:               override the home directory (default the os homedir)
       --delay [seconds]:       set a delay in seconds before starting Matterbridge in the first 5 minutes from a reboot (default 120)
       --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
-      --no-ansi:               disable ANSI color output in the logs    
+      --no-ansi:               disable ANSI color output in the logs
       --reset-sessions:        reset sessions and resumption records on shutdown (use only if your controller has issue reconnecting on restart)
   `);
   process.exit(0);

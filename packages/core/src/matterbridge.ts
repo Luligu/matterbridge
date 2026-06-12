@@ -23,8 +23,9 @@
  */
 
 // istanbul ignore if -- Loader logs are not relevant for coverage
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (process.argv.includes('--loader') || process.argv.includes('-loader')) console.log('\u001B[32mMatterbridge loaded.\u001B[40;0m');
+if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Matterbridge loaded.\u001B[40;0m');
 
 // @matter
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -2659,7 +2660,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
     this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
 
-    // Validate the passcode   
+    // Validate the passcode
     if(passcode < 0 || passcode > 99999999) {
       this.log.warn(`Invalid passcode ${passcode} for server node ${storeId}. Passcode must be between 0 and 99999999. Generating a random passcode...`);
       passcode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
@@ -2670,7 +2671,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
-    
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */

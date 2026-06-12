@@ -41,8 +41,9 @@ import type { BackendExpress } from './backendExpress.js';
 import type { BackendWsServer } from './backendWsServer.js';
 
 // istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
+// prettier-ignore
 // eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32mBackend loaded.\u001B[40;0m');
+if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Backend loaded.\u001B[40;0m');
 
 /**
  * Represents the Backend events.
