@@ -192,6 +192,15 @@ describe('PluginManager', () => {
     expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
     expect(plugins.has('matterbridge-mock1')).toBe(true);
     expect(plugins.get('matterbridge-mock1')?.enabled).toBe(true);
+    const plugin = plugins.get('matterbridge-mock1');
+    expect(
+      (await testServer.fetch({ type: 'plugins_set_latest_version', src: testServer.name, dst: 'plugins', params: { plugin: plugin as ApiPlugin, version: '1.0.0' } }, 5000)).result
+        .success,
+    ).toBeTruthy();
+    expect(
+      (await testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: plugin as ApiPlugin, version: '1.0.0' } }, 5000)).result
+        .success,
+    ).toBeTruthy();
     expect(
       (await testServer.fetch({ type: 'plugins_disable', src: testServer.name, dst: 'plugins', params: { nameOrPath: 'matterbridge-mock1' } }, 5000)).result.plugin,
     ).toBeDefined();
@@ -270,7 +279,7 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1.tgz' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
-      expect(plugins.has('matterbridge-mock1')).toBe(true); 
+      expect(plugins.has('matterbridge-mock1')).toBe(true);
 
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       plugins.get('matterbridge-mock1')!.loaded = true;
@@ -278,7 +287,7 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       // await setDebug(false);
-      expect(plugins.has('matterbridge-mock1')).toBe(false); 
+      expect(plugins.has('matterbridge-mock1')).toBe(false);
     }
   }, 10000);
 

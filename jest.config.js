@@ -49,8 +49,17 @@ const jestConfig = {
     '/packages/core/src/jestutils/',
     '/packages/core/test/backend', // Not released yet, so ignore for now
     '/packages/core/test/matterNode', // Not released yet, so ignore for now
+    // Ignore test files in vitest-utils and jest-utils
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
+    // Moved in Vitest, so ignore for Jest
+    '/packages/utils/',
+    '/packages/dgram/',
+    '/packages/types/',
+    '/packages/thread/',
+    '/packages/core/test/clusters/',
+    '/packages/core/test/devices/',
+    '/packages/core/test/behaviors/',
   ],
   collectCoverageFrom: ['**/src/**/*.{ts,mts,cts}'],
   coverageDirectory: 'coverage/jest',
@@ -75,13 +84,21 @@ const jestConfig = {
     '/packages/core/src/crypto/',
     '/packages/core/src/workers/',
     '/packages/core/src/mock/',
-    '/packages/core/src/jestutils/',
     '/packages/core/src/backend', // Not released yet, so ignore for now
     '/packages/core/src/matterNode', // Not released yet, so ignore for now
+    // Ignore vitest-utils and jest-utils
+    '/packages/core/src/jestutils/',
     '/packages/vitest-utils/',
     '/packages/jest-utils/',
-    // Vitest specific paths to ignore
+    // Vitest tested specific paths to ignore
+    '/packages/utils/',
+    '/packages/dgram/',
+    '/packages/types/',
+    '/packages/thread/',
     '/packages/core/src/matterbridgeFactory.ts',
+    '/packages/core/src/clusters/',
+    '/packages/core/src/devices/',
+    '/packages/core/src/behaviors/',
   ],
   // Use all available CPU cores for running tests
   maxWorkers: '100%',

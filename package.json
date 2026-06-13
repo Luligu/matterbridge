@@ -189,7 +189,7 @@
     "test:vitest": "vitest run",
     "test:vitest:watch": "vitest --reporter verbose",
     "test:vitest:verbose": "vitest run --reporter verbose",
-    "test:vitest:coverage": "vitest run --reporter verbose --coverage",
+    "test:vitest:coverage": "vitest run --coverage",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
     "lint:debug": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --debug",

@@ -112,7 +112,7 @@ export class MatterbridgeBindingServer extends BindingServer {
   }
 }
 
-// istanbul ignore next but why is this not covered?
+/* istanbul ignore start */
 export namespace MatterbridgeBindingServer {
   /**
    * Internal state for binding behavior.
@@ -130,3 +130,4 @@ export namespace MatterbridgeBindingServer {
     clientList: ClusterId[] = [];
   }
 }
+/* istanbul ignore stop */

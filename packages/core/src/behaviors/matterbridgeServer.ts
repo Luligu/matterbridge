@@ -45,7 +45,7 @@ export class MatterbridgeServer extends Behavior {
   }
 }
 
-// istanbul ignore next cause this is just a namespace for shared state types
+/* istanbul ignore start */
 export namespace MatterbridgeServer {
   /**
    * State shared by Matterbridge servers.
@@ -55,3 +55,4 @@ export namespace MatterbridgeServer {
     commandHandler!: CommandHandler;
   }
 }
+/* istanbul ignore stop */

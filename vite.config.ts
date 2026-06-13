@@ -32,7 +32,17 @@ export default defineConfig({
       reportsDirectory: 'coverage/vitest',
       reporter: ['lcov', 'text', 'json'],
       // include: ['**/src/**/*.{ts,mts,cts}'],
-      include: ['packages/vitest-utils/src/**/*.{ts,mts,cts}', 'packages/core/src/matterbridgeFactory.ts', 'packages/utils/src/**/*.{ts,mts,cts}'],
+      include: [
+        'packages/vitest-utils/src/**/*.{ts,mts,cts}',
+        'packages/utils/src/**/*.{ts,mts,cts}',
+        'packages/dgram/src/**/*.{ts,mts,cts}',
+        'packages/types/src/**/*.{ts,mts,cts}',
+        'packages/thread/src/**/*.{ts,mts,cts}',
+        'packages/core/src/matterbridgeFactory.ts',
+        'packages/core/src/clusters/**/*.{ts,mts,cts}',
+        'packages/core/src/devices/**/*.{ts,mts,cts}',
+        'packages/core/src/behaviors/**/*.{ts,mts,cts}',
+      ],
       exclude: [
         '**/.cache/',
         '**/apps/',
@@ -48,7 +58,11 @@ export default defineConfig({
         '**/vendor/',
         '**/vitest/**',
         '**/src/**/*.d.ts',
+        '**/src/**/*.{spec,test}.{ts,mts,cts}',
       ],
+      thresholds: {
+        100: true,
+      },
     },
   },
 });

@@ -313,6 +313,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
     expect(device.hasAttributeServer(OnOff, 'startUpOnOff')).toBe(true);
 
+    // Exercise with empty list
+    device.createDefaultBindingClusterServer();
+
     await add(device);
     (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -1541,6 +1544,21 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultDoorLockClusterServer();
+    expect(device.hasAttributeServer(DoorLock, 'operatingMode')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+    (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createUserPinDoorLockClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinLock' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer();
     expect(device.hasAttributeServer(DoorLock, 'operatingMode')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);

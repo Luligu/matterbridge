@@ -55,6 +55,15 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.9.1] - Dev branch
+
+### Development Changes
+
+- [test]: Add Vitest tests (migration from Jest to Vitest will take a while).
+- [typescript]: Moved package to TypeScript Preview (tsgo). The final build in the workflow is always with typescript.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.9.0] - 2026-06-12
 
 ### New plugin

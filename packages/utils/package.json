@@ -143,6 +143,7 @@
     "node-ansi-logger": "3.3.0-dev-20260607-585945a"
   },
   "devDependencies": {
-    "@jest/globals": "30.4.1"
+    "@jest/globals": "30.4.1",
+    "vitest": "4.1.8"
   }
 }

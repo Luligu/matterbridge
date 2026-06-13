@@ -63,15 +63,7 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
     log.debug(`Error fetching plugins for update check: ${error instanceof Error ? error.message : error}`);
   }
 
-  /*
-  if (hasParameter('shelly')) {
-    const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
-
-    shellyUpdatesPromises.push(getShellySysUpdate(matterbridge, log, server));
-    shellyUpdatesPromises.push(getShellyMainUpdate(matterbridge, log, server));
-  }
-  */
-  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises /* , ...shellyUpdatesPromises*/]);
+  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises]);
 
   server.close();
 }

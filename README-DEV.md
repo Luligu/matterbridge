@@ -120,9 +120,15 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 | File                                                      | Notes                                                 |
 | --------------------------------------------------------- | ----------------------------------------------------- |
-| `.claude/CLAUDE.md`                                       | Main project instructions — always loaded             |
+| `.CLAUDE.md`                                              | Main project instructions — always loaded             |
 | `.claude/rules/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — loaded for all contexts |
 | `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `**/*.test.ts`          |
+
+## Agents instructions
+
+| File         | Notes                     |
+| ------------ | ------------------------- |
+| `.AGENTS.md` | Main project instructions |
 
 ## Guidelines on imports/exports
 

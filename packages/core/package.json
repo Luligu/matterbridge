@@ -150,6 +150,7 @@
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/multer": "2.1.0",
-    "@types/ws": "8.18.1"
+    "@types/ws": "8.18.1",
+    "vitest": "4.1.8"
   }
 }

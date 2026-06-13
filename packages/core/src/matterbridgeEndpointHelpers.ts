@@ -565,6 +565,7 @@ export async function invokeBehaviorCommand(
 
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
+    // istanbul ignore next -- This is only used in Jest tests, so we don't need to cover it in production.
     const patchedContext = new Proxy(agent.context, { get: (t, k) => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
     Object.defineProperty(behavior, 'context', { configurable: true, value: patchedContext });
     try {
