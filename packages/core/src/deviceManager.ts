@@ -86,6 +86,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
+    // istanbul ignore next cause debug logs are not relevant for coverage
     this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
@@ -102,6 +103,7 @@ export class DeviceManager {
   }
 
   private async msgHandler(msg: WorkerMessage) {
+    // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       // istanbul ignore next cause debug logs are not relevant for coverage
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);

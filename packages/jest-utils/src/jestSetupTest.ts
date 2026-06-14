@@ -56,9 +56,13 @@ export let log: AnsiLogger;
  * Setup the Jest environment:
  * - it will remove any existing home directory
  * - setup the spies for logging
+ * - process.argv will be set to ['jest', name, ...argv]
+ * - the provided environment variables will be set on process.env
  *
  * @param {string} name The name of the test suite.
  * @param {boolean} debug If true, the logging is not mocked.
+ * @param {string[]} argv Additional process.argv arguments to set after the 'jest' and name entries.
+ * @param {Record<string, string>} env Environment variables to set on process.env.
  *
  * @example
  * ```typescript
@@ -66,14 +70,23 @@ export let log: AnsiLogger;
  *
  * // Setup the test environment
  * await setupTest(NAME, false);
+ *
+ * // Setup the test environment with extra argv and environment variables
+ * await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
  * ```
  */
-export async function setupTest(name: string, debug: boolean = false): Promise<void> {
+export async function setupTest(name: string, debug: boolean = false, argv: string[] = [], env: Record<string, string> = {}): Promise<void> {
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
   HOMEDIR = path.join('.cache', 'jest', name);
+  process.argv = ['jest', name, ...argv];
+
+  // Set the provided environment variables
+  for (const [key, value] of Object.entries(env)) {
+    process.env[key] = value;
+  }
 
   // Create the exported log
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });

@@ -43,27 +43,22 @@ const jestConfig = {
     '/vendor/',
     '/vitest/',
     // Matterbridge specific paths to ignore
-    '/packages/core/src/crypto/',
-    '/packages/core/src/workers/',
-    '/packages/core/src/mock/',
-    '/packages/core/src/jestutils/',
     '/packages/core/test/backend', // Not released yet, so ignore for now
     '/packages/core/test/matterNode', // Not released yet, so ignore for now
-    // Ignore test files in vitest-utils and jest-utils
-    '/packages/vitest-utils/',
-    '/packages/jest-utils/',
+    '/packages/core/src/jestutils/', // Ignore test files in vitest-utils and jest-utils
+    '/packages/vitest-utils/', // Ignore test files in vitest-utils and jest-utils
+    '/packages/jest-utils/', // Ignore test files in vitest-utils and jest-utils
     // Moved in Vitest, so ignore for Jest
     '/packages/utils/',
     '/packages/dgram/',
     '/packages/types/',
     '/packages/thread/',
-    '/packages/core/test/clusters/',
-    '/packages/core/test/devices/',
-    '/packages/core/test/behaviors/',
+    '/packages/core/',
   ],
-  collectCoverageFrom: ['**/src/**/*.{ts,mts,cts}'],
   coverageDirectory: 'coverage/jest',
   coverageReporters: ['lcov', 'text', 'json'],
+  // Coverage collection from all source files in src directory (glob)
+  collectCoverageFrom: ['**/src/**/*.{ts,mts,cts}'],
   // Ignore specific paths for coverage files (regex)
   coveragePathIgnorePatterns: [
     '/.cache/',
@@ -81,8 +76,6 @@ const jestConfig = {
     '/vitest/',
     '/src/.*\\.d\\.ts$',
     // Matterbridge specific paths to ignore
-    '/packages/core/src/crypto/',
-    '/packages/core/src/workers/',
     '/packages/core/src/mock/',
     '/packages/core/src/backend', // Not released yet, so ignore for now
     '/packages/core/src/matterNode', // Not released yet, so ignore for now
@@ -96,9 +89,27 @@ const jestConfig = {
     '/packages/types/',
     '/packages/thread/',
     '/packages/core/src/matterbridgeFactory.ts',
+    '/packages/core/src/mb_coap.ts',
+    '/packages/core/src/mb_health.ts',
+    '/packages/core/src/mb_mdns.ts',
+    '/packages/core/src/matterbridgeDeviceTypes.ts',
+    '/packages/core/src/helpers.ts',
+    '/packages/core/src/matterbridgePlatform.ts',
+    '/packages/core/src/matterbridgeAccessoryPlatform.ts',
+    '/packages/core/src/matterbridgeDynamicPlatform.ts',
+    '/packages/core/src/pluginManager.ts',
+    '/packages/core/src/deviceManager.ts',
+    '/packages/core/src/cli.ts',
+    '/packages/core/src/cliEmitter.ts',
+    '/packages/core/src/cliHistory.ts',
     '/packages/core/src/clusters/',
     '/packages/core/src/devices/',
     '/packages/core/src/behaviors/',
+    '/packages/core/src/frontend',
+    '/packages/core/src/matterbridgeEndpoint',
+    '/packages/core/src/matterbridge',
+    '/packages/core/src/matterNode', // Not released yet, so ignore for now
+    '/packages/core/src/backend', // Not released yet, so ignore for now
   ],
   // Use all available CPU cores for running tests
   maxWorkers: '100%',

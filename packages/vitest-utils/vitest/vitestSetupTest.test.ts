@@ -22,6 +22,11 @@ describe('Vitest Helpers', () => {
     await setupTest(NAME, true);
     await setupTest(NAME, false);
     log.log(LogLevel.INFO, 'Test setup completed');
+
+    // Setup with extra argv and environment variables
+    await setupTest(NAME, false, ['--verbose'], { VITEST_SETUP_TEST_ENV: 'enabled' });
+    expect(process.argv).toEqual(['vitest', NAME, '--verbose']);
+    expect(process.env.VITEST_SETUP_TEST_ENV).toBe('enabled');
     console.log('Test setup completed');
     console.debug('Test setup completed');
     console.info('Test setup completed');

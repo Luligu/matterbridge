@@ -14,6 +14,10 @@ Migrate a Jest test file (e.g. `packages/core/src/foo.test.ts`) into a Vitest te
 - Each test file must keep a unique `MATTER_PORT`. If creating a brand-new file, pick an unused port (check existing tests).
 - Vitest runs with `globals: true`: `describe`, `test`, `expect`, `beforeAll`, `beforeEach`, `afterAll`, and `vi` are globals. Do not import them from `'vitest'` and do not import `'@jest/globals'`.
 
+## Example file to transform
+
+- packages\core\vitest\matterbridgeFactory.test.ts
+
 ## Step-by-step transformation
 
 ### 1. Header block

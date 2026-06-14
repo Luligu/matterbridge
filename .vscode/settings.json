@@ -3,7 +3,7 @@
   "eslint.enable": true,
   "prettier.enable": true,
   "oxc.enable": false,
-  "js/ts.experimental.useTsgo": true,
+  "js/ts.experimental.useTsgo": false,
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "terminal.integrated.scrollback": 10000,
   "editor.tabSize": 2,
@@ -51,6 +51,5 @@
     ".claude/rules": true,
     "~/.copilot/instructions": false,
     "~/.claude/rules": false
-  },
-  "typescript.native-preview.tsdk": "node_modules\\@typescript\\native-preview"
+  }
 }

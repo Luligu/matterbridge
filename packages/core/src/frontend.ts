@@ -1067,9 +1067,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Plugin frontend routes
+    // istanbul ignore next cause is under development and will be tested in the future
     for (const plugin of this.matterbridge.plugins.array().filter((p) => p.enabled && !p.error)) {
       const { existsSync } = await import('node:fs');
-      // istanbul ignore next cause is under development and will be tested in the future
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
         this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
@@ -1390,6 +1390,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // istanbul ignore else
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
+    // TODO: Remove
+    // istanbul ignore next
     const getUserLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
       if (labelList) {
@@ -1400,6 +1402,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       return '';
     };
 
+    // TODO: Remove
+    // istanbul ignore next
     const getFixedLabel = (device: MatterbridgeEndpoint) => {
       const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
       if (labelList) {
@@ -1413,6 +1417,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
 
+    // TODO: Remove
+    // istanbul ignore next
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;

@@ -58,15 +58,18 @@ describe(`${NAME}`, () => {
 
   it('should check updates', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValue('1.0.0');
+    (getGitHubUpdate as Mock).mockResolvedValue({});
 
     await checkUpdates(matterbridge);
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin');
+    expect(getGitHubUpdate).toHaveBeenCalled();
   });
 
   it('should update to the latest version if versions differ', async () => {

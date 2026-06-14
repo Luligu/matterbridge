@@ -1,6 +1,6 @@
 /**
  * docker-downloads.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Tracks Docker Hub pulls per day by sampling the repository "pull_count" daily.
  * Docker Hub provides total pulls for a repo; daily pulls are computed from deltas
@@ -138,7 +138,7 @@ function dayKeyUTC(iso) {
  * Load the history JSON file (if present).
  *
  * @param {string} historyPath Path to the JSON history file.
- * @returns {Promise<Array<{ts:string, repo:string, pull_count:number}>>} Parsed history rows.
+ * @returns {Promise<Array<{ts:string, repo:string, pull_count:number, delta:number|null}>>} Parsed history rows.
  */
 async function loadHistory(historyPath) {
   if (!existsSync(historyPath)) return [];
@@ -147,14 +147,19 @@ async function loadHistory(historyPath) {
   if (!Array.isArray(parsed)) return [];
   return parsed
     .filter((x) => x && typeof x.ts === 'string' && typeof x.repo === 'string' && typeof x.pull_count === 'number')
-    .map((x) => ({ ts: x.ts, repo: x.repo, pull_count: x.pull_count }));
+    .map((x, index, rows) => ({
+      ts: x.ts,
+      repo: x.repo,
+      pull_count: x.pull_count,
+      delta: index === 0 ? null : x.pull_count - rows[index - 1].pull_count,
+    }));
 }
 
 /**
  * Save the history JSON file.
  *
  * @param {string} historyPath Path to the JSON history file.
- * @param {Array<{ts:string, repo:string, pull_count:number}>} rows Rows to write.
+ * @param {Array<{ts:string, repo:string, pull_count:number, delta:number|null}>} rows Rows to write.
  * @returns {Promise<void>}
  */
 async function saveHistory(historyPath, rows) {
@@ -244,7 +249,13 @@ async function main() {
   const history = await loadHistory(historyPath);
 
   // Append snapshot if it's new for today OR pull_count changed (safe to append; we compress later).
-  history.push({ ts: now, repo, pull_count: stats.pull_count });
+  const previous = history.at(-1);
+  history.push({
+    ts: now,
+    repo,
+    pull_count: stats.pull_count,
+    delta: previous ? stats.pull_count - previous.pull_count : null,
+  });
 
   // Optional: trim history to last 4000 entries to avoid unbounded growth
   const trimmed = history.slice(Math.max(0, history.length - 4000));

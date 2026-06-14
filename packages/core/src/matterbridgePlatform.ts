@@ -209,8 +209,9 @@ export class MatterbridgePlatform {
       configurable: false,
     });
 
-    // istanbul ignore next 2 lines Debug logs are not relevant for coverage
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);
 
     // create the NodeStorageManager for the plugin platform
@@ -268,6 +269,7 @@ export class MatterbridgePlatform {
    * Destroys the platform, clean up memory, close storage and broadcast server.
    */
   private async destroy() {
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Destroying MatterbridgePlatform for plugin ${this.config.name}`);
 
     // Cleanup memory
@@ -283,6 +285,7 @@ export class MatterbridgePlatform {
     // Close the broadcast server
     this.#server.close();
 
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Destroyed MatterbridgePlatform for plugin ${this.config.name}`);
     this.isReady = false;
   }
@@ -1042,6 +1045,7 @@ export class MatterbridgePlatform {
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
       for (const child of device.getChildEndpoints()) {
+        // istanbul ignore next because is just defensive
         if (!child.maybeId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + child.id) && endpointMap.get(device.uniqueId + separator + child.id) !== child.maybeNumber) {
           this.log.warn(

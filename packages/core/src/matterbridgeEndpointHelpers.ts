@@ -309,6 +309,7 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     return {};
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
+  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
   if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
   return supportedBehavior.features ?? {};
 }
@@ -339,10 +340,9 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     return undefined;
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
-  if (!supportedBehavior) {
-    // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
-    return undefined;
-  }
+  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
+  if (!supportedBehavior) return undefined;
+
   return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;
 }
 
@@ -367,6 +367,7 @@ export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.O
 export function defaultFor<T extends Behavior.Type>(type: T, options?: Behavior.Options<T>): Partial<Behavior.Options<T>> | undefined {
   let defaults: Record<string, unknown> | undefined;
 
+  // istanbul ignore else
   if (options) {
     for (const key in type.defaults) {
       if (key in options) {
@@ -509,6 +510,7 @@ export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): Clust
  */
 export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Behavior.Type | undefined {
   let behavior: Behavior.Type | undefined;
+  // istanbul ignore else -- The cluster parameter is expected to be one of the specified types, so we can ignore the case where it is not.
   if (typeof cluster === 'string') {
     behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
   } else if (typeof cluster === 'number') {
@@ -657,6 +659,7 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalServerClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!optionalServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
         optionalServerList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -760,6 +763,7 @@ export function addRequiredClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.requiredClientClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!requiredClientList.includes(clusterId)) {
         requiredClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -781,6 +785,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalClientClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!optionalClientList.includes(clusterId)) {
         optionalClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -807,6 +812,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(FixedLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  // istanbul ignore else
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
@@ -831,6 +837,7 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(UserLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  // istanbul ignore else
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });

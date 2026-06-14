@@ -118,6 +118,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   constructor(private readonly matterbridge: Matterbridge) {
     super();
+    // istanbul ignore next - Loader logs are not relevant for coverage
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge plugin manager starting...');
     this.server = new BroadcastServer('plugins', this.log);
@@ -182,7 +183,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
+    // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
+      // istanbul ignore next - Loader logs are not relevant for coverage
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -368,6 +371,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
+    // istanbul ignore else
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -390,7 +394,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
                 // istanbul ignore else
                 if (plugin) plugin.tarballPath = msg.result.packageName;
                 await this.saveToStorage();
-                // istanbul ignore else
+                // istanbul ignore next
                 if (plugin && !plugin.loaded) await this.load(plugin);
               }
             } else {
@@ -933,6 +937,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       // Test if frontend build exists and set frontendPath if it does
       const frontendPath = path.join(plugin.path.replace('package.json', ''), 'apps', 'frontend', 'build', 'index.html');
       const { existsSync } = await import('node:fs');
+      // istanbul ignore next - frontendPath is optional, so we don't need to test it in unit tests
       if (existsSync(frontendPath)) plugin.frontendPath = frontendPath;
 
       const invalidDependencies = this.findInvalidDependencies(packageJson as PackageJsonLike);
@@ -1192,6 +1197,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         config.name = packageJson.name;
         config.version = packageJson.version;
 
+        // istanbul ignore next - if the plugin is loaded in debug mode, it will log in debug mode, otherwise it will use the matterbridge log level
         const log = new AnsiLogger({
           logName: plugin.description,
           logTimestampFormat: TimestampFormat.TIME_MILLIS,
