@@ -60,7 +60,13 @@ These classes will run as threads in the next releases:
 ### Development Changes
 
 - [test]: Add Vitest tests (migration from Jest to Vitest will take a while).
-- [typescript]: Moved package to TypeScript Preview (tsgo). The final build in the workflow is always with typescript.
+- [typescript]: Moved package to TypeScript Preview (tsgo). The final build in the publish workflow is always with typescript.
+
+### Changed
+
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `eslint` to v.10.5.0.
+- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260613.1.
 
 ### Fixed
 
