@@ -62,6 +62,11 @@ These classes will run as threads in the next releases:
 - [test]: Add Vitest tests (migration from Jest to Vitest will take a while).
 - [typescript]: Moved package to TypeScript Preview (tsgo). The final build in the workflow is always with typescript.
 
+### Fixed
+
+- [utils/zip]: Remove no more present zip export. Thanks Pugsin (https://github.com/Luligu/matterbridge/pull/568).
+- [package]: Update legacy export. Thanks Pugsin (https://github.com/Luligu/matterbridge/pull/567).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.9.0] - 2026-06-12

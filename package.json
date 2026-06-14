@@ -42,8 +42,8 @@
     "ewelink"
   ],
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/export.js",
+  "types": "dist/export.d.ts",
   "bin": {
     "matterbridge": "bin/matterbridge.js",
     "mb-mdns": "bin/mb_mdns.js",

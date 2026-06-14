@@ -66,7 +66,7 @@ export default defineConfig({
         '**/src/**/*.{spec,test}.{ts,mts,cts}',
       ],
       thresholds: {
-        perFile: true,
+        'perFile': true,
         'packages/{utils,dgram,types,thread}/src/**/*.{ts,mts,cts}': {
           statements: 100,
           branches: 100,
@@ -79,12 +79,13 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
-        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointCommandHandler,matterbridgeFactory}.ts': {
-          statements: 100,
-          branches: 100,
-          functions: 100,
-          lines: 100,
-        },
+        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointCommandHandler,matterbridgeFactory}.ts':
+          {
+            statements: 100,
+            branches: 100,
+            functions: 100,
+            lines: 100,
+          },
         'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint,matterbridgeEndpointHelpers}.ts': {
           functions: 100,
           lines: 100,
