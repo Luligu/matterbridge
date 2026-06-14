@@ -118,10 +118,6 @@
       "types": "./dist/createDirectory.d.ts",
       "import": "./dist/createDirectory.js"
     },
-    "./zip": {
-      "types": "./dist/createZip.d.ts",
-      "import": "./dist/createZip.js"
-    },
     "./color-utils": {
       "types": "./dist/colorUtils.d.ts",
       "import": "./dist/colorUtils.js"
