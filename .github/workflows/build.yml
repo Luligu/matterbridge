@@ -79,11 +79,8 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest -- --testTimeout=30000
 
       - name: List, audit, fix outdated dependencies and build again
         run: |

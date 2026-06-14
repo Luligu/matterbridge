@@ -1,6 +1,6 @@
 /**
  * publish-workspaces.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Publishes all workspace packages to npm.
  *
@@ -8,7 +8,6 @@
  *   node scripts/publish-workspaces.mjs [--dry-run]
  */
 
-/* eslint-disable n/no-extraneous-import */
 /* eslint-disable no-console */
 /* eslint-disable jsdoc/require-jsdoc */
 
@@ -16,8 +15,6 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-import { glob } from 'glob';
 
 const ANSI_GREEN = '\x1b[32m';
 const ANSI_RESET = '\x1b[0m';
@@ -96,14 +93,16 @@ async function findWorkspacePackageJsonPaths(repoRoot, workspacePatterns) {
     }
   }
 
-  const globMatches =
-    globPatterns.length > 0
-      ? await glob(globPatterns, {
-          cwd: repoRoot,
-          windowsPathsNoEscape: true,
-          ignore: ['**/node_modules/**'],
-        })
-      : [];
+  const globMatches = [];
+  if (globPatterns.length > 0) {
+    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this script always runs on current LTS
+    for await (const match of fs.glob(globPatterns, {
+      cwd: repoRoot,
+      exclude: (entry) => entry.split(/[\\/]/).includes('node_modules'),
+    })) {
+      globMatches.push(match);
+    }
+  }
 
   const all = uniqueStrings([...resolvedPaths, ...globMatches.map((rel) => path.resolve(repoRoot, rel))]);
 
@@ -343,7 +342,7 @@ try {
   }
 
   runCmd(repoRoot, false, 'node', ['scripts/sync-workspaces.mjs', '--scope', scopePrefix]);
-  runCmd(repoRoot, false, 'npm', ['run', 'cleanBuildProduction']);
+  runCmd(repoRoot, false, 'npm', ['run', 'cleanBuildProduction']); // Will use tsc
 
   const stripSummary = await stripFieldsInAllPackageJson();
   console.log('');

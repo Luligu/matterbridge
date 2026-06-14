@@ -21,21 +21,20 @@
  * limitations under the License.
  */
 
-import { jest } from '@jest/globals';
-
 import { DeviceManager } from '../deviceManager.js';
 
 // Spy on DeviceManager methods
-export const destroyDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'destroy');
-export const lengthDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'length', 'get');
-export const sizeDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'size', 'get');
-export const hasDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'has');
-export const getDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'get');
-export const setDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'set');
-export const removeDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'remove');
-export const clearDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'clear');
-export const arrayDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'array');
-export const baseArrayDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'baseArray');
-export const iteratorDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, Symbol.iterator);
-export const forEachDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'forEach');
-export const logLevelDeviceManagerSpy = jest.spyOn(DeviceManager.prototype, 'logLevel', 'set');
+const { jest } = await import('@jest/globals' as string);
+export const destroyDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.destroy> = jest.spyOn(DeviceManager.prototype, 'destroy');
+export const lengthDeviceManagerSpy: jest.SpiedGetter<typeof DeviceManager.prototype.length> = jest.spyOn(DeviceManager.prototype, 'length', 'get');
+export const sizeDeviceManagerSpy: jest.SpiedGetter<typeof DeviceManager.prototype.size> = jest.spyOn(DeviceManager.prototype, 'size', 'get');
+export const hasDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.has> = jest.spyOn(DeviceManager.prototype, 'has');
+export const getDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.get> = jest.spyOn(DeviceManager.prototype, 'get');
+export const setDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.set> = jest.spyOn(DeviceManager.prototype, 'set');
+export const removeDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.remove> = jest.spyOn(DeviceManager.prototype, 'remove');
+export const clearDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.clear> = jest.spyOn(DeviceManager.prototype, 'clear');
+export const arrayDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.array> = jest.spyOn(DeviceManager.prototype, 'array');
+export const baseArrayDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.baseArray> = jest.spyOn(DeviceManager.prototype, 'baseArray');
+export const iteratorDeviceManagerSpy: jest.SpiedFunction<(typeof DeviceManager.prototype)[typeof Symbol.iterator]> = jest.spyOn(DeviceManager.prototype, Symbol.iterator);
+export const forEachDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.forEach> = jest.spyOn(DeviceManager.prototype, 'forEach');
+export const logLevelDeviceManagerSpy: jest.SpiedSetter<typeof DeviceManager.prototype.logLevel> = jest.spyOn(DeviceManager.prototype, 'logLevel', 'set');

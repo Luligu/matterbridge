@@ -21,8 +21,8 @@ export default defineConfig({
       '**/src/mock/',
       '**/temp/',
       '**/vendor/',
-      '**/jest-utils/', // Test package for Jest
-      '**/vitest-utils/', // Test package for Vitest
+      '**/jest-utils/', // Plugins test package for Jest
+      '**/vitest-utils/', // Plugins test package for Vitest
       '**/matterNode*.test.ts', // Not released yet, so ignore for now
       '**/backend*.test.ts', // Not released yet, so ignore for now
     ],
@@ -35,7 +35,6 @@ export default defineConfig({
       provider: 'istanbul',
       reportsDirectory: 'coverage/vitest',
       reporter: ['lcov', 'text', 'json'],
-      // include: ['**/src/**/*.{ts,mts,cts}'],
       include: [
         'packages/utils/src/**/*.{ts,mts,cts}',
         'packages/dgram/src/**/*.{ts,mts,cts}',
@@ -58,12 +57,12 @@ export default defineConfig({
         '**/vendor/',
         '**/vitest/**',
         '**/src/**/*.d.ts',
-        'packages/core/src/jestutils/**/*.{ts,mts,cts}', // Internal jest test utilities
+        'packages/core/src/jestutils/**/*.{ts,mts,cts}', // Internal deprecated jest test utilities
         'packages/core/src/backend.ts', // Not released yet, so ignore for now
         'packages/core/src/backendExpress.ts', // Not released yet, so ignore for now
         'packages/core/src/backendWsServer.ts', // Not released yet, so ignore for now
         'packages/core/src/matterNode.ts', // Not released yet, so ignore for now
-        '**/src/**/*.{spec,test}.{ts,mts,cts}',
+        '**/src/**/*.{spec,test}.{ts,mts,cts}', // Any test files should be excluded from coverage, even if they are not in the vitest folder
       ],
       thresholds: {
         'perFile': true,

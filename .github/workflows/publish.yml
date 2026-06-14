@@ -43,8 +43,8 @@ jobs:
       - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build matterbridge for production
-        run: tsc --build tsconfig.build.production.json --verbose
+      - name: Build matterbridge
+        run: npm run build
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
@@ -76,11 +76,8 @@ jobs:
         run: npm publish --tag latest --access public || true
         working-directory: apps/frontend
 
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |
@@ -195,8 +192,8 @@ jobs:
       - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build matterbridge for production
-        run: tsc --build tsconfig.build.production.json --verbose
+      - name: Build matterbridge
+        run: npm run build
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
@@ -236,11 +233,8 @@ jobs:
           npm publish --tag dev --access public || true
           npm version "${BASE}" --no-git-tag-version --ignore-scripts
 
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |

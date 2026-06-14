@@ -21,21 +21,33 @@
  * limitations under the License.
  */
 
-import { jest } from '@jest/globals';
 import { BroadcastServer } from '@matterbridge/thread/server';
 
 // Spy on BroadcastServer methods
-export const closeBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'close');
-export const getUniqueIdBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'getUniqueId');
-export const isWorkerRequestBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
-export const isWorkerRequestOfTypeBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequestOfType');
-export const isWorkerResponseBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
-export const isWorkerResponseOfTypeBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponseOfType');
-export const broadcastBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcast');
-export const requestBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'request');
-export const respondBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'respond');
-export const fetchBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'fetch');
-// @ts-expect-error - access to private members for testing
-export const broadcastMessageHandlerBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
-// @ts-expect-error - access to private members for testing
-export const broadcastMessageErrorHandlerBroadcastServerSpy = jest.spyOn(BroadcastServer.prototype, 'broadcastMessageErrorHandler');
+const { jest } = await import('@jest/globals' as string);
+export const closeBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.close> = jest.spyOn(BroadcastServer.prototype, 'close');
+export const getUniqueIdBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.getUniqueId> = jest.spyOn(BroadcastServer.prototype, 'getUniqueId');
+export const isWorkerRequestBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequest> = jest.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
+export const isWorkerRequestOfTypeBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerRequestOfType> = jest.spyOn(
+  BroadcastServer.prototype,
+  'isWorkerRequestOfType',
+);
+export const isWorkerResponseBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponse> = jest.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
+export const isWorkerResponseOfTypeBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.isWorkerResponseOfType> = jest.spyOn(
+  BroadcastServer.prototype,
+  'isWorkerResponseOfType',
+);
+export const broadcastBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcast> = jest.spyOn(BroadcastServer.prototype, 'broadcast');
+export const requestBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.request> = jest.spyOn(BroadcastServer.prototype, 'request');
+export const respondBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.respond> = jest.spyOn(BroadcastServer.prototype, 'respond');
+export const fetchBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.fetch> = jest.spyOn(BroadcastServer.prototype, 'fetch');
+// @ts-expect-error - TypeScript does not recognize the private method, but we want to spy on it anyway
+export const broadcastMessageHandlerBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcastMessageHandler> = jest.spyOn(
+  BroadcastServer.prototype,
+  'broadcastMessageHandler',
+);
+// @ts-expect-error - TypeScript does not recognize the private method, but we want to spy on it anyway
+export const broadcastMessageErrorHandlerBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.broadcastMessageErrorHandler> = jest.spyOn(
+  BroadcastServer.prototype,
+  'broadcastMessageErrorHandler',
+);

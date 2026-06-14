@@ -26,7 +26,6 @@ import '@matter/nodejs'; // Set up Node.js environment for matter.js
 import path from 'node:path';
 import { inspect } from 'node:util';
 
-import { jest } from '@jest/globals';
 // @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
 import { Endpoint, ServerNode, ServerNodeStore } from '@matter/node';
@@ -181,28 +180,46 @@ export function getMatterbridge(): PlatformMatterbridge {
   return matterbridge;
 }
 
-/** Add a bridged endpoint */
-export const addBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
+/**
+ * Add a bridged endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {Endpoint} device The device to add.
+ * @returns {Promise<boolean>} A promise that resolves to true if the endpoint was added successfully, or rejects with an error if the operation failed.
+ */
+export const addBridgedEndpoint = async (pluginName: string, device: Endpoint): Promise<boolean> => {
   try {
     await aggregator.add(device);
     return Promise.resolve(true);
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Remove a bridged endpoint */
-export const removeBridgedEndpoint = jest.fn(async (pluginName: string, device: Endpoint) => {
+/**
+ * Remove a bridged endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {Endpoint} device The device to remove.
+ * @returns {Promise<boolean>} A promise that resolves to true if the endpoint was removed successfully, or rejects with an error if the operation failed.
+ */
+export const removeBridgedEndpoint = async (pluginName: string, device: Endpoint): Promise<boolean> => {
   try {
     await device.delete();
     return Promise.resolve(true);
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Remove all bridged endpoints */
-export const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _delay: number = 0) => {
+/**
+ * Remove all bridged endpoints
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {number} _delay The delay before removing all endpoints.
+ * @returns {Promise<boolean>} A promise that resolves to true if all endpoints were removed successfully, or rejects with an error if the operation failed.
+ */
+export const removeAllBridgedEndpoints = async (pluginName: string, _delay: number = 0): Promise<boolean> => {
   try {
     for (const device of aggregator.parts) {
       await device.delete();
@@ -211,10 +228,23 @@ export const removeAllBridgedEndpoints = jest.fn(async (pluginName: string, _del
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Add a virtual endpoint */
-export const addVirtualEndpoint = jest.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
+/**
+ * Add a virtual endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {string} name The name of the virtual endpoint.
+ * @param {'light' | 'outlet' | 'switch' | 'mounted_switch'} type The type of the virtual endpoint.
+ * @param {() => Promise<void>} callback The callback to execute when the virtual endpoint is triggered.
+ * @returns {Promise<boolean>} A promise that resolves to true if the virtual endpoint was added successfully, or rejects with an error if the operation failed.
+ */
+export const addVirtualEndpoint = async (
+  pluginName: string,
+  name: string,
+  type: 'light' | 'outlet' | 'switch' | 'mounted_switch',
+  callback: () => Promise<void>,
+): Promise<boolean> => {
   try {
     const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
       id: name.replaceAll(' ', '') + ':' + type,
@@ -254,12 +284,7 @@ export const addVirtualEndpoint = jest.fn(async (pluginName: string, name: strin
   } catch (error) {
     return Promise.reject(error);
   }
-});
-
-export const addBridgedEndpointMatterbridgeSpy = addBridgedEndpoint;
-export const removeBridgedEndpointMatterbridgeSpy = removeBridgedEndpoint;
-export const removeAllBridgedEndpointsMatterbridgeSpy = removeAllBridgedEndpoints;
-export const addVirtualEndpointMatterbridgeSpy = addVirtualEndpoint;
+};
 
 /**
  * Inject matterbridge platform for testing.

@@ -24,7 +24,6 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
-import type { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
@@ -95,7 +94,7 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
   rmSync(HOMEDIR, { recursive: true, force: true });
   mkdirSync(HOMEDIR, { recursive: true });
 
-  const { jest } = await import('@jest/globals');
+  const { jest } = await import('@jest/globals' as string);
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');
   loggerInfoSpy = jest.spyOn(AnsiLogger.prototype, 'info');
   loggerNoticeSpy = jest.spyOn(AnsiLogger.prototype, 'notice');
@@ -137,7 +136,7 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
  * ```
  */
 export async function setDebug(debug: boolean): Promise<void> {
-  const { jest } = await import('@jest/globals');
+  const { jest } = await import('@jest/globals' as string);
   if (debug) {
     loggerLogSpy.mockRestore();
     consoleLogSpy.mockRestore();

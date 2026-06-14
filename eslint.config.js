@@ -11,7 +11,6 @@ import json from '@eslint/json';
 import markdown from '@eslint/markdown';
 import vitest from '@vitest/eslint-plugin';
 import { defineConfig } from 'eslint/config';
-import jest from 'eslint-plugin-jest';
 import jsdoc from 'eslint-plugin-jsdoc';
 import n from 'eslint-plugin-n';
 import prettier from 'eslint-plugin-prettier';
@@ -20,7 +19,6 @@ import tseslint from 'typescript-eslint';
 
 const sourceFiles = ['**/*.{js,mjs,cjs,ts,mts,cts}'];
 const typescriptFiles = ['**/src/**/*.{ts,mts,cts}', '**/test/**/*.{ts,mts,cts}', '**/vitest/**/*.{ts,mts,cts}'];
-const jestTestFiles = ['**/src/**/*.{spec,test}.{ts,mts,cts}', '**/test/**/*.{spec,test}.{ts,mts,cts}'];
 const vitestTestFiles = ['**/vitest/**/*.{spec,test}.{ts,mts,cts}'];
 const configDirname = path.dirname(url.fileURLToPath(import.meta.url));
 
@@ -125,42 +123,13 @@ export default defineConfig([
     },
   },
   {
-    name: 'Jest Test Files',
-    files: jestTestFiles,
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        tsconfigRootDir: configDirname,
-        project: 'tsconfig.jest.json', // Use a separate tsconfig for Jest tests
-      },
-    },
-    extends: [jest.configs['flat/recommended']],
-    rules: {
-      'no-undef': 'off', // Disable no-undef for TypeScript files since TypeScript already checks for undefined variables
-      'no-unused-vars': 'off', // Disable base rule for unused variables and use the TypeScript-specific rule instead
-      'n/no-extraneous-import': 'off', // Allow imports from devDependencies in test files
-      'n/no-unpublished-import': 'off', // Allow imports from unpublished packages
-      '@typescript-eslint/no-unused-vars': 'off', // Disable TypeScript rule for unused variables in test files
-      '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type in test files
-      '@typescript-eslint/no-empty-function': 'off', // Allow empty functions in test files
-      '@typescript-eslint/no-floating-promises': 'off', // Require unhandled promises to be explicitly voided or awaited
-      '@typescript-eslint/no-misused-promises': 'off', // Disallow promises in non-async callbacks or boolean conditions
-      '@typescript-eslint/await-thenable': 'off', // Disallow awaiting non-Promise values
-      '@typescript-eslint/return-await': 'off', // Require return await inside try-catch so rejections are caught locally
-      '@typescript-eslint/only-throw-error': 'off', // Require only Error objects to be thrown or rejected
-      '@typescript-eslint/promise-function-async': 'off', // Require Promise-returning functions to be async
-      '@typescript-eslint/require-await': 'off', // Disallow async functions without any await expression
-      'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
-    },
-  },
-  {
     name: 'Vitest Test Files',
     files: vitestTestFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         tsconfigRootDir: configDirname,
-        project: 'tsconfig.vitest.json', // Use a separate tsconfig for Vitest tests
+        project: 'tsconfig.json', // Use a separate tsconfig for Vitest tests
       },
     },
     extends: [vitest.configs.recommended],

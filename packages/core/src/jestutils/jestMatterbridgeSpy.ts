@@ -21,12 +21,17 @@
  * limitations under the License.
  */
 
-import { jest } from '@jest/globals';
-
 import { Matterbridge } from '../matterbridge.js';
 
 // Spy on Matterbridge methods
-export const addBridgedEndpointMatterbridgeSpy = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
-export const removeBridgedEndpointMatterbridgeSpy = jest.spyOn(Matterbridge.prototype, 'removeBridgedEndpoint');
-export const removeAllBridgedEndpointsMatterbridgeSpy = jest.spyOn(Matterbridge.prototype, 'removeAllBridgedEndpoints');
-export const addVirtualEndpointMatterbridgeSpy = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');
+const { jest } = await import('@jest/globals' as string);
+export const addBridgedEndpointMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint> = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
+export const removeBridgedEndpointMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint> = jest.spyOn(
+  Matterbridge.prototype,
+  'removeBridgedEndpoint',
+);
+export const removeAllBridgedEndpointsMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeAllBridgedEndpoints> = jest.spyOn(
+  Matterbridge.prototype,
+  'removeAllBridgedEndpoints',
+);
+export const addVirtualEndpointMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addVirtualEndpoint> = jest.spyOn(Matterbridge.prototype, 'addVirtualEndpoint');

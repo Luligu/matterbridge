@@ -59,8 +59,9 @@ These classes will run as threads in the next releases:
 
 ### Development Changes
 
-- [test]: Add Vitest tests (migration from Jest to Vitest will take a while).
-- [typescript]: Moved package to TypeScript Preview (tsgo). The final build in the publish workflow is always with typescript.
+- [test]: Add Vitest tests.
+- [test]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450.
+- [typescript]: Move package to TypeScript Preview (tsgo). The final build in the publish workflow is always with typescript.
 
 ### Changed
 

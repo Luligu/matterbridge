@@ -14,7 +14,7 @@ import { dev, plg } from '@matterbridge/types';
 import { flushAsync, log, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   addBridgedEndpoint,
-  addMatterbridge,
+  addVirtualEndpoint,
   createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
@@ -33,6 +33,11 @@ import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatfor
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+// Spy on the Matterbridge node helpers injected into the platform via setMatterNode.
+const addBridgedEndpointMatterbridgeSpy = vi.fn(addBridgedEndpoint);
+const removeBridgedEndpointMatterbridgeSpy = vi.fn(removeBridgedEndpoint);
+const removeAllBridgedEndpointsMatterbridgeSpy = vi.fn(removeAllBridgedEndpoints);
 
 describe('Matterbridge platform', () => {
   let matterbridge: PlatformMatterbridge;
@@ -113,8 +118,9 @@ describe('Matterbridge platform', () => {
     // Should not be registered until setMatterNode is called
     expect(await platform.registerVirtualDevice('Virtual', 'switch', async () => Promise.resolve())).toBe(false);
 
-    // Inject in the platform the Matterbridge environment
-    addMatterbridge(platform);
+    // Inject in the platform the Matterbridge node helpers using local spies
+    // @ts-expect-error - setMatterNode is intentionally private
+    platform.setMatterNode(addBridgedEndpointMatterbridgeSpy, removeBridgedEndpointMatterbridgeSpy, removeAllBridgedEndpointsMatterbridgeSpy, addVirtualEndpoint);
 
     // Add the platform to the Matterbridge environment
     expect(platform).toBeDefined();
@@ -752,7 +758,7 @@ describe('Matterbridge platform', () => {
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
     await platform.registerDevice(testDevice);
     expect(platform.size()).toBe(1);
-    expect(addBridgedEndpoint).toHaveBeenCalled();
+    expect(addBridgedEndpointMatterbridgeSpy).toHaveBeenCalled();
 
     const savedMode = matterbridge.bridgeMode;
     const savedType = platform.type;
@@ -763,7 +769,7 @@ describe('Matterbridge platform', () => {
     testDevice2.createDefaultBasicInformationClusterServer('test 2', 'serial0123445678');
     await platform.registerDevice(testDevice2);
     expect(platform.size()).toBe(2);
-    expect(addBridgedEndpoint).toHaveBeenCalled();
+    expect(addBridgedEndpointMatterbridgeSpy).toHaveBeenCalled();
     // @ts-expect-error access private property
     matterbridge.bridgeMode = savedMode;
     platform.type = savedType;
@@ -771,14 +777,14 @@ describe('Matterbridge platform', () => {
 
   test('unregisterDevice calls matterbridge.removeBridgedEndpoint', async () => {
     await platform.unregisterAllDevices();
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
     await platform.registerDevice(testDevice);
     await platform.unregisterDevice(testDevice);
     expect(platform.size()).toBe(0);
-    expect(removeBridgedEndpoint).toHaveBeenCalled();
+    expect(removeBridgedEndpointMatterbridgeSpy).toHaveBeenCalled();
   });
 
   test('registerDevice should log error if the device uniqueid is undefined', async () => {
@@ -796,7 +802,7 @@ describe('Matterbridge platform', () => {
   test('registerDevice should log error if the device deviceName is undefined', async () => {
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     const device = new MatterbridgeEndpoint(powerSource);
     expect(device).toBeDefined();
@@ -812,7 +818,7 @@ describe('Matterbridge platform', () => {
   test('registerDevice should log error if the device serialNumber is undefined', async () => {
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     const device = new MatterbridgeEndpoint(powerSource);
     expect(device).toBeDefined();
@@ -828,7 +834,7 @@ describe('Matterbridge platform', () => {
   test('registerDevice should add bridgeNode and BridgedDeviceBasicInformation if not present', async () => {
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     const device = new MatterbridgeEndpoint(powerSource);
     expect(device).toBeDefined();
@@ -851,13 +857,13 @@ describe('Matterbridge platform', () => {
 
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
   });
 
   test('registerDevice should log error if the device name already exist', async () => {
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     await registerDevice('test', 'serial01234', 'uniqueId0123', 'Test Id');
     expect(platform.size()).toBe(1);
@@ -875,7 +881,7 @@ describe('Matterbridge platform', () => {
   test('Device retrieval methods should return undefined for unregistered devices', async () => {
     await platform.unregisterAllDevices();
     expect(platform.size()).toBe(0);
-    expect(removeAllBridgedEndpoints).toHaveBeenCalled();
+    expect(removeAllBridgedEndpointsMatterbridgeSpy).toHaveBeenCalled();
 
     const device = await registerDevice('test', 'serial01234', 'uniqueId0123', 'Test Id', 155);
     expect(platform.size()).toBe(1);
