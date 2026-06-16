@@ -21,10 +21,10 @@
  * limitations under the License.
  */
 
+// oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 
 import path from 'node:path';
-import { inspect } from 'node:util';
 
 // @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
@@ -37,16 +37,19 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
+import { inspectError } from '@matterbridge/utils/error';
 // node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from './flushAsync.js';
-import { HOMEDIR, NAME } from './jestSetupTest.js';
+import { HOMEDIR, log, NAME } from './jestSetupTest.js';
 
 export let environment: Environment;
 export let server: ServerNode;
 export let aggregator: Endpoint<AggregatorEndpoint>;
+
+const noop = (): void => undefined;
 
 /**
  * Create a matter test environment for testing:
@@ -80,6 +83,7 @@ export let aggregator: Endpoint<AggregatorEndpoint>;
  * await destroyTestEnvironment();
  * ```
  */
+// oxlint-disable-next-line typescript/require-await
 export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
@@ -215,11 +219,11 @@ export const removeBridgedEndpoint = async (pluginName: string, device: Endpoint
 /**
  * Remove all bridged endpoints
  *
- * @param {string} pluginName The name of the plugin.
+ * @param {string} _pluginName The name of the plugin.
  * @param {number} _delay The delay before removing all endpoints.
  * @returns {Promise<boolean>} A promise that resolves to true if all endpoints were removed successfully, or rejects with an error if the operation failed.
  */
-export const removeAllBridgedEndpoints = async (pluginName: string, _delay: number = 0): Promise<boolean> => {
+export const removeAllBridgedEndpoints = async (_pluginName: string, _delay: number = 0): Promise<boolean> => {
   try {
     for (const device of aggregator.parts) {
       await device.delete();
@@ -263,8 +267,8 @@ export const addVirtualEndpoint = async (
     device.events.onOff.onOff$Changed.on((value) => {
       // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
       if (value) {
-        void callback().catch(/* istanbul ignore next */ () => {});
-        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+        void callback().catch(/* istanbul ignore next */ noop);
+        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ noop);
       }
     });
 
@@ -346,6 +350,7 @@ function getRootServerNode(endpoint: Endpoint): ServerNode {
   while (current.owner) {
     current = current.owner;
   }
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return current as ServerNode;
 }
 
@@ -357,12 +362,10 @@ function getRootServerNode(endpoint: Endpoint): ServerNode {
  */
 function collectAllEndpoints(root: Endpoint): Endpoint[] {
   const list: Endpoint[] = [];
-  const walk = (ep: Endpoint) => {
+  const walk = (ep: Endpoint): void => {
     list.push(ep);
-    if (ep.parts) {
-      for (const child of ep.parts as unknown as Endpoint[]) {
-        walk(child);
-      }
+    for (const child of ep.parts) {
+      walk(child);
     }
   };
   walk(root);
@@ -384,7 +387,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   const nodeStore = targetServer.env.get(ServerNodeStore);
   // Ensure any pending persistence finished (flush any in-flight batch promise)
   await nodeStore.endpointStores.close();
-  const all = collectAllEndpoints(targetServer as unknown as Endpoint);
+  const all = collectAllEndpoints(targetServer);
   for (const ep of all) {
     const store = nodeStore.storeForEndpoint(ep);
     if (ep.maybeNumber === 0) {
@@ -403,11 +406,9 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  * @returns {Promise<void>} Resolves when the stores have been closed.
  */
 export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
-  // Close endpoint stores to avoid number persistence issues
-  if (!targetServer) targetServer = server;
-  await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
+  const resolvedTargetServer = targetServer ?? server;
+  await resolvedTargetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
-
 /**
  * Create a matter server node for testing.
  *
@@ -561,10 +562,10 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
 
   // Wait for the server to be online
   await new Promise<void>((resolve, reject) => {
-    server.lifecycle.online.on(async () => {
+    server.lifecycle.online.on(() => {
       resolve();
     });
-    server.start().catch((err) => reject(err));
+    server.start().catch((err: unknown) => reject(err));
   });
 
   // Check if the server is online
@@ -722,9 +723,8 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   try {
     await owner.add(device);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : error;
-    const errorInspect = inspect(error, { depth: 10 });
-    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
+    inspectError(log, `Error adding device ${device.maybeId}.${device.maybeNumber}`, error);
+    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
     return false;
   }
   await device.construction.ready;
@@ -765,9 +765,8 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   try {
     await device.delete();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : error;
-    const errorInspect = inspect(error, { depth: 10 });
-    process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
+    inspectError(log, `Error deleting device ${device.maybeId}.${device.maybeNumber}`, error);
+    process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
     return false;
   }
   expect(owner.parts.has(device)).toBeFalsy();

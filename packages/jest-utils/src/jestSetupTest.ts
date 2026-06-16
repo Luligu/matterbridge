@@ -51,6 +51,8 @@ export let HOMEDIR: string;
 
 export let log: AnsiLogger;
 
+const noop = (): void => undefined;
+
 /**
  * Setup the Jest environment:
  * - it will remove any existing home directory
@@ -109,12 +111,12 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
     consoleWarnSpy = jest.spyOn(console, 'warn');
     consoleErrorSpy = jest.spyOn(console, 'error');
   } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(noop);
   }
 }
 
@@ -151,11 +153,11 @@ export async function setDebug(debug: boolean): Promise<void> {
     consoleWarnSpy = jest.spyOn(console, 'warn');
     consoleErrorSpy = jest.spyOn(console, 'error');
   } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(noop);
   }
 }
