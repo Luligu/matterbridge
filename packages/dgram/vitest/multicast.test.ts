@@ -9,7 +9,7 @@
  */
 
 import { Socket } from 'node:dgram';
-import { type AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
@@ -40,7 +40,7 @@ describe('Multicast', () => {
     process.argv = originalArgv;
   });
 
-  test('Create the multicast with udp4 with no available interfaces', async () => {
+  test('Create the multicast with udp4 with no available interfaces', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true);
     expect(mcast).not.toBeUndefined();
     expect(mcast).toBeInstanceOf(Multicast);
@@ -60,7 +60,7 @@ describe('Multicast', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopped dgram multicast socket.'));
   });
 
-  test('Create the multicast with udp6 with no available interfaces', async () => {
+  test('Create the multicast with udp6 with no available interfaces', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp6');
     expect(mcast).not.toBeUndefined();
     expect(mcast).toBeInstanceOf(Multicast);
@@ -80,7 +80,7 @@ describe('Multicast', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Stopped dgram multicast socket.'));
   });
 
-  test('Create the multicast with udp6 and let listenig fail', async () => {
+  test('Create the multicast with udp6 and let listenig fail', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp6');
     expect(mcast).not.toBeUndefined();
     expect(mcast).toBeInstanceOf(Multicast);
@@ -489,7 +489,7 @@ describe('Multicast', () => {
       eth0: [{ address: 'fe80::41', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:41', internal: false, cidr: 'fe80::41/64', scopeid: 8 }],
     });
     vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {
-      throw 'join failed string';
+      throw new Error('join failed string');
     });
     vi.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
     vi.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
@@ -519,6 +519,23 @@ describe('Multicast', () => {
 
     expect(addMembershipSpy).not.toHaveBeenCalled();
     expect(mcast.joinedInterfaces).toEqual([]);
+  });
+
+  test('onListening uses the system default multicast interface when no outgoing address is resolved', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true);
+    vi.spyOn(os, 'networkInterfaces').mockReturnValue({});
+    const addMembershipSpy = vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
+    vi.spyOn(mcast.socket as any, 'setBroadcast').mockImplementation(() => {});
+    vi.spyOn(mcast.socket as any, 'setTTL').mockImplementation(() => {});
+    vi.spyOn(mcast.socket as any, 'setMulticastTTL').mockImplementation(() => {});
+    vi.spyOn(mcast.socket as any, 'setMulticastLoopback').mockImplementation(() => {});
+    const setMulticastInterfaceSpy = vi.spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {});
+
+    mcast.onListening({ address: '0.0.0.0', family: 'IPv4', port: COAP_MULTICAST_PORT });
+
+    expect(addMembershipSpy).not.toHaveBeenCalled();
+    expect(setMulticastInterfaceSpy).not.toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('using system default multicast interface'));
   });
 
   test.each([

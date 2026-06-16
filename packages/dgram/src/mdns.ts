@@ -21,11 +21,16 @@
  * limitations under the License.
  */
 
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
+// oxlint-disable no-bitwise
+// oxlint-disable no-param-reassign
+
 // Node.js imports
 import type dgram from 'node:dgram';
 
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
 // AnsiLogger imports
 import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
@@ -135,7 +140,6 @@ export enum DnsClass {
 
 export enum DnsClassFlag {
   FLUSH = 0x8000, // For answers (resource records)
-  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
   QU = 0x8000, // For questions (unicast response preferred)
 }
 
@@ -167,8 +171,8 @@ interface DnsQuestion {
 
 interface MdnsRecord {
   name: string;
-  type: number;
-  class: number;
+  type: DnsRecordType;
+  class: DnsClass;
   ttl: number;
   data: string;
 }
@@ -257,7 +261,7 @@ export class Mdns extends Multicast {
    * @param {dgram.RemoteInfo} rinfo - Sender address information.
    * @param {MdnsMessage} _query - Parsed query message.
    */
-  onQuery(rinfo: dgram.RemoteInfo, _query: MdnsMessage) {
+  onQuery(rinfo: dgram.RemoteInfo, _query: MdnsMessage): void {
     this.log.debug(`mDNS query received from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
@@ -267,7 +271,7 @@ export class Mdns extends Multicast {
    * @param {dgram.RemoteInfo} rinfo - Sender address information.
    * @param {MdnsMessage} _response - Parsed response message.
    */
-  onResponse(rinfo: dgram.RemoteInfo, _response: MdnsMessage) {
+  onResponse(rinfo: dgram.RemoteInfo, _response: MdnsMessage): void {
     this.log.debug(`mDNS response received from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
@@ -324,7 +328,7 @@ export class Mdns extends Multicast {
       }
       this.logMdnsMessage(result);
     } catch (error) {
-      this.log.error(`Error decoding mDNS message: ${error instanceof Error ? error.message : error}`);
+      this.log.error(`Error decoding mDNS message: ${getErrorMessage(error)}`);
     }
   }
 
@@ -621,12 +625,12 @@ export class Mdns extends Multicast {
     offset += 2;
 
     let data: string;
-    if (type === DnsRecordType.PTR) {
+    if (type === (DnsRecordType.PTR as number)) {
       // PTR record (type 12): decode its RDATA as a domain name.
       const ptrResult = this.decodeDnsName(msg, offset);
       data = ptrResult.name;
       offset += rdlength;
-    } else if (type === DnsRecordType.TXT) {
+    } else if (type === (DnsRecordType.TXT as number)) {
       // TXT record: may consist of one or more length-prefixed strings.
       const txtStrings: string[] = [];
       const end = offset + rdlength;
@@ -638,7 +642,7 @@ export class Mdns extends Multicast {
         offset += txtLen;
       }
       data = txtStrings.join(', ');
-    } else if (type === DnsRecordType.SRV) {
+    } else if (type === (DnsRecordType.SRV as number)) {
       // SRV record (type === 33): consists of 2 bytes for priority, 2 for weight, 2 for port, followed by the target domain name.
       const priority = msg.readUInt16BE(offset);
       const weight = msg.readUInt16BE(offset + 2);
@@ -652,12 +656,12 @@ export class Mdns extends Multicast {
         target: srvTargetResult.name,
       });
       offset = srvTargetResult.newOffset;
-    } else if (type === DnsRecordType.A) {
+    } else if (type === (DnsRecordType.A as number)) {
       // A record (type 1): an IPv4 address stored in 4 bytes.
       const ipBytes = msg.subarray(offset, offset + 4);
       data = Array.from(ipBytes).join('.');
       offset += 4;
-    } else if (type === DnsRecordType.AAAA) {
+    } else if (type === (DnsRecordType.AAAA as number)) {
       // AAAA record (type 28): IPv6 address stored in 16 bytes.
       const ipBytes = msg.subarray(offset, offset + 16);
       // Convert the 16 bytes into an IPv6 address string (colon-separated)
@@ -667,7 +671,7 @@ export class Mdns extends Multicast {
       }
       data = ipv6Parts.join(':');
       offset += 16;
-    } else if (type === DnsRecordType.NSEC) {
+    } else if (type === (DnsRecordType.NSEC as number)) {
       // NSEC record: RDATA consists of:
       //   - Next Domain Name (in DNS label format)
       //   - Type Bit Maps (variable length)
@@ -737,6 +741,7 @@ export class Mdns extends Multicast {
       const qname = this.encodeDnsName(name);
       const qfields = Buffer.alloc(4);
       qfields.writeUInt16BE(qtype, 0);
+      // oxlint-disable-next-line oxc/bad-bitwise-operator
       qfields.writeUInt16BE(unicastResponse ? qclass | DnsClassFlag.QU : qclass, 2);
       return Buffer.concat([qname, qfields]);
     });
@@ -812,7 +817,7 @@ export class Mdns extends Multicast {
     // Send the response packet via the socket.
     this.socket.send(response, 0, response.length, this.multicastPort, this.multicastAddress, (error: Error | null) => {
       if (error) {
-        this.log.error(`Dgram mDNS server failed to send response message: ${error instanceof Error ? error.message : error}`);
+        this.log.error(`Dgram mDNS server failed to send response message: ${getErrorMessage(error)}`);
         this.emit('error', error);
       } else {
         this.log.debug(`Dgram mDNS server sent response message`);
@@ -933,7 +938,7 @@ export class Mdns extends Multicast {
    */
   dnsResponseClassToString(cls: number): string {
     const isFlush = !!(cls & DnsClassFlag.FLUSH);
-    const baseClass = cls & 0x7fff;
+    const baseClass: DnsClass = cls & 0x7fff;
 
     let classStr: string;
     switch (baseClass) {
@@ -950,6 +955,7 @@ export class Mdns extends Multicast {
         classStr = 'ANY';
         break;
       default:
+        // oxlint-disable-next-line typescript/restrict-template-expressions
         classStr = `CLASS${baseClass}`;
     }
 
@@ -965,7 +971,7 @@ export class Mdns extends Multicast {
    */
   dnsQuestionClassToString(cls: number): string {
     const isQU = !!(cls & DnsClassFlag.QU);
-    const baseClass = cls & 0x7fff;
+    const baseClass: DnsClass = cls & 0x7fff;
 
     let classStr: string;
     switch (baseClass) {
@@ -982,6 +988,7 @@ export class Mdns extends Multicast {
         classStr = 'ANY';
         break;
       default:
+        // oxlint-disable-next-line typescript/restrict-template-expressions
         classStr = `CLASS${baseClass}`;
     }
 
@@ -1025,7 +1032,7 @@ export class Mdns extends Multicast {
   /**
    * Logs the discovered devices from the mDNS queries and responses.
    */
-  logDevices() {
+  logDevices(): void {
     this.log.info(`Discovered query devices: ${MAGENTA}${this.deviceQueries.size}${nf}`);
     // Collect devices into an array
     const deviceQueryArray = Array.from(this.deviceQueries.entries());

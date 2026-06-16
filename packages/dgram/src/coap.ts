@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable no-bitwise
+
 // Node.js imports
 import type dgram from 'node:dgram';
 
@@ -503,6 +505,7 @@ export class Coap extends Multicast {
       messageId,
       token: token ? Buffer.from(token) : Buffer.alloc(0),
       options,
+      // oxlint-disable-next-line unicorn/no-negated-condition
       payload: payload !== undefined ? Buffer.from(JSON.stringify(payload)) : undefined,
     };
     const encodedBuffer = this.encodeCoapMessage(coapMessage);
@@ -514,7 +517,7 @@ export class Coap extends Multicast {
    *
    * @param {CoapMessage} msg - Parsed CoAP message.
    */
-  logCoapMessage(msg: CoapMessage) {
+  logCoapMessage(msg: CoapMessage): void {
     this.log.info(
       `Decoded CoAP message: version ${MAGENTA}${msg.version}${nf} type ${MAGENTA}${this.coapTypeToString(msg.type)}${nf} ` +
         `code ${MAGENTA}${this.coapCodeToString(msg.code)}${nf} messageId ${MAGENTA}${msg.messageId}${nf} ` +
@@ -523,7 +526,7 @@ export class Coap extends Multicast {
     );
     msg.options.forEach((option) => {
       if (option.number === COAP_OPTION_URI_PATH) {
-        this.log.info(`Option: COAP_OPTION_URI_PATH => ${GREEN}${option.value}${nf}`);
+        this.log.info(`Option: COAP_OPTION_URI_PATH => ${GREEN}${option.value.toString()}${nf}`);
       } else if (option.number === COIOT_OPTION_DEVID) {
         /*
          * First defined option is COIOT_OPTION_GLOBAL_DEVID. This is a global option and must be present in all CoIoT packages with request or payload.
@@ -534,7 +537,7 @@ export class Coap extends Multicast {
         const deviceMac = parts[1];
         const protocolRevision = parts[2];
         this.log.info(
-          `Option: COIOT_OPTION_DEVID => ${option.value} => Model: ${GREEN}${deviceModel}${nf}, MAC: ${GREEN}${deviceMac}${nf}, Protocol: ${GREEN}${protocolRevision}${nf}`,
+          `Option: COIOT_OPTION_DEVID => ${option.value.toString()} => Model: ${GREEN}${deviceModel}${nf}, MAC: ${GREEN}${deviceMac}${nf}, Protocol: ${GREEN}${protocolRevision}${nf}`,
         );
       } else if (option.number === COIOT_OPTION_SERIAL) {
         /*

@@ -22,8 +22,8 @@
  */
 
 // Node.js imports
-import { type RemoteInfo } from 'node:dgram';
-import { type AddressInfo } from 'node:net';
+import type { RemoteInfo } from 'node:dgram';
+import type { AddressInfo } from 'node:net';
 
 // AnsiLogger imports
 import { BLUE, db } from 'node-ansi-logger';
@@ -55,7 +55,7 @@ export class Unicast extends Dgram {
   /**
    * Starts the dgram unicast socket.
    */
-  start() {
+  start(): void {
     // Get the local ipv4 or ipv6 interfaceAddress to bind to. If not provided and interfaceName has been provided, use the first one found.
     // If neither interfaceAddress nor interfaceName is provided, use undefined to bind to any available address. In this case broadcast will not work.
     if (this.socketType === 'udp4') {
@@ -69,7 +69,7 @@ export class Unicast extends Dgram {
     // Bind to the local address and port:
     // port 0 or undefined means "assign any available port"
     // address 0.0.0.0 or :: means "bind to all available addresses"
-    this.log.debug(`Binding dgram unicast socket to ${BLUE}${this.interfaceAddress || 'all available addresses'}${db} on port ${BLUE}${this.port || 'any available port'}${db}...`);
+    this.log.debug(`Binding dgram unicast socket to ${BLUE}${this.interfaceAddress ?? 'all available addresses'}${db} on port ${BLUE}${this.port ?? 'any available port'}${db}...`);
     this.socket.bind(this.port, this.interfaceAddress, () => {
       const address = this.socket.address();
       this.log.debug(`Dgram unicast socket bound to ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
@@ -82,7 +82,7 @@ export class Unicast extends Dgram {
    *
    * @param {AddressInfo} [address] - The address info.
    */
-  override onListening(address: AddressInfo) {
+  override onListening(address: AddressInfo): void {
     this.log.debug(`Dgram unicast socket listening on ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram unicast socket broadcast enabled`);
@@ -95,14 +95,14 @@ export class Unicast extends Dgram {
    * @param {Buffer} msg - The message buffer.
    * @param {RemoteInfo} rinfo - The remote info.
    */
-  override onMessage(msg: Buffer, rinfo: RemoteInfo) {
+  override onMessage(msg: Buffer, rinfo: RemoteInfo): void {
     this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
   /**
    * Stops the dgram unicast socket.
    */
-  stop() {
+  stop(): void {
     this.log.debug('Stopping dgram unicast socket...');
     this.socket.close();
     this.log.debug('Stopped dgram unicast socket.');

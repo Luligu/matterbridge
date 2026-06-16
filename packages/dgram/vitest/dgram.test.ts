@@ -616,6 +616,7 @@ describe('Dgram', () => {
 
   test('Handle invalid IPv4 broadcast address inputs', async () => {
     dgram = new Dgram('Dgram', 'udp4');
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     const broadcastAddress = dgram.getIpv4BroadcastAddress(undefined, undefined);
     expect(broadcastAddress).toBeUndefined();
 

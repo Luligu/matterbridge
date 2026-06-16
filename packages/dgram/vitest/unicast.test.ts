@@ -8,7 +8,7 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import { type AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { CYAN, LogLevel, nf } from 'node-ansi-logger';

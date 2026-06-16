@@ -26,20 +26,29 @@ describe('Coap', () => {
   beforeEach(() => {
     // Mock dgram.createSocket
     mockSocket = {
-      bind: vi.fn(),
-      addMembership: vi.fn(),
-      setMulticastTTL: vi.fn(),
-      setBroadcast: vi.fn(),
-      setMulticastLoopback: vi.fn(),
-      setMulticastInterface: vi.fn(),
-      on: vi.fn(),
-      off: vi.fn(),
-      close: vi.fn(),
-      send: vi.fn((msg: any, offset: number, length: number, port: number, address: string, callback?: (error: Error | null, bytes?: number) => void) => {
+      bind: vi.fn<() => dgram.Socket>(),
+      addMembership: vi.fn<() => dgram.Socket>(),
+      setMulticastTTL: vi.fn<() => dgram.Socket>(),
+      setBroadcast: vi.fn<() => dgram.Socket>(),
+      setMulticastLoopback: vi.fn<() => dgram.Socket>(),
+      setMulticastInterface: vi.fn<() => dgram.Socket>(),
+      on: vi.fn<() => dgram.Socket>(),
+      off: vi.fn<() => dgram.Socket>(),
+      close: vi.fn<(callback?: () => void) => dgram.Socket>(),
+      send: vi.fn<
+        (
+          msg: string | Uint8Array | readonly Uint8Array[],
+          offset: number,
+          length: number,
+          port: number,
+          address: string,
+          callback?: (error: Error | null, bytes?: number) => void,
+        ) => void
+      >((msg, offset, length, port, address, callback) => {
         // Call the callback to simulate successful send
         if (callback) callback(null, length);
       }),
-      address: vi.fn(() => ({ address: '127.0.0.1', family: 'IPv4', port: 5683 })),
+      address: vi.fn<() => ReturnType<dgram.Socket['address']>>(() => ({ address: '127.0.0.1', family: 'IPv4', port: 5683 })),
     } as unknown as Mocked<dgram.Socket>;
 
     vi.spyOn(dgram, 'createSocket').mockReturnValue(mockSocket);
@@ -585,6 +594,7 @@ describe('Coap', () => {
     });
 
     it('should use default multicast address and port when not specified', () => {
+      // oxlint-disable-next-line unicorn/no-useless-undefined
       coap.sendRequest(1234, [], undefined, undefined, undefined, undefined);
 
       expect(mockSocket.send).toHaveBeenCalled();

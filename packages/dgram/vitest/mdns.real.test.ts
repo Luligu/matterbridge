@@ -8,7 +8,7 @@
  * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
-import { type RemoteInfo } from 'node:dgram';
+import type { RemoteInfo } from 'node:dgram';
 
 import { getMacAddress } from '@matterbridge/utils';
 
@@ -124,7 +124,8 @@ describe('Mdns Real Interaction Tests', () => {
       mdnsServer.on('error', () => {
         reject(new Error('mDNS server error'));
       });
-      mdnsServer.onQuery = (rinfo: RemoteInfo, query: MdnsMessage) => {
+      mdnsServer.onQuery = (rinfo: RemoteInfo, query: MdnsMessage): void => {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
         if (query.questions?.find((q) => q.name === serviceName && q.type === DnsRecordType.PTR)) {
           const ptrRdata = mdnsServer.encodeDnsName(instanceName);
           mdnsServer.sendResponse([{ name: serviceName, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
@@ -142,7 +143,7 @@ describe('Mdns Real Interaction Tests', () => {
       mdnsClient.on('error', () => {
         reject(new Error('mDNS client error'));
       });
-      mdnsClient.onResponse = (rinfo: RemoteInfo, response: MdnsMessage) => {
+      mdnsClient.onResponse = (rinfo: RemoteInfo, response: MdnsMessage): void => {
         if (response.answers?.find((a) => a.name === serviceName && a.type === DnsRecordType.PTR) && sent) {
           const ptrAnswer = response.answers.find((a) => a.name === serviceName && a.type === DnsRecordType.PTR);
           resolve();

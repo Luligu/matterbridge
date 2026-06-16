@@ -17,12 +17,12 @@ import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './vite
 // Vitest's bare automock returns undefined from createSocket, so provide a minimal fake socket
 // (only `.on` is exercised during construction; each test replaces mdns.socket with its own mock).
 vi.mock('node:dgram', () => {
-  const createSocket = vi.fn(() => ({
-    on: vi.fn(),
-    bind: vi.fn(),
-    close: vi.fn(),
-    send: vi.fn(),
-    address: vi.fn(() => ({ address: '127.0.0.1', family: 'IPv4', port: 5353 })),
+  const createSocket = vi.fn<() => object>(() => ({
+    on: vi.fn<() => void>(),
+    bind: vi.fn<() => void>(),
+    close: vi.fn<() => void>(),
+    send: vi.fn<() => void>(),
+    address: vi.fn<() => ReturnType<dgram.Socket['address']>>(() => ({ address: '127.0.0.1', family: 'IPv4', port: 5353 })),
   }));
   return { default: { createSocket }, createSocket };
 });
@@ -39,7 +39,7 @@ describe('Mdns', () => {
 
   beforeEach(() => {
     mockSocket = {
-      send: vi.fn((...args: any[]) => {
+      send: vi.fn<(...args: any[]) => void>((...args) => {
         const cb = args[args.length - 1];
         if (typeof cb === 'function') cb(null);
       }),
@@ -369,7 +369,9 @@ describe('Mdns', () => {
   it('should convert DNS types and classes to string', () => {
     expect(mdns.dnsTypeToString(DnsRecordType.PTR)).toBe('PTR');
     expect(mdns.dnsTypeToString(9999)).toBe('TYPE9999');
+    // oxlint-disable-next-line no-bitwise
     expect(mdns.dnsResponseClassToString(DnsClass.IN | DnsClassFlag.FLUSH)).toContain('IN|FLUSH');
+    // oxlint-disable-next-line no-bitwise
     expect(mdns.dnsQuestionClassToString(DnsClass.IN | DnsClassFlag.QU)).toContain('IN|QU');
   });
 
@@ -408,8 +410,8 @@ describe('Mdns', () => {
 
   it('should handle onMessage when decodeMdnsMessage throws a non-Error', () => {
     const saved = (mdns as any).decodeMdnsMessage;
-    (mdns as any).decodeMdnsMessage = () => {
-      throw 'boom';
+    (mdns as any).decodeMdnsMessage = (): any => {
+      throw new Error('boom');
     };
 
     mdns.onMessage(Buffer.alloc(12), mockRinfo);
@@ -420,7 +422,7 @@ describe('Mdns', () => {
 
   it('should handle onMessage response when answers are undefined (fallback ptr branch)', () => {
     const saved = (mdns as any).decodeMdnsMessage;
-    (mdns as any).decodeMdnsMessage = () => ({
+    (mdns as any).decodeMdnsMessage = (): any => ({
       id: 0,
       qr: 1,
       opcode: 0,
@@ -489,9 +491,11 @@ describe('Mdns', () => {
     expect(mdns.dnsQuestionClassToString(DnsClass.ANY)).toBe('ANY');
 
     // Test CH with FLUSH flag
+    // oxlint-disable-next-line no-bitwise
     expect(mdns.dnsResponseClassToString(DnsClass.CH | DnsClassFlag.FLUSH)).toBe('CH|FLUSH');
 
     // Test CH with QU flag
+    // oxlint-disable-next-line no-bitwise
     expect(mdns.dnsQuestionClassToString(DnsClass.CH | DnsClassFlag.QU)).toBe('CH|QU');
 
     // Test unknown class (line 720) - should use default case
@@ -501,11 +505,11 @@ describe('Mdns', () => {
 
   it('should handle sendQuery error callback', () => {
     // Mock socket to call callback with error
-    mockSocket.send = vi.fn((...args: any[]) => {
+    mockSocket.send = vi.fn<(...args: any[]) => void>((...args) => {
       const cb = args[args.length - 1];
       if (typeof cb === 'function') cb(new Error('Network error'));
     });
-    mdns.on('error', (err: Error) => {
+    mdns.on('error', () => {
       //
     });
     mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
@@ -514,7 +518,7 @@ describe('Mdns', () => {
   });
 
   it('should handle sendQuery error callback with non-Error value', () => {
-    mockSocket.send = vi.fn((...args: any[]) => {
+    mockSocket.send = vi.fn<(...args: any[]) => void>((...args) => {
       const cb = args[args.length - 1];
       if (typeof cb === 'function') cb('Network error');
     });
@@ -528,6 +532,7 @@ describe('Mdns', () => {
   it('should set QU bit when sending query with unicastResponse=true', () => {
     const query = mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true }]);
     const decoded = mdns.decodeMdnsMessage(query as any);
+    // oxlint-disable-next-line no-bitwise
     expect(decoded.questions?.[0].class).toBe(DnsClass.IN | DnsClassFlag.QU);
   });
 
@@ -547,11 +552,11 @@ describe('Mdns', () => {
 
   it('should handle sendResponse error callback', () => {
     // Mock socket to call callback with error
-    mockSocket.send = vi.fn((...args: any[]) => {
+    mockSocket.send = vi.fn<(...args: any[]) => void>((...args) => {
       const cb = args[args.length - 1];
       if (typeof cb === 'function') cb(new Error('Send failed'));
     });
-    mdns.on('error', (err: Error) => {
+    mdns.on('error', () => {
       //
     });
 
@@ -562,7 +567,7 @@ describe('Mdns', () => {
   });
 
   it('should handle sendResponse error callback with non-Error value', () => {
-    mockSocket.send = vi.fn((...args: any[]) => {
+    mockSocket.send = vi.fn<(...args: any[]) => void>((...args) => {
       const cb = args[args.length - 1];
       if (typeof cb === 'function') cb('Network error');
     });
