@@ -23,15 +23,15 @@
  */
 
 // @matter
-import { type EndpointNumber } from '@matter/types/datatype';
+import type { EndpointNumber } from '@matter/types/datatype';
 // AnsiLogger
-import { type LogLevel } from 'node-ansi-logger';
+import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
 import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
-import { type ThreadNames, type WorkerData } from './workerTypes.js';
+import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -111,7 +111,7 @@ type WorkerMessageResponseErrorMap = {
 export type WorkerMessageResponseError<K extends keyof WorkerMessageTypes = keyof WorkerMessageTypes> = WorkerMessageResponseErrorMap[K];
 
 /** Convenience alias for any worker request */
-export type WorkerMessageRequestAny = WorkerMessageRequest<keyof WorkerMessageTypes>;
+export type WorkerMessageRequestAny = WorkerMessageRequest;
 
 /** Resolve a successful response type based on the originating request */
 export type WorkerMessageResponseSuccessForRequest<T extends WorkerMessageRequestAny> = WorkerMessageResponseSuccess<Extract<keyof WorkerMessageTypes, T['type']>>;
@@ -366,7 +366,7 @@ export type WorkerMessageTypes = {
   };
   plugins_load: {
     request: { params: { plugin: ApiPlugin | string; start?: boolean; message?: string; configure?: boolean } };
-    response: { result: { platform: unknown | undefined } };
+    response: { result: { platform: unknown } };
   };
   plugins_start: {
     request: { params: { plugin: ApiPlugin | string; message?: string; configure?: boolean } };
