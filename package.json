@@ -298,7 +298,7 @@
     "@types/jest": "30.0.0",
     "@types/node": "25.9.3",
     "@typescript/native-preview": "7.0.0-dev.20260615.1",
-    "@vitest/coverage-istanbul": "4.1.9",
+    "@vitest/coverage-v8": "4.1.9",
     "@vitest/eslint-plugin": "1.6.20",
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",

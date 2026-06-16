@@ -67,7 +67,12 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `eslint` to v.10.5.0.
-- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260613.1.
+- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260614.1.
+- [matterbridge]: Bump `oxlint` to v.1.70.0.
+- [matterbridge]: Bump `oxfmt` to v.0.55.0.
+- [matterbridge]: Bump `vitest` to v.4.1.9.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.9.
+- [oxlint]: Update Oxlint configuration to v.1.0.9.
 
 ### Fixed
 
