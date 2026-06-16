@@ -1,22 +1,26 @@
 // vitest\githubVersion.test.ts
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+
+import type { ClientRequest, IncomingMessage } from 'node:http';
+import type { get, RequestOptions } from 'node:https';
+import { PassThrough } from 'node:stream';
+
+import type { Mock } from 'vitest';
 
 // ESM mock for https get
 let mockedGet: Mock<typeof get>;
 let mockedGetPayload = JSON.stringify({ 'dist-tags': { latest: '1.2.3' } });
 let mockedGetStatusCode = 200;
 vi.doMock('node:https', () => {
-  mockedGet = vi.fn((url: string | URL, options: RequestOptions, callback: (res: IncomingMessage) => void) => {
+  mockedGet = vi.fn<(url: string | URL, options: RequestOptions, callback: (res: IncomingMessage) => void) => ClientRequest>((_url, _options, callback) => {
     const mockRes = new PassThrough();
     const mockReq = {
-      on: vi.fn(),
-      destroy: vi.fn(),
-      end: vi.fn(),
+      on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+      destroy: vi.fn<(error?: Error) => void>(),
+      end: vi.fn<() => void>(),
     };
-    // @ts-ignore
+    // @ts-expect-error statusCode is not on PassThrough
     mockRes.statusCode = mockedGetStatusCode;
-    // @ts-ignore
-    mockRes.resume = vi.fn();
+    mockRes.resume = vi.fn<() => PassThrough>();
 
     // Call the callback immediately with the mocked response
     callback(mockRes as unknown as IncomingMessage);
@@ -35,12 +39,6 @@ vi.doMock('node:https', () => {
 
   return { get: mockedGet };
 });
-
-import { type ClientRequest, type IncomingMessage } from 'node:http';
-import { type get, type RequestOptions } from 'node:https';
-import { PassThrough } from 'node:stream';
-
-import type { Mock } from 'vitest';
 
 import { setupTest } from './vitestSetupTest.js';
 
@@ -178,12 +176,11 @@ describe('getGitHubUpdate', () => {
 
   it('should reject on timeout', async () => {
     // Override the mock to simulate a request that never responds
-    // @ts-ignore
     mockedGet.mockImplementationOnce((url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void) => {
       const mockReq = {
-        on: vi.fn(),
-        destroy: vi.fn(),
-        end: vi.fn(),
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
       };
       // Don't call the callback - simulate hanging request
       // The abort timeout will trigger the timeout

@@ -7,34 +7,18 @@
  * @license Apache-2.0
  */
 
-import { type AnsiLogger } from 'node-ansi-logger';
-import type { Mocked } from 'vitest';
-
 import { getErrorMessage, inspectError, logError } from '../src/error.js';
-import { setupTest } from './vitestSetupTest.js';
+import { log, loggerErrorSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Error', false);
 
 describe('Error logger', () => {
-  let mockLogger: Mocked<AnsiLogger>;
-
-  beforeAll(async () => {});
-
-  beforeEach(async () => {
-    // Create a mock logger
-    mockLogger = {
-      error: vi.fn(),
-    } as unknown as Mocked<AnsiLogger>;
-
-    // Clear all mocks
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
-
-  afterAll(async () => {
-    // Restore all mocks
+  afterAll(() => {
     vi.restoreAllMocks();
   });
 
@@ -47,7 +31,8 @@ describe('Error logger', () => {
       expect(getErrorMessage('Simple string error')).toBe('Simple string error');
       expect(getErrorMessage(404)).toBe('404');
       expect(getErrorMessage(null)).toBe('null');
-      expect(getErrorMessage(undefined)).toBe('undefined');
+      // @ts-expect-error Testing undefined case
+      expect(getErrorMessage()).toBe('undefined');
     });
   });
 
@@ -55,60 +40,61 @@ describe('Error logger', () => {
     const testError = new Error('Test error message');
     const testMessage = 'Failed to process';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   it('should log error message with non-Error value', () => {
     const testError = 'Simple string error';
     const testMessage = 'Operation failed';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
   });
 
   it('should log error message with null value', () => {
     const testError = null;
     const testMessage = 'Null error occurred';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
   });
 
   it('should log error message with undefined value', () => {
     const testError = undefined;
     const testMessage = 'Undefined error occurred';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
   });
 
   it('should log error message with number value', () => {
     const testError = 404;
     const testMessage = 'HTTP error';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
   });
 
   it('should log error message with object value', () => {
     const testError = { code: 'ENOENT', path: '/missing/file' };
     const testMessage = 'File system error';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    // oxlint-disable-next-line typescript/no-base-to-string typescript/restrict-template-expressions
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError}`);
   });
 
   it('should handle Error instance with custom properties', () => {
@@ -116,10 +102,10 @@ describe('Error logger', () => {
     testError.stack = 'Error: Custom error\n    at test (test.js:1:1)';
     const testMessage = 'Custom error test';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   it('should handle Error instance without stack trace', () => {
@@ -127,10 +113,10 @@ describe('Error logger', () => {
     delete testError.stack;
     const testMessage = 'Stack-less error';
 
-    logError(mockLogger, testMessage, testError);
+    logError(log, testMessage, testError);
 
-    expect(mockLogger.error).toHaveBeenCalledTimes(1);
-    expect(mockLogger.error).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`${testMessage}: ${testError.message} \nStack: \n${testError.stack}`);
   });
 
   describe('inspectError', () => {
@@ -138,10 +124,10 @@ describe('Error logger', () => {
       const testError = new Error('Test error message');
       const testMessage = 'Failed to process';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('Test error message');
       expect(loggedMessage).toContain('Error: Test error message');
@@ -151,10 +137,10 @@ describe('Error logger', () => {
       const testError = 'Simple string error';
       const testMessage = 'Operation failed';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain("'Simple string error'");
     });
@@ -163,10 +149,10 @@ describe('Error logger', () => {
       const testError = null;
       const testMessage = 'Null error occurred';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('null');
     });
@@ -175,10 +161,10 @@ describe('Error logger', () => {
       const testError = undefined;
       const testMessage = 'Undefined error occurred';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('undefined');
     });
@@ -187,10 +173,10 @@ describe('Error logger', () => {
       const testError = 404;
       const testMessage = 'HTTP error';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('404');
     });
@@ -203,10 +189,10 @@ describe('Error logger', () => {
       };
       const testMessage = 'File system error';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('ENOENT');
       expect(loggedMessage).toContain('/missing/file');
@@ -222,14 +208,13 @@ describe('Error logger', () => {
       const testError = createNestedObject(12); // Deeper than 10 levels
       const testMessage = 'Deep nesting error';
 
-      inspectError(mockLogger, testMessage, testError);
+      inspectError(log, testMessage, testError);
 
-      expect(mockLogger.error).toHaveBeenCalledTimes(1);
-      const loggedMessage = mockLogger.error.mock.calls[0][0];
+      expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+      const loggedMessage = loggerErrorSpy.mock.calls[0][0];
       expect(loggedMessage).toContain(`${testMessage}:`);
       expect(loggedMessage).toContain('level');
       expect(loggedMessage).toContain('12');
-      // Should show at least some levels deep
       expect(loggedMessage).toContain('nested');
     });
   });

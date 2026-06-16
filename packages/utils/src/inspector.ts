@@ -22,19 +22,16 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
-
-// istanbul ignore next line - loader/debug/verbose flags are only used for development and testing, not in production
-// prettier-ignore
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Inspector loaded.\u001B[40;0m');
-
 import EventEmitter from 'node:events';
 import type { HeapProfiler, InspectorNotification, Session } from 'node:inspector';
 
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 import { getErrorMessage } from './error.js';
+import { logModuleLoaded } from './loader.js';
 import { fireAndForget } from './wait.js';
+
+logModuleLoaded('Inspector');
 
 // Inspector events
 interface InspectorEvents {
@@ -110,7 +107,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
    * The snapshot is saved in the heap_profiles directory that is created in the current working directory.
    * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
    */
-  async start() {
+  async start(): Promise<void> {
     if (this.session) {
       this.log.warn('Inspector session already active.');
       return;
@@ -130,7 +127,10 @@ export class Inspector extends EventEmitter<InspectorEvents> {
       this.session = new Session();
       this.session.connect();
       await new Promise<void>((resolve, reject) => {
-        this.session?.post('HeapProfiler.startSampling', (err) => (err ? reject(err) : resolve()));
+        this.session?.post('HeapProfiler.startSampling', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
       });
       this.log.debug(`Started heap sampling`);
 
@@ -140,18 +140,14 @@ export class Inspector extends EventEmitter<InspectorEvents> {
       if (interval && interval >= 30000) {
         this.log.debug(`Started heap snapshot interval of ${CYAN}${interval}${db} ms`);
         clearInterval(this.snapshotInterval);
-        this.snapshotInterval = setInterval(async () => {
-          try {
-            if (this.snapshotInProgress) {
-              // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-              if (this.debug) this.log.debug(`Skip heap snapshot: previous snapshot still in progress`);
-              return;
-            }
-            this.log.debug(`Run heap snapshot interval`);
-            await this.takeHeapSnapshot();
-          } catch (err) {
-            this.log.error(`Error during scheduled heap snapshot: ${getErrorMessage(err)}`);
+        this.snapshotInterval = setInterval(() => {
+          if (this.snapshotInProgress) {
+            // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+            if (this.debug) this.log.debug(`Skip heap snapshot: previous snapshot still in progress`);
+            return;
           }
+          this.log.debug(`Run heap snapshot interval`);
+          fireAndForget(this.takeHeapSnapshot(), this.log, 'Inspector snapshot interval');
         }, interval).unref();
       }
     } catch (err) {
@@ -166,14 +162,14 @@ export class Inspector extends EventEmitter<InspectorEvents> {
    * Stops the heap sampling and saves the profile to a file in the heap_profiles directory.
    * This function is called when the inspector is stopped.
    */
-  async stop() {
+  async stop(): Promise<void> {
     if (!this.session) {
       this.log.warn('No active inspector session.');
       return;
     }
 
     const { writeFileSync } = await import('node:fs');
-    const path = await import('node:path');
+    const { default: path } = await import('node:path');
 
     this.log.debug(`Stopping heap sampling...`);
 
@@ -187,7 +183,10 @@ export class Inspector extends EventEmitter<InspectorEvents> {
 
     try {
       const result = await new Promise<HeapProfiler.StopSamplingReturnType>((resolve, reject) => {
-        this.session?.post('HeapProfiler.stopSampling', (err, result) => (err ? reject(err) : resolve(result)));
+        this.session?.post('HeapProfiler.stopSampling', (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
       });
 
       const profile = JSON.stringify(result.profile);
@@ -214,7 +213,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
    * The snapshot is saved in the heap_snapshots directory that is created in the current working directory.
    * The snapshot can be analyzed using vscode or Chrome DevTools or other tools that support heap snapshots.
    */
-  async takeHeapSnapshot() {
+  async takeHeapSnapshot(): Promise<void> {
     if (!this.session) {
       this.log.warn('No active inspector session.');
       return;
@@ -228,7 +227,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     this.snapshotInProgress = true;
 
     const { createWriteStream } = await import('node:fs');
-    const path = await import('node:path');
+    const { default: path } = await import('node:path');
     const safeTimestamp = new Date().toISOString().replace(/[<>:"/\\|?*]/g, '-');
     const filename = path.join('heap_snapshots', `${safeTimestamp}.heapsnapshot`);
 
@@ -241,13 +240,13 @@ export class Inspector extends EventEmitter<InspectorEvents> {
 
     const stream = createWriteStream(filename, { flags: 'w' });
     let streamErrored = false;
-    const onStreamError = (err: unknown) => {
+    const onStreamError = (err: unknown): void => {
       streamErrored = true;
       this.log.error(`Heap snapshot stream error: ${getErrorMessage(err)}`);
     };
     stream.once('error', onStreamError);
 
-    const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>) => {
+    const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>): void => {
       // notification.params.chunk is a string; write directly to the stream
       // istanbul ignore next
       if (!stream.write(notification.params.chunk)) {
@@ -260,7 +259,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
         this.session?.post('HeapProfiler.takeHeapSnapshot', (err) => {
           // Detach chunk listener and close the stream, then perform post-actions
           this.session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
-          const finalize = () => {
+          const finalize = (): void => {
             // istanbul ignore else
             if (!err && !streamErrored) {
               // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
@@ -300,7 +299,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
    * - minor collection refers to young-generation collections (scavenges).
    * - sync execution blocks the main thread until GC is complete, which can cause pauses.
    */
-  runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async') {
+  runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async'): void {
     if (global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });

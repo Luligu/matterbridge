@@ -103,6 +103,8 @@ describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress /
 
   it('returns undefined if no interfaces', () => {
     (os.networkInterfaces as Mock).mockReturnValue({});
+    expect(getInterfaceDetails()).toBeUndefined();
+    expect(getInterfaceName()).toBeUndefined();
     expect(getIpv4InterfaceAddress()).toBeUndefined();
     expect(getIpv6InterfaceAddress()).toBeUndefined();
     expect(getMacAddress()).toBeUndefined();
@@ -115,6 +117,8 @@ describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress /
       lo: undefined,
     };
     (os.networkInterfaces as Mock).mockReturnValue(fakeIfaces);
+    expect(getInterfaceDetails()).toBeUndefined();
+    expect(getInterfaceName()).toBeUndefined();
     expect(getIpv4InterfaceAddress()).toBeUndefined();
     expect(getIpv6InterfaceAddress()).toBeUndefined();
     expect(getMacAddress()).toBeUndefined();

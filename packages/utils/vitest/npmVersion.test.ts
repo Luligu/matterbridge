@@ -1,46 +1,41 @@
 // vitest\npmVersion.test.ts
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+
+import type { ClientRequest, IncomingMessage } from 'node:http';
+import type { RequestOptions } from 'node:https';
+import { PassThrough } from 'node:stream';
+
+import type { Mock } from 'vitest';
+
+type GetFn = (url: string | URL, options: RequestOptions, callback: (res: IncomingMessage) => void) => ClientRequest;
 
 // ESM mock for https get
-let mockedGet: Mock<typeof get>;
+let mockedGet: Mock<GetFn>;
 let mockedGetPayload = JSON.stringify({ 'dist-tags': { latest: '1.2.3' } });
 let mockedGetStatusCode = 200;
 vi.doMock('node:https', () => {
-  mockedGet = vi.fn((url: string | URL, options: RequestOptions, callback: (res: IncomingMessage) => void) => {
+  mockedGet = vi.fn<GetFn>((_url, _options, callback) => {
     const mockRes = new PassThrough();
     const mockReq = {
-      on: vi.fn(),
-      destroy: vi.fn(),
-      end: vi.fn(),
+      on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+      destroy: vi.fn<(error?: Error) => void>(),
+      end: vi.fn<() => void>(),
     };
-    // @ts-ignore
+    // @ts-expect-error statusCode is not on PassThrough
     mockRes.statusCode = mockedGetStatusCode;
-    // @ts-ignore
-    mockRes.resume = vi.fn();
+    mockRes.resume = vi.fn<() => PassThrough>();
 
-    // Call the callback immediately with the mocked response
     callback(mockRes as unknown as IncomingMessage);
 
-    // Emit data and end events synchronously based on status code
     if (mockedGetStatusCode === 200) {
       mockRes.emit('data', Buffer.from(mockedGetPayload));
       mockRes.emit('end');
     }
-    // For non-200 status codes, the response handling is done in the callback
-    // no need to emit data/end events
 
-    // Return a mock ClientRequest to match the expected return type
     return mockReq as unknown as ClientRequest;
-  }) as unknown as Mock<typeof get>;
+  });
 
   return { get: mockedGet };
 });
-
-import { type ClientRequest, type IncomingMessage } from 'node:http';
-import { type get, type RequestOptions } from 'node:https';
-import { PassThrough } from 'node:stream';
-
-import type { Mock } from 'vitest';
 
 import { setupTest } from './vitestSetupTest.js';
 
@@ -69,7 +64,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should resolve with version when tag exists (latest)', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -80,7 +74,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should resolve with version when tag exists (beta)', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -91,7 +84,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should resolve with version when tag exists (alpha)', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -102,7 +94,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should use default tag (latest) when not specified', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -113,7 +104,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should use default timeout when not specified', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -124,7 +114,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject when tag does not exist', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -133,7 +122,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on non-200 status code (404)', async () => {
-    // Set the statusCode
     mockedGetStatusCode = 404;
 
     await expect(getNpmPackageVersion('nonexistent-package', 'latest', 5000)).rejects.toThrow('Failed to fetch data. Status code: 404');
@@ -141,7 +129,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on 500 server error', async () => {
-    // Set the statusCode
     mockedGetStatusCode = 500;
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Failed to fetch data. Status code: 500');
@@ -149,7 +136,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on invalid JSON response', async () => {
-    // Set the statusCode and invalid payload
     mockedGetStatusCode = 200;
     mockedGetPayload = 'not-valid-json{';
 
@@ -158,7 +144,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on empty response', async () => {
-    // Set the statusCode and empty payload
     mockedGetStatusCode = 200;
     mockedGetPayload = '';
 
@@ -167,7 +152,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on malformed JSON with trailing comma', async () => {
-    // Set the statusCode and malformed payload
     mockedGetStatusCode = 200;
     mockedGetPayload = '{"dist-tags": {"latest": "1.0.0",}}';
 
@@ -176,7 +160,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should handle response with missing dist-tags', async () => {
-    // Set the statusCode and payload without dist-tags
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify({ versions: { '1.0.0': {} } });
 
@@ -185,7 +168,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should handle response with empty dist-tags', async () => {
-    // Set the statusCode and payload with empty dist-tags
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify({ 'dist-tags': {} });
 
@@ -194,7 +176,6 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should handle scoped package names', async () => {
-    // Set the statusCode and payload
     mockedGetStatusCode = 200;
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
@@ -205,43 +186,31 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on timeout', async () => {
-    // Override the mock to simulate a request that never responds
-    // @ts-ignore
-    mockedGet.mockImplementationOnce((url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void) => {
+    mockedGet.mockImplementationOnce((_url, _options) => {
       const mockReq = {
-        on: vi.fn(),
-        destroy: vi.fn(),
-        end: vi.fn(),
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
       };
-
-      // Don't call the callback - simulate hanging request
-      // The real setTimeout will trigger the timeout
-
       return mockReq as unknown as ClientRequest;
     });
 
-    // Start the request with a very short timeout (100ms)
     const promise = getNpmPackageVersion('test-package', 'latest', 100);
 
-    // The timeout should trigger after 100ms
     await expect(promise).rejects.toThrow('Request timed out after 0.1 seconds');
   }, 10000);
 
   it('should reject on request error', async () => {
-    // Override the mock to simulate a request error
-    // @ts-ignore
-    mockedGet.mockImplementationOnce((url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void) => {
+    mockedGet.mockImplementationOnce((_url, _options) => {
       const mockReq = {
-        on: vi.fn((event: string, handler: (error: Error) => void) => {
+        on: vi.fn<(event: string, handler: (error: Error) => void) => void>((event, handler) => {
           if (event === 'error') {
-            // Simulate an error event
             setTimeout(() => handler(new Error('Network connection failed')), 0);
           }
         }),
-        destroy: vi.fn(),
-        end: vi.fn(),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
       };
-
       return mockReq as unknown as ClientRequest;
     });
 

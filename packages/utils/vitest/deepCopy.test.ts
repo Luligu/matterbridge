@@ -9,6 +9,7 @@ describe('deepCopy', () => {
     expect(deepCopy('hello')).toBe('hello');
     expect(deepCopy(true)).toBe(true);
     expect(deepCopy(null)).toBeNull();
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(deepCopy(undefined)).toBeUndefined();
   });
 
@@ -97,7 +98,7 @@ describe('deepCopy', () => {
       constructor(v: number) {
         this.value = v;
       }
-      method() {
+      method(): number {
         return this.value;
       }
     }

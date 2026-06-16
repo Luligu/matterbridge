@@ -1,4 +1,7 @@
 // vitest\hex.test.ts
+
+// oxlint-disable no-use-before-define
+
 import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from '../src/hex.js';
 
 describe('bufferToHex()', () => {
@@ -114,10 +117,10 @@ aG9zdDAeFw0yMzAxMDEwMDAwMDBaFw0yNDAxMDEwMDAwMDBaMBQxEjAQBgNVBAMM
   it('should handle PEM with extra whitespace and empty lines', () => {
     const pemWithWhitespace = `
     -----BEGIN CERTIFICATE-----
-    
+
     MIIBkTCB+wIJAMlyFqk69v+9MA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNVBAMMCWxv
     Y2FsaG9zdDAeFw0yMzAxMDEwMDAwMDBaFw0yNDAxMDEwMDAwMDBaMBQxEjAQBgNV
-    
+
     -----END CERTIFICATE-----
     `;
 

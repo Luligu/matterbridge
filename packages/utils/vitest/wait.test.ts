@@ -29,13 +29,13 @@ describe('waiter()', () => {
   });
 
   it('resolves immediately with true if check returns true', async () => {
-    const check = vi.fn().mockReturnValue(true);
+    const check = vi.fn<() => boolean>().mockReturnValue(true);
     await expect(waiter('immediate', check as any)).resolves.toBe(true);
     expect(check).toHaveBeenCalledTimes(1);
   });
 
   it('resolves immediately with true if check returns true and logs when debug=true', async () => {
-    const check = vi.fn().mockReturnValue(true);
+    const check = vi.fn<() => boolean>().mockReturnValue(true);
     await expect(waiter('immediate-debug', check as any, false, 5000, 500, true)).resolves.toBe(true);
     expect(check).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Waiter "immediate-debug" already true');
@@ -43,7 +43,7 @@ describe('waiter()', () => {
 
   it('resolves true when check becomes true before timeout', async () => {
     let calls = 0;
-    const check = vi.fn().mockImplementation(() => ++calls >= 2);
+    const check = vi.fn<() => boolean>().mockImplementation(() => ++calls >= 2);
     const promise = waiter('eventual', check as any, false, 1000, 100, false);
 
     // initial immediate check
@@ -58,7 +58,7 @@ describe('waiter()', () => {
 
   it('resolves true when check becomes true before timeout debug=true', async () => {
     let calls = 0;
-    const check = vi.fn().mockImplementation(() => ++calls >= 2);
+    const check = vi.fn<() => boolean>().mockImplementation(() => ++calls >= 2);
     const promise = waiter('eventual', check as any, false, 1000, 100, true);
 
     // initial immediate check
@@ -74,7 +74,7 @@ describe('waiter()', () => {
   });
 
   it('resolves false on timeout when exitWithReject=false', async () => {
-    const check = vi.fn().mockReturnValue(false);
+    const check = vi.fn<() => boolean>().mockReturnValue(false);
     const promise = waiter('timeoutFalse', check as any, false, 500, 100);
     vi.advanceTimersByTime(500);
     await expect(promise).resolves.toBe(false);
@@ -83,7 +83,7 @@ describe('waiter()', () => {
   });
 
   it('rejects on timeout when exitWithReject=true', async () => {
-    const check = vi.fn().mockReturnValue(false);
+    const check = vi.fn<() => boolean>().mockReturnValue(false);
     const promise = waiter('timeoutReject', check as any, true, 500, 100);
     vi.advanceTimersByTime(500);
     await expect(promise).rejects.toThrow('Waiter "timeoutReject" finished due to timeout');
@@ -92,7 +92,7 @@ describe('waiter()', () => {
   });
 
   it('logs debug messages when debug=true', async () => {
-    const check = vi.fn().mockReturnValue(false);
+    const check = vi.fn<() => boolean>().mockReturnValue(false);
     const promise = waiter('dbg', check as any, false, 200, 100, true);
 
     // advance to timeout and await
@@ -104,7 +104,7 @@ describe('waiter()', () => {
   });
 
   it('dont logs debug messages when debug=false', async () => {
-    const check = vi.fn().mockReturnValue(false);
+    const check = vi.fn<() => boolean>().mockReturnValue(false);
     const promise = waiter('dbg', check as any, false, 200, 100, false);
 
     // advance to timeout and await

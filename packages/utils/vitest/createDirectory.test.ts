@@ -34,13 +34,19 @@ describe('createDirectory', () => {
   it('should handle errors when creating directory', async () => {
     vi.spyOn(fs.promises, 'mkdir').mockRejectedValueOnce(new Error('Failed to create directory'));
     await createDirectory(path.join(HOMEDIR, 'newDir'), 'Jest New Directory', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: Error: Failed to create directory`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`Error creating dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: Failed to create directory`),
+    );
   });
 
   it('should handle errors when accessing directory', async () => {
     const errorMessage = 'Access denied';
     vi.spyOn(fs.promises, 'access').mockRejectedValueOnce(new Error(errorMessage));
     await createDirectory(path.join(HOMEDIR, 'newDir'), 'Jest New Directory', log);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error accessing dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: Error: ${errorMessage}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      expect.stringContaining(`Error accessing dir Jest New Directory path ${path.join(HOMEDIR, 'newDir')}: ${errorMessage}`),
+    );
   });
 });

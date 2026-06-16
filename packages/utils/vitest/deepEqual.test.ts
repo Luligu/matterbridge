@@ -24,7 +24,9 @@ describe('deepEqual', () => {
   // Null and undefined
   test('distinguishes null and undefined', () => {
     expect(deepEqual(null, null)).toBe(true);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(deepEqual(undefined, undefined)).toBe(true);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(deepEqual(null, undefined)).toBe(false);
     expect(deepEqual(null, {})).toBe(false);
     expect(deepEqual({}, null)).toBe(false);
@@ -127,8 +129,8 @@ describe('deepEqual', () => {
 
   // Mixed edge cases
   test('functions and dates are treated as plain objects/primitives', () => {
-    const fn1 = () => {};
-    const fn2 = () => {};
+    const fn1 = (): void => {};
+    const fn2 = (): void => {};
     expect(deepEqual(fn1, fn1)).toBe(true);
     expect(deepEqual(fn1, fn2)).toBe(false);
 

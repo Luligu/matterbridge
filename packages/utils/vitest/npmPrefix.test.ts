@@ -1,22 +1,23 @@
 // vitest\npmPrefix.test.ts
 
+import type { ChildProcess, ExecException } from 'node:child_process';
+
+import type { Mock } from 'vitest';
+
+type ExecFn = (command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => ChildProcess;
+
 // ESM mock for child_process exec
-let mockedExec: Mock<typeof exec>;
+let mockedExec: Mock<ExecFn>;
 vi.doMock('node:child_process', () => {
-  mockedExec = vi.fn((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
+  mockedExec = vi.fn<ExecFn>((command, callback) => {
     if (command === 'npm root -g' && callback) {
       callback(null, '/usr/lib/node_modules\n', '');
     }
-    // Return a mock ChildProcess to match the expected return type
     return {} as ChildProcess;
-  }) as unknown as Mock<typeof exec>;
+  });
 
   return { exec: mockedExec };
 });
-
-import { type ChildProcess, type exec, type ExecException } from 'node:child_process';
-
-import type { Mock } from 'vitest';
 
 import { setupTest } from './vitestSetupTest.js';
 
@@ -30,12 +31,10 @@ describe('getGlobalNodeModules()', () => {
   });
 
   it('rejects on exec error', async () => {
-    // Change the implementation for the next call only
-    (mockedExec as any).mockImplementationOnce((command: string, callback?: (error: ExecException | null, stdout: string, stderr: string) => void) => {
+    mockedExec.mockImplementationOnce((command, callback) => {
       if (command === 'npm root -g' && callback) {
         callback(new Error('fail'), '', '');
       }
-      // Return a mock ChildProcess to match the expected return type
       return {} as ChildProcess;
     });
     await expect(getGlobalNodeModules()).rejects.toThrow('fail');

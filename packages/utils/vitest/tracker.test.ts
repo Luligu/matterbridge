@@ -15,7 +15,7 @@ describe('Tracker', () => {
     // Reset all modules before each test
     vi.resetModules();
     // Setup the test environment
-    setDebug(false);
+    await setDebug(false);
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -107,7 +107,7 @@ describe('Tracker', () => {
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester');
 
-    const gcMock: (...args: any[]) => any = vi.fn(() => {});
+    const gcMock = vi.fn<(...args: any[]) => any>(() => {});
     global.gc = ((arg?: unknown) => {
       return gcMock(arg as any);
     }) as any;
@@ -125,7 +125,7 @@ describe('Tracker', () => {
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester2');
 
-    const gcMock: (...args: any[]) => any = vi.fn((arg?: unknown) => {
+    const gcMock = vi.fn<(...args: any[]) => any>((arg?: unknown) => {
       if (arg !== undefined) throw new Error('no args supported');
       return;
     });

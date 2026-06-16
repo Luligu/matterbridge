@@ -21,8 +21,9 @@
  * limitations under the License.
  */
 
-// Node.js modules import types
-import type { ExecException } from 'node:child_process';
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('NpmPrefix');
 
 /**
  * Retrieves the path to the global Node.js modules directory.
@@ -32,12 +33,9 @@ import type { ExecException } from 'node:child_process';
 export async function getGlobalNodeModules(): Promise<string> {
   const { exec } = await import('node:child_process');
   return new Promise((resolve, reject) => {
-    exec('npm root -g', (error: ExecException | null, stdout: string) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(stdout.trim());
-      }
+    exec('npm root -g', (error, stdout) => {
+      if (error) reject(error);
+      else resolve(stdout.trim());
     });
   });
 }

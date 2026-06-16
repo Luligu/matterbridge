@@ -26,6 +26,9 @@
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { inspectError } from './error.js';
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('Wait');
 
 /**
  * Asynchronous waiter function that resolves when the provided condition is met or rejects on timeout.
@@ -47,7 +50,10 @@ export async function waiter(
   resolveInterval: number = 500,
   debug: boolean = false,
 ): Promise<boolean> {
+  let intervalId: NodeJS.Timeout;
+
   const log = new AnsiLogger({ logName: 'Waiter', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+
   if (check()) {
     if (debug) log.debug(`Waiter "${name}" already true`);
     return true;
@@ -62,14 +68,14 @@ export async function waiter(
       else resolve(false);
     }, resolveTimeout).unref();
 
-    const intervalId = setInterval(async () => {
+    intervalId = setInterval(() => {
       if (check()) {
         if (debug) log.debug(`Waiter "${name}" finished for true condition...`);
         clearTimeout(timeoutId);
         clearInterval(intervalId);
         resolve(true);
       }
-      await Promise.resolve();
+      // await Promise.resolve();
     }, resolveInterval).unref();
   });
 }
@@ -108,6 +114,7 @@ export async function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: numb
       if (reThrow) {
         reject(new Error('Operation timed out'));
       } else {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         resolve(undefined as unknown as T); // Resolve with undefined if reThrow is false
       }
     }, timeoutMillisecs).unref(); // Unref the timer to prevent it from keeping the event loop alive
@@ -117,11 +124,12 @@ export async function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: numb
         resolve(result);
         return result;
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         clearTimeout(timer); // Ensure timeout does not fire if promise rejects first
         if (reThrow) {
           reject(error); // Reject with the original error
         } else {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           resolve(undefined as unknown as T); // Resolve with undefined if reThrow is false
         }
       });
@@ -139,5 +147,5 @@ export async function withTimeout<T>(promise: Promise<T>, timeoutMillisecs: numb
  * fireAndForget(this.publishUpdate(payload), log, 'publishUpdate');
  */
 export function fireAndForget(promise: Promise<unknown>, log: AnsiLogger, context: string): void {
-  promise.catch((err) => inspectError(log, `${context} failed`, err));
+  promise.catch((err: unknown) => inspectError(log, `${context} failed`, err));
 }

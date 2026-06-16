@@ -121,6 +121,10 @@
     "./color-utils": {
       "types": "./dist/colorUtils.d.ts",
       "import": "./dist/colorUtils.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
     }
   },
   "engines": {
@@ -139,6 +143,6 @@
     "node-ansi-logger": "3.3.0-dev-20260607-585945a"
   },
   "devDependencies": {
-    "vitest": "4.1.8"
+    "vitest": "4.1.9"
   }
 }

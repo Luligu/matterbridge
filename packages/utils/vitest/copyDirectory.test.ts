@@ -2,17 +2,15 @@
 
 const NAME = 'CopyDirectory';
 
-import type { Mock } from 'vitest';
-
 import { setupTest } from './vitestSetupTest.js';
 
 // Prepare fake implementations
-const fakeMkdir: Mock<(path: string, options: { recursive: boolean }) => Promise<void>> = vi.fn();
-const fakeReaddir: Mock<(path: string, options: { withFileTypes: true }) => Promise<{ name: string; isFile(): boolean; isDirectory(): boolean }[]>> = vi.fn();
-const fakeCopyFile: Mock<(src: string, dest: string) => Promise<void>> = vi.fn();
+const fakeMkdir = vi.fn<(path: string, options: { recursive: boolean }) => Promise<void>>();
+const fakeReaddir = vi.fn<(path: string, options: { withFileTypes: true }) => Promise<{ name: string; isFile(): boolean; isDirectory(): boolean }[]>>();
+const fakeCopyFile = vi.fn<(src: string, dest: string) => Promise<void>>();
 
 // ESM module mocks
-vi.doMock('node:fs', async () => ({
+vi.doMock('node:fs', () => ({
   __esModule: true,
   promises: {
     mkdir: fakeMkdir,
@@ -35,10 +33,10 @@ vi.doMock('node:path', async () =>
 const { copyDirectory } = await import('../src/copyDirectory.js');
 
 // Helper Dirent-like objects
-const makeDirent = (name: string, isFile: boolean, isDirectory: boolean) => ({
+const makeDirent = (name: string, isFile: boolean, isDirectory: boolean): { name: string; isFile(): boolean; isDirectory(): boolean } => ({
   name,
-  isFile: () => isFile,
-  isDirectory: () => isDirectory,
+  isFile: (): boolean => isFile,
+  isDirectory: (): boolean => isDirectory,
 });
 
 // Setup the test environment
@@ -118,7 +116,7 @@ describe('copyDirectory', () => {
 
   test('ignores non-file, non-directory entries', async () => {
     fakeMkdir.mockResolvedValue();
-    fakeReaddir.mockResolvedValue([{ name: 'weird', isFile: () => false, isDirectory: () => false }]);
+    fakeReaddir.mockResolvedValue([{ name: 'weird', isFile: (): boolean => false, isDirectory: (): boolean => false }]);
 
     const result = await copyDirectory('src', 'dest');
     expect(result).toBe(true);

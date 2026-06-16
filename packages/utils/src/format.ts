@@ -21,6 +21,10 @@
  * limitations under the License.
  */
 
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('Format');
+
 /**
  * Format a timestamp into a human-readable string.
  *
@@ -66,15 +70,15 @@ export function formatBytes(bytes: number, digits: number = 2): string {
 export function formatUptime(seconds: number): string {
   if (seconds >= 86400) {
     const days = Math.floor(seconds / 86400);
-    return `${days} day${days !== 1 ? 's' : ''}`;
+    return `${days} day${days === 1 ? '' : 's'}`;
   }
   if (seconds >= 3600) {
     const hours = Math.floor(seconds / 3600);
-    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+    return `${hours} hour${hours === 1 ? '' : 's'}`;
   }
   if (seconds >= 60) {
     const minutes = Math.floor(seconds / 60);
-    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+    return `${minutes} minute${minutes === 1 ? '' : 's'}`;
   }
-  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+  return `${seconds} second${seconds === 1 ? '' : 's'}`;
 }

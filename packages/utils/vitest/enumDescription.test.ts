@@ -29,6 +29,7 @@ describe('getEnumDescription()', () => {
   test('returns Invalid by default for missing or unknown values', () => {
     expect(getEnumDescription(DoorState, 999 as DoorState)).toBe('Invalid');
     expect(getEnumDescription(DoorState, null)).toBe('Invalid');
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(getEnumDescription(DoorState, undefined)).toBe('Invalid');
   });
 

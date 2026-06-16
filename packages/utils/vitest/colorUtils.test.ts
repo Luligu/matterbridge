@@ -32,26 +32,26 @@ const colors = [
 ];
 
 describe('Utils test', () => {
-  beforeAll(async () => {
+  beforeAll(() => {
     //
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     //
   });
 
   describe('hslColorToRgbColor', () => {
-    test('Pure Red', async () => {
+    test('Pure Red', () => {
       const color = colors[0];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Bright Orange', async () => {
+    test('Bright Orange', () => {
       const color = colors[1];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('luminance below 50 hits lower luminance branch', async () => {
+    test('luminance below 50 hits lower luminance branch', () => {
       const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       try {
@@ -61,443 +61,443 @@ describe('Utils test', () => {
       }
     });
 
-    test('Pure Yellow', async () => {
+    test('Pure Yellow', () => {
       const color = colors[2];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Lime Green', async () => {
+    test('Lime Green', () => {
       const color = colors[3];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Green', async () => {
+    test('Pure Green', () => {
       const color = colors[4];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Light Sea Green', async () => {
+    test('Light Sea Green', () => {
       const color = colors[5];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Cyan', async () => {
+    test('Pure Cyan', () => {
       const color = colors[6];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Sky Blue', async () => {
+    test('Deep Sky Blue', () => {
       const color = colors[7];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Blue', async () => {
+    test('Pure Blue', () => {
       const color = colors[8];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Blue Violet', async () => {
+    test('Blue Violet', () => {
       const color = colors[9];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Magenta', async () => {
+    test('Pure Magenta', () => {
       const color = colors[10];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Pink', async () => {
+    test('Deep Pink', () => {
       const color = colors[11];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
     // 50% saturation
 
-    test('Pure Red 50%', async () => {
+    test('Pure Red 50%', () => {
       const color = colors[12];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Bright Orange 50%', async () => {
+    test('Bright Orange 50%', () => {
       const color = colors[13];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Yellow 50%', async () => {
+    test('Pure Yellow 50%', () => {
       const color = colors[14];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Lime Green 50%', async () => {
+    test('Lime Green 50%', () => {
       const color = colors[15];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Green 50%', async () => {
+    test('Pure Green 50%', () => {
       const color = colors[16];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Light Sea Green 50%', async () => {
+    test('Light Sea Green 50%', () => {
       const color = colors[17];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Cyan 50%', async () => {
+    test('Pure Cyan 50%', () => {
       const color = colors[18];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Sky Blue 50%', async () => {
+    test('Deep Sky Blue 50%', () => {
       const color = colors[19];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Blue 50%', async () => {
+    test('Pure Blue 50%', () => {
       const color = colors[20];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Blue Violet 50%', async () => {
+    test('Blue Violet 50%', () => {
       const color = colors[21];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Magenta 50%', async () => {
+    test('Pure Magenta 50%', () => {
       const color = colors[22];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Pink 50%', async () => {
+    test('Deep Pink 50%', () => {
       const color = colors[23];
       expect(hslColorToRgbColor(color.hsl.h, color.hsl.s, color.hsl.l)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Red 360', async () => {
+    test('Pure Red 360', () => {
       expect(hslColorToRgbColor(360, 100, 50)).toStrictEqual({ r: 255, g: 0, b: 0 });
     });
 
-    test('Pure Red Saturation 0', async () => {
+    test('Pure Red Saturation 0', () => {
       expect(hslColorToRgbColor(0, 0, 50)).toStrictEqual({ r: 128, g: 128, b: 128 });
     });
   });
 
   describe('rgbColorToHslColor', () => {
-    test('Pure Red', async () => {
+    test('Pure Red', () => {
       const color = colors[0];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Bright Orange', async () => {
+    test('Bright Orange', () => {
       const color = colors[1];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Yellow', async () => {
+    test('Pure Yellow', () => {
       const color = colors[2];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Lime Green', async () => {
+    test('Lime Green', () => {
       const color = colors[3];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Green', async () => {
+    test('Pure Green', () => {
       const color = colors[4];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Light Sea Green', async () => {
+    test('Light Sea Green', () => {
       const color = colors[5];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Cyan', async () => {
+    test('Pure Cyan', () => {
       const color = colors[6];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Deep Sky Blue', async () => {
+    test('Deep Sky Blue', () => {
       const color = colors[7];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Blue', async () => {
+    test('Pure Blue', () => {
       const color = colors[8];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Blue Violet', async () => {
+    test('Blue Violet', () => {
       const color = colors[9];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Magenta', async () => {
+    test('Pure Magenta', () => {
       const color = colors[10];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Deep Pink', async () => {
+    test('Deep Pink', () => {
       const color = colors[11];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
     // 50% saturation
 
-    test('Pure Red 50%', async () => {
+    test('Pure Red 50%', () => {
       const color = colors[12];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Bright Orange 50%', async () => {
+    test('Bright Orange 50%', () => {
       const color = colors[13];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Yellow 50%', async () => {
+    test('Pure Yellow 50%', () => {
       const color = colors[14];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Lime Green 50%', async () => {
+    test('Lime Green 50%', () => {
       const color = colors[15];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Green 50%', async () => {
+    test('Pure Green 50%', () => {
       const color = colors[16];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Light Sea Green 50%', async () => {
+    test('Light Sea Green 50%', () => {
       const color = colors[17];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Cyan 50%', async () => {
+    test('Pure Cyan 50%', () => {
       const color = colors[18];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Deep Sky Blue 50%', async () => {
+    test('Deep Sky Blue 50%', () => {
       const color = colors[19];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Blue 50%', async () => {
+    test('Pure Blue 50%', () => {
       const color = colors[20];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Blue Violet 50%', async () => {
+    test('Blue Violet 50%', () => {
       const color = colors[21];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Pure Magenta 50%', async () => {
+    test('Pure Magenta 50%', () => {
       const color = colors[22];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Deep Pink 50%', async () => {
+    test('Deep Pink 50%', () => {
       const color = colors[23];
       expect(rgbColorToHslColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });
 
-    test('Achromatic', async () => {
+    test('Achromatic', () => {
       expect(rgbColorToHslColor({ r: 128, g: 128, b: 128 })).toStrictEqual({ h: 0, s: 0, l: 50 });
     });
   });
 
   describe('rgbColorToXYColor', () => {
-    test('Pure Red', async () => {
+    test('Pure Red', () => {
       const color = colors[0];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Bright Orange', async () => {
+    test('Bright Orange', () => {
       const color = colors[1];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Yellow', async () => {
+    test('Pure Yellow', () => {
       const color = colors[2];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Lime Green', async () => {
+    test('Lime Green', () => {
       const color = colors[3];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Green', async () => {
+    test('Pure Green', () => {
       const color = colors[4];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Light Sea Green', async () => {
+    test('Light Sea Green', () => {
       const color = colors[5];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Cyan', async () => {
+    test('Pure Cyan', () => {
       const color = colors[6];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Deep Sky Blue', async () => {
+    test('Deep Sky Blue', () => {
       const color = colors[7];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Blue', async () => {
+    test('Pure Blue', () => {
       const color = colors[8];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Blue Violet', async () => {
+    test('Blue Violet', () => {
       const color = colors[9];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Magenta', async () => {
+    test('Pure Magenta', () => {
       const color = colors[10];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Deep Pink', async () => {
+    test('Deep Pink', () => {
       const color = colors[11];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
     // 50% saturation
 
-    test('Pure Red 50%', async () => {
+    test('Pure Red 50%', () => {
       const color = colors[12];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Bright Orange 50%', async () => {
+    test('Bright Orange 50%', () => {
       const color = colors[13];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Yellow 50%', async () => {
+    test('Pure Yellow 50%', () => {
       const color = colors[14];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Lime Green 50%', async () => {
+    test('Lime Green 50%', () => {
       const color = colors[15];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Green 50%', async () => {
+    test('Pure Green 50%', () => {
       const color = colors[16];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Light Sea Green 50%', async () => {
+    test('Light Sea Green 50%', () => {
       const color = colors[17];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Cyan 50%', async () => {
+    test('Pure Cyan 50%', () => {
       const color = colors[18];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Deep Sky Blue 50%', async () => {
+    test('Deep Sky Blue 50%', () => {
       const color = colors[19];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Blue 50%', async () => {
+    test('Pure Blue 50%', () => {
       const color = colors[20];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Blue Violet 50%', async () => {
+    test('Blue Violet 50%', () => {
       const color = colors[21];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Pure Magenta 50%', async () => {
+    test('Pure Magenta 50%', () => {
       const color = colors[22];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
 
-    test('Deep Pink 50%', async () => {
+    test('Deep Pink 50%', () => {
       const color = colors[23];
       expect(rgbColorToXYColor({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b })).toStrictEqual({ x: color.xy.x, y: color.xy.y });
     });
   });
 
   describe('xyColorToRgbColor', () => {
-    test('Pure Red', async () => {
+    test('Pure Red', () => {
       const color = colors[0];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Bright Orange', async () => {
+    test('Bright Orange', () => {
       const color = colors[1];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Yellow', async () => {
+    test('Pure Yellow', () => {
       const color = colors[2];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Lime Green', async () => {
+    test('Lime Green', () => {
       const color = colors[3];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Green', async () => {
+    test('Pure Green', () => {
       const color = colors[4];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Light Sea Green', async () => {
+    test('Light Sea Green', () => {
       const color = colors[5];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Cyan', async () => {
+    test('Pure Cyan', () => {
       const color = colors[6];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Sky Blue', async () => {
+    test('Deep Sky Blue', () => {
       const color = colors[7];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Blue', async () => {
+    test('Pure Blue', () => {
       const color = colors[8];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Blue Violet', async () => {
+    test('Blue Violet', () => {
       const color = colors[9];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Pure Magenta', async () => {
+    test('Pure Magenta', () => {
       const color = colors[10];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
 
-    test('Deep Pink', async () => {
+    test('Deep Pink', () => {
       const color = colors[11];
       expect(xyColorToRgbColor(color.xy.x, color.xy.y)).toStrictEqual({ r: color.rgb.r, g: color.rgb.g, b: color.rgb.b });
     });
   });
 
   describe('colorTemperature', () => {
-    test('Mireds to kelvin', async () => {
+    test('Mireds to kelvin', () => {
       expect(miredsToKelvin(500)).toBe(2000);
       expect(miredsToKelvin(400)).toBe(2500);
       expect(miredsToKelvin(300)).toBe(3333);
@@ -507,7 +507,7 @@ describe('Utils test', () => {
       expect(miredsToKelvin(147)).toBe(6803);
     });
 
-    test('Kelvin to mireds', async () => {
+    test('Kelvin to mireds', () => {
       expect(kelvinToMireds(2000)).toBe(500);
       expect(kelvinToMireds(2500)).toBe(400);
       expect(kelvinToMireds(2700)).toBe(370);
@@ -519,7 +519,7 @@ describe('Utils test', () => {
       expect(kelvinToMireds(6803)).toBe(147);
     });
 
-    test('Kelvin to RGB', async () => {
+    test('Kelvin to RGB', () => {
       expect(kelvinToRGB(10)).toEqual({ r: 255, g: 68, b: 0 });
       expect(kelvinToRGB(2000)).toEqual({ r: 255, g: 137, b: 14 });
       expect(kelvinToRGB(2500)).toEqual({ r: 255, g: 159, b: 70 });
@@ -533,7 +533,7 @@ describe('Utils test', () => {
   });
 
   describe('xyToHsl', () => {
-    test('Pure Red', async () => {
+    test('Pure Red', () => {
       const color = colors[0];
       expect(xyToHsl(color.xy.x, color.xy.y)).toStrictEqual({ h: color.hsl.h, s: color.hsl.s, l: color.hsl.l });
     });

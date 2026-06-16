@@ -1,5 +1,7 @@
 // vitest\inspector.test.ts
 
+// oxlint-disable typescript/explicit-function-return-type
+
 import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
@@ -13,7 +15,7 @@ describe('Inspector', () => {
     // Reset all modules before each test
     vi.resetModules();
     // Setup the test environment
-    setDebug(false);
+    await setDebug(false);
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -78,7 +80,7 @@ describe('Inspector', () => {
   test('runGarbageCollector: with global.gc options and fallback', async () => {
     const { Inspector } = await import('../src/inspector.js');
     const gc = vi
-      .fn()
+      .fn<(...args: any[]) => any>()
       // Throw when called with options object
       .mockImplementationOnce(() => {
         throw new Error('unsupported options');
@@ -236,7 +238,7 @@ describe('Inspector', () => {
     const debugSpy = vi.spyOn((inspector as any)['log'], 'debug');
     const events: Array<{ t: string; e: string }> = [];
     inspector.on('gc_done', (t, e) => events.push({ t, e }));
-    (global as any).gc = vi.fn();
+    (global as any).gc = vi.fn<(...args: any[]) => any>();
     inspector.runGarbageCollector('minor', 'sync');
     expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Garbage collection (minor-sync) triggered'));
     expect(events).toContainEqual({ t: 'minor', e: 'sync' });
@@ -337,7 +339,7 @@ describe('Inspector', () => {
     await vi.advanceTimersByTimeAsync(30000);
     // Allow any pending microtasks from the async interval handler to settle
     await Promise.resolve();
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Error during scheduled heap snapshot'));
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Inspector snapshot interval failed'));
     vi.useRealTimers();
   });
 
@@ -350,7 +352,7 @@ describe('Inspector', () => {
     // snapshot event should call takeHeapSnapshot and warn (no session)
     inspector.emit('snapshot');
     // gc event should call runGarbageCollector (uses default major/async)
-    (global as any).gc = vi.fn();
+    (global as any).gc = vi.fn<(...args: any[]) => any>();
     inspector.emit('gc');
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('No active inspector session'));
     expect(gcDone).toContainEqual({ t: 'major', e: 'async' });
@@ -422,7 +424,7 @@ describe('Inspector', () => {
     const { Inspector } = await import('../src/inspector.js');
 
     // Expose a fake gc to cover gc paths invoked around snapshot
-    (global as any).gc = vi.fn();
+    (global as any).gc = vi.fn<(...args: any[]) => any>();
 
     const inspector = new Inspector('Inspector', true, false);
     await inspector.start();

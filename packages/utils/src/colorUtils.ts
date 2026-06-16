@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable no-param-reassign
+
 export interface RGB {
   r: number;
   g: number;
@@ -182,15 +184,15 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
 
   // Normalize even if this code should never be reached...
   // istanbul ignore next
-  if (isNaN(red) || red < 0) {
+  if (Number.isNaN(red) || red < 0) {
     red = 0;
   }
   // istanbul ignore next
-  if (isNaN(green) || green < 0) {
+  if (Number.isNaN(green) || green < 0) {
     green = 0;
   }
   // istanbul ignore next
-  if (isNaN(blue) || blue < 0) {
+  if (Number.isNaN(blue) || blue < 0) {
     blue = 0;
   }
 
@@ -224,6 +226,7 @@ export function rgbColorToHslColor(rgb: RGB): HSL {
   } else {
     const d = max - min;
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    // oxlint-disable-next-line default-case
     switch (max) {
       case r:
         h = (g - b) / d + (g < b ? 6 : 0);

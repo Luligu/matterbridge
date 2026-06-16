@@ -1,5 +1,7 @@
 // vitest\validate.test.ts
 
+// oxlint-disable unicorn/no-useless-undefined
+
 import {
   isValidArray,
   isValidBoolean,
@@ -156,6 +158,7 @@ describe('Validation Functions', () => {
       expect(isValidPromise(null)).toBe(false);
       expect(isValidPromise(undefined)).toBe(false);
       expect(isValidPromise({})).toBe(false);
+      // oxlint-disable-next-line unicorn/no-thenable
       expect(isValidPromise({ then: () => {} } as any)).toBe(false);
       expect(isValidPromise('promise' as any)).toBe(false);
     });

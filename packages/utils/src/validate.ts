@@ -22,6 +22,10 @@
  * limitations under the License.
  */
 
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('Validate');
+
 /**
  * Checks if a given string is a valid IPv4 address.
  *
@@ -154,6 +158,7 @@ export function isValidPromise(value: unknown): value is Promise<unknown> {
  */
 export function parseVersionString(versionString: string): number | undefined {
   if (!isValidString(versionString)) return undefined;
+  // oxlint-disable-next-line no-param-reassign
   versionString = versionString.trim();
   const match = versionString.match(/^(\d+)\.(\d+)\.(\d+)/);
   if (!match) return undefined;
