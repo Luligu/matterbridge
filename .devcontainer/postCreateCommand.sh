@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# postCreateCommand.sh
+# postCreateCommand.sh v. 1.0.1
 
 # This script runs after the Dev Container is created to set up the dev container environment.
 
@@ -33,11 +33,14 @@ ls .
 sudo chown -R node:node .cache node_modules apps/frontend/node_modules /home/node/Matterbridge /home/node/.matterbridge /home/node/.mattercert
 sudo chmod +x bin/*.js
 
+sudo mkdir -p /home/node/.claude /home/node/.codex
+sudo chown -R node:node /home/node/.claude /home/node/.codex
+
 echo "4 - Installing dependencies..."
 npm install --no-fund --no-audit
 
 echo "5 - Building the package..."
-npm run build:tsgo
+npm run build
 
 echo "6 - Building the frontend package..."
 cd apps/frontend
