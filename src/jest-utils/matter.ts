@@ -7,4 +7,5 @@
  * @license Apache-2.0
  */
 
+// oxlint-disable-next-line oxc/no-barrel-file
 export * from '@matterbridge/jest-utils/matter';
