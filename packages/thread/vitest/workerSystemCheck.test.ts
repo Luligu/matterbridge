@@ -40,21 +40,32 @@ function setNvmEnv(options: Pick<RunOptions, 'nvmBin' | 'nvmDir'>): () => void {
   };
 }
 
-async function runWorkerSystemCheck(options: RunOptions) {
+type RunWorkerSystemCheckResult = Readonly<{
+  wrapperName: string | undefined;
+  success: boolean | undefined;
+  loggerMock: Mock<(...args: any[]) => any>;
+  snackBarMock: Mock<(...args: any[]) => any>;
+  fetchMock: Mock<(...args: any[]) => any>;
+  inspectError: Mock<(...args: any[]) => any>;
+  networkInterfacesMock: Mock<(...args: any[]) => any>;
+}>;
+
+async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSystemCheckResult> {
   vi.resetModules();
 
-  const loggerMock = vi.fn();
-  const snackBarMock = vi.fn();
+  const loggerMock = vi.fn<(...args: any[]) => any>();
+  const snackBarMock = vi.fn<(...args: any[]) => any>();
   const fetchMock = options.fetchThrows
-    ? vi.fn(async () => {
+    ? vi.fn<(...args: any[]) => any>(async () => {
+        await Promise.resolve();
         throw new Error('fetch failed');
       })
-    : vi.fn(async () => ({ result: { data: { mdnsInterface: options.mdnsInterface } } }));
+    : vi.fn<(...args: any[]) => any>(async () => await Promise.resolve({ result: { data: { mdnsInterface: options.mdnsInterface } } }));
 
   const worker = {
     logger: loggerMock,
     snackBar: snackBarMock,
-    log: { debug: vi.fn() },
+    log: { debug: vi.fn<(...args: any[]) => any>() },
     server: { fetch: fetchMock },
   } as any;
 
@@ -71,14 +82,14 @@ async function runWorkerSystemCheck(options: RunOptions) {
     },
   }));
 
-  const networkInterfacesMock = vi.fn(() => options.networkInterfaces);
+  const networkInterfacesMock = vi.fn<(...args: any[]) => any>(() => options.networkInterfaces);
   vi.doMock('node:os', () => ({
     default: {
       networkInterfaces: networkInterfacesMock,
     },
   }));
 
-  const inspectError = vi.fn(() => 'inspected error');
+  const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
   vi.doMock('@matterbridge/utils/error', () => ({ inspectError }));
 
   const excludedInterfaceNamePattern =

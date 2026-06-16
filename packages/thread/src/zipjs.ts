@@ -23,9 +23,8 @@
  */
 
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import { basename, dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
+import path from 'node:path';
 
-// eslint-disable-next-line n/no-missing-import
 import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -52,12 +51,12 @@ export async function createZip(zipPath: string, sourcePaths: string[]): Promise
   let entryCount = 0;
 
   for (const sourcePath of sourcePaths) {
-    const resolvedSourcePath = resolve(sourcePath);
-    entryCount += await addZipEntry(writer, resolvedSourcePath, basename(resolvedSourcePath), log);
+    const resolvedSourcePath = path.resolve(sourcePath);
+    entryCount += await addZipEntry(writer, resolvedSourcePath, path.basename(resolvedSourcePath), log);
   }
 
   const zipData = await writer.close();
-  await mkdir(dirname(zipPath), { recursive: true });
+  await mkdir(path.dirname(zipPath), { recursive: true });
   await writeFile(zipPath, zipData);
 
   log.info(`Created zip ${zipPath} with ${entryCount} entries (${zipData.byteLength} bytes).`);
@@ -123,7 +122,7 @@ export async function unZip(zipPath: string, destinationPath: string = getDefaul
         continue;
       }
 
-      await mkdir(dirname(entryPath), { recursive: true });
+      await mkdir(path.dirname(entryPath), { recursive: true });
       const fileData = await entry.getData(new Uint8ArrayWriter());
       await writeFile(entryPath, fileData);
       extractedEntries++;
@@ -166,7 +165,7 @@ async function addZipEntry(writer: ZipWriter<Uint8Array<ArrayBuffer>>, sourcePat
 
     let childEntries = 1;
     for (const child of children) {
-      childEntries += await addZipEntry(writer, join(sourcePath, child.name), `${directoryEntryName}${child.name}`, log);
+      childEntries += await addZipEntry(writer, path.join(sourcePath, child.name), `${directoryEntryName}${child.name}`, log);
     }
 
     log.debug(`Added directory ${directoryEntryName}`);
@@ -189,9 +188,9 @@ async function addZipEntry(writer: ZipWriter<Uint8Array<ArrayBuffer>>, sourcePat
  * @returns {string} The sibling directory used for extraction.
  */
 function getDefaultDestinationPath(zipPath: string): string {
-  const zipExtension = extname(zipPath);
-  const zipName = basename(zipPath, zipExtension);
-  return join(dirname(zipPath), zipName);
+  const zipExtension = path.extname(zipPath);
+  const zipName = path.basename(zipPath, zipExtension);
+  return path.join(path.dirname(zipPath), zipName);
 }
 
 /**
@@ -212,11 +211,11 @@ function normalizeEntryName(entryName: string): string {
  * @returns {string} The safe absolute destination path for the entry.
  */
 function resolveEntryPath(destinationPath: string, entryName: string): string {
-  const resolvedDestinationPath = resolve(destinationPath);
-  const resolvedEntryPath = resolve(resolvedDestinationPath, normalizeEntryName(entryName));
-  const relativeEntryPath = relative(resolvedDestinationPath, resolvedEntryPath);
+  const resolvedDestinationPath = path.resolve(destinationPath);
+  const resolvedEntryPath = path.resolve(resolvedDestinationPath, normalizeEntryName(entryName));
+  const relativeEntryPath = path.relative(resolvedDestinationPath, resolvedEntryPath);
 
-  if (isAbsolute(relativeEntryPath) || relativeEntryPath.startsWith('..')) {
+  if (path.isAbsolute(relativeEntryPath) || relativeEntryPath.startsWith('..')) {
     throw new Error(`Refusing to extract zip entry outside destination: ${entryName}`);
   }
 

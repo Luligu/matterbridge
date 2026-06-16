@@ -21,7 +21,7 @@ vi.mock('@matterbridge/utils/github-version', { spy: true });
 
 await setupTest(NAME, false);
 
-describe(`${NAME}`, () => {
+describe(`Test ${NAME}`, () => {
   // Create BroadcastServer for tests
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
@@ -52,24 +52,72 @@ describe(`${NAME}`, () => {
     vi.restoreAllMocks();
   });
 
-  it('should add plugin', async () => {
+  it('should add plugin', () => {
     expect(plugin).not.toBe(null);
   });
 
   it('should check updates', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
     const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
+    const frontendServer = new BroadcastServer('frontend', log);
+    const refreshRequiredMessages: string[] = [];
 
     // Set the return value for this specific test case
-    (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValue('1.0.0');
+    (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockImplementation(async (packageName: string, tag?: string) => {
+      if (packageName === 'matterbridge' && tag === 'dev') return Promise.resolve('1.1.0-dev-1');
+      if (packageName === 'matterbridge') return Promise.resolve('1.1.0');
+      if (tag === 'dev') return Promise.resolve('1.1.0-dev-1');
+      return Promise.resolve('1.1.0');
+    });
     (getGitHubUpdate as Mock).mockResolvedValue({});
+    matterbridge.matterbridgeVersion = '1.0.0-dev-1';
+    if (plugin !== null) plugin.version = '1.0.0-dev-1';
 
-    await checkUpdates(matterbridge);
+    frontendServer.on('broadcast_message', (msg) => {
+      if (msg.type === 'frontend_refreshrequired' && 'params' in msg) refreshRequiredMessages.push(msg.params.changed);
+    });
+
+    try {
+      await checkUpdates(matterbridge);
+      await flushAsync(undefined, undefined, 100);
+    } finally {
+      frontendServer.close();
+    }
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
     expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin');
+    expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin', 'dev');
     expect(getGitHubUpdate).toHaveBeenCalled();
+    expect(refreshRequiredMessages.filter((changed) => changed === 'settings')).toHaveLength(1);
+    expect(refreshRequiredMessages.filter((changed) => changed === 'plugins')).toHaveLength(1);
+  });
+
+  it('should not send refresh messages when no refresh is required', async () => {
+    const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
+    const frontendServer = new BroadcastServer('frontend', log);
+    const refreshRequiredMessages: string[] = [];
+
+    matterbridge.matterbridgeVersion = '1.0.0';
+    if (plugin !== null) plugin.version = '1.0.1';
+    (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockImplementation(async (packageName: string) =>
+      Promise.resolve(packageName === 'matterbridge' ? '1.0.0' : '1.0.1'),
+    );
+    (getGitHubUpdate as Mock).mockResolvedValue({});
+
+    frontendServer.on('broadcast_message', (msg) => {
+      if (msg.type === 'frontend_refreshrequired' && 'params' in msg) refreshRequiredMessages.push(msg.params.changed);
+    });
+
+    try {
+      await checkUpdates(matterbridge);
+      await flushAsync(undefined, undefined, 100);
+    } finally {
+      frontendServer.close();
+    }
+
+    expect(refreshRequiredMessages).toHaveLength(0);
   });
 
   it('should update to the latest version if versions differ', async () => {

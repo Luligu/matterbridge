@@ -54,6 +54,8 @@ export let HOMEDIR: string;
 
 export let log: AnsiLogger;
 
+const noop = (): void => undefined;
+
 /**
  * Setup the Vitest environment:
  * - it will remove any existing home directory
@@ -99,12 +101,12 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
     consoleWarnSpy = vi.spyOn(console, 'warn');
     consoleErrorSpy = vi.spyOn(console, 'error');
   } else {
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(noop);
   }
 }
 
@@ -141,11 +143,11 @@ export async function setDebug(debug: boolean): Promise<void> {
     consoleWarnSpy = vi.spyOn(console, 'warn');
     consoleErrorSpy = vi.spyOn(console, 'error');
   } else {
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(noop);
   }
 }

@@ -1,5 +1,6 @@
 // vitest\threadsManager.test.ts
 
+// oxlint-disable no-use-before-define
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 const NAME = 'ThreadsManager';
@@ -22,18 +23,18 @@ describe('ThreadsManager', () => {
   const moduleDirectory = path.dirname(url.fileURLToPath(new URL('../src/threadsManager.js', import.meta.url)));
   const tempWorkerDirectory = path.resolve(HOMEDIR, 'temp-workers');
 
-  beforeAll(async () => {
+  beforeAll(() => {
     mkdirSync(tempWorkerDirectory, { recursive: true });
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -281,6 +282,7 @@ describe('ThreadsManager', () => {
         params: { name: 'CheckUpdates' },
       });
       expect(runThreadSpy).toHaveBeenCalledTimes(1);
+      // oxlint-disable-next-line unicorn/no-useless-undefined
       expect(runThreadSpy).toHaveBeenLastCalledWith('CheckUpdates', undefined, undefined, undefined, undefined, undefined);
       expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_run', id: 10, src: 'frontend', dst: 'manager', result: { success: true } }));
 
@@ -296,6 +298,7 @@ describe('ThreadsManager', () => {
         params: { name: 'SystemCheck' },
       });
       expect(runThreadSpy).toHaveBeenCalledTimes(2);
+      // oxlint-disable-next-line unicorn/no-useless-undefined
       expect(runThreadSpy).toHaveBeenLastCalledWith('SystemCheck', undefined, undefined, undefined, undefined, undefined);
       expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_run', id: 11, src: 'frontend', dst: 'manager', result: { success: false } }));
 
@@ -519,7 +522,7 @@ describe('ThreadsManager', () => {
 
       // Also cover the "running: yes" / lastSeen present / non-nullish runCount+errorCount branches.
       const threads = (manager as any).threads as Array<any>;
-      threads[0].worker = { threadId: 1, postMessage: vi.fn() };
+      threads[0].worker = { threadId: 1, postMessage: vi.fn<(...args: any[]) => any>() };
       threads[0].lastSeen = 1;
       threads[0].runCount = 2;
       threads[0].errorCount = 3;
@@ -539,7 +542,7 @@ describe('ThreadsManager', () => {
 
       const threads = (manager as any).threads as Array<any>;
       const thread = threads[0];
-      thread.worker = { threadId: 123, postMessage: vi.fn() };
+      thread.worker = { threadId: 123, postMessage: vi.fn<(...args: any[]) => any>() };
 
       const nowSpy = vi.spyOn(Date, 'now');
       try {
@@ -700,7 +703,7 @@ describe('ThreadsManager', () => {
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const { AnsiLogger: AnsiLoggerMocked } = await import('node-ansi-logger');
       const createSpy = vi.spyOn(AnsiLoggerMocked, 'create');
-      const logSpy = vi.fn();
+      const logSpy = vi.fn<(...args: any[]) => any>();
       createSpy.mockReturnValue({ log: logSpy } as any);
 
       const manager = new ThreadsManagerMocked();

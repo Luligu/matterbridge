@@ -5,6 +5,7 @@ const MATTER_PORT = 0;
 
 import { BroadcastChannel } from 'node:worker_threads';
 
+import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
@@ -20,33 +21,33 @@ describe('BroadcastServer', () => {
 
   beforeAll(async () => {});
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
 
-  test('constructor defaults', async () => {
+  test('constructor defaults', () => {
     const server = new BroadcastServer('manager', log);
     expect(server).toBeInstanceOf(BroadcastServer);
     expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);
     server.close();
   });
 
-  test('constructor', async () => {
+  test('constructor', () => {
     process.argv = [...originalProcessArgv, '--loader', '--verbose'];
     server = new BroadcastServer('manager', log, NAME);
     expect(server).toBeInstanceOf(BroadcastServer);
     expect((server as any).broadcastChannel).toBeInstanceOf(BroadcastChannel);
   });
 
-  test('message handler', async () => {
+  test('message handler', () => {
     // @ts-expect-error: access private method for test
     server.verbose = true;
 
@@ -63,7 +64,7 @@ describe('BroadcastServer', () => {
     server.verbose = false;
   });
 
-  test('message error handler', async () => {
+  test('message error handler', () => {
     // @ts-expect-error: access private method for test
     server.broadcastChannel.onmessageerror({ data: { invalid: 'message' } } as any);
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/received message error/));
@@ -92,7 +93,7 @@ describe('BroadcastServer', () => {
     server.closed = false;
   });
 
-  test('getUniqueId', async () => {
+  test('getUniqueId', () => {
     const id1 = server.getUniqueId();
     const id2 = server.getUniqueId();
     expect(id1).toBeGreaterThanOrEqual(100_000_000);
@@ -160,7 +161,7 @@ describe('BroadcastServer', () => {
     expect(server.isWorkerResponseOfType(malformedResponse, 'jest')).toBe(false);
   });
 
-  test('broadcast: should broadcast a valid simple request message', async () => {
+  test('broadcast: should broadcast a valid simple request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
     server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } });
@@ -179,7 +180,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('broadcast: should broadcast a valid request message', async () => {
+  test('broadcast: should broadcast a valid request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
     server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Bob', age: 42 } });
@@ -198,7 +199,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('request: should broadcast a valid simple request message', async () => {
+  test('request: should broadcast a valid simple request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const requestMsg = { type: 'jest_simple', src: 'frontend', dst: 'manager' } as const;
     server.request(requestMsg);
@@ -206,7 +207,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('request: should broadcast a valid request message', async () => {
+  test('request: should broadcast a valid request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
@@ -214,7 +215,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('request: should broadcast a valid request message adding id and timestamp', async () => {
+  test('request: should broadcast a valid request message adding id and timestamp', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
@@ -233,7 +234,7 @@ describe('BroadcastServer', () => {
     logErrorSpy.mockRestore();
   });
 
-  test('respond: should broadcast a valid response message adding elapsed', async () => {
+  test('respond: should broadcast a valid response message adding elapsed', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = { id: 654321, timestamp: Date.now() - 1000, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
@@ -249,7 +250,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('respond: should broadcast a valid response message adding timestamp but not elapsed', async () => {
+  test('respond: should broadcast a valid response message adding timestamp but not elapsed', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = { id: 654321, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
@@ -265,7 +266,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test('respond: should broadcast a valid response message reverse of src dst', async () => {
+  test('respond: should broadcast a valid response message reverse of src dst', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = {
       id: 654321,
@@ -290,7 +291,7 @@ describe('BroadcastServer', () => {
     postMessageSpy.mockRestore();
   });
 
-  test("respond: should swap dst when dst is 'all'", async () => {
+  test("respond: should swap dst when dst is 'all'", () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
     const responseMsg = {
       id: 654321,
@@ -325,7 +326,7 @@ describe('BroadcastServer', () => {
   });
 
   test('broadcastMessageHandler: should receive a broadcast message', async () => {
-    const eventHandler = vi.fn();
+    const eventHandler = vi.fn<(msg: WorkerMessage) => void>();
     server.on('broadcast_message', eventHandler);
 
     const { BroadcastServer } = await import('../src/broadcastServer.js');
@@ -372,14 +373,21 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should resolve with correct response without id', async () => {
+    const generatedId = 123456789;
+    const getUniqueIdSpy = vi.spyOn(server, 'getUniqueId').mockReturnValue(generatedId);
     const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     const responseMsg = { type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
     setTimeout(() => {
       // Simulate receiving the response
-      (server as any).broadcastChannel.onmessage({ data: { ...responseMsg, id: (requestMsg as any).id, timestamp: Date.now() } });
+      (server as any).broadcastChannel.onmessage({ data: { ...responseMsg, id: generatedId, timestamp: Date.now() } });
     }, 10);
-    const result = await server.fetch(requestMsg);
-    expect(result).toEqual({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
+    try {
+      const result = await server.fetch(requestMsg);
+      expect(result).toEqual({ id: generatedId, timestamp: expect.any(Number), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
+      expect((requestMsg as { id?: number }).id).toBeUndefined();
+    } finally {
+      getUniqueIdSpy.mockRestore();
+    }
   });
 
   test('fetch: should keep provided timestamp', async () => {
@@ -395,7 +403,7 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should resolve with correct response from another thread', async () => {
-    const handler = (msg: any) => {
+    const handler = (msg: any): void => {
       if (msg.type === 'jest' && !('response' in msg)) {
         server.respond({ ...msg, src: 'manager', dst: msg.src, result: { name: 'Alice', age: 33 } });
       }
@@ -484,7 +492,7 @@ describe('BroadcastServer', () => {
     expect(result2).toEqual(res2);
   });
 
-  test('close', async () => {
+  test('close', () => {
     server.close();
     expect((server as any).broadcastChannel.onmessage).toBeNull();
     // @ts-expect-error: access private method for test

@@ -1,5 +1,7 @@
 // vitest\threadsManager.threads.test.ts
 
+// oxlint-disable no-use-before-define
+
 const NAME = 'ThreadsManagerThreads';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
@@ -22,7 +24,7 @@ describe('ThreadsManagerThreads', () => {
   let broadcastserverPlugins: BroadcastServer;
   let manager: ThreadsManager;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // process.argv.push('--debug-worker');
     // Create ThreadsManager instance
     manager = new ThreadsManager();
@@ -41,14 +43,14 @@ describe('ThreadsManagerThreads', () => {
     });
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     // Close broadcast servers
     broadcastserverMatterbridge.close();
     broadcastserverPlugins.close();

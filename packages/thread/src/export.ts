@@ -13,6 +13,7 @@ export * from './threadsManager.js';
  * Export the systemCheck thread module.
  */
 // istanbul ignore next
+// oxlint-disable-next-line typescript/explicit-function-return-type typescript/explicit-module-boundary-types
 export async function systemCheck() {
   await import('./workerSystemCheck.js');
 }

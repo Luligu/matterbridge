@@ -22,11 +22,6 @@
  * limitations under the License.
  */
 
-// istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BroadcastServer loaded.\u001B[40;0m');
-
 import { EventEmitter } from 'node:events';
 import { BroadcastChannel } from 'node:worker_threads';
 
@@ -41,7 +36,10 @@ import type {
 } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
+
+logModuleLoaded('BroadcastServer');
 
 interface BroadcastServerEvents {
   broadcast_message: [msg: WorkerMessage];
@@ -95,6 +93,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   private broadcastMessageHandler(event: MessageEvent): void {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const msg = event.data as WorkerMessage;
     if (msg.dst === this.name || msg.dst === 'all') {
       if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
@@ -111,6 +110,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   private broadcastMessageErrorHandler(event: MessageEvent): void {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const msg = event.data as WorkerMessage;
     this.log.error(`Server ${CYAN}${this.name}${db} received message error: ${debugStringify(msg)}`);
   }
@@ -157,7 +157,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {value is WorkerMessageRequest<K>} True when the value looks like a request message of the requested type.
    */
   isWorkerRequestOfType<K extends keyof WorkerMessageTypes>(value: unknown, type: K): value is WorkerMessageRequest<K> {
-    return this.isWorkerRequest(value) && (value as WorkerMessageRequest).type === type;
+    return this.isWorkerRequest(value) && value.type === type;
   }
 
   /**
@@ -195,7 +195,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {value is WorkerMessageResponse<K>} True when the value looks like a response message of the requested type.
    */
   isWorkerResponseOfType<K extends keyof WorkerMessageTypes>(value: unknown, type: K): value is WorkerMessageResponse<K> {
-    return this.isWorkerResponse(value) && (value as WorkerMessageResponse).type === type;
+    return this.isWorkerResponse(value) && value.type === type;
   }
 
   /**
@@ -211,18 +211,17 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error('Broadcast channel is closed');
       return;
     }
-    if (message.id === undefined) {
-      message.id = this.getUniqueId();
-    }
-    if (message.timestamp === undefined) {
-      message.timestamp = Date.now();
-    }
-    message.src = this.name;
-    if (this.verbose) this.log.debug(`Broadcasting message: ${debugStringify(message)}`);
+    const broadcastMessage = {
+      ...message,
+      id: message.id ?? this.getUniqueId(),
+      timestamp: message.timestamp ?? Date.now(),
+      src: this.name,
+    };
+    if (this.verbose) this.log.debug(`Broadcasting message: ${debugStringify(broadcastMessage)}`);
     try {
-      this.broadcastChannel.postMessage(message);
+      this.broadcastChannel.postMessage(broadcastMessage);
     } catch (error) {
-      logError(this.log, `Failed to broadcast message ${debugStringify(message)}${er}`, error);
+      logError(this.log, `Failed to broadcast message ${debugStringify(broadcastMessage)}${er}`, error);
     }
   }
 
@@ -238,22 +237,21 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error('Broadcast channel is closed');
       return;
     }
-    if (message.id === undefined) {
-      message.id = this.getUniqueId();
-    }
-    if (message.timestamp === undefined) {
-      message.timestamp = Date.now();
-    }
-    message.src = this.name;
-    if (!this.isWorkerRequest(message)) {
-      this.log.error(`Invalid request message format: ${debugStringify(message)}`);
+    const requestMessage = {
+      ...message,
+      id: message.id ?? this.getUniqueId(),
+      timestamp: message.timestamp ?? Date.now(),
+      src: this.name,
+    };
+    if (!this.isWorkerRequest(requestMessage)) {
+      this.log.error(`Invalid request message format: ${debugStringify(requestMessage)}`);
       return;
     }
-    if (this.verbose) this.log.debug(`Broadcasting request message: ${debugStringify(message)}`);
+    if (this.verbose) this.log.debug(`Broadcasting request message: ${debugStringify(requestMessage)}`);
     try {
-      this.broadcastChannel.postMessage(message);
+      this.broadcastChannel.postMessage(requestMessage);
     } catch (error) {
-      logError(this.log, `Failed to broadcast request message ${debugStringify(message)}${er}`, error);
+      logError(this.log, `Failed to broadcast request message ${debugStringify(requestMessage)}${er}`, error);
     }
   }
 
@@ -270,25 +268,23 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       this.log.error('Broadcast channel is closed');
       return;
     }
-    if (typeof message.timestamp === 'number') {
-      message.elapsed = Date.now() - message.timestamp;
-    }
-    if (message.timestamp === undefined) {
-      message.timestamp = Date.now();
-    }
-    if (message.dst === this.name) {
-      message.dst = message.src;
-    }
-    message.src = this.name;
-    if (!this.isWorkerResponse(message)) {
-      this.log.error(`Invalid response message format: ${debugStringify(message)}`);
+    const now = Date.now();
+    const responseMessage = {
+      ...message,
+      ...(typeof message.timestamp === 'number' ? { elapsed: now - message.timestamp } : {}),
+      timestamp: message.timestamp ?? now,
+      dst: message.dst === this.name ? message.src : message.dst,
+      src: this.name,
+    };
+    if (!this.isWorkerResponse(responseMessage)) {
+      this.log.error(`Invalid response message format: ${debugStringify(responseMessage)}`);
       return;
     }
-    if (this.verbose) this.log.debug(`Broadcasting response message: ${debugStringify(message)}`);
+    if (this.verbose) this.log.debug(`Broadcasting response message: ${debugStringify(responseMessage)}`);
     try {
-      this.broadcastChannel.postMessage(message);
+      this.broadcastChannel.postMessage(responseMessage);
     } catch (error) {
-      logError(this.log, `Failed to broadcast response message ${debugStringify(message)}${er}`, error);
+      logError(this.log, `Failed to broadcast response message ${debugStringify(responseMessage)}${er}`, error);
     }
   }
 
@@ -309,37 +305,45 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (this.closed) {
       return Promise.reject(new Error('Broadcast channel is closed'));
     }
-    if (message.id === undefined) {
-      message.id = this.getUniqueId();
-    }
-    if (message.timestamp === undefined) {
-      message.timestamp = Date.now();
-    }
-    if (this.verbose) this.log.debug(`Fetching message: ${debugStringify(message)}`);
+    let timeoutId: NodeJS.Timeout;
+    const requestMessage = {
+      ...message,
+      id: message.id ?? this.getUniqueId(),
+      timestamp: message.timestamp ?? Date.now(),
+      src: this.name,
+    };
+    if (this.verbose) this.log.debug(`Fetching message: ${debugStringify(requestMessage)}`);
 
     return new Promise<WorkerMessageResponseSuccess<K>>((resolve, reject) => {
-      const responseHandler = (msg: WorkerMessage) => {
-        if (this.isWorkerResponseOfType(msg, message.type) && msg.id === message.id) {
+      const responseHandler = (msg: WorkerMessage): void => {
+        if (this.isWorkerResponseOfType(msg, requestMessage.type) && msg.id === requestMessage.id) {
           clearTimeout(timeoutId);
           this.off('broadcast_message', responseHandler);
           if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
           if ('error' in msg && typeof msg.error === 'string') {
-            reject(new Error(`Fetch received error response ${msg.error} to message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
+            reject(
+              new Error(
+                `Fetch received error response ${msg.error} to message type ${requestMessage.type} id ${requestMessage.id} from ${requestMessage.src} to ${requestMessage.dst}`,
+              ),
+            );
           } else if ('result' in msg) {
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             resolve(msg as WorkerMessageResponseSuccess<K>);
           } else {
-            reject(new Error(`Fetch received malformed response for message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
+            reject(
+              new Error(`Fetch received malformed response for message type ${requestMessage.type} id ${requestMessage.id} from ${requestMessage.src} to ${requestMessage.dst}`),
+            );
           }
           return;
         }
       };
 
       this.on('broadcast_message', responseHandler);
-      this.request(message);
+      this.request(requestMessage);
 
-      const timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {
         this.off('broadcast_message', responseHandler);
-        reject(new Error(`Fetch timeout after ${timeout}ms for message type ${message.type} id ${message.id} from ${message.src} to ${message.dst}`));
+        reject(new Error(`Fetch timeout after ${timeout}ms for message type ${requestMessage.type} id ${requestMessage.id} from ${requestMessage.src} to ${requestMessage.dst}`));
       }, timeout);
     });
   }

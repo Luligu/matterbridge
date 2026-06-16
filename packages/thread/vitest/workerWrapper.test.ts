@@ -1,4 +1,4 @@
-import { type ThreadNames } from '@matterbridge/types';
+import type { ThreadNames } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -7,6 +7,28 @@ type MockedParentPort = {
   on: Mock<(...args: any[]) => any>;
   close: Mock<(...args: any[]) => any>;
 };
+
+type SetupOptions = Readonly<{
+  isMainThread: boolean;
+  threadId: number;
+  threadName: string;
+  parentPortPresent: boolean;
+  debugParam?: boolean;
+  verboseParam?: boolean;
+  workerDataPresent?: boolean;
+}>;
+
+type SetupResult = Readonly<{
+  WorkerWrapper: typeof import('../src/workerWrapper.js').WorkerWrapper;
+  parentPort: MockedParentPort | null;
+  getOnMessageHandler: () => ((message: any) => void) | undefined;
+  hasParameterMock: Mock<(...args: any[]) => any>;
+  serverRequest: Mock<(...args: any[]) => any>;
+  serverClose: Mock<(...args: any[]) => any>;
+  waitImmediate: () => Promise<void>;
+}>;
+
+const asyncTrue = async (): Promise<boolean> => await Promise.resolve(true);
 
 describe('WorkerWrapper', () => {
   beforeEach(() => {
@@ -19,33 +41,25 @@ describe('WorkerWrapper', () => {
     vi.restoreAllMocks();
   });
 
-  async function setup(options: {
-    isMainThread: boolean;
-    threadId: number;
-    threadName: string;
-    parentPortPresent: boolean;
-    debugParam?: boolean;
-    verboseParam?: boolean;
-    workerDataPresent?: boolean;
-  }) {
+  async function setup(options: SetupOptions): Promise<SetupResult> {
     vi.resetModules();
 
     let onMessageHandler: ((message: any) => void) | undefined;
 
     const parentPort: MockedParentPort | null = options.parentPortPresent
       ? {
-          postMessage: vi.fn(),
-          on: vi.fn((event: string, handler: (message: any) => void) => {
+          postMessage: vi.fn<(...args: any[]) => any>(),
+          on: vi.fn<(...args: any[]) => any>((event: string, handler: (message: any) => void) => {
             if (event === 'message') onMessageHandler = handler;
           }),
-          close: vi.fn(),
+          close: vi.fn<(...args: any[]) => any>(),
         }
       : null;
 
-    const serverClose = vi.fn();
-    const serverRequest = vi.fn();
+    const serverClose = vi.fn<(...args: any[]) => any>();
+    const serverRequest = vi.fn<(...args: any[]) => any>();
 
-    const hasParameterMock = vi.fn((parameter: string) => {
+    const hasParameterMock = vi.fn<(...args: any[]) => any>((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
       if (parameter === 'verbose') return options.verboseParam ?? false;
       if (parameter === 'debug-threads') return false;
@@ -85,12 +99,12 @@ describe('WorkerWrapper', () => {
     }));
 
     const { WorkerWrapper } = await import('../src/workerWrapper.js');
-    const waitImmediate = async () => new Promise<void>((resolve) => setImmediate(resolve));
+    const waitImmediate = async (): Promise<void> => await new Promise<void>((resolve) => setImmediate(resolve));
 
     return {
       WorkerWrapper,
       parentPort,
-      getOnMessageHandler: () => onMessageHandler,
+      getOnMessageHandler: (): ((message: any) => void) | undefined => onMessageHandler,
       hasParameterMock,
       serverRequest,
       serverClose,
@@ -106,7 +120,8 @@ describe('WorkerWrapper', () => {
       threadName: 'ThreadA',
     });
 
-    const callback = vi.fn(async (worker: InstanceType<typeof WorkerWrapper>) => {
+    const callback = vi.fn<(...args: any[]) => any>(async (worker: InstanceType<typeof WorkerWrapper>) => {
+      await Promise.resolve();
       worker.logger(LogLevel.INFO, 'hello');
       return true;
     });
@@ -149,7 +164,8 @@ describe('WorkerWrapper', () => {
     });
 
     const callbackError = new Error('boom');
-    const callback = vi.fn(async () => {
+    const callback = vi.fn<(...args: any[]) => any>(async () => {
+      await Promise.resolve();
       throw callbackError;
     });
 
@@ -183,7 +199,7 @@ describe('WorkerWrapper', () => {
       threadName: 'ThreadPing',
     });
 
-    new WorkerWrapper('Pinger' as unknown as ThreadNames, async () => true);
+    new WorkerWrapper('Pinger' as unknown as ThreadNames, asyncTrue);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
@@ -204,7 +220,7 @@ describe('WorkerWrapper', () => {
       verboseParam: true,
     });
 
-    new WorkerWrapper('DbgWorker' as unknown as ThreadNames, async () => true);
+    new WorkerWrapper('DbgWorker' as unknown as ThreadNames, asyncTrue);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
@@ -227,7 +243,7 @@ describe('WorkerWrapper', () => {
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, async () => true);
+    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
     expect(() => worker.parentPost({ type: 'ping', threadId: 1, threadName: 'NoPort' } as any)).toThrow(/parentPort is not available/);
   });
 
@@ -239,7 +255,7 @@ describe('WorkerWrapper', () => {
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, async () => true);
+    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
     expect(() => worker.parentLog('X', LogLevel.INFO, 'msg')).toThrow(/parentPort is not available/);
   });
 
@@ -252,7 +268,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    new WorkerWrapper('NoWorkerData' as unknown as ThreadNames, async () => true);
+    new WorkerWrapper('NoWorkerData' as unknown as ThreadNames, asyncTrue);
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
@@ -271,7 +287,7 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const callback = vi.fn(async () => true);
+    const callback = vi.fn<(...args: any[]) => any>(asyncTrue);
     const worker = new WorkerWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
     expect(parentPort).toBeNull();
 
@@ -297,10 +313,11 @@ describe('WorkerWrapper', () => {
 
     const ansi = await import('node-ansi-logger');
     const createSpy = vi.spyOn(ansi.AnsiLogger, 'create');
-    const logSpy = vi.fn();
+    const logSpy = vi.fn<(...args: any[]) => any>();
     createSpy.mockReturnValue({ log: logSpy } as any);
 
-    const callback = vi.fn(async (worker: InstanceType<typeof WorkerWrapper>) => {
+    const callback = vi.fn<(...args: any[]) => any>(async (worker: InstanceType<typeof WorkerWrapper>) => {
+      await Promise.resolve();
       worker.logger(LogLevel.INFO, 'hi');
       return true;
     });
@@ -320,7 +337,7 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const wrapper = new WorkerWrapper('SnackBarWrapper' as unknown as ThreadNames, async () => true);
+    const wrapper = new WorkerWrapper('SnackBarWrapper' as unknown as ThreadNames, asyncTrue);
     wrapper.snackBar('system issue', 0, 'error');
 
     expect(serverRequest).toHaveBeenCalledWith({
@@ -349,8 +366,8 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('WorkerInfoActive' as unknown as ThreadNames, async () => true);
-    const debug = vi.fn();
+    const wrapper = new WorkerWrapper('WorkerInfoActive' as unknown as ThreadNames, asyncTrue);
+    const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any, false);
 
     expect(debug).toHaveBeenCalledWith(expect.stringMatching(/^Worker thread: /));
@@ -369,8 +386,8 @@ describe('WorkerWrapper', () => {
     process.argv = ['node', 'script'];
 
     try {
-      const wrapper = new WorkerWrapper('Info' as unknown as ThreadNames, async () => true);
-      const debug = vi.fn();
+      const wrapper = new WorkerWrapper('Info' as unknown as ThreadNames, asyncTrue);
+      const debug = vi.fn<(...args: any[]) => any>();
       wrapper.logWorkerInfo({ debug } as any, true);
 
       expect(debug).toHaveBeenCalledWith(expect.stringMatching(/^Main thread: /));
@@ -395,8 +412,8 @@ describe('WorkerWrapper', () => {
     process.argv = ['node', 'script', '--foo', 'bar'];
 
     try {
-      const wrapper = new WorkerWrapper('InfoArgs' as unknown as ThreadNames, async () => true);
-      const debug = vi.fn();
+      const wrapper = new WorkerWrapper('InfoArgs' as unknown as ThreadNames, asyncTrue);
+      const debug = vi.fn<(...args: any[]) => any>();
       wrapper.logWorkerInfo({ debug } as any, false);
 
       expect(debug).toHaveBeenCalledWith('Argv: --foo bar');
@@ -414,8 +431,8 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('InfoNoData' as unknown as ThreadNames, async () => true);
-    const debug = vi.fn();
+    const wrapper = new WorkerWrapper('InfoNoData' as unknown as ThreadNames, asyncTrue);
+    const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any, false);
 
     expect(debug).toHaveBeenCalledWith('WorkerData: none');
@@ -429,8 +446,8 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const wrapper = new WorkerWrapper('InfoDefaultArg' as unknown as ThreadNames, async () => true);
-    const debug = vi.fn();
+    const wrapper = new WorkerWrapper('InfoDefaultArg' as unknown as ThreadNames, asyncTrue);
+    const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any);
 
     expect(debug).toHaveBeenCalledWith('Env: not logged');

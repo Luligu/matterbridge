@@ -1,9 +1,6 @@
 // vitest\threadsManager.mainthread.test.ts
 
 const NAME = 'ThreadsManagerMainThread';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
-
-import path from 'node:path';
 
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
@@ -22,7 +19,7 @@ describe('ThreadsManagerMainThread', () => {
   let broadcastserverPlugins: BroadcastServer;
   let manager: ThreadsManager;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // process.argv.push('--debug-worker');
     // Create ThreadsManager instance
     manager = new ThreadsManager();
@@ -41,14 +38,14 @@ describe('ThreadsManagerMainThread', () => {
     });
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     // Close broadcast servers
     broadcastserverMatterbridge.close();
     broadcastserverPlugins.close();
@@ -62,7 +59,6 @@ describe('ThreadsManagerMainThread', () => {
     expect(await manager.runInMainThread('DockerVersion')).toBe(true);
   }, 10000);
 
-  // eslint-disable-next-line vitest/no-commented-out-tests
   /*
   test('Run GlobalPrefix in the main thread', async () => {
     expect(await manager.runInMainThread('GlobalPrefix')).toBe(true);

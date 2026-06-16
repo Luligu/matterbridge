@@ -12,6 +12,8 @@
  *   (`matterbridge` and `plugins`) needed by checkUpdates, so the test server gets real answers.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import type { ApiPlugin, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -93,6 +95,7 @@ const plugins: ApiPlugin[] = [];
  *
  * @returns {Promise<SharedMatterbridge>} The local matterbridge instance.
  */
+// oxlint-disable-next-line typescript/require-await
 export async function startMatterbridge(): Promise<SharedMatterbridge> {
   plugins.length = 0;
 
@@ -126,6 +129,7 @@ export async function startMatterbridge(): Promise<SharedMatterbridge> {
  *
  * @returns {Promise<void>} Resolves once the responders are closed.
  */
+// oxlint-disable-next-line typescript/require-await
 export async function stopMatterbridge(): Promise<void> {
   matterbridgeServer?.close();
   pluginsServer?.close();

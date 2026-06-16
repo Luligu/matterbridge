@@ -22,18 +22,16 @@
  * limitations under the License.
  */
 
-// istanbul ignore next -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[35m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] SystemCheck loaded.\u001B[40;0m');
-
 import os from 'node:os';
 
 import { inspectError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { LogLevel } from 'node-ansi-logger';
 
 import { WorkerWrapper } from './workerWrapper.js';
+
+logModuleLoaded('SystemCheck', '\u001B[35m');
 
 export default new WorkerWrapper('SystemCheck', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting system check...`);
@@ -43,7 +41,7 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
     const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 1000)).result.data;
 
     // Utility function to log an error and show a snack bar message
-    const logSnackBarError = (level: LogLevel, message: string, timeout: number, severity: 'error' | 'info' | 'warning' | 'success') => {
+    const logSnackBarError = (level: LogLevel, message: string, timeout: number, severity: 'error' | 'info' | 'warning' | 'success'): void => {
       worker.logger(level, message);
       worker.snackBar(message, timeout, severity);
     };
@@ -84,7 +82,7 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
         foundExcluded = true;
       }
       if (excludedInterfaceNamePattern.test(interfaceName)) continue;
-      for (const detail of interfaceDetails || []) {
+      for (const detail of interfaceDetails ?? []) {
         if (detail.internal) foundInternal = true;
         if (!detail.internal) foundExternal = true;
         if (detail.family === 'IPv4' && !detail.internal && !foundIpv4) foundIpv4 = true;

@@ -1,19 +1,29 @@
 import { LogLevel } from 'node-ansi-logger';
+import type { Mock } from 'vitest';
 
 type RunOptions = Readonly<{
   globalPrefix?: string;
   getGlobalThrows?: boolean;
 }>;
 
-async function runWorkerGlobalPrefix(options: RunOptions) {
+type RunWorkerGlobalPrefixResult = Readonly<{
+  wrapperName: string | undefined;
+  success: boolean;
+  loggerMock: Mock<(...args: any[]) => any>;
+  requestMock: Mock<(...args: any[]) => any>;
+  getGlobalNodeModules: Mock<(...args: any[]) => any>;
+  inspectError: Mock<(...args: any[]) => any>;
+}>;
+
+async function runWorkerGlobalPrefix(options: RunOptions): Promise<RunWorkerGlobalPrefixResult> {
   vi.resetModules();
 
-  const loggerMock = vi.fn();
-  const requestMock = vi.fn();
+  const loggerMock = vi.fn<(...args: any[]) => any>();
+  const requestMock = vi.fn<(...args: any[]) => any>();
 
   const worker = {
     logger: loggerMock,
-    log: { debug: vi.fn() },
+    log: { debug: vi.fn<(...args: any[]) => any>() },
     server: { request: requestMock },
   } as any;
 
@@ -21,12 +31,13 @@ async function runWorkerGlobalPrefix(options: RunOptions) {
   let runPromise: Promise<boolean> | undefined;
 
   const getGlobalNodeModules = options.getGlobalThrows
-    ? vi.fn(async () => {
+    ? vi.fn<(...args: any[]) => any>(async () => {
+        await Promise.resolve();
         throw new Error('getGlobalNodeModules failed');
       })
-    : vi.fn(async () => options.globalPrefix ?? '/usr/local/lib/node_modules');
+    : vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.globalPrefix ?? '/usr/local/lib/node_modules'));
 
-  const inspectError = vi.fn(() => 'inspected error');
+  const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
 
   vi.doMock('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -42,7 +53,7 @@ async function runWorkerGlobalPrefix(options: RunOptions) {
   vi.doMock('@matterbridge/utils/error', () => ({ inspectError }));
 
   await import('../src/workerGlobalPrefix.js');
-  const success = await runPromise;
+  const success = await (runPromise ?? Promise.resolve(false));
 
   return { wrapperName, success, loggerMock, requestMock, getGlobalNodeModules, inspectError };
 }

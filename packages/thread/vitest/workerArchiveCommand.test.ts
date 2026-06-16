@@ -1,4 +1,5 @@
 import { LogLevel } from 'node-ansi-logger';
+import type { Mock } from 'vitest';
 
 type RunOptions = Readonly<{
   command?: 'zip' | 'verify' | 'unzip';
@@ -8,11 +9,22 @@ type RunOptions = Readonly<{
   workerData?: Record<string, unknown>;
 }>;
 
-async function runWorkerArchiveCommand(options: RunOptions) {
+type RunWorkerArchiveCommandResult = Readonly<{
+  wrapperName: string | undefined;
+  success: boolean;
+  loggerMock: Mock<(...args: any[]) => any>;
+  respondMock: Mock<(...args: any[]) => any>;
+  createZip: Mock<(...args: any[]) => any>;
+  readZip: Mock<(...args: any[]) => any>;
+  unZip: Mock<(...args: any[]) => any>;
+  workerData: any;
+}>;
+
+async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerArchiveCommandResult> {
   vi.resetModules();
 
-  const loggerMock = vi.fn();
-  const respondMock = vi.fn();
+  const loggerMock = vi.fn<(...args: any[]) => any>();
+  const respondMock = vi.fn<(...args: any[]) => any>();
 
   const workerData = {
     threadName: 'ArchiveCommand',
@@ -30,7 +42,7 @@ async function runWorkerArchiveCommand(options: RunOptions) {
 
   const worker = {
     logger: loggerMock,
-    log: { debug: vi.fn() },
+    log: { debug: vi.fn<(...args: any[]) => any>() },
     server: { respond: respondMock, getUniqueId: () => 123456789 },
     workerData,
   } as any;
@@ -38,9 +50,9 @@ async function runWorkerArchiveCommand(options: RunOptions) {
   let wrapperName: string | undefined;
   let runPromise: Promise<boolean> | undefined;
 
-  const createZip = vi.fn(async () => options.createZipResult ?? 128);
-  const readZip = vi.fn(async () => options.readZipResult ?? [{ filename: 'file.txt' }]);
-  const unZip = vi.fn(async () => options.unZipResult ?? workerData.destinationPath);
+  const createZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.createZipResult ?? 128));
+  const readZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.readZipResult ?? [{ filename: 'file.txt' }]));
+  const unZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.unZipResult ?? workerData.destinationPath));
 
   vi.doMock('../src/zipjs.js', () => ({ createZip, readZip, unZip }));
 
@@ -55,7 +67,7 @@ async function runWorkerArchiveCommand(options: RunOptions) {
   }));
 
   await import('../src/workerArchiveCommand.js');
-  const success = await runPromise;
+  const success = await (runPromise ?? Promise.resolve(false));
 
   return { wrapperName, success, loggerMock, respondMock, createZip, readZip, unZip, workerData };
 }

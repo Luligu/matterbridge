@@ -1,4 +1,5 @@
 import { LogLevel } from 'node-ansi-logger';
+import type { Mock } from 'vitest';
 
 type RunOptions = Readonly<{
   getDockerVersionThrows?: boolean;
@@ -8,17 +9,28 @@ type RunOptions = Readonly<{
   readDockerBuildConfigThrows?: boolean;
 }>;
 
-async function runWorkerDockerVersion(options: RunOptions) {
+type RunWorkerDockerVersionResult = Readonly<{
+  wrapperName: string | undefined;
+  success: boolean;
+  loggerMock: Mock<(...args: any[]) => any>;
+  snackBarMock: Mock<(...args: any[]) => any>;
+  requestMock: Mock<(...args: any[]) => any>;
+  getDockerVersion: Mock<(...args: any[]) => any>;
+  inspectError: Mock<(...args: any[]) => any>;
+  readFileSync: Mock<(...args: any[]) => any>;
+}>;
+
+async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDockerVersionResult> {
   vi.resetModules();
 
-  const loggerMock = vi.fn();
-  const snackBarMock = vi.fn();
-  const requestMock = vi.fn();
+  const loggerMock = vi.fn<(...args: any[]) => any>();
+  const snackBarMock = vi.fn<(...args: any[]) => any>();
+  const requestMock = vi.fn<(...args: any[]) => any>();
 
   const worker = {
     logger: loggerMock,
     snackBar: snackBarMock,
-    log: { debug: vi.fn() },
+    log: { debug: vi.fn<(...args: any[]) => any>() },
     server: { request: requestMock },
   } as any;
 
@@ -26,20 +38,22 @@ async function runWorkerDockerVersion(options: RunOptions) {
   let runPromise: Promise<boolean> | undefined;
 
   const getDockerVersion = options.getDockerVersionThrows
-    ? vi.fn(async () => {
+    ? vi.fn<(...args: any[]) => any>(async () => {
+        await Promise.resolve();
         throw new Error('getDockerVersion failed');
       })
-    : vi.fn(async (_owner: string, _repo: string, tag?: string) => {
+    : vi.fn<(...args: any[]) => any>(async (_owner: string, _repo: string, tag?: string) => {
+        await Promise.resolve();
         if (tag === 'dev') return options.dockerVersionDev ?? '3.5.6-dev';
         return options.dockerVersionLatest ?? '3.5.5';
       });
 
-  const inspectError = vi.fn(() => 'inspected error');
+  const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
   const readFileSync = options.readDockerBuildConfigThrows
-    ? vi.fn(() => {
+    ? vi.fn<(...args: any[]) => any>(() => {
         throw new Error('readFileSync failed');
       })
-    : vi.fn(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
+    : vi.fn<(...args: any[]) => any>(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
 
   vi.doMock('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -56,7 +70,7 @@ async function runWorkerDockerVersion(options: RunOptions) {
   vi.doMock('node:fs', () => ({ readFileSync }));
 
   await import('../src/workerDockerVersion.js');
-  const success = await runPromise;
+  const success = await (runPromise ?? Promise.resolve(false));
 
   return { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, inspectError, readFileSync };
 }

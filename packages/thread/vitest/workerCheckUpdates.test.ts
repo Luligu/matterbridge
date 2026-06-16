@@ -1,18 +1,28 @@
 import { LogLevel } from 'node-ansi-logger';
+import type { Mock } from 'vitest';
 
 type RunOptions = Readonly<{
   checkUpdatesThrows?: boolean;
 }>;
 
-async function runWorkerCheckUpdates(options: RunOptions) {
+type RunWorkerCheckUpdatesResult = Readonly<{
+  wrapperName: string | undefined;
+  success: boolean;
+  loggerMock: Mock<(...args: any[]) => any>;
+  fetchMock: Mock<(...args: any[]) => any>;
+  checkUpdates: Mock<(...args: any[]) => any>;
+  inspectError: Mock<(...args: any[]) => any>;
+}>;
+
+async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerCheckUpdatesResult> {
   vi.resetModules();
 
-  const loggerMock = vi.fn();
-  const fetchMock = vi.fn(async () => ({ result: { data: { logLevel: LogLevel.INFO } } }));
+  const loggerMock = vi.fn<(...args: any[]) => any>();
+  const fetchMock = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve({ result: { data: { logLevel: LogLevel.INFO } } }));
 
   const worker = {
     logger: loggerMock,
-    log: { debug: vi.fn() },
+    log: { debug: vi.fn<(...args: any[]) => any>() },
     server: { fetch: fetchMock },
   } as any;
 
@@ -20,12 +30,13 @@ async function runWorkerCheckUpdates(options: RunOptions) {
   let runPromise: Promise<boolean> | undefined;
 
   const checkUpdates = options.checkUpdatesThrows
-    ? vi.fn(async () => {
+    ? vi.fn<(...args: any[]) => any>(async () => {
+        await Promise.resolve();
         throw new Error('checkUpdates failed');
       })
-    : vi.fn(async () => {});
+    : vi.fn<(...args: any[]) => any>(async () => await Promise.resolve());
 
-  const inspectError = vi.fn(() => 'inspected error');
+  const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
 
   vi.doMock('../src/workerWrapper.js', () => ({
     // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -41,7 +52,7 @@ async function runWorkerCheckUpdates(options: RunOptions) {
   vi.doMock('@matterbridge/utils/error', () => ({ inspectError }));
 
   await import('../src/workerCheckUpdates.js');
-  const success = await runPromise;
+  const success = await (runPromise ?? Promise.resolve(false));
 
   return { wrapperName, success, loggerMock, fetchMock, checkUpdates, inspectError };
 }

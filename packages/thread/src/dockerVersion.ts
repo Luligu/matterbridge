@@ -22,7 +22,11 @@
  * limitations under the License.
  */
 
+import { getErrorMessage } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidString } from '@matterbridge/utils/validate';
+
+logModuleLoaded('DockerVersion');
 
 type DockerRegistryTokenResponse = {
   token?: string;
@@ -104,9 +108,10 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       res.on('end', () => {
         clearTimeout(timeoutId);
         try {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           resolve(JSON.parse(data) as T);
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${error instanceof Error ? error.message : error}`));
+          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
@@ -114,7 +119,7 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
       clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${error instanceof Error ? error.message : error}`));
+      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

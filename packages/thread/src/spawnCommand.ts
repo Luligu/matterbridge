@@ -22,9 +22,13 @@
  */
 
 import { hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
+
+logModuleLoaded('SpawnCommand');
 
 /**
  * Spawns a child process with the given command and arguments.
@@ -45,12 +49,12 @@ export async function spawnCommand(command: string, args: string[], packageComma
   const log = new AnsiLogger({ logName: 'Spawn', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
   const server = new BroadcastServer('spawn', log);
 
-  const sendLog = (name: string, message: string) => {
+  const sendLog = (name: string, message: string): void => {
     try {
       server.request({ type: 'frontend_logmessage', src: 'spawn', dst: 'frontend', params: { level: 'spawn', time: log.now(), name, message } });
     } catch (err) {
       // istanbul ignore next cause it's a precaution
-      log.debug(`Failed to send log message to frontend: ${err instanceof Error ? err.message : String(err)}`);
+      log.debug(`Failed to send log message to frontend: ${getErrorMessage(err)}`);
     }
   };
 
@@ -66,6 +70,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
     // Must be spawn('cmd.exe', ['/c', 'npm -g install <package>']);
     const argstring = 'npm ' + args.join(' ');
     args.splice(0, args.length, '/c', argstring);
+    // oxlint-disable-next-line no-param-reassign
     command = 'cmd.exe';
   }
   // Decide when using sudo on linux and macOS
@@ -76,6 +81,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
     (process.platform !== 'win32' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'))
   ) {
     args.unshift(command);
+    // oxlint-disable-next-line no-param-reassign
     command = 'sudo';
   }
   log.debug(`Spawn command ${command} with ${args.join(' ')}`);
@@ -89,7 +95,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
     });
 
     childProcess.on('error', (err) => {
-      log.error(`Failed to start child process "${cmdLine}": ${err.message}`);
+      log.error(`Failed to start child process "${cmdLine}": ${getErrorMessage(err)}`);
       sendLog('Matterbridge:spawn-exit-error', 'Spawn process error');
       resolve(false);
     });

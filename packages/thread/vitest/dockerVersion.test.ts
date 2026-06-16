@@ -2,28 +2,28 @@ import type { Mock } from 'vitest';
 
 let httpsGetImpl: Mock<(...args: any[]) => any>;
 
-vi.doMock('node:https', async () => {
+vi.doMock('node:https', (): { get: (...args: any[]) => any } => {
   return {
-    get: (...args: any[]) => httpsGetImpl(...args),
+    get: (...args: any[]): any => httpsGetImpl(...args),
   };
 });
 
 const { getDockerVersion } = await import('../src/dockerVersion.js');
 
-function createStreamingJsonResponse(statusCode: number | undefined, jsonBody: any, raw = false, headers: Record<string, any> = {}) {
+function createStreamingJsonResponse(statusCode: number | undefined, jsonBody: any, raw = false, headers: Record<string, any> = {}): any {
   const handlers: Record<string, Array<(...args: any[]) => void>> = {};
   const body = raw ? String(jsonBody) : JSON.stringify(jsonBody);
 
   const response = {
     statusCode,
     headers,
-    resume: vi.fn(),
-    on: (event: string, handler: (...args: any[]) => void) => {
+    resume: vi.fn<(...args: any[]) => any>(),
+    on: (event: string, handler: (...args: any[]) => void): any => {
       handlers[event] ??= [];
       handlers[event].push(handler);
       return response as any;
     },
-    start: () => {
+    start: (): void => {
       (handlers['data'] ?? []).forEach((h) => h(body));
       (handlers['end'] ?? []).forEach((h) => h());
     },
@@ -34,7 +34,7 @@ function createStreamingJsonResponse(statusCode: number | undefined, jsonBody: a
 
 describe('getDockerVersion', () => {
   beforeEach(() => {
-    httpsGetImpl = vi.fn();
+    httpsGetImpl = vi.fn<(...args: any[]) => any>();
   });
 
   afterEach(() => {
@@ -44,7 +44,7 @@ describe('getDockerVersion', () => {
   test('returns org.opencontainers.image.version from Docker Hub image config', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
       const request = {
-        on: vi.fn().mockReturnThis(),
+        on: vi.fn<(...args: any[]) => any>().mockReturnThis(),
       };
 
       queueMicrotask(() => {
@@ -82,7 +82,7 @@ describe('getDockerVersion', () => {
     let redirectedOptions: any;
 
     httpsGetImpl.mockImplementation((url: string, options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -126,7 +126,7 @@ describe('getDockerVersion', () => {
 
   test('uses default tag (latest) when tag not provided', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -160,15 +160,15 @@ describe('getDockerVersion', () => {
   });
 
   test('returns undefined for 3xx response without Location header', async () => {
-    const resume = vi.fn();
+    const resume = vi.fn<(...args: any[]) => any>();
 
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
           const response = createStreamingJsonResponse(307, '', true, {});
-          (response as any).resume = resume;
+          response.resume = resume;
           callback(response);
           return;
         }
@@ -185,7 +185,7 @@ describe('getDockerVersion', () => {
     let redirectedOptions: any;
 
     httpsGetImpl.mockImplementation((url: string, options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -228,7 +228,7 @@ describe('getDockerVersion', () => {
 
   test('supports access_token and container_config Labels', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -263,7 +263,7 @@ describe('getDockerVersion', () => {
 
   test('falls back to org.label-schema.version in config Labels', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -298,7 +298,7 @@ describe('getDockerVersion', () => {
 
   test('falls back to org.label-schema.version in container_config Labels', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -333,7 +333,7 @@ describe('getDockerVersion', () => {
 
   test('handles multi-arch manifest list (prefers linux/amd64)', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -381,7 +381,7 @@ describe('getDockerVersion', () => {
 
   test('falls back to first manifest digest when linux/amd64 not present', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -426,7 +426,7 @@ describe('getDockerVersion', () => {
 
   test('returns undefined when manifest list has no manifests', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -454,7 +454,7 @@ describe('getDockerVersion', () => {
 
   test('returns undefined when manifest list has no digests', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -485,7 +485,7 @@ describe('getDockerVersion', () => {
 
   test('returns undefined when config digest is invalid', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -513,7 +513,7 @@ describe('getDockerVersion', () => {
 
   test('returns undefined when token is missing/invalid', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -533,15 +533,15 @@ describe('getDockerVersion', () => {
   });
 
   test('returns undefined on non-2xx response (including missing statusCode)', async () => {
-    const resume = vi.fn();
+    const resume = vi.fn<(...args: any[]) => any>();
 
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
           const response = createStreamingJsonResponse(undefined, { token: 'token-1234567890' });
-          (response as any).resume = resume;
+          response.resume = resume;
           callback(response);
           // no need to stream body; handler should reject immediately
           return;
@@ -557,7 +557,7 @@ describe('getDockerVersion', () => {
 
   test('returns undefined when response JSON is invalid (parse error)', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -574,15 +574,15 @@ describe('getDockerVersion', () => {
     await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
-  test('returns undefined when JSON.parse throws non-Error', async () => {
+  test('returns undefined when JSON.parse throws an Error', async () => {
     const originalParse = JSON.parse;
 
-    (JSON as any).parse = () => {
-      throw 'bad';
+    (JSON as any).parse = (): never => {
+      throw new Error('bad');
     };
 
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
 
       queueMicrotask(() => {
         if (url.startsWith('https://auth.docker.io/token')) {
@@ -607,7 +607,7 @@ describe('getDockerVersion', () => {
     vi.useFakeTimers();
 
     httpsGetImpl.mockImplementation((_url: string, _options: any, _callback: (res: any) => void) => {
-      const request = { on: vi.fn().mockReturnThis() };
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
       return request as any;
     });
 
@@ -623,7 +623,7 @@ describe('getDockerVersion', () => {
   test('returns undefined on request error', async () => {
     httpsGetImpl.mockImplementation((_url: string, _options: any, _callback: (res: any) => void) => {
       const request = {
-        on: vi.fn((event: string, handler: (err: any) => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, handler: (err: any) => void) => {
           if (event === 'error') queueMicrotask(() => handler(new Error('network error')));
           return request;
         }),

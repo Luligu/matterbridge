@@ -22,22 +22,20 @@
  * limitations under the License.
  */
 
-// istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] WorkerWrapper loaded.\u001B[40;0m');
-
 import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData } from '@matterbridge/types';
-import { inspectError } from '@matterbridge/utils';
+import { getErrorMessage, inspectError } from '@matterbridge/utils';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { formatBytes } from '@matterbridge/utils/format';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import type { Tracker } from '@matterbridge/utils/tracker';
 import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 import { ThreadsManager } from './threadsManager.js';
+
+logModuleLoaded('WorkerWrapper');
 
 /**
  * Worker wrapper
@@ -66,11 +64,11 @@ export class WorkerWrapper {
     public callback: (worker: WorkerWrapper) => Promise<boolean>,
   ) {
     // Update debug, verbose and tracker flags if workerData is available
-    // istanbul ignore next 5 lines - debug/verbose/tracker flags are only used for development and testing, not in production
+    // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.workerData) {
-      this.debug = this.workerData.debug || this.debug;
-      this.verbose = this.workerData.verbose || this.verbose;
-      this.useTracker = this.workerData.tracker || this.useTracker;
+      this.debug = this.workerData.debug ?? this.debug;
+      this.verbose = this.workerData.verbose ?? this.verbose;
+      this.useTracker = this.workerData.tracker ?? this.useTracker;
     }
     // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.useTracker) {
@@ -81,9 +79,9 @@ export class WorkerWrapper {
           return;
         })
         // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
-        .catch((err) => {
+        .catch((err: unknown) => {
           // eslint-disable-next-line no-console
-          if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker`, err);
+          if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
           return;
         });
     }
@@ -134,15 +132,17 @@ export class WorkerWrapper {
 
     // Execute the callback function and destroy the worker with the success status returned by the callback
     if (!isMainThread) {
-      setImmediate(async () => {
-        let success = false;
-        try {
-          success = await callback(this);
-        } catch (err) {
-          inspectError(this.log, `Worker ${this.name} callback failed`, err);
-        } finally {
-          this.destroy(success);
-        }
+      setImmediate(() => {
+        void (async (): Promise<void> => {
+          let success = false;
+          try {
+            success = await callback(this);
+          } catch (err) {
+            inspectError(this.log, `Worker ${this.name} callback failed`, err);
+          } finally {
+            this.destroy(success);
+          }
+        })();
       });
     }
   }

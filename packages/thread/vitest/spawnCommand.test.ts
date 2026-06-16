@@ -8,7 +8,7 @@ vi.mock('node:child_process', async () => {
 
   return {
     ...originalModule,
-    spawn: vi.fn((command: string, args: string[], options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>) => {
+    spawn: vi.fn<(...args: any[]) => any>((command: string, args: string[], options: SpawnOptionsWithStdioTuple<StdioNull, StdioPipe, StdioPipe>) => {
       // console.error('spawn called with command:', command);
       return originalModule.spawn(command, args, options);
     }),
@@ -32,7 +32,7 @@ describe('Spawn', () => {
 
   afterEach(async () => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     vi.restoreAllMocks();
   });
 
@@ -59,7 +59,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
           if (event === 'disconnect' && callback) {
             callback(null, null);
           }
@@ -78,7 +78,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: (err: Error) => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: (err: Error) => void) => {
           if (event === 'error' && callback) {
             callback(new Error('Spawn error'));
           }
@@ -97,7 +97,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
           if (event === 'close' && callback) {
             callback(1, null);
           }
@@ -116,7 +116,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: (code: number | null, signal: NodeJS.Signals | null) => void) => {
           if (event === 'exit' && callback) {
             callback(1, null);
           }
@@ -135,7 +135,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: () => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
@@ -144,14 +144,14 @@ describe('Spawn', () => {
         }),
 
         stdout: {
-          on: vi.fn((event: string, callback: (data: Buffer) => void) => {
+          on: vi.fn<(...args: any[]) => any>((event: string, callback: (data: Buffer) => void) => {
             if (event === 'data' && callback) {
               callback(Buffer.from('Hello from stdout'));
             }
           }),
         },
         stderr: {
-          on: vi.fn((event: string, callback: (data: Buffer) => void) => {
+          on: vi.fn<(...args: any[]) => any>((event: string, callback: (data: Buffer) => void) => {
             if (event === 'data' && callback) {
               callback(Buffer.from('Hello from stderr'));
             }
@@ -176,7 +176,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: () => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
@@ -185,14 +185,14 @@ describe('Spawn', () => {
         }),
 
         stdout: {
-          on: vi.fn((event: string, callback: (data: Buffer) => void) => {
+          on: vi.fn<(...args: any[]) => any>((event: string, callback: (data: Buffer) => void) => {
             if (event === 'data' && callback) {
               callback(Buffer.from('Hello from stdout'));
             }
           }),
         },
         stderr: {
-          on: vi.fn((event: string, callback: (data: Buffer) => void) => {
+          on: vi.fn<(...args: any[]) => any>((event: string, callback: (data: Buffer) => void) => {
             if (event === 'data' && callback) {
               callback(Buffer.from('Hello from stderr'));
             }
@@ -223,7 +223,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: () => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
@@ -260,7 +260,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: () => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
@@ -293,7 +293,7 @@ describe('Spawn', () => {
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
-        on: vi.fn((event: string, callback: () => void) => {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
