@@ -22,6 +22,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// oxlint-disable typescript/no-unsafe-type-assertion
 
 import { inspect } from 'node:util';
 
@@ -39,7 +40,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
   const requests = (process as any)._getActiveRequests?.() ?? [];
 
   // istanbul ignore next
-  const fmtHandle = (h: unknown, i: number) => {
+  const fmtHandle = (h: unknown, i: number): { i: number; type: string; hasRef?: boolean; isPort?: boolean; fd?: number } => {
     const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     // Timer-like?
     const hasRef = typeof (h as any)?.hasRef === 'function' ? (h as any).hasRef() : undefined;
@@ -51,7 +52,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
   };
 
   // istanbul ignore next
-  const fmtReq = (r: unknown, i: number) => {
+  const fmtReq = (r: unknown, i: number): { i: number; type: string } => {
     const ctor = (r as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     return { i, type: ctor };
   };
