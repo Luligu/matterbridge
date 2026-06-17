@@ -1,7 +1,5 @@
 // vitest/devices/basicVideoPlayer.test.ts
 
-
-
 const NAME = 'BasicVideoPlayer';
 const MATTER_PORT = 8017;
 const MATTER_CREATE_ONLY = true;

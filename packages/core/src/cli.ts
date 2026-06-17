@@ -139,7 +139,10 @@ function registerHandlers(): void {
   instance.on('stopmemorycheck', () => stop());
   instance.on('startinspector', () => void startInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to start inspector', error)));
   instance.on('stopinspector', () => void stopInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to stop inspector', error)));
-  instance.on('takeheapsnapshot', () => void takeHeapSnapshot().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to take heap snapshot', error)));
+  instance.on(
+    'takeheapsnapshot',
+    () => void takeHeapSnapshot().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to take heap snapshot', error)),
+  );
   instance.on('triggergarbagecollection', () => triggerGarbageCollection());
   log.debug('Registered event handlers');
 }

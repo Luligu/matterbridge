@@ -112,19 +112,19 @@ describe('MatterNode', () => {
 
   let device: MatterbridgeEndpoint;
 
-  beforeAll( () => {
+  beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach( () => {});
+  afterEach(() => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance
@@ -164,7 +164,7 @@ describe('MatterNode', () => {
     expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'matter' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
-  test('Broadcast close',  () => {
+  test('Broadcast close', () => {
     expect(testServer.close()).toBeUndefined();
   });
 

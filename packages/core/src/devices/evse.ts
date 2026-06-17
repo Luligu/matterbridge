@@ -32,6 +32,7 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { fireAndForget } from '@matterbridge/utils/wait';
 import { debugStringify } from 'node-ansi-logger';
 
 // Matterbridge
@@ -39,7 +40,6 @@ import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
-import { fireAndForget } from '@matterbridge/utils/wait';
 
 /**
  * Matterbridge endpoint representing an EVSE (electric vehicle supply equipment).

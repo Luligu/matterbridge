@@ -1,7 +1,5 @@
 // vitest/devices/speaker.test.ts
 
-
-
 const NAME = 'Speaker';
 const MATTER_PORT = 8015;
 const MATTER_CREATE_ONLY = true;

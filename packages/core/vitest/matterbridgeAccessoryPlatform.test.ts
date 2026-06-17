@@ -37,7 +37,7 @@ describe('Matterbridge accessory platform', () => {
     matterbridge = { ...getMatterbridge(), log: log } as PlatformMatterbridge;
   }, 30000);
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });

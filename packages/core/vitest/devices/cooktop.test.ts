@@ -1,7 +1,5 @@
 // vitest/devices/cooktop.test.ts
 
-
-
 const NAME = 'Cooktop';
 const MATTER_PORT = 8003;
 const MATTER_CREATE_ONLY = true;

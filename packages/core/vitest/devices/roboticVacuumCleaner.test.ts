@@ -1,7 +1,5 @@
 // vitest/devices/roboticVacuumCleaner.test.ts
 
-
-
 const NAME = 'Vacuum';
 const MATTER_PORT = 8013;
 const MATTER_CREATE_ONLY = true;

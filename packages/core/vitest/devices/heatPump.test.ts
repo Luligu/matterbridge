@@ -1,7 +1,5 @@
 // vitest/devices/heatPump.test.ts
 
-
-
 const NAME = 'HeatPump';
 const MATTER_PORT = 8007;
 const MATTER_CREATE_ONLY = true;

@@ -1,7 +1,5 @@
 // vitest/devices/soilSensor.test.ts
 
-
-
 const NAME = 'SoilSensor';
 const MATTER_PORT = 8020;
 const MATTER_CREATE_ONLY = true;

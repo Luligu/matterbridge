@@ -1,7 +1,5 @@
 // vitest/devices/irrigationSystem.test.ts
 
-
-
 const NAME = 'IrrigationSystem';
 const MATTER_PORT = 8021;
 const MATTER_CREATE_ONLY = true;

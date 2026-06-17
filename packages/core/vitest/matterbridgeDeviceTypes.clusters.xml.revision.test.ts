@@ -282,7 +282,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)',  (display, entry) => {
+    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)', (display, entry) => {
       const key = normalizeName(display);
       const xmlInfo = xmlIndex.get(key);
       const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);

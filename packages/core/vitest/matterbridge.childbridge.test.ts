@@ -219,7 +219,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugin).toBeDefined();
     if (!plugin) return;
     plugin.type = 'AccessoryPlatform';
-    vi.spyOn(Matterbridge.prototype, 'createAccessoryPlugin' as any).mockImplementationOnce( () => {
+    vi.spyOn(Matterbridge.prototype, 'createAccessoryPlugin' as any).mockImplementationOnce(() => {
       throw new Error('Error creating endpoint');
     });
     await matterbridge.addBridgedEndpoint('matterbridge-mock4', {} as any);
@@ -233,7 +233,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugin).toBeDefined();
     if (!plugin) return;
     plugin.type = 'DynamicPlatform';
-    vi.spyOn(Matterbridge.prototype, 'createDynamicPlugin' as any).mockImplementationOnce( () => {
+    vi.spyOn(Matterbridge.prototype, 'createDynamicPlugin' as any).mockImplementationOnce(() => {
       throw new Error('Error creating endpoint');
     });
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);

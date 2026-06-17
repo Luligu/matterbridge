@@ -1,7 +1,5 @@
 // vitest/devices/temperatureControl.test.ts
 
-
-
 const NAME = 'TemperatureControl';
 const MATTER_PORT = 8024;
 const MATTER_CREATE_ONLY = true;

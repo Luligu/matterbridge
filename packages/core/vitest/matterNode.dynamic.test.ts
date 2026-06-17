@@ -118,14 +118,14 @@ describe('MatterNode dynamic', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
-  beforeAll( () => {
+  beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode childbridge tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge, 'matterbridge-mock1');
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });

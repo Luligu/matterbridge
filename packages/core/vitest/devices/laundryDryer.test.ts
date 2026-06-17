@@ -1,7 +1,5 @@
 // vitest/devices/laundryDryer.test.ts
 
-
-
 const NAME = 'LaundryDryer';
 const MATTER_PORT = 8008;
 const MATTER_CREATE_ONLY = true;

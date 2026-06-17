@@ -1,7 +1,5 @@
 // vitest/devices/oven.test.ts
 
-
-
 const NAME = 'Oven';
 const MATTER_PORT = 8011;
 const MATTER_CREATE_ONLY = true;

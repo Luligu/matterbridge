@@ -1,7 +1,5 @@
 // vitest/devices/solarPower.test.ts
 
-
-
 const NAME = 'SolarPower';
 const MATTER_PORT = 8014;
 const MATTER_CREATE_ONLY = true;

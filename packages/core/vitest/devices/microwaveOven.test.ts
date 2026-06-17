@@ -1,7 +1,5 @@
 // vitest/devices/microwaveOven.test.ts
 
-
-
 const NAME = 'MicrowaveOven';
 const MATTER_PORT = 8010;
 const MATTER_CREATE_ONLY = true;

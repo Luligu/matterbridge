@@ -81,7 +81,7 @@ describe('Matterbridge platform', () => {
     matterbridge = { ...getMatterbridge(), log: log } as PlatformMatterbridge;
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -358,7 +358,7 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
-  it('should validate with device entity black list and entity black list',  () => {
+  it('should validate with device entity black list and entity black list', () => {
     platform.config.entityBlackList = ['blackEntity'];
     platform.config.deviceEntityBlackList = { device1: ['blackEntityDevice1'] };
     expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
@@ -696,11 +696,11 @@ describe('Matterbridge platform', () => {
     await flushAsync();
   });
 
-  test('wssSendRestartRequired',  () => {
+  test('wssSendRestartRequired', () => {
     expect(platform.wssSendRestartRequired()).toBeUndefined();
   });
 
-  test('wssSendSnackbarMessage',  () => {
+  test('wssSendSnackbarMessage', () => {
     expect(platform.wssSendSnackbarMessage('Test message')).toBeUndefined();
   });
 
@@ -738,11 +738,11 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform test', 'test reason');
   });
 
-  test('getDevice should return []',  () => {
+  test('getDevice should return []', () => {
     expect(platform.getDevices()).toEqual([]);
   });
 
-  test('setMatterNode should not set helpers',  () => {
+  test('setMatterNode should not set helpers', () => {
     // @ts-expect-error - setMatterNode is intentionally private and has already been called
     expect(platform.setMatterNode).toBeUndefined();
   });

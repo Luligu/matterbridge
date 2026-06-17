@@ -314,7 +314,7 @@ describe('Client clusters and behaviors', () => {
       nextUserIndex: null,
     };
 
-    userPinDoorLock.addCommandHandler('DoorLock.getUser',  () => handlerResponse);
+    userPinDoorLock.addCommandHandler('DoorLock.getUser', () => handlerResponse);
 
     expect(await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 7 }))).toEqual(handlerResponse);
 

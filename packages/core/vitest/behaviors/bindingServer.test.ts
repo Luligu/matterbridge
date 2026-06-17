@@ -1,7 +1,5 @@
 // src\behaviors\bindingServer.test.ts
 
-
-
 const NAME = 'BindingServer';
 const MATTER_PORT = 11400;
 const MATTER_CREATE_ONLY = true;
@@ -47,7 +45,7 @@ describe('Client clusters and behaviors', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });

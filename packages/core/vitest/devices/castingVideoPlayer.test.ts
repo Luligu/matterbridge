@@ -1,7 +1,5 @@
 // vitest/devices/castingVideoPlayer.test.ts
 
-
-
 const NAME = 'CastingVideoPlayer';
 const MATTER_PORT = 8018;
 const MATTER_CREATE_ONLY = true;

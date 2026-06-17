@@ -46,7 +46,7 @@ const runGarbageCollectionSpy = vi.spyOn(Inspector.prototype, 'runGarbageCollect
 await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });

@@ -1,7 +1,5 @@
 // vitest/devices/extractorHood.test.ts
 
-
-
 const NAME = 'ExtractorHood';
 const MATTER_PORT = 8006;
 const MATTER_CREATE_ONLY = true;

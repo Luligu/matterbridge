@@ -1,7 +1,5 @@
 // vitest/devices/batteryStorage.test.ts
 
-
-
 const NAME = 'BatteryStorage';
 const MATTER_PORT = 8002;
 const MATTER_CREATE_ONLY = true;

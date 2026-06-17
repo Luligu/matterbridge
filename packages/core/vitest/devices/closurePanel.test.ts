@@ -1,7 +1,5 @@
 // vitest/devices/closurePanel.test.ts
 
-
-
 const NAME = 'ClosurePanel';
 const MATTER_PORT = 8023;
 const MATTER_CREATE_ONLY = true;

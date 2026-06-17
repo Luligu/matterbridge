@@ -28,13 +28,13 @@ import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/n
 import type { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { powerSource, refrigerator, temperatureControlledCabinetCooler } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
-import { fireAndForget } from '@matterbridge/utils/wait';
 
 /**
  * Matterbridge endpoint representing a refrigerator device.

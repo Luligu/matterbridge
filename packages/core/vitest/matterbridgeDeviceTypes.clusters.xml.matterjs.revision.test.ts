@@ -267,7 +267,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s revision matches Matter 1.5.1 XML',  (display, entry) => {
+    test.each(cases)('Cluster %s revision matches Matter 1.5.1 XML', (display, entry) => {
       const key = normalizeName(display);
       const xmlRev = xmlIndex.get(key);
       const typesRev = getClusterRevision(entry);

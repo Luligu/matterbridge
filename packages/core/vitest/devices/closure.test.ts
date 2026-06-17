@@ -1,7 +1,5 @@
 // vitest/devices/closure.test.ts
 
-
-
 const NAME = 'Closure';
 const MATTER_PORT = 8022;
 const MATTER_CREATE_ONLY = true;

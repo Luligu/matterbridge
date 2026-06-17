@@ -114,14 +114,14 @@ describe('MatterNode server', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
-  beforeAll( () => {
+  beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode server tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -173,7 +173,7 @@ describe('MatterNode server', () => {
       .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
       .addRequiredClusterServers();
     tmpSensor.plugin = 'matterbridge-mock1';
-    const spy = vi.spyOn(MatterNode.prototype, 'create').mockImplementationOnce( () => {
+    const spy = vi.spyOn(MatterNode.prototype, 'create').mockImplementationOnce(() => {
       throw new Error('Simulated create error');
     });
     expect(await matter.addBridgedEndpoint('matterbridge-mock1', tmpSensor)).toBeUndefined();

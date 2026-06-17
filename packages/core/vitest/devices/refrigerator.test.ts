@@ -1,7 +1,5 @@
 // vitest/devices/refrigerator.test.ts
 
-
-
 const NAME = 'Refrigerator';
 const MATTER_PORT = 8012;
 const MATTER_CREATE_ONLY = true;

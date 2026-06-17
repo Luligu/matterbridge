@@ -1287,7 +1287,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getChildEndpoints().length).toBe(11);
   });
 
-  test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed and taglist and already added',  () => {
+  test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed and taglist and already added', () => {
     const childEndpoint = device.addChildDeviceType('contactChild-2bis', contactSensor);
     expect(childEndpoint).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceType: ${CYAN}contactChild-2bis${db}`));
@@ -1323,21 +1323,21 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getChildEndpoints().length).toBe(13);
   });
 
-  test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist and already added',  () => {
+  test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist and already added', () => {
     const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor);
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceTypeWithClusterServer: ${CYAN}contactChild-3bis${db}`));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`- endpoint ${CYAN}contactChild-3bis${db} already added!`));
     expect(childEndpoint.number).toBe(47);
   });
 
-  test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist and already added 2',  () => {
+  test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist and already added 2', () => {
     const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor);
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceTypeWithClusterServer: ${CYAN}contactChild-3bis${db}`));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`- endpoint ${CYAN}contactChild-3bis${db} already added!`));
     expect(childEndpoint.number).toBe(47);
   });
 
-  test('verify OnOffOutletWithSensors child endpoints',  () => {
+  test('verify OnOffOutletWithSensors child endpoints', () => {
     const getChildDescriptorAttribute = (name: string, attribute: string): any => {
       const childEndpoint = device.getChildEndpointById(name);
       expect(childEndpoint).toBeDefined();

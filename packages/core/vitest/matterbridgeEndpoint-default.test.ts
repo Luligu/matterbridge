@@ -134,7 +134,7 @@ describe('Matterbridge ' + NAME, () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   }, 30000);
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -171,7 +171,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(lowercaseFirstLetter(null as any)).toBe(null);
   });
 
-  test('getBehaviourTypeFromClusterServerId',  () => {
+  test('getBehaviourTypeFromClusterServerId', () => {
     expect(getBehaviourTypeFromClusterServerId(PowerSource.id)?.id).toBe('powerSource');
     expect(getBehaviourTypeFromClusterServerId(UserLabel.id)?.id).toBe('userLabel');
     expect(getBehaviourTypeFromClusterServerId(FixedLabel.id)?.id).toBe('fixedLabel');
@@ -181,7 +181,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.id)?.id).toBe('deviceEnergyManagementMode');
   });
 
-  test('getBehaviourTypesFromClusterClientIds',  () => {
+  test('getBehaviourTypesFromClusterClientIds', () => {
     const clusterIds = [
       Identify.id,
       Groups.id,
@@ -210,7 +210,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypesFromClusterClientIds([0xffff as any])).toEqual([]);
   });
 
-  test('getBehaviourTypeFromClusterClientId',  () => {
+  test('getBehaviourTypeFromClusterClientId', () => {
     expect((getBehaviourTypeFromClusterClientId(Identify.id) as any)?.cluster?.id).toBe(Identify.id);
     expect((getBehaviourTypeFromClusterClientId(Groups.id) as any)?.cluster?.id).toBe(Groups.id);
     expect((getBehaviourTypeFromClusterClientId(OnOff.id) as any)?.cluster?.id).toBe(OnOff.id);

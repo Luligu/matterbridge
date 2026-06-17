@@ -1,7 +1,5 @@
 // vitest/devices/evse.test.ts
 
-
-
 const NAME = 'Evse';
 const MATTER_PORT = 8005;
 const MATTER_CREATE_ONLY = true;

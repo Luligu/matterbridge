@@ -37,7 +37,7 @@ process.argv = [
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -115,17 +115,17 @@ describe('Matterbridge matterjs', () => {
     (matterbridge as any).matterStorageService = matterStorageService;
   });
 
-  test('serverNode commissioned',  () => {
+  test('serverNode commissioned', () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge commissioned successfully!`);
   });
 
-  test('serverNode decommissioned',  () => {
+  test('serverNode decommissioned', () => {
     matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
   });
 
-  test('serverNode fabricsChanged',  () => {
+  test('serverNode fabricsChanged', () => {
     matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'added');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
     matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'deleted');
@@ -134,17 +134,17 @@ describe('Matterbridge matterjs', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} updated on server node`));
   });
 
-  test('serverNode sessions.opened',  () => {
+  test('serverNode sessions.opened', () => {
     matterbridge.serverNode?.events.sessions.opened.emit({} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session opened on server node for Matterbridge`));
   });
 
-  test('serverNode sessions.closed',  () => {
+  test('serverNode sessions.closed', () => {
     matterbridge.serverNode?.events.sessions.closed.emit({} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session closed on server node for Matterbridge`));
   });
 
-  test('serverNode sessions.subscriptionsChanged',  () => {
+  test('serverNode sessions.subscriptionsChanged', () => {
     matterbridge.serverNode?.events.sessions.subscriptionsChanged.emit({} as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session subscriptions changed on server node for Matterbridge`));
   });

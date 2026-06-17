@@ -1,7 +1,5 @@
 // vitest/devices/dishwasher.test.ts
 
-
-
 const NAME = 'Dishwasher';
 const MATTER_PORT = 8004;
 const MATTER_CREATE_ONLY = true;

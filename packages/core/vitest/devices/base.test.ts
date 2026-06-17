@@ -1,7 +1,5 @@
 // vitest/devices/base.test.ts
 
-
-
 const NAME = 'BaseTest';
 const MATTER_PORT = 8000;
 const MATTER_CREATE_ONLY = true;
