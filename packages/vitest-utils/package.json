@@ -71,7 +71,7 @@
     "@matter/main": "0.17.3",
     "@matterbridge/types": "3.9.1",
     "@matterbridge/utils": "3.9.1",
-    "node-ansi-logger": "3.3.0-dev-20260607-585945a"
+    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
   },
   "devDependencies": {
     "vitest": "4.1.9"

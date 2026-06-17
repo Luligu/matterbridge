@@ -281,8 +281,8 @@
     "@matterbridge/types": "3.9.1",
     "@matterbridge/utils": "3.9.1",
     "@matterbridge/vitest-utils": "3.9.1",
-    "node-ansi-logger": "3.3.0-dev-20260607-585945a",
-    "node-persist-manager": "2.1.0-dev-20260524-6a6019a"
+    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7",
+    "node-persist-manager": "2.1.0-dev-20260617-3224082"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
