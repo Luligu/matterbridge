@@ -186,17 +186,10 @@
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
     "test:coverage": "vitest run --coverage",
-    "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
-    "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",
-    "lint:debug": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --debug",
-    "lint:config": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --print-config",
-    "lint:inspect": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 --inspect-config",
-    "oxlint": "oxlint",
-    "oxlint:fix": "oxlint --fix",
-    "format": "prettier --cache --cache-location .cache/.prettiercache --write .",
-    "format:check": "prettier --cache --cache-location .cache/.prettiercache --check .",
-    "oxfmt": "oxfmt",
-    "oxfmt:check": "oxfmt --check",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "preversion": "npm run runMeBeforePublish",
     "postversion": "npm run sync && npm run reset",
     "version:patch": "npm version patch --no-git-tag-version",
@@ -275,11 +268,6 @@
     "pack:local": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag local && npm run reset",
     "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
   },
-  "overrides": {
-    "typescript": "6.0.3",
-    "eslint": "10.5.0",
-    "@eslint/js": "10.0.1"
-  },
   "dependencies": {
     "@matterbridge/core": "3.9.1",
     "@matterbridge/dgram": "3.9.1",
@@ -292,29 +280,17 @@
     "node-persist-manager": "2.1.0-dev-20260524-6a6019a"
   },
   "devDependencies": {
-    "@eslint/js": "10.0.1",
-    "@eslint/json": "2.0.0",
-    "@eslint/markdown": "8.0.2",
     "@types/jest": "30.0.0",
     "@types/node": "25.9.3",
     "@typescript/native-preview": "7.0.0-dev.20260615.1",
     "@vitest/coverage-v8": "4.1.9",
-    "@vitest/eslint-plugin": "1.6.20",
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
-    "eslint": "10.5.0",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-jsdoc": "63.0.4",
-    "eslint-plugin-n": "18.1.0",
-    "eslint-plugin-prettier": "5.5.6",
-    "eslint-plugin-simple-import-sort": "13.0.0",
     "marked": "18.0.5",
     "oxfmt": "0.55.0",
     "oxlint": "1.70.0",
     "oxlint-tsgolint": "0.23.0",
-    "prettier": "3.8.4",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.61.1",
     "vitest": "4.1.9"
   }
 }

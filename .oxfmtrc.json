@@ -1,4 +1,4 @@
-// .oxfmtrc.json 1.0.2
+// .oxfmtrc.json 1.0.3
 
 // This Oxfmt configuration is designed for a TypeScript project using ESM modules.
 {
@@ -10,6 +10,7 @@
     "**/build/**",
     "chip/**",
     "**/coverage/**",
+    "docs",
     "**/dist/**",
     "**/temp/**",
     "**/jest/**",
@@ -17,6 +18,7 @@
     "**/screenshots/**",
     "vendor/**",
     "**/package-lock.json",
+    "scripts/*.html",
     "eslint.config.js"
   ],
   "printWidth": 180,
