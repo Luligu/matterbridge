@@ -1,11 +1,11 @@
 /**
- * marked.mjs
+ * update-htmls.mjs
  * Version: 1.0.1
  *
  * Converts Markdown files to HTML using the marked library.
  *
  * Usage:
- *   node scripts/marked.mjs
+ *   node scripts/update-htmls.mjs
  */
 
 /* eslint-disable no-console */
