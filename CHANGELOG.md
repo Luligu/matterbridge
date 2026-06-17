@@ -74,6 +74,7 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `matter.js` to v.0.17.3.
 - [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260614.1.
 - [matterbridge]: Bump `oxlint` to v.1.70.0.
 - [matterbridge]: Bump `oxfmt` to v.0.55.0.

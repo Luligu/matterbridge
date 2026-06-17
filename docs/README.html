@@ -653,14 +653,16 @@ While Amazon has expanded support to include core categories like lighting, plug
   thread --&gt; utils
   thread --&gt; types
   dgram --&gt; utils
+  jestutils --&gt; utils
   jestutils --&gt; types
+  vitestutils --&gt; utils
   vitestutils --&gt; types
 </code></pre>
 <p>The graph is acyclic and layered:</p>
 <ul>
 <li><strong>Foundation (no internal dependencies):</strong> <code>@matterbridge/types</code>, <code>@matterbridge/utils</code>.</li>
 <li><strong>Networking &amp; workers:</strong> <code>@matterbridge/dgram</code> (→ <code>utils</code>), <code>@matterbridge/thread</code> (→ <code>utils</code>, <code>types</code>).</li>
-<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> (→ <code>types</code>).</li>
+<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> (→ <code>utils</code>, <code>types</code>).</li>
 <li><strong>Core:</strong> <code>@matterbridge/core</code> (→ <code>dgram</code>, <code>thread</code>, <code>utils</code>, <code>types</code>).</li>
 <li><strong>Top level:</strong> <code>matterbridge</code> declares all scoped packages as direct dependencies; <code>core</code> pulls in the rest transitively.</li>
 </ul>
