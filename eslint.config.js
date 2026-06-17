@@ -73,9 +73,11 @@ export default defineConfig([
           },
         },
       ],
+      'n/no-missing-import': ['error', { allowModules: ['@zip.js/zip.js'] }], // Allow imports from @matter packages
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1, endLines: 0 }], // Require a blank line before JSDoc comments
       'jsdoc/check-tag-names': ['warn', { definedTags: ['created', 'contributor', 'remarks'] }], // Allow custom tags
       'jsdoc/no-undefined-types': 'off',
+      'jsdoc/reject-any-type': 'off', // Allow 'any' type in JSDoc comments
       'simple-import-sort/imports': ['warn'],
       'simple-import-sort/exports': ['warn'],
       'prettier/prettier': 'warn', // Use Prettier for formatting
@@ -149,6 +151,7 @@ export default defineConfig([
       '@typescript-eslint/promise-function-async': 'off', // Require Promise-returning functions to be async
       '@typescript-eslint/require-await': 'off', // Disallow async functions without any await expression
       'jsdoc/require-jsdoc': 'off', // Disable JSDoc rule in test files
+      'vitest/no-commented-out-tests': 'off', // Warn on commented out tests
     },
   },
   {

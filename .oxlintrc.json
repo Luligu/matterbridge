@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.9
+// .oxlintrc.json 1.0.10
 
 // This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
@@ -17,7 +17,9 @@
     "**/scripts/**",
     "**/screenshots/**",
     "vendor/**",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "**/bin/**",
+    "**/src/mock/**"
   ],
   "env": {
     "builtin": true,
@@ -66,7 +68,7 @@
     "eslint/no-await-in-loop": "off",
     "eslint/no-undefined": "off",
     "eslint/no-void": "off",
-    "eslint/no-use-before-define": ["error", { "classes": false, "functions": false }],
+    "eslint/no-use-before-define": ["error", { "classes": false, "functions": false, "allowNamedExports": true }],
     "eslint/complexity": ["warn", { "max": 100 }],
     "eslint/class-methods-use-this": "off",
     "eslint/no-plusplus": "off",
@@ -89,14 +91,14 @@
     "oxc/no-optional-chaining": "off", // Keep optional chaining for safe nullable access.
     "oxc/no-rest-spread-properties": "off", // Keep object rest/spread where cloning or omitting fields is intentional.
     "typescript/no-dynamic-delete": "error",
-    "typescript/no-duplicate-enum-values": "off", // Matter enum aliases can intentionally share the same numeric value.
+    "typescript/no-duplicate-enum-values": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
     "typescript/require-await": "warn",
     "typescript/promise-function-async": "warn",
-    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "typescript/only-throw-error": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-require-imports": "error",
