@@ -136,10 +136,12 @@
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls" alt="Docker Pulls"></a>
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
-<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="Codecov"></a>
+<a href="https://vitest.dev"><img src="https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white" alt="tested with Vitest"></a>
+<a href="https://oxc.rs/docs/guide/usage/formatter.html"><img src="https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white" alt="styled with Oxc"></a>
+<a href="https://oxc.rs/docs/guide/usage/linter.html"><img src="https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white" alt="linted with Oxc"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+<a href="https://github.com/microsoft/typescript-go"><img src="https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white" alt="TypeScript Native"></a>
 <a href="https://nodejs.org"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
@@ -178,25 +180,29 @@
 <h2 id="391-dev-branch">[3.9.1] - Dev branch</h2>
 <h3 id="development-changes">Development Changes</h3>
 <ul>
-<li>[test]: Add Vitest tests.</li>
-<li>[test]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450.</li>
-<li>[typescript]: Move package to TypeScript Preview (tsgo). The final build in the publish workflow is always with typescript.</li>
+<li>[vitest]: Jest has been replaced by <a href="https://vitest.dev">Vitest</a>, which is much faster and natively supports ESM without extra configuration.</li>
+<li>[jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster. Vitest also runs the test suite much faster than Jest.</li>
+<li>[oxc]: ESLint and Prettier have been replaced by the <a href="https://oxc.rs">oxc</a> stack: <a href="https://oxc.rs/docs/guide/usage/linter.html">oxlint</a> for linting and <a href="https://oxc.rs/docs/guide/usage/formatter.html">oxfmt</a> for formatting. Both lint and format the codebase in a fraction of the time the previous tools took.</li>
+<li>[oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.</li>
+<li>[typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[matterbridge]: Update dependencies.</li>
-<li>[matterbridge]: Bump <code>eslint</code> to v.10.5.0.</li>
 <li>[matterbridge]: Bump <code>@typescript/native-preview</code> to v.7.0.0-dev.20260614.1.</li>
 <li>[matterbridge]: Bump <code>oxlint</code> to v.1.70.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.55.0.</li>
 <li>[matterbridge]: Bump <code>vitest</code> to v.4.1.9.</li>
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.4.1.9.</li>
+<li>[oxfmt]: Update Oxlint configuration to v.1.0.3.</li>
 <li>[oxlint]: Update Oxlint configuration to v.1.0.10.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[utils/zip]: Remove no more present zip export. Thanks Pugsin (<a href="https://github.com/Luligu/matterbridge/pull/568">https://github.com/Luligu/matterbridge/pull/568</a>).</li>
 <li>[package]: Update legacy export. Thanks Pugsin (<a href="https://github.com/Luligu/matterbridge/pull/567">https://github.com/Luligu/matterbridge/pull/567</a>).</li>
+<li>[publish]: Fix publish.yml not checking the previously published SHA.</li>
+<li>[publish]: Fix publish.yml publishing the frontend even when no changes were made.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="390-2026-06-12">[3.9.0] - 2026-06-12</h2>
@@ -306,7 +312,7 @@
 <li>[endpoint]: Add <code>createDefaultBindingClusterServer(clientList: ClusterId[])</code> chainable <code>MatterbridgeEndpoint</code> method as the standard <code>createDefault*</code> helper for the Binding cluster.</li>
 <li>[readme]: Add &quot;How to use cluster clients&quot; section to README-DEV.html with description and examples for <code>addClusterClients</code>, <code>addRequiredClusterClients</code>, <code>addOptionalClusterClients</code>, and <code>getEndpoint</code>.</li>
 <li>[deviceTypes]: Add <code>requiredClientClusters</code> and <code>optionalClientClusters</code> to the device type definitions for: <code>OTAProvider</code>, <code>deviceEnergyManagement</code>, <code>onOffLight</code>, <code>dimmableLight</code>, <code>colorTemperatureLight</code>, <code>extendedColorLight</code>, <code>onOffOutlet</code>, <code>dimmableOutlet</code>, <code>onOffMountedSwitch</code>, <code>dimmableMountedSwitch</code>, <code>pumpDevice</code>, <code>waterValve</code>, <code>onOffSwitch</code>, <code>dimmableSwitch</code>, <code>colorTemperatureSwitch</code>, <code>thermostatDevice</code>, <code>heatPump</code>, <code>cameraController</code>.</li>
-<li>[codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.</li>
+<li>[Codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.</li>
 </ul>
 <h3 id="changed-2">Changed</h3>
 <ul>
