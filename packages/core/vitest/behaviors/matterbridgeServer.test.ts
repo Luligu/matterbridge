@@ -1,5 +1,7 @@
 // src\behaviors\matterbridgeServer.test.ts
 
+// oxlint-disable vitest/no-commented-out-tests
+
 // TODO: analyze each rule
 // oxlint-disable vitest/no-conditional-expect typescript/explicit-function-return-type
 
@@ -136,7 +138,7 @@ describe('Server clusters and behaviors', () => {
     let invoke: Promise<void>;
 
     await new Promise((resolve, reject) => {
-      endpoint.addCommandHandler(command,  (data) => {
+      endpoint.addCommandHandler(command, (data) => {
         try {
           expect(data.endpoint).toBe(endpoint);
           if (expectedRequest === undefined) expect(data.request).toEqual({});
@@ -165,7 +167,7 @@ describe('Server clusters and behaviors', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach( () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -714,7 +716,7 @@ describe('Server clusters and behaviors', () => {
 
   test('FanControl server', async () => {
     const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    vent.addCommandHandler('step',  (data) => {
+    vent.addCommandHandler('step', (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -841,7 +843,7 @@ describe('Server clusters and behaviors', () => {
     );
     const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
 
-    thermostatPreset.addCommandHandler('setActivePresetRequest',  (data) => {
+    thermostatPreset.addCommandHandler('setActivePresetRequest', (data) => {
       presetCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -1058,7 +1060,7 @@ describe('Server clusters and behaviors', () => {
     const powerAdjustRequest = { power: 500, duration: 60, cause: 'Test' };
     const cancelCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: unknown }> = [];
 
-    energyManagement.addCommandHandler('cancelPowerAdjustRequest',  (data) => {
+    energyManagement.addCommandHandler('cancelPowerAdjustRequest', (data) => {
       cancelCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -1084,7 +1086,7 @@ describe('Server clusters and behaviors', () => {
 
   test('DeviceEnergyManagementMode server', async () => {
     const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    energyManagement.addCommandHandler('changeToMode',  (data) => {
+    energyManagement.addCommandHandler('changeToMode', (data) => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 

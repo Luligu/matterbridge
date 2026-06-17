@@ -1,6 +1,7 @@
 // vitest\pluginManager.test.ts
 
 // oxlint-disable no-use-before-define
+// oxlint-disable vitest/no-commented-out-tests
 
 const NAME = 'PluginManager';
 const MATTER_PORT = 12000;

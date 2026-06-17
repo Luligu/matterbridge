@@ -1,5 +1,7 @@
 // vitest\threadsManager.mainthread.test.ts
 
+// oxlint-disable vitest/no-commented-out-tests
+
 const NAME = 'ThreadsManagerMainThread';
 
 import type { WorkerMessage } from '@matterbridge/types';
