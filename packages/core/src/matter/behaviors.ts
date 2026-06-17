@@ -7,5 +7,5 @@
  * @license Apache-2.0
  */
 
-// @matter
+// oxlint-disable-next-line oxc/no-barrel-file
 export * from '@matter/node/behaviors';

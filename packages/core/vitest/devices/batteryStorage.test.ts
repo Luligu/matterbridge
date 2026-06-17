@@ -1,6 +1,6 @@
 // vitest/devices/batteryStorage.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'BatteryStorage';
 const MATTER_PORT = 8002;
@@ -28,7 +28,7 @@ import { stringify } from 'node-ansi-logger';
 
 import { BatteryStorage } from '../../src/devices/batteryStorage.js';
 import { batteryStorage } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -41,12 +41,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -65,7 +65,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a battery storage device', async () => {
+  test('create a battery storage device', () => {
     device = new BatteryStorage('Battery Storage Test Device', 'BS123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('BatteryStorageTestDevice-BS123456');
@@ -84,7 +84,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

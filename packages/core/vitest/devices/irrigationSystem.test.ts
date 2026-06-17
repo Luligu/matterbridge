@@ -1,6 +1,6 @@
 // vitest/devices/irrigationSystem.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'IrrigationSystem';
 const MATTER_PORT = 8021;
@@ -42,11 +42,11 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -65,7 +65,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create an irrigation system device', async () => {
+  test('create an irrigation system device', () => {
     device = new IrrigationSystem('Irrigation System Test Device', 'IR123456', { flowMeasuredValue: 123, operationalState: OperationalState.OperationalStateEnum.Running })
       .addZone(getSemtag(CommonNumberTag.One))
       .addZone(getSemtag(CommonNumberTag.Two))
@@ -98,7 +98,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(defaultDevice.hasClusterServer(ValveConfigurationAndControl.id)).toBeFalsy();
   });
 
-  test('create a single zone battery irrigation system device', async () => {
+  test('create a single zone battery irrigation system device', () => {
     singleZoneBatteryDevice = new IrrigationSystem('Irrigation System Single Zone', 'IRBAT001', { singleZone: true, batteryPowered: true, flowMeasuredValue: 45 });
     expect(singleZoneBatteryDevice).toBeDefined();
     expect(singleZoneBatteryDevice.id).toBe('IrrigationSystemSingleZone-IRBAT001');
@@ -128,7 +128,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, singleZoneBatteryDevice)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -221,7 +221,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('single zone battery device forEachAttribute', async () => {
+  test('single zone battery device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

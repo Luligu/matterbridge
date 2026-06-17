@@ -1,6 +1,6 @@
 // vitest/devices/closurePanel.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'ClosurePanel';
 const MATTER_PORT = 8023;
@@ -37,12 +37,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -61,7 +61,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a closure panel device', async () => {
+  test('create a closure panel device', () => {
     device = new ClosurePanel('Closure Panel Test Device', 'CP123456', { stepValue: 100 });
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosurePanelTestDevice-CP123456');
@@ -122,7 +122,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device3)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

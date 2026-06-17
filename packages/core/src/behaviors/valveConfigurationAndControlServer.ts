@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

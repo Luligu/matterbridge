@@ -1,10 +1,13 @@
 // vitest\matterbridgeEndpoint.typed.test.ts
 
+// TODO: refactor
+// oxlint-disable typescript/no-floating-promises
+
 const MATTER_PORT = 11700;
 const NAME = 'EndpointTypeChecks';
 
 import { OnOffServer } from '@matter/main/behaviors/on-off';
-import { type ActionContext } from '@matter/node';
+import type { ActionContext } from '@matter/node';
 import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
 import { OnOffBehavior } from '@matter/node/behaviors/on-off';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
@@ -26,7 +29,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     await createServerNode(MATTER_PORT);
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
@@ -200,7 +203,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       let behaviorState: boolean | undefined;
       let behaviorOldState: boolean | undefined;
       let behaviorOfflineState: boolean | undefined;
-      const behaviorListener = (newValue: boolean, oldValue: boolean, context: ActionContext) => {
+      const behaviorListener = (newValue: boolean, oldValue: boolean, context: ActionContext): void => {
         behaviorState = newValue;
         behaviorOldState = oldValue;
         behaviorOfflineState = context?.fabric === undefined;

@@ -22,12 +22,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable jsdoc/reject-any-type */
-
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpointHelpers loaded.\u001B[40;0m');
+// TODO: analyze each rule
+// oxlint-disable typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing unicorn/no-negated-condition no-param-reassign typescript/explicit-function-return-type typescript/explicit-module-boundary-types
 
 // Other modules
 import { createHash } from 'node:crypto';
@@ -133,6 +129,7 @@ import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
 import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
@@ -155,8 +152,10 @@ import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.j
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import { type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { type CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+
+logModuleLoaded('MatterbridgeEndpointHelpers');
 
 /**
  *  Capitalizes the first letter of a string.
@@ -283,6 +282,7 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * Don't set the mfgCode field for standard namespaces: the global namespaceId already provides uniqueness.
  */
 export function getSemtag(semtag: Semtag, label?: string | null, mfgCode: VendorId | null = null): Semtag {
+  // oxlint-disable-next-line no-param-reassign
   if (label !== undefined && label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
 
   if (label === undefined) return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag };
@@ -547,10 +547,10 @@ export async function invokeBehaviorCommand(
     return false;
   }
 
+  // oxlint-disable-next-line no-param-reassign
   command = command.includes('.') ? (command.split('.')[1] as CommandHandlers) : command;
   let invoked = true;
   await endpoint.act(async (agent) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const behavior = (agent as unknown as Record<string, Record<string, Function> | undefined>)[behaviorId];
     const handler = behavior?.[command];
     if (typeof handler !== 'function') {
@@ -568,7 +568,7 @@ export async function invokeBehaviorCommand(
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
     // istanbul ignore next -- This is only used in Jest tests, so we don't need to cover it in production.
-    const patchedContext = new Proxy(agent.context, { get: (t, k) => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
+    const patchedContext = new Proxy(agent.context, { get: (t, k): unknown => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
     Object.defineProperty(behavior, 'context', { configurable: true, value: patchedContext });
     try {
       // Preserve `this` binding for behavior command handlers.
@@ -675,7 +675,7 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
  * @param {ClusterId[]} serverList - The list of cluster IDs to add.
  */
-export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]) {
+export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]): void {
   if (serverList.includes(PowerSource.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
   if (serverList.includes(Identify.id)) endpoint.createDefaultIdentifyClusterServer();
   if (serverList.includes(Groups.id)) endpoint.createDefaultGroupsClusterServer();
@@ -802,7 +802,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
  * @param {string} label - The label to add. Max 16 characters.
  * @param {string} value - The value of the label. Max 16 characters.
  */
-export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string): Promise<void> {
   if (!endpoint.hasClusterServer(FixedLabel.id)) {
     endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(FixedLabelServer, {
@@ -827,7 +827,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
  * @param {string} label - The label to add. Max 16 characters.
  * @param {string} value - The value of the label. Max 16 characters.
  */
-export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string): Promise<void> {
   if (!endpoint.hasClusterServer(UserLabel.id)) {
     endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(UserLabelServer, {

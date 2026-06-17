@@ -22,6 +22,9 @@
  * limitations under the License.
  */
 
+// TODO: analyze each rule
+// oxlint-disable complexity typescript/no-base-to-string typescript/restrict-template-expressions typescript/no-misused-promises typescript/prefer-nullish-coalescing typescript/consistent-return typescript/require-await typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style unicorn/no-negated-condition no-param-reassign
+
 // Node.js built-in modules
 import EventEmitter from 'node:events';
 import type { Server as HttpServer } from 'node:http';
@@ -65,16 +68,15 @@ import {
   plg,
 } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
-import { inspectError } from '@matterbridge/utils/error';
-import { logError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
-import type { WebSocket } from 'ws';
-import type { WebSocketServer } from 'ws';
+import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
@@ -84,10 +86,7 @@ import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
-// istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Frontend loaded.\u001B[40;0m');
+logModuleLoaded('Frontend');
 
 /**
  * Represents the Frontend events.
@@ -148,6 +147,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
+    // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
   }
 
@@ -157,11 +157,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   destroy(): void {
     clearTimeout(this.authClientsTimeout);
     this.authClientsTimeout = undefined;
-    this.server.off('broadcast_message', this.broadcastMsgHandler.bind(this));
     this.server.close();
   }
 
-  private async broadcastMsgHandler(msg: WorkerMessage) {
+  private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg)) {
       // istanbul ignore else
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -230,6 +229,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'frontend')) {
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      // oxlint-disable-next-line default-case
       switch (msg.type) {
         case 'manager_spawn_response':
           if (msg.result?.packageCommand === 'install') {
@@ -275,6 +275,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               method: 'archive',
               success: true,
               response: {
+                // oxlint-disable-next-line typescript/no-unsafe-type-assertion
                 command: msg.result.command as 'zip' | 'verify' | 'unzip',
                 archivePath: msg.result.archivePath,
                 sourcePaths: msg.result.sourcePaths,
@@ -289,6 +290,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   /**
    * Updates the logger level at runtime.
+   *
+   * @param {LogLevel} logLevel - The new log level to set.
    */
   set logLevel(logLevel: LogLevel) {
     this.log.logLevel = logLevel;
@@ -406,6 +409,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.error(`WebSocketServer error: ${error}`);
     });
 
+    // oxlint-disable-next-line unicorn/no-negated-condition
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
       const http = await import('node:http');
@@ -413,7 +417,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.debug(`Creating HTTP server...`);
         this.httpServer = http.createServer(this.expressApp);
       } catch (error) {
-        this.log.error(`Failed to create HTTP server: ${error}`);
+        logError(this.log, `Failed to create HTTP server`, error);
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.emit('server_error', error as Error);
         return;
       }
@@ -475,6 +480,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       this.httpServer.on('error', (error: Error) => {
         this.log.error(`Frontend http server error listening on ${this.port}`);
+        // oxlint-disable-next-line default-case
         switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
@@ -496,7 +502,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       let pfx: Buffer | undefined;
       let passphrase: string | undefined;
 
-      // eslint-disable-next-line no-useless-assignment
       let httpsServerOptions: HttpsServerOptions = {};
 
       const fs = await import('node:fs');
@@ -506,7 +511,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           pfx = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12'));
           this.log.info(`Loaded p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}: ${error}`);
+          logError(this.log, `Error reading p12 certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.p12')}`, error);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.emit('server_error', error as Error);
           return;
         }
@@ -515,7 +521,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           passphrase = passphrase.trim(); // Ensure no extra characters
           this.log.info(`Loaded p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}`);
         } catch (error) {
-          this.log.error(`Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}: ${error}`);
+          logError(this.log, `Error reading p12 passphrase file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pass')}`, error);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.emit('server_error', error as Error);
           return;
         }
@@ -526,7 +533,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           cert = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem'), 'utf8');
           this.log.info(`Loaded certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}: ${error}`);
+          logError(this.log, `Error reading certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'cert.pem')}`, error);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.emit('server_error', error as Error);
           return;
         }
@@ -534,7 +542,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           key = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem'), 'utf8');
           this.log.info(`Loaded key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}`);
         } catch (error) {
-          this.log.error(`Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}: ${error}`);
+          logError(this.log, `Error reading key file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'key.pem')}`, error);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.emit('server_error', error as Error);
           return;
         }
@@ -543,7 +552,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           fullChain = `${cert}\n${ca}`;
           this.log.info(`Loaded CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')}`);
         } catch (error) {
-          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')} not loaded: ${error}`);
+          this.log.info(`CA certificate file ${path.join(this.matterbridge.matterbridgeDirectory, 'certs', 'ca.pem')} not loaded: ${getErrorMessage(error)}`);
         }
         httpsServerOptions = { cert: fullChain ?? cert, key, ca };
       }
@@ -558,7 +567,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.debug(`Creating HTTPS server...`);
         this.httpsServer = https.createServer(httpsServerOptions, this.expressApp);
       } catch (error) {
-        this.log.error(`Failed to create HTTPS server: ${error}`);
+        logError(this.log, `Failed to create HTTPS server`, error);
         this.emit('server_error', error as Error);
         return;
       }
@@ -619,6 +628,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
+        // oxlint-disable-next-line default-case
         switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
@@ -646,7 +656,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Endpoint to validate login code
     // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
-    this.expressApp.post('/api/login', express.json(), async (req, res) => {
+    this.expressApp.post('/api/login', express.json(), (req, res) => {
       const { password } = req.body;
       this.log.debug(`The frontend sent /api/login with password ${password ? '[redacted]' : '(empty)'}`);
       if (this.storedPassword === '' || password === this.storedPassword) {
@@ -718,21 +728,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide settings (debug only reasons - not used in production)
-    this.expressApp.get('/api/settings', async (req, res) => {
+    this.expressApp.get('/api/settings', (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
       res.json(this.getApiSettings());
     });
 
     // Endpoint to provide plugins (debug only reasons - not used in production)
-    this.expressApp.get('/api/plugins', async (req, res) => {
+    this.expressApp.get('/api/plugins', (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       if (!this.validateReq(req, res)) return;
       res.json(this.getApiPlugins());
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
-    this.expressApp.get('/api/devices', async (req, res) => {
+    this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
       res.json(this.getApiDevices());
@@ -768,12 +778,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           'Enable the matterbridge log on file in the settings to download the matterbridge log.',
           'utf-8',
         );
-        this.log.debug(`Error in /api/download-mblog: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error in /api/download-mblog: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         if (error) {
-          this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}`, error);
           res.status(500).send('Error downloading the matterbridge log file');
         } else {
           this.log.debug(`Matterbridge log file ${MATTERBRIDGE_LOGGER_FILE} downloaded successfully`);
@@ -791,7 +801,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/plain; charset=utf-8');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error reading matter log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+        logError(this.log, `Error reading matter log file ${MATTER_LOGGER_FILE}`, error);
         res.status(500).send('Error reading matter log file. Please enable the matter log on file in the settings.');
       }
     });
@@ -807,12 +817,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), data, 'utf-8');
       } catch (error) {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'Enable the matter log on file in the settings to download the matter log.', 'utf-8');
-        this.log.debug(`Error in /api/download-mjlog: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error in /api/download-mjlog: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         if (error) {
-          this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading log file ${MATTER_LOGGER_FILE}`, error);
           res.status(500).send('Error downloading the matter log file');
         } else {
           this.log.debug(`Matter log file ${MATTER_LOGGER_FILE} downloaded successfully`);
@@ -831,7 +841,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/plain; charset=utf-8');
         res.send(data.slice(29));
       } catch (error) {
-        this.log.error(`Error reading diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
+        logError(this.log, `Error reading diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE}`, error);
         res.status(500).send('Error reading diagnostic log file.');
       }
     });
@@ -848,7 +858,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
       } catch (error) {
         // istanbul ignore next
-        this.log.debug(`Error in /api/download-diagnostic: ${error instanceof Error ? error.message : error}`);
+        this.log.debug(`Error in /api/download-diagnostic: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
@@ -871,7 +881,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        logError(this.log, `Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
@@ -888,68 +898,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
-            this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+            logError(this.log, `Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
             res.status(500).send('Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
         });
       } catch (error) {
-        this.log.error(`Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${error instanceof Error ? error.message : error}`);
+        logError(this.log, `Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
 
-    // Endpoint to view the shelly log
-    /*
-    this.expressApp.get('/api/shellyviewsystemlog', async (req, res) => {
-      this.log.debug('The frontend sent /api/shellyviewsystemlog');
-      if (!this.validateReq(req, res)) return;
-      try {
-        const fs = await import('node:fs');
-        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
-        res.type('text/plain; charset=utf-8');
-        res.send(data);
-      } catch (error) {
-        this.log.error(`Error reading shelly log file ${MATTERBRIDGE_LOGGER_FILE}: ${error instanceof Error ? error.message : error}`);
-        res.status(500).send('Error reading shelly log file. Please create the shelly system log before loading it.');
-      }
-    });
-    */
-
-    // Endpoint to download the shelly log
-    /*
-    this.expressApp.get('/api/shellydownloadsystemlog', async (req, res) => {
-      this.log.debug('The frontend sent /api/shellydownloadsystemlog');
-      if (!this.validateReq(req, res)) return;
-      const fs = await import('node:fs');
-      try {
-        await fs.promises.access(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), fs.constants.F_OK);
-        const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, 'shelly.log'), 'utf8');
-        await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), data, 'utf-8');
-      } catch (error) {
-        await fs.promises.writeFile(path.join(os.tmpdir(), 'shelly.log'), 'Create the Shelly system log before downloading it.', 'utf-8');
-        this.log.debug(`Error in /api/shellydownloadsystemlog: ${error instanceof Error ? error.message : error}`);
-      }
-      res.type('text/plain; charset=utf-8');
-      res.download(path.join(os.tmpdir(), 'shelly.log'), 'shelly.log', (error) => {
-        if (error) {
-          this.log.error(`Error downloading Shelly system log file: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading Shelly system log file');
-        }
-      });
-    });
-    */
-
     // Endpoint to download the matterbridge backup (created with the backup command)
-    this.expressApp.get('/api/download-backup', async (req, res) => {
+    this.expressApp.get('/api/download-backup', (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.backup.zip`), `matterbridge.backup.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
         if (error) {
-          this.log.error(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading file matterbridge.backup.zip`, error);
+          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${getErrorMessage(error)}`);
         } else {
           this.log.debug('Backup matterbridge.backup.zip downloaded successfully');
         }
@@ -957,7 +926,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to download the matterbridge storage directory
-    this.expressApp.get('/api/download-mbstorage', async (req, res) => {
+    this.expressApp.get('/api/download-mbstorage', (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
@@ -972,13 +941,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to download the matter storage directory
-    this.expressApp.get('/api/download-mjstorage', async (req, res) => {
+    this.expressApp.get('/api/download-mjstorage', (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), `matterbridge.${MATTER_STORAGE_DIR}.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         if (error) {
-          this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip`, error);
           res.status(500).send('Error downloading the matter storage zip file');
         } else {
           this.log.debug(`Matter storage matterbridge.${MATTER_STORAGE_DIR}.zip downloaded successfully`);
@@ -987,13 +956,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to download the matterbridge plugin directory
-    this.expressApp.get('/api/download-pluginstorage', async (req, res) => {
+    this.expressApp.get('/api/download-pluginstorage', (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.pluginstorage.zip`), `matterbridge.pluginstorage.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating plugin backup...');
         if (error) {
-          this.log.error(`Error downloading file matterbridge.pluginstorage.zip: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading file matterbridge.pluginstorage.zip`, error);
           res.status(500).send('Error downloading the matterbridge plugin storage file');
         } else {
           this.log.debug('Plugin storage matterbridge.pluginstorage.zip downloaded successfully');
@@ -1002,13 +971,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to download the matterbridge plugin config files
-    this.expressApp.get('/api/download-pluginconfig', async (req, res) => {
+    this.expressApp.get('/api/download-pluginconfig', (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.pluginconfig.zip`), `matterbridge.pluginconfig.zip`, (error) => {
         this.wssSendCloseSnackbarMessage('Creating config backup...');
         if (error) {
-          this.log.error(`Error downloading file matterbridge.pluginconfig.zip: ${error instanceof Error ? error.message : error}`);
+          logError(this.log, `Error downloading file matterbridge.pluginconfig.zip`, error);
           res.status(500).send('Error downloading the matterbridge plugin config file');
         } else {
           this.log.debug('Plugin config matterbridge.pluginconfig.zip downloaded successfully');
@@ -1075,7 +1044,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
 
         // Unified API route handler for GET, POST, PUT, PATCH, DELETE
-        const apiHandler = async (req: import('express').Request, res: import('express').Response) => {
+        const apiHandler = async (req: import('express').Request, res: import('express').Response): Promise<void> => {
           const method = req.method.toUpperCase();
           const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
           const query = req.query;
@@ -1120,6 +1089,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // SPA fallback: serve the plugin's index.html for unmatched GET requests only (Express 5 syntax)
         this.expressApp.get(`/plugins/${plugin.name}/{*splat}`, (_req, res) => {
           this.log.warn(`The plugin frontend sent /plugins/${plugin.name}/index.html (plugin SPA fallback)`);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
           res.sendFile('index.html', { root: path.dirname(plugin.frontendPath as string) });
         });
       }
@@ -1140,7 +1110,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Stops the frontend HTTP/HTTPS and websocket servers.
    */
-  async stop() {
+  async stop(): Promise<void> {
     this.log.debug('Stopping the frontend...');
     const ws = await import('ws');
 
@@ -1312,7 +1282,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private getReachability(device: MatterbridgeEndpoint): boolean {
     if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
     if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
-    if (device.hasClusterServer(BridgedDeviceBasicInformation.id)) return device.getAttribute(BridgedDeviceBasicInformation.id, 'reachable') as boolean;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    if (device.hasClusterServer(BridgedDeviceBasicInformation.id)) return device.getAttribute(BridgedDeviceBasicInformation, 'reachable') as boolean;
     if (device.mode === 'server' && device.serverNode?.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
     if (this.matterbridge.bridgeMode === 'childbridge') return true;
     return false;
@@ -1328,17 +1299,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
-    const powerSource = (device: MatterbridgeEndpoint) => {
+    const powerSource = (device: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined => {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
       if (featureMap.wired) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         const wiredCurrentType = device.getAttribute(PowerSource.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return ['ac', 'dc'][wiredCurrentType] as 'ac' | 'dc' | undefined;
       }
       if (featureMap.battery) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         const batChargeLevel = device.getAttribute(PowerSource.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return ['ok', 'warning', 'critical'][batChargeLevel] as 'ok' | 'warning' | 'critical' | undefined;
       }
-      return;
+      return undefined;
     };
 
     // Root endpoint
@@ -1348,6 +1324,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // istanbul ignore else
       if (child.hasClusterServer(PowerSource.id)) return powerSource(child);
     }
+    return undefined;
   }
 
   /**
@@ -1360,13 +1337,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
     if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
 
-    const batteryLevel = (device: MatterbridgeEndpoint) => {
+    const batteryLevel = (device: MatterbridgeEndpoint): number | undefined => {
       const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
       if (featureMap.battery) {
         const batChargeLevel = device.getAttribute(PowerSource.id, 'batPercentRemaining') as number | undefined;
         return isValidNumber(batChargeLevel) ? batChargeLevel / 2 : undefined;
       }
-      return;
+      return undefined;
     };
 
     // Root endpoint
@@ -1376,6 +1353,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // istanbul ignore else
       if (child.hasClusterServer(PowerSource.id)) return batteryLevel(child);
     }
+    return undefined;
   }
 
   /**
@@ -1392,7 +1370,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // TODO: Remove
     // istanbul ignore next
-    const getUserLabel = (device: MatterbridgeEndpoint) => {
+    const getUserLabel = (device: MatterbridgeEndpoint): string => {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
       if (labelList) {
         const composed = labelList.find((entry) => entry.label === 'composed');
@@ -1404,7 +1383,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // TODO: Remove
     // istanbul ignore next
-    const getFixedLabel = (device: MatterbridgeEndpoint) => {
+    const getFixedLabel = (device: MatterbridgeEndpoint): string => {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
       if (labelList) {
         const composed = labelList.find((entry) => entry.label === 'composed');
@@ -1433,6 +1413,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode']);
       if (modeClusters.has(clusterName) && attributeName === 'supportedModes') {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         supportedModes = attributeValue as { label: string; mode: number }[];
       }
       if (modeClusters.has(clusterName) && attributeName === 'currentMode') {
@@ -1472,6 +1453,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
 
       if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
       if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue))
         attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
@@ -1612,7 +1594,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
         attributeName,
         attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue.toString(),
+        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
         attributeLocalValue: attributeValue,
       });
     });
@@ -1645,7 +1627,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
           attributeName,
           attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-          attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue as object) : attributeValue.toString(),
+          attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
           attributeLocalValue: attributeValue,
         });
       });
@@ -1675,7 +1657,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE)))
       fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
     const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
-    diagnosticDestination.write = async (text: string, _message: Diagnostic.Message) => {
+    diagnosticDestination.write = async (text: string, _message: Diagnostic.Message): Promise<void> => {
       await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
     };
     Logger.destinations.diagnostic = diagnosticDestination;
@@ -1707,7 +1689,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private async wsMessageHandler(client: WebSocket, message: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 
-    const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse) => {
+    const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse): void => {
       // istanbul ignore else cause is only a safety check
       if (client.readyState === client.OPEN) {
         if ('response' in data) {
@@ -1719,7 +1701,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.log.debug(`Sending api response message: ${debugStringify(data)}`);
         }
         // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
-        const bigintReplacer = (_: string, v: unknown) => (typeof v === 'bigint' ? `${v}n` : v);
+        const bigintReplacer = (_: string, v: unknown): unknown => (typeof v === 'bigint' ? `${v}n` : v);
         client.send(JSON.stringify(data, bigintReplacer));
       } else {
         this.log.error('Cannot send api response, client not connected');
@@ -2149,7 +2131,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
             return;
           })
-          .catch((error) => {
+          .catch((error: unknown) => {
             this.log.error(`Error in plugin ${plugin.name} action ${localData.params.action}: ${error}`);
             sendResponse({
               id: data.id,
@@ -2285,7 +2267,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }
             break;
           case 'setmatterport':
-            // eslint-disable-next-line no-case-declarations
             const port = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
             if (isValidNumber(port, 5540, 5600)) {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
@@ -2304,7 +2285,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }
             break;
           case 'setmatterdiscriminator':
-            // eslint-disable-next-line no-case-declarations
             const discriminator = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
             if (isValidNumber(discriminator, 0, 4095)) {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
@@ -2329,7 +2309,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             }
             break;
           case 'setmatterpasscode':
-            // eslint-disable-next-line no-case-declarations
             const passcode = isValidString(data.params.value) ? Number.parseInt(data.params.value) : 0;
             if (isValidNumber(passcode, 1, 99999998) && !CommissioningOptions.FORBIDDEN_PASSCODES.includes(passcode)) {
               this.matterbridge.passcode = this.matterbridge.initialPasscode = passcode;
@@ -2537,7 +2516,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    * @param {string} params.lock - The name of the plugin that has locked the refresh. Required if changed is 'plugins'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a refresh required message to all connected clients');
     // Send the message to all connected clients
@@ -2550,7 +2529,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients. Default is true.
    * @param {boolean} fixed - If true, the restart is fixed and will not be reset by plugin restarts. Default is false.
    */
-  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
+  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart required message to all connected clients');
     this.restartRequired = true;
@@ -2565,7 +2544,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients. Default is true.
    */
-  wssSendRestartNotRequired(snackbar: boolean = true) {
+  wssSendRestartNotRequired(snackbar: boolean = true): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart not required message to all connected clients');
     this.restartRequired = false;
@@ -2579,7 +2558,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
-  wssSendUpdateRequired(devVersion: boolean = false) {
+  wssSendUpdateRequired(devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an update required message to all connected clients');
     this.updateRequired = true;
@@ -2593,7 +2572,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {number} cpuUsage - The CPU usage percentage to send.
    * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
    */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
+  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
@@ -2619,7 +2598,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} external - The external memory in bytes.
    * @param {string} arrayBuffers - The array buffers memory in bytes.
    */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
+  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
@@ -2640,7 +2619,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} systemUptime - The system uptime in a human-readable format.
    * @param {string} processUptime - The process uptime in a human-readable format.
    */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
+  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // istanbul ignore else
     if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
@@ -2659,7 +2638,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @remarks
    * If timeout is 0, the snackbar message will be displayed until closed by the user.
    */
-  wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
+  wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a snackbar message to all connected clients');
     // Send the message to all connected clients
@@ -2672,7 +2651,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {string} message - The message to send.
    */
-  wssSendCloseSnackbarMessage(message: string) {
+  wssSendCloseSnackbarMessage(message: string): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a close snackbar message to all connected clients');
     // Send the message to all connected clients
@@ -2704,7 +2683,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     cluster: string,
     attribute: string,
     value: number | string | boolean | null,
-  ) {
+  ): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an attribute update message to all connected clients');
     // Send the message to all connected clients
@@ -2724,7 +2703,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {WsMessageBroadcast} msg - The message to send.
    */
-  wssBroadcastMessage(msg: WsMessageBroadcast) {
+  wssBroadcastMessage(msg: WsMessageBroadcast): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);

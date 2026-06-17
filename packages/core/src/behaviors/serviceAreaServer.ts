@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
-import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
-import { type ServiceArea } from '@matter/types/clusters/service-area';
+// oxlint-disable typescript/no-unsafe-type-assertion
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
+import type { ServiceArea } from '@matter/types/clusters/service-area';
+
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

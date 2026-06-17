@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+// oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 
 import path from 'node:path';
@@ -76,6 +77,7 @@ export let aggregator: Endpoint<AggregatorEndpoint>;
  * await destroyTestEnvironment();
  * ```
  */
+// oxlint-disable-next-line typescript/require-await
 export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
@@ -131,6 +133,7 @@ export async function destroyTestEnvironment(): Promise<void> {
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
 export function getPlatformMatterbridge(): PlatformMatterbridge {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return {
     systemInformation: {
       interfaceName: 'eth0',
@@ -227,6 +230,7 @@ function getRootServerNode(endpoint: Endpoint): ServerNode {
   while (current.owner) {
     current = current.owner;
   }
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return current as ServerNode;
 }
 
@@ -238,9 +242,10 @@ function getRootServerNode(endpoint: Endpoint): ServerNode {
  */
 function collectAllEndpoints(root: Endpoint): Endpoint[] {
   const list: Endpoint[] = [];
-  const walk = (ep: Endpoint) => {
+  const walk = (ep: Endpoint): void => {
     list.push(ep);
     if (ep.parts) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       for (const child of ep.parts as unknown as Endpoint[]) {
         walk(child);
       }
@@ -265,6 +270,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   const nodeStore = targetServer.env.get(ServerNodeStore);
   // Ensure any pending persistence finished (flush any in-flight batch promise)
   await nodeStore.endpointStores.close();
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const all = collectAllEndpoints(targetServer as unknown as Endpoint);
   for (const ep of all) {
     const store = nodeStore.storeForEndpoint(ep);
@@ -285,6 +291,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  */
 export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
   // Close endpoint stores to avoid number persistence issues
+  // oxlint-disable-next-line no-param-reassign typescript/prefer-nullish-coalescing
   if (!targetServer) targetServer = server;
   await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
@@ -442,10 +449,10 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
 
   // Wait for the server to be online
   await new Promise<void>((resolve, reject) => {
-    server.lifecycle.online.on(async () => {
+    server.lifecycle.online.on((): void => {
       resolve();
     });
-    server.start().catch((err) => reject(err));
+    server.start().catch((err: unknown) => reject(err));
   });
 
   // Check if the server is online
@@ -602,6 +609,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
+    // oxlint-disable-next-line typescript/restrict-template-expressions
     process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
@@ -645,6 +653,7 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
+    // oxlint-disable-next-line typescript/restrict-template-expressions
     process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }

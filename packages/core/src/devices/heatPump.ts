@@ -24,6 +24,8 @@
 // Imports from @matter
 import { CommonAreaNamespaceTag, CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostat } from '../matterbridgeDeviceTypes.js';
@@ -93,27 +95,19 @@ export class HeatPump extends MatterbridgeEndpoint {
       .addRequiredClusterServers();
 
     // Add the Living thermostat for the heat pump.
-    this.addChildDeviceType('LivingThermostat', thermostat, {
+    const livingThermostat = this.addChildDeviceType('LivingThermostat', thermostat, {
       tagList: [getSemtag(CommonNumberTag.One, 'LivingThermostat'), getSemtag(CommonAreaNamespaceTag.LivingRoom)],
     })
       .createDefaultThermostatClusterServer()
-      .addRequiredClusterServers()
-      .addUserLabel('room', 'Living Room')
-      .catch(
-        /* istanbul ignore next */
-        () => {},
-      );
+      .addRequiredClusterServers();
+    fireAndForget(livingThermostat.addUserLabel('room', 'Living Room'), this.log, 'HeatPump addUserLabel LivingRoom');
 
     // Add the Bedroom thermostat for the heat pump.
-    this.addChildDeviceType('BedroomThermostat', thermostat, {
+    const bedroomThermostat = this.addChildDeviceType('BedroomThermostat', thermostat, {
       tagList: [getSemtag(CommonNumberTag.Two, 'BedroomThermostat'), getSemtag(CommonAreaNamespaceTag.Bedroom)],
     })
       .createDefaultThermostatClusterServer()
-      .addRequiredClusterServers()
-      .addUserLabel('room', 'Bedroom')
-      .catch(
-        /* istanbul ignore next */
-        () => {},
-      );
+      .addRequiredClusterServers();
+    fireAndForget(bedroomThermostat.addUserLabel('room', 'Bedroom'), this.log, 'HeatPump addUserLabel Bedroom');
   }
 }

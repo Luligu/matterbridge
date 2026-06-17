@@ -1,7 +1,5 @@
 // vitest/devices/airConditioner.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
-
 const NAME = 'AirConditioner';
 const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)
 const MATTER_CREATE_ONLY = true;
@@ -42,12 +40,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -66,7 +64,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create an air conditioner device (defaults)', async () => {
+  test('create an air conditioner device (defaults)', () => {
     device = new AirConditioner('Air Conditioner Test Device', 'AC123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('AirConditionerTestDevice-AC123456');
@@ -170,7 +168,7 @@ describe('Matterbridge ' + NAME, () => {
     ]);
   });
 
-  test('fan control attributes check', async () => {
+  test('fan control attributes check', () => {
     // Presence
     expect(device.hasAttributeServer(FanControl, 'percentSetting')).toBe(true);
     expect(device.hasAttributeServer(FanControl, 'percentCurrent')).toBe(true);
@@ -183,7 +181,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(FanControl.id, 'fanModeSequence')).toBe(FanControl.FanModeSequence.OffLowMedHighAuto);
   });
 
-  test('thermostat attributes check', async () => {
+  test('thermostat attributes check', () => {
     // Presence
     expect(device.hasClusterServer(Thermostat.id)).toBe(true);
     expect(device.hasClusterServer(Thermostat)).toBe(true);
@@ -220,7 +218,7 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('thermostat UI configuration attributes check', async () => {
+  test('thermostat UI configuration attributes check', () => {
     // Presence
     expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.id)).toBe(true);
     expect(device.hasAttributeServer(ThermostatUserInterfaceConfiguration.id, 'temperatureDisplayMode')).toBe(true);
@@ -232,7 +230,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ThermostatUserInterfaceConfiguration.id, 'scheduleProgrammingVisibility')).toBe(0);
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

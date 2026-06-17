@@ -12,7 +12,7 @@ import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { type ClusterId } from '@matter/types/datatype';
+import type { ClusterId } from '@matter/types/datatype';
 import { log, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -66,7 +66,7 @@ describe('Options helpers', () => {
       public nested: unknown,
     ) {}
 
-    get upperLabel() {
+    get upperLabel(): string {
       return this.label.toUpperCase();
     }
   }
@@ -82,12 +82,12 @@ describe('Options helpers', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode
@@ -191,9 +191,10 @@ describe('Options helpers', () => {
 
   test('getSnapshot returns non-object values unchanged', () => {
     const symbolValue = Symbol('plain-cluster-symbol');
-    const functionValue = () => 'plain-cluster-function';
+    const functionValue = (): string => 'plain-cluster-function';
 
-    expect(getSnapshot(undefined)).toBeUndefined();
+    // @ts-expect-error: Testing getSnapshot with various types, including null and undefined
+    expect(getSnapshot()).toBeUndefined();
     expect(getSnapshot(null)).toBeNull();
     expect(getSnapshot(true)).toBe(true);
     expect(getSnapshot(false)).toBe(false);

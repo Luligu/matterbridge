@@ -1,13 +1,13 @@
 // vitest\matterbridgeDeviceTypes.requirements.test.ts
 
-/* eslint-disable simple-import-sort/imports */
-
 const NAME = 'MatterbridgeDevicetypesRequirements';
 
+// oxlint-disable-next-line import/no-namespace
 import * as devices from '@matter/node/devices';
+// oxlint-disable-next-line import/no-namespace
 import * as endpoints from '@matter/node/endpoints';
-
 import { setupTest } from '@matterbridge/vitest-utils';
+// oxfmt-ignore
 import {
   // Utility
   rootNode,
@@ -255,6 +255,7 @@ describe('Matterbridge device cluster mappings', () => {
   });
 
   for (const { name, mb, md } of entries) {
+    // oxlint-disable-next-line typescript/no-unnecessary-template-expression
     test(`${name}`, () => {
       expect.hasAssertions();
       const mandatoryServerIds = extractClusterIds(md.requirements?.server?.mandatory ?? {});

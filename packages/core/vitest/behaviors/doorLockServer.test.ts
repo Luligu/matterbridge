@@ -1,5 +1,8 @@
 // src\behaviors\doorLockServer.test.ts
 
+// TODO: analyze each rule
+// oxlint-disable vitest/require-mock-type-parameters
+
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
@@ -30,7 +33,7 @@ describe('Client clusters and behaviors', () => {
   let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
 
-  function supportedDoorLockServer() {
+  function supportedDoorLockServer(): typeof MatterbridgeDoorLockServer {
     return userPinDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
   }
 
@@ -48,12 +51,12 @@ describe('Client clusters and behaviors', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode
@@ -311,7 +314,7 @@ describe('Client clusters and behaviors', () => {
       nextUserIndex: null,
     };
 
-    userPinDoorLock.addCommandHandler('DoorLock.getUser', async () => handlerResponse);
+    userPinDoorLock.addCommandHandler('DoorLock.getUser',  () => handlerResponse);
 
     expect(await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 7 }))).toEqual(handlerResponse);
 

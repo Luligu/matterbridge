@@ -1,6 +1,6 @@
 // vitest/devices/base.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'BaseTest';
 const MATTER_PORT = 8000;
@@ -39,12 +39,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -76,7 +76,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

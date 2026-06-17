@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable no-param-reassign
+
 // Imports from @matter
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';

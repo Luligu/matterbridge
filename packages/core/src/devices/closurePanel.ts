@@ -21,6 +21,9 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable unicorn/no-negated-condition typescript/no-misused-spread
+
 // @matter
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';

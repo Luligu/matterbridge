@@ -1,5 +1,7 @@
 // vitest\matterbridge.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
+
 const NAME = 'MatterbridgeGlobal';
 const MATTER_PORT = 6000;
 
@@ -65,11 +67,11 @@ describe('Matterbridge', () => {
   (broadcastMessageHandlerBroadcastServerSpy as unknown as MockedFunction<(event: unknown) => void>).mockImplementation(() => {});
   requestBroadcastServerSpy.mockImplementation(() => {});
   respondBroadcastServerSpy.mockImplementation(() => {});
-  fetchBroadcastServerSpy.mockImplementation(async () => {
+  fetchBroadcastServerSpy.mockImplementation(() => {
     return Promise.resolve() as any;
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -161,6 +163,7 @@ describe('Matterbridge', () => {
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);
 
     // Responses
+    // oxlint-disable-next-line typescript/no-misused-promises
     const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation(async () => Promise.resolve());
     // prettier-ignore
     await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', result: { packageCommand: 'install', packageName: 'matterbridge', success: true } } as any);
@@ -385,11 +388,11 @@ describe('Matterbridge', () => {
     await invalidServerNode.close();
   });
 
-  test('hasParameter("debug") should return false', async () => {
+  test('hasParameter("debug") should return false', () => {
     expect(hasParameter('debug')).toBeFalsy();
   });
 
-  test('hasParameter("frontend") should return true', async () => {
+  test('hasParameter("frontend") should return true', () => {
     expect(hasParameter('frontend')).toBeTruthy();
   });
 
@@ -802,7 +805,7 @@ describe('Matterbridge', () => {
 
   test('setLogLevel LogLevel.INFO', async () => {
     Logger.level = MatterLogLevel.INFO;
-    matterbridge.setLogLevel(LogLevel.INFO);
+    await matterbridge.setLogLevel(LogLevel.INFO);
     expect((matterbridge as any).log.logLevel).toBe(LogLevel.INFO);
     expect((matterbridge as any).frontend.log.logLevel).toBe(LogLevel.INFO);
     expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.INFO);
@@ -813,7 +816,7 @@ describe('Matterbridge', () => {
   });
 
   test('setLogLevel LogLevel.DEBUG', async () => {
-    matterbridge.setLogLevel(LogLevel.DEBUG);
+    await matterbridge.setLogLevel(LogLevel.DEBUG);
     expect((matterbridge as any).log.logLevel).toBe(LogLevel.DEBUG);
     expect((matterbridge as any).frontend.log.logLevel).toBe(LogLevel.DEBUG);
     expect((matterbridge as any).plugins.log.logLevel).toBe(LogLevel.DEBUG);
@@ -880,6 +883,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -920,6 +924,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -959,6 +964,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1004,6 +1010,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1063,6 +1070,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1128,6 +1136,7 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
+          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);

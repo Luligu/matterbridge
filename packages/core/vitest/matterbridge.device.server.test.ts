@@ -11,7 +11,7 @@ import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { db, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
-import { type MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
@@ -40,7 +40,7 @@ describe('Matterbridge Device serverMode=server', () => {
   let matterbridge: Matterbridge;
   let serverDevice: MatterbridgeEndpoint;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -122,7 +122,7 @@ describe('Matterbridge Device serverMode=server', () => {
       matterbridge.plugins.once('added', (name) => {
         if (name === 'serverdevicetest') resolve();
       });
-      matterbridge.plugins.add('./packages/core/src/mock/pluginserverdevice');
+      void matterbridge.plugins.add('./packages/core/src/mock/pluginserverdevice');
     });
 
     expect(matterbridge.plugins.length).toBe(1);
@@ -140,7 +140,7 @@ describe('Matterbridge Device serverMode=server', () => {
       });
       const plugin = matterbridge.plugins.get('serverdevicetest');
       expect(plugin).toBeDefined();
-      if (plugin) matterbridge.plugins.load(plugin);
+      if (plugin) void matterbridge.plugins.load(plugin);
     });
 
     expect(matterbridge.plugins.size).toBe(1);
@@ -159,7 +159,7 @@ describe('Matterbridge Device serverMode=server', () => {
       });
       const plugin = matterbridge.plugins.get('serverdevicetest');
       expect(plugin).toBeDefined();
-      if (plugin) matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
+      if (plugin) void matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
     });
 
     expect(matterbridge.plugins.size).toBe(1);
@@ -243,7 +243,7 @@ describe('Matterbridge Device serverMode=server', () => {
     }
   }, 60000);
 
-  test('Check device server node online', async () => {
+  test('Check device server node online', () => {
     expect(serverDevice.serverNode).toBeDefined();
     expect(serverDevice.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(serverDevice.serverNode?.lifecycle.isOnline).toBeTruthy();

@@ -1,6 +1,6 @@
 // vitest/devices/temperatureControl.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'TemperatureControl';
 const MATTER_PORT = 8024;
@@ -34,12 +34,12 @@ describe('Matterbridge Temperature Control', () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();

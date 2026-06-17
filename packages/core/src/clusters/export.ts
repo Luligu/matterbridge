@@ -13,3 +13,6 @@
  * The 3 clusters present (ClosureControl, ClosureDimension, SoilMeasurement) are now all defined in matter.js.
  * Are there only to provide an example of custom clusters.
  */
+
+// oxlint-disable-next-line jsdoc/require-returns
+export const noop = (): void => undefined;

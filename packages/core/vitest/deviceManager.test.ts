@@ -9,7 +9,7 @@ import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { DeviceManager } from '../src/deviceManager.js';
-import { type MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -20,14 +20,14 @@ describe('DeviceManager', () => {
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
 
-  beforeAll(async () => {});
+  beforeAll(() => {});
 
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Close the test server
     testServer.close();
     // Restore all mocks
@@ -39,7 +39,7 @@ describe('DeviceManager', () => {
     expect(devices).toBeInstanceOf(DeviceManager);
   });
 
-  test('unknown server message type', async () => {
+  test('unknown server message type', () => {
     // @ts-expect-error -- Testing unknown message type
     expect(testServer.request({ type: 'devices_unknown', src: testServer.name, dst: 'devices', params: {} })).toBeUndefined();
   });
@@ -97,7 +97,7 @@ describe('DeviceManager', () => {
     expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).result.length).toBe(3);
   });
 
-  test('set without uniqueId to throw', async () => {
+  test('set without uniqueId to throw', () => {
     expect(() => devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1' } as unknown as MatterbridgeEndpoint)).toThrow();
   });
 
@@ -188,6 +188,7 @@ describe('DeviceManager', () => {
 
   test('async forEach allows for iteration over devices', async () => {
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       expect(device.name).toBeDefined();
       expect(device.serialNumber).toBeDefined();
@@ -200,6 +201,7 @@ describe('DeviceManager', () => {
 
   test('async forEach to not throw', async () => {
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       count++;
       throw new Error('Test error');
@@ -297,6 +299,7 @@ describe('DeviceManager', () => {
   test('async forEach to return immediately if no devices', async () => {
     expect(devices.length).toBe(0);
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       count++;
     });

@@ -1,5 +1,7 @@
 // vitest\frontend.websocket.test.ts
 
+// oxlint-disable typescript/no-misused-promises typescript/require-await typescript/explicit-function-return-type
+
 const MATTER_PORT = 9200;
 const FRONTEND_PORT = 8286;
 const NAME = 'FrontendWebsocket';
@@ -82,12 +84,12 @@ describe('Matterbridge frontend', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
 
@@ -152,7 +154,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 10000);
 
-  test('Frontend is running on http', async () => {
+  test('Frontend is running on http', () => {
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
@@ -672,7 +674,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API /api/install', async () => {
-    installPluginSpy.mockImplementationOnce(async (packageName: string) => {
+    installPluginSpy.mockImplementationOnce(async (_packageName: string) => {
       return Promise.resolve(true);
     });
     expect((matterbridge as any).plugins.size).toBe(3);

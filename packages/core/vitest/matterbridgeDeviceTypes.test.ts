@@ -1,15 +1,16 @@
 // vitest\matterbridgeDeviceTypes.test.ts
 
-/* eslint-disable simple-import-sort/imports */
-
 const NAME = 'MatterbridgeDevicetypes';
 
+// oxlint-disable-next-line import/no-namespace
 import * as devices from '@matter/node/devices';
 // @matter endpoints
+// oxlint-disable-next-line import/no-namespace
 import * as endpoints from '@matter/node/endpoints';
 import { OnOff } from '@matter/types/clusters/on-off';
-
 import { setupTest } from '@matterbridge/vitest-utils';
+
+// oxfmt-ignore
 import {
   DeviceTypeDefinition,
   getSupportedCluster,
@@ -130,12 +131,12 @@ describe('Matterbridge device types', () => {
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
 
-  const expectWithLog = (label: string, actual: unknown, expected: unknown) => {
+  const expectWithLog = (label: string, actual: unknown, expected: unknown): void => {
     if (actual !== expected) {
       // Provide a helpful diff on failure to ease Matter spec migration
       // eslint-disable-next-line no-console

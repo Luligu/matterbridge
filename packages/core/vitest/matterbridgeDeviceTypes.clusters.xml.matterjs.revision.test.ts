@@ -124,11 +124,11 @@ try {
 // Helper to read a cluster's revision across variations in @matter/types exports
 const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.revision ?? entry?.Base?.revision ?? entry?.Complete?.revision ?? entry?.CompleteInstance?.revision;
 
-function normalizeName(s: string) {
+function normalizeName(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-async function buildXmlIndex() {
+async function buildXmlIndex(): Promise<Map<string, number | undefined>> {
   const files = await readdir(XML_CLUSTERS_DIR);
   const index = new Map<string, number | undefined>();
   for (const f of files.filter((f) => f.endsWith('.xml'))) {
@@ -151,6 +151,7 @@ async function buildXmlIndex() {
   return index;
 }
 
+// oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
   describe('Matter 1.5.1 XML vs @matter/types cluster revisions dummy', () => {
     test(`Skipped: missing ${XML_CLUSTERS_DIR}`, () => {
@@ -266,7 +267,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s revision matches Matter 1.5.1 XML', async (display, entry) => {
+    test.each(cases)('Cluster %s revision matches Matter 1.5.1 XML',  (display, entry) => {
       const key = normalizeName(display);
       const xmlRev = xmlIndex.get(key);
       const typesRev = getClusterRevision(entry);

@@ -1,6 +1,6 @@
 // vitest/devices/oven.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Oven';
 const MATTER_PORT = 8011;
@@ -30,7 +30,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from '../../src/devices/oven.js';
 import { oven } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -45,12 +45,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a oven device', async () => {
+  test('create a oven device', () => {
     device = new Oven('Oven Test Device', 'OV123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('OvenTestDevice-OV123456');
@@ -122,7 +122,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -201,7 +201,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('cabinet1 forEachAttribute', async () => {
+  test('cabinet1 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -293,7 +293,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('cabinet2 forEachAttribute', async () => {
+  test('cabinet2 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

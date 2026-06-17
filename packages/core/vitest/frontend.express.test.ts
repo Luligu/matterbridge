@@ -1,9 +1,12 @@
 // vitest\frontend.express.test.ts
 
+// oxlint-disable typescript/prefer-nullish-coalescing
+
 const MATTER_PORT = 9100;
 const FRONTEND_PORT = 8285;
 const NAME = 'FrontendExpress';
 
+// oxlint-disable-next-line import/no-namespace
 import * as nodeFs from 'node:fs';
 import fs from 'node:fs/promises';
 import http from 'node:http';
@@ -29,6 +32,7 @@ const broadcastServerIsWorkerResponseSpy = vi.spyOn(BroadcastServer.prototype, '
 const broadcastServerBroadcastMessageHandlerSpy = vi.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
 const broadcastServerRequestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
 const broadcastServerRespondSpy = vi.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
+// oxlint-disable-next-line typescript/require-await
 const broadcastServerFetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
   return Promise.resolve() as any;
 });
@@ -67,12 +71,12 @@ describe('Matterbridge frontend express with http', () => {
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
 
-  const makeRequest = async (path: string, method: string, body?: any) => {
+  const makeRequest = async (path: string, method: string, body?: any): Promise<{ status: number; body: any }> => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const data = body ? JSON.stringify(body) : null;
       const req = http.request(
@@ -94,6 +98,7 @@ describe('Matterbridge frontend express with http', () => {
                 body: JSON.parse(responseBody),
               });
             } catch (error) {
+              // oxlint-disable-next-line promise/no-multiple-resolved
               resolve({
                 status: res.statusCode || 500,
                 body: responseBody,
@@ -108,6 +113,7 @@ describe('Matterbridge frontend express with http', () => {
     });
   };
 
+  // oxlint-disable-next-line typescript/explicit-function-return-type
   const makeMultipartRequest = async (path: string, filename: string, fileContent: Buffer) => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
@@ -151,7 +157,7 @@ describe('Matterbridge frontend express with http', () => {
     });
   };
 
-  const makeMultipartRequestWithoutFile = async (path: string, filename: string) => {
+  const makeMultipartRequestWithoutFile = async (path: string, filename: string): Promise<{ status: number; body: any }> => {
     return new Promise<{ status: number; body: any }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const formData = [`--${boundary}`, `Content-Disposition: form-data; name="filename"`, '', filename, `--${boundary}--`, ''].join('\r\n');
@@ -182,6 +188,7 @@ describe('Matterbridge frontend express with http', () => {
     });
   };
 
+  // oxlint-disable-next-line typescript/explicit-function-return-type
   const mockDownloadErrorOnce = () =>
     vi.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
       const done = args[args.length - 1];
@@ -190,6 +197,7 @@ describe('Matterbridge frontend express with http', () => {
       }
     }) as typeof expressResponse.download);
 
+  // oxlint-disable-next-line typescript/explicit-function-return-type
   const seedTempZip = async (filename: string) => {
     await fs.copyFile(TEST_ZIP_FIXTURE, path.join(os.tmpdir(), filename));
   };
@@ -231,7 +239,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
   }, 60000);
 
-  test('Frontend is running on http', async () => {
+  test('Frontend is running on http', () => {
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();

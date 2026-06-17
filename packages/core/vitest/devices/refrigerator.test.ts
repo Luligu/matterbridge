@@ -1,6 +1,6 @@
 // vitest/devices/refrigerator.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Refrigerator';
 const MATTER_PORT = 8012;
@@ -29,7 +29,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
 import { refrigerator } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -44,12 +44,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a refrigerator device', async () => {
+  test('create a refrigerator device', () => {
     device = new Refrigerator('Refrigerator Test Device', 'RF123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('RefrigeratorTestDevice-RF123456');
@@ -147,7 +147,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await device.triggerDoorOpenState(false)).toBeDefined();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -241,7 +241,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('cabinet1 forEachAttribute', async () => {
+  test('cabinet1 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -316,7 +316,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('cabinet2 forEachAttribute', async () => {
+  test('cabinet2 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

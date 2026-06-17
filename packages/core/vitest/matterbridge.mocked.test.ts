@@ -1,5 +1,7 @@
 // vitest\matterbridge.mocked.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters typescript/require-await typescript/no-misused-promises typescript/consistent-return typescript/non-nullable-type-assertion-style
+
 const NAME = 'MatterbridgeMocked';
 
 import fs, { existsSync, mkdirSync, type PathLike, rmSync, unlinkSync, writeFileSync } from 'node:fs';
@@ -716,7 +718,7 @@ describe('Matterbridge mocked', () => {
     plugins.array()[3].private = true;
     plugins.array()[3].tarballPath = 'matterbridge-mock4-1.0.4._tgz';
     await plugins.load(plugins.array()[3]);
-    matterbridge.setLogLevel(LogLevel.NOTICE);
+    await matterbridge.setLogLevel(LogLevel.NOTICE);
     expect((plugins as any).log.logLevel).toBe(LogLevel.NOTICE);
     expect(plugins.array()[3].private).toBe(true);
     expect(plugins.array()[3].tarballPath).toBe('matterbridge-mock4-1.0.4._tgz');
@@ -1123,7 +1125,7 @@ describe('Matterbridge mocked', () => {
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Getting global node_modules directory...'));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Error: Test error for getGlobalNodeModules'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error getting global node_modules directory: Test error for getGlobalNodeModules'));
 
     getGlobalNodeModulesMock.mockImplementation(async () => {
       return Promise.resolve('usr/local/lib/node_modules');

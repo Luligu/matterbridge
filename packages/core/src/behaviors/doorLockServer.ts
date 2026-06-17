@@ -22,11 +22,13 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { DoorLockServer } from '@matter/node/behaviors/door-lock';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
@@ -43,10 +45,10 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
   /**
    * Initializes state and logs the initialization of the server.
    */
-  override async initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeDoorLockServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await super.initialize(); // Does a check of supportedOperatingModes
+    super.initialize(); // Does a check of supportedOperatingModes
   }
 
   /**

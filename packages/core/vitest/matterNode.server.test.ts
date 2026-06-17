@@ -1,5 +1,7 @@
 // vitest\matterNode.server.test.ts
 
+// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing typescript/explicit-function-return-type
+
 const MATTER_PORT = 10020;
 const NAME = 'MatterNodeServer';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);
@@ -112,14 +114,14 @@ describe('MatterNode server', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
-  beforeAll(async () => {
+  beforeAll( () => {
     // process.stdout.write('=== Starting MatterNode server tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -171,12 +173,12 @@ describe('MatterNode server', () => {
       .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
       .addRequiredClusterServers();
     tmpSensor.plugin = 'matterbridge-mock1';
-    const spy = vi.spyOn(MatterNode.prototype, 'create').mockImplementationOnce(async () => {
+    const spy = vi.spyOn(MatterNode.prototype, 'create').mockImplementationOnce( () => {
       throw new Error('Simulated create error');
     });
     expect(await matter.addBridgedEndpoint('matterbridge-mock1', tmpSensor)).toBeUndefined();
     spy.mockRestore();
-    matter.dependantMatterNodes.get('Temperaturesensor')?.destroy();
+    void matter.dependantMatterNodes.get('Temperaturesensor')?.destroy();
     expect(await matter.addBridgedEndpoint('matterbridge-mock1', tmpSensor)).not.toBeUndefined();
   });
 

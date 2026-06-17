@@ -22,6 +22,11 @@
  * limitations under the License.
  */
 
+// WARNING: Not released yet and excluded from Vitest coverage
+
+// TODO: analyze each rule
+// oxlint-disable no-param-reassign
+
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { EndpointNumber } from '@matter/types/datatype';
@@ -39,6 +44,7 @@ import type {
 } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidNumber, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger
@@ -47,12 +53,9 @@ import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 
 import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { type Backend } from './backend.js';
+import type { Backend } from './backend.js';
 
-// istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BackendWsServer loaded.\u001B[40;0m');
+logModuleLoaded('BackendWsServer');
 
 /**
  * Class representing a WebSocket server for frontend connections.
@@ -97,7 +100,6 @@ export class BackendWsServer {
    * Destroy the BroadcastServer.
    */
   destroy(): void {
-    this.server.off('broadcast_message', this.broadcastMsgHandler.bind(this));
     this.server.close();
   }
 
@@ -117,6 +119,8 @@ export class BackendWsServer {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
+        default:
+        //
       }
     }
   }
@@ -126,6 +130,7 @@ export class BackendWsServer {
    *
    * @returns {Promise<WebSocketServer | undefined>} A promise that resolves when the WebSocket server is successfully started.
    */
+  // oxlint-disable-next-line typescript/require-await
   async start(): Promise<WebSocketServer | undefined> {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
@@ -247,10 +252,11 @@ export class BackendWsServer {
    * @param {WebSocket.RawData} rawData - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
+  // oxlint-disable-next-line typescript/require-await
   private async wsMessageHandler(client: WebSocket, rawData: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 
-    const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse) => {
+    const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse): void => {
       if (client.readyState === client.OPEN) {
         // istanbul ignore else
         if ('response' in data) {
@@ -260,7 +266,7 @@ export class BackendWsServer {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
         }
         // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
-        const bigintReplacer = (_: string, v: unknown) => (typeof v === 'bigint' ? `${v}n` : v);
+        const bigintReplacer = (_: string, v: unknown): unknown => (typeof v === 'bigint' ? `${v}n` : v);
         client.send(JSON.stringify(data, bigintReplacer));
       } else {
         this.log.error('Cannot send api response, client not connected');
@@ -290,7 +296,7 @@ export class BackendWsServer {
    *
    * @param {WsMessageBroadcast} msg - The message to send.
    */
-  wssBroadcastMessage(msg: WsMessageBroadcast) {
+  wssBroadcastMessage(msg: WsMessageBroadcast): void {
     if (!this.hasActiveClients()) return;
     try {
       const stringifiedMsg = JSON.stringify(msg);
@@ -369,7 +375,7 @@ export class BackendWsServer {
    * @param {ApiMatter} params.matter - The matter device that has changed. Required if changed is 'matter'.
    * @param {string} params.lock - The name of the plugin that has locked the refresh. Required if changed is 'plugins'.
    */
-  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }) {
+  wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a refresh required message to all connected clients');
@@ -382,7 +388,7 @@ export class BackendWsServer {
    * @param {boolean} snackbar - If true, a snackbar message will be sent to all connected clients. Default is true.
    * @param {boolean} fixed - If true, the restart is fixed and will not be reset by plugin restarts. Default is false.
    */
-  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false) {
+  wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart required message to all connected clients');
@@ -399,7 +405,7 @@ export class BackendWsServer {
    *
    * @param {boolean} snackbar - If true, the snackbar message will be cleared from all connected clients. Default is true.
    */
-  wssSendRestartNotRequired(snackbar: boolean = true) {
+  wssSendRestartNotRequired(snackbar: boolean = true): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a restart not required message to all connected clients');
@@ -415,7 +421,7 @@ export class BackendWsServer {
    *
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
-  wssSendUpdateRequired(devVersion: boolean = false) {
+  wssSendUpdateRequired(devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an update required message to all connected clients');
@@ -430,7 +436,7 @@ export class BackendWsServer {
    * @param {number} cpuUsage - The CPU usage percentage to send.
    * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
    */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number) {
+  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
@@ -455,7 +461,7 @@ export class BackendWsServer {
    * @param {string} external - The external memory in bytes.
    * @param {string} arrayBuffers - The array buffers memory in bytes.
    */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) {
+  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
@@ -475,7 +481,7 @@ export class BackendWsServer {
    * @param {string} systemUptime - The system uptime in a human-readable format.
    * @param {string} processUptime - The process uptime in a human-readable format.
    */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string) {
+  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
@@ -493,7 +499,7 @@ export class BackendWsServer {
    * @remarks
    * If timeout is 0, the snackbar message will be displayed until closed by the user.
    */
-  wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info') {
+  wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a snackbar message to all connected clients');
@@ -506,7 +512,7 @@ export class BackendWsServer {
    *
    * @param {string} message - The message to send.
    */
-  wssSendCloseSnackbarMessage(message: string) {
+  wssSendCloseSnackbarMessage(message: string): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending a close snackbar message to all connected clients');
@@ -534,7 +540,7 @@ export class BackendWsServer {
     cluster: string,
     attribute: string,
     value: number | string | boolean | null,
-  ) {
+  ): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an attribute update message to all connected clients');

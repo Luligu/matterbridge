@@ -22,6 +22,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// oxlint-disable typescript/no-unsafe-type-assertion
 
 /*
  *  Jest Matterbridge Test Environment helpers.
@@ -66,8 +67,8 @@ import path from 'node:path';
 
 // @matter
 import { Environment, RuntimeService } from '@matter/general';
-import { type Endpoint, type ServerNode } from '@matter/node';
-import { type AggregatorEndpoint } from '@matter/node/endpoints';
+import type { Endpoint, ServerNode } from '@matter/node';
+import type { AggregatorEndpoint } from '@matter/node/endpoints';
 import { MdnsService } from '@matter/protocol';
 // @matterbridge
 import { MATTER_STORAGE_DIR, NODE_STORAGE_DIR } from '@matterbridge/types';
@@ -381,10 +382,10 @@ export async function startMatterbridgeEnvironment(port: number = 5540, createOn
   // Wait for the server to be online
   expect(server.lifecycle.isOnline).toBeFalsy();
   await new Promise<void>((resolve, reject) => {
-    server.lifecycle.online.on(async () => {
+    server.lifecycle.online.on(() => {
       resolve();
     });
-    server.start().catch((err) => reject(err));
+    server.start().catch((err: unknown) => reject(err));
   });
 
   // Check if the server is online

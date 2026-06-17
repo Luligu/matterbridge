@@ -38,7 +38,7 @@ process.argv = [
 describe('Matterbridge  Device serverMode=matter', () => {
   let matterbridge: Matterbridge;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -120,7 +120,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
       matterbridge.plugins.once('added', (name) => {
         if (name === 'matterdevicetest') resolve();
       });
-      matterbridge.plugins.add('./packages/core/src/mock/pluginmatterdevice');
+      void matterbridge.plugins.add('./packages/core/src/mock/pluginmatterdevice');
     });
 
     expect(matterbridge.plugins.length).toBe(1);
@@ -138,7 +138,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
       });
       const plugin = matterbridge.plugins.get('matterdevicetest');
       expect(plugin).toBeDefined();
-      if (plugin) matterbridge.plugins.load(plugin);
+      if (plugin) void matterbridge.plugins.load(plugin);
     });
 
     expect(matterbridge.plugins.size).toBe(1);
@@ -157,7 +157,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
       });
       const plugin = matterbridge.plugins.get('matterdevicetest');
       expect(plugin).toBeDefined();
-      if (plugin) matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
+      if (plugin) void matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
     });
 
     expect(matterbridge.plugins.size).toBe(1);

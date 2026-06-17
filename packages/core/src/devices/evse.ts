@@ -22,20 +22,24 @@
  * limitations under the License.
  */
 
+// oxlint-disable unicorn/no-negated-condition typescript/prefer-nullish-coalescing typescript/no-unsafe-type-assertion
+
 // Imports from @matter
-import { type MaybePromise } from '@matter/general';
+import type { MaybePromise } from '@matter/general';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { debugStringify } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { deviceEnergyManagement, electricalSensor, evse, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 /**
  * Matterbridge endpoint representing an EVSE (electric vehicle supply equipment).
@@ -80,7 +84,7 @@ export class Evse extends MatterbridgeEndpoint {
       .createDefaultEnergyEvseModeClusterServer(currentMode, supportedModes)
       .createDefaultTemperatureMeasurementClusterServer(24_00) // Internal temperature 24°C in centi-degrees
       .addRequiredClusterServers();
-    void this.addFixedLabel('composed', 'EVSE').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'EVSE'), this.log, 'Error adding composed label to EVSE');
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()
@@ -201,7 +205,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
    */
   override setTargets(request: EnergyEvse.SetTargetsRequest): MaybePromise {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SetTargets request ${request.chargingTargetSchedules} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`SetTargets request ${debugStringify(request.chargingTargetSchedules)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // The implementation should store the provided charging targets and use them to manage the charging process according to the user's preferences.
     // super.setTargets();
     // setTargets is not implemented in matter.js

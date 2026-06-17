@@ -32,7 +32,7 @@ const zeroEntry: TrackerSnapshot = {
 
 const mutatedIndices = new Set<number>();
 
-function configureHistoryEntry(index: number, overrides: Partial<TrackerSnapshot>) {
+function configureHistoryEntry(index: number, overrides: Partial<TrackerSnapshot>): void {
   Object.assign(Tracker.history[index], zeroEntry, overrides);
   mutatedIndices.add(index);
 }

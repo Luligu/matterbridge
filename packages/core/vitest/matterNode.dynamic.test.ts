@@ -1,5 +1,7 @@
 // vitest\matterNode.dynamic.test.ts
 
+// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing typescript/explicit-function-return-type
+
 const MATTER_PORT = 10030;
 const NAME = 'MatterNodeDynamic';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);
@@ -116,14 +118,14 @@ describe('MatterNode dynamic', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
-  beforeAll(async () => {
+  beforeAll( () => {
     // process.stdout.write('=== Starting MatterNode childbridge tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge, 'matterbridge-mock1');
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });

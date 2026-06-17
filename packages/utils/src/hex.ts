@@ -140,7 +140,6 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
     }
 
     if (trimmedLine.startsWith('-----END')) {
-      // eslint-disable-next-line no-useless-assignment
       inContent = false;
       break;
     }

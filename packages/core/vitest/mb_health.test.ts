@@ -1,5 +1,7 @@
 // vitest\mb_health.test.ts
 
+// oxlint-disable typescript/explicit-function-return-type vitest/require-mock-type-parameters
+
 import type { Mock } from 'vitest';
 
 let httpRequestImpl: Mock<(...args: any[]) => any>;

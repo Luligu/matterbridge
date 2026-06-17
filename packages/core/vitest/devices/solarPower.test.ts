@@ -1,6 +1,6 @@
 // vitest/devices/solarPower.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'SolarPower';
 const MATTER_PORT = 8014;
@@ -40,12 +40,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a solar power device', async () => {
+  test('create a solar power device', () => {
     device = new SolarPower('Solar Power Test Device', 'SP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('SolarPowerTestDevice-SP123456');
@@ -83,7 +83,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

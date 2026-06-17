@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
-import { IdentifyServer } from '@matter/node/behaviors/identify';
-import { type Identify } from '@matter/types/clusters/identify';
+// oxlint-disable typescript/no-unsafe-type-assertion
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { IdentifyServer } from '@matter/node/behaviors/identify';
+import type { Identify } from '@matter/types/clusters/identify';
+
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

@@ -1,5 +1,7 @@
 // vitest\pluginManager.test.ts
 
+// oxlint-disable no-use-before-define
+
 const NAME = 'PluginManager';
 const MATTER_PORT = 12000;
 const NPM_CONFIG_PREFIX = path.resolve(path.join('.cache', '.npm-global'));
@@ -17,7 +19,7 @@ import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@mat
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
-import { type MatterbridgePlatform } from '../src/matterbridgePlatform.js';
+import type { MatterbridgePlatform } from '../src/matterbridgePlatform.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
 import { closeMdnsInstance, closeRuntimeInstance, destroyInstance } from './vitestUtils.js';
 
@@ -61,16 +63,16 @@ describe('PluginManager', () => {
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
 
-  beforeAll(async () => {});
+  beforeAll(() => {});
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach(() => {});
 
-  afterAll(async () => {
+  afterAll(() => {
     // Close the test server
     testServer.close();
     // Restore all mocks
@@ -98,7 +100,7 @@ describe('PluginManager', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
   });
 
-  test('checkDependencies should detect forbidden package prefixes across dependency types', async () => {
+  test('checkDependencies should detect forbidden package prefixes across dependency types', () => {
     expect(
       plugins.checkDependencies({
         dependencies: { semver: '^7.7.1' },
@@ -153,7 +155,7 @@ describe('PluginManager', () => {
     ).toBe(false);
   });
 
-  test('logInvalidDependencies should log errors and notify frontend', async () => {
+  test('logInvalidDependencies should log errors and notify frontend', () => {
     (plugins as any).logInvalidDependencies(
       { name: 'test-plugin' },
       {
@@ -186,6 +188,7 @@ describe('PluginManager', () => {
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
     expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
+    // oxlint-disable-next-line typescript/require-await
     addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
       return null;
     });
@@ -335,6 +338,7 @@ describe('PluginManager', () => {
 
   test('async forEach to return', async () => {
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       count++;
     });
@@ -594,7 +598,7 @@ describe('PluginManager', () => {
     expect(plugins.length).toBe(3);
   });
 
-  test('toApiPlugin includes matter data when the plugin has a server node', async () => {
+  test('toApiPlugin includes matter data when the plugin has a server node', () => {
     plugins.set({
       name: 'matterbridge-mockmatter',
       path: './packages/core/src/mock/plugin1/package.json',
@@ -683,6 +687,7 @@ describe('PluginManager', () => {
 
   test('async forEach allows for iteration over plugins', async () => {
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       expect(plugin.name).toBeDefined();
       expect(plugin.path).toBeDefined();
@@ -701,6 +706,7 @@ describe('PluginManager', () => {
 
   test('async forEach to not throw', async () => {
     let count = 0;
+    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       count++;
       throw new Error('Test error');
@@ -815,7 +821,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Resolved plugin path'));
   });
 
-  test('install uninstall plugin', async () => {
+  test('install uninstall plugin', () => {
     plugins.install('matterbridge-websocket');
     plugins.uninstall('matterbridge-websocket');
     expect(plugins.length).toBe(3);
@@ -1098,20 +1104,20 @@ describe('PluginManager', () => {
     (plugins as any)._plugins.delete('matterbridge-test');
   });
 
-  test('parse author', async () => {
+  test('parse author', () => {
     expect(plugins.getAuthor({})).toBe('Unknown author');
     expect(plugins.getAuthor({ author: undefined } as any)).toBe('Unknown author');
     expect(plugins.getAuthor({ author: 'String name' })).toBe('String name');
     expect(plugins.getAuthor({ author: { name: 'Object name' } })).toBe('Object name');
   });
 
-  test('parse description', async () => {
+  test('parse description', () => {
     expect(plugins.getDescription({})).toBe('No description');
     expect(plugins.getDescription({ description: undefined } as any)).toBe('No description');
     expect(plugins.getDescription({ description: 'String description' })).toBe('String description');
   });
 
-  test('parse homepage', async () => {
+  test('parse homepage', () => {
     expect(plugins.getHomepage({})).toBe(undefined);
     expect(plugins.getHomepage({ homepage: undefined } as any)).toBe(undefined);
     expect(plugins.getHomepage({ homepage: 'HomeUrl' })).toBe(undefined);
@@ -1121,7 +1127,7 @@ describe('PluginManager', () => {
     expect(plugins.getHomepage({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge');
   });
 
-  test('parse help', async () => {
+  test('parse help', () => {
     expect(plugins.getHelp({})).toBe(undefined);
     expect(plugins.getHelp({ help: 'HelpUrl' })).toBe(undefined);
     expect(plugins.getHelp({ help: 'http://HelpUrl' })).toBe('http://HelpUrl');
@@ -1132,7 +1138,7 @@ describe('PluginManager', () => {
     expect(plugins.getHelp({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/README.md');
   });
 
-  test('parse changelog', async () => {
+  test('parse changelog', () => {
     expect(plugins.getChangelog({})).toBe(undefined);
     expect(plugins.getChangelog({ changelog: 'ChangelogUrl' })).toBe(undefined);
     expect(plugins.getChangelog({ changelog: 'http://ChangelogUrl' })).toBe('http://ChangelogUrl');
@@ -1143,7 +1149,7 @@ describe('PluginManager', () => {
     expect(plugins.getChangelog({ repository: { url: 'git+https://github.com/Luligu/matterbridge.git' } })).toBe('https://github.com/Luligu/matterbridge/blob/main/CHANGELOG.md');
   });
 
-  test('parse funding', async () => {
+  test('parse funding', () => {
     expect(plugins.getFunding({})).toBe(undefined);
     expect(plugins.getFunding({ funding: 'FundingUrl' })).toBe(undefined);
     expect(plugins.getFunding({ funding: 'https://www.buymeacoffee.com/luligugithub' })).toBe('https://www.buymeacoffee.com/luligugithub');
@@ -1199,7 +1205,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to enable plugin ${plg}./packages/core/src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
-    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     expect(await plugins.enable('./packages/core/src/mock/plugin3')).toBeNull();
@@ -1225,7 +1231,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to disable plugin ${plg}./packages/core/src/mock/plugintest/package.json${er}: plugin not registered`);
 
     loggerLogSpy.mockClear();
-    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     expect(await plugins.disable('./packages/core/src/mock/plugin3')).toBeNull();
@@ -1264,7 +1270,7 @@ describe('PluginManager', () => {
       homepage: 'https://example.com',
       private: true,
     });
-    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     expect(await plugins.remove('./packages/core/src/mock/plugin3')).toBeNull();
@@ -1293,7 +1299,7 @@ describe('PluginManager', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Removed plugin ${plg}matterbridge-mock3${nf}`);
 
     loggerLogSpy.mockClear();
-    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(async () => {
+    vi.spyOn(plugins, 'saveToStorage').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     expect(await plugins.add('./packages/core/src/mock/plugin3')).toBeNull();
@@ -1455,6 +1461,7 @@ describe('PluginManager', () => {
 
   test('load default config plugin matterbridge-mock4', async () => {
     let configFileName = path.join(NPM_CONFIG_PREFIX, 'node_modules', `matterbridge-mock4`, `matterbridge-mock4.config.json`);
+    // oxlint-disable-next-line typescript/explicit-function-return-type
     const deleteConfig = async () => {
       try {
         await fs.unlink(configFileName);
@@ -1472,7 +1479,7 @@ describe('PluginManager', () => {
 
     // Test write error
     await deleteConfig();
-    vi.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
+    vi.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Test write error');
     });
     let config = await plugins.loadConfig(plugin);
@@ -1485,7 +1492,7 @@ describe('PluginManager', () => {
 
     // Test access error
     await deleteConfig();
-    vi.spyOn(fs, 'access').mockImplementationOnce(async () => {
+    vi.spyOn(fs, 'access').mockImplementationOnce(() => {
       throw new Error('Test access error');
     });
     config = await plugins.loadConfig(plugin);
@@ -1561,7 +1568,7 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
 
     // Test save config write error from plugin
-    vi.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
+    vi.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     await expect(plugins.saveConfigFromPlugin(plugin)).rejects.toThrow();
@@ -1597,7 +1604,7 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
 
     // Test save config write error from json
-    vi.spyOn(fs, 'writeFile').mockImplementationOnce(async () => {
+    vi.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     config = await plugins.loadConfig(plugin);
@@ -1606,6 +1613,7 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
 
     // Test save config onConfigChanged error from json
+    // oxlint-disable-next-line typescript/require-await
     vi.spyOn(plugin.platform, 'onConfigChanged').mockImplementationOnce(async () => {
       throw new Error('Test error');
     });
@@ -1828,7 +1836,7 @@ describe('PluginManager', () => {
     expect(plugin.configured).toBeFalsy();
     expect(plugin.platform).toBeDefined();
     if (!plugin.platform) return;
-    vi.spyOn(plugin.platform, 'onStart').mockImplementationOnce(async () => {
+    vi.spyOn(plugin.platform, 'onStart').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     const result = await plugins.start(plugin, 'Test with Jest', false);
@@ -1908,7 +1916,7 @@ describe('PluginManager', () => {
 
     // Spy on and mock the configure method to throw an error once
     if (plugin.platform) {
-      const configureSpy = vi.spyOn(plugin.platform, 'onConfigure').mockImplementationOnce(async () => {
+      const configureSpy = vi.spyOn(plugin.platform, 'onConfigure').mockImplementationOnce(() => {
         throw new Error('Test error');
       });
     }
@@ -1971,7 +1979,7 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
     expect(plugin.platform).toBeDefined();
     if (!plugin.platform) return;
-    vi.spyOn(plugin.platform, 'onShutdown').mockImplementationOnce(async () => {
+    vi.spyOn(plugin.platform, 'onShutdown').mockImplementationOnce(() => {
       throw new Error('Test error');
     });
     result = await plugins.shutdown(plugin, 'Test with Jest', true, false);
@@ -2047,7 +2055,7 @@ describe('PluginManager', () => {
     config.whiteList = ['No devices'];
     await plugins.saveConfigFromJson(plugin, config);
 
-    plugins.load(plugin, true, 'Test with Jest', true);
+    void plugins.load(plugin, true, 'Test with Jest', true);
     expect(plugin.loaded).toBe(undefined);
     expect(plugin.started).toBe(undefined);
     expect(plugin.configured).toBe(undefined);
@@ -2077,11 +2085,11 @@ describe('PluginManager', () => {
     plugin = await plugins.shutdown(plugin, 'Test with Jest', true);
     expect(plugin).not.toBeUndefined();
 
+    // oxlint-disable-next-line typescript/non-nullable-type-assertion-style
     await plugins.shutdown(plugin as Plugin, 'Test with Jest');
   });
 
   // Useless test to uninstall matterbridge globally and mocked plugins
-  // eslint-disable-next-line vitest/no-commented-out-tests
   /*
   test('uninstall matterbridge globally and mocked plugins', async () => {
     execSync(`npm uninstall matterbridge --silent --prefix=${NPM_CONFIG_PREFIX}`, {

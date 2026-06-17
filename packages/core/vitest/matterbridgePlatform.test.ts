@@ -1,5 +1,6 @@
 // vitest\matterbridgePlatform.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters typescript/prefer-nullish-coalescing
 /* eslint-disable vitest/no-conditional-expect */
 
 const NAME = 'MatterbridgePlatform';
@@ -80,7 +81,7 @@ describe('Matterbridge platform', () => {
     matterbridge = { ...getMatterbridge(), log: log } as PlatformMatterbridge;
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -160,6 +161,7 @@ describe('Matterbridge platform', () => {
     const brand = Object.getOwnPropertySymbols(guardPlatform).find((symbol) => symbol.description === 'MatterbridgePlatform.brand');
 
     expect(isMatterbridgePlatform(guardPlatform)).toBe(true);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(isMatterbridgePlatform(undefined)).toBe(false);
     expect(isMatterbridgePlatform(null)).toBe(false);
     expect(isMatterbridgePlatform('string')).toBe(false);
@@ -356,7 +358,7 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
-  it('should validate with device entity black list and entity black list', async () => {
+  it('should validate with device entity black list and entity black list',  () => {
     platform.config.entityBlackList = ['blackEntity'];
     platform.config.deviceEntityBlackList = { device1: ['blackEntityDevice1'] };
     expect(platform.validateEntity('any', 'whiteEntity')).toBe(true);
@@ -373,7 +375,7 @@ describe('Matterbridge platform', () => {
     platform.config.deviceEntityBlackList = {};
   });
 
-  it('should not create storage manager without a name', async () => {
+  it('should not create storage manager without a name', () => {
     expect(() => {
       // @ts-expect-error access private constructor
       new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
@@ -386,7 +388,7 @@ describe('Matterbridge platform', () => {
     }).toThrow();
   });
 
-  it('should not create storage manager with name empty', async () => {
+  it('should not create storage manager with name empty', () => {
     expect(() => {
       // @ts-expect-error access private constructor
       new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform' }), {
@@ -492,7 +494,7 @@ describe('Matterbridge platform', () => {
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
     platform.setSelectDevice('serial1', 'name1', 'url1', 'hub');
-    platform.clearDeviceSelect('serial1');
+    await platform.clearDeviceSelect('serial1');
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
     await (platform as any).destroy();
@@ -511,7 +513,7 @@ describe('Matterbridge platform', () => {
     expect(platform.context).toBeDefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgePlatform for plugin matterbridge-jest is fully initialized`);
     platform.setSelectEntity('name1', 'description1', 'component');
-    platform.clearEntitySelect('name1');
+    await platform.clearEntitySelect('name1');
     expect(platform.getSelectDevices()).toHaveLength(0);
     expect(platform.getSelectEntities()).toHaveLength(0);
     await (platform as any).destroy();
@@ -694,11 +696,11 @@ describe('Matterbridge platform', () => {
     await flushAsync();
   });
 
-  test('wssSendRestartRequired', async () => {
+  test('wssSendRestartRequired',  () => {
     expect(platform.wssSendRestartRequired()).toBeUndefined();
   });
 
-  test('wssSendSnackbarMessage', async () => {
+  test('wssSendSnackbarMessage',  () => {
     expect(platform.wssSendSnackbarMessage('Test message')).toBeUndefined();
   });
 
@@ -736,11 +738,11 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform test', 'test reason');
   });
 
-  test('getDevice should return []', async () => {
+  test('getDevice should return []',  () => {
     expect(platform.getDevices()).toEqual([]);
   });
 
-  test('setMatterNode should not set helpers', async () => {
+  test('setMatterNode should not set helpers',  () => {
     // @ts-expect-error - setMatterNode is intentionally private and has already been called
     expect(platform.setMatterNode).toBeUndefined();
   });

@@ -1,5 +1,7 @@
 // vitest\mb_mdns.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
+
 import os from 'node:os';
 
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
@@ -9,7 +11,7 @@ const scheduledIntervals: Array<{ callback: () => void; delay: number | undefine
 const scheduledTimeouts: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];
 
 class MockMdns {
-  static clear() {
+  static clear(): void {
     mockMdnsInstances.length = 0;
   }
 

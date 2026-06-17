@@ -1,5 +1,7 @@
 // vitest\backendWsServer.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
+
 const NAME = 'BackendWsServer';
 
 import { EventEmitter } from 'node:events';
@@ -10,7 +12,7 @@ import type { SharedMatterbridge } from '@matterbridge/types';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
-import { type Backend } from '../src/backend.js';
+import type { Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
 
 // Spy on BroadcastServer methods
@@ -43,7 +45,7 @@ describe('BackendWsServer', () => {
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -169,7 +171,7 @@ describe('BackendWsServer', () => {
     }
   });
 
-  test('Send helpers (active + inactive clients)', async () => {
+  test('Send helpers (active + inactive clients)', () => {
     // No clients => early returns
     expect(wsServer.hasActiveClients()).toBe(false);
     wsServer.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log', success: true } as any);
@@ -199,6 +201,7 @@ describe('BackendWsServer', () => {
     const client: any = new FakeClient();
     (wsServer as any).webSocketServer = {
       clients: new Set([client]),
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       close: (cb: (error?: Error) => void) => cb(),
       removeAllListeners: vi.fn(),
     };
@@ -245,6 +248,7 @@ describe('BackendWsServer', () => {
     const stopClient: any = new FakeClientForStop();
     (wsServer as any).webSocketServer = {
       clients: new Set([stopClient]),
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       close: (cb: (error?: Error) => void) => cb(new Error('close failed')),
       removeAllListeners: vi.fn(),
     };
@@ -254,6 +258,7 @@ describe('BackendWsServer', () => {
     const stopClient2: any = new FakeClientForStop();
     (wsServer as any).webSocketServer = {
       clients: new Set([stopClient2]),
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       close: (cb: (error?: Error) => void) => cb(),
       removeAllListeners: vi.fn(),
     };
@@ -264,7 +269,7 @@ describe('BackendWsServer', () => {
     await wsServer.stop();
   });
 
-  test('Destroy', async () => {
+  test('Destroy', () => {
     wsServer.destroy();
 
     const server: any = (wsServer as any).server;

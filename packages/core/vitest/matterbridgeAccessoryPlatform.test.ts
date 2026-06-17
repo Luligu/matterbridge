@@ -37,7 +37,7 @@ describe('Matterbridge accessory platform', () => {
     matterbridge = { ...getMatterbridge(), log: log } as PlatformMatterbridge;
   }, 30000);
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -66,6 +66,7 @@ describe('Matterbridge accessory platform', () => {
     expect(platform.type).toBe('AccessoryPlatform');
     expect(platform.config.type).toBe('AccessoryPlatform');
     expect(isMatterbridgeAccessoryPlatform(platform)).toBe(true);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(isMatterbridgeAccessoryPlatform(undefined)).toBe(false);
     expect(isMatterbridgeAccessoryPlatform(null)).toBe(false);
     expect(isMatterbridgeAccessoryPlatform('string')).toBe(false);

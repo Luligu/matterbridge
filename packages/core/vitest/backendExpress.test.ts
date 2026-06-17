@@ -1,5 +1,7 @@
 // vitest\backendExpress.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters typescript/prefer-nullish-coalescing no-use-before-define
+
 const NAME = 'BackendExpress';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);
 
@@ -22,7 +24,7 @@ import type express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
-import { type Backend } from '../src/backend.js';
+import type { Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
 
 const TEST_ZIP_FIXTURE = new URL('../src/mock/test.zip', import.meta.url);
@@ -69,16 +71,26 @@ describe('BackendExpress', () => {
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
 
   const MAX_CAPTURE_BYTES = 32 * 1024;
 
-  const delay = async (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  const delay = async (ms: number): Promise<void> => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-  const makeRequest = async (reqPath: string, method: string, body?: unknown) => {
+  const makeRequest = async (
+    reqPath: string,
+    method: string,
+    body?: unknown,
+  ): Promise<{
+    status: number;
+    body: any;
+    headers: http.IncomingHttpHeaders;
+    bytes: number;
+    truncated: boolean;
+  }> => {
     return new Promise<{
       status: number;
       body: any;
@@ -128,7 +140,7 @@ describe('BackendExpress', () => {
 
           res.on('end', () => {
             const status = res.statusCode || 500;
-            const contentType = String(res.headers['content-type'] ?? '');
+            const contentType = res.headers['content-type'] ?? '';
             const raw = Buffer.concat(chunks);
 
             const rawText = raw.toString('utf8');
@@ -171,7 +183,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeGetRequestAndAbort = async (reqPath: string) => {
+  const makeGetRequestAndAbort = async (reqPath: string): Promise<{ status: number }> => {
     return new Promise<{ status: number }>((resolve) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' }, (res) => {
         const status = res.statusCode || 0;
@@ -184,7 +196,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeGetRequestAndAbortEarly = async (reqPath: string) => {
+  const makeGetRequestAndAbortEarly = async (reqPath: string): Promise<void> => {
     return new Promise<void>((resolve) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' });
 
@@ -195,11 +207,12 @@ describe('BackendExpress', () => {
 
       req.end();
       setImmediate(() => req.destroy());
+      // oxlint-disable-next-line promise/no-multiple-resolved
       setTimeout(resolve, 25);
     });
   };
 
-  const makeGetRequestAndDrain = async (reqPath: string) => {
+  const makeGetRequestAndDrain = async (reqPath: string): Promise<{ status: number; headers: http.IncomingHttpHeaders; bytes: number }> => {
     return new Promise<{ status: number; headers: http.IncomingHttpHeaders; bytes: number }>((resolve, reject) => {
       const req = http.request(`${baseUrl}${reqPath}`, { method: 'GET' }, (res) => {
         let bytes = 0;
@@ -215,7 +228,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeMultipartRequest = async (reqPath: string, filename: string, fileContent: Buffer) => {
+  const makeMultipartRequest = async (reqPath: string, filename: string, fileContent: Buffer): Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }> => {
     return new Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const preamble = Buffer.from(
@@ -261,7 +274,7 @@ describe('BackendExpress', () => {
     });
   };
 
-  const makeMultipartRequestWithoutFile = async (reqPath: string, filename: string) => {
+  const makeMultipartRequestWithoutFile = async (reqPath: string, filename: string): Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }> => {
     return new Promise<{ status: number; body: any; headers: http.IncomingHttpHeaders }>((resolve, reject) => {
       const boundary = '----formdata-boundary';
       const payload = Buffer.from([`--${boundary}`, `Content-Disposition: form-data; name="filename"`, '', filename, `--${boundary}--`, ''].join('\r\n'), 'utf8');
@@ -314,6 +327,7 @@ describe('BackendExpress', () => {
     // 1) Trigger limiter once (low limit) to verify it's wired
     // Use a delegating middleware so we can swap limits later without restarting.
     let currentLimiter = rateLimit({ windowMs: 1000, max: 2 });
+    // oxlint-disable-next-line typescript/explicit-function-return-type
     (backendExpress as any).fileLimiter = (req: any, res: any, next: any) => currentLimiter(req, res, next);
 
     expressApp = await backendExpress.start();
@@ -778,7 +792,7 @@ describe('BackendExpress', () => {
     expect(expressApp).toBeUndefined();
   });
 
-  test('Destroy', async () => {
+  test('Destroy', () => {
     backendExpress.destroy();
 
     const server: any = (backendExpress as any).server;

@@ -23,6 +23,8 @@
 
 // Imports from @matter
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { extractorHood, powerSource } from '../matterbridgeDeviceTypes.js';
@@ -43,7 +45,7 @@ export class ExtractorHood extends MatterbridgeEndpoint {
    * @param {boolean | undefined} hepaInPlaceIndicator - The HEPA filter in-place indicator. Default is true.
    * @param {number | null | undefined} hepaLastChangedTime - The last time the HEPA filter was changed. Default is null.
    * @param {ResourceMonitoring.ReplacementProduct[]} hepaReplacementProductList - The list of HEPA filter replacement products. Default is an empty array.
-   
+
    * @param {number} [activatedCarbonCondition] - The initial activated carbon filter condition (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} activatedCarbonChangeIndication - The initial activated carbon filter change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} activatedCarbonInPlaceIndicator - The activated carbon filter in-place indicator. Default is true.
@@ -86,7 +88,7 @@ export class ExtractorHood extends MatterbridgeEndpoint {
     this.subscribeAttribute('fanControl', 'percentSetting', (newValue: number, oldValue: number, context) => {
       if (context.fabric === undefined) return;
       this.log.info(`Fan control percentSetting attribute changed: ${newValue}`);
-      void this.setAttribute('fanControl', 'percentCurrent', newValue, this.log).catch(/* istanbul ignore next */ () => {});
+      fireAndForget(this.setAttribute('fanControl', 'percentCurrent', newValue, this.log), this.log, 'ExtractorHood setAttribute');
     });
 
     this.subscribeAttribute('hepaFilterMonitoring', 'lastChangedTime', (newValue: number, oldValue: number, context) => {

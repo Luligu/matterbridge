@@ -289,6 +289,7 @@ export declare namespace ClosureControl {
 
 // console.log('ClosureControl cluster:', inspect(ClusterType(ClosureControlModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0104;
   readonly name: 'ClosureControl';

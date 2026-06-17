@@ -22,13 +22,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable jsdoc/reject-function-type */
-/* eslint-disable jsdoc/reject-any-type */
-
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Plugin Manager loaded.\u001B[40;0m');
+// oxlint-disable typescript/prefer-nullish-coalescing
 
 // Node.js import
 import EventEmitter from 'node:events';
@@ -43,7 +37,8 @@ import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
-import { inspectError, logError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr } from 'node-ansi-logger';
@@ -56,6 +51,8 @@ import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
+
+logModuleLoaded('Plugin Manager');
 
 /** Define an interface for matterbridge */
 export interface Plugin extends ApiPlugin {
@@ -122,6 +119,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge plugin manager starting...');
     this.server = new BroadcastServer('plugins', this.log);
+    // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.msgHandler.bind(this));
     this.log.debug('Matterbridge plugin manager started');
   }
@@ -130,7 +128,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * Destroys the plugin manager and releases resources.
    */
   destroy(): void {
-    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
@@ -375,6 +372,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+      // oxlint-disable-next-line default-case
       switch (msg.type) {
         case 'manager_spawn_response':
           if (msg.result?.packageCommand === 'install') {
@@ -585,7 +583,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    *
    * @returns {IterableIterator<Plugin>} An iterator for the plugins.
    */
-  [Symbol.iterator]() {
+  [Symbol.iterator](): IterableIterator<Plugin> {
     return this._plugins.values();
   }
 
@@ -672,6 +670,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   async resolve(nameOrPath: string): Promise<string | null> {
     const { default: path } = await import('node:path');
     const { promises } = await import('node:fs');
+    // oxlint-disable-next-line no-param-reassign
     if (!nameOrPath.endsWith('package.json')) nameOrPath = path.join(nameOrPath, 'package.json');
 
     // Resolve the package.json of the plugin
@@ -821,6 +820,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     ) {
       return packageJson.repository.url.replace('git+', '').replace('.git', '');
     }
+    return undefined;
   }
 
   /**
@@ -844,6 +844,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     } else if (packageJson.homepage && typeof packageJson.homepage === 'string' && packageJson.homepage.includes('http')) {
       return packageJson.homepage.replace('git+', '').replace('.git', '');
     }
+    return undefined;
   }
 
   /**
@@ -867,6 +868,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     } else if (packageJson.homepage && typeof packageJson.homepage === 'string' && packageJson.homepage.includes('http')) {
       return packageJson.homepage.replace('git+', '').replace('.git', '');
     }
+    return undefined;
   }
 
   /**
@@ -879,7 +881,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   getFunding(packageJson: Record<string, any>): string | undefined {
     const funding = packageJson.funding;
     if (!funding) return undefined;
-    if (typeof funding === 'string' && !funding.startsWith('http')) return;
+    if (typeof funding === 'string' && !funding.startsWith('http')) return undefined;
     if (typeof funding === 'string' && funding.startsWith('http')) return funding;
 
     // Normalize funding into an array.
@@ -894,6 +896,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         return entry.url;
       }
     }
+    return undefined;
   }
 
   /**
@@ -912,6 +915,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         this.log.error(`Plugin ${plg}${plugin}${er} not found`);
         return null;
       }
+      // oxlint-disable-next-line no-param-reassign
       plugin = p;
     }
     try {
@@ -940,8 +944,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       // istanbul ignore next - frontendPath is optional, so we don't need to test it in unit tests
       if (existsSync(frontendPath)) plugin.frontendPath = frontendPath;
 
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const invalidDependencies = this.findInvalidDependencies(packageJson as PackageJsonLike);
       if (invalidDependencies) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.logInvalidDependencies(packageJson as PackageJsonLike, invalidDependencies, plugin.name);
         return null;
       }
@@ -974,6 +980,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
       const plugin = this._plugins.get(nameOrPath) as Plugin;
       plugin.enabled = true;
       this.log.info(`Enabled plugin ${plg}${plugin.name}${nf}`);
@@ -1018,6 +1025,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
       const plugin = this._plugins.get(nameOrPath) as Plugin;
       plugin.enabled = false;
       this.log.info(`Disabled plugin ${plg}${plugin.name}${nf}`);
@@ -1062,6 +1070,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const { promises } = await import('node:fs');
     if (!nameOrPath) return null;
     if (this._plugins.has(nameOrPath)) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
       const plugin = this._plugins.get(nameOrPath) as Plugin;
       this._plugins.delete(nameOrPath);
       this.log.info(`Removed plugin ${plg}${plugin.name}${nf}`);
@@ -1135,6 +1144,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       await this.saveToStorage();
       const plugin = this._plugins.get(packageJson.name);
       this.emit('added', packageJson.name);
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
       return plugin as Plugin;
     } catch (err) {
       logError(this.log, `Failed to parse package.json of plugin ${plg}${nameOrPath}${er}`, err);
@@ -1160,6 +1170,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         this.log.error(`Plugin ${plg}${plugin}${er} not found`);
         return undefined;
       }
+      // oxlint-disable-next-line no-param-reassign
       plugin = p;
     }
     if (!plugin.enabled) {
@@ -1180,6 +1191,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       const { pathToFileURL } = await import('node:url');
       const pluginUrl = pathToFileURL(pluginEntry);
       this.log.debug(`Importing plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const pluginInstance = (await import(pluginUrl.href)) as { default: (matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) => MatterbridgePlatform };
       this.log.debug(`Imported plugin ${plg}${plugin.name}${db} from ${pluginUrl.href}`);
 
@@ -1273,6 +1285,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         this.log.error(`Plugin ${plg}${plugin}${er} not found`);
         return undefined;
       }
+      // oxlint-disable-next-line no-param-reassign
       plugin = p;
     }
     if (!plugin.loaded) {
@@ -1317,6 +1330,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         this.log.error(`Plugin ${plg}${plugin}${er} not found`);
         return undefined;
       }
+      // oxlint-disable-next-line no-param-reassign
       plugin = p;
     }
     if (!plugin.loaded) {
@@ -1369,6 +1383,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         this.log.error(`Plugin ${plg}${plugin}${er} not found`);
         return undefined;
       }
+      // oxlint-disable-next-line no-param-reassign
       plugin = p;
     }
     this.log.debug(`Shutting down plugin ${plg}${plugin.name}${db}`);
@@ -1434,6 +1449,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     try {
       await promises.access(configFile);
       const data = await promises.readFile(configFile, 'utf8');
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const config = JSON.parse(data) as PlatformConfig;
       this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
@@ -1444,6 +1460,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (config.unregisterOnShutdown === undefined) config.unregisterOnShutdown = false;
       return config;
     } catch (err) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const nodeErr = err as NodeJS.ErrnoException;
       if (nodeErr.code === 'ENOENT') {
         this.log.debug(`Config file ${configFile} for plugin ${plg}${plugin.name}${db} does not exist, creating new config file...`);
@@ -1451,6 +1468,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         try {
           await promises.access(defaultConfigFile);
           const data = await promises.readFile(defaultConfigFile, 'utf8');
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           config = JSON.parse(data) as PlatformConfig;
           this.log.debug(`Loaded default config file ${defaultConfigFile} for plugin ${plg}${plugin.name}${db}.`);
         } catch (_err) {
@@ -1535,7 +1553,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       if (restartRequired) plugin.restartRequired = true;
       if (plugin.platform) {
         plugin.platform.config = config;
-        plugin.platform.onConfigChanged(config).catch((err) => this.log.error(`Error calling onConfigChanged for plugin ${plg}${plugin.name}${er}: ${err}`));
+        plugin.platform
+          .onConfigChanged(config)
+          .catch((err: unknown) => this.log.error(`Error calling onConfigChanged for plugin ${plg}${plugin.name}${er}: ${getErrorMessage(err)}`));
       }
       this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}`);
       // this.log.debug(`Saved config file ${configFile} for plugin ${plg}${plugin.name}${db}.\nConfig:${rs}\n`, config);
@@ -1561,6 +1581,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     try {
       await promises.access(schemaFile);
       const data = await promises.readFile(schemaFile, 'utf8');
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const schema = JSON.parse(data) as PlatformSchema;
       schema.title = plugin.description;
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;

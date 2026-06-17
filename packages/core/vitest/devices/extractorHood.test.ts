@@ -1,6 +1,6 @@
 // vitest/devices/extractorHood.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'ExtractorHood';
 const MATTER_PORT = 8006;
@@ -32,7 +32,7 @@ import { MatterbridgeActivatedCarbonFilterMonitoringServer } from '../../src/beh
 import { MatterbridgeHepaFilterMonitoringServer } from '../../src/behaviors/hepaFilterMonitoringServer.js';
 import { ExtractorHood } from '../../src/devices/extractorHood.js';
 import { extractorHood } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { invokeSubscribeHandler } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
@@ -46,12 +46,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create an extractor hood device', async () => {
+  test('create an extractor hood device', () => {
     device = new ExtractorHood('Extractor Hood Test Device', 'EH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('ExtractorHoodTestDevice-EH123456');
@@ -85,7 +85,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

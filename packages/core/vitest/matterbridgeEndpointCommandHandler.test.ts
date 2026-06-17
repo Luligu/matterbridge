@@ -1,5 +1,7 @@
 // vitest\matterbridgeEndpointCommandHandler.test.ts
 
+// oxlint-disable typescript/require-await
+
 import { NamedHandler } from '@matter/general';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';

@@ -1,6 +1,6 @@
 // vitest/devices/cooktop.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Cooktop';
 const MATTER_PORT = 8003;
@@ -29,7 +29,7 @@ import { stringify } from 'node-ansi-logger';
 
 import { Cooktop } from '../../src/devices/cooktop.js';
 import { cooktop } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -44,12 +44,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -68,7 +68,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a cooktop device', async () => {
+  test('create a cooktop device', () => {
     device = new Cooktop('Cooktop Test Device', 'CT123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('CooktopTestDevice-CT123456');
@@ -104,7 +104,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -189,7 +189,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('surface1 forEachAttribute', async () => {
+  test('surface1 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -268,7 +268,7 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
-  test('surface2 forEachAttribute', async () => {
+  test('surface2 forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

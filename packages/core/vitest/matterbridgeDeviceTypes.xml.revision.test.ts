@@ -1,13 +1,14 @@
 // vitest\matterbridgeDeviceTypes.xml.revision.test.ts
 
-/* eslint-disable simple-import-sort/imports */
-
 const NAME = 'MatterbridgeDevicetypesXmlRevision';
 
 // Cross-check device type revisions between official Matter 1.5.1 XML and Matterbridge definitions
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { setupTest } from '@matterbridge/vitest-utils';
+
+// oxfmt-ignore
 import {
   // Utility
   rootNode,
@@ -116,8 +117,6 @@ import {
 } from '../src/matterbridgeDeviceTypes.js';
 import type { DeviceTypeDefinition } from '../src/matterbridgeDeviceTypes.js';
 
-import { setupTest } from '@matterbridge/vitest-utils';
-
 await setupTest(NAME, false);
 
 const XML_DEVICE_TYPES_DIR = path.join('chip', '1.5.1', 'xml', 'device_types');
@@ -159,7 +158,7 @@ try {
 
 type XmlDeviceTypeInfo = { id: number; name: string; revision: number; class: string | undefined; scope: string | undefined };
 
-async function buildXmlIndex() {
+async function buildXmlIndex(): Promise<Map<number, XmlDeviceTypeInfo>> {
   const files = await readdir(XML_DEVICE_TYPES_DIR);
   const index = new Map<number, XmlDeviceTypeInfo>();
   for (const f of files.filter((f) => f.endsWith('.xml'))) {
@@ -198,6 +197,7 @@ async function buildXmlIndex() {
   return index;
 }
 
+// oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
   describe('Matter 1.5.1 XML vs Matterbridge device type revisions dummy', () => {
     test(`Skipped: missing ${XML_DEVICE_TYPES_DIR}`, () => {
@@ -326,7 +326,7 @@ if (!hasXmlDir) {
       ['doorbell', doorbell],
     ];
 
-    test.each(cases)('Device type %s matches Matter 1.5.1 XML (id, revision, name, deviceClass, deviceScope)', async (display, mb) => {
+    test.each(cases)('Device type %s matches Matter 1.5.1 XML (id, revision, name, deviceClass, deviceScope)', (display, mb) => {
       const xmlInfo = xmlIndex.get(mb.code);
       if (!xmlInfo) {
         // eslint-disable-next-line no-console

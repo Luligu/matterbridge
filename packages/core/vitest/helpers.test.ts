@@ -1,11 +1,12 @@
 // src\helpers.test.ts
 
 /* eslint-disable no-console */
+
 const NAME = 'Helpers';
 const MATTER_PORT = 6600;
 const MATTER_CREATE_ONLY = true;
 
-import { type Endpoint } from '@matter/node';
+import type { Endpoint } from '@matter/node';
 import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -44,7 +45,7 @@ describe('Matterbridge ' + NAME, () => {
     matterbridge = { ...getMatterbridge(), log: log } as Matterbridge;
   }, 30000);
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -68,6 +69,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a light virtual device', async () => {
     expect(aggregator).toBeDefined();
+    // oxlint-disable-next-line typescript/require-await
     device = await addVirtualDevice(aggregator, 'Test Device', 'light', async () => {
       // Callback function when the device is turned on
       console.log('Device turned on');
@@ -87,6 +89,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.stateOf(OnOffServer).onOff).toBe(false);
 
     await new Promise<void>((resolve) => {
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       const listener = (value: boolean) => {
         if (value) {
           (device as any).events.onOff.onOff$Changed.off(listener);
@@ -94,7 +97,7 @@ describe('Matterbridge ' + NAME, () => {
         }
       };
       (device as any).events.onOff.onOff$Changed.on(listener);
-      device.setStateOf(OnOffServer, { onOff: true });
+      void device.setStateOf(OnOffServer, { onOff: true });
     });
     // expect(await invokeBehaviorCommand(device as unknown as MatterbridgeEndpoint, OnOffServer, 'on')).toBe(true);
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -179,6 +182,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     await new Promise<void>((resolve) => {
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       const listener = (value: boolean) => {
         if (value) {
           (restartDevice as any).events.onOff.onOff$Changed.off(listener);
@@ -186,13 +190,14 @@ describe('Matterbridge ' + NAME, () => {
         }
       };
       (restartDevice as any).events.onOff.onOff$Changed.on(listener);
-      restartDevice.setStateOf(OnOffServer, { onOff: true });
+      void restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     matterbridge.restartMode = 'service';
     await new Promise<void>((resolve) => {
+      // oxlint-disable-next-line typescript/explicit-function-return-type
       const listener = (value: boolean) => {
         if (value) {
           (restartDevice as any).events.onOff.onOff$Changed.off(listener);
@@ -200,7 +205,7 @@ describe('Matterbridge ' + NAME, () => {
         }
       };
       (restartDevice as any).events.onOff.onOff$Changed.on(listener);
-      restartDevice.setStateOf(OnOffServer, { onOff: true });
+      void restartDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(restartDevice.stateOf(OnOffServer).onOff).toBe(false);
@@ -213,14 +218,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);
 
     await new Promise<void>((resolve) => {
-      const listener = (value: boolean) => {
+      const listener = (value: boolean): void => {
         if (value) {
           (updateDevice as any).events.onOff.onOff$Changed.off(listener);
           resolve();
         }
       };
       (updateDevice as any).events.onOff.onOff$Changed.on(listener);
-      updateDevice.setStateOf(OnOffServer, { onOff: true });
+      void updateDevice.setStateOf(OnOffServer, { onOff: true });
     });
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(updateDevice.stateOf(OnOffServer).onOff).toBe(false);

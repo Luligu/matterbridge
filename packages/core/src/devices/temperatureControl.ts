@@ -21,13 +21,15 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
@@ -85,7 +87,7 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
   /**
    * Initializes the server and logs the configured temperature levels.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`,
@@ -128,7 +130,7 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
   /**
    * Initializes the server and logs the configured setpoint constraints.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`,

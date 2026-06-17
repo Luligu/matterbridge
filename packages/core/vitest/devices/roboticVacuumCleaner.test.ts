@@ -1,6 +1,6 @@
 // vitest/devices/roboticVacuumCleaner.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Vacuum';
 const MATTER_PORT = 8013;
@@ -47,12 +47,12 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create an RVC device', async () => {
+  test('create an RVC device', () => {
     device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('RVCTestDevice-RVC123456');
@@ -195,7 +195,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

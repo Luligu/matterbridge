@@ -127,13 +127,13 @@ const getClusterData = (entry: any): { id: number | undefined; name: string | un
   return { id: c?.id, name: c?.name, revision: c?.revision };
 };
 
-function normalizeName(s: string) {
+function normalizeName(s: string): string {
   return s.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
 type XmlClusterInfo = { revision: number | undefined; id: number | undefined; name: string };
 
-async function buildXmlIndex() {
+async function buildXmlIndex(): Promise<Map<string, XmlClusterInfo>> {
   const files = await readdir(XML_CLUSTERS_DIR);
   const index = new Map<string, XmlClusterInfo>();
   for (const f of files.filter((f) => f.endsWith('.xml'))) {
@@ -166,6 +166,7 @@ async function buildXmlIndex() {
   return index;
 }
 
+// oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
   describe('Matter 1.5.1 XML vs @matter/types cluster revisions dummy', () => {
     test(`Skipped: missing ${XML_CLUSTERS_DIR}`, () => {
@@ -281,7 +282,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)', async (display, entry) => {
+    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)',  (display, entry) => {
       const key = normalizeName(display);
       const xmlInfo = xmlIndex.get(key);
       const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);

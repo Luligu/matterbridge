@@ -21,6 +21,9 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable unicorn/no-negated-condition typescript/no-misused-spread
+
 // @matter
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureControl } from '@matter/types/clusters/closure-control';

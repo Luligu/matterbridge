@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
-import { LevelControlServer } from '@matter/node/behaviors/level-control';
-import { type LevelControl } from '@matter/types/clusters/level-control';
+// oxlint-disable typescript/no-unsafe-type-assertion
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { LevelControlServer } from '@matter/node/behaviors/level-control';
+import type { LevelControl } from '@matter/types/clusters/level-control';
+
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

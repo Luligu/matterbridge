@@ -329,6 +329,7 @@ export declare namespace ClosureDimension {
 
 // console.log('ClosureDimension cluster:', inspect(ClusterType(ClosureDimensionModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0105;
   readonly name: 'ClosureDimension';

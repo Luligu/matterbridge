@@ -21,13 +21,15 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
-import { type OperationalState } from '@matter/types/clusters/operational-state';
+import type { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -155,14 +157,15 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   /**
    * Initializes the server and hooks on/off changes.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeLaundryWasherModeServer initialized: currentMode is ${this.state.currentMode}`);
+    // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
   }
 
   // Dead Front OnOff Cluster
-  protected handleOnOffChange(onOff: boolean) {
+  protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // istanbul ignore else

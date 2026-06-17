@@ -91,6 +91,7 @@ export declare namespace SoilMeasurement {
 
 // console.log('SoilMeasurement cluster:', inspect(ClusterType(SoilMeasurementModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0430;
   readonly name: 'SoilMeasurement';

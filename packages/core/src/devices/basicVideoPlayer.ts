@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
 import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
@@ -115,13 +117,14 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
   /**
    * Initializes the server and hooks on/off changes.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMediaPlaybackServer initialized: currentState is ${this.state.currentState}`);
+    // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
   }
 
-  protected handleOnOffChange(_onOff: boolean) {
+  protected handleOnOffChange(_onOff: boolean): void {
     this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
   }
 
@@ -264,7 +267,7 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
   /**
    * Initializes the server.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeKeypadInputServer initialized`);
   }

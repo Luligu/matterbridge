@@ -24,11 +24,11 @@
 
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { type Endpoint } from '@matter/main/node';
+import type { Endpoint } from '@matter/main/node';
 import { BindingBehavior, type BindingResolution, BindingServer } from '@matter/node/behaviors/binding';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
-import { type ClusterId } from '@matter/types';
-import { type Binding } from '@matter/types/clusters/binding';
+import type { ClusterId } from '@matter/types';
+import type { Binding } from '@matter/types/clusters/binding';
 import { debugStringify, nt } from 'node-ansi-logger';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
@@ -44,7 +44,7 @@ export class MatterbridgeBindingServer extends BindingServer {
   /**
    * Initializes binding handling and reacts to binding changes.
    */
-  override async initialize(): Promise<void> {
+  override initialize(): void {
     super.initialize();
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -85,7 +85,7 @@ export class MatterbridgeBindingServer extends BindingServer {
     });
 
     // React to removed bindings and update internal bound state
-    this.reactTo(this.events.removed, async (resolution: BindingResolution) => {
+    this.reactTo(this.events.removed, (resolution: BindingResolution) => {
       device.log.notice(
         `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding removed: kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt}`,
       );
@@ -93,7 +93,7 @@ export class MatterbridgeBindingServer extends BindingServer {
     });
   }
 
-  override async [Symbol.asyncDispose]() {
+  override async [Symbol.asyncDispose](): Promise<void> {
     this.internal.boundEndpoints.clear();
     await super[Symbol.asyncDispose]();
   }

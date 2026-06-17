@@ -21,12 +21,14 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
-import { type OperationalState } from '@matter/types/clusters/operational-state';
+import type { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -129,15 +131,16 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   /**
    * Initializes mode defaults and hooks on/off changes.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDishwasherModeServer initialized: currentMode is ${this.state.currentMode}`);
     this.state.currentMode = 2;
+    // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
   }
 
   // Dead Front OnOff Cluster
-  protected handleOnOffChange(onOff: boolean) {
+  protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     // istanbul ignore else
     if (!onOff) {

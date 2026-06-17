@@ -1,6 +1,6 @@
 // vitest/devices/soilSensor.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'SoilSensor';
 const MATTER_PORT = 8020;
@@ -39,11 +39,11 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a soil sensor device', async () => {
+  test('create a soil sensor device', () => {
     device = new SoilSensor('Soil Sensor Test Device', 'SS123456', { soilMoistureMeasuredValue: 42 });
     expect(device).toBeDefined();
     expect(device.id).toBe('SoilSensorTestDevice-SS123456');
@@ -75,14 +75,14 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('create a soil sensor device with default option', async () => {
+  test('create a soil sensor device with default option', () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000');
     expect(defaultDevice.getClusterServerOptions(SoilMeasurement.id)).toMatchObject({
       soilMoistureMeasuredValue: null,
     });
   });
 
-  test('create a soil sensor device with battery power', async () => {
+  test('create a soil sensor device with battery power', () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { batteryPowered: true });
     expect(defaultDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({
       batChargeLevel: 0,
@@ -97,7 +97,7 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('create a soil sensor device with temperature', async () => {
+  test('create a soil sensor device with temperature', () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { temperatureMeasuredValue: 2500 });
     expect(defaultDevice.getClusterServerOptions(SoilMeasurement.id)).toMatchObject({
       soilMoistureMeasuredValue: null,
@@ -114,11 +114,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('check attributes after adding device to server', async () => {
+  test('check attributes after adding device to server', () => {
     expect(device.getSoilMoistureMeasuredValue()).toBe(42);
   });
 
-  test('read SoilMeasurement global attributes', async () => {
+  test('read SoilMeasurement global attributes', () => {
     // Verify hasAttributeServer() sees both globals and custom attributes.
     expect(device.hasAttributeServer(SoilMeasurement.id, 'soilMoistureMeasurementLimits')).toBe(true);
     expect(device.hasAttributeServer(SoilMeasurement.id, 'soilMoistureMeasuredValue')).toBe(true);
@@ -140,7 +140,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getSoilMoistureMeasuredValue()).toBeNull();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

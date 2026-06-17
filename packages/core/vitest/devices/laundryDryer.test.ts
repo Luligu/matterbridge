@@ -1,6 +1,6 @@
 // vitest/devices/laundryDryer.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'LaundryDryer';
 const MATTER_PORT = 8008;
@@ -33,7 +33,7 @@ import { LaundryDryer } from '../../src/devices/laundryDryer.js';
 import { MatterbridgeLaundryWasherModeServer } from '../../src/devices/laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { laundryDryer } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -46,12 +46,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a laundry dryer device', async () => {
+  test('create a laundry dryer device', () => {
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
@@ -94,7 +94,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -243,7 +243,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await deleteDevice(server, device)).toBeTruthy();
   });
 
-  test('create a laundry dryer device with number temperature control', async () => {
+  test('create a laundry dryer device with number temperature control', () => {
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');

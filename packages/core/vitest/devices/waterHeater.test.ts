@@ -1,7 +1,5 @@
 // vitest/devices/waterHeater.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
-
 const NAME = 'WaterHeater';
 const MATTER_PORT = 8016;
 const MATTER_CREATE_ONLY = true;
@@ -44,12 +42,12 @@ describe('Matterbridge Water Heater', () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -68,7 +66,7 @@ describe('Matterbridge Water Heater', () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a water heater device with all parameters', async () => {
+  test('create a water heater device with all parameters', () => {
     device = new WaterHeater(
       'Water Heater Test Device',
       'WH123456',
@@ -92,7 +90,7 @@ describe('Matterbridge Water Heater', () => {
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
   });
 
-  test('create a water heater device with no parameter', async () => {
+  test('create a water heater device with no parameter', () => {
     device = new WaterHeater('Water Heater Test Device', 'WH123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
@@ -145,7 +143,7 @@ describe('Matterbridge Water Heater', () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

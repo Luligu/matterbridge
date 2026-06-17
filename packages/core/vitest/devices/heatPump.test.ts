@@ -1,6 +1,6 @@
 // vitest/devices/heatPump.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'HeatPump';
 const MATTER_PORT = 8007;
@@ -27,7 +27,7 @@ import { stringify } from 'node-ansi-logger';
 
 import { HeatPump } from '../../src/devices/heatPump.js';
 import { heatPump } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -40,12 +40,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a heat pump device', async () => {
+  test('create a heat pump device', () => {
     device = new HeatPump('Heat Pump Test Device', 'HP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('HeatPumpTestDevice-HP123456');
@@ -79,7 +79,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

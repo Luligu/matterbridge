@@ -1,5 +1,7 @@
 // vitest\matterNode.bridge.test.ts
 
+// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing typescript/explicit-function-return-type
+
 const MATTER_PORT = 10010;
 const NAME = 'MatterNodeBridge';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);
@@ -116,14 +118,14 @@ describe('MatterNode bridge', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
-  beforeAll(async () => {
+  beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode bridge tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });

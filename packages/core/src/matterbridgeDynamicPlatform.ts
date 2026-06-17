@@ -22,18 +22,16 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeDynamicPlatform loaded.\u001B[40;0m');
-
 // @matterbridge
 import type { PlatformConfig, PlatformMatterbridge } from '@matterbridge/types';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // AnsiLogger module
-import { type AnsiLogger } from 'node-ansi-logger';
+import type { AnsiLogger } from 'node-ansi-logger';
 
 // matterbridge
 import { MatterbridgePlatform } from './matterbridgePlatform.js';
+
+logModuleLoaded('MatterbridgeDynamicPlatform');
 
 // Module-private brand
 const MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND = Symbol('MatterbridgeDynamicPlatform.brand');
@@ -47,7 +45,7 @@ const MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND = Symbol('MatterbridgeDynamicPlatform.
 export function isMatterbridgeDynamicPlatform(value: unknown): value is MatterbridgeDynamicPlatform {
   if (!value || typeof value !== 'object') return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any typescript/no-unsafe-type-assertion
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.

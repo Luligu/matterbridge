@@ -1,5 +1,6 @@
 // vitest\matterbridge.bridge.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
 /* eslint-disable vitest/no-conditional-expect */
 
 const MATTER_PORT = 6500;
@@ -28,6 +29,7 @@ vi.mock('../src/helpers.js', async () => {
   const actual = await vi.importActual<typeof import('../src/helpers.js')>('../src/helpers.js');
   return {
     ...actual,
+    // oxlint-disable-next-line typescript/require-await
     addVirtualDevice: vi.fn(async () => {
       return; // Mock the addVirtualDevice function to return immediately
     }),
@@ -65,12 +67,12 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
   let matterbridge: Matterbridge;
   let plugins: PluginManager;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -331,6 +333,7 @@ describe('Matterbridge loadInstance() and cleanup() -bridge mode', () => {
     for (const device of matterbridge.devices.array()) {
       expect(device).toBeDefined();
       if (device.hasClusterServer(BridgedDeviceBasicInformationServer)) await device.setStateOf(BridgedDeviceBasicInformationServer, { reachable: false });
+      // oxlint-disable-next-line typescript/no-misused-promises
       device.getChildEndpoints().some(async (child) => {
         if (child.hasClusterServer(PressureMeasurementServer)) await child.setStateOf(PressureMeasurementServer, { measuredValue: 9900 });
       });

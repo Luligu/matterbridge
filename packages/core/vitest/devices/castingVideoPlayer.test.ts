@@ -1,6 +1,6 @@
 // vitest/devices/castingVideoPlayer.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'CastingVideoPlayer';
 const MATTER_PORT = 8018;
@@ -32,7 +32,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { CastingVideoPlayer } from '../../src/devices/castingVideoPlayer.js';
 import { castingVideoPlayer } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -45,12 +45,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a casting video player device', async () => {
+  test('create a casting video player device', () => {
     device = new CastingVideoPlayer('CastingVideoPlayer Test Device', 'CVP123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('CastingVideoPlayerTestDevice-CVP123456');
@@ -85,7 +85,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

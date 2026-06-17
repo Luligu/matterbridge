@@ -1,5 +1,7 @@
 // vitest\mb_coap.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
+
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
 
 const mockCoapInstances: MockCoap[] = [];
@@ -7,7 +9,7 @@ const scheduledIntervals: Array<{ callback: () => void; delay: number | undefine
 const scheduledTimeouts: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];
 
 class MockCoap {
-  static clear() {
+  static clear(): void {
     mockCoapInstances.length = 0;
   }
 

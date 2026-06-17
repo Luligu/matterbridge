@@ -25,7 +25,9 @@
 // Imports from @matter
 import { PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { type Semtag } from '@matter/types/globals';
+import type { Semtag } from '@matter/types/globals';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { deviceEnergyManagement, electricalSensor, powerSource, solarPower } from '../matterbridgeDeviceTypes.js';
@@ -101,7 +103,7 @@ export class SolarPower extends MatterbridgeEndpoint {
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
       .addRequiredClusterServers();
-    void panel.addUserLabel('panel', name.slice(0, 16)).catch(/* istanbul ignore next */ () => {}); // UserLabel has a max length of 16 characters
+    fireAndForget(panel.addUserLabel('panel', name.slice(0, 16)), this.log, 'SolarPower addUserLabel'); // UserLabel has a max length of 16 characters
     return panel;
   }
 }

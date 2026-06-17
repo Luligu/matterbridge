@@ -27,7 +27,7 @@
  * inlining them in every file, so they only need to change in one place.
  */
 
-import { Environment, RuntimeService } from '@matter/general';
+import { type Environment, RuntimeService } from '@matter/general';
 import { MdnsService } from '@matter/protocol';
 import { flushAsync } from '@matterbridge/vitest-utils';
 
@@ -57,6 +57,7 @@ export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: 
  * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
  */
 export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const environment = (matterbridge as unknown as { environment: Environment }).environment;
   const mdns = environment.maybeGet(MdnsService);
   if (!mdns) return;
@@ -71,6 +72,7 @@ export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<voi
  * @returns {Promise<void>} A promise that resolves when the runtime instance is closed.
  */
 export async function closeRuntimeInstance(matterbridge: Matterbridge): Promise<void> {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const environment = (matterbridge as unknown as { environment: Environment }).environment;
   const runtime = environment.maybeGet(RuntimeService);
   await runtime?.close();

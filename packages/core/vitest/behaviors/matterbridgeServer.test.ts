@@ -1,5 +1,8 @@
 // src\behaviors\matterbridgeServer.test.ts
 
+// TODO: analyze each rule
+// oxlint-disable vitest/no-conditional-expect typescript/explicit-function-return-type
+
 const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
@@ -43,7 +46,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { type AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
 import { MatterbridgeServer } from '../../src/behaviors/matterbridgeServer.js';
@@ -105,7 +108,7 @@ describe('Server clusters and behaviors', () => {
     { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: null },
   ];
 
-  function createPresetThermostatEndpoint(id: string) {
+  function createPresetThermostatEndpoint(id: string): MatterbridgeEndpoint {
     const endpoint = new MatterbridgeEndpoint(thermostat, { id });
     endpoint.createDefaultPresetsThermostatClusterServer(
       23,
@@ -128,11 +131,12 @@ describe('Server clusters and behaviors', () => {
     return endpoint;
   }
 
+  // oxlint-disable-next-line typescript/explicit-function-return-type
   async function expectCommand(endpoint: MatterbridgeEndpoint, cluster: any, command: CommandHandlers, expectedRequest?: object, check?: (data: any) => void) {
     let invoke: Promise<void>;
 
     await new Promise((resolve, reject) => {
-      endpoint.addCommandHandler(command, async (data) => {
+      endpoint.addCommandHandler(command,  (data) => {
         try {
           expect(data.endpoint).toBe(endpoint);
           if (expectedRequest === undefined) expect(data.request).toEqual({});
@@ -161,7 +165,7 @@ describe('Server clusters and behaviors', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -710,7 +714,7 @@ describe('Server clusters and behaviors', () => {
 
   test('FanControl server', async () => {
     const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    vent.addCommandHandler('step', async (data) => {
+    vent.addCommandHandler('step',  (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -790,7 +794,6 @@ describe('Server clusters and behaviors', () => {
     expect(updatedThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2200, occupiedCoolingSetpoint: 2600 });
   });
 
-  // eslint-disable-next-line vitest/no-commented-out-tests
   /*
   test('Thermostat server ignores undefined occupied setpoints', async () => {
     const executeHandler = jest.fn();
@@ -838,7 +841,7 @@ describe('Server clusters and behaviors', () => {
     );
     const presetCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
 
-    thermostatPreset.addCommandHandler('setActivePresetRequest', async (data) => {
+    thermostatPreset.addCommandHandler('setActivePresetRequest',  (data) => {
       presetCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -1055,7 +1058,7 @@ describe('Server clusters and behaviors', () => {
     const powerAdjustRequest = { power: 500, duration: 60, cause: 'Test' };
     const cancelCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: unknown }> = [];
 
-    energyManagement.addCommandHandler('cancelPowerAdjustRequest', async (data) => {
+    energyManagement.addCommandHandler('cancelPowerAdjustRequest',  (data) => {
       cancelCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
@@ -1081,7 +1084,7 @@ describe('Server clusters and behaviors', () => {
 
   test('DeviceEnergyManagementMode server', async () => {
     const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    energyManagement.addCommandHandler('changeToMode', async (data) => {
+    energyManagement.addCommandHandler('changeToMode',  (data) => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 

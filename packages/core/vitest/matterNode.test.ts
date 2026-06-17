@@ -1,5 +1,7 @@
 // vitest\matterNode.test.ts
 
+// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing
+
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);
@@ -12,8 +14,8 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { type SessionsBehavior } from '@matter/node';
-import { type ExposedFabricInformation } from '@matter/protocol';
+import type { SessionsBehavior } from '@matter/node';
+import type { ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
@@ -110,19 +112,19 @@ describe('MatterNode', () => {
 
   let device: MatterbridgeEndpoint;
 
-  beforeAll(async () => {
+  beforeAll( () => {
     // process.stdout.write('=== Starting MatterNode tests ===\n\n');
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
+  afterEach( () => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance
@@ -141,12 +143,12 @@ describe('MatterNode', () => {
     // process.stdout.write('=== Finished MatterNode tests ===\n\n');
   });
 
-  test('Broadcast unknown server message type', async () => {
+  test('Broadcast unknown server message type', () => {
     // @ts-expect-error -- Testing unknown message type
     expect(testServer.request({ type: 'unknown', src: testServer.name, dst: 'matter', params: {} })).toBeUndefined();
   });
 
-  test('Broadcast response server message type', async () => {
+  test('Broadcast response server message type', () => {
     // @ts-expect-error -- Testing unknown message type
     expect(testServer.respond({ type: 'unknown', id: 123456, timestamp: Date.now(), src: testServer.name, dst: 'matter', result: { success: true } })).toBeUndefined();
     expect(
@@ -162,11 +164,11 @@ describe('MatterNode', () => {
     expect((await testServer.fetch({ type: 'get_log_level', src: testServer.name, dst: 'matter' })).result.logLevel).toBe(LogLevel.DEBUG);
   });
 
-  test('Broadcast close', async () => {
+  test('Broadcast close',  () => {
     expect(testServer.close()).toBeUndefined();
   });
 
-  test('MatterNode instance', async () => {
+  test('MatterNode instance', () => {
     expect(matter).toBeDefined();
     expect(matter).toBeInstanceOf(MatterNode);
     // @ts-expect-error access private property
@@ -185,13 +187,13 @@ describe('MatterNode', () => {
     destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
-  test('PluginManager instance', async () => {
+  test('PluginManager instance', () => {
     expect(pluginManager).toBeDefined();
     expect(pluginManager).toBeInstanceOf(PluginManager);
     expect(pluginManager.length).toBe(0);
   });
 
-  test('DeviceManager instance', async () => {
+  test('DeviceManager instance', () => {
     expect(deviceManager).toBeDefined();
     expect(deviceManager).toBeInstanceOf(DeviceManager);
     expect(deviceManager.length).toBe(0);
@@ -329,7 +331,7 @@ describe('MatterNode', () => {
     await Promise.all([startPromise, onlinePromise]);
   });
 
-  test('Get server node for Matterbridge data', async () => {
+  test('Get server node for Matterbridge data', () => {
     expect(matter.serverNode).toBeDefined();
     if (matter.serverNode === undefined) return;
     expect(matter.getServerNodeData(matter.serverNode)).toEqual({
@@ -357,17 +359,17 @@ describe('MatterNode', () => {
     });
   });
 
-  test('Server node commissioned', async () => {
+  test('Server node commissioned', () => {
     matter.serverNode?.lifecycle.commissioned.emit(undefined as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`Server node for Matterbridge was initially commissioned successfully!`);
   });
 
-  test('Server node decommissioned', async () => {
+  test('Server node decommissioned', () => {
     matter.serverNode?.lifecycle.decommissioned.emit(undefined as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`Server node for Matterbridge was fully decommissioned successfully!`);
   });
 
-  test('Server node fabricsChanged', async () => {
+  test('Server node fabricsChanged', () => {
     matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'added');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
     matter.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'deleted');
@@ -376,17 +378,17 @@ describe('MatterNode', () => {
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} updated on server node`));
   });
 
-  test('Server node sessions.opened', async () => {
+  test('Server node sessions.opened', () => {
     matter.serverNode?.events.sessions.opened.emit({} as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Session opened on server node for Matterbridge`));
   });
 
-  test('Server node sessions.closed', async () => {
+  test('Server node sessions.closed', () => {
     matter.serverNode?.events.sessions.closed.emit({} as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Session closed on server node for Matterbridge`));
   });
 
-  test('Server node sessions.subscriptionsChanged', async () => {
+  test('Server node sessions.subscriptionsChanged', () => {
     matter.serverNode?.events.sessions.subscriptionsChanged.emit({} as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Session subscriptions changed on server node for Matterbridge`));
   });

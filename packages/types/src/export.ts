@@ -7,6 +7,8 @@
  * @license Apache-2.0
  */
 
+// oxlint-disable oxc/no-barrel-file
+
 export * from './broadcastServerTypes.js';
 export * from './frontendTypes.js';
 export * from './matterbridgePlatformTypes.js';

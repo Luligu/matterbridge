@@ -22,11 +22,6 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeHelpers loaded.\u001B[40;0m');
-
 // @matter module
 import { Endpoint } from '@matter/node';
 import { BindingServer } from '@matter/node/behaviors/binding';
@@ -37,12 +32,14 @@ import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-c
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
-import { type AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types/datatype';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 
-// @matterbridge
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
+
+logModuleLoaded('MatterbridgeHelpers');
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,
@@ -66,6 +63,7 @@ export async function addVirtualDevice(
   // The device ID is created by replacing all spaces in the name with an empty string.
   // The node label of the bridged device basic information is set to the given name.
   let deviceType;
+  // oxlint-disable-next-line default-case
   switch (type) {
     case 'light':
       deviceType = OnOffLightDevice.with(BridgedDeviceBasicInformationServer);
@@ -98,8 +96,16 @@ export async function addVirtualDevice(
   device.events.onOff.onOff$Changed.on((value) => {
     // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
     if (value) {
-      void callback().catch(/* istanbul ignore next */ () => {});
-      void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+      void callback().catch(
+        /* istanbul ignore next */ () => {
+          // Noop
+        },
+      );
+      void device.setStateOf(OnOffServer, { onOff: false }).catch(
+        /* istanbul ignore next */ () => {
+          // Noop
+        },
+      );
     }
   });
 

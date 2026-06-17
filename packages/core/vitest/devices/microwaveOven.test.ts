@@ -1,6 +1,6 @@
 // vitest/devices/microwaveOven.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'MicrowaveOven';
 const MATTER_PORT = 8010;
@@ -29,7 +29,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from '../../src/devices/microwaveOven.js';
 import { microwaveOven } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -42,12 +42,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -66,7 +66,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a microwave oven device', async () => {
+  test('create a microwave oven device', () => {
     device = new MicrowaveOven('Microwave Oven Test Device', 'MW123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('MicrowaveOvenTestDevice-MW123456');
@@ -86,7 +86,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

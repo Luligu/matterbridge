@@ -38,7 +38,7 @@ describe('Matterbridge dynamic platform', () => {
     matterbridge = { ...getMatterbridge(), log: log } as PlatformMatterbridge;
   }, 30000);
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
@@ -67,6 +67,7 @@ describe('Matterbridge dynamic platform', () => {
     expect(platform.type).toBe('DynamicPlatform');
     expect(platform.config.type).toBe('DynamicPlatform');
     expect(isMatterbridgeDynamicPlatform(platform)).toBe(true);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(isMatterbridgeDynamicPlatform(undefined)).toBe(false);
     expect(isMatterbridgeDynamicPlatform(null)).toBe(false);
     expect(isMatterbridgeDynamicPlatform('string')).toBe(false);

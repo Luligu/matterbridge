@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
-import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
-import { type ModeSelect } from '@matter/types/clusters/mode-select';
+// oxlint-disable typescript/no-unsafe-type-assertion
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
+import type { ModeSelect } from '@matter/types/clusters/mode-select';
+
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

@@ -134,7 +134,7 @@ describe('Matterbridge ' + NAME, () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   }, 30000);
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
@@ -159,19 +159,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(aggregator, device)).toBe(true);
   }
 
-  test('capitalizeFirstLetter', async () => {
+  test('capitalizeFirstLetter', () => {
     const result = capitalizeFirstLetter('hello');
     expect(result).toBe('Hello');
     expect(capitalizeFirstLetter(null as any)).toBe(null);
   });
 
-  test('lowercaseFirstLetter', async () => {
+  test('lowercaseFirstLetter', () => {
     const result = lowercaseFirstLetter('Hello');
     expect(result).toBe('hello');
     expect(lowercaseFirstLetter(null as any)).toBe(null);
   });
 
-  test('getBehaviourTypeFromClusterServerId', async () => {
+  test('getBehaviourTypeFromClusterServerId',  () => {
     expect(getBehaviourTypeFromClusterServerId(PowerSource.id)?.id).toBe('powerSource');
     expect(getBehaviourTypeFromClusterServerId(UserLabel.id)?.id).toBe('userLabel');
     expect(getBehaviourTypeFromClusterServerId(FixedLabel.id)?.id).toBe('fixedLabel');
@@ -181,7 +181,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.id)?.id).toBe('deviceEnergyManagementMode');
   });
 
-  test('getBehaviourTypesFromClusterClientIds', async () => {
+  test('getBehaviourTypesFromClusterClientIds',  () => {
     const clusterIds = [
       Identify.id,
       Groups.id,
@@ -210,7 +210,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypesFromClusterClientIds([0xffff as any])).toEqual([]);
   });
 
-  test('getBehaviourTypeFromClusterClientId', async () => {
+  test('getBehaviourTypeFromClusterClientId',  () => {
     expect((getBehaviourTypeFromClusterClientId(Identify.id) as any)?.cluster?.id).toBe(Identify.id);
     expect((getBehaviourTypeFromClusterClientId(Groups.id) as any)?.cluster?.id).toBe(Groups.id);
     expect((getBehaviourTypeFromClusterClientId(OnOff.id) as any)?.cluster?.id).toBe(OnOff.id);
@@ -1338,12 +1338,12 @@ describe('Matterbridge ' + NAME, () => {
     await device.setAttribute(Thermostat.id, 'maxCoolSetpointLimit', 3600);
     expect(device.getAttribute(Thermostat.id, 'maxCoolSetpointLimit')).toBe(3600);
 
-    const expectHeatLimitsUnchanged = () => {
+    const expectHeatLimitsUnchanged = (): void => {
       expect(device.getAttribute(Thermostat.id, 'minHeatSetpointLimit')).toBe(1300);
       expect(device.getAttribute(Thermostat.id, 'maxHeatSetpointLimit')).toBe(3400);
     };
 
-    const expectStableThermostatLimits = () => {
+    const expectStableThermostatLimits = (): void => {
       expect(device.getCluster(Thermostat)).toMatchObject({
         minHeatSetpointLimit: 1300,
         maxHeatSetpointLimit: 3400,

@@ -22,13 +22,8 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeDeviceTypes loaded.\u001B[40;0m');
-
-import type { ClusterType } from '@matter/types';
 // @matter clusters
+import type { ClusterType } from '@matter/types';
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
@@ -138,12 +133,9 @@ import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transpo
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ZoneManagement } from '@matter/types/clusters/zone-management';
 import { type ClusterId, DeviceTypeId } from '@matter/types/datatype';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 
-/*
-import { ClosureControl } from './clusters/closure-control.js';
-import { ClosureDimension } from './clusters/closure-dimension.js';
-import { SoilMeasurement } from './clusters/soil-measurement.js';
-*/
+logModuleLoaded('MatterbridgeDeviceTypes');
 
 export enum DeviceClasses {
   /** 1.1.5. Device Type Class Conditions */

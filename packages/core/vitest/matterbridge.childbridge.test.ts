@@ -1,5 +1,6 @@
 // vitest\matterbridge.childbridge.test.ts
 
+// oxlint-disable vitest/require-mock-type-parameters
 /* eslint-disable no-console */
 /* eslint-disable vitest/no-conditional-expect */
 
@@ -22,7 +23,7 @@ import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger'
 import { Matterbridge } from '../src/matterbridge.js';
 import { pressureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
-import { type PluginManager } from '../src/pluginManager.js';
+import type { PluginManager } from '../src/pluginManager.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Mock the addVirtualDevice from the helpers module so loading does not spawn virtual devices
@@ -174,6 +175,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('addBridgedEndpoint for AccessoryPlatform with mode = matter', async () => {
+    // oxlint-disable-next-line typescript/no-misused-promises
     vi.spyOn(matterbridge, 'subscribeAttributeChanged' as any).mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -193,6 +195,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   });
 
   test('addBridgedEndpoint for DynamicPlatform with mode = matter', async () => {
+    // oxlint-disable-next-line typescript/no-misused-promises
     vi.spyOn(matterbridge, 'subscribeAttributeChanged' as any).mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -216,7 +219,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugin).toBeDefined();
     if (!plugin) return;
     plugin.type = 'AccessoryPlatform';
-    vi.spyOn(Matterbridge.prototype, 'createAccessoryPlugin' as any).mockImplementationOnce(async () => {
+    vi.spyOn(Matterbridge.prototype, 'createAccessoryPlugin' as any).mockImplementationOnce( () => {
       throw new Error('Error creating endpoint');
     });
     await matterbridge.addBridgedEndpoint('matterbridge-mock4', {} as any);
@@ -230,7 +233,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugin).toBeDefined();
     if (!plugin) return;
     plugin.type = 'DynamicPlatform';
-    vi.spyOn(Matterbridge.prototype, 'createDynamicPlugin' as any).mockImplementationOnce(async () => {
+    vi.spyOn(Matterbridge.prototype, 'createDynamicPlugin' as any).mockImplementationOnce( () => {
       throw new Error('Error creating endpoint');
     });
     await matterbridge.addBridgedEndpoint('matterbridge-mock1', {} as any);

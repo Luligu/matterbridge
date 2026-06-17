@@ -1,6 +1,6 @@
 // vitest/devices/speaker.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Speaker';
 const MATTER_PORT = 8015;
@@ -38,12 +38,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -62,7 +62,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create speaker device (defaults)', async () => {
+  test('create speaker device (defaults)', () => {
     device = new Speaker('Living Room Speaker', 'SPK123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('LivingRoomSpeaker-SPK123456');
@@ -71,7 +71,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(LevelControl.id)).toBeTruthy();
   });
 
-  test('create speaker device (custom states)', async () => {
+  test('create speaker device (custom states)', () => {
     const custom = new Speaker('Bedroom Speaker', 'SPK654321', true, 10);
     expect(custom.id).toBe('BedroomSpeaker-SPK654321');
     expect(custom.getClusterServerOptions(OnOff.id)).toEqual({ onOff: false });
@@ -105,7 +105,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('check attributes after adding speaker to server', async () => {
+  test('check attributes after adding speaker to server', () => {
     expect(device.getAttribute(OnOff.id, 'onOff')).toBe(true); // unmuted
     expect(device.getAttribute(LevelControl.id, 'currentLevel')).toBe(128);
   });
@@ -137,7 +137,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getVolume()).toBe(100);
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;

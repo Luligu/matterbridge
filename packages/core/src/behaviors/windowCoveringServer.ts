@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { type WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
@@ -50,11 +52,11 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * Will set the initial movement status to Stopped and target = current, which is a safe default until we get the real status from the device.
    * Disable automatic operational mode handling to let the device manage it.
    */
-  override async initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeWindowCoveringServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.internal.disableOperationalModeHandling = true;
-    await super.initialize();
+    super.initialize();
   }
 
   /**
@@ -175,7 +177,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * No-op: movement is handled by the device implementation.
    */
   // istanbul ignore next
-  override async handleMovement() {
+  override handleMovement(): void {
     // Do nothing here, as the device will handle the movement
   }
 }

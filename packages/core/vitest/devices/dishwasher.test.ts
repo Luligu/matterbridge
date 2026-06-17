@@ -1,6 +1,6 @@
 // vitest/devices/dishwasher.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Dishwasher';
 const MATTER_PORT = 8004;
@@ -33,7 +33,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 import { Dishwasher, MatterbridgeDishwasherModeServer } from '../../src/devices/dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { dishwasher } from '../../src/matterbridgeDeviceTypes.js';
-import { type MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -46,12 +46,12 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a dishwasher device', async () => {
+  test('create a dishwasher device', () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');
@@ -87,7 +87,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
@@ -222,7 +222,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await deleteDevice(server, device)).toBeTruthy();
   });
 
-  test('create a dishwasher device with number temperature control', async () => {
+  test('create a dishwasher device with number temperature control', () => {
     device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');

@@ -8,6 +8,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
 
+// oxlint-disable-next-line typescript/require-await
 const loadInstance = vi.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   throw new Error('Mock implementation of loadInstance called.'); // Simulate an error by throwing an exception
 });
@@ -36,6 +37,7 @@ const takeHeapSnapshotSpy = vi.spyOn(Inspector.prototype, 'takeHeapSnapshot').mo
   return Promise.resolve();
 });
 
+// oxlint-disable-next-line typescript/no-misused-promises
 const runGarbageCollectionSpy = vi.spyOn(Inspector.prototype, 'runGarbageCollector').mockImplementation(async function () {
   return Promise.resolve();
 });
@@ -44,12 +46,12 @@ const runGarbageCollectionSpy = vi.spyOn(Inspector.prototype, 'runGarbageCollect
 await setupTest(NAME, false);
 
 describe('Matterbridge', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
   });

@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable oxc/no-barrel-file
+
 export * from './activatedCarbonFilterMonitoringServer.js';
 export * from './bindingServer.js';
 export * from './booleanStateConfigurationServer.js';

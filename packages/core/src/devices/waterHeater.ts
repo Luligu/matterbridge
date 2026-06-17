@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
@@ -29,6 +31,8 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+// Utils
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -85,7 +89,7 @@ export class WaterHeater extends MatterbridgeEndpoint {
       .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
       .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
       .createDefaultWaterHeaterModeClusterServer();
-    void this.addFixedLabel('composed', 'Water Heater').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'Water Heater'), this.log, 'WaterHeater addFixedLabel');
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()

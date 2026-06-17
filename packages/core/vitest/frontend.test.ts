@@ -1,5 +1,6 @@
 // vitest\frontend.test.ts
 
+// oxlint-disable typescript/require-await vitest/require-mock-type-parameters typescript/explicit-function-return-type typescript/consistent-return typescript/no-floating-promises
 /* eslint-disable no-console */
 
 const MATTER_PORT = 9000;
@@ -370,9 +371,9 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend getClusters', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(await frontend.getClusters('', 1)).toBeUndefined();
+    expect(frontend.getClusters('', 1)).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(await frontend.getClusters('', 1)).toBeUndefined();
+    expect(frontend.getClusters('', 1)).toBeUndefined();
   });
 
   test('Frontend getClusterTextFromDevice', () => {
@@ -808,7 +809,7 @@ describe('Matterbridge frontend', () => {
     expect((matterbridge as any).frontend.webSocketServer).toBeDefined();
     expect(startSpy).toHaveBeenNthCalledWith(1, FRONTEND_PORT);
     expect(createServerMock).toHaveBeenCalled();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Failed to create HTTP server: Error: Test error`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to create HTTP server: Test error`));
   });
 
   test('Frontend.start()', async () => {
@@ -981,6 +982,7 @@ describe('Matterbridge frontend', () => {
         resolve();
       });
       client.on('message', (data) => {
+        // oxlint-disable-next-line typescript/no-base-to-string typescript/restrict-template-expressions
         console.log(`Received message: ${data}`);
       });
       client.on('close', () => {
@@ -1119,6 +1121,7 @@ describe('Matterbridge frontend', () => {
         resolve();
       });
       client.on('message', (data) => {
+        // oxlint-disable-next-line typescript/no-base-to-string typescript/restrict-template-expressions
         console.log(`Received message: ${data}`);
       });
       client.on('close', () => {
@@ -1201,6 +1204,7 @@ describe('Matterbridge frontend', () => {
         resolve();
       });
       client.on('message', (data) => {
+        // oxlint-disable-next-line typescript/no-base-to-string typescript/restrict-template-expressions
         console.log(`Received message: ${data}`);
       });
       client.on('close', () => {

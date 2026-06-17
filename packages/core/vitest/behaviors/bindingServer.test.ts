@@ -1,6 +1,6 @@
 // src\behaviors\bindingServer.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'BindingServer';
 const MATTER_PORT = 11400;
@@ -15,7 +15,7 @@ import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { EndpointNumber, FabricIndex, NodeId } from '@matter/types';
 import { getClusterNameById } from '@matter/types/cluster';
-import { type Binding } from '@matter/types/clusters/binding';
+import type { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -47,7 +47,7 @@ describe('Client clusters and behaviors', () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
   });
 
-  beforeEach(async () => {
+  beforeEach( () => {
     // Clear all mocks
     vi.clearAllMocks();
   });

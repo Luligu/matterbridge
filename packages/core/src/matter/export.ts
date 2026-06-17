@@ -7,7 +7,7 @@
  * @license Apache-2.0
  */
 
-// @matter
+// oxlint-disable-next-line oxc/no-barrel-file
 export * from '@matter/main';
 export { AttributeElement, ClusterElement, ClusterModel, CommandElement, EventElement, FieldElement, MatterDefinition } from '@matter/main/model';
 export { MdnsService, Val } from '@matter/main/protocol';

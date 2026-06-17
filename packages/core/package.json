@@ -140,7 +140,7 @@
     "escape-html": "1.0.3",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
-    "multer": "2.1.1",
+    "multer": "2.2.0",
     "node-ansi-logger": "3.3.0-dev-20260607-585945a",
     "node-persist-manager": "2.1.0-dev-20260524-6a6019a",
     "ws": "8.21.0"
@@ -150,6 +150,6 @@
     "@types/express": "5.0.6",
     "@types/multer": "2.1.0",
     "@types/ws": "8.18.1",
-    "vitest": "4.1.8"
+    "vitest": "4.1.9"
   }
 }

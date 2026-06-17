@@ -22,10 +22,13 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { debugStringify } from 'node-ansi-logger';
 
-import { type MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
@@ -44,7 +47,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    */
   override async enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Enabling/disabling alarm ${request.alarmsToEnableDisable} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`Enabling/disabling alarm ${debugStringify(request.alarmsToEnableDisable)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('BooleanStateConfiguration.enableDisableAlarm', {
       command: 'enableDisableAlarm',
       request,

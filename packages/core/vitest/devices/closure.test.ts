@@ -1,6 +1,6 @@
 // vitest/devices/closure.test.ts
 
-/* eslint-disable vitest/no-standalone-expect */
+
 
 const NAME = 'Closure';
 const MATTER_PORT = 8022;
@@ -36,11 +36,11 @@ describe('Matterbridge ' + NAME, () => {
     await createTestEnvironment();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(aggregator).toBeDefined();
   });
 
-  test('create a closure device', async () => {
+  test('create a closure device', () => {
     device = new Closure('Closure Test Device', 'CL123456');
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosureTestDevice-CL123456');
@@ -76,7 +76,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });
 
-  test('check attributes after adding device to server', async () => {
+  test('check attributes after adding device to server', () => {
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
   });
 
@@ -114,7 +114,7 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('device forEachAttribute', async () => {
+  test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
       clusterId: number;
