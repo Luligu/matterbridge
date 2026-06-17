@@ -8,10 +8,12 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
-[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
+[![Codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
+[![tested with Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white)](https://vitest.dev)
+[![styled with Oxc](https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/formatter.html)
+[![linted with Oxc](https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
@@ -59,25 +61,29 @@ These classes will run as threads in the next releases:
 
 ### Development Changes
 
-- [test]: Add Vitest tests.
-- [test]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450.
-- [typescript]: Move package to TypeScript Preview (tsgo). The final build in the publish workflow is always with typescript.
+- [vitest]: Jest has been replaced by [Vitest](https://vitest.dev), which is much faster and natively supports ESM without extra configuration.
+- [jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster. Vitest also runs the test suite much faster than Jest.
+- [oxc]: ESLint and Prettier have been replaced by the [oxc](https://oxc.rs) stack: [oxlint](https://oxc.rs/docs/guide/usage/linter.html) for linting and [oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) for formatting. Both lint and format the codebase in a fraction of the time the previous tools took.
+- [oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.
+- [typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.
 
 ### Changed
 
 - [matterbridge]: Update dependencies.
-- [matterbridge]: Bump `eslint` to v.10.5.0.
 - [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260614.1.
 - [matterbridge]: Bump `oxlint` to v.1.70.0.
 - [matterbridge]: Bump `oxfmt` to v.0.55.0.
 - [matterbridge]: Bump `vitest` to v.4.1.9.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.9.
+- [oxfmt]: Update Oxlint configuration to v.1.0.3.
 - [oxlint]: Update Oxlint configuration to v.1.0.10.
 
 ### Fixed
 
 - [utils/zip]: Remove no more present zip export. Thanks Pugsin (https://github.com/Luligu/matterbridge/pull/568).
 - [package]: Update legacy export. Thanks Pugsin (https://github.com/Luligu/matterbridge/pull/567).
+- [publish]: Fix publish.yml not checking the previously published SHA.
+- [publish]: Fix publish.yml publishing the frontend even when no changes were made.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -170,7 +176,7 @@ These classes will run as threads in the next releases:
 - [endpoint]: Add `createDefaultBindingClusterServer(clientList: ClusterId[])` chainable `MatterbridgeEndpoint` method as the standard `createDefault*` helper for the Binding cluster.
 - [readme]: Add "How to use cluster clients" section to README-DEV.md with description and examples for `addClusterClients`, `addRequiredClusterClients`, `addOptionalClusterClients`, and `getEndpoint`.
 - [deviceTypes]: Add `requiredClientClusters` and `optionalClientClusters` to the device type definitions for: `OTAProvider`, `deviceEnergyManagement`, `onOffLight`, `dimmableLight`, `colorTemperatureLight`, `extendedColorLight`, `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `waterValve`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `thermostatDevice`, `heatPump`, `cameraController`.
-- [codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.
+- [Codecov]: Add merge of Jest and Vitest coverage reports. This allows to run both Jest and Vitest tests in the same package and have a unified coverage report in Codecov.
 
 ### Changed
 
