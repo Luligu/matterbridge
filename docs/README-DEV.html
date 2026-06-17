@@ -239,7 +239,7 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>.CLAUDE.html</code></td>
+<td><code>CLAUDE.html</code></td>
 <td>Main project instructions — always loaded</td>
 </tr>
 <tr>
@@ -260,8 +260,16 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><code>.AGENTS.html</code></td>
+<td><code>AGENTS.html</code></td>
 <td>Main project instructions</td>
+</tr>
+<tr>
+<td><code>.codex/config.toml</code></td>
+<td>Codex project permissions, approvals, and profile</td>
+</tr>
+<tr>
+<td><code>.codex/rules/default.rules</code></td>
+<td>Codex command allow, prompt, and deny rules</td>
 </tr>
 </tbody></table>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>
@@ -294,6 +302,30 @@
 <ul>
 <li>NodeStorageManager and NodeStorage classes.</li>
 </ul>
+<p><strong>&quot;matterbridge/dgram&quot;</strong></p>
+<ul>
+<li>UDP/datagram helpers exported by Matterbridge.</li>
+</ul>
+<p><strong>&quot;matterbridge/jestutils&quot;</strong></p>
+<ul>
+<li>Legacy Jest utility exports. <strong>Deprecated</strong> will be removed in 3.10.0.</li>
+</ul>
+<p><strong>&quot;matterbridge/jest-utils&quot;</strong></p>
+<ul>
+<li>Jest utility exports.</li>
+</ul>
+<p><strong>&quot;matterbridge/jest-utils/matter&quot;</strong></p>
+<ul>
+<li>Jest Matter test helpers.</li>
+</ul>
+<p><strong>&quot;matterbridge/vitest-utils&quot;</strong></p>
+<ul>
+<li>Vitest utility exports.</li>
+</ul>
+<p><strong>&quot;matterbridge/vitest-utils/matter&quot;</strong></p>
+<ul>
+<li>Vitest Matter test helpers.</li>
+</ul>
 <p><strong>&quot;matterbridge/matter&quot;</strong></p>
 <ul>
 <li>All relevant matter.js exports.</li>
@@ -320,21 +352,21 @@
 </ul>
 <p><strong>&quot;matterbridge/matter/types&quot;</strong></p>
 <ul>
-<li>All matter.js types.</li>
+<li>All matter.js cluster types.</li>
 </ul>
 <h3 id="warning">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
 <p>A plugin must never install or import from <code>@matter</code> or <code>@project-chip</code> directly (neither as a dependency, devDependency, nor peerDependency), as this leads to a second instance of <code>matter.js</code>, causing instability and unpredictable errors such as &quot;The only instance is Endpoint&quot;.</p>
 <p>Additionally, when Matterbridge updates the <code>matter.js</code> version, it should be consistent across all plugins.</p>
 <h3 id="warning-1">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
-<p>A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).</p>
-<p>Matterbridge must be linked to the plugin in development only. At runtime the plugin is loaded directly from the running Mattebridge instance.</p>
-<pre><code class="language-json">&quot;scripts&quot;: {
-    &#39;&#39;&#39;
-    &quot;dev:link&quot;: &quot;npm link matterbridge&quot;,
-    &#39;&#39;&#39;
+<p>A plugin must never declare Matterbridge as a dependency, devDependency, or peerDependency.</p>
+<p>For local development only, Matterbridge may be linked to the plugin with <code>npm link matterbridge</code>. At runtime the plugin is loaded directly from the running Matterbridge instance.</p>
+<pre><code class="language-json">{
+  &quot;scripts&quot;: {
+    &quot;dev:link&quot;: &quot;npm link matterbridge&quot;
+  }
 }
 </code></pre>
-<p>If you don&#39;t use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).</p>
+<p>If you don&#39;t use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, build it locally and link it globally (npm link from the matterbridge package root).</p>
 <pre><code class="language-bash">git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge.git
 cd matterbridge
 npm install --no-fund --no-audit
@@ -358,7 +390,7 @@ npm link --no-fund --no-audit
 </code></pre>
 <p>Always keep your local instance of matterbridge up to date.</p>
 <h3 id="warning-2">*<strong>*****</strong> WARNING *<strong>*****</strong></h3>
-<p>Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.</p>
+<p>Some error messages are logged on start when a plugin has invalid imports or configuration and the plugin will be disabled to prevent instability and crashes.</p>
 <h2 id="how-to-install-and-register-a-plugin-for-development-from-github">How to install and register a plugin for development (from github)</h2>
 <p>To install i.e. <a href="https://github.com/Luligu/matterbridge-example-accessory-platform">https://github.com/Luligu/matterbridge-example-accessory-platform</a></p>
 <p>On windows:</p>
@@ -750,6 +782,19 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <tr>
 <td><code>MatterbridgeEndpointCommands</code> interface</td>
 <td><code>CommandHandlers</code></td>
+</tr>
+</tbody></table>
+<h3 id="package-exports">Package exports</h3>
+<table>
+<thead>
+<tr>
+<th>Deprecated export</th>
+<th>Replacement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>matterbridge/jestutils</code></td>
+<td><code>matterbridge/jest-utils</code></td>
 </tr>
 </tbody></table>
 <h1 id="frequently-asked-questions">Frequently asked questions</h1>

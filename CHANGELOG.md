@@ -70,6 +70,8 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [dependencies]: Add `scripts/scan-deps.mjs` to check that every `@matter/*` and `@matterbridge/*` import across the monorepo is declared in the package `dependencies`/`devDependencies` and, for workspace packages, referenced in the build tsconfig project references. The scanner understands the lockstep `@matter` monorepo, so a declared `@matter/main` satisfies its whole dependency closure (including the `@matter/nodejs` Node bootstrap).
+- [codex]: Add Codex configuration in `.codex/config.toml` and rules in `.codex/default.rules`.
+- [checkUpdates]: Improved workflow sending only once the refresh to the frontend.
 
 ### Changed
 
@@ -82,6 +84,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.9.
 - [oxfmt]: Update Oxlint configuration to v.1.0.3.
 - [oxlint]: Update Oxlint configuration to v.1.0.10.
+- [agents]: Update `AGENTS.md` and `STYLEGUIDE.md`.
 
 ### Fixed
 

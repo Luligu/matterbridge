@@ -122,15 +122,17 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 | File                                                      | Notes                                                 |
 | --------------------------------------------------------- | ----------------------------------------------------- |
-| `.CLAUDE.md`                                              | Main project instructions — always loaded             |
+| `CLAUDE.md`                                               | Main project instructions — always loaded             |
 | `.claude/rules/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — loaded for all contexts |
 | `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `**/*.test.ts`          |
 
 ## Agents instructions
 
-| File         | Notes                     |
-| ------------ | ------------------------- |
-| `.AGENTS.md` | Main project instructions |
+| File                         | Notes                                             |
+| ---------------------------- | ------------------------------------------------- |
+| `AGENTS.md`                  | Main project instructions                         |
+| `.codex/config.toml`         | Codex project permissions, approvals, and profile |
+| `.codex/rules/default.rules` | Codex command allow, prompt, and deny rules       |
 
 ## Guidelines on imports/exports
 
@@ -164,6 +166,30 @@ Matterbridge exports from:
 
 - NodeStorageManager and NodeStorage classes.
 
+**"matterbridge/dgram"**
+
+- UDP/datagram helpers exported by Matterbridge.
+
+**"matterbridge/jestutils"**
+
+- Legacy Jest utility exports. **Deprecated** will be removed in 3.10.0.
+
+**"matterbridge/jest-utils"**
+
+- Jest utility exports.
+
+**"matterbridge/jest-utils/matter"**
+
+- Jest Matter test helpers.
+
+**"matterbridge/vitest-utils"**
+
+- Vitest utility exports.
+
+**"matterbridge/vitest-utils/matter"**
+
+- Vitest Matter test helpers.
+
 **"matterbridge/matter"**
 
 - All relevant matter.js exports.
@@ -190,7 +216,7 @@ Matterbridge exports from:
 
 **"matterbridge/matter/types"**
 
-- All matter.js types.
+- All matter.js cluster types.
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
@@ -200,19 +226,19 @@ Additionally, when Matterbridge updates the `matter.js` version, it should be co
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
-A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
+A plugin must never declare Matterbridge as a dependency, devDependency, or peerDependency.
 
-Matterbridge must be linked to the plugin in development only. At runtime the plugin is loaded directly from the running Mattebridge instance.
+For local development only, Matterbridge may be linked to the plugin with `npm link matterbridge`. At runtime the plugin is loaded directly from the running Matterbridge instance.
 
 ```json
-"scripts": {
-    '''
-    "dev:link": "npm link matterbridge",
-    '''
+{
+  "scripts": {
+    "dev:link": "npm link matterbridge"
+  }
 }
 ```
 
-If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
+If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, build it locally and link it globally (npm link from the matterbridge package root).
 
 ```bash
 git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge.git
@@ -244,7 +270,7 @@ Always keep your local instance of matterbridge up to date.
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
-Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
+Some error messages are logged on start when a plugin has invalid imports or configuration and the plugin will be disabled to prevent instability and crashes.
 
 ## How to install and register a plugin for development (from github)
 
@@ -661,6 +687,12 @@ The properties of the schema file shall correspond to the properties of the conf
 | ----------------------------------------------- | ------------------------------------------------------------ |
 | `MatterbridgeEndpoint.getChildEndpointByName()` | `getChildEndpointById()` or `getChildEndpointByOriginalId()` |
 | `MatterbridgeEndpointCommands` interface        | `CommandHandlers`                                            |
+
+### Package exports
+
+| Deprecated export        | Replacement               |
+| ------------------------ | ------------------------- |
+| `matterbridge/jestutils` | `matterbridge/jest-utils` |
 
 # Frequently asked questions
 

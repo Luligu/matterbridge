@@ -189,6 +189,8 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[dependencies]: Add <code>scripts/scan-deps.mjs</code> to check that every <code>@matter/*</code> and <code>@matterbridge/*</code> import across the monorepo is declared in the package <code>dependencies</code>/<code>devDependencies</code> and, for workspace packages, referenced in the build tsconfig project references. The scanner understands the lockstep <code>@matter</code> monorepo, so a declared <code>@matter/main</code> satisfies its whole dependency closure (including the <code>@matter/nodejs</code> Node bootstrap).</li>
+<li>[codex]: Add Codex configuration in <code>.codex/config.toml</code> and rules in <code>.codex/default.rules</code>.</li>
+<li>[checkUpdates]: Improved workflow sending only once the refresh to the frontend.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -201,6 +203,7 @@
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.4.1.9.</li>
 <li>[oxfmt]: Update Oxlint configuration to v.1.0.3.</li>
 <li>[oxlint]: Update Oxlint configuration to v.1.0.10.</li>
+<li>[agents]: Update <code>AGENTS.html</code> and <code>STYLEGUIDE.html</code>.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
