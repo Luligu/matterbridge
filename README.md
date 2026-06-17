@@ -812,7 +812,9 @@ graph TD
   thread --> utils
   thread --> types
   dgram --> utils
+  jestutils --> utils
   jestutils --> types
+  vitestutils --> utils
   vitestutils --> types
 ```
 
@@ -820,7 +822,7 @@ The graph is acyclic and layered:
 
 - **Foundation (no internal dependencies):** `@matterbridge/types`, `@matterbridge/utils`.
 - **Networking & workers:** `@matterbridge/dgram` (→ `utils`), `@matterbridge/thread` (→ `utils`, `types`).
-- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `types`).
+- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `utils`, `types`).
 - **Core:** `@matterbridge/core` (→ `dgram`, `thread`, `utils`, `types`).
 - **Top level:** `matterbridge` declares all scoped packages as direct dependencies; `core` pulls in the rest transitively.
 

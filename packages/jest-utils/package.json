@@ -68,7 +68,9 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
+    "@matter/main": "0.17.2",
     "@matterbridge/types": "3.9.1",
+    "@matterbridge/utils": "3.9.1",
     "node-ansi-logger": "3.3.0-dev-20260607-585945a"
   }
 }

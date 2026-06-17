@@ -67,6 +67,10 @@ These classes will run as threads in the next releases:
 - [oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.
 - [typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.
 
+### Added
+
+- [dependencies]: Add `scripts/scan-deps.mjs` to check that every `@matter/*` and `@matterbridge/*` import across the monorepo is declared in the package `dependencies`/`devDependencies` and, for workspace packages, referenced in the build tsconfig project references. The scanner understands the lockstep `@matter` monorepo, so a declared `@matter/main` satisfies its whole dependency closure (including the `@matter/nodejs` Node bootstrap).
+
 ### Changed
 
 - [matterbridge]: Update dependencies.
