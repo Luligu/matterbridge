@@ -1,5 +1,11 @@
 // vitest\matterbridgeEndpointHelpers.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 const NAME = 'MatterbridgeEndpointHelpers';
 const MATTER_PORT = 11300;
 const MATTER_CREATE_ONLY = true;

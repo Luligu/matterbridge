@@ -1,5 +1,11 @@
 // vitest\matterbridgeEndpoint-matterjs.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 // oxlint-disable typescript/no-misused-promises vitest/require-mock-type-parameters typescript/prefer-nullish-coalescing
 
 const NAME = 'EndpointMatterJs';

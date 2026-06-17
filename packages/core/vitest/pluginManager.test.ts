@@ -1,5 +1,11 @@
 // vitest\pluginManager.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 // oxlint-disable no-use-before-define
 // oxlint-disable vitest/no-commented-out-tests
 
@@ -1158,6 +1164,9 @@ describe('PluginManager', () => {
     expect(plugins.getFunding({ funding: { url: 'https://www.buymeacoffee.com/luligugithub' } })).toBe('https://www.buymeacoffee.com/luligugithub');
     expect(plugins.getFunding({ funding: ['https://www.buymeacoffee.com/luligugithub'] })).toBe('https://www.buymeacoffee.com/luligugithub');
     expect(plugins.getFunding({ funding: [{ url: 'https://www.buymeacoffee.com/luligugithub' }] })).toBe('https://www.buymeacoffee.com/luligugithub');
+    expect(plugins.getFunding({ funding: ['FundingUrl'] })).toBe(undefined);
+    expect(plugins.getFunding({ funding: [{ url: 'FundingUrl' }] })).toBe(undefined);
+    expect(plugins.getFunding({ funding: { type: 'whatever' } })).toBe(undefined);
   });
 
   test('parse registered plugin', async () => {

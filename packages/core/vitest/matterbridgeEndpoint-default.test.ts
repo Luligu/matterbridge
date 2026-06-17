@@ -1,5 +1,11 @@
 // vitest\matterbridgeEndpoint-default.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 const NAME = 'EndpointDefault';
 const MATTER_PORT = 11200;
 const MATTER_CREATE_ONLY = true;
@@ -550,6 +556,11 @@ describe('Matterbridge ' + NAME, () => {
     );
     expect(device.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBe(50);
+    // Return undefined when the operationalStatus is not a valid object.
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const getAttributeSpy = vi.spyOn(device, 'getAttribute').mockReturnValueOnce(undefined);
+    expect(device.getWindowCoveringStatus()).toBe(undefined);
+    getAttributeSpy.mockRestore();
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
