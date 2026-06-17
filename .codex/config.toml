@@ -1,0 +1,20 @@
+approval_policy = "on-request"
+approvals_reviewer = "user"
+default_permissions = "matterbridge_safe"
+
+[permissions.matterbridge_safe]
+description = "Workspace access with sensitive files denied and network off."
+extends = ":workspace"
+
+[permissions.matterbridge_safe.filesystem]
+glob_scan_max_depth = 4
+
+[permissions.matterbridge_safe.filesystem.":workspace_roots"]
+".env" = "deny"
+".env.*" = "deny"
+"**/.env" = "deny"
+"**/.env.*" = "deny"
+"**/secrets/**" = "deny"
+
+[permissions.matterbridge_safe.network]
+enabled = false
