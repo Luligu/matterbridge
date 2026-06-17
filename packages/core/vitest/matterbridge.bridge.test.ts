@@ -1,5 +1,11 @@
 // vitest\matterbridge.bridge.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 // oxlint-disable vitest/require-mock-type-parameters
 /* eslint-disable vitest/no-conditional-expect */
 

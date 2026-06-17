@@ -1,6 +1,7 @@
 // vitest\matterbridgePlatform.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters typescript/prefer-nullish-coalescing
+// oxlint-disable vitest/require-mock-type-parameters
+// oxlint-disable typescript/prefer-nullish-coalescing
 /* eslint-disable vitest/no-conditional-expect */
 
 const NAME = 'MatterbridgePlatform';
