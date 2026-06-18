@@ -181,7 +181,7 @@
 <h3 id="development-changes">Development Changes</h3>
 <ul>
 <li>[vitest]: Jest has been replaced by <a href="https://vitest.dev">Vitest</a>, which is much faster and natively supports ESM without extra configuration.</li>
-<li>[jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster. Vitest also runs the test suite much faster than Jest.</li>
+<li>[jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster.</li>
 <li>[oxc]: ESLint and Prettier have been replaced by the <a href="https://oxc.rs">oxc</a> stack: <a href="https://oxc.rs/docs/guide/usage/linter.html">oxlint</a> for linting and <a href="https://oxc.rs/docs/guide/usage/formatter.html">oxfmt</a> for formatting. Both lint and format the codebase in a fraction of the time the previous tools took.</li>
 <li>[oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.</li>
 <li>[typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.</li>
@@ -197,12 +197,12 @@
 <ul>
 <li>[matterbridge]: Update dependencies.</li>
 <li>[matterbridge]: Bump <code>matter.js</code> to v.0.17.3.</li>
-<li>[matterbridge]: Bump <code>@typescript/native-preview</code> to v.7.0.0-dev.20260614.1.</li>
+<li>[matterbridge]: Bump <code>@typescript/native-preview</code> to v.7.0.0-dev.20260618.1.</li>
 <li>[matterbridge]: Bump <code>oxlint</code> to v.1.70.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.55.0.</li>
 <li>[matterbridge]: Bump <code>vitest</code> to v.4.1.9.</li>
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.4.1.9.</li>
-<li>[oxfmt]: Update Oxlint configuration to v.1.0.3.</li>
+<li>[oxfmt]: Update Oxfmt configuration to v.1.0.3.</li>
 <li>[oxlint]: Update Oxlint configuration to v.1.0.10.</li>
 <li>[agents]: Update <code>AGENTS.html</code> and <code>STYLEGUIDE.html</code>.</li>
 </ul>

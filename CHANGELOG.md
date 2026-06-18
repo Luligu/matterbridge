@@ -62,7 +62,7 @@ These classes will run as threads in the next releases:
 ### Development Changes
 
 - [vitest]: Jest has been replaced by [Vitest](https://vitest.dev), which is much faster and natively supports ESM without extra configuration.
-- [jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster. Vitest also runs the test suite much faster than Jest.
+- [jest]: Remove Jest tests and Jest packages. Dev dependencies package count drops from ~660 to ~450. A clean install is much faster.
 - [oxc]: ESLint and Prettier have been replaced by the [oxc](https://oxc.rs) stack: [oxlint](https://oxc.rs/docs/guide/usage/linter.html) for linting and [oxfmt](https://oxc.rs/docs/guide/usage/formatter.html) for formatting. Both lint and format the codebase in a fraction of the time the previous tools took.
 - [oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.
 - [typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.
@@ -78,12 +78,12 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `matter.js` to v.0.17.3.
-- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260614.1.
+- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260618.1.
 - [matterbridge]: Bump `oxlint` to v.1.70.0.
 - [matterbridge]: Bump `oxfmt` to v.0.55.0.
 - [matterbridge]: Bump `vitest` to v.4.1.9.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.9.
-- [oxfmt]: Update Oxlint configuration to v.1.0.3.
+- [oxfmt]: Update Oxfmt configuration to v.1.0.3.
 - [oxlint]: Update Oxlint configuration to v.1.0.10.
 - [agents]: Update `AGENTS.md` and `STYLEGUIDE.md`.
 
