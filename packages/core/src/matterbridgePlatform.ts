@@ -950,7 +950,7 @@ export class MatterbridgePlatform {
    * The blacklist has priority over the whitelist.
    *
    * @param {string | string[]} device - The device name(s) to validate.
-   * @param {boolean} [log] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result. Default is true.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    */
   validateDevice(device: string | string[], log: boolean = true): boolean {

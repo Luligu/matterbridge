@@ -1,9 +1,9 @@
 # Matterbridge Workspace Instructions
 
 - Follow [STYLEGUIDE.md](../STYLEGUIDE.md) for code style, naming, JSDoc, validation, logging, and formatting expectations.
-- JSDoc requirements are enforced by ESLint. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
-- Import and export ordering are enforced by ESLint. Preserve the existing grouped and sorted order unless a change requires updating it.
-- Formatting is enforced by ESLint through the Prettier rule. Follow the existing formatting and do not fight the formatter.
+- JSDoc requirements are enforced by oxlint. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
+- Import and export ordering are enforced by oxlint/oxfmt. Preserve the existing grouped and sorted order unless a change requires updating it.
+- Formatting is enforced by oxfmt. Follow the existing formatting and do not fight the formatter.
 - Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
 - Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
 - Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.

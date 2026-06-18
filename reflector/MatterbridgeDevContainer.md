@@ -4,7 +4,7 @@
 
 - Docker Desktop or Docker Engine are required to use the Dev Container.
 - Devcontainer works correctly on Linux, macOS, Windows, WSL2.
-- The devcontainer provides Node.js, npm, TypeScript, ESLint, Prettier, Jest, Vitest and other tools and extensions pre-installed and configured.
+- The devcontainer provides Node.js, npm, TypeScript, Jest, Vitest, the shared Matterbridge Oxc/oxlint/oxfmt configs, and other tools and extensions pre-installed and configured.
 - The dev branch of Matterbridge is already build and installed into the Dev Container and linked to the plugin. The plugin is automatically added to matterbridge.
 - The devcontainer is optimized using named mounts for node_modules, .cache and matterbridge.
 - You can run, build, and test your plugin directly inside the container.
