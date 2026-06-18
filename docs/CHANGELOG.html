@@ -185,6 +185,7 @@
 <li>[oxc]: ESLint and Prettier have been replaced by the <a href="https://oxc.rs">oxc</a> stack: <a href="https://oxc.rs/docs/guide/usage/linter.html">oxlint</a> for linting and <a href="https://oxc.rs/docs/guide/usage/formatter.html">oxfmt</a> for formatting. Both lint and format the codebase in a fraction of the time the previous tools took.</li>
 <li>[oxc]: Remove ESLint and Prettier packages. Dev dependencies package count drops from ~450 to ~240. A clean install is much faster.</li>
 <li>[typescript]: Move the package to the TypeScript Native Preview (tsgo), which type-checks and builds in a fraction of the time of the classic compiler. The final build in the publish workflow is always done with TypeScript (tsc), since tsgo is still in preview.</li>
+<li>[endpoint]: <code>hasAttributeServer()</code> now also detects mandatory attributes supplied by Matter.js behavior defaults.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>

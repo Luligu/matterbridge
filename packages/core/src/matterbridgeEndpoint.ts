@@ -508,7 +508,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const normalizedAttribute = lowercaseFirstLetter(attribute);
     const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
     const defaults = defaultFor(behavior, options) as Record<string, boolean | number | bigint | string | object | null> | undefined;
-    return (options !== undefined && normalizedAttribute in options) || (defaults !== undefined && normalizedAttribute in defaults);
+    const behaviorDefaults = behavior.defaults as Record<string, unknown>;
+    return (
+      (options !== undefined && normalizedAttribute in options) ||
+      (defaults !== undefined && normalizedAttribute in defaults) ||
+      behaviorDefaults[normalizedAttribute] !== undefined
+    );
   }
 
   /**
