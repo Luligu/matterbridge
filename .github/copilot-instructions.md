@@ -10,6 +10,7 @@
 - Maintain compatibility with the supported Node.js versions in this repository: 20, 22, 24 and 26.
 - This repository is a TypeScript ESM monorepo. Follow existing project patterns for imports, exports, build configuration, and test setup.
 - Prefer the existing npm scripts in [package.json](../package.json) and the VS Code tasks in [tasks.json](../.vscode/tasks.json) for building, linting, and testing.
+- For frontend work, run npm scripts from `apps/frontend` (or use commands that explicitly target that package).
 - Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
 - Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
 - For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
