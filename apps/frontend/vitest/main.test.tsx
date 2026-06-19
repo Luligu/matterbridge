@@ -8,8 +8,8 @@ globalThis.console = Object.assign({}, console, {
   trace: vi.fn(),
 });
 
-import { describe, it, vi, expect } from 'vitest';
 import { cleanup } from '@testing-library/react';
+import { describe, it, vi, expect } from 'vitest';
 
 describe('main.tsx', () => {
   it('renders without crashing', async () => {

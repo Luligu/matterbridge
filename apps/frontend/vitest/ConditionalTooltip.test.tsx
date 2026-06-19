@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, act, waitFor, cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+import { render, screen, fireEvent, act, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 async function loadConditionalTooltip() {
   return import('../src/components/ConditionalTooltip');
@@ -21,7 +22,7 @@ describe('ConditionalTooltip', () => {
     render(
       <ConditionalTooltip title="Alpha">
         <span>Alpha</span>
-      </ConditionalTooltip>
+      </ConditionalTooltip>,
     );
 
     const target = screen.getByLabelText('Alpha');
@@ -55,7 +56,7 @@ describe('ConditionalTooltip', () => {
     render(
       <ConditionalTooltip title="Alpha">
         <span>Alpha</span>
-      </ConditionalTooltip>
+      </ConditionalTooltip>,
     );
 
     const target = screen.getByLabelText('Alpha');
@@ -97,7 +98,7 @@ describe('ConditionalTooltip', () => {
       shouldTooltipOpen({
         scrollWidth: 100,
         clientWidth: 100,
-      } as HTMLSpanElement)
+      } as HTMLSpanElement),
     ).toBe(false);
   });
 });

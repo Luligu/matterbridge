@@ -1,26 +1,9 @@
 // .oxfmtrc.json 1.0.3
 
-// This Oxfmt configuration is designed for a TypeScript project using ESM modules.
+// This Oxfmt configuration is designed for a Vite/React/Typescript frontend using ESM modules.
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": [
-    "**/.cache/**",
-    "**/.git/**",
-    "apps/**",
-    "**/build/**",
-    "chip/**",
-    "**/coverage/**",
-    "docs",
-    "**/dist/**",
-    "**/temp/**",
-    "**/jest/**",
-    "**/node_modules/**",
-    "**/screenshots/**",
-    "vendor/**",
-    "**/package-lock.json",
-    "scripts/*.html",
-    "eslint.config.js"
-  ],
+  "ignorePatterns": ["**/.cache/**", "**/.git/**", "**/build/**", "**/coverage/**", "**/temp/**", "**/node_modules/**", "**/screenshots/**", "**/package-lock.json"],
   "printWidth": 180,
   "tabWidth": 2,
   "useTabs": false,

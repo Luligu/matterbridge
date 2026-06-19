@@ -1,6 +1,7 @@
-import React from 'react';
 import '@testing-library/jest-dom';
+
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/components/WebSocketProvider', () => ({
@@ -8,14 +9,18 @@ vi.mock('../src/components/WebSocketProvider', () => ({
 }));
 
 vi.mock('../src/components/Connecting', () => ({
-  Connecting: () => <div data-testid='connecting'>Connecting</div>,
+  Connecting: () => <div data-testid="connecting">Connecting</div>,
 }));
 
 vi.mock('../src/components/MbfWindow', () => ({
-  MbfWindow: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window'>{children}</div>,
-  MbfWindowContent: ({ children, ...props }: { children: React.ReactNode }) => <div data-testid='mbf-window-content' {...props}>{children}</div>,
-  MbfWindowHeader: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window-header'>{children}</div>,
-  MbfWindowHeaderText: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window-header-text'>{children}</div>,
+  MbfWindow: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window">{children}</div>,
+  MbfWindowContent: ({ children, ...props }: { children: React.ReactNode }) => (
+    <div data-testid="mbf-window-content" {...props}>
+      {children}
+    </div>
+  ),
+  MbfWindowHeader: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window-header">{children}</div>,
+  MbfWindowHeaderText: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window-header-text">{children}</div>,
 }));
 
 vi.mock('@mui/material/Button', () => ({
@@ -24,7 +29,7 @@ vi.mock('@mui/material/Button', () => ({
 }));
 
 vi.mock('@mui/icons-material/Refresh', () => ({
-  default: () => <span data-testid='refresh-icon' />,
+  default: () => <span data-testid="refresh-icon" />,
 }));
 
 async function loadHomeBrowserRefresh(debug = false) {
@@ -41,7 +46,7 @@ async function renderHomeBrowserRefresh(online: boolean, debug = false, version 
   return render(
     <WebSocketContext.Provider value={{ online } as never}>
       <HomeBrowserRefresh version={version} />
-    </WebSocketContext.Provider>
+    </WebSocketContext.Provider>,
   );
 }
 
@@ -61,6 +66,7 @@ describe('HomeBrowserRefresh', () => {
     const reloadSpy = vi.fn();
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
+      // oxlint-disable-next-line typescript/no-misused-spread
       value: { ...originalLocation, reload: reloadSpy },
       configurable: true,
       writable: true,

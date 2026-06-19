@@ -1,6 +1,7 @@
-import React from 'react';
-import { cleanup, render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+import { cleanup, render, screen, fireEvent, act } from '@testing-library/react';
+import React from 'react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // Mock UiContext and UiProvider before all other imports to avoid hoisting issues

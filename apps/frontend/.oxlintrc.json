@@ -1,6 +1,6 @@
-// .oxlintrc.react.json 1.0.1
+// .oxlintrc.react.json 1.0.2
 
-// This Oxlint configuration is designed for a Vite/React project using ESM modules.
+// This Oxlint configuration is designed for a Vite/React/Typescript frontend using ESM modules.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**", "eslint.config.js", "**/vite-env.d.ts"],
@@ -8,7 +8,8 @@
     "browser": true,
     "es2024": true
   },
-  "plugins": ["eslint", "react" /* "react-perf",*/, "jsx-a11y", "typescript", "unicorn", "import", "oxc", "jsdoc", "promise"],
+  // "react-perf" — all four rules conflict with MUI patterns; not worth enabling
+  "plugins": ["eslint", "react", "jsx-a11y", "typescript", "unicorn", "import", "oxc", "jsdoc", "promise"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -23,8 +24,8 @@
     "eslint/no-undefined": "off", // `undefined` is idiomatic in TS/React (useState init, optional args)
     "eslint/no-void": "off", // `void promise` marks intentionally fire-and-forget promises (usePolling)
     "eslint/no-shadow": "off", // variable shadowing is common in React (props/state vs local vars)
-    "eslint/no-use-before-define": "off",
-    "eslint/no-plusplus": "off",
+    "eslint/no-use-before-define": "off", // function declarations are hoisted; common pattern in React
+    "eslint/no-plusplus": "off", // ++ is idiomatic in for loops and increment expressions
     "eslint/no-unused-vars": [
       "warn",
       {
@@ -33,18 +34,21 @@
         "varsIgnorePattern": "^_",
         "ignoreRestSiblings": true
       }
-    ], // unused vars are often used to satisfy TS type signatures, so we allow them with a leading underscore
+    ], // vars prefixed with _ are intentionally unused (e.g., required by interface conformance or type signatures)
     "eslint/max-lines": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
     "eslint/max-lines-per-function": ["warn", { "max": 500, "skipComments": true, "skipBlankLines": true }],
     "eslint/complexity": ["warn", { "max": 100 }],
+    "eslint/eqeqeq": ["warn", "always", { "null": "ignore" }], // enforce === everywhere; null exception preserves the intentional == null idiom (handles both null and undefined)
+    "eslint/no-alert": "warn", // alert()/confirm()/prompt() block the main thread and are not appropriate in React apps
     "oxc/no-async-await": "off", // async/await is the standard style in this project
     "oxc/no-optional-chaining": "off", // optional chaining is the standard style in this project
     "oxc/no-rest-spread-properties": "off", // rest/spread is the standard style in this project
     "unicorn/consistent-function-scoping": "off", // React components often define small inline subcomponents
     "typescript/explicit-function-return-type": "off", // React components/inline callbacks infer their return type
-    "typescript/explicit-module-boundary-types": "off", // same: avoid noisy explicit return types on components
+    "typescript/explicit-module-boundary-types": "off", // return types on exported module boundaries clutter code with what TypeScript already infers
     "typescript/no-import-type-side-effects": "off", // conflicts with the inline type-imports style enforced below
     "typescript/no-explicit-any": "warn",
+    "typescript/prefer-nullish-coalescing": "warn", // a ?? b only substitutes null/undefined; a || b also substitutes 0, "", false — prefer ?? for nullable state
     "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "warn",
@@ -59,24 +63,24 @@
     "jsdoc/require-property-name": "warn",
     "jsdoc/require-property-description": "warn",
     "jsdoc/require-property-type": "warn",
-    "import/no-default-export": "off", // We allow default exports in React components
-    "import/no-relative-parent-imports": "off", // We allow relative parent imports
-    "import/newline-after-import": "warn", // Enforce a newline after import statements for better readability
-    "import/no-namespace": "warn", // Disallow namespace imports to encourage more explicit imports
-    "import/first": "warn", // Ensure all import statements are at the top of the file
-    "import/no-duplicates": "warn", // Disallow duplicate imports to avoid confusion and improve readability
-    "promise/no-nesting": "warn",
-    "promise/prefer-await-to-callbacks": "warn",
-    "promise/prefer-catch": "warn",
-    "promise/param-names": "warn",
-    "promise/no-return-wrap": "warn",
+    "import/no-default-export": "off", // default exports are idiomatic for React components
+    "import/no-relative-parent-imports": "off", // relative parent imports are used throughout this project
+    "import/newline-after-import": "warn", // newline after imports improves readability
+    "import/no-namespace": "warn", // named imports are easier to trace and tree-shake than namespace imports
+    "import/first": "warn", // imports must appear at the top of the file
+    "import/no-duplicates": "warn", // duplicate imports can cause confusion about which declaration is used
+    "promise/no-nesting": "warn", // discourage callback pyramids; async/await is preferred but warn level allows flexibility
+    "promise/prefer-await-to-callbacks": "warn", // encourage modern async/await style; warn for legacy callback patterns
+    "promise/prefer-catch": "warn", // encourage .catch() over .then(null, fn) for readability
+    "promise/param-names": "warn", // enforce consistent param names (resolve, reject) for promise executors
+    "promise/no-return-wrap": "warn", // unnecessary Promise.resolve()/reject() wrappers add noise; prefer returning values directly
     "react/react-in-jsx-scope": "off", // React 17+ automatic JSX runtime needs no React import
     "react/jsx-filename-extension": "off", // JSX lives in .tsx files in this project
     "react/no-multi-comp": "off", // small colocated subcomponents (PayloadCell/PayloadDetail) are allowed
     "react/no-array-index-key": "off", // the message feed has no stable id; index key is acceptable here
-    "react-perf/jsx-no-new-object-as-prop": "off", // incompatible with MUI's idiomatic inline `sx={{ ... }}` styling
     "react/forbid-component-props": "off", // MUI components often require passing through arbitrary props (e.g. `sx`), so we allow all component props
-    "react/jsx-no-literals": "off" // we allow string literals in JSX
+    "react/jsx-no-literals": "off", // we allow string literals in JSX
+    "react/button-has-type": "warn" // native <button> defaults to type="submit" and can silently submit parent forms
   },
   "overrides": [
     {
@@ -84,39 +88,39 @@
       "plugins": ["vitest"],
       "env": { "vitest": true },
       "rules": {
-        "eslint/no-unused-vars": "off",
-        "eslint/no-new": "off",
-        "eslint/require-await": "off",
-        "eslint/no-empty-function": "off",
-        "eslint/max-lines-per-function": "off",
-        "eslint/max-lines": "off",
-        "eslint/complexity": "off",
-        "typescript/no-unsafe-type-assertion": "off",
-        "typescript/no-explicit-any": "off",
-        "typescript/unbound-method": "off",
-        "typescript/no-non-null-assertion": "off",
-        "unicorn/consistent-function-scoping": "off",
-        "react/jsx-no-constructed-context-values": "off",
-        "vitest/require-to-throw-message": "off",
-        "vitest/no-conditional-tests": "off",
-        "vitest/no-standalone-expect": "off",
-        "vitest/require-test-timeout": "off",
-        "vitest/require-mock-type-parameters": "off",
-        "jsdoc/require-param": "off",
-        "jsdoc/require-param-type": "off",
-        "jsdoc/require-param-description": "off",
-        "jsdoc/require-returns": "off",
-        "jsdoc/require-returns-type": "off",
-        "jsdoc/require-returns-description": "off",
-        "jsdoc/require-throws-type": "off",
-        "jsdoc/require-throws-description": "off",
-        "jsdoc/require-property": "off",
-        "jsdoc/require-property-name": "off",
-        "jsdoc/require-property-description": "off",
-        "jsdoc/require-property-type": "off",
-        "import/first": "off",
-        "import/no-relative-parent-imports": "off",
-        "import/no-unassigned-import": "off"
+        "eslint/no-unused-vars": "off", // test setup functions and helper vars often appear unused
+        "eslint/no-new": "off", // test constructors don't need assignment (e.g., `new MockClass()`)
+        "eslint/require-await": "off", // sync tests or setup code may not await everything
+        "eslint/no-empty-function": "off", // empty callbacks/mocks are common in test fixtures
+        "eslint/max-lines-per-function": "off", // test suites can span many lines for thorough coverage
+        "eslint/max-lines": "off", // test files often accumulate many test cases
+        "eslint/complexity": "off", // complex test logic is acceptable for comprehensive coverage
+        "typescript/no-unsafe-type-assertion": "off", // tests often use type casts to mock external APIs
+        "typescript/no-explicit-any": "off", // test mocks and fixtures frequently require `any` for flexibility
+        "typescript/unbound-method": "off", // test mocks don't need full type context
+        "typescript/no-non-null-assertion": "off", // tests often know values exist; ! is acceptable in test code
+        "unicorn/consistent-function-scoping": "off", // test callbacks and helpers can be inline for readability
+        "react/jsx-no-constructed-context-values": "off", // test mocks can have inline context values
+        "vitest/require-to-throw-message": "off", // not all errors need explicit messages in tests
+        "vitest/no-conditional-tests": "off", // test fixtures sometimes need conditional setup
+        "vitest/no-standalone-expect": "off", // test helpers may have standalone assertions
+        "vitest/require-test-timeout": "off", // not all tests need explicit timeouts
+        "vitest/require-mock-type-parameters": "off", // mock generics are inferred from usage
+        "jsdoc/require-param": "off", // JSDoc documentation is not required in test files
+        "jsdoc/require-param-type": "off", // same
+        "jsdoc/require-param-description": "off", // same
+        "jsdoc/require-returns": "off", // same
+        "jsdoc/require-returns-type": "off", // same
+        "jsdoc/require-returns-description": "off", // same
+        "jsdoc/require-throws-type": "off", // same
+        "jsdoc/require-throws-description": "off", // same
+        "jsdoc/require-property": "off", // same
+        "jsdoc/require-property-name": "off", // same
+        "jsdoc/require-property-description": "off", // same
+        "jsdoc/require-property-type": "off", // same
+        "import/first": "off", // test imports may mix with setup code and test data
+        "import/no-relative-parent-imports": "off", // tests access shared test utilities from parent directories
+        "import/no-unassigned-import": "off" // test setup imports don't need assignment (e.g., polyfills, fixtures)
       }
     }
   ]

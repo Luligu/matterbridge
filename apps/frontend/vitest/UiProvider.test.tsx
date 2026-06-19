@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
-import { useContext } from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { useContext } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MbfLsk } from '../src/utils/localStorage';
@@ -23,13 +23,13 @@ vi.mock('notistack', () => ({
 vi.mock('../src/components/ConfirmCancelForm', () => ({
   ConfirmCancelForm: ({ open, title, message, onConfirm, onCancel }: { open: boolean; title: string; message: string; onConfirm: () => void; onCancel: () => void }) =>
     open ? (
-      <div data-testid='confirm-cancel-form'>
+      <div data-testid="confirm-cancel-form">
         <div>{title}</div>
         <div>{message}</div>
-        <button type='button' onClick={onConfirm}>
+        <button type="button" onClick={onConfirm}>
           Confirm action
         </button>
-        <button type='button' onClick={onCancel}>
+        <button type="button" onClick={onCancel}>
           Cancel action
         </button>
       </div>
@@ -37,14 +37,28 @@ vi.mock('../src/components/ConfirmCancelForm', () => ({
 }));
 
 vi.mock('../src/components/InstallProgressDialog', () => ({
-  InstallProgressDialog: ({ open, title, _command, _packageName, output, onClose }: { open: boolean; title: string; _command: string; _packageName: string; output: string; onClose: () => void }) =>
+  InstallProgressDialog: ({
+    open,
+    title,
+    _command,
+    _packageName,
+    output,
+    onClose,
+  }: {
+    open: boolean;
+    title: string;
+    _command: string;
+    _packageName: string;
+    output: string;
+    onClose: () => void;
+  }) =>
     open ? (
-      <div data-testid='install-progress-dialog'>
+      <div data-testid="install-progress-dialog">
         <div>{title}</div>
-        <div data-testid='install-command'>{_command}</div>
-        <div data-testid='install-package'>{_packageName}</div>
-        <div data-testid='install-output'>{output}</div>
-        <button type='button' onClick={onClose}>
+        <div data-testid="install-command">{_command}</div>
+        <div data-testid="install-package">{_packageName}</div>
+        <div data-testid="install-output">{output}</div>
+        <button type="button" onClick={onClose}>
           Close install dialog
         </button>
       </div>
@@ -75,46 +89,46 @@ describe('UiProvider', () => {
 
       return (
         <div>
-          <div data-testid='mobile'>{String(ui.mobile)}</div>
-          <div data-testid='current-page'>{ui.currentPage ?? 'null'}</div>
-          <div data-testid='install-auto-exit'>{String(ui.installAutoExit)}</div>
-          <button type='button' onClick={() => ui.setMobile(true)}>
+          <div data-testid="mobile">{String(ui.mobile)}</div>
+          <div data-testid="current-page">{ui.currentPage ?? 'null'}</div>
+          <div data-testid="install-auto-exit">{String(ui.installAutoExit)}</div>
+          <button type="button" onClick={() => ui.setMobile(true)}>
             Set mobile
           </button>
-          <button type='button' onClick={() => ui.setCurrentPage('Devices')}>
+          <button type="button" onClick={() => ui.setCurrentPage('Devices')}>
             Set current page
           </button>
-          <button type='button' onClick={() => ui.showSnackbarMessage('persist message', 0, 'success')}>
+          <button type="button" onClick={() => ui.showSnackbarMessage('persist message', 0, 'success')}>
             Show persistent snackbar
           </button>
-          <button type='button' onClick={() => ui.showSnackbarMessage('timed message', 2, 'warning')}>
+          <button type="button" onClick={() => ui.showSnackbarMessage('timed message', 2, 'warning')}>
             Show timed snackbar
           </button>
-          <button type='button' onClick={() => ui.closeSnackbarMessage('persist message')}>
+          <button type="button" onClick={() => ui.closeSnackbarMessage('persist message')}>
             Close snackbar by message
           </button>
-          <button type='button' onClick={() => ui.closeSnackbar('manual-key')}>
+          <button type="button" onClick={() => ui.closeSnackbar('manual-key')}>
             Close snackbar direct
           </button>
-          <button type='button' onClick={() => ui.showConfirmCancelDialog('Confirm title', 'Confirm message', 'restart', confirmSpy, cancelSpy)}>
+          <button type="button" onClick={() => ui.showConfirmCancelDialog('Confirm title', 'Confirm message', 'restart', confirmSpy, cancelSpy)}>
             Show confirm dialog
           </button>
-          <button type='button' onClick={() => ui.showInstallProgress('Install title', 'npm install matterbridge-test', 'matterbridge-test')}>
+          <button type="button" onClick={() => ui.showInstallProgress('Install title', 'npm install matterbridge-test', 'matterbridge-test')}>
             Show install progress
           </button>
-          <button type='button' onClick={() => ui.addInstallProgress('line 1')}>
+          <button type="button" onClick={() => ui.addInstallProgress('line 1')}>
             Add install progress
           </button>
-          <button type='button' onClick={() => ui.exitInstallProgressSuccess()}>
+          <button type="button" onClick={() => ui.exitInstallProgressSuccess()}>
             Exit install success
           </button>
-          <button type='button' onClick={() => ui.exitInstallProgressError()}>
+          <button type="button" onClick={() => ui.exitInstallProgressError()}>
             Exit install error
           </button>
-          <button type='button' onClick={() => ui.hideInstallProgress()}>
+          <button type="button" onClick={() => ui.hideInstallProgress()}>
             Hide install progress
           </button>
-          <button type='button' onClick={() => ui.setInstallAutoExit((prev) => !prev)}>
+          <button type="button" onClick={() => ui.setInstallAutoExit((prev) => !prev)}>
             Toggle install auto exit
           </button>
         </div>

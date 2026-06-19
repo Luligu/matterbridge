@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UiContext } from '../src/components/UiContext';
@@ -63,19 +63,17 @@ describe('HomeInstallAddPlugins', () => {
     // JSDOM returns 0x0 rects by default; MUI Popper warns that anchorEl isn't in layout.
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function () {
-      return (
-        {
-          width: 100,
-          height: 20,
-          top: 0,
-          left: 0,
-          bottom: 20,
-          right: 100,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        } as DOMRect
-      );
+      return {
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 20,
+        right: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
     };
 
     HomeInstallAddPlugins = (await import('../src/components/HomeInstallAddPlugins')).default;

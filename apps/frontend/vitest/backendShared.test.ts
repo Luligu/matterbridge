@@ -14,7 +14,7 @@ describe('backendShared', () => {
         id: 1,
         src: 'Matterbridge',
         dst: 'Frontend',
-      } as any)
+      } as any),
     ).toBe(true);
 
     expect(
@@ -22,7 +22,7 @@ describe('backendShared', () => {
         id: 0,
         src: 'Matterbridge',
         dst: 'Frontend',
-      } as any)
+      } as any),
     ).toBe(false);
 
     expect(
@@ -30,7 +30,7 @@ describe('backendShared', () => {
         id: 1,
         src: 'Plugin',
         dst: 'Frontend',
-      } as any)
+      } as any),
     ).toBe(false);
 
     expect(
@@ -38,7 +38,7 @@ describe('backendShared', () => {
         id: 1,
         src: 'Matterbridge',
         dst: 'Backend',
-      } as any)
+      } as any),
     ).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MbfLsk, resetLocalStorage } from '../src/utils/localStorage';
@@ -73,19 +73,17 @@ describe('Devices', () => {
     // is not part of the document layout. Override for this test file.
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function () {
-      return (
-        {
-          width: 100,
-          height: 20,
-          top: 0,
-          left: 0,
-          bottom: 20,
-          right: 100,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        } as DOMRect
-      );
+      return {
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 20,
+        right: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
     };
 
     Devices = (await import('../src/components/Devices')).default;
@@ -188,7 +186,7 @@ describe('Devices', () => {
     const removeListener = vi.fn();
 
     let listener: ((msg: any) => void) | undefined;
-     
+
     const addListener = vi.fn((fn: (msg: any) => void) => {
       listener = fn;
     });

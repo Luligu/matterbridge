@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiPlugin } from '../src/utils/backendShared';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
+import type { ApiPlugin } from '../src/utils/backendShared';
 
 vi.mock('../src/appState', () => ({
   debug: true,
@@ -16,7 +16,7 @@ vi.mock('@mui/material/Tooltip', () => ({
 }));
 
 vi.mock('@mui/material/Dialog', () => ({
-  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid='dialog'>{children}</div> : null),
+  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid="dialog">{children}</div> : null),
 }));
 
 import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
@@ -109,12 +109,14 @@ describe('ConfigPluginDialog debug paths', () => {
 
     const renderResult = render(
       <WebSocketContext.Provider
-        value={{
-          sendMessage,
-          addListener,
-          removeListener,
-          getUniqueId: () => 1234,
-        } as any}
+        value={
+          {
+            sendMessage,
+            addListener,
+            removeListener,
+            getUniqueId: () => 1234,
+          } as any
+        }
       >
         <ConfigPluginDialog open={true} onClose={onClose} plugin={plugin} />
       </WebSocketContext.Provider>,
@@ -164,7 +166,11 @@ describe('ConfigPluginDialog debug paths', () => {
     fireEvent.click(within(screen.getAllByTestId('dialog').at(-1) as HTMLElement).getByText('Kitchen Sensor'));
 
     await waitFor(() => {
-      expect(within(deviceNamesSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['Kitchen Sensor']);
+      expect(
+        within(deviceNamesSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['Kitchen Sensor']);
     });
 
     const entityNamesSection = screen.getByText('Entity Names').closest('div')?.parentElement;
@@ -173,7 +179,11 @@ describe('ConfigPluginDialog debug paths', () => {
     fireEvent.click(within(screen.getAllByTestId('dialog').at(-1) as HTMLElement).getByText('Entity One'));
 
     await waitFor(() => {
-      expect(within(entityNamesSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['Entity One']);
+      expect(
+        within(entityNamesSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['Entity One']);
     });
 
     const deviceEntitySection = screen.getByText('Kitchen Sensor').closest('div')?.parentElement;
@@ -182,7 +192,11 @@ describe('ConfigPluginDialog debug paths', () => {
     fireEvent.click(within(screen.getAllByTestId('dialog').at(-1) as HTMLElement).getByText('Kitchen Light'));
 
     await waitFor(() => {
-      expect(within(deviceEntitySection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['Kitchen Light']);
+      expect(
+        within(deviceEntitySection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['Kitchen Light']);
     });
 
     const serialMappingsSection = screen.getByText('Serial Mappings').closest('div')?.parentElement;
@@ -191,7 +205,11 @@ describe('ConfigPluginDialog debug paths', () => {
     fireEvent.click(within(screen.getAllByTestId('dialog').at(-1) as HTMLElement).getByText('Hall Sensor'));
 
     await waitFor(() => {
-      expect(within(serialMappingsSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['serial-002', '']);
+      expect(
+        within(serialMappingsSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['serial-002', '']);
     });
 
     const actionInput = screen.getByPlaceholderText('Enter debug action');

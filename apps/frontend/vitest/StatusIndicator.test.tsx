@@ -8,9 +8,11 @@ globalThis.console = {
   debug: vi.fn(),
   trace: vi.fn(),
 };
-import { vi, describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+import { render, screen, fireEvent } from '@testing-library/react';
+import { vi, describe, it, expect } from 'vitest';
+
 import { StatusIndicator } from '../src/components/StatusIndicator';
 
 // Helper to get element by text

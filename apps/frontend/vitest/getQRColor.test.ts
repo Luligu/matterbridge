@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
 import type { ApiMatter } from '../src/utils/backendShared';
 
 const fabricInformations = [{ fabricIndex: 1 }] as any;
@@ -75,8 +76,8 @@ describe('getQRColor', () => {
           manualPairingCode: '',
           fabricInformations: undefined,
           sessionInformations: undefined,
-        })
-      )
+        }),
+      ),
     ).toBe('red');
   });
 
@@ -86,8 +87,8 @@ describe('getQRColor', () => {
       getQRColor(
         createMatter({
           commissioned: false,
-        })
-      )
+        }),
+      ),
     ).toBe('var(--primary-color)');
   });
 
@@ -98,8 +99,8 @@ describe('getQRColor', () => {
         createMatter({
           fabricInformations,
           sessionInformations: inactiveSessionInformations,
-        })
-      )
+        }),
+      ),
     ).toBe('var(--secondary-color)');
   });
 
@@ -110,8 +111,8 @@ describe('getQRColor', () => {
         createMatter({
           fabricInformations,
           sessionInformations: activeSessionWithoutSubscriptions,
-        })
-      )
+        }),
+      ),
     ).toBe('var(--secondary-color)');
   });
 
@@ -123,8 +124,8 @@ describe('getQRColor', () => {
           manualPairingCode: '',
           fabricInformations,
           sessionInformations: undefined,
-        })
-      )
+        }),
+      ),
     ).toBe('var(--div-text-color)');
   });
 
@@ -135,8 +136,8 @@ describe('getQRColor', () => {
         createMatter({
           fabricInformations,
           sessionInformations: activeSessionWithSubscriptions,
-        })
-      )
+        }),
+      ),
     ).toBe('var(--div-text-color)');
   });
 });
