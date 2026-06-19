@@ -83,9 +83,9 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxfmt` to v.0.55.0.
 - [matterbridge]: Bump `vitest` to v.4.1.9.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.9.
-- [oxfmt]: Update Oxfmt configuration to v.1.0.3.
-- [oxlint]: Update Oxlint configuration to v.1.0.10.
-- [agents]: Update `AGENTS.md` and `STYLEGUIDE.md`.
+- [oxfmt]: Update `Oxfmt configuration` to v.1.0.3.
+- [oxlint]: Update `Oxlint configuration` to v.1.0.10.
+- [agents]: Update `docs` to reflect the new toolchain..
 
 ### Fixed
 
