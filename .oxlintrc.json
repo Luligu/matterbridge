@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.10
+// .oxlintrc.json 1.0.11
 
 // This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
@@ -186,6 +186,7 @@
         "vitest/no-conditional-tests": "off",
         "vitest/no-standalone-expect": "off",
         "vitest/require-test-timeout": "off",
+        "vitest/require-mock-type-parameters": "off",
         "jsdoc/require-param": "off",
         "jsdoc/require-param-type": "off",
         "jsdoc/require-param-description": "off",

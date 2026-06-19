@@ -1,6 +1,5 @@
 // vitest\backendWsServer.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters
 
 const NAME = 'BackendWsServer';
 

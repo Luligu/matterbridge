@@ -1,6 +1,6 @@
 // vitest\frontend.test.ts
 
-// oxlint-disable typescript/require-await vitest/require-mock-type-parameters typescript/explicit-function-return-type typescript/consistent-return typescript/no-floating-promises
+// oxlint-disable typescript/require-await typescript/explicit-function-return-type typescript/consistent-return typescript/no-floating-promises
 /* eslint-disable no-console */
 
 const MATTER_PORT = 9000;
