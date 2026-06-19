@@ -68,7 +68,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>
         </div>
       </DialogTitle>
@@ -113,12 +113,16 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-evenly' }}>
         {onInstall && (
-          <Button variant='contained' onClick={onInstall}>
+          <Button variant="contained" onClick={onInstall}>
             Install
           </Button>
         )}
         <Button onClick={onClose}>Close</Button>
-        <FormControlLabel control={<Checkbox checked={installAutoExit} onChange={(e) => handleInstallAutoExitChange(e)} />} label='Close on success' style={{ color: 'var(--div-text-color)' }} />
+        <FormControlLabel
+          control={<Checkbox checked={installAutoExit} onChange={(e) => handleInstallAutoExitChange(e)} />}
+          label="Close on success"
+          style={{ color: 'var(--div-text-color)' }}
+        />
       </DialogActions>
     </Dialog>
   );

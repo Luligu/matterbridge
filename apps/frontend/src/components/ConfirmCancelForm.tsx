@@ -1,5 +1,5 @@
-import Button from '@mui/material/Button';
 // @mui/material
+import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -33,7 +33,7 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }:
     <Dialog open={open}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>
         </div>
       </DialogTitle>
@@ -53,10 +53,10 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }:
           <p style={{ flex: 1, margin: '0' }}>{message}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
-          <Button onClick={handleConfirm} variant='contained' color='primary' size='small'>
+          <Button onClick={handleConfirm} variant="contained" color="primary" size="small">
             Confirm
           </Button>
-          <Button onClick={handleCancel} variant='contained' color='primary' size='small'>
+          <Button onClick={handleCancel} variant="contained" color="primary" size="small">
             Cancel
           </Button>
         </div>

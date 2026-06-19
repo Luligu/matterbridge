@@ -92,17 +92,19 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
     <div style={containerStyle}>
       <form onSubmit={handleSubmit} style={formStyle}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h3 style={{ color: 'var(--div-text-color)' }}>Welcome to Matterbridge</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
-          <input type='text' name='username' autoComplete='username' style={{ display: 'none' }} tabIndex={-1} />
-          <input type='password' value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} placeholder='password' autoComplete='current-password' />
-          <button type='submit' style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>
+          <input type="text" name="username" autoComplete="username" style={{ display: 'none' }} tabIndex={-1} />
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} placeholder="password" autoComplete="current-password" />
+          <button type="submit" style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', borderColor: 'var(--div-bg-color)' }}>
             Log in
           </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>{errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}</div>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: 0, height: '30px' }}>
+          {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+        </div>
       </form>
     </div>
   );
@@ -161,12 +163,12 @@ function App(): React.JSX.Element {
               <BrowserRouter basename={basePath}>
                 <MbfScreen>
                   <Routes>
-                    <Route path='/' element={<Home />} />
-                    <Route path='/devices' element={<Devices />} />
-                    <Route path='/log' element={<Logs />} />
-                    <Route path='/settings' element={<Settings />} />
-                    <Route path='/test' element={<Test />} />
-                    <Route path='*' element={<Navigate to='/' />} />
+                    <Route path="/" element={<Home />} />
+                    <Route path="/devices" element={<Devices />} />
+                    <Route path="/log" element={<Logs />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/test" element={<Test />} />
+                    <Route path="*" element={<Navigate to="/" />} />
                   </Routes>
                 </MbfScreen>
               </BrowserRouter>

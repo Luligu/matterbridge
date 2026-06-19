@@ -1,15 +1,14 @@
-// React
-import { useState } from 'react';
-
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
-import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
+// React
+import { useState } from 'react';
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -58,29 +57,38 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }: ChangePasswordDi
         }
         onClose();
       }}
-      maxWidth='sm'
+      maxWidth="sm"
       style={{ maxWidth: '500px', margin: 'auto' }}
       disableEscapeKeyDown
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>Change Password</h4>
         </div>
       </DialogTitle>
       <DialogContent dividers>
-        <FormControl component='fieldset' fullWidth sx={{ margin: 0, padding: 0, gap: '20px' }}>
+        <FormControl component="fieldset" fullWidth sx={{ margin: 0, padding: 0, gap: '20px' }}>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             <Grid size={12}>
-              <TextField type='password' autoComplete='new-password' label='New Password' size='small' variant='outlined' fullWidth value={newPassword} onChange={handleNewPasswordChange} />
+              <TextField
+                type="password"
+                autoComplete="new-password"
+                label="New Password"
+                size="small"
+                variant="outlined"
+                fullWidth
+                value={newPassword}
+                onChange={handleNewPasswordChange}
+              />
             </Grid>
             <Grid size={12}>
               <TextField
-                type='password'
-                autoComplete='new-password'
-                label='Confirm Password'
-                size='small'
-                variant='outlined'
+                type="password"
+                autoComplete="new-password"
+                label="Confirm Password"
+                size="small"
+                variant="outlined"
                 fullWidth
                 value={confirmPassword}
                 onChange={handleConfirmPasswordChange}
@@ -93,10 +101,10 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }: ChangePasswordDi
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel}>Cancel</Button>
-        <Button variant='contained' onClick={handleSave} disabled={!isValid}>
+        <Button variant="contained" onClick={handleSave} disabled={!isValid}>
           Change
         </Button>
-        <Button variant='contained' onClick={handleReset}>
+        <Button variant="contained" onClick={handleReset}>
           Reset
         </Button>
       </DialogActions>

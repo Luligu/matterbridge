@@ -89,7 +89,19 @@ function WebSocketLogs() {
       <ul style={{ margin: '0px', padding: '0px' }}>
         {messages.map((msg, index) => (
           <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}>
-            <span style={{ marginRight: '5px', padding: '1px 5px', backgroundColor: getLevelMessageBgColor(msg.level), color: getLevelMessageColor(msg.level), fontSize: '12px', borderRadius: '3px', textAlign: 'center' }}>{msg.level}</span>
+            <span
+              style={{
+                marginRight: '5px',
+                padding: '1px 5px',
+                backgroundColor: getLevelMessageBgColor(msg.level),
+                color: getLevelMessageColor(msg.level),
+                fontSize: '12px',
+                borderRadius: '3px',
+                textAlign: 'center',
+              }}
+            >
+              {msg.level}
+            </span>
             {msg.time && <span style={{ marginRight: '3px', color: '#505050' }}>{'[' + msg.time + ']'}</span>}
             {msg.name && <span style={{ marginRight: '3px', color: '#09516d' }}>{'[' + msg.name + ']'}</span>}
             <span style={{ color: 'var(--main-log-color)' }}>{msg.message}</span>

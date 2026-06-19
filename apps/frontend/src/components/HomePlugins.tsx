@@ -36,7 +36,7 @@ interface HomePluginsProps {
   setStoreId: (id: string | null) => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// oxlint-disable-next-line no-unused-vars
 function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
@@ -56,7 +56,11 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       required: true,
       render: (value, rowKey, plugin, _column) => (
         <Tooltip title={`Plugin path ${plugin.path}`}>
-          <button type='button' style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }} onClick={() => handleHomepagePlugin(plugin)}>
+          <button
+            type="button"
+            style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+            onClick={() => handleHomepagePlugin(plugin)}
+          >
             {plugin.name}
           </button>
         </Tooltip>
@@ -66,8 +70,12 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       label: 'Description',
       id: 'description',
       render: (value, rowKey, plugin, _column) => (
-        <Tooltip title='Open the plugin homepage'>
-          <button type='button' style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }} onClick={() => handleHomepagePlugin(plugin)}>
+        <Tooltip title="Open the plugin homepage">
+          <button
+            type="button"
+            style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+            onClick={() => handleHomepagePlugin(plugin)}
+          >
             {plugin.description}
           </button>
         </Tooltip>
@@ -106,51 +114,56 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       render: (value, rowKey, plugin, _column) => (
         <div style={{ margin: '0px', padding: '0px', gap: '4px', display: 'flex', flexDirection: 'row' }}>
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled && (
-            <Tooltip title='Shows the QRCode or the fabrics' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title="Shows the QRCode or the fabrics" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton
                 style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: getQRColor(plugin.matter) }}
                 onClick={() => {
                   if (plugin.matter?.id) setStoreId(plugin.matter?.id);
                 }}
-                size='small'
+                size="small"
               >
                 <QrCode2 />
               </IconButton>
             </Tooltip>
           )}
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled && (
-            <Tooltip title='Restart the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin)} size='small'>
+            <Tooltip title="Restart the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin)} size="small">
                 <RestartAltIcon />
               </IconButton>
             </Tooltip>
           )}
-          <Tooltip title='Plugin config' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton disabled={plugin.restartRequired === true} style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleConfigPlugin(plugin)} size='small'>
+          <Tooltip title="Plugin config" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <IconButton
+              disabled={plugin.restartRequired === true}
+              style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
+              onClick={() => handleConfigPlugin(plugin)}
+              size="small"
+            >
               <SettingsOutlinedIcon />
             </IconButton>
           </Tooltip>
           {matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='Remove the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title="Remove the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton
                 style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
                 onClick={() => {
                   handleActionWithConfirmCancel('Remove plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'remove', plugin);
                 }}
-                size='small'
+                size="small"
               >
                 <DeleteForeverOutlinedIcon />
               </IconButton>
             </Tooltip>
           )}
           {plugin.enabled ? (
-            <Tooltip title='Disable the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title="Disable the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton
                 style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }}
                 onClick={() => {
                   handleActionWithConfirmCancel('Disable plugin', 'Are you sure? This will also remove all devices and configuration from the controller.', 'disable', plugin);
                 }}
-                size='small'
+                size="small"
               >
                 <UnpublishedOutlinedIcon />
               </IconButton>
@@ -159,50 +172,68 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             <></>
           )}
           {!plugin.enabled ? (
-            <Tooltip title='Enable the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleEnableDisablePlugin(plugin)} size='small'>
+            <Tooltip title="Enable the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleEnableDisablePlugin(plugin)} size="small">
                 <PublishedWithChanges />
               </IconButton>
             </Tooltip>
           ) : (
             <></>
           )}
-          <Tooltip title='Open the plugin help' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size='small'>
+          <Tooltip title="Open the plugin help" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size="small">
               <HelpOutlineIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title='Open the plugin version history' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size='small'>
+          <Tooltip title="Open the plugin version history" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size="small">
               <HistoryOutlinedIcon />
             </IconButton>
           </Tooltip>
 
           {plugin.enabled && plugin.frontendPath && (
-            <Tooltip title='Open the plugin frontend' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleFrontendPlugin(plugin)} size='small'>
+            <Tooltip title="Open the plugin frontend" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleFrontendPlugin(plugin)} size="small">
                 <LanguageIcon />
               </IconButton>
             </Tooltip>
           )}
 
           {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title={`Update the plugin to the latest version v.${plugin.latestVersion}`} slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdatePlugin(plugin)} size='small'>
+            <Tooltip
+              title={`Update the plugin to the latest version v.${plugin.latestVersion}`}
+              slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
+            >
+              <IconButton
+                style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }}
+                onClick={() => handleUpdatePlugin(plugin)}
+                size="small"
+              >
                 <SystemUpdateAltIcon />
               </IconButton>
             </Tooltip>
           )}
-          {(plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.devVersion !== undefined && plugin.devVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title={`Update the plugin to the latest dev version v.${plugin.devVersion}`} slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ color: 'var(--secondary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleUpdateDevPlugin(plugin)} size='small'>
-                <SystemUpdateAltIcon />
-              </IconButton>
-            </Tooltip>
-          )}
+          {(plugin.version.includes('-dev-') || plugin.version.includes('-git-')) &&
+            plugin.devVersion !== undefined &&
+            plugin.devVersion !== plugin.version &&
+            matterbridgeInfo &&
+            !matterbridgeInfo.readOnly && (
+              <Tooltip
+                title={`Update the plugin to the latest dev version v.${plugin.devVersion}`}
+                slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
+              >
+                <IconButton
+                  style={{ color: 'var(--secondary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }}
+                  onClick={() => handleUpdateDevPlugin(plugin)}
+                  size="small"
+                >
+                  <SystemUpdateAltIcon />
+                </IconButton>
+              </Tooltip>
+            )}
           {matterbridgeInfo && !matterbridgeInfo.readOnly && (
-            <Tooltip title='Sponsor the plugin' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size='small'>
+            <Tooltip title="Sponsor the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size="small">
                 <Favorite />
               </IconButton>
             </Tooltip>
@@ -219,25 +250,25 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
         <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', margin: '0', padding: '0', gap: '5px', width: 'auto', maxWidth: 'max-content' }}>
           {plugin.error ? (
             <>
-              <StatusIndicator status={false} enabledText='Error' disabledText='Error' tooltipText='The plugin is in error state. Check the log!' />
+              <StatusIndicator status={false} enabledText="Error" disabledText="Error" tooltipText="The plugin is in error state. Check the log!" />
             </>
           ) : (
             <>
               {!plugin.enabled ? (
                 <>
-                  <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' />
+                  <StatusIndicator status={plugin.enabled} enabledText="Enabled" disabledText="Disabled" tooltipText="Whether the plugin is enable or disabled" />
                 </>
               ) : (
                 <>
                   {plugin.loaded && plugin.started && plugin.configured ? (
                     <>
-                      <StatusIndicator status={plugin.loaded} enabledText='Running' tooltipText='Whether the plugin is running' />
+                      <StatusIndicator status={plugin.loaded} enabledText="Running" tooltipText="Whether the plugin is running" />
                     </>
                   ) : (
                     <>
-                      <StatusIndicator status={plugin.loaded} enabledText='Loaded' tooltipText='Whether the plugin has been loaded' />
-                      <StatusIndicator status={plugin.started} enabledText='Started' tooltipText='Whether the plugin started' />
-                      <StatusIndicator status={plugin.configured} enabledText='Configured' tooltipText='Whether the plugin has been configured' />
+                      <StatusIndicator status={plugin.loaded} enabledText="Loaded" tooltipText="Whether the plugin has been loaded" />
+                      <StatusIndicator status={plugin.started} enabledText="Started" tooltipText="Whether the plugin started" />
+                      <StatusIndicator status={plugin.configured} enabledText="Configured" tooltipText="Whether the plugin has been configured" />
                     </>
                   )}
                 </>
@@ -469,7 +500,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
         {/* Config plugin dialog */}
         {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
 
-        <MbfTable<ApiPlugin> name='Plugins' columns={pluginsColumns} rows={plugins} footerRight='' footerLeft='' />
+        <MbfTable<ApiPlugin> name="Plugins" columns={pluginsColumns} rows={plugins} footerRight="" footerLeft="" />
       </MbfWindow>
       <Dialog
         open={selectedPluginFrontend !== null}

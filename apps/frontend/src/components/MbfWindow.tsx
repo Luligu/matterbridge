@@ -182,7 +182,7 @@ export function MbfWindowIcons({ children, style, close }: MbfWindowIconsProps):
       {enableWindows && close && (
         <IconButton style={{ margin: '0px' }} onClick={close}>
           <Tooltip title={`Close the window`}>
-            <Icon path={mdiClose} size='20px' color={'var(--header-text-color)'} />
+            <Icon path={mdiClose} size="20px" color={'var(--header-text-color)'} />
           </Tooltip>
         </IconButton>
       )}

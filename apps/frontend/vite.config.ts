@@ -37,7 +37,14 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@emotion')) {
               return 'vendor_emotion';
             }
-            if (id.includes('/@rjsf/') || id.includes('/ajv/') || id.includes('/ajv-formats/') || id.includes('/json-schema-compare/') || id.includes('/json-schema-traverse/') || id.includes('/json-schema-merge/')) {
+            if (
+              id.includes('/@rjsf/') ||
+              id.includes('/ajv/') ||
+              id.includes('/ajv-formats/') ||
+              id.includes('/json-schema-compare/') ||
+              id.includes('/json-schema-traverse/') ||
+              id.includes('/json-schema-merge/')
+            ) {
               return 'vendor_rjsf';
             }
             if (id.includes('notistack')) {

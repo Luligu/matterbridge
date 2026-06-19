@@ -53,7 +53,13 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
         <MbfWindowHeaderText>Matterbridge info</MbfWindowHeaderText>
         <MbfWindowIcons close={() => setClosed(true)} />
       </MbfWindowHeader>
-      <MbfWindowContent style={enableMobile && mobile ? { flex: '1 1 auto', margin: '0px', padding: '0px', gap: '0px' } : { flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }}>
+      <MbfWindowContent
+        style={
+          enableMobile && mobile
+            ? { flex: '1 1 auto', margin: '0px', padding: '0px', gap: '0px' }
+            : { flex: '1 1 auto', overflow: 'auto', margin: '0px', padding: '0px', gap: '0px' }
+        }
+      >
         <table style={{ border: 'none', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <colgroup>
             <col style={{ width: '40%' }} />
@@ -89,7 +95,15 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
                       .replace('updateRequired', 'Update required')}
                   </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {enableMobile && mobile ? typeof value !== 'string' ? value.toString() : value : <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />}
+                    {enableMobile && mobile ? (
+                      typeof value !== 'string' ? (
+                        value.toString()
+                      ) : (
+                        value
+                      )
+                    ) : (
+                      <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={24} />
+                    )}
                   </td>
                 </tr>
               ))}

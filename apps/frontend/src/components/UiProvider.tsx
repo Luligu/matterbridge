@@ -61,7 +61,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
             <Alert
               key={key}
               severity={severity ?? 'info'}
-              variant='filled'
+              variant="filled"
               sx={{
                 color: '#fff',
                 fontWeight: 'normal',
@@ -71,8 +71,8 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
               }}
               onClick={() => closeSnackbar(key)}
               action={
-                <IconButton size='small' onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
-                  <CloseIcon fontSize='small' />
+                <IconButton size="small" onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               }
             >
@@ -113,15 +113,18 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     }
   };
 
-  const showConfirmCancelDialog = useCallback((title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
-    if (debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
-    setConfirmCancelFormTitle(title);
-    setConfirmCancelFormMessage(message);
-    setConfirmCancelFormCommand(command);
-    confirmCancelFormHandleConfirmRef.current = handleConfirm;
-    confirmCancelFormHandleCancelRef.current = handleCancel;
-    setShowConfirmCancelForm(true);
-  }, []);
+  const showConfirmCancelDialog = useCallback(
+    (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
+      if (debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
+      setConfirmCancelFormTitle(title);
+      setConfirmCancelFormMessage(message);
+      setConfirmCancelFormCommand(command);
+      confirmCancelFormHandleConfirmRef.current = handleConfirm;
+      confirmCancelFormHandleCancelRef.current = handleCancel;
+      setShowConfirmCancelForm(true);
+    },
+    [],
+  );
 
   // ******************************** InstallProgressDialog ********************************
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
@@ -211,7 +214,14 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   return (
     <UiContext.Provider value={contextValue}>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
-      <InstallProgressDialog open={installDialogOpen} title={installTitle} _command={installCommand} _packageName={installPackageName} output={installOutput} onClose={handleInstallClose} />
+      <InstallProgressDialog
+        open={installDialogOpen}
+        title={installTitle}
+        _command={installCommand}
+        _packageName={installPackageName}
+        output={installOutput}
+        onClose={handleInstallClose}
+      />
       {children}
     </UiContext.Provider>
   );

@@ -118,7 +118,7 @@ function Home(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Home' style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
+    <MbfPage name="Home" style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
       {/* Left column */}
       {((enableMobile && !mobile) || !enableMobile) && (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>

@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [frontend]: Add type aware linting with `oxlint` and format with `oxfmt`.
+- [frontend]: Remove eslint prettier typescript packages. The total package count drops from ~430 to ~220. Oxlint, Oxfmt and Tsgo run in a fraction of second.
 
 ### Changed
 

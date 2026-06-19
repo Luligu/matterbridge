@@ -48,10 +48,18 @@ function HomeShowChangelog({ version, changelog }: HomeShowChangelogProps): Reac
           >
             Sponsor
           </Button>
-          <Button onClick={() => window.open(changelog, '_blank')} endIcon={<HistoryOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
+          <Button
+            onClick={() => window.open(changelog, '_blank')}
+            endIcon={<HistoryOutlinedIcon />}
+            style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}
+          >
             Changelog
           </Button>
-          <Button onClick={() => window.location.reload()} endIcon={<CancelIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
+          <Button
+            onClick={() => window.location.reload()}
+            endIcon={<CancelIcon />}
+            style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}
+          >
             Close
           </Button>
         </div>

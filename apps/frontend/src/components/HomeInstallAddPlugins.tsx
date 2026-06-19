@@ -233,7 +233,7 @@ function HomeInstallAddPlugins() {
 
         {/* Input and search IconButton */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <Tooltip title='Provide the npm name or the local path of the plugin to install, uninstall, or add'>
+          <Tooltip title="Provide the npm name or the local path of the plugin to install, uninstall, or add">
             <TextField
               value={pluginName}
               onChange={(event) => {
@@ -243,23 +243,23 @@ function HomeInstallAddPlugins() {
                 setSelectedPluginVersion('latest');
                 setPluginName(next);
               }}
-              size='small'
-              id='plugin-name'
-              label='Plugin name or plugin path'
-              variant='outlined'
+              size="small"
+              id="plugin-name"
+              label="Plugin name or plugin path"
+              variant="outlined"
               fullWidth
             />
           </Tooltip>
           {pluginVersions.length > 0 && (
-            <Tooltip title='Select the npm tag/version to install'>
+            <Tooltip title="Select the npm tag/version to install">
               <span>
-                <FormControl size='small' style={{ minWidth: '150px' }}>
-                  <InputLabel id='plugin-version-label'>Tag or version</InputLabel>
+                <FormControl size="small" style={{ minWidth: '150px' }}>
+                  <InputLabel id="plugin-version-label">Tag or version</InputLabel>
                   <Select
-                    labelId='plugin-version-label'
-                    id='plugin-version'
+                    labelId="plugin-version-label"
+                    id="plugin-version"
                     value={selectedPluginVersion}
-                    label='Tag or version'
+                    label="Tag or version"
                     onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}
                     sx={{
                       '& .MuiSelect-icon': {
@@ -277,40 +277,58 @@ function HomeInstallAddPlugins() {
               </span>
             </Tooltip>
           )}
-          <Tooltip title='Search on npm the plugin to install'>
-            <IconButton size='large' onClick={handleOpenSearchDialog}>
-              <ManageSearchIcon fontSize='inherit' />
+          <Tooltip title="Search on npm the plugin to install">
+            <IconButton size="large" onClick={handleOpenSearchDialog}>
+              <ManageSearchIcon fontSize="inherit" />
             </IconButton>
           </Tooltip>
         </div>
 
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <Tooltip title='Install or update a plugin from npm'>
-            <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Install or update a plugin from npm">
+            <Button
+              onClick={handleInstallPluginClick}
+              endIcon={<Download />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Install
             </Button>
           </Tooltip>
-          <Tooltip title='Uninstall and remove a plugin'>
-            <Button onClick={handleUninstallPluginClick} endIcon={<DeleteForeverOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Uninstall and remove a plugin">
+            <Button
+              onClick={handleUninstallPluginClick}
+              endIcon={<DeleteForeverOutlinedIcon />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Uninstall
             </Button>
           </Tooltip>
-          <Tooltip title='Upload and install a plugin from a tarball'>
-            <Button onClick={handleUploadClick} onContextMenu={handleUploadRightClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Upload and install a plugin from a tarball">
+            <Button
+              onClick={handleUploadClick}
+              onContextMenu={handleUploadRightClick}
+              endIcon={<FileUploadIcon />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Upload
             </Button>
           </Tooltip>
-          <Tooltip title='Add an already installed plugin or a plugin from a local path'>
-            <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Add an already installed plugin or a plugin from a local path">
+            <Button
+              onClick={handleAddPluginClick}
+              onContextMenu={handleAddRightClick}
+              endIcon={<Add />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Add
             </Button>
           </Tooltip>
-          <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
+          <input id="file-upload" type="file" accept=".tgz" style={{ display: 'none' }} onChange={handleFileUpload} />
         </div>
       </MbfWindowContent>
     </MbfWindow>

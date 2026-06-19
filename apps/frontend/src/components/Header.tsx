@@ -386,22 +386,22 @@ function Header() {
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           {/* Clicking the logo toggles debug mode (developer affordance). */}
           <IconButton style={{ margin: '0', padding: '0' }} onClick={handleLogoClick}>
-            <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} />
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '30px' }} />
           </IconButton>
           <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
           <nav>
-            <Link to='/' className='nav-link'>
+            <Link to="/" className="nav-link">
               Home
             </Link>
-            <Link to='/devices' className='nav-link'>
+            <Link to="/devices" className="nav-link">
               Devices
             </Link>
-            <Link to='/log' className='nav-link'>
+            <Link to="/log" className="nav-link">
               Logs
             </Link>
-            <Link to='/settings' className='nav-link'>
+            <Link to="/settings" className="nav-link">
               Settings
             </Link>
           </nav>
@@ -411,7 +411,7 @@ function Header() {
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
-            <span className='status-information' style={{ cursor: 'default' }}>
+            <span className="status-information" style={{ cursor: 'default' }}>
               v.
               {settings.matterbridgeInformation.matterbridgeVersion.split('-')[0] +
                 (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '') +
@@ -421,30 +421,30 @@ function Header() {
             </span>
           </Tooltip>
         )}
-        {settings.matterbridgeInformation.shellyBoard && <img src='Shelly.svg' alt='Shelly Icon' style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
+        {settings.matterbridgeInformation.shellyBoard && <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
         {settings.matterbridgeInformation.bridgeMode !== '' && !settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Bridge mode'>
-            <span className='status-information' style={{ cursor: 'default' }}>
+          <Tooltip title="Bridge mode">
+            <span className="status-information" style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.bridgeMode}
             </span>
           </Tooltip>
         ) : null}
         {settings.matterbridgeInformation.restartMode !== '' && !settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Restart mode'>
-            <span className='status-information' style={{ cursor: 'default' }}>
+          <Tooltip title="Restart mode">
+            <span className="status-information" style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.restartMode}
             </span>
           </Tooltip>
         ) : null}
         {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && !settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Current profile'>
-            <span className='status-information' style={{ cursor: 'default' }}>
+          <Tooltip title="Current profile">
+            <span className="status-information" style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.profile}
             </span>
           </Tooltip>
         ) : null}
         {debug && (
-          <span className='status-information' style={{ cursor: 'default' }}>
+          <span className="status-information" style={{ cursor: 'default' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
             {` enabled ${localStorage.getItem(MbfLsk.enableMobile) !== 'false'}`}
@@ -454,37 +454,37 @@ function Header() {
       {/* Icons */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '5px' }}>
         {!settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Matterbridge discord group'>
+          <Tooltip title="Matterbridge discord group">
             <IconButton style={{ margin: '0', padding: '0' }} onClick={handleDiscordLogoClick}>
-              <img src='discord.svg' alt='Discord Logo' style={{ height: '25px' }} />
+              <img src="discord.svg" alt="Discord Logo" style={{ height: '25px' }} />
             </IconButton>
           </Tooltip>
         ) : null}
         {!settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Give a star to Matterbridge'>
+          <Tooltip title="Give a star to Matterbridge">
             <IconButton style={{ color: '#FFD700', margin: '0', padding: '0' }} onClick={handleStarClick}>
               <StarIcon />
             </IconButton>
           </Tooltip>
         ) : null}
         {!settings.matterbridgeInformation.readOnly ? (
-          <Tooltip title='Sponsor Matterbridge'>
+          <Tooltip title="Sponsor Matterbridge">
             <IconButton style={{ color: '#b6409c', margin: '0', padding: '0' }} onClick={handleSponsorClick}>
               <Favorite />
             </IconButton>
           </Tooltip>
         ) : null}
-        <Tooltip title='Matterbridge homepage'>
+        <Tooltip title="Matterbridge homepage">
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHomepageClick}>
             <HomeOutlinedIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title='Matterbridge help'>
+        <Tooltip title="Matterbridge help">
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleHelpClick}>
             <HelpOutlineIcon />
           </IconButton>
         </Tooltip>
-        <Tooltip title='Matterbridge changelog'>
+        <Tooltip title="Matterbridge changelog">
           <IconButton style={{ color: 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0' }} onClick={handleChangelogClick}>
             <HistoryOutlinedIcon />
           </IconButton>
@@ -504,44 +504,50 @@ function Header() {
           </Tooltip>
         )}
         {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate && (
-          <Tooltip title='Shelly system update'>
+          <Tooltip title="Shelly system update">
             <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellySystemUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         )}
         {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate && (
-          <Tooltip title='Shelly software update'>
+          <Tooltip title="Shelly software update">
             <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellyMainUpdateClick}>
               <SystemUpdateAltIcon />
             </IconButton>
           </Tooltip>
         )}
-        <Tooltip title='Restart matterbridge'>
-          <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleRestartClick}>
+        <Tooltip title="Restart matterbridge">
+          <IconButton
+            style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }}
+            onClick={handleRestartClick}
+          >
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
         {settings.matterbridgeInformation.restartMode === '' ? (
-          <Tooltip title='Shut down matterbridge'>
-            <IconButton style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShutdownClick}>
+          <Tooltip title="Shut down matterbridge">
+            <IconButton
+              style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }}
+              onClick={handleShutdownClick}
+            >
               <PowerSettingsNewIcon />
             </IconButton>
           </Tooltip>
         ) : null}
         {/* Command menu */}
-        <Tooltip title='Download, backup and more'>
+        <Tooltip title="Download, backup and more">
           <IconButton onClick={handleMenuOpen}>
             <MoreHoriz style={{ color: 'var(--main-icon-color)' }} />
           </IconButton>
         </Tooltip>
-        <Menu id='command-menu' anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
+        <Menu id="command-menu" anchorEl={menuAnchorEl} keepMounted open={Boolean(menuAnchorEl)} onClose={() => handleMenuCloseConfirm('')}>
           {enableMobile && mobile && (
             <MenuItem onClick={() => handleMenuCloseConfirm('/')}>
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Home page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Home page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -549,7 +555,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Devices page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Devices page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -557,7 +563,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Logs page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Logs page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -565,7 +571,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Settings page' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Settings page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -573,7 +579,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Install latest stable' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Install latest stable" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -581,7 +587,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Install latest dev' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -589,7 +595,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Check for updates' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Check for updates" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate && (
@@ -597,7 +603,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Shelly system update' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shelly system update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate && (
@@ -605,21 +611,21 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Shelly software update' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shelly software update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           <MenuItem onClick={() => handleMenuCloseConfirm('restart')}>
             <ListItemIcon>
               <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary='Restart' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Restart" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
           {settings.matterbridgeInformation.restartMode === '' ? (
             <MenuItem onClick={() => handleMenuCloseConfirm('shutdown')}>
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Shutdown' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shutdown" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           ) : null}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -631,7 +637,7 @@ function Header() {
               <ListItemIcon>
                 <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Reboot...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reboot..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
           )}
           <Divider />
@@ -640,9 +646,16 @@ function Header() {
             <ListItemIcon>
               <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary='View' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="View" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
-          <Menu id='sub-menu-view' anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <Menu
+            id="sub-menu-view"
+            anchorEl={viewMenuAnchorEl}
+            keepMounted
+            open={Boolean(viewMenuAnchorEl)}
+            onClose={handleViewMenuClose}
+            sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
+          >
             <MenuItem
               onClick={() => {
                 clearEnableMobile();
@@ -654,7 +667,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Desktop site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Desktop site" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -667,7 +680,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Mobile site' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Mobile site" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -678,7 +691,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -689,7 +702,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matter log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -700,7 +713,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge diagnostic log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge diagnostic log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -711,7 +724,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge system history' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge system history" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
               <MenuItem
@@ -723,7 +736,7 @@ function Header() {
                 <ListItemIcon>
                   <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Shelly system log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
           </Menu>
@@ -733,9 +746,16 @@ function Header() {
             <ListItemIcon>
               <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary='Download' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Download" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
-          <Menu id='sub-menu-download' anchorEl={downloadMenuAnchorEl} keepMounted open={Boolean(downloadMenuAnchorEl)} onClose={handleDownloadMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <Menu
+            id="sub-menu-download"
+            anchorEl={downloadMenuAnchorEl}
+            keepMounted
+            open={Boolean(downloadMenuAnchorEl)}
+            onClose={handleDownloadMenuClose}
+            sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
+          >
             <MenuItem
               onClick={() => {
                 handleMenuCloseConfirm('create-matterbridge-storage-backup');
@@ -745,7 +765,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge storage' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -756,7 +776,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge plugins storage' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge plugins storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -767,7 +787,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge plugins config' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge plugins config" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -778,7 +798,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -789,7 +809,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matter storage' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -800,7 +820,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matter log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -811,7 +831,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge diagnostic log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge diagnostic log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -822,7 +842,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Matterbridge system history' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge system history" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
 
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -835,7 +855,7 @@ function Header() {
                 <ListItemIcon>
                   <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Create Shelly system log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Create Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -848,7 +868,7 @@ function Header() {
                 <ListItemIcon>
                   <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Download Shelly system log' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Download Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
           </Menu>
@@ -862,7 +882,7 @@ function Header() {
             <ListItemIcon>
               <SaveIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary='Backup' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Backup" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
 
           <Divider />
@@ -870,19 +890,32 @@ function Header() {
             <ListItemIcon>
               <ReportProblemIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary='Reset' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Reset" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
-          <Menu id='sub-menu-reset' anchorEl={resetMenuAnchorEl} keepMounted open={Boolean(resetMenuAnchorEl)} onClose={handleResetMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
+          <Menu
+            id="sub-menu-reset"
+            anchorEl={resetMenuAnchorEl}
+            keepMounted
+            open={Boolean(resetMenuAnchorEl)}
+            onClose={handleResetMenuClose}
+            sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}
+          >
             <MenuItem
               onClick={() => {
                 handleResetMenuClose();
-                showConfirmCancelDialog('Reset the frontend UI', 'Are you sure you want to reset the frontend UI? This will reset all local settings and reload the page.', 'reset_frontend', handleMenuCloseConfirm, handleMenuCloseCancel);
+                showConfirmCancelDialog(
+                  'Reset the frontend UI',
+                  'Are you sure you want to reset the frontend UI? This will reset all local settings and reload the page.',
+                  'reset_frontend',
+                  handleMenuCloseConfirm,
+                  handleMenuCloseCancel,
+                );
               }}
             >
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Reset the frontend UI...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset the frontend UI..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -899,7 +932,7 @@ function Header() {
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Reset all devices...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset all devices..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -916,7 +949,7 @@ function Header() {
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary='Reset commissioning...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset commissioning..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
             </MenuItem>
             {!settings.matterbridgeInformation.readOnly && (
               <MenuItem
@@ -934,33 +967,45 @@ function Header() {
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Factory reset...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
               <MenuItem
                 onClick={() => {
                   handleResetMenuClose();
-                  showConfirmCancelDialog('Network reset', 'Are you sure you want to factory reset the network parameters?', 'softreset', handleMenuCloseConfirm, handleMenuCloseCancel);
+                  showConfirmCancelDialog(
+                    'Network reset',
+                    'Are you sure you want to factory reset the network parameters?',
+                    'softreset',
+                    handleMenuCloseConfirm,
+                    handleMenuCloseCancel,
+                  );
                 }}
               >
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Reset network...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Reset network..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
               <MenuItem
                 onClick={() => {
                   handleResetMenuClose();
-                  showConfirmCancelDialog('Factory reset', 'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.', 'hardreset', handleMenuCloseConfirm, handleMenuCloseCancel);
+                  showConfirmCancelDialog(
+                    'Factory reset',
+                    'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.',
+                    'hardreset',
+                    handleMenuCloseConfirm,
+                    handleMenuCloseCancel,
+                  );
                 }}
               >
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary='Factory reset...' primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
               </MenuItem>
             )}
           </Menu>

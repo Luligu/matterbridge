@@ -297,7 +297,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     if (hasDevTag) list.push('dev');
     list.push(...latestVersions);
 
-    if (debug) console.log(`[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`, list);
+    if (debug)
+      console.log(
+        `[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`,
+        list,
+      );
 
     versionsCacheRef.current[packageName] = { versions: list, asOf };
     writeVersionsCache(versionsCacheRef.current);
@@ -372,7 +376,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HomeOutlinedIcon />
               </IconButton>
@@ -394,7 +398,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HelpOutlineIcon />
               </IconButton>
@@ -416,7 +420,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HistoryOutlinedIcon />
               </IconButton>
@@ -511,7 +515,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         const json = (await response.json()) as NpmSearchResponse;
 
         const officialUsername = 'luligu';
-        const isOfficial = (pkg: NpmSearchPackage) => pkg.publisher?.username?.toLowerCase() === officialUsername || (pkg.maintainers ?? []).some((m) => m.username?.toLowerCase() === officialUsername);
+        const isOfficial = (pkg: NpmSearchPackage) =>
+          pkg.publisher?.username?.toLowerCase() === officialUsername || (pkg.maintainers ?? []).some((m) => m.username?.toLowerCase() === officialUsername);
 
         const objects = (json.objects ?? [])
           .filter((obj): obj is NpmSearchObject => !!obj?.package && typeof obj.package.name === 'string')
@@ -636,7 +641,10 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           });
         const packagesNeedingMetaFetchSet = new Set(packagesNeedingMetaFetchList);
 
-        const fetchPackageMeta = async (packageName: string, fallbackHomepage: string | null): Promise<{ homepage: string | null; help: string | null; changelog: string | null } | null> => {
+        const fetchPackageMeta = async (
+          packageName: string,
+          fallbackHomepage: string | null,
+        ): Promise<{ homepage: string | null; help: string | null; changelog: string | null } | null> => {
           const latestUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
           try {
             const latestResponse = await fetch(latestUrl, { signal: controller.signal });
@@ -895,7 +903,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>Search Plugins</h4>
         </div>
       </DialogTitle>
@@ -907,10 +915,10 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             <div style={{ padding: '20px' }}>{error}</div>
           ) : (
             <MbfTable<PluginSearchRow>
-              name='Search plugins'
+              name="Search plugins"
               rows={rows}
               columns={columns}
-              getRowKey='name'
+              getRowKey="name"
               onRowClick={(row, _rowKey, event) => {
                 selectedPluginNameRef.current = row.name;
                 setPluginName(row.name);
@@ -923,12 +931,12 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         </div>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <Tooltip title='Select the plugin and close the dialog. Double-click a row to select and close the dialog.'>
-          <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
+        <Tooltip title="Select the plugin and close the dialog. Double-click a row to select and close the dialog.">
+          <Button variant="contained" onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
             Select
           </Button>
         </Tooltip>
-        <Tooltip title='Close the dialog without selecting a plugin.'>
+        <Tooltip title="Close the dialog without selecting a plugin.">
           <Button onClick={handleCancel}>Cancel</Button>
         </Tooltip>
       </DialogActions>

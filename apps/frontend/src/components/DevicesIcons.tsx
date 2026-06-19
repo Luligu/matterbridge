@@ -1,6 +1,5 @@
 // oxlint-disable unicorn/prefer-set-has
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// oxlint-disable no-unused-expressions
 
 // TODO: verify each rule
 // oxlint-disable typescript/no-unsafe-type-assertion
@@ -142,7 +141,10 @@ function Render({ icon, iconColor, cluster, value, unit, prefix }: RenderProps):
   return (
     <Box key={`${cluster.clusterId}-${cluster.attributeId}-box`} sx={renderBoxSx}>
       {icon && cloneElement(icon, { key: `${cluster.clusterId}-${cluster.attributeId}-icon`, sx: { ...iconSx, color: iconColor ?? 'var(--primary-color)' } })}
-      <Box key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`} sx={{ ...renderBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center' }}>
+      <Box
+        key={`${cluster.clusterId}-${cluster.attributeId}-valueunitbox`}
+        sx={{ ...renderBoxSx, gap: '4px', alignContent: 'center', alignItems: 'end', justifyContent: 'center' }}
+      >
         {unit && prefix && (
           <Typography key={`${cluster.clusterId}-${cluster.attributeId}-unit-prefix`} sx={unitSx}>
             {unit}
@@ -176,7 +178,9 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
   if (debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
 
   // Descriptor tagList
-  const tagList = clusters.find((cluster) => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'tagList')?.attributeLocalValue as Array<{ namespaceId: number; tag: number; label: string }> | undefined;
+  const tagList = clusters.find((cluster) => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'tagList')?.attributeLocalValue as
+    | Array<{ namespaceId: number; tag: number; label: string }>
+    | undefined;
   if (tagList) {
     let tagListLabels = '';
     tagList.map((t) => {
@@ -186,39 +190,68 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
   }
 
   // PowerSource
-  deviceType === 0x0011 && clusters.filter((cluster) => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage').map((cluster) => (details = `${(cluster.attributeLocalValue ?? 0) as number} mV`));
+  deviceType === 0x0011 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage')
+      .map((cluster) => (details = `${(cluster.attributeLocalValue ?? 0) as number} mV`));
 
   // LevelControl
-  currentLevelDeviceTypes.includes(deviceType) && clusters.filter((cluster) => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel').map((cluster) => (details = `Level ${cluster.attributeValue}`));
+  currentLevelDeviceTypes.includes(deviceType) &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel')
+      .map((cluster) => (details = `Level ${cluster.attributeValue}`));
 
   // WindowCovering
   deviceType === 0x0202 &&
-    clusters.filter((cluster) => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map((cluster) => (details = `Position ${(cluster.attributeLocalValue as number) / 100}%`));
+    clusters
+      .filter((cluster) => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths')
+      .map((cluster) => (details = `Position ${(cluster.attributeLocalValue as number) / 100}%`));
 
   // Thermostat
-  deviceType === 0x0301 && clusters.filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedHeatingSetpoint').map((cluster) => (details = `Heat ${(cluster.attributeLocalValue as number) / 100}°C `));
-  deviceType === 0x0301 && clusters.filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint').map((cluster) => (details = details + `Cool ${(cluster.attributeLocalValue as number) / 100}°C`));
+  deviceType === 0x0301 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedHeatingSetpoint')
+      .map((cluster) => (details = `Heat ${(cluster.attributeLocalValue as number) / 100}°C `));
+  deviceType === 0x0301 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint')
+      .map((cluster) => (details = details + `Cool ${(cluster.attributeLocalValue as number) / 100}°C`));
 
   // SmokeCoAlarm
-  deviceType === 0x0076 && clusters.filter((cluster) => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState').map((cluster) => (details = cluster.attributeLocalValue === 0 ? 'No CO detected' : 'CO alarm!'));
+  deviceType === 0x0076 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState')
+      .map((cluster) => (details = cluster.attributeLocalValue === 0 ? 'No CO detected' : 'CO alarm!'));
 
   // ElectricalPowerMeasurement
-  deviceType === 0x0510 && clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage').map((cluster) => (details = `${(cluster.attributeLocalValue as number) / 1000} V, `));
   deviceType === 0x0510 &&
-    clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} A, `));
-  deviceType === 0x0510 && clusters.filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower').map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} W`));
+    clusters
+      .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage')
+      .map((cluster) => (details = `${(cluster.attributeLocalValue as number) / 1000} V, `));
+  deviceType === 0x0510 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activeCurrent')
+      .map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} A, `));
+  deviceType === 0x0510 &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower')
+      .map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} W`));
 
   // ModeSelect
   if (deviceType === 0x0027) {
     const mode = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
-    const supportedModes = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
+    const supportedModes = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as
+      | Array<{ mode: number; label: string }>
+      | undefined;
     details = supportedModes?.find((m) => m.mode === mode)?.label || 'Unknown';
   }
 
   // RvcRunMode
   if (deviceType === 0x0074) {
     const runMode = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
-    const runSupportedModes = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as Array<{ mode: number; label: string }> | undefined;
+    const runSupportedModes = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as
+      | Array<{ mode: number; label: string }>
+      | undefined;
     details = runSupportedModes?.find((m) => m.mode === runMode)?.label || 'Unknown';
   }
 
@@ -436,22 +469,36 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
 
   const stateUpdate = useCallback(
     (msg: WsMessageApiStateUpdate) => {
-      if (debug || debugUpdate) console.log(`DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
+      if (debug || debugUpdate)
+        console.log(
+          `DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
+          msg.response,
+        );
       const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
       if (!updateDevice) {
-        if (debug || debugUpdate) console.warn(`DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`);
+        if (debug || debugUpdate)
+          console.warn(
+            `DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`,
+          );
         return;
       }
-      const updatedCluster = clusters[updateDevice.serial]?.find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
+      const updatedCluster = clusters[updateDevice.serial]?.find(
+        (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
+      );
       if (!updatedCluster) {
         if (debug || debugUpdate)
-          console.warn(`DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`);
+          console.warn(
+            `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
+          );
         return;
       }
       updatedCluster.attributeValue = String(msg.response.value);
       updatedCluster.attributeLocalValue = msg.response.value;
       setClusters({ ...clusters });
-      if (debug || debugUpdate) console.log(`DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+      if (debug || debugUpdate)
+        console.log(
+          `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+        );
     },
     [clusters, devices],
   );
@@ -523,7 +570,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       removeListener(handleWebSocketMessage);
       if (debug) console.log('DevicesIcons WebSocket effect unmounted');
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [devices]);
 
   useEffect(() => {

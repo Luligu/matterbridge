@@ -118,7 +118,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     {
       label: 'Availability',
       id: 'availability',
-      render: (value, rowKey, mixedDevice, _column) => (mixedDevice.reachable === true ? 'Online' : mixedDevice.reachable === false ? <span style={{ color: 'red' }}>Offline</span> : ''),
+      render: (value, rowKey, mixedDevice, _column) =>
+        mixedDevice.reachable === true ? 'Online' : mixedDevice.reachable === false ? <span style={{ color: 'red' }}>Offline</span> : '',
       comparator: (rowA, rowB) => {
         const a = rowA.reachable === true ? 1 : rowA.reachable === false ? 0 : -1;
         const b = rowB.reachable === true ? 1 : rowB.reachable === false ? 0 : -1;
@@ -130,31 +131,31 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       id: 'powerSource',
       render: (value, rowKey, mixedDevice, _column) => {
         if (mixedDevice.powerSource === 'ac' || mixedDevice.powerSource === 'dc') {
-          return <ElectricalServicesIcon fontSize='small' sx={{ color: 'var(--primary-color)' }} />;
+          return <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />;
         } else if (mixedDevice.powerSource === 'ok') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'green' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'green' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'gray' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'gray' }} />;
         } else if (mixedDevice.powerSource === 'warning') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />;
         } else if (mixedDevice.powerSource === 'critical') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />;
         } else return <span></span>;
       },
     },
@@ -173,30 +174,39 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       render: (value, rowKey, mixedDevice, _column) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {mixedDevice.matter !== undefined ? (
-            <Tooltip title='Show the QRCode or the fabrics' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title="Show the QRCode or the fabrics" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton
-                onClick={() => setStoreId(storeId === mixedDevice.matter?.id ? (settings?.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null) : mixedDevice.matter?.id || null)}
-                aria-label='Show the QRCode'
+                onClick={() =>
+                  setStoreId(
+                    storeId === mixedDevice.matter?.id ? (settings?.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null) : mixedDevice.matter?.id || null,
+                  )
+                }
+                aria-label="Show the QRCode"
                 sx={{ margin: 0, padding: 0, color: getQRColor(mixedDevice.matter) }}
               >
-                <QrCode2 fontSize='small' />
+                <QrCode2 fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
           {mixedDevice.configUrl ? (
-            <Tooltip title='Open the configuration page' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label='Open config url' sx={{ margin: 0, padding: 0 }}>
-                <SettingsIcon fontSize='small' />
+            <Tooltip title="Open the configuration page" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label="Open config url" sx={{ margin: 0, padding: 0 }}>
+                <SettingsIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
           {mixedDevice.selected !== undefined ? (
-            <Tooltip title='Select/unselect the device' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <Checkbox checked={mixedDevice.selected} onChange={(event) => handleCheckboxChange(event, mixedDevice)} sx={{ margin: '0', marginLeft: '8px', padding: '0' }} size='small' />
+            <Tooltip title="Select/unselect the device" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <Checkbox
+                checked={mixedDevice.selected}
+                onChange={(event) => handleCheckboxChange(event, mixedDevice)}
+                sx={{ margin: '0', marginLeft: '8px', padding: '0' }}
+                size="small"
+              />
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
@@ -221,12 +231,33 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       if (postfix === '') postfix = undefined;
       if (plugin.hasWhiteList === true && plugin.hasBlackList === true && selectMode) {
         device.selected = true;
-        if (selectMode === 'serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = true;
-        if (selectMode === 'serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = false;
-        if (selectMode === 'serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.whiteList &&
+          plugin.configJson.whiteList.length > 0 &&
+          plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = true;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.whiteList &&
+          plugin.configJson.whiteList.length > 0 &&
+          !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = false;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.blackList &&
+          plugin.configJson.blackList.length > 0 &&
+          plugin.configJson.blackList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = false;
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name))
+          device.selected = true;
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name))
+          device.selected = false;
+        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name))
+          device.selected = false;
       }
       // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} selectMode ${selectMode} postfix ${postfix} name ${device.name} serial ${device.serial} select ${device.selected}`);
       return device.selected;
@@ -325,7 +356,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           setDevices(msg.response);
         }
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-        if (debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
+        if (debug)
+          console.log(
+            `HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`,
+            msg.response,
+          );
         if (msg.response && msg.response.length > 0) {
           setSelectDevices((prevSelectDevices) => {
             // Filter out devices not from the current plugin
@@ -479,7 +514,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     <>
       <MbfWindow style={{ flex: '1 1 auto' }}>
         <MbfTable
-          name='Devices'
+          name="Devices"
           getRowKey={getRowKey}
           rows={mixedDevices}
           columns={devicesColumns}
