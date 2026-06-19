@@ -25,6 +25,8 @@
 
 // WARNING: Not released yet and excluded from Vitest coverage
 
+// oxlint-disable max-lines
+
 // @matter
 // oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs';

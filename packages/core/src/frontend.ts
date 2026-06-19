@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // TODO: analyze each rule
 // oxlint-disable complexity typescript/no-base-to-string typescript/restrict-template-expressions typescript/no-misused-promises typescript/prefer-nullish-coalescing typescript/consistent-return typescript/require-await typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style unicorn/no-negated-condition no-param-reassign
 
@@ -320,6 +322,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {number} [port] - TCP port to listen on. Defaults to 8283.
    * @returns {Promise<void>} Resolves when startup completes.
    */
+  // oxlint-disable-next-line max-lines-per-function
   async start(port: number = 8283): Promise<void> {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
@@ -1686,6 +1689,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {WebSocket.RawData} message - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
+  // oxlint-disable-next-line max-lines-per-function
   private async wsMessageHandler(client: WebSocket, message: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 

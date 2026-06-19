@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // TODO: analyze each rule
 // oxlint-disable typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing unicorn/no-negated-condition no-param-reassign typescript/explicit-function-return-type typescript/explicit-module-boundary-types
 

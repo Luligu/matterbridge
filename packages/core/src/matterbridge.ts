@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // TODO: analyze each rule
 // oxlint-disable default-case typescript/no-unsafe-type-assertion unicorn/no-negated-condition typescript/no-unnecessary-template-expression typescript/non-nullable-type-assertion-style typescript/prefer-nullish-coalescing typescript/require-await typescript/no-misused-promises no-param-reassign typescript/restrict-template-expressions
 // oxlint-disable complexity

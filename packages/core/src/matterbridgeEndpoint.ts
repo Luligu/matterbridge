@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // TODO: analyze each rule
 // oxlint-disable typescript/no-unsafe-type-assertion unicorn/no-negated-condition
 

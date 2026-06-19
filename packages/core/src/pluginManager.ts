@@ -23,6 +23,7 @@
  */
 
 // oxlint-disable typescript/prefer-nullish-coalescing
+// oxlint-disable max-lines
 
 // Node.js import
 import EventEmitter from 'node:events';

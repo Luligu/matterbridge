@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // @matter clusters
 import type { ClusterType } from '@matter/types';
 import { AccountLogin } from '@matter/types/clusters/account-login';
