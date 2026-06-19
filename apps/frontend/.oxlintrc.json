@@ -1,9 +1,9 @@
-// .oxlintrc.react.json 1.0.2
+// .oxlintrc.react.json 1.0.3
 
 // This Oxlint configuration is designed for a Vite/React/Typescript frontend using ESM modules.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**", "eslint.config.js", "**/vite-env.d.ts"],
+  "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**", "eslint.config.js"],
   "env": {
     "browser": true,
     "es2024": true
