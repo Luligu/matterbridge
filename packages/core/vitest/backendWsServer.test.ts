@@ -1,6 +1,5 @@
 // vitest\backendWsServer.test.ts
 
-
 const NAME = 'BackendWsServer';
 
 import { EventEmitter } from 'node:events';

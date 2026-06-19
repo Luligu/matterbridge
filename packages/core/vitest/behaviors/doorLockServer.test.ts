@@ -1,6 +1,5 @@
 // src\behaviors\doorLockServer.test.ts
 
-
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;

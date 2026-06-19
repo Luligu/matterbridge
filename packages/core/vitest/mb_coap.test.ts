@@ -1,6 +1,5 @@
 // vitest\mb_coap.test.ts
 
-
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
 
 const mockCoapInstances: MockCoap[] = [];

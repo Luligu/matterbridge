@@ -6,7 +6,6 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-
 const NAME = 'MatterbridgeGlobal';
 const MATTER_PORT = 6000;
 
