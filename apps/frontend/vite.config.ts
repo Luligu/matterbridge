@@ -1,7 +1,7 @@
 // Vite/Vitest configuration file for a React project
 
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig(({ mode }) => {
   const debugBuild = mode === 'debug';

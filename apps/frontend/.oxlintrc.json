@@ -1,0 +1,77 @@
+// .oxlintrc.react.json 1.0.11
+
+// This Oxlint configuration is designed for a Vite/React project using ESM modules.
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**"],
+  "env": {
+    "browser": true,
+    "es2024": true
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "warn",
+    "respectEslintDisableDirectives": true,
+    "typeAware": true,
+    "typeCheck": true,
+    "maxWarnings": 0
+  },
+  "plugins": ["eslint", "react", "react-perf", "jsx-a11y", "typescript", "unicorn", "import", "oxc", "jsdoc", "promise"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "restriction": "warn",
+    "perf": "warn",
+    "style": "off",
+    "pedantic": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    "eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "ignoreRestSiblings": true
+      }
+    ],
+    "eslint/no-console": "warn",
+    "eslint/no-undefined": "off", // `undefined` is idiomatic in TS/React (useState init, optional args)
+    "eslint/no-void": "off", // `void promise` marks intentionally fire-and-forget promises (usePolling)
+    "oxc/no-async-await": "off", // async/await is the standard style in this project
+    "oxc/no-optional-chaining": "off", // optional chaining is standard ES and used throughout
+    "typescript/no-explicit-any": "warn",
+    "typescript/explicit-function-return-type": "off", // React components/inline callbacks infer their return type
+    "typescript/explicit-module-boundary-types": "off", // same: avoid noisy explicit return types on components
+    "typescript/no-import-type-side-effects": "off", // conflicts with the inline type-imports style enforced below
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "import/no-default-export": "off", // React entry and components (App, etc.) use default exports
+    "import/newline-after-import": "warn",
+    "import/first": "warn",
+    "import/no-duplicates": "warn",
+    "import/unambiguous": "off", // vite-env.d.ts is a triple-slash reference with no import/export
+    "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
+    "jsdoc/require-param": "error",
+    "jsdoc/require-param-type": "error",
+    "jsdoc/require-param-description": "error",
+    "jsdoc/require-returns": "error",
+    "jsdoc/require-returns-type": "error",
+    "jsdoc/require-returns-description": "error",
+    "jsdoc/require-throws-type": "error",
+    "jsdoc/require-throws-description": "error",
+    "jsdoc/require-property": "error",
+    "jsdoc/require-property-name": "error",
+    "jsdoc/require-property-description": "error",
+    "jsdoc/require-property-type": "error",
+    "promise/no-nesting": "warn",
+    "promise/prefer-await-to-callbacks": "warn",
+    "promise/prefer-catch": "warn",
+    "promise/param-names": "warn",
+    "promise/no-return-wrap": "warn",
+    "react/react-in-jsx-scope": "off", // React 17+ automatic JSX runtime needs no React import
+    "react/jsx-filename-extension": "off", // JSX lives in .tsx files in this project
+    "react/no-multi-comp": "off", // small colocated subcomponents (PayloadCell/PayloadDetail) are allowed
+    "react/no-array-index-key": "off", // the message feed has no stable id; index key is acceptable here
+    "react-perf/jsx-no-new-object-as-prop": "off" // incompatible with MUI's idiomatic inline `sx={{ ... }}` styling
+  }
+}

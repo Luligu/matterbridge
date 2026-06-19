@@ -1,0 +1,45 @@
+// .oxfmtrc.json 1.0.3
+
+// This Oxfmt configuration is designed for a TypeScript project using ESM modules.
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/.git/**",
+    "apps/**",
+    "**/build/**",
+    "chip/**",
+    "**/coverage/**",
+    "docs",
+    "**/dist/**",
+    "**/temp/**",
+    "**/jest/**",
+    "**/node_modules/**",
+    "**/screenshots/**",
+    "vendor/**",
+    "**/package-lock.json",
+    "scripts/*.html",
+    "eslint.config.js"
+  ],
+  "printWidth": 180,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": true,
+  "singleQuote": true,
+  "quoteProps": "consistent",
+  "jsxSingleQuote": false,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "arrowParens": "always",
+  "requirePragma": false,
+  "insertPragma": false,
+  "proseWrap": "preserve",
+  "endOfLine": "lf",
+  "embeddedLanguageFormatting": "auto",
+  "singleAttributePerLine": false,
+  "sortImports": {
+    "groups": ["side_effect", "builtin", "external", ["internal", "subpath"], ["parent", "sibling", "index"], "style", "unknown"]
+  },
+  "sortPackageJson": false
+}
