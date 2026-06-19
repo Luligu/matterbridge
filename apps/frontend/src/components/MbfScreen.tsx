@@ -1,29 +1,26 @@
 // React
-import { ReactNode, useEffect, useContext } from 'react';
+import { type ReactNode, useEffect, useContext } from 'react';
 
-// Frontend
-import Header from './Header';
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile } from '../App';
-// const debug = true;
-
-export const MOBILE_WIDTH_THRESHOLD = 1200;
-export const MOBILE_HEIGHT_THRESHOLD = 900;
-export let viewportWidth: number;
-export let viewportHeight: number;
+import { MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD, setViewport } from '../viewport';
+import Header from './Header';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 /**
  * Returns true if the window width and height are less than the thresholds.
  * We consider a minimum of 360px in width to render the mobile layout.
+ * @returns {boolean} True when the viewport is below the mobile thresholds.
  */
+// oxlint-disable-next-line react/only-export-components
 export function isMobile(): boolean {
   if (typeof window !== 'undefined') {
-    viewportWidth = Math.floor(window.visualViewport?.width ?? window.innerWidth);
-    viewportHeight = Math.floor(window.visualViewport?.height ?? window.innerHeight);
-    const isMobile = viewportWidth < MOBILE_WIDTH_THRESHOLD || viewportHeight < MOBILE_HEIGHT_THRESHOLD;
-    if (debug) console.log('Visual viewport (%s) width %i height %i mobile %s', window.visualViewport !== undefined, viewportWidth, viewportHeight, isMobile);
+    const width = Math.floor(window.visualViewport?.width ?? window.innerWidth);
+    const height = Math.floor(window.visualViewport?.height ?? window.innerHeight);
+    setViewport(width, height);
+    const isMobile = width < MOBILE_WIDTH_THRESHOLD || height < MOBILE_HEIGHT_THRESHOLD;
+    if (debug) console.log('Visual viewport (%s) width %i height %i mobile %s', window.visualViewport !== undefined, width, height, isMobile);
     return isMobile;
   }
   return false;

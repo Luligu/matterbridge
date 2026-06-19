@@ -1,28 +1,24 @@
-// React
-import { useState, useContext, memo } from 'react';
-
+// @mui/icons-material
+import DeleteForever from '@mui/icons-material/DeleteForever';
 // @mui/material
-import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
+// React
+import { useState, useContext, memo } from 'react';
 
-// @mui/icons-material
-import DeleteForever from '@mui/icons-material/DeleteForever';
-
-// Frontend
-import WebSocketLogs from './WebSocketLogs';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
-import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
-// const debug = true;
+import WebSocketLogs from './WebSocketLogs';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Logs(): React.JSX.Element {
   // Contexts

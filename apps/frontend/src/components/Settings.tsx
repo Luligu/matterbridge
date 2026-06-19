@@ -1,32 +1,27 @@
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Select, { type SelectChangeEvent } from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
 // React
 import { useState, useEffect, useContext, useRef, memo, useMemo } from 'react';
 
-// @mui/material
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import TextField from '@mui/material/TextField';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-
-// Backend
-import { WsMessageApiResponse, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
-
-// Frontend
-import { Connecting } from './Connecting';
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
-import { NetworkConfigDialog } from './NetworkConfigDialog';
-import { ChangePasswordDialog } from './ChangePasswordDialog';
-import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { MbfPage } from './MbfPage';
+import { debug, enableMobile, setWssPassword } from '../appState';
+import { type WsMessageApiResponse, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
 import { createDebouncer } from '../utils/createDebouncer';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile, setWssPassword } from '../App';
-// const debug = true;
+import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { Connecting } from './Connecting';
+import { MbfPage } from './MbfPage';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
+import { NetworkConfigDialog } from './NetworkConfigDialog';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 const widthPx = 330;
 
@@ -95,7 +90,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info');
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
-  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
+  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
   const [virtualMode, setVirtualMode] = useState(localStorage.getItem(MbfLsk.virtualMode) ?? 'outlet'); // default outlet
 
@@ -139,21 +134,42 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const handleChangeBridgeMode = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setbridgemode', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setbridgemode', value: event.target.value },
+    });
   };
 
   // Define a function to handle change debug level
   const handleChangeMbLoggerLevel = (event: SelectChangeEvent) => {
     if (debug) console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
     setSelectedMbLoggerLevel(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmbloglevel', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmbloglevel', value: event.target.value },
+    });
   };
 
   // Define a function to handle change matterbridge log file
   const handleLogOnFileMbChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleLogOnFileMbChange called with value:', event.target.checked);
     setLogOnFileMb(event.target.checked);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmblogfile', value: event.target.checked } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmblogfile', value: event.target.checked },
+    });
   };
 
   // Define a function to handle change theme
@@ -204,8 +220,8 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
             Mode:
           </FormLabel>
           <RadioGroup row name='mode-buttons-group' value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-            <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly === true} />
-            <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly === true} />
+            <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly} />
+            <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly} />
           </RadioGroup>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
@@ -329,14 +345,28 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   const handleChangeMjLoggerLevel = (event: SelectChangeEvent) => {
     if (debug) console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
     setSelectedMjLoggerLevel(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmjloglevel', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmjloglevel', value: event.target.value },
+    });
   };
 
   // Define a function to handle change matter log file
   const handleLogOnFileMjChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleLogOnFileMjChange called with value:', event.target.checked);
     setLogOnFileMj(event.target.checked);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmjlogfile', value: event.target.checked } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmjlogfile', value: event.target.checked },
+    });
   };
 
   // Define a function to handle change mdnsInterface
@@ -440,7 +470,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -457,7 +487,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -474,7 +504,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -491,7 +521,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -508,7 +538,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -525,7 +555,7 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             variant='outlined'
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',

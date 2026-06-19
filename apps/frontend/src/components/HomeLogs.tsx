@@ -1,14 +1,12 @@
 // React
 import { memo, useContext, useState } from 'react';
 
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import WebSocketLogs from './WebSocketLogs';
+import { debug } from '../appState';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
-// const debug = true;
+import WebSocketLogs from './WebSocketLogs';
+import { WebSocketContext } from './WebSocketProvider';
 
 function HomeLogs(): React.JSX.Element {
   // States

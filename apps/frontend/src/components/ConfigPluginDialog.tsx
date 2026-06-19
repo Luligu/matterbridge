@@ -1,42 +1,42 @@
+// oxlint-disable max-lines unicorn/no-array-for-each
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// React
-import { useContext, useEffect, useState, useRef } from 'react';
 
+// TODO: verify each rule
+// oxlint-disable react/no-unstable-nested-components
+// oxlint-disable typescript/no-unsafe-type-assertion
+
+// @mui/icons-material
+import Add from '@mui/icons-material/Add'; // For AddButton
+import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
+import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
+import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For ErrorListTemplate
+import HubIcon from '@mui/icons-material/Hub'; // For selectDevice icon=hub
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import ListIcon from '@mui/icons-material/List';
+import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
+import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
 // @mui/material
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Tooltip from '@mui/material/Tooltip';
-import Checkbox from '@mui/material/Checkbox';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import TextField from '@mui/material/TextField';
 import ListItemButton from '@mui/material/ListItemButton';
-import DialogActions from '@mui/material/DialogActions';
-
-// @mui/icons-material
-import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
-import Add from '@mui/icons-material/Add'; // For AddButton
-import ListIcon from '@mui/icons-material/List';
-import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
-import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
-import HubIcon from '@mui/icons-material/Hub'; // For selectDevice icon=hub
-import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For ErrorListTemplate
-import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
-import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
-
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 // @rjsf
-import Form, { IChangeEvent } from '@rjsf/core';
-import validator from '@rjsf/validator-ajv8';
+import Form, { type IChangeEvent } from '@rjsf/core';
 import {
   getSubmitButtonOptions,
   getUiOptions,
@@ -45,33 +45,33 @@ import {
   ariaDescribedByIds,
   enumOptionsIndexForValue,
   ADDITIONAL_PROPERTY_FLAG,
-  WidgetProps,
-  SubmitButtonProps,
-  IconButtonProps,
-  FieldTemplateProps,
-  DescriptionFieldProps,
-  TitleFieldProps,
-  FieldHelpProps,
-  ErrorListProps,
-  FieldErrorProps,
-  BaseInputTemplateProps,
-  ArrayFieldTitleProps,
-  ArrayFieldDescriptionProps,
-  ArrayFieldTemplateProps,
-  ArrayFieldItemTemplateProps,
-  ObjectFieldTemplateProps,
-  WrapIfAdditionalTemplateProps,
-  UiSchema,
-  RJSFSchema,
+  type WidgetProps,
+  type SubmitButtonProps,
+  type IconButtonProps,
+  type FieldTemplateProps,
+  type DescriptionFieldProps,
+  type TitleFieldProps,
+  type FieldHelpProps,
+  type ErrorListProps,
+  type FieldErrorProps,
+  type BaseInputTemplateProps,
+  type ArrayFieldTitleProps,
+  type ArrayFieldDescriptionProps,
+  type ArrayFieldTemplateProps,
+  type ArrayFieldItemTemplateProps,
+  type ObjectFieldTemplateProps,
+  type WrapIfAdditionalTemplateProps,
+  type UiSchema,
+  type RJSFSchema,
 } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
+// React
+import { useContext, useEffect, useState, useRef } from 'react';
 
-// Backend
-import { ApiPlugin, ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../utils/backendShared';
-
-// Frontend
+import { debug } from '../appState';
+import { type ApiPlugin, type ApiSelectDevice, type ApiSelectDeviceEntity, type ApiSelectEntity, isApiResponse, type WsMessage } from '../utils/backendShared';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug } from '../App';
-// const debug = false;
+
 const rjsfDebug = false;
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -85,6 +85,8 @@ const listItemButtonSx = {};
 const listItemIconStyle = {};
 const listItemTextPrimaryStyle = {};
 const listItemTextSecondaryStyle = {};
+// Stable empty default for the optional rawErrors prop, so the destructuring default keeps a single reference across renders.
+const emptyRawErrors: string[] = [];
 let selectDevices: ApiSelectDevice[] = [];
 let selectEntities: ApiSelectEntity[] = [];
 
@@ -131,6 +133,7 @@ export interface ConfigPluginDialogProps {
   plugin: ApiPlugin;
 }
 
+// oxlint-disable-next-line max-lines-per-function
 export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {
   // Contexts
   const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
@@ -145,7 +148,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   const [schema, setSchema] = useState(plugin.schemaJson);
   const [uiSchema, setUiSchema] = useState<UiSchema>({
     'ui:submitButtonOptions': {
-      'submitText': 'Confirm',
+      submitText: 'Confirm',
     },
     'ui:globalOptions': { orderable: true },
   });
@@ -256,18 +259,25 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
 
-  const handleFormChange = (data: IChangeEvent<any, RJSFSchema, any>, id?: string) => {
+  const handleFormChange = (data: IChangeEvent, id?: string) => {
     currentFormData = data.formData;
     if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, data.formData);
   };
 
-  const handleSaveChanges = (data: IChangeEvent<any, RJSFSchema, any>) => {
+  const handleSaveChanges = (data: IChangeEvent) => {
     if (debug) console.log('ConfigPluginDialog handleSaveChanges:', data.formData);
     // Save the configuration
     setFormData(data.formData);
     plugin.configJson = data.formData;
     plugin.restartRequired = true;
-    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/savepluginconfig', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: data.formData.name, formData: data.formData } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'ConfigPlugin',
+      method: '/api/savepluginconfig',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { pluginName: data.formData.name, formData: data.formData },
+    });
     // Close the dialog
     onClose();
   };
@@ -290,7 +300,20 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     }, [additional, label, onKeyRenameBlur]);
 
     if (!additional) {
-      return <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>{children}</Box>;
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+            padding: rjsfDebug ? '2px' : 0,
+            margin: rjsfDebug ? '2px' : 0,
+            border: rjsfDebug ? '2px solid magenta' : 'none',
+          }}
+        >
+          {children}
+        </Box>
+      );
     }
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
@@ -416,9 +439,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   function BaseInputTemplate(props: BaseInputTemplateProps) {
     const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus, onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
-    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
-    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
-    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
+    const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
         <TextField
@@ -429,13 +452,15 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           placeholder={placeholder && placeholder !== '' ? placeholder : label}
           required={required}
           disabled={disabled || readonly}
+          // autofocus is an RJSF WidgetProps value carrying the config schema's ui:autofocus directive; honoring it is intended behavior.
+          // oxlint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={autofocus}
           value={value || value === 0 ? value : ''}
           type={type}
           autoComplete={type === 'password' ? 'current-password' : name}
-          onChange={onChangeOverride || _onChange}
-          onBlur={_onBlur}
-          onFocus={_onFocus}
+          onChange={onChangeOverride || handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
           fullWidth
         />
       </Box>
@@ -976,7 +1001,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
     const onClick = () => {
       if (debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/action', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'ConfigPlugin',
+        method: '/api/action',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id },
+      });
       if (schema.buttonClose === true) onClose();
       else if (schema.buttonSave === true) handleSaveChanges({ formData } as any); // Save changes and we don't close (no need for other props).
     };
@@ -1034,7 +1066,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     onBlur,
     onFocus,
     errorSchema,
-    rawErrors = [],
+    rawErrors = emptyRawErrors,
     registry,
     uiSchema,
     hideError,
@@ -1063,14 +1095,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         textFieldProps,
       });
 
-    multiple = typeof multiple === 'undefined' ? false : !!multiple;
-
     const emptyValue = multiple ? [] : '';
     const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
 
-    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
-    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
-    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
     const renderSelectedValues = (selected: unknown) => {
       if (!Array.isArray(selected) || !Array.isArray(enumOptions)) return '';
@@ -1088,12 +1118,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         value={!isEmpty && typeof selectedIndexes !== 'undefined' ? selectedIndexes : emptyValue}
         required={required}
         disabled={disabled || readonly}
+        // autofocus is an RJSF WidgetProps value carrying the config schema's ui:autofocus directive; honoring it is intended behavior.
+        // oxlint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={autofocus}
         // placeholder={placeholder} is not used cause we have the name, title and description
         error={rawErrors.length > 0}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
         select
         slotProps={{
           select: {

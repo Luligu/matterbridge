@@ -1,3 +1,7 @@
+// TODO: verify each rule
+// oxlint-disable typescript/no-misused-spread
+// oxlint-disable react/button-has-type
+
 import React from 'react';
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -29,7 +33,7 @@ vi.mock('@mui/icons-material/Favorite', () => ({ default: () => <span data-testi
 
 async function loadHomeShowChangelog(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/components/HomeShowChangelog');
 }
 

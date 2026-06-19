@@ -39,7 +39,7 @@ function createMatter(overrides: Partial<ApiMatter> = {}): ApiMatter {
 
 async function loadGetQRColor(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/utils/getQRColor');
 }
 

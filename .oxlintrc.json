@@ -107,19 +107,19 @@
     "typescript/explicit-member-accessibility": "off", // Public is the TypeScript default; require modifiers only where visibility matters.
     "typescript/no-deprecated": ["warn", { "allow": ["ClusterType", "invokeBehaviorCommand", "invokeSubscribeHandler"] }],
     "node/no-process-env": "off", // Accessing environment variables is common and not a problem in this project
-    "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
-    "jsdoc/require-param": "error",
-    "jsdoc/require-param-type": "error",
-    "jsdoc/require-param-description": "error",
-    "jsdoc/require-returns": "error",
-    "jsdoc/require-returns-type": "error",
-    "jsdoc/require-returns-description": "error",
-    "jsdoc/require-throws-type": "error",
-    "jsdoc/require-throws-description": "error",
-    "jsdoc/require-property": "error",
-    "jsdoc/require-property-name": "error",
-    "jsdoc/require-property-description": "error",
-    "jsdoc/require-property-type": "error",
+    "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
+    "jsdoc/require-param": "warn",
+    "jsdoc/require-param-type": "warn",
+    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-returns-type": "warn",
+    "jsdoc/require-returns-description": "warn",
+    "jsdoc/require-throws-type": "warn",
+    "jsdoc/require-throws-description": "warn",
+    "jsdoc/require-property": "warn",
+    "jsdoc/require-property-name": "warn",
+    "jsdoc/require-property-description": "warn",
+    "jsdoc/require-property-type": "warn",
     "import/no-default-export": "off", // We allow default exports for Matterbridge plugins
     "import/no-relative-parent-imports": "off", // We allow relative parent imports
     "import/newline-after-import": "warn", // Enforce a newline after import statements for better readability

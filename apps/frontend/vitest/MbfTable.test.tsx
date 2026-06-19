@@ -1,14 +1,21 @@
-import { vi } from 'vitest';
+import '@testing-library/jest-dom';
+
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+
+import MbfTable, { type MbfTableColumn } from '../src/components/MbfTable';
+
+interface RowType {
+  id: string;
+  name: string;
+  value: number;
+  flag: boolean;
+}
+
 // --- Edge/fallback/error tests for full coverage ---
 describe('MbfTable edge/fallback/error cases', () => {
   it('triggers stable sort fallback in main table logic', () => {
-    const columns = [
-      { id: 'id', label: 'ID', required: true, comparator: () => NaN },
-    ];
-    const rows = [
-      { id: 'a' },
-      { id: 'b' },
-    ];
+    const columns = [{ id: 'id', label: 'ID', required: true, comparator: () => Number.NaN }];
+    const rows = [{ id: 'a' }, { id: 'b' }];
     render(<MbfTable name="StableSortFallback" columns={columns} rows={rows} getRowKey="id" />);
     fireEvent.click(screen.getByText('ID'));
     expect(screen.getByText('a')).toBeInTheDocument();
@@ -16,10 +23,12 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 
   it('covers try/catch for localStorage.getItem (columnVisibility)', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true } ];
+    const columns = [{ id: 'id', label: 'ID', required: true }];
     const rows = [{ id: 'a' }];
     const origGetItem = window.localStorage.getItem;
-    window.localStorage.getItem = () => { throw new Error('fail'); };
+    window.localStorage.getItem = () => {
+      throw new Error('fail');
+    };
     expect(() => {
       render(<MbfTable name="GetItemError" columns={columns} rows={rows} getRowKey="id" />);
     }).not.toThrow();
@@ -27,10 +36,15 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 
   it('covers try/catch for localStorage.setItem (handleConfigureVisibilityChange)', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true }, { id: 'name', label: 'Name' } ];
+    const columns = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name' },
+    ];
     const rows = [{ id: 'a', name: 'Alpha' }];
     const origSetItem = window.localStorage.setItem;
-    window.localStorage.setItem = () => { throw new Error('fail'); };
+    window.localStorage.setItem = () => {
+      throw new Error('fail');
+    };
     render(<MbfTable name="SetItemError" columns={columns} rows={rows} getRowKey="id" />);
     fireEvent.click(screen.getByLabelText('Configure Columns'));
     expect(() => fireEvent.click(screen.getByLabelText('Name'))).not.toThrow();
@@ -38,10 +52,15 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 
   it('covers try/catch for localStorage.removeItem (handleResetVisibility)', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true }, { id: 'name', label: 'Name' } ];
+    const columns = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name' },
+    ];
     const rows = [{ id: 'a', name: 'Alpha' }];
     const origRemoveItem = window.localStorage.removeItem;
-    window.localStorage.removeItem = () => { throw new Error('fail'); };
+    window.localStorage.removeItem = () => {
+      throw new Error('fail');
+    };
     render(<MbfTable name="RemoveItemError" columns={columns} rows={rows} getRowKey="id" />);
     fireEvent.click(screen.getByLabelText('Configure Columns'));
     fireEvent.click(screen.getByLabelText('Name'));
@@ -50,30 +69,37 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 
   it('covers try/catch for blur logic in Dialog Close button', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true } ];
+    const columns = [{ id: 'id', label: 'ID', required: true }];
     const rows = [{ id: 'a' }];
     render(<MbfTable name="BlurDialog" columns={columns} rows={rows} getRowKey="id" />);
     fireEvent.click(screen.getByLabelText('Configure Columns'));
     const closeBtn = screen.getByText('Close');
     const origBlur = closeBtn.blur;
-    closeBtn.blur = () => { throw new Error('fail'); };
+    closeBtn.blur = () => {
+      throw new Error('fail');
+    };
     expect(() => fireEvent.click(closeBtn)).not.toThrow();
     closeBtn.blur = origBlur;
   });
 
   it('covers try/catch for blur logic in IconButton', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true } ];
+    const columns = [{ id: 'id', label: 'ID', required: true }];
     const rows = [{ id: 'a' }];
     render(<MbfTable name="BlurIcon" columns={columns} rows={rows} getRowKey="id" />);
     const iconBtn = screen.getByLabelText('Configure Columns');
     const origBlur = iconBtn.blur;
-    iconBtn.blur = () => { throw new Error('fail'); };
+    iconBtn.blur = () => {
+      throw new Error('fail');
+    };
     expect(() => fireEvent.click(iconBtn)).not.toThrow();
     iconBtn.blur = origBlur;
   });
 
   it('uses fallback stable row key and warns (no getRowKey, no id)', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true }, { id: 'name', label: 'Name' } ];
+    const columns = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name' },
+    ];
     const rows = [{ foo: 1 }];
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(<MbfTable name="FallbackKeyWarn" columns={columns} rows={rows} />);
@@ -82,34 +108,26 @@ describe('MbfTable edge/fallback/error cases', () => {
   });
 
   it('uses fallback stable row key and warns (getRowKey returns undefined)', () => {
-    const columns = [ { id: 'id', label: 'ID', required: true }, { id: 'name', label: 'Name' } ];
+    const columns = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name' },
+    ];
     const rows = [{ foo: 1 }];
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  render(<MbfTable name="FallbackKeyWarn2" columns={columns} rows={rows} getRowKey={() => undefined as unknown as string} />);
+    render(<MbfTable name="FallbackKeyWarn2" columns={columns} rows={rows} getRowKey={() => undefined as unknown as string} />);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('using fallback stable row key'));
     warn.mockRestore();
   });
 
   it('covers stable sort fallback (comparator returns NaN and undefined)', () => {
-  const columns = [ { id: 'id', label: 'ID', required: true, comparator: (_a: unknown, _b: unknown) => NaN } ];
-    const rows = [ { id: 'a' }, { id: 'b' } ];
+    const columns = [{ id: 'id', label: 'ID', required: true, comparator: (_a: unknown, _b: unknown) => Number.NaN }];
+    const rows = [{ id: 'a' }, { id: 'b' }];
     render(<MbfTable name="StableSortNaN" columns={columns} rows={rows} getRowKey="id" />);
     fireEvent.click(screen.getByText('ID'));
     expect(screen.getByText('a')).toBeInTheDocument();
     expect(screen.getByText('b')).toBeInTheDocument();
   });
 });
-import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import MbfTable, { MbfTableColumn } from '../src/components/MbfTable';
-
-interface RowType {
-  id: string;
-  name: string;
-  value: number;
-  flag: boolean;
-}
 
 describe('MbfTable', () => {
   const columns: MbfTableColumn<RowType>[] = [

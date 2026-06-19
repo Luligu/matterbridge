@@ -26,7 +26,7 @@
   "useTabs": false,
   "semi": true,
   "singleQuote": true,
-  "quoteProps": "consistent",
+  "quoteProps": "preserve",
   "jsxSingleQuote": false,
   "trailingComma": "all",
   "bracketSpacing": true,
@@ -39,7 +39,21 @@
   "embeddedLanguageFormatting": "auto",
   "singleAttributePerLine": false,
   "sortImports": {
-    "groups": ["side_effect", "builtin", "external", ["internal", "subpath"], ["parent", "sibling", "index"], "style", "unknown"]
+    "groups": [
+      "side_effect",
+      { "newlinesBetween": true },
+      "builtin",
+      { "newlinesBetween": true },
+      "external",
+      { "newlinesBetween": true },
+      ["internal", "subpath"],
+      { "newlinesBetween": true },
+      ["parent", "sibling", "index"],
+      { "newlinesBetween": true },
+      "style",
+      { "newlinesBetween": true },
+      "unknown"
+    ]
   },
   "sortPackageJson": false
 }

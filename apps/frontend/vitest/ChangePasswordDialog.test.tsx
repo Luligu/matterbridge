@@ -1,6 +1,9 @@
-import React from 'react';
+// oxlint-disable react/button-has-type
+
 import '@testing-library/jest-dom';
+
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@mui/material/Dialog', () => ({
@@ -8,7 +11,7 @@ vi.mock('@mui/material/Dialog', () => ({
     if (!open) return null;
 
     return (
-      <div data-testid='dialog'>
+      <div data-testid="dialog">
         {children}
         <button onClick={() => onClose?.({}, 'backdropClick')}>Backdrop Close</button>
         <button onClick={() => onClose?.({}, 'escapeKeyDown')}>Escape Close</button>
@@ -77,7 +80,7 @@ describe('ChangePasswordDialog', () => {
     fireEvent.change(confirmPasswordInput, { target: { value: 'alpha' } });
 
     expect(screen.queryByText('Passwords do not match')).not.toBeInTheDocument();
-  expect(changeButton).toHaveAttribute('data-disabled', 'false');
+    expect(changeButton).toHaveAttribute('data-disabled', 'false');
 
     fireEvent.click(changeButton);
     expect(onSave).toHaveBeenNthCalledWith(1, 'alpha');

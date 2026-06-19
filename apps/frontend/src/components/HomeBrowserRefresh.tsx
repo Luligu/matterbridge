@@ -1,18 +1,14 @@
+// @mui/icons-material
+import Refresh from '@mui/icons-material/Refresh';
+// @mui/material
+import Button from '@mui/material/Button';
 // React
 import { memo, useContext } from 'react';
 
-// @mui/material
-import Button from '@mui/material/Button';
-
-// @mui/icons-material
-import Refresh from '@mui/icons-material/Refresh';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
 import { Connecting } from './Connecting';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { debug } from '../App';
-// const debug = true;
+import { WebSocketContext } from './WebSocketProvider';
 
 interface HomeBrowserRefreshProps {
   version: string;

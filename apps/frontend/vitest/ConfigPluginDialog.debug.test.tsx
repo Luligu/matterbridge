@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiPlugin } from '../src/utils/backendShared';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: true,
 }));
 

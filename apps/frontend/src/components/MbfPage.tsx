@@ -1,9 +1,8 @@
 // React
-import React, { ReactNode, useContext } from 'react';
+import React, { type ReactNode, useContext } from 'react';
 
-// Frontend
-import { UiContext } from './UiProvider';
-import { debug } from '../App';
+import { debug } from '../appState';
+import { UiContext } from './UiContext';
 
 interface MbfPageProps {
   children: ReactNode;

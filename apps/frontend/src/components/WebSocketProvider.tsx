@@ -1,15 +1,17 @@
+// oxlint-disable unicorn/prefer-add-event-listener
+// oxlint-disable unicorn/no-array-for-each
+
+// TODO: verify each rule
+// oxlint-disable react/only-export-components
 /* eslint-disable react-hooks/exhaustive-deps */
+
 // React
-import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, type ReactNode } from 'react';
 
-// Backend
-import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } from '../utils/backendShared';
-
-// Frontend modules
-import { UiContext } from './UiProvider';
+import { debug, isIngress, wssPassword } from '../appState';
+import { type WsMessageApiRequest, type WsMessageApiResponse, type WsMessageErrorApiResponse } from '../utils/backendShared';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, isIngress, wssPassword } from '../App';
-// const debug = true;
+import { UiContext } from './UiContext';
 
 // TypeScript interface for log messages
 export interface WsLogMessage {
@@ -50,8 +52,10 @@ export interface WebSocketContextType {
   logMessage: (badge: string, message: string) => void;
 }
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- WebSocketMessagesContext is always provided by WebSocketProvider; this keeps consumers non-nullable without repetitive null checks.
 export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as unknown as WebSocketMessagesContextType);
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- WebSocketContext is always provided by WebSocketProvider; this keeps consumers non-nullable without repetitive null checks.
 export const WebSocketContext = createContext<WebSocketContextType>(null as unknown as WebSocketContextType);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
@@ -78,7 +82,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const messagesCounterRef = useRef(0);
   const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
-  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) === 'false' ? false : true);
+  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) !== 'false'); // default true
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
@@ -163,7 +167,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         wsRef.current.send(msg);
         if (debug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-        if (debug) console.error(`WebSocket error sending message: ${error}`);
+        if (debug) console.error(`WebSocket error sending message: ${String(error)}`);
       }
     } else {
       if (debug) console.error(`WebSocket message not sent, WebSocket not connected:`, message);
@@ -176,7 +180,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const addListener = useCallback((listener: (msg: WsMessageApiResponse) => void, id: number) => {
     if (debug) console.log(`WebSocket addListener id ${id}:`, listener);
-    if (id === undefined || id === null || isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
+    if (id === undefined || id === null || Number.isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
     // listenersRef.current = [...listenersRef.current, listener];
     listenersRef.current = [...listenersRef.current, { listener, id }];
     if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
@@ -207,6 +211,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (debug) console.error(`WebSocket invalid message src/dst:`, msg);
           return;
         }
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((msg as unknown as WsMessageErrorApiResponse).error) {
           if (debug) console.error(`WebSocket error message response:`, msg);
           return;
@@ -301,7 +306,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           return;
         }
       } catch (error) {
-        console.error(`WebSocket error parsing message: ${error}`, error instanceof Error ? error.stack : null);
+        console.error(`WebSocket error parsing message: ${String(error)}`, error instanceof Error ? error.stack : null);
       }
     };
 

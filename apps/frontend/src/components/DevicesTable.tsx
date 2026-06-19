@@ -1,21 +1,16 @@
+// @mui/icons-material
+import SettingsIcon from '@mui/icons-material/Settings';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
 // React
 import { useContext, useEffect, useState, useRef, memo, useCallback } from 'react';
 
-// @mui/material
-import IconButton from '@mui/material/IconButton';
-
-// @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
-
-// Backend
-import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
+import { type ApiDevice, type Cluster, type WsMessageApiResponse, type WsMessageApiStateUpdate } from '../utils/backendShared';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
-import MbfTable, { MbfTableColumn } from './MbfTable';
+import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
+import { WebSocketContext } from './WebSocketProvider';
 
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
@@ -215,7 +210,14 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   useEffect(() => {
     if (pluginName && endpoint && selectedDeviceUniqueId) {
       if (debug) console.log('DevicesTable sending /api/clusters');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'DevicesTable',
+        method: '/api/clusters',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId },
+      });
       // console.log(`DevicesTable useEffect: selected device "${deviceName}" with uniqueId "${selectedDeviceUniqueId}", plugin "${pluginName}", endpoint "${endpoint}"`);
     }
   }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
@@ -258,7 +260,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   return (
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
       {/* Devices Table */}
-      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
+      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: pluginName && endpoint ? '30%' : '100%', flex: '1 1 auto', overflow: 'hidden' }}>
         <MbfTable name='Registered devices' getRowKey={getDeviceRowKey} onRowClick={handleDeviceClick} rows={filteredDevices} columns={devicesColumns} footerLeft={`Total devices: ${filteredDevices.length.toString()}`} />
       </MbfWindow>
 

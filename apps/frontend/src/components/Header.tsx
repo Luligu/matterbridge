@@ -1,40 +1,37 @@
+// @mui/icons-material
+import DownloadIcon from '@mui/icons-material/Download';
+import Favorite from '@mui/icons-material/Favorite';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import MoreHoriz from '@mui/icons-material/MoreHoriz';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SaveIcon from '@mui/icons-material/Save';
+import StarIcon from '@mui/icons-material/Star';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
+// @mui/material
+import Divider from '@mui/material/Divider';
+import IconButton from '@mui/material/IconButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useState, useContext, useEffect, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router';
 
-// @mui/material
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import Divider from '@mui/material/Divider';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-
-// @mui/icons-material
-import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import MoreHoriz from '@mui/icons-material/MoreHoriz';
-import SaveIcon from '@mui/icons-material/Save';
-import DownloadIcon from '@mui/icons-material/Download';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import ViewHeadlineIcon from '@mui/icons-material/ViewHeadline';
-import StarIcon from '@mui/icons-material/Star';
-import Favorite from '@mui/icons-material/Favorite';
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
-import { viewportHeight, viewportWidth } from './MbfScreen';
+import { clearEnableMobile, debug, enableMobile, setEnableMobile, toggleDebug } from '../appState';
+import { type ApiSettings, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, type WsMessageApiResponse } from '../utils/backendShared';
 import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
-import { ApiSettings, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, WsMessageApiResponse } from '../utils/backendShared';
-import { debug, enableMobile, setEnableMobile, toggleDebug, unsetEnableMobile } from '../App';
-// const debug = true;
+import { viewportHeight, viewportWidth } from '../viewport';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
+// oxlint-disable-next-line max-lines-per-function
 function Header() {
   // Contexts
   const { mobile, showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
@@ -92,7 +89,14 @@ function Header() {
   };
 
   const handleUpdateDevClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: 'matterbridge@dev', restart: true } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Header',
+      method: '/api/install',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { packageName: 'matterbridge@dev', restart: true },
+    });
     setUpdateDev(false);
   };
 
@@ -156,7 +160,7 @@ function Header() {
     if (debug) console.log('Header: handleMenuClose', value);
     setMenuAnchorEl(null);
     if (value === '/' || value === '/devices' || value === '/log' || value === '/settings') {
-      navigate(value);
+      void navigate(value);
     } else if (value === 'reset_frontend') {
       logMessage('Matterbridge', `Resetting frontend UI...`);
       showSnackbarMessage('Resetting frontend UI...', 5);
@@ -306,13 +310,13 @@ function Header() {
       } else if (msg.method === 'restart_required') {
         if (debug) console.log(`Header received restart_required with fixed: ${msg.response.fixed}`);
         setRestart(true);
-        if (msg.response.fixed === true) setFixedRestart(true);
+        if (msg.response.fixed) setFixedRestart(true);
       } else if (msg.method === 'restart_not_required') {
         if (debug) console.log(`Header received restart_not_required`);
         setRestart(false);
       } else if (msg.method === 'update_required') {
         if (debug) console.log('Header received update_required');
-        if (msg.response.devVersion === true) {
+        if (msg.response.devVersion) {
           setUpdateDev(true);
         } else {
           setUpdate(true);
@@ -338,13 +342,13 @@ function Header() {
               }
             : null,
         );
-      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
         if (debug) console.log('Header received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
-      } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+      } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success) {
         if (debug) console.log('Header received /api/downloadhistorypage success');
         window.location.href = `./api/downloadhistory`;
-      } else if (msg.method === 'archive' && msg.success === true && msg.response.command === 'zip') {
+      } else if (msg.method === 'archive' && msg.success && msg.response.command === 'zip') {
         if (debug) console.log('Header received archive success response for zip command', msg.response);
         if (msg.response.archivePath.endsWith('matterbridge.backup.zip')) window.location.href = `./api/download-backup`;
         else if (msg.response.archivePath.endsWith(`matterbridge.${NODE_STORAGE_DIR}.zip`)) window.location.href = `./api/download-mbstorage`;
@@ -380,7 +384,10 @@ function Header() {
       {/* Logo and navigation */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} onClick={handleLogoClick} />
+          {/* Clicking the logo toggles debug mode (developer affordance). */}
+          <IconButton style={{ margin: '0', padding: '0' }} onClick={handleLogoClick}>
+            <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '30px' }} />
+          </IconButton>
           <h2 style={{ fontSize: '22px', color: 'var(--main-icon-color)', margin: '0px' }}>Matterbridge</h2>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
@@ -415,21 +422,21 @@ function Header() {
           </Tooltip>
         )}
         {settings.matterbridgeInformation.shellyBoard && <img src='Shelly.svg' alt='Shelly Icon' style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
-        {settings.matterbridgeInformation.bridgeMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
+        {settings.matterbridgeInformation.bridgeMode !== '' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Bridge mode'>
             <span className='status-information' style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.bridgeMode}
             </span>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.restartMode !== '' && settings.matterbridgeInformation.readOnly === false ? (
+        {settings.matterbridgeInformation.restartMode !== '' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Restart mode'>
             <span className='status-information' style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.restartMode}
             </span>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && settings.matterbridgeInformation.readOnly === false ? (
+        {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Current profile'>
             <span className='status-information' style={{ cursor: 'default' }}>
               {settings.matterbridgeInformation.profile}
@@ -440,25 +447,27 @@ function Header() {
           <span className='status-information' style={{ cursor: 'default' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
-            {` enabled ${localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true}`}
+            {` enabled ${localStorage.getItem(MbfLsk.enableMobile) !== 'false'}`}
           </span>
         )}
       </div>
       {/* Icons */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '5px' }}>
-        {settings.matterbridgeInformation.readOnly === false ? (
+        {!settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Matterbridge discord group'>
-            <img src='discord.svg' alt='Discord Logo' style={{ cursor: 'pointer', height: '25px' }} onClick={handleDiscordLogoClick} />
+            <IconButton style={{ margin: '0', padding: '0' }} onClick={handleDiscordLogoClick}>
+              <img src='discord.svg' alt='Discord Logo' style={{ height: '25px' }} />
+            </IconButton>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.readOnly === false ? (
+        {!settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Give a star to Matterbridge'>
             <IconButton style={{ color: '#FFD700', margin: '0', padding: '0' }} onClick={handleStarClick}>
               <StarIcon />
             </IconButton>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.readOnly === false ? (
+        {!settings.matterbridgeInformation.readOnly ? (
           <Tooltip title='Sponsor Matterbridge'>
             <IconButton style={{ color: '#b6409c', margin: '0', padding: '0' }} onClick={handleSponsorClick}>
               <Favorite />
@@ -636,7 +645,7 @@ function Header() {
           <Menu id='sub-menu-view' anchorEl={viewMenuAnchorEl} keepMounted open={Boolean(viewMenuAnchorEl)} onClose={handleViewMenuClose} sx={{ '& .MuiPaper-root': { backgroundColor: '#e2e2e2' } }}>
             <MenuItem
               onClick={() => {
-                unsetEnableMobile();
+                clearEnableMobile();
                 handleViewMenuClose();
                 handleMenuCloseCancel('');
                 window.open(`/home`, '_self');

@@ -1,19 +1,21 @@
 import '@testing-library/jest-dom';
-import type React from 'react';
+
 import { render } from '@testing-library/react';
+import type React from 'react';
 import { describe, it, beforeEach, vi, expect } from 'vitest';
+
 import { MbfPage } from '../src/components/MbfPage';
-import { UiContext, UiContextType } from '../src/components/UiProvider';
+import { UiContext, type UiContextType } from '../src/components/UiContext';
 
 // Mock App debug
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
 }));
 
 async function loadMbfPage(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
-  const [{ MbfPage }, { UiContext }] = await Promise.all([import('../src/components/MbfPage'), import('../src/components/UiProvider')]);
+  vi.doMock('../src/appState', () => ({ debug }));
+  const [{ MbfPage }, { UiContext }] = await Promise.all([import('../src/components/MbfPage'), import('../src/components/UiContext')]);
   return { MbfPage, UiContext };
 }
 
@@ -45,7 +47,7 @@ describe('MbfPage', () => {
     const { getByText, container } = render(
       <UiContext.Provider value={getMockUiContext(setCurrentPage)}>
         <MbfPage name="TestPage">Hello World</MbfPage>
-      </UiContext.Provider>
+      </UiContext.Provider>,
     );
     expect(getByText('Hello World')).toBeInTheDocument();
     const div = container.firstChild as HTMLElement;
@@ -57,7 +59,7 @@ describe('MbfPage', () => {
     render(
       <UiContext.Provider value={getMockUiContext(setCurrentPage)}>
         <MbfPage name="MyPage">Content</MbfPage>
-      </UiContext.Provider>
+      </UiContext.Provider>,
     );
     expect(setCurrentPage).toHaveBeenCalledWith('MyPage');
   });
@@ -67,8 +69,10 @@ describe('MbfPage', () => {
     const customStyle = { background: 'red', width: '80%' };
     const { container } = render(
       <UiContext.Provider value={getMockUiContext(setCurrentPage)}>
-        <MbfPage name="StyledPage" style={customStyle}>Styled</MbfPage>
-      </UiContext.Provider>
+        <MbfPage name="StyledPage" style={customStyle}>
+          Styled
+        </MbfPage>
+      </UiContext.Provider>,
     );
     const div = container.firstChild as HTMLElement;
     expect(div).toHaveStyle({ background: 'red', width: '80%' });
@@ -83,7 +87,7 @@ describe('MbfPage', () => {
     render(
       <DebugUiContext.Provider value={getMockUiContext(setCurrentPage)}>
         <DebugMbfPage name="DebugPage">Debug</DebugMbfPage>
-      </DebugUiContext.Provider>
+      </DebugUiContext.Provider>,
     );
 
     expect(consoleSpy).toHaveBeenCalledWith('MbfPage: current page set to DebugPage');

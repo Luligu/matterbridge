@@ -12,7 +12,7 @@ import {
 } from '../src/components/MbfWindow';
 
 // Mock App enableWindows
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   enableWindows: true,
 }));
 

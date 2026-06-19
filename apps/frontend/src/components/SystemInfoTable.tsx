@@ -1,24 +1,18 @@
+// @mdi
+import { mdiChartTimelineVariantShimmer } from '@mdi/js';
+import { Icon } from '@mdi/react';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { memo, useContext, useEffect, useRef, useState } from 'react';
 
-// @mui/material
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-
-// @mdi/js
-import { Icon } from '@mdi/react';
-import { mdiChartTimelineVariantShimmer } from '@mdi/js';
-
-// Backend
-import { SystemInformation, WsMessageApiResponse } from '../utils/backendShared';
-
-// Frontend
-import { TruncatedText } from './TruncatedText';
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
-import { debug, enableMobile } from '../App';
-// const debug = true;
+import { TruncatedText } from './TruncatedText';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {
   // Contexts
@@ -110,7 +104,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       } else if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
         if (debug) console.log('SystemInfoTable received uptime_update', msg);
         handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
-      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success === true) {
+      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
         if (debug) console.log('SystemInfoTable received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
       }

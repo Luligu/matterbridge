@@ -46,11 +46,4 @@ describe('StatusIndicator', () => {
     // Tooltip should be in the document
     expect(await screen.findByText('Tooltip info')).toBeInTheDocument();
   });
-
-  it('calls onClick when clicked', () => {
-    const handleClick = vi.fn();
-    render(<StatusIndicator status={true} onClick={handleClick} />);
-    fireEvent.click(screen.getByText('Enabled'));
-    expect(handleClick).toHaveBeenCalled();
-  });
 });

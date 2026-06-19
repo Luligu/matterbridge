@@ -8,7 +8,7 @@ import type { ApiPlugin } from '../src/utils/backendShared';
 import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
 }));
 

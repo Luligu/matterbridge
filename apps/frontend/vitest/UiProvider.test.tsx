@@ -9,7 +9,7 @@ import { MbfLsk } from '../src/utils/localStorage';
 const mockEnqueueSnackbar = vi.fn();
 const mockCloseSnackbar = vi.fn();
 
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
 }));
 
@@ -60,8 +60,8 @@ describe('UiProvider', () => {
   });
 
   async function loadUiProvider() {
-    const mod = await import('../src/components/UiProvider');
-    return { UiProvider: mod.UiProvider, UiContext: mod.UiContext };
+    const [providerMod, contextMod] = await Promise.all([import('../src/components/UiProvider'), import('../src/components/UiContext')]);
+    return { UiProvider: providerMod.UiProvider, UiContext: contextMod.UiContext };
   }
 
   async function renderHarness() {

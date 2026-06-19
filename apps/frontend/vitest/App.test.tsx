@@ -4,11 +4,13 @@ import '@testing-library/jest-dom';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
 // Mock UiContext and UiProvider before all other imports to avoid hoisting issues
+vi.mock('../src/components/UiContext', () => ({
+  UiContext: React.createContext({ mobile: false, setMobile: () => {} } as any),
+}));
+
 vi.mock('../src/components/UiProvider', () => {
-  const UiContext = React.createContext({ mobile: false, setMobile: () => {} });
   return {
     UiProvider: ({ children }: { children: React.ReactNode }) => <div>UiProvider{children}</div>,
-    UiContext,
   };
 });
 
@@ -38,7 +40,8 @@ vi.mock('../src/components/muiTheme', () => ({
   getCssVariable: (_name: string, def: string) => def,
 }));
 
-import App, { LoginForm, toggleDebug, debug, enableMobile, setEnableMobile, unsetEnableMobile, wssPassword, setWssPassword, basePath } from '../src/App';
+import App, { LoginForm } from '../src/App';
+import { toggleDebug, debug, enableMobile, setEnableMobile, clearEnableMobile, wssPassword, setWssPassword, basePath } from '../src/appState';
 
 describe('App dynamic import for import.meta.env.PROD coverage', () => {
   afterEach(() => {
@@ -59,7 +62,7 @@ describe('App dynamic import for import.meta.env.PROD coverage', () => {
     localStorage.setItem('enableMobile', 'false');
     vi.resetModules();
 
-    const mod = await import('../src/App');
+    const mod = await import('../src/appState');
 
     expect(mod.enableMobile).toBe(false);
   });
@@ -145,7 +148,7 @@ describe('toggleDebug', () => {
     expect(enableMobile).toBe(true);
     expect(localStorage.getItem('enableMobile')).toBe('true');
 
-    unsetEnableMobile();
+    clearEnableMobile();
     expect(enableMobile).toBe(false);
     expect(localStorage.getItem('enableMobile')).toBe('false');
 

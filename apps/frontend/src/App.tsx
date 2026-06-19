@@ -1,51 +1,28 @@
-// React
-import React, { useState } from 'react';
-import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
+// App styles
+// oxlint-disable-next-line import/no-unassigned-import
+import './App.css';
 
 // @mui
 import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
+// React
+import React, { useState } from 'react';
+import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
 
+// Global app state
+import { debug, setWssPassword, setIsIngress, setBasePath } from './appState';
+import Devices from './components/Devices';
 // Frontend routes
 import Home from './components/Home';
-import Devices from './components/Devices';
 import Logs from './components/Logs';
+import { MbfScreen } from './components/MbfScreen';
 import Settings from './components/Settings';
 import Test from './components/Test';
-
+import { UiProvider } from './components/UiProvider';
 // Frontend components
 import { WebSocketProvider } from './components/WebSocketProvider';
-import { UiProvider } from './components/UiProvider';
-import { createMuiTheme, getCssVariable } from './utils/muiTheme';
-import { MbfScreen } from './components/MbfScreen';
 import { MbfLsk } from './utils/localStorage';
-
-// App styles
-import './App.css';
-
-// Global debug flag
-export let debug = false;
-export const toggleDebug = () => {
-  debug = !debug;
-};
-export const enableWindows = false;
-export let enableMobile = localStorage.getItem(MbfLsk.enableMobile) === 'false' ? false : true;
-export const setEnableMobile = () => {
-  enableMobile = true;
-  localStorage.setItem(MbfLsk.enableMobile, 'true');
-};
-export const unsetEnableMobile = () => {
-  enableMobile = false;
-  localStorage.setItem(MbfLsk.enableMobile, 'false');
-};
-export let wssPassword: string | undefined = undefined;
-export const setWssPassword = (password: string) => {
-  wssPassword = password;
-};
-export let isIngress = false;
-export let hRef = '/';
-export let pathName = '/';
-export let basePath = '/';
+import { createMuiTheme, getCssVariable } from './utils/muiTheme';
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -92,7 +69,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
         const { valid } = await response.json();
         if (valid) {
           setLoggedIn(true);
-          if (password !== '') wssPassword = password;
+          if (password !== '') setWssPassword(password);
         } else {
           if (password !== '') setErrorMessage('Incorrect password!');
         }
@@ -156,15 +133,17 @@ function App(): React.JSX.Element {
     - isIngress = "true"
   */
   // Set the base name for the BrowserRouter
-  hRef = window.location.href;
-  pathName = window.location.pathname;
+  const hRef = window.location.href;
+  let pathName = window.location.pathname;
   // Refresh the page if we are on a subpage (e.g. /devices) to reset the pathName to the base path, otherwise the BrowserRouter will use the subpage as the base path and all navigation will be broken. This can happen when the user refreshes the page while on a subpage, or when they log in while on a subpage.
   if (pathName.endsWith('/devices') || pathName.endsWith('/log') || pathName.endsWith('/settings') || pathName.endsWith('/test')) {
     pathName = pathName.substring(0, pathName.lastIndexOf('/'));
   }
   // basePath = pathName.includes('/matterbridge/') ? '/matterbridge/' : pathName.includes('/api/hassio_ingress/') ? pathName : pathName.includes('/api/ingress/') ? pathName : '/';
-  basePath = pathName.endsWith('/') ? pathName : pathName + '/';
-  isIngress = pathName.includes('/api/hassio_ingress/');
+  const basePath = pathName.endsWith('/') ? pathName : pathName + '/';
+  setBasePath(basePath);
+  const isIngress = pathName.includes('/api/hassio_ingress/');
+  setIsIngress(isIngress);
   if (debug) {
     console.log(`Loading App...`);
     console.log(`- href = "${hRef}"`);

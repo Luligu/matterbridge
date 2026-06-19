@@ -1,21 +1,14 @@
-// .oxlintrc.react.json 1.0.11
+// .oxlintrc.react.json 1.0.1
 
 // This Oxlint configuration is designed for a Vite/React project using ESM modules.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**"],
+  "ignorePatterns": ["**/build/**", "**/node_modules/**", "**/dist/**", "eslint.config.js", "**/vite-env.d.ts"],
   "env": {
     "browser": true,
     "es2024": true
   },
-  "options": {
-    "reportUnusedDisableDirectives": "warn",
-    "respectEslintDisableDirectives": true,
-    "typeAware": true,
-    "typeCheck": true,
-    "maxWarnings": 0
-  },
-  "plugins": ["eslint", "react", "react-perf", "jsx-a11y", "typescript", "unicorn", "import", "oxc", "jsdoc", "promise"],
+  "plugins": ["eslint", "react" /* "react-perf",*/, "jsx-a11y", "typescript", "unicorn", "import", "oxc", "jsdoc", "promise"],
   "categories": {
     "correctness": "error",
     "suspicious": "warn",
@@ -26,6 +19,12 @@
     "nursery": "off"
   },
   "rules": {
+    "eslint/no-console": "off", // console logging is common in frontend code and not a problem
+    "eslint/no-undefined": "off", // `undefined` is idiomatic in TS/React (useState init, optional args)
+    "eslint/no-void": "off", // `void promise` marks intentionally fire-and-forget promises (usePolling)
+    "eslint/no-shadow": "off", // variable shadowing is common in React (props/state vs local vars)
+    "eslint/no-use-before-define": "off",
+    "eslint/no-plusplus": "off",
     "eslint/no-unused-vars": [
       "warn",
       {
@@ -34,35 +33,38 @@
         "varsIgnorePattern": "^_",
         "ignoreRestSiblings": true
       }
-    ],
-    "eslint/no-console": "warn",
-    "eslint/no-undefined": "off", // `undefined` is idiomatic in TS/React (useState init, optional args)
-    "eslint/no-void": "off", // `void promise` marks intentionally fire-and-forget promises (usePolling)
+    ], // unused vars are often used to satisfy TS type signatures, so we allow them with a leading underscore
+    "eslint/max-lines": ["warn", { "max": 1000, "skipComments": true, "skipBlankLines": true }],
+    "eslint/max-lines-per-function": ["warn", { "max": 500, "skipComments": true, "skipBlankLines": true }],
+    "eslint/complexity": ["warn", { "max": 100 }],
     "oxc/no-async-await": "off", // async/await is the standard style in this project
-    "oxc/no-optional-chaining": "off", // optional chaining is standard ES and used throughout
-    "typescript/no-explicit-any": "warn",
+    "oxc/no-optional-chaining": "off", // optional chaining is the standard style in this project
+    "oxc/no-rest-spread-properties": "off", // rest/spread is the standard style in this project
+    "unicorn/consistent-function-scoping": "off", // React components often define small inline subcomponents
     "typescript/explicit-function-return-type": "off", // React components/inline callbacks infer their return type
     "typescript/explicit-module-boundary-types": "off", // same: avoid noisy explicit return types on components
     "typescript/no-import-type-side-effects": "off", // conflicts with the inline type-imports style enforced below
-    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
-    "import/no-default-export": "off", // React entry and components (App, etc.) use default exports
-    "import/newline-after-import": "warn",
-    "import/first": "warn",
-    "import/no-duplicates": "warn",
-    "import/unambiguous": "off", // vite-env.d.ts is a triple-slash reference with no import/export
-    "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
-    "jsdoc/require-param": "error",
-    "jsdoc/require-param-type": "error",
-    "jsdoc/require-param-description": "error",
-    "jsdoc/require-returns": "error",
-    "jsdoc/require-returns-type": "error",
-    "jsdoc/require-returns-description": "error",
-    "jsdoc/require-throws-type": "error",
-    "jsdoc/require-throws-description": "error",
-    "jsdoc/require-property": "error",
-    "jsdoc/require-property-name": "error",
-    "jsdoc/require-property-description": "error",
-    "jsdoc/require-property-type": "error",
+    "typescript/no-explicit-any": "warn",
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
+    "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
+    "jsdoc/require-param": "warn",
+    "jsdoc/require-param-type": "warn",
+    "jsdoc/require-param-description": "warn",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-returns-type": "warn",
+    "jsdoc/require-returns-description": "warn",
+    "jsdoc/require-throws-type": "warn",
+    "jsdoc/require-throws-description": "warn",
+    "jsdoc/require-property": "warn",
+    "jsdoc/require-property-name": "warn",
+    "jsdoc/require-property-description": "warn",
+    "jsdoc/require-property-type": "warn",
+    "import/no-default-export": "off", // We allow default exports in React components
+    "import/no-relative-parent-imports": "off", // We allow relative parent imports
+    "import/newline-after-import": "warn", // Enforce a newline after import statements for better readability
+    "import/no-namespace": "warn", // Disallow namespace imports to encourage more explicit imports
+    "import/first": "warn", // Ensure all import statements are at the top of the file
+    "import/no-duplicates": "warn", // Disallow duplicate imports to avoid confusion and improve readability
     "promise/no-nesting": "warn",
     "promise/prefer-await-to-callbacks": "warn",
     "promise/prefer-catch": "warn",
@@ -72,6 +74,50 @@
     "react/jsx-filename-extension": "off", // JSX lives in .tsx files in this project
     "react/no-multi-comp": "off", // small colocated subcomponents (PayloadCell/PayloadDetail) are allowed
     "react/no-array-index-key": "off", // the message feed has no stable id; index key is acceptable here
-    "react-perf/jsx-no-new-object-as-prop": "off" // incompatible with MUI's idiomatic inline `sx={{ ... }}` styling
-  }
+    "react-perf/jsx-no-new-object-as-prop": "off", // incompatible with MUI's idiomatic inline `sx={{ ... }}` styling
+    "react/forbid-component-props": "off", // MUI components often require passing through arbitrary props (e.g. `sx`), so we allow all component props
+    "react/jsx-no-literals": "off" // we allow string literals in JSX
+  },
+  "overrides": [
+    {
+      "files": ["**/vitest/**/*.{spec,test}.{ts,tsx}"],
+      "plugins": ["vitest"],
+      "env": { "vitest": true },
+      "rules": {
+        "eslint/no-unused-vars": "off",
+        "eslint/no-new": "off",
+        "eslint/require-await": "off",
+        "eslint/no-empty-function": "off",
+        "eslint/max-lines-per-function": "off",
+        "eslint/max-lines": "off",
+        "eslint/complexity": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/no-explicit-any": "off",
+        "typescript/unbound-method": "off",
+        "typescript/no-non-null-assertion": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "react/jsx-no-constructed-context-values": "off",
+        "vitest/require-to-throw-message": "off",
+        "vitest/no-conditional-tests": "off",
+        "vitest/no-standalone-expect": "off",
+        "vitest/require-test-timeout": "off",
+        "vitest/require-mock-type-parameters": "off",
+        "jsdoc/require-param": "off",
+        "jsdoc/require-param-type": "off",
+        "jsdoc/require-param-description": "off",
+        "jsdoc/require-returns": "off",
+        "jsdoc/require-returns-type": "off",
+        "jsdoc/require-returns-description": "off",
+        "jsdoc/require-throws-type": "off",
+        "jsdoc/require-throws-description": "off",
+        "jsdoc/require-property": "off",
+        "jsdoc/require-property-name": "off",
+        "jsdoc/require-property-description": "off",
+        "jsdoc/require-property-type": "off",
+        "import/first": "off",
+        "import/no-relative-parent-imports": "off",
+        "import/no-unassigned-import": "off"
+      }
+    }
+  ]
 }

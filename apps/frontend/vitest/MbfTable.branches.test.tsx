@@ -1,10 +1,18 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('../src/App', () => ({
+import MbfTable, { comparator, type MbfTableColumn } from '../src/components/MbfTable';
+
+interface SortRow {
+  id: string;
+  group: string;
+  name: string;
+}
+
+vi.mock('../src/appState', () => ({
   debug: false,
 }));
 
@@ -18,7 +26,7 @@ vi.mock('../src/components/MbfWindow', () => ({
     <div>
       {children}
       {close && (
-        <button type='button' aria-label='Window Close' onClick={close}>
+        <button type="button" aria-label="Window Close" onClick={close}>
           Window Close
         </button>
       )}
@@ -31,29 +39,21 @@ vi.mock('@mui/material/Dialog', () => ({
     if (!open) return null;
 
     return (
-      <div data-testid='dialog'>
+      <div data-testid="dialog">
         {children}
-        <button type='button' onClick={() => onClose?.({}, 'backdropClick')}>
+        <button type="button" onClick={() => onClose?.({}, 'backdropClick')}>
           Backdrop Close
         </button>
-        <button type='button' onClick={() => onClose?.({}, 'escapeKeyDown')}>
+        <button type="button" onClick={() => onClose?.({}, 'escapeKeyDown')}>
           Escape Close
         </button>
-        <button type='button' onClick={() => onClose?.({}, 'closeButton')}>
+        <button type="button" onClick={() => onClose?.({}, 'closeButton')}>
           Reason Close
         </button>
       </div>
     );
   },
 }));
-
-import MbfTable, { comparator, MbfTableColumn } from '../src/components/MbfTable';
-
-interface SortRow {
-  id: string;
-  group: string;
-  name: string;
-}
 
 describe('MbfTable branch coverage', () => {
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('MbfTable branch coverage', () => {
       { id: 'row-2', group: 'same', name: 'Second' },
     ];
 
-    render(<MbfTable name='SortCycle' title='Sortable Table' columns={columns} rows={rows} getRowKey='id' />);
+    render(<MbfTable name="SortCycle" title="Sortable Table" columns={columns} rows={rows} getRowKey="id" />);
 
     const groupHeader = screen.getByRole('columnheader', { name: 'Group' });
     fireEvent.click(groupHeader);
@@ -106,7 +106,7 @@ describe('MbfTable branch coverage', () => {
     ];
     const rows: SortRow[] = [{ id: 'row-1', group: 'same', name: 'Alpha' }];
 
-    render(<MbfTable name='VisibilityDialog' columns={columns} rows={rows} getRowKey='id' />);
+    render(<MbfTable name="VisibilityDialog" columns={columns} rows={rows} getRowKey="id" />);
 
     fireEvent.click(screen.getByLabelText('Configure Columns'));
     expect(screen.getByTestId('dialog')).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('MbfTable branch coverage', () => {
     ];
     const rows: SortRow[] = [{ id: 'row-1', group: 'same', name: 'Alpha' }];
 
-    render(<MbfTable name='RowClick' columns={columns} rows={rows} getRowKey='id' onRowClick={onRowClick} />);
+    render(<MbfTable name="RowClick" columns={columns} rows={rows} getRowKey="id" onRowClick={onRowClick} />);
 
     const row = screen.getAllByRole('row')[1];
     fireEvent.click(row);

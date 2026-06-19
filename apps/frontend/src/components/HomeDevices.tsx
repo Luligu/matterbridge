@@ -1,40 +1,33 @@
-// React
-import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
-
-// @mui/material
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-
 // @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
 import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import QrCode2 from '@mui/icons-material/QrCode2';
-
+import SettingsIcon from '@mui/icons-material/Settings';
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+// React
+import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
 // @mdi/js
 
-// Backend
-import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatter, ApiPlugin } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
-import { Connecting } from './Connecting';
+import { debug, enableMobile } from '../appState';
+import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
-import MbfTable, { MbfTableColumn } from './MbfTable';
-import { debug, enableMobile } from '../App';
+import { Connecting } from './Connecting';
+import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
-// const debug = true;
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 /**
  * Get the unique row ID for a device.
- * @param {*} row
- * @returns A string in the format 'pluginName::serial'.
+ * @param {MixedApiDevices} row - The device row.
+ * @returns {string} A string in the format 'pluginName::serial'.
  */
 const getRowKey = (row: MixedApiDevices) => {
   return `${row.pluginName}::${row.serial}`;
@@ -87,6 +80,8 @@ interface HomeDevicesProps {
  * The user can configure the columns to display in the table.
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
+ * @param {HomeDevicesProps} props - The component props (storeId and setStoreId).
+ * @returns {React.JSX.Element} The rendered devices table.
  */
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
@@ -280,6 +275,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
               if (debug) console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
               return prev;
             }
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
             return [...prev];
           });
@@ -296,7 +292,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           // Check if all plugins are loaded and started and not in error state before continuing
           let running = true;
           for (const plugin of msg.response) {
-            if (plugin.enabled !== true) continue;
+            if (!plugin.enabled) continue;
             if (plugin.loaded !== true || plugin.started !== true /* || plugin.configured!==true */ || plugin.error === true) {
               running = false;
             }
@@ -305,6 +301,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
 
           if (debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
           setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
           setDevices([]);
           setSelectDevices([]);
@@ -313,7 +310,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           if (debug) console.log(`HomeDevices sent /api/devices`);
           // Request the selected devices for each plugin
           for (const plugin of msg.response) {
-            if (plugin.enabled === true && plugin.loaded === true && plugin.started === true /* && plugin.configured===true */ && plugin.error !== true) {
+            if (plugin.enabled && plugin.loaded === true && plugin.started === true /* && plugin.configured===true */ && plugin.error !== true) {
               sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
               if (debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
             }
@@ -408,9 +405,23 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       });
     }
     if (event.target.checked) {
-      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/command', src: 'Frontend', dst: 'Matterbridge', params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'HomeDevices',
+        method: '/api/command',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+      });
     } else {
-      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/command', src: 'Frontend', dst: 'Matterbridge', params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'HomeDevices',
+        method: '/api/command',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+      });
     }
   };
 
@@ -497,6 +508,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       >
         <DialogContent style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, padding: '0px', margin: '0px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)' }}>
           {selectedDeviceFrontend && (
+            // Plugin frontends are same-origin app content needing scripts + same-origin access (WebSocket/storage); a restrictive sandbox would break them.
+            // oxlint-disable-next-line react/iframe-missing-sandbox
             <iframe
               title={`${selectedDeviceFrontend.name} frontend`}
               src={selectedDeviceFrontend.path}

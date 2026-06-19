@@ -1,15 +1,12 @@
-// React
-import React, { ReactNode } from 'react';
-
+// @mdi/js
+import { mdiClose } from '@mdi/js';
+import { Icon } from '@mdi/react';
 // @mui/material
 import { IconButton, Tooltip } from '@mui/material';
+// React
+import React, { type ReactNode } from 'react';
 
-// @mdi/js
-import { Icon } from '@mdi/react';
-import { mdiClose } from '@mdi/js';
-
-// Frontend
-import { enableWindows } from '../App';
+import { enableWindows } from '../appState';
 
 interface MbfWindowProps {
   children: ReactNode;

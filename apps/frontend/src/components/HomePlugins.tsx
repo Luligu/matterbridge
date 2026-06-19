@@ -1,41 +1,35 @@
+// @mui/icons-material
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
+import Favorite from '@mui/icons-material/Favorite';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import LanguageIcon from '@mui/icons-material/Language';
+import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
+import QrCode2 from '@mui/icons-material/QrCode2';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import UnpublishedOutlinedIcon from '@mui/icons-material/UnpublishedOutlined';
+// @mui/material
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useContext, useEffect, useState, useRef, memo, type SyntheticEvent } from 'react';
 
-// @mui/material
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-
-// @mui/icons-material
-import Favorite from '@mui/icons-material/Favorite';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import PublishedWithChanges from '@mui/icons-material/PublishedWithChanges';
-import UnpublishedOutlinedIcon from '@mui/icons-material/UnpublishedOutlined';
-import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
-import QrCode2 from '@mui/icons-material/QrCode2';
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import LanguageIcon from '@mui/icons-material/Language';
-
-// Backend
-import { ApiPlugin, MatterbridgeInformation, SystemInformation, WsMessageApiResponse } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
-import { Connecting } from './Connecting';
-import { StatusIndicator } from './StatusIndicator';
-import MbfTable, { MbfTableColumn } from './MbfTable';
-import { ConfigPluginDialog } from './ConfigPluginDialog';
+import { debug, enableMobile } from '../appState';
+import { type ApiPlugin, type MatterbridgeInformation, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
-import { debug, enableMobile } from '../App';
+import { ConfigPluginDialog } from './ConfigPluginDialog';
+import { Connecting } from './Connecting';
+import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
-// const debug = true;
+import { StatusIndicator } from './StatusIndicator';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 interface HomePluginsProps {
   storeId: string | null;
@@ -62,9 +56,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       required: true,
       render: (value, rowKey, plugin, _column) => (
         <Tooltip title={`Plugin path ${plugin.path}`}>
-          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin)}>
+          <button type='button' style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }} onClick={() => handleHomepagePlugin(plugin)}>
             {plugin.name}
-          </span>
+          </button>
         </Tooltip>
       ),
     },
@@ -73,9 +67,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       id: 'description',
       render: (value, rowKey, plugin, _column) => (
         <Tooltip title='Open the plugin homepage'>
-          <span style={{ cursor: 'pointer' }} onClick={() => handleHomepagePlugin(plugin)}>
+          <button type='button' style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }} onClick={() => handleHomepagePlugin(plugin)}>
             {plugin.description}
-          </span>
+          </button>
         </Tooltip>
       ),
     },
@@ -229,7 +223,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             </>
           ) : (
             <>
-              {plugin.enabled === false ? (
+              {!plugin.enabled ? (
                 <>
                   <StatusIndicator status={plugin.enabled} enabledText='Enabled' disabledText='Disabled' tooltipText='Whether the plugin is enable or disabled' />
                 </>
@@ -341,12 +335,26 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
 
   const handleUpdatePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleUpdatePlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: plugin.name, restart: false } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'HomePlugins',
+      method: '/api/install',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { packageName: plugin.name, restart: false },
+    });
   };
 
   const handleUpdateDevPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleUpdateDevPlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: plugin.name + '@dev', restart: false } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'HomePlugins',
+      method: '/api/install',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { packageName: plugin.name + '@dev', restart: false },
+    });
   };
 
   const handleRemovePlugin = (plugin: ApiPlugin) => {
@@ -361,7 +369,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
 
   const handleEnableDisablePlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleEnableDisablePlugin plugin:', plugin.name, 'enabled:', plugin.enabled);
-    if (plugin.enabled === true) {
+    if (plugin.enabled) {
       plugin.enabled = false;
       sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/disableplugin', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: plugin.name } });
     } else {
@@ -484,6 +492,8 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       >
         <DialogContent style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, padding: '0px', margin: '0px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)' }}>
           {selectedPluginFrontend && (
+            // Plugin frontends are same-origin app content needing scripts + same-origin access (WebSocket/storage); a restrictive sandbox would break them.
+            // oxlint-disable-next-line react/iframe-missing-sandbox
             <iframe
               title={`${selectedPluginFrontend.name} frontend`}
               src={selectedPluginFrontend.path}

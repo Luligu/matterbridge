@@ -1,21 +1,17 @@
+// @mui/icons-material
+import CancelIcon from '@mui/icons-material/Cancel';
+import Favorite from '@mui/icons-material/Favorite';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import StarIcon from '@mui/icons-material/Star';
+// @mui/material
+import Button from '@mui/material/Button';
 // React
 import { memo, useContext } from 'react';
 
-// @mui/material
-import Button from '@mui/material/Button';
-
-// @mui/icons-material
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
-import CancelIcon from '@mui/icons-material/Cancel';
-import StarIcon from '@mui/icons-material/Star';
-import Favorite from '@mui/icons-material/Favorite';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
 import { Connecting } from './Connecting';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { debug } from '../App';
-// const debug = true;
+import { WebSocketContext } from './WebSocketProvider';
 
 interface HomeShowChangelogProps {
   version: string;

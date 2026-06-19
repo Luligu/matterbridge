@@ -1,11 +1,17 @@
+// TODO: verify each rule
+// oxlint-disable typescript/no-redundant-type-constituents
+
 // (imports below)
 import '@testing-library/jest-dom';
-import React from 'react';
+
 import { act, render, waitFor } from '@testing-library/react';
+import React from 'react';
 import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
-import { MbfScreen, MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD, isMobile } from '../src/components/MbfScreen';
-import { UiContext, UiContextType } from '../src/components/UiProvider';
+
+import { MbfScreen, isMobile } from '../src/components/MbfScreen';
+import { UiContext, type UiContextType } from '../src/components/UiContext';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
+import { MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD } from '../src/viewport';
 
 // Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
 vi.mock('../src/components/WebSocketProvider', () => ({
@@ -15,9 +21,13 @@ vi.mock('../src/components/WebSocketProvider', () => ({
 // Mock App debug and enableMobile with a factory so we can control per test
 let debugValue = false;
 let enableMobileValue = true;
-vi.mock('../src/App', () => ({
-  get debug() { return debugValue; },
-  get enableMobile() { return enableMobileValue; },
+vi.mock('../src/appState', () => ({
+  get debug() {
+    return debugValue;
+  },
+  get enableMobile() {
+    return enableMobileValue;
+  },
 }));
 
 // Mock Header to avoid rendering its internals
@@ -46,18 +56,13 @@ describe('MbfScreen', () => {
     setInstallAutoExit: vi.fn() as React.Dispatch<React.SetStateAction<boolean>>,
   });
 
-  const renderWithContext = (
-    mobile: boolean,
-    children: React.ReactNode = <div>child</div>,
-    setMobileFn = vi.fn(),
-    logAutoScroll = { current: true }
-  ) =>
+  const renderWithContext = (mobile: boolean, children: React.ReactNode = <div>child</div>, setMobileFn = vi.fn(), logAutoScroll = { current: true }) =>
     render(
       <WebSocketContext.Provider value={{ logAutoScroll } as any}>
         <UiContext.Provider value={getMockUiContext(mobile, setMobileFn)}>
           <MbfScreen>{children}</MbfScreen>
         </UiContext.Provider>
-      </WebSocketContext.Provider>
+      </WebSocketContext.Provider>,
     );
 
   const originalViewport = {
@@ -79,7 +84,6 @@ describe('MbfScreen', () => {
     consoleLogSpy?.mockRestore();
     resetViewport();
   });
-
 
   // Helper to mock window.visualViewport and window.innerWidth/innerHeight
   function setViewport(width: number, height: number, useVisualViewport = false) {
@@ -126,7 +130,6 @@ describe('MbfScreen', () => {
     });
   }
 
-
   describe('isMobile', () => {
     it('returns true if width < threshold', () => {
       expect(MOBILE_WIDTH_THRESHOLD).toBe(1200);
@@ -163,7 +166,6 @@ describe('MbfScreen', () => {
       global.window = origWindow;
     });
   });
-
 
   describe('MbfScreen debug and non-enableMobile branch', () => {
     it('renders in debug mode', () => {

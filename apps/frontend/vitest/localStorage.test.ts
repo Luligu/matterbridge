@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-array-for-each
+
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { LOCAL_STORAGE_PREFIX, LOCAL_STORAGE_TABLE_KEYS, MbfLsk, resetLocalStorage } from '../src/utils/localStorage';

@@ -1,14 +1,14 @@
-// React (ConditionalTooltip)
-import { ReactNode, useRef, useState } from 'react';
-
 // @mui/material
 import Tooltip from '@mui/material/Tooltip';
+// react
+import { type ReactNode, useRef, useState } from 'react';
 
 export interface ConditionalTooltipProps {
   title: string;
   children: ReactNode;
 }
 
+// oxlint-disable-next-line react/only-export-components
 export function shouldTooltipOpen(el: HTMLSpanElement | null): boolean {
   if (!el) {
     return false;
@@ -20,6 +20,8 @@ export function shouldTooltipOpen(el: HTMLSpanElement | null): boolean {
  * Tooltip that only opens when its child content is visually clipped.
  *
  * Clipping detection is done by comparing scrollWidth vs clientWidth on an internal span.
+ * @param {ConditionalTooltipProps} props - The component props (title and children).
+ * @returns {React.JSX.Element} The conditionally-opening tooltip element.
  */
 export function ConditionalTooltip({ title, children }: ConditionalTooltipProps) {
   const spanRef = useRef<HTMLSpanElement | null>(null);

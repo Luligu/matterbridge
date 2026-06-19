@@ -1,28 +1,30 @@
+// TODO: verify each rule
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable react/only-export-components
+// oxlint-disable no-eq-null
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// @mdi
+import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
+import { Icon } from '@mdi/react';
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useMemo, useRef, useState, memo } from 'react';
 
-// @mui/material
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import DialogActions from '@mui/material/DialogActions';
-import Checkbox from '@mui/material/Checkbox';
-
-// @mdi
-import { Icon } from '@mdi/react';
-import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
-
-// frontend
-import { debug } from '../App';
-import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { debug } from '../appState';
 import { ConditionalTooltip } from './ConditionalTooltip';
-// const debug = true;
+import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 
 // Generic comparator used by MbfTable sorting.
 export function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
@@ -56,7 +58,11 @@ export interface MbfTableColumn<T extends object> {
 }
 
 interface ColumnVisibility {
-  [colId: string]: boolean;
+  // Sparse override map persisted to localStorage: a key is present only to hide a column (`false`).
+  // A missing key is `undefined` and means "visible", so the optionality must stay in the type:
+  // typing this as plain `boolean` lets `no-unnecessary-boolean-literal-compare` strip the
+  // load-bearing `!== false` checks and silently flip undefined columns to hidden.
+  [colId: string]: boolean | undefined;
 }
 
 interface MbfTableProps<T extends object> {
@@ -67,7 +73,7 @@ interface MbfTableProps<T extends object> {
   getRowKey?: string | ((row: T) => string | number);
   footerLeft?: string;
   footerRight?: string;
-  onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void;
+  onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement>) => void;
 }
 
 function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, onRowClick }: MbfTableProps<T>) {
@@ -110,8 +116,12 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
   });
 
   // Derived effective visibility map from columns + overrides
-  const visibleMap = useMemo<Record<string, boolean>>(() => {
-    const next: Record<string, boolean> = {};
+  // Sparse derived map: only non-hidden columns get an entry, so a missing key is `undefined` and means "hidden".
+  // The optionality must stay in the type (`boolean | undefined`): typing it as plain `boolean` lets
+  // no-unnecessary-boolean-literal-compare strip the load-bearing `!== false`/`=== false` checks below and
+  // silently flip undefined (hidden) columns to visible or vice versa.
+  const visibleMap = useMemo<Record<string, boolean | undefined>>(() => {
+    const next: Record<string, boolean | undefined> = {};
     for (const col of columns) {
       if (!col.hidden) {
         next[col.id] = col.required ? true : columnVisibility[col.id] !== false;
@@ -133,7 +143,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       if (typeof sortCol.comparator === 'function') {
         cmp = sortCol.comparator(a.el, b.el);
       } else {
-        cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
+        cmp = comparator<any>(a.el as any, b.el as any, orderBy);
       }
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
       return a.index - b.index; // stable

@@ -4,7 +4,7 @@ import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UiContext } from '../src/components/UiProvider';
+import { UiContext } from '../src/components/UiContext';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 
 // Keep MUI Tooltip from using Popper in tests.
@@ -50,7 +50,7 @@ vi.mock('../src/components/SearchPluginsDialog', () => ({
 }));
 
 // Silence debug logs and keep enableMobile stable.
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
   enableMobile: false,
 }));

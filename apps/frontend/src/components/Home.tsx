@@ -1,33 +1,29 @@
 // React
 import { useEffect, useState, useContext, useRef, memo } from 'react';
 
-// Backend
-import { WsMessageApiResponse, ApiPlugin, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { type WsMessageApiResponse, type ApiPlugin, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
-import SystemInfoTable from './SystemInfoTable';
-import QRDiv from './QRDiv';
-import HomeInstallAddPlugins from './HomeInstallAddPlugins';
-import HomePlugins from './HomePlugins';
-import HomeDevices from './HomeDevices';
-import { MbfPage } from './MbfPage';
-import HomeLogs from './HomeLogs';
 import HomeBrowserRefresh from './HomeBrowserRefresh';
+import HomeDevices from './HomeDevices';
+import HomeInstallAddPlugins from './HomeInstallAddPlugins';
+import HomeLogs from './HomeLogs';
+import HomePlugins from './HomePlugins';
 import HomeShowChangelog from './HomeShowChangelog';
 import MatterbridgeInfoTable from './MatterbridgeInfoTable';
-import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile } from '../App';
-// const debug = true;
+import { MbfPage } from './MbfPage';
+import QRDiv from './QRDiv';
+import SystemInfoTable from './SystemInfoTable';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Home(): React.JSX.Element {
   // States
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
-  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
+  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
   const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);

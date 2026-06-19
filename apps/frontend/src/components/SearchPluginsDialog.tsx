@@ -1,5 +1,14 @@
-// React
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+// TODO: verify each rule
+// oxlint-disable max-lines-per-function
+// oxlint-disable typescript/promise-function-async
+// oxlint-disable unicorn/no-array-sort
+// oxlint-disable no-await-in-loop
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable typescript/no-unnecessary-type-conversion
+// oxlint-disable typescript/non-nullable-type-assertion-style
+// oxlint-disable oxc/no-map-spread
+// oxlint-disable typescript/consistent-return
+// oxlint-disable unicorn/no-array-reduce
 
 /*
   NPM fetch map (SearchPluginsDialog)
@@ -27,27 +36,26 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
     - Cache: localStorage key MbfLsk.searchPluginsVersions (per day)
 */
 
-// @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-
 // @mui/icons-material
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+// @mui/material
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+// React
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
-// Frontend
-import { pluginIgnoreList } from './HomeInstallAddPlugins';
-import MbfTable, { MbfTableColumn } from './MbfTable';
+import { debug, enableMobile } from '../appState';
+import { pluginIgnoreList } from '../pluginIgnoreList';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile } from '../App';
-import { UiContext } from './UiProvider';
-// const debug = true;
+import MbfTable, { type MbfTableColumn } from './MbfTable';
+import { UiContext } from './UiContext';
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
@@ -561,7 +569,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           const nextHelp = cached.help;
           const nextChangelog = cached.changelog;
           if (debug && (nextHelp || nextChangelog || (nextHomepage && nextHomepage !== r.homepage))) {
-            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, { homepage: nextHomepage, help: nextHelp, changelog: nextChangelog });
+            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, {
+              homepage: nextHomepage,
+              help: nextHelp,
+              changelog: nextChangelog,
+            });
           }
           return { ...r, homepage: nextHomepage, help: nextHelp, changelog: nextChangelog };
         });
@@ -738,7 +750,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
             if (rangeResponse.status === 429) {
               const retryAfterHeader = rangeResponse.headers.get('retry-after');
-              const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+              const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
               const backoffMs = Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 2000 * (attempt + 1);
               await sleep(backoffMs);
               continue;

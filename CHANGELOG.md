@@ -59,10 +59,15 @@ These classes will run as threads in the next releases:
 
 ## [3.9.2] - Dev branch
 
+### Added
+
+- [frontend]: Add type aware linting with `oxlint` and format with `oxfmt`.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.2.
 - [matterbridge]: Update dependencies.
+- [oxlint]: Bump `Oxlint configuration` to v.1.0.12.
 - [frontend]: Bump `frontend` version to v.3.4.18.
 - [frontend]: Update dependencies.
 

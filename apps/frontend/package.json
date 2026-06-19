@@ -58,7 +58,7 @@
     "watch": "vite build --watch",
     "preview": "vite preview",
     "typecheck": "tsgo --project tsconfig.json --noEmit",
-    "oxc-lint": "oxlint",
+    "oxc-lint": "oxlint --config .oxlintrc.json",
     "oxc-format": "oxfmt",
     "lint": "eslint --cache --cache-location .cache/.eslintcache --max-warnings=0 .",
     "lint:fix": "eslint --cache --cache-location .cache/.eslintcache --fix --max-warnings=0 .",

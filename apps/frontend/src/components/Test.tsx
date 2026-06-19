@@ -1,16 +1,12 @@
 // React
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
-// Backend
-import { ApiSettings, WsMessageApiResponse, ApiClusters, ApiDevice, ApiPlugin } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
+import { debug } from '../appState';
+import { type ApiSettings, type WsMessageApiResponse, type ApiClusters, type ApiDevice, type ApiPlugin } from '../utils/backendShared';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
 import { MbfPage } from './MbfPage';
-// const debug = true;
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Test() {
   // WebSocket context

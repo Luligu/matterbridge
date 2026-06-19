@@ -19,6 +19,7 @@ vi.mock('../src/components/MbfWindow', () => ({
 }));
 
 vi.mock('@mui/material/Button', () => ({
+  // oxlint-disable-next-line react/button-has-type
   default: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
 }));
 
@@ -28,7 +29,7 @@ vi.mock('@mui/icons-material/Refresh', () => ({
 
 async function loadHomeBrowserRefresh(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/components/HomeBrowserRefresh');
 }
 

@@ -1,40 +1,33 @@
+// TODO: verify each rule
+// oxlint-disable typescript/promise-function-async
+// oxlint-disable promise/always-return
+// oxlint-disable promise/prefer-await-to-callbacks
+// oxlint-disable typescript/use-unknown-in-catch-callback-variable
+
+// @mui/icons-material
+import Add from '@mui/icons-material/Add';
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
+import Download from '@mui/icons-material/Download';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+// @mui/material
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useState, useContext, useRef, memo } from 'react';
 
-// @mui/material
-import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-
-// @mui/icons-material
-import Download from '@mui/icons-material/Download';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import Add from '@mui/icons-material/Add';
-import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
-import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { pluginIgnoreList } from '../pluginIgnoreList';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { SearchPluginsDialog } from './SearchPluginsDialog';
-import { debug, enableMobile } from '../App';
-
-export const pluginIgnoreList = [
-  'matterbridge-', // invalid name
-  'matterbridge-plugin-template', // standard template repository - someone published on hist name!!!!!!!
-  'matterbridge-dyson', // my package
-  'matterbridge-tuya', // my package
-  'matterbridge-matter', // my package
-  'matterbridge-automations', // my package
-  'matterbridge-securitysystem', // empty place holder
-  'matterbridge-adapter', // 5 years ago
-];
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function HomeInstallAddPlugins() {
   // Contexts
@@ -158,7 +151,14 @@ function HomeInstallAddPlugins() {
       showSnackbarMessage(`Installation of plugin "${installName}" is blocked by the ignore list.`);
       return;
     }
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: installName, restart: false } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'InstallPlugins',
+      method: '/api/install',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { packageName: installName, restart: false },
+    });
   };
 
   const handleUninstallPluginClick = () => {

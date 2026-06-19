@@ -1,33 +1,30 @@
+// @mui/icons-material
+import ClearIcon from '@mui/icons-material/Clear';
+import TableViewIcon from '@mui/icons-material/TableView';
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
+import Box from '@mui/material/Box';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import MenuItem from '@mui/material/MenuItem';
+import OutlinedInput from '@mui/material/OutlinedInput';
+import Select, { type SelectChangeEvent } from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 // React
 import { useEffect, useState, memo, useContext, useRef } from 'react';
 
-// @mui/material
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import InputAdornment from '@mui/material/InputAdornment';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import OutlinedInput from '@mui/material/OutlinedInput';
-
-// @mui/icons-material
-import TableViewIcon from '@mui/icons-material/TableView';
-import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import ClearIcon from '@mui/icons-material/Clear';
-
+import { debug } from '../appState';
 // Backend
-import { WsMessageApiResponse } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { type WsMessageApiResponse } from '../utils/backendShared';
+import { MbfLsk } from '../utils/localStorage';
+import { Connecting } from './Connecting';
 import DevicesIcons from './DevicesIcons';
 import DevicesTable from './DevicesTable';
-import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
-import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
+// Frontend
+import { WebSocketContext } from './WebSocketProvider';
 // const debug = true; // Set to true to enable debug logs in Devices component
 
 function Devices(): React.JSX.Element {
@@ -94,7 +91,7 @@ function Devices(): React.JSX.Element {
     }
   }, [online, sendMessage]);
 
-  const handleFilterPluginsChange = (event: SelectChangeEvent<string>) => {
+  const handleFilterPluginsChange = (event: SelectChangeEvent) => {
     const selected = event.target.value;
     setFilterPlugins(selected);
     localStorage.setItem(MbfLsk.devicesFilterPlugins, selected);
