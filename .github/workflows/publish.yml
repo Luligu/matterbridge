@@ -50,8 +50,7 @@ jobs:
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
-        run: |
-          matterbridge --version
+        run: matterbridge --version
 
       - name: Lint matterbridge
         run: npm run lint
@@ -199,8 +198,7 @@ jobs:
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
-        run: |
-          matterbridge --version
+        run: matterbridge --version
 
       - name: Lint matterbridge
         run: npm run lint
