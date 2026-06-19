@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * This file contains the deepCopy function.
  *
@@ -22,6 +21,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+// oxlint-disable typescript/no-unsafe-type-assertion
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('DeepCopy');
 
 /**
  * Creates a deep copy of the given value.

@@ -23,9 +23,12 @@
  */
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import type { AnsiLogger } from 'node-ansi-logger';
 
 import { getErrorMessage } from './error.js';
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('CopyDirectory');
 
 /**
  * Copies a directory and all its subdirectories and files to a new location.
@@ -54,7 +57,7 @@ export async function copyDirectory(srcDir: string, destDir: string, log?: AnsiL
   }
 
   const fs = await import('node:fs').then((mod) => mod.promises);
-  const path = await import('node:path');
+  const { default: path } = await import('node:path');
 
   log?.debug(`copyDirectory: copying directory from ${srcDir} to ${destDir}`);
   try {

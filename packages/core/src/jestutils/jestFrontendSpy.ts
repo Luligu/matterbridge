@@ -21,14 +21,19 @@
  * limitations under the License.
  */
 
-import { jest } from '@jest/globals';
-
 import { Frontend } from '../frontend.js';
 
 // Spy on Frontend methods
-export const wssSendSnackbarMessageFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
-export const wssSendCloseSnackbarMessageFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendCloseSnackbarMessage');
-export const wssSendUpdateRequiredFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendUpdateRequired');
-export const wssSendRefreshRequiredFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
-export const wssSendRestartRequiredFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
-export const wssSendRestartNotRequiredFrontendSpy = jest.spyOn(Frontend.prototype, 'wssSendRestartNotRequired');
+const { jest } = await import('@jest/globals' as string);
+export const wssSendSnackbarMessageFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendSnackbarMessage> = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
+export const wssSendCloseSnackbarMessageFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendCloseSnackbarMessage> = jest.spyOn(
+  Frontend.prototype,
+  'wssSendCloseSnackbarMessage',
+);
+export const wssSendUpdateRequiredFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendUpdateRequired> = jest.spyOn(Frontend.prototype, 'wssSendUpdateRequired');
+export const wssSendRefreshRequiredFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRefreshRequired> = jest.spyOn(Frontend.prototype, 'wssSendRefreshRequired');
+export const wssSendRestartRequiredFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartRequired> = jest.spyOn(Frontend.prototype, 'wssSendRestartRequired');
+export const wssSendRestartNotRequiredFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendRestartNotRequired> = jest.spyOn(
+  Frontend.prototype,
+  'wssSendRestartNotRequired',
+);

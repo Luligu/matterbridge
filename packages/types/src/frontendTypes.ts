@@ -75,6 +75,7 @@ export interface WsMessageBaseApiRequest {
   dst: 'Matterbridge';
   method: string;
   sender?: string;
+  // oxlint-disable-next-line typescript/no-redundant-type-constituents
   params: Record<string, string | number | boolean | null | undefined | unknown>;
 }
 

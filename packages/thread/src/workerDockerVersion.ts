@@ -22,19 +22,17 @@
  * limitations under the License.
  */
 
-// istanbul ignore next -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[35m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] DockerVersion loaded.\u001B[40;0m');
-
 import { readFileSync } from 'node:fs';
 
-import { DockerBuildConfig } from '@matterbridge/types';
+import type { DockerBuildConfig } from '@matterbridge/types';
 import { inspectError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { debugStringify, LogLevel } from 'node-ansi-logger';
 
 import { getDockerVersion } from './dockerVersion.js';
 import { WorkerWrapper } from './workerWrapper.js';
+
+logModuleLoaded('DockerVersion', '\u001B[35m');
 
 export default new WorkerWrapper('DockerVersion', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting docker version check...`);
@@ -58,14 +56,14 @@ export default new WorkerWrapper('DockerVersion', async (worker) => {
     const errorMessage = inspectError(worker.log, `Failed to check docker version`, error);
     worker.logger(LogLevel.ERROR, errorMessage);
   }
-  if (dockerBuildConfig && dockerBuildConfig.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest) {
+  if (dockerBuildConfig?.dev === false && dockerVersionLatest && dockerBuildConfig.version !== dockerVersionLatest) {
     worker.logger(
       LogLevel.WARN,
       `You are using the v.${dockerBuildConfig.version} latest Docker image. Please pull the latest Docker image v.${dockerVersionLatest} and recreate the container to apply it.`,
     );
     worker.snackBar(`A new Docker image is available: v.${dockerVersionLatest}. Pull the latest Docker image and recreate the container to apply it.`, 0, 'info');
   }
-  if (dockerBuildConfig && dockerBuildConfig.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev) {
+  if (dockerBuildConfig?.dev === true && dockerVersionDev && dockerBuildConfig.version !== dockerVersionDev) {
     worker.logger(
       LogLevel.WARN,
       `You are using the v.${dockerBuildConfig.version} dev Docker image. Please pull the dev Docker image v.${dockerVersionDev} and recreate the container to apply it.`,

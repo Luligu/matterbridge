@@ -23,8 +23,11 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable jsdoc/reject-any-type */
 /* eslint-disable @typescript-eslint/no-unused-vars */
+
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('DeepEqual');
 
 /**
  * Performs a deep comparison between two values to determine if they are equivalent.
@@ -55,13 +58,14 @@
  * console.log(deepEqual(obj3, obj4, ['d'])); // true, excluding property 'd' from comparison
  * ```
  */
+// oxlint-disable-next-line typescript/explicit-module-boundary-types
 export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boolean {
   // Toggle debugging on or off easily
   // const debug = false;
 
   // Helper function for conditional logging
 
-  const debugLog = (...messages: any[]) => {
+  const debugLog = (...messages: any[]): void => {
     // if (debug) {
     // console.log(...messages);
     // }
@@ -79,6 +83,7 @@ export function deepEqual(a: any, b: any, excludeProperties: string[] = []): boo
   }
 
   // If one of them is null (and we know they are not equal from the first check), return false
+  // oxlint-disable-next-line no-eq-null
   if (a == null || b == null) {
     debugLog('deepEqual false for == null');
     return false;

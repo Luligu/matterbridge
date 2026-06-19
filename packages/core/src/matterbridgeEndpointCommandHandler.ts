@@ -22,58 +22,56 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-/* eslint-disable jsdoc/reject-any-type */
-
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpointCommandHandler loaded.\u001B[40;0m');
+// TODO: analyze each rule
+// oxlint-disable typescript/no-empty-object-type
 
 // @matter
-import { HandlerFunction } from '@matter/general';
-import { ActionContext } from '@matter/main';
+import type { HandlerFunction } from '@matter/general';
+import type { ActionContext } from '@matter/main';
 import type { ClusterType } from '@matter/types/cluster';
-import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
-import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
-import { ColorControl } from '@matter/types/clusters/color-control';
-import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
-import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
-import { DoorLock } from '@matter/types/clusters/door-lock';
-import { EnergyEvse } from '@matter/types/clusters/energy-evse';
-import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
-import { FanControl } from '@matter/types/clusters/fan-control';
-import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
-import { Identify } from '@matter/types/clusters/identify';
-import { KeypadInput } from '@matter/types/clusters/keypad-input';
-import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
-import { LevelControl } from '@matter/types/clusters/level-control';
-import { MediaPlayback } from '@matter/types/clusters/media-playback';
-import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
-import { ModeBase } from '@matter/types/clusters/mode-base';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
-import { OnOff } from '@matter/types/clusters/on-off';
-import { OperationalState } from '@matter/types/clusters/operational-state';
-import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
-import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
-import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
-import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
-import { ServiceArea } from '@matter/types/clusters/service-area';
-import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { TemperatureControl } from '@matter/types/clusters/temperature-control';
-import { Thermostat } from '@matter/types/clusters/thermostat';
-import { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
-import { TimeSynchronization } from '@matter/types/clusters/time-synchronization';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
-import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
-import { WindowCovering } from '@matter/types/clusters/window-covering';
+import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import type { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import type { ColorControl } from '@matter/types/clusters/color-control';
+import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import type { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
+import type { DoorLock } from '@matter/types/clusters/door-lock';
+import type { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import type { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import type { FanControl } from '@matter/types/clusters/fan-control';
+import type { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+import type { Identify } from '@matter/types/clusters/identify';
+import type { KeypadInput } from '@matter/types/clusters/keypad-input';
+import type { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import type { LevelControl } from '@matter/types/clusters/level-control';
+import type { MediaPlayback } from '@matter/types/clusters/media-playback';
+import type { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
+import type { ModeBase } from '@matter/types/clusters/mode-base';
+import type { ModeSelect } from '@matter/types/clusters/mode-select';
+import type { OnOff } from '@matter/types/clusters/on-off';
+import type { OperationalState } from '@matter/types/clusters/operational-state';
+import type { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+import type { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import type { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import type { ServiceArea } from '@matter/types/clusters/service-area';
+import type { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import type { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import type { Thermostat } from '@matter/types/clusters/thermostat';
+import type { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
+import type { TimeSynchronization } from '@matter/types/clusters/time-synchronization';
+import type { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import type { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import type { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import type { WindowCovering } from '@matter/types/clusters/window-covering';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 
 // matterbridge
-import { ClosureControl } from './clusters/closure-control.js';
-import { ClosureDimension } from './clusters/closure-dimension.js';
+import type { ClosureControl } from './clusters/closure-control.js';
+import type { ClosureDimension } from './clusters/closure-dimension.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+logModuleLoaded('MatterbridgeEndpointCommandHandler');
 
 /** @deprecated Use CommandHandlers instead. This signature is still here for backward compatibility and will be removed in a future release. */
 export interface MatterbridgeEndpointCommands {
@@ -1092,7 +1090,7 @@ export class CommandHandler {
    * @param {CommandHandlers} command - The command to check for a handler.
    * @returns {boolean} - True if a handler exists, false otherwise.
    */
-  hasHandler<K extends CommandHandlers>(command: K): boolean {
+  hasHandler(command: CommandHandlers): boolean {
     return this.handler.some(({ command: registeredCommand }) => registeredCommand === command);
   }
 
@@ -1103,6 +1101,7 @@ export class CommandHandler {
    * @param {CommandHandlerFunction<K>} handler - The handler function to execute for the command.
    */
   addHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     this.handler.push({ command, handler } as CommandHandlerEntry);
   }
 
@@ -1119,19 +1118,23 @@ export class CommandHandler {
   async executeHandler<K extends CommandHandlers>(command: K, ...args: Parameters<CommandHandlerFunction<K>>): Promise<CommandHandlerExecutionResult<K>> {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === command) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return await (handler as CommandHandlerFunction<K>)(...args);
       }
     }
 
     const fallbackCommand = command.includes('.') ? command.split('.').pop() : undefined;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     if (fallbackCommand === undefined) return undefined as CommandHandlerExecutionResult<K>;
 
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === fallbackCommand) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return await (handler as CommandHandlerFunction<K>)(...args);
       }
     }
 
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return undefined as CommandHandlerExecutionResult<K>;
   }
 

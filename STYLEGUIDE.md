@@ -1,6 +1,6 @@
 # Style Guide
 
-Concise rules the codebase and Copilot suggestions should follow.
+Concise rules the codebase and coding-agent suggestions should follow.
 
 ## 1. General Principles
 
@@ -21,7 +21,7 @@ Concise rules the codebase and Copilot suggestions should follow.
 
 - Functions: verb or verb phrase (`createDevice`, `updateState`).
 - Booleans: prefix with `is/has/can/should` (internal helpers); state flags in this project may keep existing names (`intervalOnOff`).
-- Private file‑local helpers start with `_` only if intentionally unused yet (silencing ESLint); otherwise export or remove.
+- Private file-local helpers start with `_` only if intentionally unused yet (silencing oxlint); otherwise export or remove.
 - Constants: `UPPER_SNAKE_CASE` only for process env or true constants; otherwise camelCase.
 
 ## 4. JSDoc Template
@@ -72,45 +72,57 @@ The logger is always AnsiLogger.
 
 ## 7. Formatting & Lint
 
-- ESLint + Prettier govern style; do not fight formatters. VSCode is configured to format on save.
-- The default tabWidth is 2 not 4.
-- No trailing spaces; keep imports sorted by groups: std libs, external deps, internal modules, types.
-- Use trailing commas where multi‑line.
-- The repo uses import 'eslint-plugin-simple-import-sort', 'eslint-plugin-n', 'eslint-plugin-promise', 'eslint-plugin-jsdoc', 'eslint-plugin-prettier/recommended', 'eslint-plugin-jest';
+- `oxfmt` governs formatting; do not fight the formatter. Run `npm run format` or check with `npm run format:check`.
+- `oxlint` governs linting, including JSDoc, import ordering, TypeScript, Node, Promise, Unicorn, OXC, Jest, and Vitest rules. Run `npm run lint`; use `npm run lint:fix` only for focused fixes.
+- The default `tabWidth` is 2, `printWidth` is 180, semicolons are required, single quotes are preferred, and multi-line trailing commas are required.
+- Keep imports grouped and sorted by `oxfmt`: side-effect, builtin, external, internal/subpath, relative, style, unknown.
+- Use `import type` for type-only imports. `oxlint` enforces consistent inline type imports.
+- No trailing spaces; preserve LF line endings.
 
-## 8. Tests
+## 8. Typecheck & Build
+
+- `tsgo` is the default TypeScript engine for development validation.
+- Run `npm run typecheck` for no-emit type checking (`tsgo --build tsconfig.json --noEmit`).
+- Run `npm run build` for the normal build (`tsgo --build tsconfig.build.json`).
+- `npm run buildProduction` still uses `tsc` for the production build path.
+- Keep all TypeScript ESM-compatible and compatible with supported Node.js versions: 20, 22, 24, and 26.
+
+## 9. Tests
 
 - Add at least one test per new helper function (happy path + one edge case).
 - Use explicit test names describing behavior (`converts 100 lux to encoded value`).
 - Keep test data small and deterministic.
+- Tests run with Vitest. Use `npm run test` for the suite, `npm run test:coverage` for coverage, and pass a test path after `--` for targeted validation.
+- Prefer the relevant full test file or matching suite/task for touched code rather than relying on arbitrary isolated single-test execution.
+- Some tests are intentionally multi-step flows. State may persist across successive steps within a single flow, but each test unit must remain isolated from other tests.
 
-## 9. Performance
+## 10. Performance
 
 - Avoid premature optimization; micro‑opt only with measurable hotspot proof.
 - Prefer simple loops over complex chaining when in per‑tick update paths.
 
-## 10. Copilot Prompting Hints
+## 11. Agent Prompting Hints
 
-Placing this file at root lets Copilot pick patterns. Reinforce by:
+Placing this file at root lets coding agents pick patterns. Reinforce by:
 
 - Keeping 2–3 perfect exemplar functions near top of large files.
 - Adding a brief `// Style: ...` comment before a series of helpers.
 - Rejecting poor suggestions early so the buffer stays clean.
 
-## 11. File Header Blocks
+## 12. File Header Blocks
 
 - Keep existing license header exactly; update `@version` only on functional changes, not style edits.
 
-## 12. Deprecation
+## 13. Deprecation
 
 - Mark deprecated APIs with `@deprecated` tag explaining alternative and planned removal version.
 
-## 13. Commit Messages (conventional subset)
+## 14. Commit Messages (conventional subset)
 
 - `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:` prefix.
 - Imperative, lower case first line; no period.
 
-## 14. Example (Reference)
+## 15. Example (Reference)
 
 ```ts
 /**
@@ -129,17 +141,35 @@ function luxToMatterExample(lux: number): number {
 }
 ```
 
-## 15. Creating Jest test
+## 16. Creating Vitest Tests
 
-Always remember we are in ESM module with ts-jest.
+- The repository is TypeScript ESM and uses Vitest for tests.
+- Prefer `vi.mock` / `vi.spyOn` patterns used by nearby tests.
+- Keep mocks explicit, reset or restore them in test cleanup, and avoid sharing mutable state across test units.
 
-So use jest.unstable_mockModule and not jest.mock.
-
-## 16. Running Jest test
+## 17. Running Tests
 
 Always use
 
+```shell
 npm run test:coverage -- yourTest.test.ts
+```
+
+For non-coverage local validation, use:
+
+```shell
+npm run test -- yourTest.test.ts
+```
+
+## 18. Release Validation
+
+Before publish-like changes, the repository uses:
+
+```shell
+npm run runMeBeforePublish
+```
+
+That runs formatting, linting, HTML updates, clean build, typecheck, and coverage.
 
 ---
 

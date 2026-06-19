@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
-import { OnOffServer } from '@matter/node/behaviors/on-off';
-import { OnOff } from '@matter/types/clusters/on-off';
+// oxlint-disable typescript/no-unsafe-type-assertion
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
+import type { OnOff } from '@matter/types/clusters/on-off';
+
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

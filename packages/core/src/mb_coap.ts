@@ -21,10 +21,15 @@
  * limitations under the License.
  */
 
-import { AddressInfo } from 'node:net';
+// oxlint-disable typescript/prefer-nullish-coalescing
+
+import type { AddressInfo } from 'node:net';
 
 import { Coap, COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, COAP_OPTION_URI_PATH } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
+
+logModuleLoaded('mb-coap');
 
 export const MB_COAP_DEFAULT_REQUEST_INTERVAL_MS = 10000;
 export const MB_COAP_DEFAULT_TIMEOUT_MS = 600000;
@@ -143,6 +148,7 @@ export function getMbCoapOptions(): MbCoapOptions {
  * @param {boolean} registerSignalHandlers Whether to register process signal handlers.
  * @returns {MbCoapRuntime} The running CoAP resources and cleanup function.
  */
+// oxlint-disable-next-line typescript/unbound-method
 export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => never | void = process.exit, registerSignalHandlers: boolean = true): MbCoapRuntime {
   let coapIpv4: Coap | undefined;
   let coapIpv6: Coap | undefined;
@@ -166,7 +172,7 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
     exitFn(0);
   }
 
-  const requestUdp4 = () => {
+  const requestUdp4 = (): void => {
     coapIpv4?.sendRequest(
       32000,
       [
@@ -180,7 +186,7 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
     );
   };
 
-  const requestUdp6 = () => {
+  const requestUdp6 = (): void => {
     coapIpv6?.sendRequest(
       32000,
       [
@@ -252,13 +258,14 @@ export function startMbCoap(options: MbCoapOptions, exitFn: (code: number) => ne
  * @param {(message: string) => void} log The logger used to print help text.
  * @returns {MbCoapRuntime | undefined} The running runtime, or `undefined` when exiting after help.
  */
+// oxlint-disable-next-line typescript/unbound-method
 export function mbCoapMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbCoapRuntime | undefined {
   const options = getMbCoapOptions();
 
   if (options.showHelp) {
     printMbCoapHelp(log);
     exitFn(0);
-    return;
+    return undefined;
   }
 
   return startMbCoap(options, exitFn);

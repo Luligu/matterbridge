@@ -28,6 +28,8 @@ import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electri
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { PowerSource } from '@matter/types/clusters/power-source';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { batteryStorage, deviceEnergyManagement, electricalSensor, powerSource } from '../matterbridgeDeviceTypes.js';
@@ -83,7 +85,7 @@ export class BatteryStorage extends MatterbridgeEndpoint {
       .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.BatteryStorage, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
-    void this.addFixedLabel('composed', 'Battery Storage').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'Battery Storage'), this.log, 'BatteryStorage addFixedLabel');
 
     const battery = this.addChildDeviceType('Battery', [powerSource, electricalSensor], {
       tagList: [getSemtag(PowerSourceTag.Battery)],

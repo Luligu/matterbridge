@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable unicorn/no-negated-condition typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
 import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
@@ -141,7 +143,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
   /**
    * Initializes the server.
    */
-  override async initialize() {
+  override async initialize(): Promise<void> {
     await super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeMicrowaveOvenControlServer initialized');

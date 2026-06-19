@@ -22,13 +22,15 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
+import type { MaybePromise } from '@matter/general';
 import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
 import { OvenModeServer } from '@matter/node/behaviors/oven-mode';
-import { Semtag } from '@matter/types';
+import type { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -58,7 +60,7 @@ export class Oven extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
-    void this.addFixedLabel('composed', 'Oven').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'Oven'), this.log, 'Oven addFixedLabel');
   }
 
   /**
@@ -155,8 +157,8 @@ export class Oven extends MatterbridgeEndpoint {
   // prettier-ignore
   createDefaultOvenCavityOperationalStateClusterServer(endpoint: MatterbridgeEndpoint, operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped, currentPhase?: number, phaseList?: string[]): MatterbridgeEndpoint {
     endpoint.behaviors.require(MatterbridgeOvenCavityOperationalStateServer, {
-      phaseList: phaseList || null,
-      currentPhase: currentPhase || null,
+      phaseList: phaseList ?? null,
+      currentPhase: currentPhase ?? null,
       operationalStateList: [
         { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
         { operationalStateId: OperationalState.OperationalStateEnum.Running },
@@ -177,7 +179,7 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
   /**
    * Initializes the server.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeOvenModeServer initialized');
   }
@@ -211,7 +213,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
   /**
    * Initializes operational state defaults.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;

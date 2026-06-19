@@ -22,11 +22,13 @@
  * limitations under the License.
  */
 
-import { MaybePromise } from '@matter/general';
+// oxlint-disable typescript/no-unsafe-type-assertion
+
+import type { MaybePromise } from '@matter/general';
 import { OperationalStateServer } from '@matter/node/behaviors/operational-state';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

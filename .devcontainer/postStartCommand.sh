@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# postStartCommand.sh
+# postStartCommand.sh v. 1.0.1
 
 # This script runs after the Dev Container is started to set up the dev container environment.
 
@@ -26,7 +26,7 @@ echo "1 - Installing dependencies..."
 npm install --no-fund --no-audit
 
 echo "2 - Building the package..."
-npm run build:tsgo
+npm run build
 
 echo "3 - Building the frontend package..."
 cd apps/frontend

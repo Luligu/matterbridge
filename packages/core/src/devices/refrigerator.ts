@@ -22,12 +22,13 @@
  */
 
 // Imports from @matter
-import { MaybePromise } from '@matter/general';
+import type { MaybePromise } from '@matter/general';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import { Semtag } from '@matter/types';
+import type { Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -68,7 +69,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
-    void this.addFixedLabel('composed', 'Refrigerator').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'Refrigerator'), this.log, 'Error adding composed label to Refrigerator');
     this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(this, currentMode, supportedModes);
     this.createDefaultRefrigeratorAlarmClusterServer(this, false);
   }
@@ -205,7 +206,7 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
   /**
    * Initializes the server.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info('MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized');
   }

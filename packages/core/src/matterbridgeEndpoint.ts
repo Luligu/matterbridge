@@ -22,18 +22,13 @@
  * limitations under the License.
  */
 
-/* eslint-disable jsdoc/reject-any-type */
-/* eslint-disable jsdoc/reject-function-type */
-
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpoint loaded.\u001B[40;0m');
+// TODO: analyze each rule
+// oxlint-disable typescript/no-unsafe-type-assertion unicorn/no-negated-condition
 
 // @matter/general
-import { AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { type AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
 // @matter/node
-import { ActionContext, Behavior, Endpoint, EndpointType, MutableEndpoint, ServerNode, SupportedBehaviors } from '@matter/node';
+import { type ActionContext, type Behavior, Endpoint, type EndpointType, MutableEndpoint, type ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
 import { AirQualityServer } from '@matter/node/behaviors/air-quality';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
@@ -74,14 +69,14 @@ import { ColorControl } from '@matter/types/clusters/color-control';
 import { ConcentrationMeasurement } from '@matter/types/clusters/concentration-measurement';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { Identify } from '@matter/types/clusters/identify';
 import { LevelControl } from '@matter/types/clusters/level-control';
-import { ModeSelect } from '@matter/types/clusters/mode-select';
+import type { ModeSelect } from '@matter/types/clusters/mode-select';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
@@ -95,10 +90,11 @@ import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId, EndpointNumber, VendorId } from '@matter/types/datatype';
-import { MeasurementAccuracy, Semtag } from '@matter/types/globals';
+import { type ClusterId, type EndpointNumber, VendorId } from '@matter/types/datatype';
+import type { MeasurementAccuracy, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { inspectError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
@@ -124,8 +120,14 @@ import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-import { CommandHandler, CommandHandlerData, CommandHandlerExecutionResult, CommandHandlerFunction, CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import {
+  CommandHandler,
+  type CommandHandlerData,
+  type CommandHandlerExecutionResult,
+  type CommandHandlerFunction,
+  type CommandHandlers,
+} from './matterbridgeEndpointCommandHandler.js';
 import {
   addClusterClients,
   addClusterServers,
@@ -172,7 +174,9 @@ import {
   triggerEvent,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+
+logModuleLoaded('MatterbridgeEndpoint');
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
@@ -272,7 +276,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   mode: 'server' | 'matter' | undefined = undefined;
   /** The server node of the endpoint, if it is a single not bridged endpoint */
-  serverNode: ServerNode<ServerNode.RootEndpoint> | undefined;
+  serverNode: ServerNode | undefined;
 
   /** The logger instance for the MatterbridgeEndpoint */
   log: AnsiLogger;
@@ -328,7 +332,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug] - Debug flag.
    */
   constructor(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false) {
-    // eslint-disable-next-line no-useless-assignment
     let deviceTypeList: { deviceType: number; revision: number }[] = [];
     const originalId = options.id;
 
@@ -423,7 +426,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.log = new AnsiLogger({
       logName: this.originalId ?? 'MatterbridgeEndpoint',
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
-      logLevel: debug === true ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel,
+      logLevel: debug ? LogLevel.DEBUG : MatterbridgeEndpoint.logLevel,
     });
     this.log.debug(
       `${YELLOW}new${db} MatterbridgeEndpoint: ${zb}${'0x' + firstDefinition.code.toString(16).padStart(4, '0')}${db}-${zb}${firstDefinition.name}${db} mode: ${CYAN}${this.mode}${db} id: ${CYAN}${optionsV8.id}${db} number: ${CYAN}${optionsV8.number}${db} taglist: ${CYAN}${options.tagList ? debugStringify(options.tagList) : 'undefined'}${db}`,
@@ -442,6 +445,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
   // prettier-ignore
+  // oxlint-disable-next-line typescript/require-await
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): Promise<MatterbridgeEndpoint> {
     return new MatterbridgeEndpoint(definition, options, debug);
   }
@@ -504,7 +508,12 @@ export class MatterbridgeEndpoint extends Endpoint {
     const normalizedAttribute = lowercaseFirstLetter(attribute);
     const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
     const defaults = defaultFor(behavior, options) as Record<string, boolean | number | bigint | string | object | null> | undefined;
-    return (options !== undefined && normalizedAttribute in options) || (defaults !== undefined && normalizedAttribute in defaults);
+    const behaviorDefaults = behavior.defaults as Record<string, unknown>;
+    return (
+      (options !== undefined && normalizedAttribute in options) ||
+      (defaults !== undefined && normalizedAttribute in defaults) ||
+      behaviorDefaults[normalizedAttribute] !== undefined
+    );
   }
 
   /**
@@ -628,7 +637,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     return getAttribute(this, cluster, attribute, log);
   }
 
-  /* eslint-disable @typescript-eslint/unified-signatures */
   /**
    * Sets the value of an attribute on a cluster server.
    *
@@ -715,7 +723,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * The last has the advantage of being able to set cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async setAttribute(clusterId: ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean>;
-  /* eslint-enable @typescript-eslint/unified-signatures */
   /**
    * Sets the value of an attribute on a cluster server.
    *
@@ -751,7 +758,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     return await setAttribute(this, clusterId, attribute, value, log);
   }
 
-  /* eslint-disable @typescript-eslint/unified-signatures */
   /**
    * Update the value of an attribute on a cluster server only if the value is different.
    *
@@ -838,7 +844,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * The last has the advantage of being able to update cluster attributes without imports. Just use the names found in the Matter specs.
    */
   async updateAttribute(cluster: ClusterId | string, attribute: string, value: boolean | number | bigint | string | object | null, log?: AnsiLogger): Promise<boolean>;
-  /* eslint-enable @typescript-eslint/unified-signatures */
   /**
    * Update the value of an attribute on a cluster server only if the value is different.
    *
@@ -874,7 +879,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     return await updateAttribute(this, cluster, attribute, value, log);
   }
 
-  /* eslint-disable @typescript-eslint/unified-signatures */
   /**
    * Subscribes to the provided attribute on a cluster.
    *
@@ -1031,7 +1035,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): MatterbridgeEndpoint {
     return subscribeAttribute(this, cluster, attribute, listener, log);
   }
-  /* eslint-enable @typescript-eslint/unified-signatures */
 
   /**
    * Sets the state of the provided cluster on a given endpoint.
@@ -1090,7 +1093,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * await device.setCluster('OnOff', { onOff: true })
    * ```
    */
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
   async setCluster<T extends ClusterType>(cluster: T, value: Partial<ClusterAttributesOf<T>>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Sets the state of the provided cluster on a given endpoint.
@@ -1326,7 +1328,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to trigger cluster events without imports. Just use the names found in the Matter specs.
    */
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
   async triggerEvent<T extends ClusterType, E extends ClusterEventName<T>>(cluster: T, event: E, payload: ClusterEventPayload<T, E>, log?: AnsiLogger): Promise<boolean>;
   /**
    * Triggers an event on the specified cluster.
@@ -1509,6 +1510,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
    */
   async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(cluster: T, command: C, params?: BehaviorCommandParams<T, C>): Promise<void>;
   /**
@@ -1517,8 +1520,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterType} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
    */
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
   async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, params?: ClusterCommandParams<T, C>): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
@@ -1526,6 +1530,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
    */
   async invokeBehaviorCommand(cluster: ClusterId | string, command: CommandHandlers, params?: Record<string, boolean | number | bigint | string | object | null>): Promise<void>;
   /**
@@ -1534,12 +1540,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   *
+   * @deprecated Used ONLY in Jest tests.
    */
   async invokeBehaviorCommand(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     command: CommandHandlers,
     params?: Record<string, boolean | number | bigint | string | object | null>,
-  ) {
+  ): Promise<void> {
     await invokeBehaviorCommand(this, cluster, command, params);
   }
 
@@ -1643,7 +1651,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>,
     )) {
       // Skip if the key / cluster name is a number, cause they are double indexed.
-      if (!isNaN(Number(clusterName))) continue;
+      if (!Number.isNaN(Number(clusterName))) continue;
       for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
         // Skip if the behavior has no associated cluster (i.e. matterbridge server)
         const clusterId = getClusterId(this, clusterName);
@@ -1694,6 +1702,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       alreadyAdded = true;
     } else {
       if ('tagList' in options) {
+        // oxlint-disable-next-line typescript/non-nullable-type-assertion-style
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
@@ -1715,7 +1724,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
       // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
-      void this.add(child).catch((error) => { inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
+      void this.add(child).catch((error: unknown) => { inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
@@ -1760,6 +1769,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       alreadyAdded = true;
     } else {
       if ('tagList' in options) {
+        // oxlint-disable-next-line typescript/non-nullable-type-assertion-style
         for (const tag of options.tagList as Semtag[]) {
           this.log.debug(`- with tagList: mfgCode ${CYAN}${tag.mfgCode}${db} namespaceId ${CYAN}${tag.namespaceId}${db} tag ${CYAN}${tag.tag}${db} label ${CYAN}${tag.label}${db}`);
         }
@@ -1799,7 +1809,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
       // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
-      void this.add(child).catch( (error) => { inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
+      void this.add(child).catch( (error: unknown) => { inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
@@ -1844,7 +1854,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {Endpoint | undefined} The child endpoint with the specified originalId, or undefined if not found.
    */
   getChildEndpointByOriginalId(originalId: string): MatterbridgeEndpoint | undefined {
-    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId) as MatterbridgeEndpoint | undefined;
+    return (this.parts as unknown as MatterbridgeEndpoint[]).find((part) => part.originalId === originalId);
   }
 
   /**
@@ -1874,7 +1884,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {SerializedMatterbridgeEndpoint | undefined} The serialized Matterbridge device object.
    */
   static serialize(device: MatterbridgeEndpoint): SerializedMatterbridgeEndpoint | undefined {
-    if (!device.serialNumber || !device.deviceName || !device.uniqueId || !device.maybeId || !device.maybeNumber) return;
+    if (!device.serialNumber || !device.deviceName || !device.uniqueId || !device.maybeId || !device.maybeNumber) return undefined;
     const serialized: SerializedMatterbridgeEndpoint = {
       pluginName: device.plugin ?? '',
       deviceName: device.deviceName,
@@ -2722,7 +2732,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
    */
-  async configureColorControlMode(colorMode: ColorControl.ColorMode) {
+  async configureColorControlMode(colorMode: ColorControl.ColorMode): Promise<void> {
     if (isValidNumber(colorMode, ColorControl.ColorMode.CurrentHueAndCurrentSaturation, ColorControl.ColorMode.ColorTemperatureMireds)) {
       await this.setAttribute(ColorControl.id, 'colorMode', colorMode, this.log);
       await this.setAttribute(ColorControl.id, 'enhancedColorMode', colorMode as unknown as ColorControl.EnhancedColorMode, this.log);
@@ -2736,7 +2746,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
    */
-  async configureEnhancedColorControlMode(colorMode: ColorControl.EnhancedColorMode) {
+  async configureEnhancedColorControlMode(colorMode: ColorControl.EnhancedColorMode): Promise<void> {
     if (isValidNumber(colorMode, ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation, ColorControl.EnhancedColorMode.EnhancedCurrentHueAndCurrentSaturation)) {
       await this.setAttribute(
         ColorControl.id,
@@ -2841,7 +2851,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Sets the window covering lift target position as the current position and stops the movement.
    *
    */
-  async setWindowCoveringTargetAsCurrentAndStopped() {
+  async setWindowCoveringTargetAsCurrentAndStopped(): Promise<void> {
     const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
     if (isValidNumber(position, 0, 10000)) {
       await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
@@ -2873,7 +2883,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} target - The target position of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
    */
-  async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus) {
+  async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus): Promise<void> {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
     await this.setAttribute(
@@ -2894,7 +2904,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
-  async setWindowCoveringStatus(status: WindowCovering.MovementStatus) {
+  async setWindowCoveringStatus(status: WindowCovering.MovementStatus): Promise<void> {
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -2919,6 +2929,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.log.debug(`Get WindowCovering operationalStatus: ${status.global}`);
       return status.global;
     }
+    return undefined;
   }
 
   /**
@@ -2927,7 +2938,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} liftPosition - The position to set, specified as a number.
    * @param {number} [tiltPosition] - The tilt position to set, specified as a number.
    */
-  async setWindowCoveringTargetAndCurrentPosition(liftPosition: number, tiltPosition?: number) {
+  async setWindowCoveringTargetAndCurrentPosition(liftPosition: number, tiltPosition?: number): Promise<void> {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', liftPosition, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', liftPosition, this.log);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
@@ -2967,10 +2978,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
     maxCoolSetpointLimit: number = 50,
-    unoccupiedHeatingSetpoint: number | undefined = undefined,
-    unoccupiedCoolingSetpoint: number | undefined = undefined,
-    occupied: boolean | undefined = undefined,
-    outdoorTemperature: number | null | undefined = undefined,
+    unoccupiedHeatingSetpoint?: number,
+    unoccupiedCoolingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
   ): this {
     this.behaviors.require(
       MatterbridgeThermostatServer.with(
@@ -3040,9 +3051,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     occupiedHeatingSetpoint: number = 21,
     minHeatSetpointLimit: number = 0,
     maxHeatSetpointLimit: number = 50,
-    unoccupiedHeatingSetpoint: number | undefined = undefined,
-    occupied: boolean | undefined = undefined,
-    outdoorTemperature: number | null | undefined = undefined,
+    unoccupiedHeatingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -3106,10 +3117,10 @@ export class MatterbridgeEndpoint extends Endpoint {
     maxHeatSetpointLimit: number = 50,
     minCoolSetpointLimit: number = 0,
     maxCoolSetpointLimit: number = 50,
-    unoccupiedHeatingSetpoint: number | undefined = undefined,
-    unoccupiedCoolingSetpoint: number | undefined = undefined,
-    occupied: boolean | undefined = undefined,
-    outdoorTemperature: number | null | undefined = undefined,
+    unoccupiedHeatingSetpoint?: number,
+    unoccupiedCoolingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
     activePresetHandle: Uint8Array | null = null,
     presets: Thermostat.Preset[] = [],
     presetTypes: Thermostat.PresetType[] = [
@@ -3164,6 +3175,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           builtIn: p.builtIn ?? true,
         })),
         presetTypes: (presetTypes ?? []).map((pt) => ({
+          // oxlint-disable-next-line typescript/no-misused-spread
           ...pt,
           numberOfPresets: pt.numberOfPresets ?? 0,
           presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
@@ -3193,9 +3205,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     occupiedCoolingSetpoint: number = 25,
     minCoolSetpointLimit: number = 0,
     maxCoolSetpointLimit: number = 50,
-    unoccupiedCoolingSetpoint: number | undefined = undefined,
-    occupied: boolean | undefined = undefined,
-    outdoorTemperature: number | null | undefined = undefined,
+    unoccupiedCoolingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
   ): this {
     this.behaviors.require(MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : [])), {
       // Common attributes
@@ -3943,7 +3955,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       return false;
     }
     if (['Single', 'Double', 'Long'].includes(event)) {
-      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).momentarySwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || !(this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).momentarySwitch) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with MomentarySwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }
@@ -3981,7 +3993,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
     }
     if (['Press', 'Release'].includes(event)) {
-      if (!this.hasClusterServer(Switch.id) || (this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).latchingSwitch === false) {
+      if (!this.hasClusterServer(Switch.id) || !(this.getAttribute(Switch.id, 'featureMap') as Record<string, boolean>).latchingSwitch) {
         this.log.error(`triggerSwitchEvent ${event} error: Switch cluster with LatchingSwitch not found on endpoint ${this.maybeId}:${this.maybeNumber}`);
         return false;
       }

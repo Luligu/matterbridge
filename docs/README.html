@@ -136,10 +136,12 @@
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls" alt="Docker Pulls"></a>
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
-<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="codecov"></a>
-<a href="https://prettier.io/"><img src="https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier" alt="styled with prettier"></a>
-<a href="https://eslint.org/"><img src="https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint" alt="linted with eslint"></a>
+<a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="Codecov"></a>
+<a href="https://vitest.dev"><img src="https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white" alt="tested with Vitest"></a>
+<a href="https://oxc.rs/docs/guide/usage/formatter.html"><img src="https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white" alt="styled with Oxc"></a>
+<a href="https://oxc.rs/docs/guide/usage/linter.html"><img src="https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white" alt="linted with Oxc"></a>
 <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white" alt="TypeScript"></a>
+<a href="https://github.com/microsoft/typescript-go"><img src="https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white" alt="TypeScript Native"></a>
 <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a></p>
 <p><a href="https://www.npmjs.com/package/matter-history"><img src="https://img.shields.io/badge/powered%20by-matter--history-blue" alt="powered by"></a>
@@ -156,7 +158,7 @@
 <p>Developers can focus solely on device development by extending the provided classes.</p>
 <p>Simply pair Matterbridge once, and it will load all your registered plugins.</p>
 <p>This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything (<a href="README-DEV.html">Development</a>).</p>
-<p>The easiest way to start create a new plugin is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> which has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.</p>
+<p>The easiest way to start create a new plugin is to clone the <a href="https://github.com/Luligu/matterbridge-plugin-template">Matterbridge Plugin Template</a> which has <strong>Dev Container support for instant development environment</strong> and all tools and extensions (like Node.js, npm, TypeScript, Jest, Vitest, and the shared Matterbridge Oxc/oxlint/oxfmt configs) already loaded and configured.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="acknowledgements">Acknowledgements</h2>
@@ -651,14 +653,16 @@ While Amazon has expanded support to include core categories like lighting, plug
   thread --&gt; utils
   thread --&gt; types
   dgram --&gt; utils
+  jestutils --&gt; utils
   jestutils --&gt; types
+  vitestutils --&gt; utils
   vitestutils --&gt; types
 </code></pre>
 <p>The graph is acyclic and layered:</p>
 <ul>
 <li><strong>Foundation (no internal dependencies):</strong> <code>@matterbridge/types</code>, <code>@matterbridge/utils</code>.</li>
 <li><strong>Networking &amp; workers:</strong> <code>@matterbridge/dgram</code> (→ <code>utils</code>), <code>@matterbridge/thread</code> (→ <code>utils</code>, <code>types</code>).</li>
-<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> (→ <code>types</code>).</li>
+<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> (→ <code>utils</code>, <code>types</code>).</li>
 <li><strong>Core:</strong> <code>@matterbridge/core</code> (→ <code>dgram</code>, <code>thread</code>, <code>utils</code>, <code>types</code>).</li>
 <li><strong>Top level:</strong> <code>matterbridge</code> declares all scoped packages as direct dependencies; <code>core</code> pulls in the rest transitively.</li>
 </ul>

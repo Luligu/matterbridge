@@ -2,7 +2,6 @@
 # This file specifies intentionally untracked directories and files that Git should ignore.
 
 # Specific directories that should be ignored
-# .vscode/
 .cache/
 coverage/
 dist/
@@ -25,8 +24,6 @@ heap_profile
 heap_profiles
 heap_snapshots
 TODO.md
-packages/core/src/crypto
-packages/core/src/workers
 
 # Allow dist folders inside vendor/
 !vendor/**/dist/

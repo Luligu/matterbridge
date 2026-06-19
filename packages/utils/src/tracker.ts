@@ -22,18 +22,15 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
-
-// istanbul ignore next line - loader/debug/verbose flags are only used for development and testing, not in production
-// prettier-ignore
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Tracker loaded.\u001B[40;0m');
-
 import EventEmitter from 'node:events';
 import os from 'node:os';
 
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
 import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('Tracker');
 
 // Memory snapshot focusing on cpu and rss, heapUsed, heapTotal, external and arrayBuffers plus peak values
 export type TrackerSnapshot = {
@@ -168,7 +165,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    *
    * @param {number} sampleIntervalMs Sample interval in milliseconds. Default is 10000 (10 seconds).
    */
-  start(sampleIntervalMs: number = 10000) {
+  start(sampleIntervalMs: number = 10000): void {
     if (this.trackerInterval) return;
     this.log.debug(`Tracker starting...`);
     let tryGcCount = 0;
@@ -272,7 +269,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   /**
    * Reset peak values to the currently stored values
    */
-  resetPeaks() {
+  resetPeaks(): void {
     const prevHistoryIndex = (Tracker.historyIndex + Tracker.historySize - 1) % Tracker.historySize;
     Tracker.history[prevHistoryIndex].peakOsCpu = 0;
     Tracker.history[prevHistoryIndex].peakProcessCpu = 0;
@@ -296,7 +293,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * - minor collection refers to young-generation collections (scavenges).
    * - sync execution blocks the main thread until GC is complete, which can cause pauses.
    */
-  runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async') {
+  runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async'): void {
     if (global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
@@ -317,7 +314,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   /**
    * Stop tracking, clear interval, log history
    */
-  stop() {
+  stop(): void {
     this.log.debug(`Tracker stopping...`);
     if (this.trackerInterval) {
       clearInterval(this.trackerInterval);

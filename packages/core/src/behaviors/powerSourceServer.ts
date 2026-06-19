@@ -23,7 +23,7 @@
  */
 
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import { EndpointNumber } from '@matter/types/datatype';
+import type { EndpointNumber } from '@matter/types/datatype';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
@@ -34,7 +34,7 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
   /**
    * Initializes state and updates endpointList when construction completes.
    */
-  override async initialize() {
+  override async initialize(): Promise<void> {
     await super.initialize();
 
     const device = this.endpoint.stateOf(MatterbridgeServer);

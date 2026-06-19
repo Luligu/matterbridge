@@ -61,11 +61,8 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test:coverage -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest:coverage -- --testTimeout=30000
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5

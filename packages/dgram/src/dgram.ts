@@ -21,10 +21,12 @@
  * limitations under the License.
  */
 
+// oxlint-disable no-param-reassign
+
 // Node.js imports
 import dgram from 'node:dgram';
 import EventEmitter from 'node:events';
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 // @matterbridge
@@ -85,7 +87,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     this.interfaceName = interfaceName;
     this.interfaceAddress = interfaceAddress;
     this.log.debug(
-      `Created socket of type ${BLUE}${socketType}${db} on interface ${BLUE}${interfaceName || 'any'}${db} with address ${BLUE}${interfaceAddress || 'any'}${db} reuseAddr=${BLUE}${reuseAddr}${db}`,
+      `Created socket of type ${BLUE}${socketType}${db} on interface ${BLUE}${interfaceName ?? 'any'}${db} with address ${BLUE}${interfaceAddress ?? 'any'}${db} reuseAddr=${BLUE}${reuseAddr}${db}`,
     );
 
     this.socket.on('error', (error) => {
@@ -129,7 +131,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {string} serverAddress - The IPv4 address of the destination server.
    * @param {number} serverPort - The port of the destination server.
    */
-  send(msg: Buffer, serverAddress: string, serverPort: number) {
+  send(msg: Buffer, serverAddress: string, serverPort: number): void {
     this.socket.send(msg, 0, msg.length, serverPort, serverAddress, (error: Error | null) => {
       if (error) {
         this.log.error(`Socket failed to send a message: ${getErrorMessage(error)}`);
@@ -148,17 +150,17 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {Error} error - Error instance.
    */
-  onError(error: Error) {
+  onError(error: Error): void {
     this.log.error(`Socket error: ${getErrorMessage(error)}`);
   }
 
   /** Handles socket close. */
-  onClose() {
+  onClose(): void {
     this.log.info(`Socket closed`);
   }
 
   /** Handles socket connect. */
-  onConnect() {
+  onConnect(): void {
     this.log.info(`Socket connected`);
   }
 
@@ -169,7 +171,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {string} serverAddress - Destination address.
    * @param {number} serverPort - Destination port.
    */
-  onSent(msg: Buffer, serverAddress: string, serverPort: number) {
+  onSent(msg: Buffer, serverAddress: string, serverPort: number): void {
     this.log.info(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
   }
 
@@ -179,7 +181,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {Buffer} msg - Received message.
    * @param {dgram.RemoteInfo} rinfo - Sender address information.
    */
-  onMessage(msg: Buffer, rinfo: dgram.RemoteInfo) {
+  onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
     this.log.info(`Socket received a message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
   }
 
@@ -188,7 +190,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {AddressInfo} address - Bound address information.
    */
-  onListening(address: AddressInfo) {
+  onListening(address: AddressInfo): void {
     this.log.info(`Socket listening on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.onReady(address);
   }
@@ -198,7 +200,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    *
    * @param {AddressInfo} address - Bound address information.
    */
-  onReady(address: AddressInfo) {
+  onReady(address: AddressInfo): void {
     this.log.info(`Socket ready on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.emit('ready', address);
   }
@@ -296,7 +298,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     const linkLocalAddress = addresses?.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.address.startsWith('fe80'));
     if (linkLocalAddress) {
       this.log.debug('Found IPv6 link-local address');
-      return linkLocalAddress.scopeid ? `${linkLocalAddress.address}%${process.platform !== 'win32' ? networkInterface : linkLocalAddress.scopeid}` : linkLocalAddress.address;
+      return linkLocalAddress.scopeid ? `${linkLocalAddress.address}%${process.platform === 'win32' ? linkLocalAddress.scopeid : networkInterface}` : linkLocalAddress.address;
     }
     this.log.debug('No IPv6 link-local address found');
 
@@ -366,7 +368,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
   getInterfaceNameFromScopeId(scopeId: number): string | undefined {
     const nets = os.networkInterfaces();
     for (const ifaceName in nets) {
-      const addresses = nets[ifaceName] || [];
+      const addresses = nets[ifaceName] ?? [];
       for (const addr of addresses) {
         // Check for IPv6 addresses with a matching scope id.
         if (addr.family === 'IPv6' && addr.scopeid === scopeId) {
@@ -414,6 +416,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     }
     const ipParts = ipAddress.split('.').map(Number);
     const maskParts = netmask.split('.').map(Number);
+    // oxlint-disable-next-line no-bitwise
     const broadcastParts = ipParts.map((octet, i) => (octet & maskParts[i]) | (255 - maskParts[i]));
     return broadcastParts.join('.');
   }
@@ -430,13 +433,14 @@ export class Dgram extends EventEmitter<DgramEvents> {
   /**
    * Logs all available network interfaces and their details.
    */
-  listNetworkInterfaces() {
+  listNetworkInterfaces(): void {
     const interfaces = os.networkInterfaces();
     for (const [name, addresses] of Object.entries(interfaces)) {
       if (!addresses) continue;
       this.log.debug(`Interface: ${idn}${name}${rs}${db}`);
       for (const address of addresses) {
         this.log.debug(
+          // oxlint-disable-next-line unicorn/no-negated-condition
           `- address ${BLUE}${address.address}${db} netmask ${BLUE}${address.netmask}${db} ${address.mac ? 'MAC: ' + BLUE + address.mac + db : ''} type: ${BLUE}${address.family}${db} ${BLUE}${address.internal ? 'internal' : 'external'}${db} ${address.scopeid !== undefined ? 'scopeid: ' + BLUE + address.scopeid + db : ''} cidr: ${BLUE}${address.cidr}${db}`,
         );
       }

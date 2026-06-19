@@ -31,9 +31,9 @@ import { isValidNumber } from './validate.js';
  * @returns {boolean} True if the parameter is present, otherwise false.
  */
 export function hasParameter(name: string): boolean {
-  const commandArguments = process.argv.slice(2);
-  let markerIncluded = commandArguments.includes(`-${name}`);
-  if (!markerIncluded) markerIncluded = commandArguments.includes(`--${name}`);
+  const commandArguments = new Set(process.argv.slice(2));
+  let markerIncluded = commandArguments.has(`-${name}`);
+  if (!markerIncluded) markerIncluded = commandArguments.has(`--${name}`);
   return markerIncluded;
 }
 
@@ -72,7 +72,7 @@ export function getParameter(name: string): string | undefined {
 export function getIntParameter(name: string): number | undefined {
   const value = getParameter(name);
   if (value === undefined) return undefined;
-  const intValue = parseInt(value, 10);
+  const intValue = Number.parseInt(value, 10);
   if (!isValidNumber(intValue)) return undefined;
   return intValue;
 }
@@ -90,7 +90,7 @@ export function getIntArrayParameter(name: string): number[] | undefined {
   if (markerIndex < 0) return undefined;
   const intValues: number[] = [];
   for (let i = markerIndex + 1; i < commandArguments.length && !commandArguments[i].startsWith('-'); i++) {
-    const intValue = parseInt(commandArguments[i], 10);
+    const intValue = Number.parseInt(commandArguments[i], 10);
     if (isValidNumber(intValue)) intValues.push(intValue);
   }
   if (intValues.length === 0) return undefined;

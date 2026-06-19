@@ -22,20 +22,18 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeFactory loaded.\u001B[40;0m');
-
 // @matter
-import { Behavior, ClusterBehavior } from '@matter/node';
+import { type Behavior, ClusterBehavior } from '@matter/node';
 import { getClusterNameById } from '@matter/types/cluster';
-import { ClusterId } from '@matter/types/datatype';
+import type { ClusterId } from '@matter/types/datatype';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // AnsiLogger module
 import { db, hk } from 'node-ansi-logger';
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+logModuleLoaded('MatterbridgeFactory');
 
 /**
  * Options for the generic cluster server factory.
@@ -133,12 +131,14 @@ export async function getServerBehaviorFromClusterId(clusterId: ClusterId, featu
 
   let mod: Record<string, unknown>;
   try {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     mod = (await import(`@matter/node/behaviors/${snakeCase(name)}`)) as Record<string, unknown>;
   } catch {
     // istanbul ignore next -- Defensive: every known matter.js cluster resolves to a behavior module.
     return undefined;
   }
 
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const base = mod[`${name}Server`] as Behavior.Type | undefined;
   // istanbul ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Server.
   if (!base || !ClusterBehavior.isType(base)) return undefined;

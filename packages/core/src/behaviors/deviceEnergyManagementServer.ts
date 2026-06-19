@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

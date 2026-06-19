@@ -21,10 +21,10 @@
  * limitations under the License.
  */
 
+// oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 
 import path from 'node:path';
-import { inspect } from 'node:util';
 
 // @matter
 import { Environment, Lifecycle, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel } from '@matter/general';
@@ -37,16 +37,19 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
+import { inspectError } from '@matterbridge/utils/error';
 // node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from './flushAsync.js';
-import { HOMEDIR, NAME } from './vitestSetupTest.js';
+import { HOMEDIR, log, NAME } from './vitestSetupTest.js';
 
 export let environment: Environment;
-export let server: ServerNode<ServerNode.RootEndpoint>;
+export let server: ServerNode;
 export let aggregator: Endpoint<AggregatorEndpoint>;
+
+const noop = (): void => undefined;
 
 /**
  * Create a matter test environment for testing:
@@ -80,6 +83,7 @@ export let aggregator: Endpoint<AggregatorEndpoint>;
  * await destroyTestEnvironment();
  * ```
  */
+// oxlint-disable-next-line typescript/require-await
 export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
@@ -165,10 +169,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.9.0',
-    matterbridgeLatestVersion: '3.9.0',
-    matterbridgeDevVersion: '3.9.0',
-    frontendVersion: '3.9.0',
+    matterbridgeVersion: '3.9.1',
+    matterbridgeLatestVersion: '3.9.1',
+    matterbridgeDevVersion: '3.9.1',
+    frontendVersion: '3.9.1',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -180,28 +184,46 @@ export function getMatterbridge(): PlatformMatterbridge {
   return matterbridge;
 }
 
-/** Add a bridged endpoint */
-export const addBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+/**
+ * Add a bridged endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {Endpoint} device The device to add.
+ * @returns {Promise<boolean>} A promise that resolves to true if the endpoint was added successfully, or rejects with an error if the operation failed.
+ */
+export const addBridgedEndpoint = async (pluginName: string, device: Endpoint): Promise<boolean> => {
   try {
     await aggregator.add(device);
     return Promise.resolve(true);
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Remove a bridged endpoint */
-export const removeBridgedEndpoint = vi.fn(async (pluginName: string, device: Endpoint) => {
+/**
+ * Remove a bridged endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {Endpoint} device The device to remove.
+ * @returns {Promise<boolean>} A promise that resolves to true if the endpoint was removed successfully, or rejects with an error if the operation failed.
+ */
+export const removeBridgedEndpoint = async (pluginName: string, device: Endpoint): Promise<boolean> => {
   try {
     await device.delete();
     return Promise.resolve(true);
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Remove all bridged endpoints */
-export const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay: number = 0) => {
+/**
+ * Remove all bridged endpoints
+ *
+ * @param {string} _pluginName The name of the plugin.
+ * @param {number} _delay The delay before removing all endpoints.
+ * @returns {Promise<boolean>} A promise that resolves to true if all endpoints were removed successfully, or rejects with an error if the operation failed.
+ */
+export const removeAllBridgedEndpoints = async (_pluginName: string, _delay: number = 0): Promise<boolean> => {
   try {
     for (const device of aggregator.parts) {
       await device.delete();
@@ -210,10 +232,23 @@ export const removeAllBridgedEndpoints = vi.fn(async (pluginName: string, _delay
   } catch (error) {
     return Promise.reject(error);
   }
-});
+};
 
-/** Add a virtual endpoint */
-export const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
+/**
+ * Add a virtual endpoint
+ *
+ * @param {string} pluginName The name of the plugin.
+ * @param {string} name The name of the virtual endpoint.
+ * @param {'light' | 'outlet' | 'switch' | 'mounted_switch'} type The type of the virtual endpoint.
+ * @param {() => Promise<void>} callback The callback to execute when the virtual endpoint is triggered.
+ * @returns {Promise<boolean>} A promise that resolves to true if the virtual endpoint was added successfully, or rejects with an error if the operation failed.
+ */
+export const addVirtualEndpoint = async (
+  pluginName: string,
+  name: string,
+  type: 'light' | 'outlet' | 'switch' | 'mounted_switch',
+  callback: () => Promise<void>,
+): Promise<boolean> => {
   try {
     const device = new Endpoint(MountedOnOffControlDevice.with(BridgedDeviceBasicInformationServer), {
       id: name.replaceAll(' ', '') + ':' + type,
@@ -232,8 +267,8 @@ export const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string,
     device.events.onOff.onOff$Changed.on((value) => {
       // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
       if (value) {
-        void callback().catch(/* istanbul ignore next */ () => {});
-        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+        void callback().catch(/* istanbul ignore next */ noop);
+        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ noop);
       }
     });
 
@@ -253,12 +288,7 @@ export const addVirtualEndpoint = vi.fn(async (pluginName: string, name: string,
   } catch (error) {
     return Promise.reject(error);
   }
-});
-
-export const addBridgedEndpointMatterbridgeSpy = addBridgedEndpoint;
-export const removeBridgedEndpointMatterbridgeSpy = removeBridgedEndpoint;
-export const removeAllBridgedEndpointsMatterbridgeSpy = removeAllBridgedEndpoints;
-export const addVirtualEndpointMatterbridgeSpy = addVirtualEndpoint;
+};
 
 /**
  * Inject matterbridge platform for testing.
@@ -315,12 +345,13 @@ export async function flushAllEndpointNumberPersistence(
  * @param {Endpoint} endpoint The endpoint to find the root server for.
  * @returns {ServerNode<ServerNode.RootEndpoint>} The root ServerNode of the given endpoint.
  */
-function getRootServerNode(endpoint: Endpoint): ServerNode<ServerNode.RootEndpoint> {
-  let current = endpoint as Endpoint;
+function getRootServerNode(endpoint: Endpoint): ServerNode {
+  let current = endpoint;
   while (current.owner) {
-    current = current.owner as Endpoint;
+    current = current.owner;
   }
-  return current as ServerNode<ServerNode.RootEndpoint>;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return current as ServerNode;
 }
 
 /**
@@ -331,12 +362,10 @@ function getRootServerNode(endpoint: Endpoint): ServerNode<ServerNode.RootEndpoi
  */
 function collectAllEndpoints(root: Endpoint): Endpoint[] {
   const list: Endpoint[] = [];
-  const walk = (ep: Endpoint) => {
+  const walk = (ep: Endpoint): void => {
     list.push(ep);
-    if (ep.parts) {
-      for (const child of ep.parts as unknown as Endpoint[]) {
-        walk(child);
-      }
+    for (const child of ep.parts) {
+      walk(child);
     }
   };
   walk(root);
@@ -358,7 +387,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   const nodeStore = targetServer.env.get(ServerNodeStore);
   // Ensure any pending persistence finished (flush any in-flight batch promise)
   await nodeStore.endpointStores.close();
-  const all = collectAllEndpoints(targetServer as unknown as Endpoint);
+  const all = collectAllEndpoints(targetServer);
   for (const ep of all) {
     const store = nodeStore.storeForEndpoint(ep);
     if (ep.maybeNumber === 0) {
@@ -377,11 +406,9 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  * @returns {Promise<void>} Resolves when the stores have been closed.
  */
 export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
-  // Close endpoint stores to avoid number persistence issues
-  if (!targetServer) targetServer = server;
-  await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
+  const resolvedTargetServer = targetServer ?? server;
+  await resolvedTargetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
-
 /**
  * Create a matter server node for testing.
  *
@@ -423,7 +450,7 @@ export async function createServerNode(
   ticks: number = 1,
   microTurns: number = 1,
   pause: number = 10,
-): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 
@@ -526,7 +553,7 @@ export async function createServerNode(
  * await destroyTestEnvironment();
  * ```
  */
-export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
     // istanbul ignore next
@@ -535,10 +562,11 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
 
   // Wait for the server to be online
   await new Promise<void>((resolve, reject) => {
+    // oxlint-disable-next-line typescript/require-await
     server.lifecycle.online.on(async () => {
       resolve();
     });
-    server.start().catch((err) => reject(err));
+    server.start().catch((err: unknown) => reject(err));
   });
 
   // Check if the server is online
@@ -683,12 +711,7 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * expect(await addDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function addDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
@@ -701,9 +724,8 @@ export async function addDevice(
   try {
     await owner.add(device);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : error;
-    const errorInspect = inspect(error, { depth: 10 });
-    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
+    inspectError(log, `Error adding device ${device.maybeId}.${device.maybeNumber}`, error);
+    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
     return false;
   }
   await device.construction.ready;
@@ -731,12 +753,7 @@ export async function addDevice(
  * expect(await deleteDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function deleteDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
@@ -749,9 +766,8 @@ export async function deleteDevice(
   try {
     await device.delete();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : error;
-    const errorInspect = inspect(error, { depth: 10 });
-    process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
+    inspectError(log, `Error deleting device ${device.maybeId}.${device.maybeNumber}`, error);
+    process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
     return false;
   }
   expect(owner.parts.has(device)).toBeFalsy();

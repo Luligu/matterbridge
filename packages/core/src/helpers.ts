@@ -22,11 +22,6 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeHelpers loaded.\u001B[40;0m');
-
 // @matter module
 import { Endpoint } from '@matter/node';
 import { BindingServer } from '@matter/node/behaviors/binding';
@@ -37,15 +32,14 @@ import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-c
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
-import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { VendorId } from '@matter/types/datatype';
-// @matterbridge
-import { hasParameter } from '@matterbridge/utils/cli';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
-import { doorLock } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+logModuleLoaded('MatterbridgeHelpers');
 
 /**
  * Adds a virtual device to the provided endpoint, sets up an event listener for device state changes,
@@ -69,6 +63,7 @@ export async function addVirtualDevice(
   // The device ID is created by replacing all spaces in the name with an empty string.
   // The node label of the bridged device basic information is set to the given name.
   let deviceType;
+  // oxlint-disable-next-line default-case
   switch (type) {
     case 'light':
       deviceType = OnOffLightDevice.with(BridgedDeviceBasicInformationServer);
@@ -101,8 +96,16 @@ export async function addVirtualDevice(
   device.events.onOff.onOff$Changed.on((value) => {
     // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
     if (value) {
-      void callback().catch(/* istanbul ignore next */ () => {});
-      void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ () => {});
+      void callback().catch(
+        /* istanbul ignore next */ () => {
+          // Noop
+        },
+      );
+      void device.setStateOf(OnOffServer, { onOff: false }).catch(
+        /* istanbul ignore next */ () => {
+          // Noop
+        },
+      );
     }
   });
 
@@ -132,6 +135,7 @@ export async function addVirtualDevice(
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
+  /*
   // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
   if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
@@ -148,6 +152,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
     lockUserPin.addRequiredClusterServers();
     await aggregatorEndpoint.add(lockUserPin);
   }
+  */
   if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
     await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
@@ -156,44 +161,6 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
     });
     await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {
       await matterbridge.updateProcess();
-      /*
-      if (hasParameter('shelly')) {
-        const { getShelly } = await import('./shelly.js');
-        getShelly('/api/updates/sys/perform', 10 * 1000)
-          .then(() => {
-            matterbridge.log.notice('Shelly system updated successfully');
-            return;
-          })
-          .catch((error) => {
-            matterbridge.log.error(`Error updating shelly system: ${error}`);
-          });
-        getShelly('/api/updates/main/perform', 10 * 1000)
-          .then(() => {
-            matterbridge.log.notice('Shelly software updated successfully');
-            return;
-          })
-          .catch((error) => {
-            matterbridge.log.error(`Error updating shelly software: ${error}`);
-          });
-      } else {
-        await matterbridge.updateProcess();
-      }
-      */
     });
-    /*
-    if (hasParameter('shelly')) {
-      await addVirtualDevice(aggregatorEndpoint, 'Reboot Matterbridge', matterbridge.virtualMode, async () => {
-        const { postShelly } = await import('./shelly.js');
-        postShelly('/api/system/reboot', {}, 60 * 1000)
-          .then(() => {
-            matterbridge.log.notice('Rebooting shelly board...');
-            return;
-          })
-          .catch((error) => {
-            matterbridge.log.error(`Error rebooting shelly board: ${error}`);
-          });
-      });
-    }
-    */
   }
 }

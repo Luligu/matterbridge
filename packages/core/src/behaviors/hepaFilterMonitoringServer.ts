@@ -22,11 +22,13 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
-import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+import type { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 

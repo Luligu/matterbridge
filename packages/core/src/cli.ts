@@ -25,17 +25,14 @@
 /* eslint-disable no-console */
 /* eslint-disable n/no-process-exit */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Cli loaded.\u001B[40;0m');
-
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatUptime } from '@matterbridge/utils/format';
 import { Inspector } from '@matterbridge/utils/inspector';
-import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { Tracker, type TrackerSnapshot } from '@matterbridge/utils/tracker';
 // AnsiLogger module
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -44,6 +41,8 @@ import { cliEmitter } from './cliEmitter.js';
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
 
+logModuleLoaded('Cli');
+
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
@@ -51,7 +50,7 @@ const manager = new ThreadsManager();
 
 /** Minimal ANSI styling */
 // istanbul ignore next cause colorEnabled is not relevant for coverage
-const colorEnabled = Boolean(!process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi'));
+const colorEnabled = !process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi');
 // istanbul ignore else
 if (!colorEnabled) process.env.NO_COLOR = '1';
 
@@ -60,7 +59,7 @@ const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat
 /**
  * Starts the CPU and memory tracker.
  */
-function startCpuMemoryCheck() {
+function startCpuMemoryCheck(): void {
   log.debug(`Cpu memory check starting...`);
   tracker.start();
   tracker.on('uptime', (os: number, process: number) => {
@@ -86,7 +85,7 @@ function startCpuMemoryCheck() {
 /**
  * Stops the CPU and memory tracker.
  */
-function stopCpuMemoryCheck() {
+function stopCpuMemoryCheck(): void {
   log.debug(`Cpu memory check stopping...`);
   tracker.stop();
   tracker.removeAllListeners();
@@ -97,7 +96,7 @@ function stopCpuMemoryCheck() {
  * Starts the inspector for heap sampling.
  * This function is called when the -inspect parameter is passed.
  */
-async function startInspector() {
+async function startInspector(): Promise<void> {
   await inspector.start();
 }
 
@@ -105,14 +104,14 @@ async function startInspector() {
  * Stops the heap sampling and saves the profile.
  * This function is called when the -inspect parameter is passed.
  */
-async function stopInspector() {
+async function stopInspector(): Promise<void> {
   await inspector.stop();
 }
 
 /**
  * Takes a heap snapshot
  */
-async function takeHeapSnapshot() {
+async function takeHeapSnapshot(): Promise<void> {
   await inspector.takeHeapSnapshot();
 }
 
@@ -122,25 +121,28 @@ async function takeHeapSnapshot() {
  *
  * @remarks To check the effect of the garbage collection, add also --trace_gc or --trace_gc_verbose.
  */
-function triggerGarbageCollection() {
+function triggerGarbageCollection(): void {
   inspector.runGarbageCollector();
 }
 
 /**
  * Registers event handlers for the Matterbridge instance.
  */
-function registerHandlers() {
+function registerHandlers(): void {
   log.debug('Registering event handlers...');
   // istanbul ignore next cause registerHandlers is called only if instance is defined
   if (!instance) return;
-  instance.on('shutdown', () => shutdown());
-  instance.on('restart', () => restart());
-  instance.on('update', () => update());
+  instance.on('shutdown', () => void shutdown().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to shutdown', error)));
+  instance.on('restart', () => void restart().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to restart', error)));
+  instance.on('update', () => void update().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to update', error)));
   instance.on('startmemorycheck', () => start());
   instance.on('stopmemorycheck', () => stop());
-  instance.on('startinspector', () => startInspector());
-  instance.on('stopinspector', () => stopInspector());
-  instance.on('takeheapsnapshot', () => takeHeapSnapshot());
+  instance.on('startinspector', () => void startInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to start inspector', error)));
+  instance.on('stopinspector', () => void stopInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to stop inspector', error)));
+  instance.on(
+    'takeheapsnapshot',
+    () => void takeHeapSnapshot().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to take heap snapshot', error)),
+  );
   instance.on('triggergarbagecollection', () => triggerGarbageCollection());
   log.debug('Registered event handlers');
 }
@@ -148,7 +150,7 @@ function registerHandlers() {
 /**
  * Shuts down the Matterbridge instance and exits the process.
  */
-async function shutdown() {
+async function shutdown(): Promise<void> {
   log.debug('Received shutdown event, exiting...');
 
   if (hasParameter('inspect')) await stopInspector();
@@ -165,7 +167,7 @@ async function shutdown() {
 /**
  * Restarts the Matterbridge instance.
  */
-async function restart() {
+async function restart(): Promise<void> {
   log.debug('Received restart event, loading...');
 
   const { Matterbridge } = await import('./matterbridge.js');
@@ -177,7 +179,7 @@ async function restart() {
 /**
  * Updates the Matterbridge instance.
  */
-async function update() {
+async function update(): Promise<void> {
   log.debug('Received update event, updating...');
 
   // TODO: Implement update logic outside of matterbridge
@@ -190,7 +192,7 @@ async function update() {
 /**
  * Starts the CPU and memory check when the -startmemorycheck parameter is passed.
  */
-function start() {
+function start(): void {
   log.debug('Received start memory check event');
   startCpuMemoryCheck();
 }
@@ -198,7 +200,7 @@ function start() {
 /**
  * Stops the CPU and memory check when the -stopmemorycheck parameter is passed.
  */
-function stop() {
+function stop(): void {
   log.debug('Received stop memory check event');
   stopCpuMemoryCheck();
 }
@@ -220,7 +222,7 @@ function stop() {
  *
  * --snapshotinterval <milliseconds> can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
  */
-async function main() {
+async function main(): Promise<void> {
   log.debug(`Cli main() started`);
 
   startCpuMemoryCheck();
@@ -248,10 +250,11 @@ if (hasAnyParameter('help', 'h')) help();
 
 if (hasAnyParameter('version', 'v')) await version();
 
-main().catch((error) => {
+main().catch((error: unknown) => {
   inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
   // istanbul ignore next cause process.exit is not relevant for coverage
-  shutdown().catch(() => process.exit(1));
+  // oxlint-disable-next-line promise/no-nesting
+  shutdown().catch(/* v8 ignore next -- @preserve */ () => process.exit(1));
 });
 
 /**

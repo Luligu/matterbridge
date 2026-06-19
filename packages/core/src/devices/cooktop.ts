@@ -22,7 +22,9 @@
  */
 
 // Imports from @matter
-import { Semtag } from '@matter/types';
+import type { Semtag } from '@matter/types';
+// @matterbridge
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { cookSurface, cooktop, powerSource } from '../matterbridgeDeviceTypes.js';
@@ -54,7 +56,7 @@ export class Cooktop extends MatterbridgeEndpoint {
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Cooktop');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createOffOnlyOnOffClusterServer(true);
-    void this.addFixedLabel('composed', 'Cooktop').catch(/* istanbul ignore next */ () => {});
+    fireAndForget(this.addFixedLabel('composed', 'Cooktop'), this.log, 'Error adding composed label to cooktop');
   }
 
   /**

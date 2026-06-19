@@ -21,12 +21,12 @@
  * limitations under the License.
  */
 
-import { AtLeastOne } from '@matter/general';
+import type { AtLeastOne } from '@matter/general';
 import { CommonLocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
-import { Semtag } from '@matter/types/globals';
+import type { Semtag } from '@matter/types/globals';
 
-import { DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
+import { type DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
@@ -80,7 +80,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @param {Semtag} tag - Semantic tag describing the zone.
    * @returns {this} The current endpoint instance for chaining.
    */
-  addZone(tag: Semtag) {
+  addZone(tag: Semtag): this {
     this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [getSemtag(tag), getSemtag(CommonLocationTag.Zone)] })
       .createDefaultValveConfigurationAndControlClusterServer()
       .addRequiredClusterServers();

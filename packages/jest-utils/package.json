@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/jest-utils",
-  "version": "3.9.0",
+  "version": "3.9.1",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -68,10 +68,9 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/types": "3.9.0",
-    "node-ansi-logger": "3.3.0-dev-20260607-585945a"
-  },
-  "devDependencies": {
-    "@jest/globals": "30.4.1"
+    "@matter/main": "0.17.3",
+    "@matterbridge/types": "3.9.1",
+    "@matterbridge/utils": "3.9.1",
+    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
   }
 }

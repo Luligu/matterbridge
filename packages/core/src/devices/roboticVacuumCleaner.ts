@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+// oxlint-disable unicorn/no-negated-condition typescript/no-unsafe-type-assertion
+
 // Imports from @matter
 import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
@@ -67,7 +69,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
   constructor(
     name: string,
     serial: string,
-    mode: 'server' | 'matter' | undefined = undefined,
+    mode?: 'server' | 'matter',
     currentRunMode?: number,
     supportedRunModes?: RvcRunMode.ModeOption[],
     currentCleanMode?: number,

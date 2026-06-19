@@ -130,7 +130,7 @@
 </head>
 <body>
 <h1 id="style-guide">Style Guide</h1>
-<p>Concise rules the codebase and Copilot suggestions should follow.</p>
+<p>Concise rules the codebase and coding-agent suggestions should follow.</p>
 <h2 id="1-general-principles">1. General Principles</h2>
 <ul>
 <li>Prefer clarity over brevity; explicit names, no ambiguous abbreviations.</li>
@@ -150,7 +150,7 @@
 <ul>
 <li>Functions: verb or verb phrase (<code>createDevice</code>, <code>updateState</code>).</li>
 <li>Booleans: prefix with <code>is/has/can/should</code> (internal helpers); state flags in this project may keep existing names (<code>intervalOnOff</code>).</li>
-<li>Private file‑local helpers start with <code>_</code> only if intentionally unused yet (silencing ESLint); otherwise export or remove.</li>
+<li>Private file-local helpers start with <code>_</code> only if intentionally unused yet (silencing oxlint); otherwise export or remove.</li>
 <li>Constants: <code>UPPER_SNAKE_CASE</code> only for process env or true constants; otherwise camelCase.</li>
 </ul>
 <h2 id="4-jsdoc-template">4. JSDoc Template</h2>
@@ -196,44 +196,56 @@
 </ul>
 <h2 id="7-formatting-lint">7. Formatting &amp; Lint</h2>
 <ul>
-<li>ESLint + Prettier govern style; do not fight formatters. VSCode is configured to format on save.</li>
-<li>The default tabWidth is 2 not 4.</li>
-<li>No trailing spaces; keep imports sorted by groups: std libs, external deps, internal modules, types.</li>
-<li>Use trailing commas where multi‑line.</li>
-<li>The repo uses import &#39;eslint-plugin-simple-import-sort&#39;, &#39;eslint-plugin-n&#39;, &#39;eslint-plugin-promise&#39;, &#39;eslint-plugin-jsdoc&#39;, &#39;eslint-plugin-prettier/recommended&#39;, &#39;eslint-plugin-jest&#39;;</li>
+<li><code>oxfmt</code> governs formatting; do not fight the formatter. Run <code>npm run format</code> or check with <code>npm run format:check</code>.</li>
+<li><code>oxlint</code> governs linting, including JSDoc, import ordering, TypeScript, Node, Promise, Unicorn, OXC, Jest, and Vitest rules. Run <code>npm run lint</code>; use <code>npm run lint:fix</code> only for focused fixes.</li>
+<li>The default <code>tabWidth</code> is 2, <code>printWidth</code> is 180, semicolons are required, single quotes are preferred, and multi-line trailing commas are required.</li>
+<li>Keep imports grouped and sorted by <code>oxfmt</code>: side-effect, builtin, external, internal/subpath, relative, style, unknown.</li>
+<li>Use <code>import type</code> for type-only imports. <code>oxlint</code> enforces consistent inline type imports.</li>
+<li>No trailing spaces; preserve LF line endings.</li>
 </ul>
-<h2 id="8-tests">8. Tests</h2>
+<h2 id="8-typecheck-build">8. Typecheck &amp; Build</h2>
+<ul>
+<li><code>tsgo</code> is the default TypeScript engine for development validation.</li>
+<li>Run <code>npm run typecheck</code> for no-emit type checking (<code>tsgo --build tsconfig.json --noEmit</code>).</li>
+<li>Run <code>npm run build</code> for the normal build (<code>tsgo --build tsconfig.build.json</code>).</li>
+<li><code>npm run buildProduction</code> still uses <code>tsc</code> for the production build path.</li>
+<li>Keep all TypeScript ESM-compatible and compatible with supported Node.js versions: 20, 22, 24, and 26.</li>
+</ul>
+<h2 id="9-tests">9. Tests</h2>
 <ul>
 <li>Add at least one test per new helper function (happy path + one edge case).</li>
 <li>Use explicit test names describing behavior (<code>converts 100 lux to encoded value</code>).</li>
 <li>Keep test data small and deterministic.</li>
+<li>Tests run with Vitest. Use <code>npm run test</code> for the suite, <code>npm run test:coverage</code> for coverage, and pass a test path after <code>--</code> for targeted validation.</li>
+<li>Prefer the relevant full test file or matching suite/task for touched code rather than relying on arbitrary isolated single-test execution.</li>
+<li>Some tests are intentionally multi-step flows. State may persist across successive steps within a single flow, but each test unit must remain isolated from other tests.</li>
 </ul>
-<h2 id="9-performance">9. Performance</h2>
+<h2 id="10-performance">10. Performance</h2>
 <ul>
 <li>Avoid premature optimization; micro‑opt only with measurable hotspot proof.</li>
 <li>Prefer simple loops over complex chaining when in per‑tick update paths.</li>
 </ul>
-<h2 id="10-copilot-prompting-hints">10. Copilot Prompting Hints</h2>
-<p>Placing this file at root lets Copilot pick patterns. Reinforce by:</p>
+<h2 id="11-agent-prompting-hints">11. Agent Prompting Hints</h2>
+<p>Placing this file at root lets coding agents pick patterns. Reinforce by:</p>
 <ul>
 <li>Keeping 2–3 perfect exemplar functions near top of large files.</li>
 <li>Adding a brief <code>// Style: ...</code> comment before a series of helpers.</li>
 <li>Rejecting poor suggestions early so the buffer stays clean.</li>
 </ul>
-<h2 id="11-file-header-blocks">11. File Header Blocks</h2>
+<h2 id="12-file-header-blocks">12. File Header Blocks</h2>
 <ul>
 <li>Keep existing license header exactly; update <code>@version</code> only on functional changes, not style edits.</li>
 </ul>
-<h2 id="12-deprecation">12. Deprecation</h2>
+<h2 id="13-deprecation">13. Deprecation</h2>
 <ul>
 <li>Mark deprecated APIs with <code>@deprecated</code> tag explaining alternative and planned removal version.</li>
 </ul>
-<h2 id="13-commit-messages-conventional-subset">13. Commit Messages (conventional subset)</h2>
+<h2 id="14-commit-messages-conventional-subset">14. Commit Messages (conventional subset)</h2>
 <ul>
 <li><code>feat:</code>, <code>fix:</code>, <code>docs:</code>, <code>refactor:</code>, <code>test:</code>, <code>chore:</code> prefix.</li>
 <li>Imperative, lower case first line; no period.</li>
 </ul>
-<h2 id="14-example-reference">14. Example (Reference)</h2>
+<h2 id="15-example-reference">15. Example (Reference)</h2>
 <pre><code class="language-ts">/**
  * Convert lux to Matter encoded illuminance value.
  *
@@ -249,12 +261,24 @@ function luxToMatterExample(lux: number): number {
   return Math.round(Math.min(10000 * Math.log10(lux), 0xfffe));
 }
 </code></pre>
-<h2 id="15-creating-jest-test">15. Creating Jest test</h2>
-<p>Always remember we are in ESM module with ts-jest.</p>
-<p>So use jest.unstable_mockModule and not jest.mock.</p>
-<h2 id="16-running-jest-test">16. Running Jest test</h2>
+<h2 id="16-creating-vitest-tests">16. Creating Vitest Tests</h2>
+<ul>
+<li>The repository is TypeScript ESM and uses Vitest for tests.</li>
+<li>Prefer <code>vi.mock</code> / <code>vi.spyOn</code> patterns used by nearby tests.</li>
+<li>Keep mocks explicit, reset or restore them in test cleanup, and avoid sharing mutable state across test units.</li>
+</ul>
+<h2 id="17-running-tests">17. Running Tests</h2>
 <p>Always use</p>
-<p>npm run test:coverage -- yourTest.test.ts</p>
+<pre><code class="language-shell">npm run test:coverage -- yourTest.test.ts
+</code></pre>
+<p>For non-coverage local validation, use:</p>
+<pre><code class="language-shell">npm run test -- yourTest.test.ts
+</code></pre>
+<h2 id="18-release-validation">18. Release Validation</h2>
+<p>Before publish-like changes, the repository uses:</p>
+<pre><code class="language-shell">npm run runMeBeforePublish
+</code></pre>
+<p>That runs formatting, linting, HTML updates, clean build, typecheck, and coverage.</p>
 <hr>
 <p>Short, opinionated. If a rule isn’t helping, propose a PR to adjust.</p>
   <script>

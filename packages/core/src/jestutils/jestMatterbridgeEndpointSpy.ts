@@ -21,14 +21,28 @@
  * limitations under the License.
  */
 
-import { jest } from '@jest/globals';
-
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 // Spy on MatterbridgeEndpoint methods
-export const setClusterMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
-export const setAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute');
-export const updateAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'updateAttribute');
-export const subscribeAttributeMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'subscribeAttribute');
-export const triggerEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerEvent');
-export const triggerSwitchEventMatterbridgeEndpointSpy = jest.spyOn(MatterbridgeEndpoint.prototype, 'triggerSwitchEvent');
+const { jest } = await import('@jest/globals' as string);
+export const setClusterMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setCluster> = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
+export const setAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute> = jest.spyOn(
+  MatterbridgeEndpoint.prototype,
+  'setAttribute',
+);
+export const updateAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.updateAttribute> = jest.spyOn(
+  MatterbridgeEndpoint.prototype,
+  'updateAttribute',
+);
+export const subscribeAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.subscribeAttribute> = jest.spyOn(
+  MatterbridgeEndpoint.prototype,
+  'subscribeAttribute',
+);
+export const triggerEventMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerEvent> = jest.spyOn(
+  MatterbridgeEndpoint.prototype,
+  'triggerEvent',
+);
+export const triggerSwitchEventMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.triggerSwitchEvent> = jest.spyOn(
+  MatterbridgeEndpoint.prototype,
+  'triggerSwitchEvent',
+);

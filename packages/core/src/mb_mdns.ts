@@ -1,3 +1,4 @@
+// oxlint-disable no-bitwise
 /**
  * @description This file contains the bin mb_mdns for the class Mdns.
  * @file packages/core/src/mb_mdns.ts
@@ -21,14 +22,20 @@
  * limitations under the License.
  */
 
-import { AddressInfo } from 'node:net';
+// oxlint-disable typescript/prefer-nullish-coalescing
+
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
 import { DnsClass, DnsClassFlag, DnsRecordType, Mdns, MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from '@matterbridge/dgram';
 import { getIntParameter, getParameter, getStringArrayParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 
 import pkg from '../package.json' with { type: 'json' };
+
+logModuleLoaded('mb-mdns');
 
 export const MB_MDNS_DEFAULT_INTERVAL_MS = 10000;
 export const MB_MDNS_DEFAULT_TIMEOUT_MS = 600000;
@@ -196,7 +203,7 @@ export function sendMdnsQuery(mdns: Mdns, unicast: boolean = false): void {
       { name: '_services._dns-sd._udp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: unicast },
     ]);
   } catch (error) {
-    mdns.log.error(`Error sending mDNS query: ${(error as Error).message}`);
+    mdns.log.error(`Error sending mDNS query: ${getErrorMessage(error)}`);
   }
 }
 
@@ -258,7 +265,7 @@ export function advertiseMatterbridgeService(mdns: Mdns, ttl: number = 120): voi
   try {
     mdns.sendResponse(answers);
   } catch (error) {
-    mdns.log.error(`Error sending mDNS advertisement: ${(error as Error).message}`);
+    mdns.log.error(`Error sending mDNS advertisement: ${getErrorMessage(error)}`);
   }
 }
 
@@ -324,12 +331,14 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
         mdnsIpv4?.log.info('Multicast loopback disabled for mdnsIpv4');
       }
       mdnsIpv4?.log.info(`mdnsIpv4 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (options.advertiseIntervalMs !== undefined) {
-        advertiseMatterbridgeService(mdnsIpv4 as Mdns);
+      if (options.advertiseIntervalMs !== undefined && mdnsIpv4) {
+        advertiseMatterbridgeService(mdnsIpv4);
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
         mdnsIpv4AdvertiseInterval = setInterval(() => advertiseMatterbridgeService(mdnsIpv4 as Mdns), options.advertiseIntervalMs).unref();
       }
-      if (options.queryIntervalMs !== undefined) {
-        sendMdnsQuery(mdnsIpv4 as Mdns, options.unicast);
+      if (options.queryIntervalMs !== undefined && mdnsIpv4) {
+        sendMdnsQuery(mdnsIpv4, options.unicast);
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
         mdnsIpv4QueryInterval = setInterval(() => sendMdnsQuery(mdnsIpv4 as Mdns, options.unicast), options.queryIntervalMs).unref();
       }
     });
@@ -359,27 +368,32 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
         mdnsIpv6?.log.info('Multicast loopback disabled for mdnsIpv6');
       }
       mdnsIpv6?.log.info(`mdnsIpv6 server ready on ${address.family} ${address.address}:${address.port}`);
-      if (options.advertiseIntervalMs !== undefined) {
-        advertiseMatterbridgeService(mdnsIpv6 as Mdns);
+      if (options.advertiseIntervalMs !== undefined && mdnsIpv6) {
+        advertiseMatterbridgeService(mdnsIpv6);
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
         mdnsIpv6AdvertiseInterval = setInterval(() => advertiseMatterbridgeService(mdnsIpv6 as Mdns), options.advertiseIntervalMs).unref();
       }
-      if (options.queryIntervalMs !== undefined) {
-        sendMdnsQuery(mdnsIpv6 as Mdns, options.unicast);
+      if (options.queryIntervalMs !== undefined && mdnsIpv6) {
+        sendMdnsQuery(mdnsIpv6, options.unicast);
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style
         mdnsIpv6QueryInterval = setInterval(() => sendMdnsQuery(mdnsIpv6 as Mdns, options.unicast), options.queryIntervalMs).unref();
       }
     });
   }
 
   if (registerSignalHandlers) {
+    // oxlint-disable-next-line typescript/no-misused-promises
     process.on('SIGINT', async () => {
       await cleanupAndLogAndExit();
     });
+    // oxlint-disable-next-line typescript/no-misused-promises
     process.on('SIGTERM', async () => {
       await cleanupAndLogAndExit();
     });
   }
 
   if (!options.disableTimeout) {
+    // oxlint-disable-next-line typescript/no-misused-promises
     setTimeout(async () => {
       await cleanupAndLogAndExit();
     }, MB_MDNS_DEFAULT_TIMEOUT_MS).unref();
@@ -399,13 +413,14 @@ export function startMbMdns(options: MbMdnsOptions, registerSignalHandlers: bool
  * @param {(message: string) => void} log The logger used to print help text.
  * @returns {MbMdnsRuntime | undefined} The running runtime, or `undefined` when exiting after help.
  */
+// oxlint-disable-next-line typescript/unbound-method
 export function mbMdnsMain(exitFn: (code: number) => never | void = process.exit, log: (message: string) => void = defaultConsoleLog): MbMdnsRuntime | undefined {
   const options = getMbMdnsOptions();
 
   if (options.showHelp) {
     printMbMdnsHelp(log);
     exitFn(0);
-    return;
+    return undefined;
   }
 
   return startMbMdns(options);

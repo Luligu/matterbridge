@@ -26,8 +26,8 @@
 
 import { AttributeElement, ClusterElement, ClusterModel, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
-import { type ClusterId } from '@matter/types/datatype';
-import { type MeasurementAccuracy } from '@matter/types/globals';
+import type { ClusterId } from '@matter/types/datatype';
+import type { MeasurementAccuracy } from '@matter/types/globals';
 
 // Create the cluster definition and model for the SoilMeasurement cluster.
 export const SoilMeasurementDefinition = ClusterElement(
@@ -91,6 +91,7 @@ export declare namespace SoilMeasurement {
 
 // console.log('SoilMeasurement cluster:', inspect(ClusterType(SoilMeasurementModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const SoilMeasurement = ClusterType(SoilMeasurementModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0430;
   readonly name: 'SoilMeasurement';

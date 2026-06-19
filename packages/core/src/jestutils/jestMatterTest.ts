@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+// oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
 
 import path from 'node:path';
@@ -41,7 +42,7 @@ import { flushAsync } from './flushAsync.js';
 import { HOMEDIR, NAME } from './jestSetupTest.js';
 
 export let environment: Environment;
-export let server: ServerNode<ServerNode.RootEndpoint>;
+export let server: ServerNode;
 export let aggregator: Endpoint<AggregatorEndpoint>;
 
 /**
@@ -76,6 +77,7 @@ export let aggregator: Endpoint<AggregatorEndpoint>;
  * await destroyTestEnvironment();
  * ```
  */
+// oxlint-disable-next-line typescript/require-await
 export async function createTestEnvironment(): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
@@ -131,6 +133,7 @@ export async function destroyTestEnvironment(): Promise<void> {
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
 export function getPlatformMatterbridge(): PlatformMatterbridge {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   return {
     systemInformation: {
       interfaceName: 'eth0',
@@ -160,10 +163,10 @@ export function getPlatformMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.9.0',
-    matterbridgeLatestVersion: '3.9.0',
-    matterbridgeDevVersion: '3.9.0',
-    frontendVersion: '3.9.0',
+    matterbridgeVersion: '3.9.1',
+    matterbridgeLatestVersion: '3.9.1',
+    matterbridgeDevVersion: '3.9.1',
+    frontendVersion: '3.9.1',
     bridgeMode: '',
     restartMode: '',
     virtualMode: 'mounted_switch',
@@ -222,12 +225,13 @@ export async function flushAllEndpointNumberPersistence(
  * @param {Endpoint} endpoint The endpoint to find the root server for.
  * @returns {ServerNode<ServerNode.RootEndpoint>} The root ServerNode of the given endpoint.
  */
-function getRootServerNode(endpoint: Endpoint): ServerNode<ServerNode.RootEndpoint> {
-  let current = endpoint as Endpoint;
+function getRootServerNode(endpoint: Endpoint): ServerNode {
+  let current = endpoint;
   while (current.owner) {
-    current = current.owner as Endpoint;
+    current = current.owner;
   }
-  return current as ServerNode<ServerNode.RootEndpoint>;
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return current as ServerNode;
 }
 
 /**
@@ -238,9 +242,10 @@ function getRootServerNode(endpoint: Endpoint): ServerNode<ServerNode.RootEndpoi
  */
 function collectAllEndpoints(root: Endpoint): Endpoint[] {
   const list: Endpoint[] = [];
-  const walk = (ep: Endpoint) => {
+  const walk = (ep: Endpoint): void => {
     list.push(ep);
     if (ep.parts) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       for (const child of ep.parts as unknown as Endpoint[]) {
         walk(child);
       }
@@ -265,6 +270,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   const nodeStore = targetServer.env.get(ServerNodeStore);
   // Ensure any pending persistence finished (flush any in-flight batch promise)
   await nodeStore.endpointStores.close();
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const all = collectAllEndpoints(targetServer as unknown as Endpoint);
   for (const ep of all) {
     const store = nodeStore.storeForEndpoint(ep);
@@ -285,6 +291,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
  */
 export async function closeServerNodeStores(targetServer?: ServerNode): Promise<void> {
   // Close endpoint stores to avoid number persistence issues
+  // oxlint-disable-next-line no-param-reassign typescript/prefer-nullish-coalescing
   if (!targetServer) targetServer = server;
   await targetServer?.env.get(ServerNodeStore)?.endpointStores.close();
 }
@@ -330,7 +337,7 @@ export async function createServerNode(
   ticks: number = 1,
   microTurns: number = 1,
   pause: number = 10,
-): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 
@@ -433,7 +440,7 @@ export async function createServerNode(
  * await destroyTestEnvironment();
  * ```
  */
-export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode<ServerNode.RootEndpoint>, Endpoint<AggregatorEndpoint>]> {
+export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
     // istanbul ignore next
@@ -442,10 +449,10 @@ export async function startServerNode(ticks: number = 1, microTurns: number = 1,
 
   // Wait for the server to be online
   await new Promise<void>((resolve, reject) => {
-    server.lifecycle.online.on(async () => {
+    server.lifecycle.online.on((): void => {
       resolve();
     });
-    server.start().catch((err) => reject(err));
+    server.start().catch((err: unknown) => reject(err));
   });
 
   // Check if the server is online
@@ -587,12 +594,7 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * expect(await addDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function addDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
@@ -607,6 +609,7 @@ export async function addDevice(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
+    // oxlint-disable-next-line typescript/restrict-template-expressions
     process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }
@@ -635,12 +638,7 @@ export async function addDevice(
  * expect(await deleteDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function deleteDevice(
-  owner: ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>,
-  device: Endpoint,
-  rounds: number = 3,
-  pause: number = 10,
-): Promise<boolean> {
+export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
@@ -655,6 +653,7 @@ export async function deleteDevice(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : error;
     const errorInspect = inspect(error, { depth: 10 });
+    // oxlint-disable-next-line typescript/restrict-template-expressions
     process.stderr.write(`${er}Error deleting device ${device.maybeId}.${device.maybeNumber}: ${errorMessage}${rs}\nStack: ${errorInspect}\n`);
     return false;
   }

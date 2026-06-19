@@ -8,7 +8,7 @@ paths:
 
 ## 1. Test Framework
 
-- Use Jest (with ts-jest) as the testing framework for all unit tests.
+- Use Vitest as the testing framework for all unit tests.
 - Ensure that tests are written in TypeScript and follow the ESM module format.
 
 ## 2. Test Structure
@@ -31,8 +31,8 @@ paths:
 
 ## 6. Mocking
 
-- Use `jest.unstable_mockModule` for mocking dependencies in ESM modules.
-- Avoid using `jest.mock` as it is not compatible with ESM modules.
+- Use `vi.mock` for hoisted module mocks and `vi.doMock` when a test needs a non-hoisted mock before dynamic import.
+- Avoid importing test globals manually; Vitest globals are configured for the test suite.
 
 ## 7. Running Tests
 
@@ -43,7 +43,7 @@ paths:
 
 ## 8. Test Assertions
 
-- Use appropriate Jest matchers for assertions (e.g., `toBe`, `toEqual`, `toThrow`).
+- Use appropriate Vitest matchers for assertions (e.g., `toBe`, `toEqual`, `toThrow`).
 - Ensure that assertions are clear and directly related to the behavior being tested.
 
 ## 9. Performance

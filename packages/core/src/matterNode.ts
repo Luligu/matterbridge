@@ -1,3 +1,4 @@
+// oxlint-disable unicorn/no-negated-condition no-param-reassign
 /**
  * This file contains the class MatterNode.
  *
@@ -22,7 +23,10 @@
  * limitations under the License.
  */
 
+// WARNING: Not released yet and excluded from Vitest coverage
+
 // @matter
+// oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs';
 
 // Node modules
@@ -57,6 +61,7 @@ import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, 
 import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidNumber, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 import { wait, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger module
@@ -70,8 +75,10 @@ import { addVirtualDevice } from './helpers.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { type MatterbridgePlatform } from './matterbridgePlatform.js';
+import type { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
+
+logModuleLoaded('MatterNode');
 
 /**
  * Represents the Matter events.
@@ -171,6 +178,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Setup the broadcast server
     this.server = new BroadcastServer('matter', this.log);
+    // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.msgHandler.bind(this));
     if (this.verbose) this.log.debug(`BroadcastServer is ready`);
 
@@ -178,6 +186,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     fs.mkdirSync(matterbridge.matterbridgeDirectory, { recursive: true });
 
     // Setup the plugin manager with thread server closed
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     this.pluginManager = new PluginManager(this.matterbridge as Matterbridge);
     this.pluginManager.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
     // @ts-expect-error access private property
@@ -195,6 +204,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Ensure MdnsService is registered in the default environment
     this.matterMdnsService = new MdnsService(this.environment);
+    // oxlint-disable-next-line typescript/no-misused-promises
     setImmediate(async () => {
       await this.matterMdnsService?.construction.ready;
       if (this.verbose) this.log.debug(`Matter MdnsService is ready`);
@@ -208,6 +218,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // Setup the matter logger
     Logger.destinations.default.write = this.createDestinationMatterLogger();
     const levels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'] as const;
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     if (this.verbose) this.log.debug(`Matter logLevel: ${levels[Logger.level as MatterLogLevel]} fileLogger: ${matterbridge.matterFileLogger}.`);
 
     if (this.debug) this.log.debug(`MatterNode ${this.pluginName ? 'for plugin ' + this.pluginName : 'bridge'} loaded`);
@@ -218,7 +229,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    *
    * @param {WorkerMessage} msg - The incoming message.
    */
-  async msgHandler(msg: WorkerMessage) {
+  // oxlint-disable-next-line typescript/require-await
+  async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
@@ -304,6 +316,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       return;
     }
 
+    // oxlint-disable-next-line unicorn/no-negated-condition
     if (!this.pluginName) {
       this.log.debug('Creating MatterNode instance for all plugins...');
 
@@ -477,6 +490,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           msg = text.split(message.facility)[1]?.trim();
         }
         this.matterLog.logName = message.facility;
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
       } catch (_error) {
         // istanbul ignore next
@@ -727,7 +741,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
-    serverNode.lifecycle.online.on(async () => {
+    serverNode.lifecycle.online.on(() => {
       this.log.notice(`Server node for ${storeId} is online`);
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
@@ -759,6 +773,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.events.commissioning.fabricsChanged.on((fabricIndex, fabricAction) => {
       let action = '';
+      // oxlint-disable-next-line default-case
       switch (fabricAction) {
         case 'added':
           this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
@@ -810,6 +825,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @returns {ApiMatter} The serializable data of the server node.
    */
   getServerNodeData(serverNode: ServerNode): ApiMatter {
+    // oxlint-disable-next-line typescript/prefer-nullish-coalescing
     const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
     return {
       id: serverNode.id,
@@ -1061,7 +1077,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         this.log.debug(`Created MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})`);
       } catch (error) {
         inspectError(this.log, `Error creating MatterNode for device ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`, error);
-        return;
+        return undefined;
       }
     } else if (this.matterbridge.bridgeMode === 'bridge') {
       if (device.mode === 'matter') {
@@ -1072,7 +1088,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           await this.serverNode.add(device);
         } catch (error) {
           inspectError(this.log, `Matter error adding matter endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`, error);
-          return;
+          return undefined;
         }
       } else {
         // Register and add the device to the Matter aggregator node
@@ -1082,7 +1098,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           await this.aggregatorNode.add(device);
         } catch (error) {
           inspectError(this.log, `Matter error adding bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`, error);
-          return;
+          return undefined;
         }
       }
     } else if (this.matterbridge.bridgeMode === 'childbridge') {
@@ -1097,7 +1113,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           }
         } catch (error) {
           inspectError(this.log, `Matter error adding accessory endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`, error);
-          return;
+          return undefined;
         }
       }
       // Register and add the device to the plugin aggregator node
@@ -1112,7 +1128,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           else await this.aggregatorNode?.add(device);
         } catch (error) {
           inspectError(this.log, `Matter error adding bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`, error);
-          return;
+          return undefined;
         }
       }
     }
@@ -1186,6 +1202,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.debug(`Removing all #${plugin.registeredDevices} bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}...`);
     const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName } })).result.devices;
     for (const device of devices) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing
       const endpoint = (this.aggregatorNode?.parts.get(device.id || '') || this.serverNode?.parts.get(device.id || '')) as MatterbridgeEndpoint | undefined;
       if (!endpoint) throw new Error(`Endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} id ${device.id} not found removing all endpoints`);
       this.log.debug(`Removing bridged endpoint ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${endpoint?.name}${db})...`);
@@ -1253,6 +1270,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {MatterbridgeEndpoint} device - The device to subscribe to attribute changes for.
    * @returns {Promise<void>} A promise that resolves when the subscription is set up.
    */
+  // oxlint-disable-next-line typescript/require-await
   async subscribeAttributeChanged(plugin: Plugin, device: MatterbridgeEndpoint): Promise<void> {
     if (!plugin || !device?.plugin || !device.serialNumber || !device.uniqueId || !device.maybeNumber) return;
     this.log.debug(
@@ -1413,6 +1431,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return {
           name: session.name,
           nodeId: session.nodeId.toString(),
@@ -1441,7 +1460,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    *
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  async setServerReachability(reachable: boolean) {
+  async setServerReachability(reachable: boolean): Promise<void> {
     await this.serverNode?.setStateOf(BasicInformationServer, { reachable });
     this.serverNode?.act((agent) => this.serverNode?.eventsOf(BasicInformationServer).reachableChanged?.emit({ reachableNewValue: reachable }, agent.context));
   }
@@ -1452,17 +1471,19 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean) {
+  async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean): Promise<void> {
     for (const child of aggregatorNode.parts) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       this.log.debug(`Setting reachability of ${(child as unknown as MatterbridgeEndpoint)?.deviceName} to ${reachable}`);
       await child.setStateOf(BridgedDeviceBasicInformationServer, { reachable });
       child.act((agent) => child.eventsOf(BridgedDeviceBasicInformationServer).reachableChanged.emit({ reachableNewValue: true }, agent.context));
     }
   }
 
-  getVendorIdName = (vendorId: number | undefined) => {
+  getVendorIdName = (vendorId: number | undefined): string => {
     if (!vendorId) return '';
     let vendorName = '(Unknown vendorId)';
+    // oxlint-disable-next-line default-case
     switch (vendorId) {
       case 4937:
         vendorName = '(AppleHome)';

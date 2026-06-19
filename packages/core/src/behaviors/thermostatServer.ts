@@ -22,10 +22,12 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
@@ -41,7 +43,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   /**
    * Initializes thermostat behavior and adjusts command lists to avoid unsupported atomic commands.
    */
-  override async initialize() {
+  override async initialize(): Promise<void> {
     await super.initialize();
 
     this.endpoint.construction.onSuccess(async () => {

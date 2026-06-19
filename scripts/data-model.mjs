@@ -73,14 +73,81 @@ const lowerFirstCharacter = (value) => {
   return `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
 };
 
-const formatGeneratedTs = async (source, filePath) => {
-  const prettier = await import('prettier');
-  const prettierOptions = (await prettier.resolveConfig(filePath)) ?? {};
+const stripJsonComments = (source) => {
+  let output = '';
+  let inString = false;
+  let stringQuote = '';
+  let isEscaped = false;
 
-  return prettier.format(source, {
-    ...prettierOptions,
-    filepath: filePath,
-  });
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    const nextCharacter = source[index + 1];
+
+    if (inString) {
+      output += character;
+      if (isEscaped) {
+        isEscaped = false;
+      } else if (character === '\\') {
+        isEscaped = true;
+      } else if (character === stringQuote) {
+        inString = false;
+        stringQuote = '';
+      }
+      continue;
+    }
+
+    if (character === '"' || character === "'") {
+      inString = true;
+      stringQuote = character;
+      output += character;
+      continue;
+    }
+
+    if (character === '/' && nextCharacter === '/') {
+      while (index < source.length && source[index] !== '\n' && source[index] !== '\r') {
+        index += 1;
+      }
+      index -= 1;
+      continue;
+    }
+
+    if (character === '/' && nextCharacter === '*') {
+      index += 2;
+      while (index < source.length && !(source[index] === '*' && source[index + 1] === '/')) {
+        index += 1;
+      }
+      index += 1;
+      continue;
+    }
+
+    output += character;
+  }
+
+  return output;
+};
+
+let oxfmtConfig;
+
+const loadOxfmtConfig = async () => {
+  if (oxfmtConfig) {
+    return oxfmtConfig;
+  }
+
+  const configSource = await readFile(OXFMT_CONFIG_PATH, 'utf8');
+  const { $schema, ignorePatterns, overrides, ...formatConfig } = JSON.parse(stripJsonComments(configSource));
+  oxfmtConfig = formatConfig;
+
+  return oxfmtConfig;
+};
+
+const formatGeneratedTs = async (source, filePath) => {
+  const result = await formatOxfmt(filePath, source, await loadOxfmtConfig());
+
+  if (result.errors.length > 0) {
+    throw new Error(`Unable to format generated TypeScript ${filePath}: ${result.errors.map((error) => error.message).join('; ')}`);
+  }
+
+  return result.code;
 };
 
 const isDoNotUseEntryKey = (value) => typeof value === 'string' && value.trim().toLowerCase() === 'donotuse';
@@ -1201,9 +1268,13 @@ const resolveClusterTemplateKey = (clustersByKey, clusterName) => {
   return undefined;
 };
 
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { request } from 'node:https';
 import { join } from 'node:path';
+
+import { format as formatOxfmt } from 'oxfmt';
+
+const OXFMT_CONFIG_PATH = '.oxfmtrc.json';
 
 const fetchRemoteText = async (url, { description, headers = {}, maxRedirects = 5 } = {}) => {
   const label = description || url;

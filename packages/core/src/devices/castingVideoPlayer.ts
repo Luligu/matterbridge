@@ -120,7 +120,7 @@ export class MatterbridgeContentLauncherServer extends ContentLauncherServer {
   /**
    * Initializes the server.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeContentLauncherServer initialized`);
   }

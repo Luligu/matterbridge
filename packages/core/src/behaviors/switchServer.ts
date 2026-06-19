@@ -33,7 +33,7 @@ export class MatterbridgeSwitchServer extends SwitchServer {
   /**
    * Intentionally no-op: switch logic is handled by the device implementation.
    */
-  override initialize() {
+  override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Initializing MatterbridgeSwitchServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }

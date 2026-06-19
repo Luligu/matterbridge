@@ -34,6 +34,10 @@
 import http from 'node:http';
 import https from 'node:https';
 
+import { logModuleLoaded } from '@matterbridge/utils/loader';
+
+logModuleLoaded('mb-health');
+
 const DEFAULT_MB_HEALTH_URL = 'http://localhost:8283/health';
 
 /**
@@ -59,7 +63,7 @@ export async function checkHealth(url: string, timeoutMs: number): Promise<boole
  * @param {number} timeoutMs The timeout in milliseconds.
  * @returns {Promise<{ ok: boolean; statusCode: number; body: string; json?: unknown }>} The response details.
  */
-export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boolean; statusCode: number; body: string; json?: unknown }> {
+export async function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boolean; statusCode: number; body: string; json?: unknown }> {
   return new Promise((resolve) => {
     const parsedUrl = new URL(url);
     const requestImpl = parsedUrl.protocol === 'https:' ? https : http;
@@ -88,7 +92,7 @@ export function fetchHealth(url: string, timeoutMs: number): Promise<{ ok: boole
           const ok = statusCode >= 200 && statusCode < 300;
           const body = Buffer.concat(chunks).toString('utf8');
 
-          let json: unknown | undefined;
+          let json: unknown;
           try {
             if (body.trim().length > 0) json = JSON.parse(body);
           } catch {
@@ -136,6 +140,7 @@ export async function mbHealthExitCode(url: string, timeoutMs: number): Promise<
  * @param {(code: number) => never | void} exitFn Exit function (defaults to process.exit).
  * @returns {Promise<void>} Resolves when done.
  */
+// oxlint-disable-next-line typescript/unbound-method
 export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code: number) => never | void = process.exit): Promise<void> {
   const { ok, statusCode, body, json } = await fetchHealth(url, timeoutMs);
 
@@ -160,6 +165,7 @@ export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code:
  * @param {string} url Optional URL to fetch (defaults to http://localhost:8283/health).
  * @returns {Promise<void>} Resolves when done.
  */
+// oxlint-disable-next-line typescript/unbound-method
 export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit, url: string = DEFAULT_MB_HEALTH_URL): Promise<void> {
   await mbHealthCli(url, 5000, exitFn);
 }

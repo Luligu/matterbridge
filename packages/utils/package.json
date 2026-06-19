@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.9.0",
+  "version": "3.9.1",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -118,13 +118,13 @@
       "types": "./dist/createDirectory.d.ts",
       "import": "./dist/createDirectory.js"
     },
-    "./zip": {
-      "types": "./dist/createZip.d.ts",
-      "import": "./dist/createZip.js"
-    },
     "./color-utils": {
       "types": "./dist/colorUtils.d.ts",
       "import": "./dist/colorUtils.js"
+    },
+    "./loader": {
+      "types": "./dist/loader.d.ts",
+      "import": "./dist/loader.js"
     }
   },
   "engines": {
@@ -140,9 +140,9 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "node-ansi-logger": "3.3.0-dev-20260607-585945a"
+    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
   },
   "devDependencies": {
-    "@jest/globals": "30.4.1"
+    "vitest": "4.1.9"
   }
 }

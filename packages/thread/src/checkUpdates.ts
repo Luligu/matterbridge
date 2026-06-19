@@ -22,18 +22,25 @@
  * limitations under the License.
  */
 
-// @matterbridge
 // Node.js modules
 import { createHash } from 'node:crypto';
 
+// @matterbridge
 import type { ApiPlugin, SharedMatterbridge } from '@matterbridge/types';
 import { plg } from '@matterbridge/types';
+import { getErrorMessage } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
 // matterbridge
 import { BroadcastServer } from './broadcastServer.js';
+
+logModuleLoaded('CheckUpdates');
+
+let refreshSettingsRequired = false;
+let refreshPluginsRequired = false;
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -60,18 +67,16 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
     }
   } catch (error) {
     // istanbul ignore next cause it's just an error log
-    log.debug(`Error fetching plugins for update check: ${error instanceof Error ? error.message : error}`);
+    log.debug(`Error fetching plugins for update check: ${getErrorMessage(error)}`);
   }
 
-  /*
-  if (hasParameter('shelly')) {
-    const { getShellySysUpdate, getShellyMainUpdate } = await import('./shelly.js');
+  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises]);
 
-    shellyUpdatesPromises.push(getShellySysUpdate(matterbridge, log, server));
-    shellyUpdatesPromises.push(getShellyMainUpdate(matterbridge, log, server));
-  }
-  */
-  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises /* , ...shellyUpdatesPromises*/]);
+  // Send only once the refresh required messages to the frontend if needed, instead of sending one for each update check
+  if (refreshSettingsRequired) server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
+  if (refreshPluginsRequired) server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
+  refreshSettingsRequired = false;
+  refreshPluginsRequired = false;
 
   server.close();
 }
@@ -117,7 +122,7 @@ export async function checkUpdatesAndLog(matterbridge: SharedMatterbridge, log: 
       });
     }
   } catch (error) {
-    log.debug(`Error checking GitHub ${branch} updates: ${error instanceof Error ? error.message : error}`);
+    log.debug(`Error checking GitHub ${branch} updates: ${getErrorMessage(error)}`);
   }
 }
 
@@ -136,7 +141,9 @@ export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbri
   try {
     const version = await getNpmPackageVersion('matterbridge');
     server.request({ type: 'matterbridge_latest_version', src: server.name, dst: 'matterbridge', params: { version } });
-    if (matterbridge.matterbridgeVersion !== version) {
+    if (matterbridge.matterbridgeVersion === version) {
+      log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${version}.`);
+    } else {
       log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${version}.`);
       server.request({
         type: 'frontend_snackbarmessage',
@@ -145,13 +152,13 @@ export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbri
         params: { message: 'Matterbridge latest update available', timeout: 0, severity: 'info' },
       });
       server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { devVersion: false } });
-      server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
-    } else {
-      log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${version}.`);
+      refreshSettingsRequired = true;
+      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
     }
     return version;
   } catch (error) {
-    log.warn(`Error getting Matterbridge latest version: ${error instanceof Error ? error.message : error}`);
+    log.warn(`Error getting Matterbridge latest version: ${getErrorMessage(error)}`);
+    return undefined;
   }
 }
 
@@ -179,13 +186,15 @@ export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge
         params: { message: 'Matterbridge dev update available', timeout: 0, severity: 'info' },
       });
       server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { devVersion: true } });
-      server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
+      refreshSettingsRequired = true;
+      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
     } else if ((matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-')) && matterbridge.matterbridgeVersion === version) {
       log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${version}.`);
     }
     return version;
   } catch (error) {
-    log.warn(`Error getting Matterbridge latest dev version: ${error instanceof Error ? error.message : error}`);
+    log.warn(`Error getting Matterbridge latest dev version: ${getErrorMessage(error)}`);
+    return undefined;
   }
 }
 
@@ -205,15 +214,17 @@ export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastS
     const version = await getNpmPackageVersion(plugin.name);
     plugin.latestVersion = version;
     server.request({ type: 'plugins_set_latest_version', src: server.name, dst: 'plugins', params: { plugin, version } });
-    if (plugin.version !== plugin.latestVersion) {
-      log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-      server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-    } else {
+    if (plugin.version === plugin.latestVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+    } else {
+      log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
+      refreshPluginsRequired = true;
+      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
     }
     return version;
   } catch (error) {
-    log.warn(`Error getting plugin ${plg}${plugin.name}${wr} latest version: ${error instanceof Error ? error.message : error}`);
+    log.warn(`Error getting plugin ${plg}${plugin.name}${wr} latest version: ${getErrorMessage(error)}`);
+    return undefined;
   }
 }
 
@@ -235,12 +246,14 @@ export async function getPluginDevVersion(log: AnsiLogger, server: BroadcastServ
     server.request({ type: 'plugins_set_dev_version', src: server.name, dst: 'plugins', params: { plugin, version } });
     if ((plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.version !== plugin.devVersion) {
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
-      server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
+      refreshPluginsRequired = true;
+      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
     } else if (plugin.version.includes('-dev-') && plugin.version === plugin.devVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
     }
     return version;
   } catch (error) {
-    log.debug(`Error getting plugin ${plg}${plugin.name}${db} latest dev version: ${error instanceof Error ? error.message : error}`);
+    log.debug(`Error getting plugin ${plg}${plugin.name}${db} latest dev version: ${getErrorMessage(error)}`);
+    return undefined;
   }
 }

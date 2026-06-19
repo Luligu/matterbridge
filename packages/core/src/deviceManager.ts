@@ -22,21 +22,19 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Device Manager loaded.\u001B[40;0m');
-
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+
+logModuleLoaded('Device Manager');
 
 /**
  * Converts a MatterbridgeEndpoint to a BaseDevice.
@@ -86,6 +84,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
+    // istanbul ignore next cause debug logs are not relevant for coverage
     this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
@@ -97,11 +96,11 @@ export class DeviceManager {
    * Destroys the device manager and releases resources.
    */
   destroy(): void {
-    this.server.off('broadcast_message', this.msgHandler.bind(this));
     this.server.close();
   }
 
-  private async msgHandler(msg: WorkerMessage) {
+  private msgHandler(msg: WorkerMessage): void {
+    // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       // istanbul ignore next cause debug logs are not relevant for coverage
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -129,9 +128,11 @@ export class DeviceManager {
           }
           break;
         case 'devices_set':
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
           break;
         case 'devices_remove':
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           this.server.respond({ ...msg, result: { success: this.remove(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
           break;
         case 'devices_clear':
@@ -266,7 +267,7 @@ export class DeviceManager {
    *
    * @returns {IterableIterator<MatterbridgeEndpoint>} An iterator for the devices.
    */
-  [Symbol.iterator]() {
+  [Symbol.iterator](): IterableIterator<MatterbridgeEndpoint> {
     return this._devices.values();
   }
 

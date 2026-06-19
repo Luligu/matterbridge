@@ -24,11 +24,11 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { type MaybePromise } from '@matter/general';
+import type { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
-import { type ClusterId } from '@matter/types/datatype';
-import { type ThreeLevelAuto } from '@matter/types/globals';
+import type { ClusterId } from '@matter/types/datatype';
+import type { ThreeLevelAuto } from '@matter/types/globals';
 
 // Create the cluster definition and model for the ClosureDimension cluster.
 export const ClosureDimensionDefinition = ClusterElement(
@@ -329,6 +329,7 @@ export declare namespace ClosureDimension {
 
 // console.log('ClosureDimension cluster:', inspect(ClusterType(ClosureDimensionModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const ClosureDimension = ClusterType(ClosureDimensionModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0105;
   readonly name: 'ClosureDimension';

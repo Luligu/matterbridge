@@ -22,33 +22,31 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgePlatform loaded.\u001B[40;0m');
-
 // Node.js modules
 import path from 'node:path';
 
 // @matter
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
-import { EndpointNumber } from '@matter/types/datatype';
+import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // Node AnsiLogger module
-import { AnsiLogger, CYAN, db, er, LogLevel, nf, wr } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, er, type LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
-import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
+import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
 // matterbridge
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
-import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { assertMatterbridgeEndpoint, type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
+
+logModuleLoaded('MatterbridgePlatform');
 
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
@@ -64,7 +62,7 @@ export type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformM
 export function isMatterbridgePlatform(value: unknown): value is MatterbridgePlatform {
   if (!value || typeof value !== 'object') return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any typescript/no-unsafe-type-assertion
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.
@@ -209,8 +207,9 @@ export class MatterbridgePlatform {
       configurable: false,
     });
 
-    // istanbul ignore next 2 lines Debug logs are not relevant for coverage
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);
 
     // create the NodeStorageManager for the plugin platform
@@ -267,7 +266,8 @@ export class MatterbridgePlatform {
   /**
    * Destroys the platform, clean up memory, close storage and broadcast server.
    */
-  private async destroy() {
+  private async destroy(): Promise<void> {
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Destroying MatterbridgePlatform for plugin ${this.config.name}`);
 
     // Cleanup memory
@@ -283,6 +283,7 @@ export class MatterbridgePlatform {
     // Close the broadcast server
     this.#server.close();
 
+    // istanbul ignore next Debug logs are not relevant for coverage
     if (this.#verbose) this.log.debug(`Destroyed MatterbridgePlatform for plugin ${this.config.name}`);
     this.isReady = false;
   }
@@ -295,7 +296,8 @@ export class MatterbridgePlatform {
    * @param {string} [reason] - The reason for starting.
    * @throws {Error} - Throws an error if the method is not overridden.
    */
-  async onStart(reason?: string) {
+  // oxlint-disable-next-line typescript/require-await
+  async onStart(reason?: string): Promise<void> {
     this.log.error('Plugins must override onStart.', reason);
     throw new Error('Plugins must override onStart.');
   }
@@ -306,7 +308,7 @@ export class MatterbridgePlatform {
    * Use this method to perform any configuration of your devices and to override the value of the attributes that are persistent and stored in the
    * matter storage (i.e. the onOff attribute of the OnOff cluster).
    */
-  async onConfigure() {
+  async onConfigure(): Promise<void> {
     this.log.debug(`Configuring platform ${this.name}`);
 
     // Save the selectDevice and selectEntity
@@ -323,7 +325,7 @@ export class MatterbridgePlatform {
    *
    * @param {string} [reason] - The reason for shutting down.
    */
-  async onShutdown(reason?: string) {
+  async onShutdown(reason?: string): Promise<void> {
     this.log.debug(`Shutting down platform ${this.name}`, reason);
 
     // Save the selectDevice and selectEntity
@@ -341,7 +343,8 @@ export class MatterbridgePlatform {
    *
    * @param {LogLevel} logLevel The new logger level.
    */
-  async onChangeLoggerLevel(logLevel: LogLevel) {
+  // oxlint-disable-next-line typescript/require-await
+  async onChangeLoggerLevel(logLevel: LogLevel): Promise<void> {
     this.log.debug(`The plugin doesn't override onChangeLoggerLevel. Logger level set to: ${logLevel}`);
   }
 
@@ -371,7 +374,8 @@ export class MatterbridgePlatform {
    *  },
    * ```
    */
-  async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig) {
+  // oxlint-disable-next-line typescript/require-await
+  async onAction(action: string, value?: string, id?: string, formData?: PlatformConfig): Promise<void> {
     this.log.debug(
       `The plugin ${CYAN}${this.name}${db} doesn't override onAction. Received action ${CYAN}${action}${db}${value ? ' with ' + CYAN + value + db : ''} ${id ? ' for schema ' + CYAN + id + db : ''}`,
       formData,
@@ -388,6 +392,7 @@ export class MatterbridgePlatform {
    * @param {unknown} [body] - Optional request body (for POST, PUT, PATCH)
    * @returns {Promise<unknown>} - A JSON-serializable value, or undefined to respond with 404
    */
+  // oxlint-disable-next-line typescript/require-await
   async onFetch(method: string, path?: string, query?: Record<string, unknown>, body?: unknown): Promise<unknown> {
     this.log.debug(`onFetch called: method=${method} path=${path ?? 'none'} query=${query ? JSON.stringify(query) : 'none'} body=${body ? JSON.stringify(body) : 'none'}`);
     return undefined;
@@ -398,7 +403,8 @@ export class MatterbridgePlatform {
    *
    * @param {PlatformConfig} config The new plugin config.
    */
-  async onConfigChanged(config: PlatformConfig) {
+  // oxlint-disable-next-line typescript/require-await
+  async onConfigChanged(config: PlatformConfig): Promise<void> {
     this.log.debug(`The plugin ${CYAN}${config.name}${db} doesn't override onConfigChanged. Received new config.`);
   }
 
@@ -599,7 +605,7 @@ export class MatterbridgePlatform {
    *
    * @param {MatterbridgeEndpoint} device - The device to register.
    */
-  async registerDevice(device: MatterbridgeEndpoint) {
+  async registerDevice(device: MatterbridgeEndpoint): Promise<void> {
     assertMatterbridgeEndpoint(device, `MatterbridgePlatform.registerDevice for plugin ${this.name}`);
     device.plugin = this.name;
     if (!device.uniqueId) {
@@ -635,6 +641,7 @@ export class MatterbridgePlatform {
         const options = device.getClusterServerOptions(Descriptor.id);
         // istanbul ignore else
         if (options) {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
           // istanbul ignore else
           if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
@@ -670,7 +677,7 @@ export class MatterbridgePlatform {
    *
    * @param {MatterbridgeEndpoint} device - The device to unregister.
    */
-  async unregisterDevice(device: MatterbridgeEndpoint) {
+  async unregisterDevice(device: MatterbridgeEndpoint): Promise<void> {
     assertMatterbridgeEndpoint(device, `MatterbridgePlatform.unregisterDevice for plugin ${this.name}`);
     await this.#removeBridgedEndpoint?.(this.name, device);
     // istanbul ignore else
@@ -682,7 +689,7 @@ export class MatterbridgePlatform {
    *
    * @param {number} [delay] - The delay in milliseconds between removing each bridged endpoint (default: 0).
    */
-  async unregisterAllDevices(delay: number = 0) {
+  async unregisterAllDevices(delay: number = 0): Promise<void> {
     await this.#removeAllBridgedEndpoints?.(this.name, delay);
     this.#registeredEndpoints.clear();
   }
@@ -828,6 +835,7 @@ export class MatterbridgePlatform {
     const device = this.#selectDevices.get(serial);
     // istanbul ignore else
     if (device) {
+      // oxlint-disable-next-line typescript/prefer-nullish-coalescing
       if (!device.entities) device.entities = [];
       if (!device.entities.find((entity) => entity.name === entityName)) device.entities.push({ name: entityName, description: entityDescription, icon: entityIcon });
     }
@@ -911,7 +919,7 @@ export class MatterbridgePlatform {
    */
   verifyMatterbridgeVersion(requiredVersion: string, destroy: boolean = true): boolean {
     const compareVersions = (matterbridgeVersion: string, requiredVersion: string): boolean => {
-      const stripTag = (v: string) => {
+      const stripTag = (v: string): string => {
         const parts = v.split('-');
         return parts[0];
       };
@@ -942,10 +950,11 @@ export class MatterbridgePlatform {
    * The blacklist has priority over the whitelist.
    *
    * @param {string | string[]} device - The device name(s) to validate.
-   * @param {boolean} [log] - Whether to log the validation result.
+   * @param {boolean} [log] - Whether to log the validation result. Default is true.
    * @returns {boolean} - Returns true if the device is allowed, false otherwise.
    */
   validateDevice(device: string | string[], log: boolean = true): boolean {
+    // oxlint-disable-next-line no-param-reassign
     if (!Array.isArray(device)) device = [device];
 
     let blackListBlocked = 0;
@@ -992,6 +1001,7 @@ export class MatterbridgePlatform {
     if (
       isValidObject(this.config.deviceEntityBlackList, 1) &&
       device in this.config.deviceEntityBlackList &&
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)
     ) {
       // istanbul ignore else
@@ -1041,7 +1051,8 @@ export class MatterbridgePlatform {
         this.log.debug(`Setting endpoint number for device ${CYAN}${device.uniqueId}${db} to ${CYAN}${device.maybeNumber}${db}`);
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
-      for (const child of device.getChildEndpoints() as MatterbridgeEndpoint[]) {
+      for (const child of device.getChildEndpoints()) {
+        // istanbul ignore next because is just defensive
         if (!child.maybeId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + child.id) && endpointMap.get(device.uniqueId + separator + child.id) !== child.maybeNumber) {
           this.log.warn(

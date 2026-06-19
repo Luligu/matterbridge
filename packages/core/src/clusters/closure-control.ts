@@ -24,11 +24,11 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
 /* eslint-disable @typescript-eslint/no-namespace */
 
-import { type MaybePromise } from '@matter/general';
+import type { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, EventElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
 import { ClusterType, type ClusterTyping } from '@matter/types/cluster';
-import { type ClusterId } from '@matter/types/datatype';
-import { type ThreeLevelAuto } from '@matter/types/globals';
+import type { ClusterId } from '@matter/types/datatype';
+import type { ThreeLevelAuto } from '@matter/types/globals';
 
 // Create the cluster definition and model for the ClosureControl cluster.
 export const ClosureControlDefinition = ClusterElement(
@@ -289,6 +289,7 @@ export declare namespace ClosureControl {
 
 // console.log('ClosureControl cluster:', inspect(ClusterType(ClosureControlModel), { depth: null, colors: true }));
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion
 export const ClosureControl = ClusterType(ClosureControlModel) as ClusterType.Concrete & {
   readonly id: ClusterId & 0x0104;
   readonly name: 'ClosureControl';

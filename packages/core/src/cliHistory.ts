@@ -22,17 +22,15 @@
  * limitations under the License.
  */
 
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Cli history loaded.\u001B[40;0m');
-
 import { writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // @matterbridge
-import { Tracker, TrackerSnapshot } from '@matterbridge/utils/tracker';
+import { Tracker, type TrackerSnapshot } from '@matterbridge/utils/tracker';
+
+logModuleLoaded('CliHistory');
 
 export type GenerateHistoryPageOptions = {
   /**

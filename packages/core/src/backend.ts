@@ -22,6 +22,10 @@
  * limitations under the License.
  */
 
+// WARNING: Not released yet and excluded from Vitest coverage
+
+// oxlint-disable typescript/prefer-nullish-coalescing
+
 // Node.js built-in modules
 import EventEmitter from 'node:events';
 import type { Server as HttpServer } from 'node:http';
@@ -33,6 +37,7 @@ import { BroadcastServer } from '@matterbridge/thread';
 import type { ApiDevice, ApiPlugin, ApiSettings, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // AnsiLogger
 import { AnsiLogger, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
@@ -40,10 +45,7 @@ import { AnsiLogger, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } fr
 import type { BackendExpress } from './backendExpress.js';
 import type { BackendWsServer } from './backendWsServer.js';
 
-// istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Backend loaded.\u001B[40;0m');
+logModuleLoaded('Backend');
 
 /**
  * Represents the Backend events.
@@ -98,6 +100,7 @@ export class Backend extends EventEmitter<BackendEvents> {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
+    // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
   }
 
@@ -105,7 +108,6 @@ export class Backend extends EventEmitter<BackendEvents> {
    * Destroy the BroadcastServer.
    */
   destroy(): void {
-    this.server.off('broadcast_message', this.broadcastMsgHandler.bind(this));
     this.server.close();
   }
 
@@ -114,9 +116,11 @@ export class Backend extends EventEmitter<BackendEvents> {
    *
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
-  private async broadcastMsgHandler(msg: WorkerMessage) {
+  // oxlint-disable-next-line typescript/require-await
+  private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
     // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
+      // oxlint-disable-next-line default-case
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
@@ -143,17 +147,21 @@ export class Backend extends EventEmitter<BackendEvents> {
     this.backendExpress = new BackendExpress(this.matterbridge, this);
     this.backendWsServer = new BackendWsServer(this.matterbridge, this);
 
+    // oxlint-disable-next-line unicorn/no-negated-condition
     if (!hasParameter('ssl')) {
       // Create an HTTP server and attach the express app
       const http = await import('node:http');
+      await this.backendExpress.start();
       try {
         this.log.debug(`Creating HTTP server...`);
         this.httpServer = http.createServer(this.backendExpress.expressApp);
       } catch (error) {
         logError(this.log, `Failed to create HTTP server`, error);
         this.emit('server_error', error);
+        await this.backendExpress.stop();
         return;
       }
+      await this.backendWsServer.start();
 
       // Listen on the specified port
       this.httpServer.listen(this.port, getParameter('bind'), () => {
@@ -208,11 +216,13 @@ export class Backend extends EventEmitter<BackendEvents> {
             socket.destroy();
           }
         }
+        // oxlint-disable-next-line unicorn/no-useless-undefined
         return undefined;
       });
 
       this.httpServer.on('error', (error: Error) => {
         this.log.error(`Frontend http server error listening on ${this.port}`);
+        // oxlint-disable-next-line default-case
         switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
@@ -222,7 +232,8 @@ export class Backend extends EventEmitter<BackendEvents> {
             break;
         }
         this.emit('server_error', error);
-        return;
+        // oxlint-disable-next-line unicorn/no-useless-undefined
+        return undefined;
       });
     } else {
       // SSL is enabled, load the certificate and the private key
@@ -291,14 +302,17 @@ export class Backend extends EventEmitter<BackendEvents> {
 
       // Create an HTTPS server with the SSL certificate and private key (ca is optional) and attach the express app
       const https = await import('node:https');
+      await this.backendExpress.start();
       try {
         this.log.debug(`Creating HTTPS server...`);
         this.httpsServer = https.createServer(httpsServerOptions, this.backendExpress.expressApp);
       } catch (error) {
         logError(this.log, `Failed to create HTTPS server`, error);
         this.emit('server_error', error);
+        await this.backendExpress.stop();
         return;
       }
+      await this.backendWsServer.start();
 
       // Listen on the specified port
       this.httpsServer.listen(this.port, getParameter('bind'), () => {
@@ -352,11 +366,13 @@ export class Backend extends EventEmitter<BackendEvents> {
             socket.destroy();
           }
         }
+        // oxlint-disable-next-line unicorn/no-useless-undefined
         return undefined;
       });
 
       this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
+        // oxlint-disable-next-line default-case
         switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
@@ -380,6 +396,8 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async stop(): Promise<void> {
     this.log.debug('Stopping backend...');
+
+    await this.backendWsServer?.stop();
 
     // Close the http server
     if (this.httpServer) {
@@ -409,6 +427,12 @@ export class Backend extends EventEmitter<BackendEvents> {
       this.log.debug('Backend https server closed successfully');
     }
 
+    await this.backendExpress?.stop();
+    this.backendWsServer?.destroy();
+    this.backendExpress?.destroy();
+    this.backendWsServer = undefined;
+    this.backendExpress = undefined;
+
     this.log.debug('Backend stopped');
   }
 
@@ -420,6 +444,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    * @returns {ApiSettings} The api settings object.
    */
   getApiSettings(): ApiSettings {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     return {} as ApiSettings;
   }
 
@@ -445,5 +470,6 @@ export class Backend extends EventEmitter<BackendEvents> {
   /**
    * Generates a diagnostic file with the server nodes information.
    */
+  // oxlint-disable-next-line no-empty-function
   async generateDiagnostic(): Promise<void> {}
 }

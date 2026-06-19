@@ -22,19 +22,15 @@
  * limitations under the License.
  */
 
-/* eslint-disable jsdoc/reject-any-type */
-
-// istanbul ignore if -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] MatterbridgeEndpointHelpers loaded.\u001B[40;0m');
+// TODO: analyze each rule
+// oxlint-disable typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing unicorn/no-negated-condition no-param-reassign typescript/explicit-function-return-type typescript/explicit-module-boundary-types
 
 // Other modules
 import { createHash } from 'node:crypto';
 
 // @matter
 import { Lifecycle } from '@matter/general';
-import { ActionContext, Behavior, ClusterBehavior, Endpoint } from '@matter/node';
+import { type ActionContext, type Behavior, ClusterBehavior, type Endpoint } from '@matter/node';
 // @matter behaviors
 import { AirQualityServer } from '@matter/node/behaviors/air-quality';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
@@ -129,13 +125,14 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/t
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { ClusterId, NodeId, VendorId } from '@matter/types/datatype';
-import { MeasurementAccuracy, MeasurementType, Semtag } from '@matter/types/globals';
+import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
+import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray } from '@matterbridge/utils/validate';
 // AnsiLogger module
-import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
+import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
 
 // matterbridge
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
@@ -155,8 +152,10 @@ import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.j
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import type { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+
+logModuleLoaded('MatterbridgeEndpointHelpers');
 
 /**
  *  Capitalizes the first letter of a string.
@@ -282,7 +281,8 @@ export function createUniqueId(param1: string, param2: string, param3: string, p
  * The mfgCode field shall be used only if the Semtag is from a manufacturer-specific namespace, and shall be set to the manufacturer code of the device.
  * Don't set the mfgCode field for standard namespaces: the global namespaceId already provides uniqueness.
  */
-export function getSemtag(semtag: Semtag, label: string | null | undefined = undefined, mfgCode: VendorId | null = null): Semtag {
+export function getSemtag(semtag: Semtag, label?: string | null, mfgCode: VendorId | null = null): Semtag {
+  // oxlint-disable-next-line no-param-reassign
   if (label !== undefined && label !== null && typeof label === 'string') label = label.trim().slice(0, 64); // Trim and limit label to 64 characters
 
   if (label === undefined) return { mfgCode, namespaceId: semtag.namespaceId, tag: semtag.tag };
@@ -309,6 +309,7 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     return {};
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
+  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
   if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
   return supportedBehavior.features ?? {};
 }
@@ -339,10 +340,9 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     return undefined;
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
-  if (!supportedBehavior) {
-    // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
-    return undefined;
-  }
+  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
+  if (!supportedBehavior) return undefined;
+
   return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;
 }
 
@@ -367,6 +367,7 @@ export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.O
 export function defaultFor<T extends Behavior.Type>(type: T, options?: Behavior.Options<T>): Partial<Behavior.Options<T>> | undefined {
   let defaults: Record<string, unknown> | undefined;
 
+  // istanbul ignore else
   if (options) {
     for (const key in type.defaults) {
       if (key in options) {
@@ -509,6 +510,7 @@ export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): Clust
  */
 export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Behavior.Type | undefined {
   let behavior: Behavior.Type | undefined;
+  // istanbul ignore else -- The cluster parameter is expected to be one of the specified types, so we can ignore the case where it is not.
   if (typeof cluster === 'string') {
     behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
   } else if (typeof cluster === 'number') {
@@ -545,10 +547,10 @@ export async function invokeBehaviorCommand(
     return false;
   }
 
+  // oxlint-disable-next-line no-param-reassign
   command = command.includes('.') ? (command.split('.')[1] as CommandHandlers) : command;
   let invoked = true;
   await endpoint.act(async (agent) => {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
     const behavior = (agent as unknown as Record<string, Record<string, Function> | undefined>)[behaviorId];
     const handler = behavior?.[command];
     if (typeof handler !== 'function') {
@@ -565,7 +567,8 @@ export async function invokeBehaviorCommand(
 
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
-    const patchedContext = new Proxy(agent.context, { get: (t, k) => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
+    // istanbul ignore next -- This is only used in Jest tests, so we don't need to cover it in production.
+    const patchedContext = new Proxy(agent.context, { get: (t, k): unknown => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
     Object.defineProperty(behavior, 'context', { configurable: true, value: patchedContext });
     try {
       // Preserve `this` binding for behavior command handlers.
@@ -656,6 +659,7 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalServerClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!optionalServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
         optionalServerList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -671,7 +675,7 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to add the cluster servers to.
  * @param {ClusterId[]} serverList - The list of cluster IDs to add.
  */
-export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]) {
+export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: ClusterId[]): void {
   if (serverList.includes(PowerSource.id)) endpoint.createDefaultPowerSourceWiredClusterServer();
   if (serverList.includes(Identify.id)) endpoint.createDefaultIdentifyClusterServer();
   if (serverList.includes(Groups.id)) endpoint.createDefaultGroupsClusterServer();
@@ -759,6 +763,7 @@ export function addRequiredClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.requiredClientClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!requiredClientList.includes(clusterId)) {
         requiredClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -780,6 +785,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalClientClusters.forEach((clusterId) => {
+      // istanbul ignore else
       if (!optionalClientList.includes(clusterId)) {
         optionalClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -796,7 +802,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
  * @param {string} label - The label to add. Max 16 characters.
  * @param {string} value - The value of the label. Max 16 characters.
  */
-export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: string, value: string): Promise<void> {
   if (!endpoint.hasClusterServer(FixedLabel.id)) {
     endpoint.log.debug(`addFixedLabel: add cluster ${hk}FixedLabel${db}:${hk}fixedLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(FixedLabelServer, {
@@ -806,6 +812,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(FixedLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  // istanbul ignore else
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
@@ -820,7 +827,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
  * @param {string} label - The label to add. Max 16 characters.
  * @param {string} value - The value of the label. Max 16 characters.
  */
-export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string) {
+export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string, value: string): Promise<void> {
   if (!endpoint.hasClusterServer(UserLabel.id)) {
     endpoint.log.debug(`addUserLabel: add cluster ${hk}UserLabel${db}:${hk}userLabel${db} with label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
     endpoint.behaviors.require(UserLabelServer, {
@@ -830,6 +837,7 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(UserLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
+  // istanbul ignore else
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });

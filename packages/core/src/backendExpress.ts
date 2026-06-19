@@ -22,6 +22,8 @@
  * limitations under the License.
  */
 
+// WARNING: Not released yet and excluded from Vitest coverage
+
 // Node.js built-in modules
 import os from 'node:os';
 import path from 'node:path';
@@ -45,6 +47,7 @@ import {
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 // Express
 import escapeHtml from 'escape-html';
 import express from 'express';
@@ -55,12 +58,9 @@ import multer from 'multer';
 import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 // matterbridge
-import { Backend } from './backend.js';
+import type { Backend } from './backend.js';
 
-// istanbul ignore next 2 lines --loader flag is only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (hasParameter('loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] BackendExpress loaded.\u001B[40;0m');
+logModuleLoaded('BackendExpress');
 
 /**
  * Class representing an Express application for frontend connections.
@@ -102,6 +102,7 @@ export class BackendExpress {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
+    // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
   }
 
@@ -109,7 +110,6 @@ export class BackendExpress {
    * Destroy the BroadcastServer.
    */
   destroy(): void {
-    this.server.off('broadcast_message', this.broadcastMsgHandler.bind(this));
     this.server.close();
   }
 
@@ -118,7 +118,8 @@ export class BackendExpress {
    *
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
-  private async broadcastMsgHandler(msg: WorkerMessage) {
+  // oxlint-disable-next-line typescript/require-await
+  private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
     // istanbul ignore else
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
@@ -129,6 +130,8 @@ export class BackendExpress {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
+        default:
+        //
       }
     }
   }
@@ -155,6 +158,7 @@ export class BackendExpress {
    *
    * @returns {Promise<express.Application | undefined>} The express application instance if it was started successfully, otherwise undefined.
    */
+  // oxlint-disable-next-line typescript/require-await
   async start(): Promise<express.Application | undefined> {
     this.log.debug('Starting express application...');
 
@@ -179,7 +183,7 @@ export class BackendExpress {
 
     // Endpoint to validate login code
     // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
-    this.expressApp.post('/api/login', express.json(), async (req, res) => {
+    this.expressApp.post('/api/login', express.json(), (req, res) => {
       const { password } = req.body;
       this.log.debug(`The frontend sent /api/login with password ${password ? '[redacted]' : '(empty)'}`);
       if (this.backend.storedPassword === '' || password === this.backend.storedPassword) {
@@ -252,21 +256,21 @@ export class BackendExpress {
     });
 
     // Endpoint to provide settings (debug only reasons - not used in production)
-    this.expressApp.get('/api/settings', async (req, res) => {
+    this.expressApp.get('/api/settings', (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
       res.json(this.backend.getApiSettings());
     });
 
     // Endpoint to provide plugins (debug only reasons - not used in production)
-    this.expressApp.get('/api/plugins', async (req, res) => {
+    this.expressApp.get('/api/plugins', (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       if (!this.validateReq(req, res)) return;
       res.json(this.backend.getApiPlugins());
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
-    this.expressApp.get('/api/devices', async (req, res) => {
+    this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
       res.json(this.backend.getApiDevices());
@@ -435,7 +439,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge backup (created with the backup command)
-    this.expressApp.get('/api/download-backup', this.fileLimiter, async (req, res) => {
+    this.expressApp.get('/api/download-backup', this.fileLimiter, (req, res) => {
       this.log.debug('The frontend sent /api/download-backup');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_BACKUP_FILE), MATTERBRIDGE_BACKUP_FILE, (error) => {
@@ -450,7 +454,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge storage directory
-    this.expressApp.get('/api/download-mbstorage', this.fileLimiter, async (req, res) => {
+    this.expressApp.get('/api/download-mbstorage', this.fileLimiter, (req, res) => {
       this.log.debug('The frontend sent /api/download-mbstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), `matterbridge.${NODE_STORAGE_DIR}.zip`, (error) => {
@@ -465,7 +469,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matter storage directory
-    this.expressApp.get('/api/download-mjstorage', this.fileLimiter, async (req, res) => {
+    this.expressApp.get('/api/download-mjstorage', this.fileLimiter, (req, res) => {
       this.log.debug('The frontend sent /api/download-mjstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), `matterbridge.${MATTER_STORAGE_DIR}.zip`, (error) => {
@@ -480,7 +484,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge plugin directory
-    this.expressApp.get('/api/download-pluginstorage', this.fileLimiter, async (req, res) => {
+    this.expressApp.get('/api/download-pluginstorage', this.fileLimiter, (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginstorage');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_STORAGE_FILE), MATTERBRIDGE_PLUGIN_STORAGE_FILE, (error) => {
@@ -495,7 +499,7 @@ export class BackendExpress {
     });
 
     // Endpoint to download the matterbridge plugin config files
-    this.expressApp.get('/api/download-pluginconfig', this.fileLimiter, async (req, res) => {
+    this.expressApp.get('/api/download-pluginconfig', this.fileLimiter, (req, res) => {
       this.log.debug('The frontend sent /api/download-pluginconfig');
       if (!this.validateReq(req, res)) return;
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_CONFIG_FILE), MATTERBRIDGE_PLUGIN_CONFIG_FILE, (error) => {
@@ -638,6 +642,7 @@ export class BackendExpress {
    *
    * @returns {Promise<express.Application | undefined>} The express application instance if it was running, otherwise undefined.
    */
+  // oxlint-disable-next-line typescript/require-await
   async stop(): Promise<express.Application | undefined> {
     // Remove listeners from the express app
     if (this.expressApp) {

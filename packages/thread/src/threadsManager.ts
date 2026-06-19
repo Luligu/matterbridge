@@ -24,22 +24,21 @@
 
 /* eslint-disable jsdoc/no-defaults */
 
-// istanbul ignore next 2 lines - loader/debug/verbose flags are only used for development and testing, not in production
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] ThreadsManager loaded.\u001B[40;0m');
-
 import fs from 'node:fs';
-import path, { resolve } from 'node:path';
+import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { Worker, WorkerOptions } from 'node:worker_threads';
+import { Worker, type WorkerOptions } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 import type { WorkerWrapper } from './workerWrapper.js';
+
+logModuleLoaded('ThreadsManager');
 
 interface ThreadInfo {
   /** Logical name used to identify the thread (also passed as workerData.threadName). */
@@ -126,7 +125,7 @@ export class ThreadsManager {
   /**
    * Clean up resources used by the ThreadsManager, such as the interval and broadcast servers.
    */
-  destroy() {
+  destroy(): void {
     // Clear the interval
     clearInterval(this.interval);
     // Close broadcast servers and remove listeners
@@ -141,7 +140,7 @@ export class ThreadsManager {
    *
    * @param {WorkerMessage} msg - The message received from the broadcast server.
    */
-  private async msgHandler(msg: WorkerMessage) {
+  private msgHandler(msg: WorkerMessage): void {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'manager')) {
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -161,7 +160,7 @@ export class ThreadsManager {
             this.runThread(msg.params.name, msg.params.workerData, msg.params.argv, msg.params.env, msg.params.execArgv, msg.params.pipedOutput);
             this.server.respond({ ...msg, result: { success: true } });
           } catch (err) {
-            this.log.warn(`Failed to run thread ${CYAN}${msg.params.name}${wr}: ${(err as Error).message}`);
+            this.log.warn(`Failed to run thread ${CYAN}${msg.params.name}${wr}: ${getErrorMessage(err)}`);
             this.server.respond({ ...msg, result: { success: false } });
           }
           break;
@@ -172,18 +171,18 @@ export class ThreadsManager {
     }
   }
 
-  private intervalHandler() {
+  private intervalHandler(): void {
     for (const thread of this.threads) {
       this.log.debug(
         `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
       );
     }
     for (const thread of this.threads) {
-      if (thread.worker && Date.now() - (thread.lastSeen || 0) > this.intervalMs) {
+      if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs) {
         const msg: ParentPortMessage = { type: 'ping', threadId: thread.worker.threadId, threadName: thread.name };
         thread.worker.postMessage(msg);
       }
-      if (thread.worker && Date.now() - (thread.lastSeen || 0) > this.intervalMs * 2) {
+      if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs * 2) {
         this.log.warn(`Thread ${CYAN}${thread.name}${db} has not been seen for more than ${this.intervalMs * 2} ms. It may be unresponsive.`);
       }
     }
@@ -366,7 +365,7 @@ export class ThreadsManager {
     execArgv?: string[],
     pipedOutput: boolean = false,
   ): Worker {
-    const fileURL = pathToFileURL(resolve(relativePath));
+    const fileURL = pathToFileURL(path.resolve(relativePath));
     const options: WorkerOptions & { type: string } = {
       workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel, tracker: this.tracker }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
       type: 'module',

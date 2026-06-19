@@ -26,6 +26,21 @@ import { inspect } from 'node:util';
 
 import { type AnsiLogger, RESET } from 'node-ansi-logger';
 
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('Error');
+
+/**
+ * True if `e` is an Error carrying a Node.js system error `code`.
+ *
+ * @param {unknown} e - The value to check.
+ * @returns {boolean} True if `e` is a NodeJS.ErrnoException, false otherwise.
+ */
+export function isErrnoException(e: unknown): e is NodeJS.ErrnoException {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  return e instanceof Error && 'code' in e && typeof (e as NodeJS.ErrnoException).code === 'string';
+}
+
 /**
  * Returns a readable message for unknown error-like values.
  *

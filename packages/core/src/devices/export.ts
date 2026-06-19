@@ -7,6 +7,8 @@
  * @license Apache-2.0
  */
 
+// oxlint-disable oxc/no-barrel-file
+
 // Chapter 10. Media Device Types - Single class device types
 export * from './basicVideoPlayer.js';
 export * from './castingVideoPlayer.js';

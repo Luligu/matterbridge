@@ -1,8 +1,8 @@
-// .devcontainer/devcontainer.json v. 1.0.2
+// .devcontainer/devcontainer.json v. 1.0.3
 
 // This file defines the development container configuration for Matterbridge.
 
-/* 
+/*
   ************************************************* NOTICE *************************************************
 Dev containers have networking limitations depending on the host OS and Docker setup.
 
@@ -48,7 +48,9 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
-    "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume"
+    "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume",
+    "source=claude-code,target=/home/node/.claude,type=volume",
+    "source=codex,target=/home/node/.codex,type=volume"
   ],
   // Create the matterbridge Docker network if it doesn't exist, then pull the base image (runs on the HOST before the container starts).
   "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull mcr.microsoft.com/devcontainers/javascript-node:24-trixie",
@@ -77,13 +79,15 @@ Dev containers have networking limitations depending on the host OS and Docker s
       "extensions": [
         "typescriptteam.native-preview",
         "oxc.oxc-vscode",
-        "ms-azuretools.vscode-containers",
+        "firsttris.vscode-jest-runner",
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-containers",
         "anthropic.claude-code",
         "github.copilot-chat",
         "github.vscode-github-actions",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "openai.chatgpt"
       ],
       // Settings for the VS Code environment in dev container (applies to the container, not the host)
       "settings": {
@@ -93,6 +97,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "oxc.enable": false,
         "js/ts.experimental.useTsgo": true,
         "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+        "jestrunner.enableESM": true,
+        "jestrunner.codeLens": ["run", "watch", "coverage", "debug"],
         "terminal.integrated.scrollback": 10000,
         "editor.tabSize": 2,
         "editor.rulers": [180],

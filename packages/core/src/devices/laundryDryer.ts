@@ -25,7 +25,7 @@
 import { LaundryDryerControlsServer } from '@matter/node/behaviors/laundry-dryer-controls';
 import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
-import { OperationalState } from '@matter/types/clusters/operational-state';
+import type { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
 import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';

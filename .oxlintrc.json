@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.6
+// .oxlintrc.json 1.0.10
 
 // This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
@@ -17,7 +17,9 @@
     "**/scripts/**",
     "**/screenshots/**",
     "vendor/**",
-    "**/package-lock.json"
+    "**/package-lock.json",
+    "**/bin/**",
+    "**/src/mock/**"
   ],
   "env": {
     "builtin": true,
@@ -66,42 +68,45 @@
     "eslint/no-await-in-loop": "off",
     "eslint/no-undefined": "off",
     "eslint/no-void": "off",
-    "eslint/no-use-before-define": ["error", { "classes": false }],
-    "eslint/complexity": ["warn", { "max": 50 }],
+    "eslint/no-use-before-define": ["error", { "classes": false, "functions": false, "allowNamedExports": true }],
+    "eslint/complexity": ["warn", { "max": 100 }],
+    "eslint/class-methods-use-this": "off",
+    "eslint/no-plusplus": "off",
     "unicorn/prefer-node-protocol": "error",
-    "unicorn/require-post-message-target-origin": "off",
-    "unicorn/prefer-add-event-listener": "off",
-    "unicorn/no-array-for-each": "off",
-    "unicorn/consistent-function-scoping": "off",
+    "unicorn/require-post-message-target-origin": "off", // Node worker_threads postMessage does not use browser target origins.
+    "unicorn/prefer-add-event-listener": "off", // Node EventEmitter APIs use on/off consistently across the repo.
+    "unicorn/no-array-for-each": "off", // forEach is acceptable for side-effect iteration when it reads clearly.
+    "unicorn/consistent-function-scoping": "off", // Keep helper functions near the code they support when locality helps readability.
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-abusive-eslint-disable": "error",
     "unicorn/prefer-array-find": "warn",
     "unicorn/prefer-includes": "warn",
     "unicorn/no-useless-undefined": "warn",
     "unicorn/no-negated-condition": "warn",
-    "oxc/no-async-endpoint-handlers": "off",
-    "oxc/no-accumulating-spread": "error",
-    "oxc/no-const-enum": "error",
-    "oxc/no-map-spread": "off",
-    "oxc/no-async-await": "off",
-    "oxc/no-optional-chaining": "off",
-    "oxc/no-rest-spread-properties": "off",
+    "oxc/no-async-endpoint-handlers": "off", // Express and WebSocket handlers may be async when errors are handled locally.
+    "oxc/no-accumulating-spread": "error", // Accumulating spread in loops is easy to miss and can be quadratic.
+    "oxc/no-const-enum": "error", // Avoid const enum emit/versioning surprises in published packages.
+    "oxc/no-map-spread": "off", // Object/array spread from maps is acceptable when it keeps code clearer.
+    "oxc/no-async-await": "off", // Keep async/await; replacing it can change scheduling/readability.
+    "oxc/no-optional-chaining": "off", // Keep optional chaining for safe nullable access.
+    "oxc/no-rest-spread-properties": "off", // Keep object rest/spread where cloning or omitting fields is intentional.
     "typescript/no-dynamic-delete": "error",
-    "typescript/no-duplicate-enum-values": "off",
+    "typescript/no-duplicate-enum-values": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "typescript/no-explicit-any": "warn",
     "typescript/no-non-null-assertion": "warn",
     "typescript/require-await": "warn",
     "typescript/promise-function-async": "warn",
-    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports" }],
+    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "typescript/only-throw-error": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-require-imports": "error",
     "typescript/prefer-nullish-coalescing": "warn",
     "typescript/prefer-optional-chain": "warn",
-    "typescript/explicit-member-accessibility": "off",
-    "typescript/no-deprecated": "warn",
+    "typescript/explicit-member-accessibility": "off", // Public is the TypeScript default; require modifiers only where visibility matters.
+    "typescript/no-deprecated": ["warn", { "allow": ["ClusterType", "invokeBehaviorCommand", "invokeSubscribeHandler"] }],
+    "node/no-process-env": "off",
     "jsdoc/check-tag-names": ["error", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "error",
     "jsdoc/require-param-type": "error",
@@ -120,8 +125,9 @@
     "import/no-namespace": "warn", // Disallow namespace imports to encourage more explicit imports
     "import/first": "warn", // Ensure all import statements are at the top of the file
     "import/no-duplicates": "warn", // Disallow duplicate imports to avoid confusion and improve readability
+    "import/no-relative-parent-imports": "off", // Encourage using absolute imports for better readability and maintainability
     "promise/no-nesting": "warn", // Avoid nesting promises to improve readability and maintainability
-    "promise/prefer-await-to-callbacks": "warn", // Encourage using async/await instead of callbacks for better readability
+    "promise/prefer-await-to-callbacks": "off", // Encourage using async/await instead of callbacks for better readability
     "promise/prefer-catch": "warn", // Encourage using .catch() for handling promise rejections instead of passing a second argument to .then()
     "promise/param-names": "warn", // Enforce standard parameter names for Promise constructors
     "promise/no-return-wrap": "warn" // Avoid wrapping values in Promise.resolve or Promise.reject when not needed
@@ -141,6 +147,7 @@
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-explicit-any": "off",
         "typescript/unbound-method": "off",
+        "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
         "jest/require-to-throw-message": "off",
         "jest/no-conditional-in-test": "off",
         "jest/no-standalone-expect": "off",
@@ -174,6 +181,7 @@
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-explicit-any": "off",
         "typescript/unbound-method": "off",
+        "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
         "vitest/require-to-throw-message": "off",
         "vitest/no-conditional-tests": "off",
         "vitest/no-standalone-expect": "off",

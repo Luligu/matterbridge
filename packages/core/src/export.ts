@@ -21,10 +21,12 @@
  * limitations under the License.
  */
 
-// istanbul ignore next -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[32m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] Index loaded.\u001B[40;0m');
+// oxlint-disable oxc/no-barrel-file
+
+import { logModuleLoaded } from '@matterbridge/utils/loader';
+
+// istanbul ignore next
+logModuleLoaded('Index');
 
 export * from './behaviors/activatedCarbonFilterMonitoringServer.js';
 export * from './behaviors/bindingServer.js';

@@ -9,10 +9,12 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
-[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
+[![Codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
+[![tested with Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white)](https://vitest.dev)
+[![styled with Oxc](https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/formatter.html)
+[![linted with Oxc](https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
@@ -26,7 +28,7 @@
 
 ## How to create your plugin
 
-The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
+The easiest way is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) that has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, Jest, Vitest, and the shared Matterbridge Oxc/oxlint/oxfmt configs) already loaded and configured.
 
 After you clone it locally, change the name (keep always matterbridge- at the beginning of the name), version, description, author, homepage, repository, bugs and funding in the package.json.
 
@@ -34,7 +36,7 @@ It is also possible to add two custom properties to the package.json: **help** a
 
 Add your plugin logic in module.ts.
 
-The Matterbridge Plugin Template has an already configured Jest / Vitest test unit (with 100% coverage) that you can expand while you add your own plugin logic.
+The Matterbridge Plugin Template has already configured Jest and Vitest test suites (with 100% coverage) that you can expand while you add your own plugin logic.
 
 It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
 
@@ -120,9 +122,17 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 | File                                                      | Notes                                                 |
 | --------------------------------------------------------- | ----------------------------------------------------- |
-| `.claude/CLAUDE.md`                                       | Main project instructions — always loaded             |
+| `CLAUDE.md`                                               | Main project instructions — always loaded             |
 | `.claude/rules/matterbridge/matterbridge.instructions.md` | Matterbridge endpoint guide — loaded for all contexts |
 | `.claude/rules/testing/unit-tests.instructions.md`        | Testing standards — scoped to `**/*.test.ts`          |
+
+## Agents instructions
+
+| File                         | Notes                                             |
+| ---------------------------- | ------------------------------------------------- |
+| `AGENTS.md`                  | Main project instructions                         |
+| `.codex/config.toml`         | Codex project permissions, approvals, and profile |
+| `.codex/rules/default.rules` | Codex command allow, prompt, and deny rules       |
 
 ## Guidelines on imports/exports
 
@@ -156,6 +166,30 @@ Matterbridge exports from:
 
 - NodeStorageManager and NodeStorage classes.
 
+**"matterbridge/dgram"**
+
+- UDP/datagram helpers exported by Matterbridge.
+
+**"matterbridge/jestutils"**
+
+- Legacy Jest utility exports. **Deprecated** will be removed in 3.10.0.
+
+**"matterbridge/jest-utils"**
+
+- Jest utility exports.
+
+**"matterbridge/jest-utils/matter"**
+
+- Jest Matter test helpers.
+
+**"matterbridge/vitest-utils"**
+
+- Vitest utility exports.
+
+**"matterbridge/vitest-utils/matter"**
+
+- Vitest Matter test helpers.
+
 **"matterbridge/matter"**
 
 - All relevant matter.js exports.
@@ -182,7 +216,7 @@ Matterbridge exports from:
 
 **"matterbridge/matter/types"**
 
-- All matter.js types.
+- All matter.js cluster types.
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
@@ -192,19 +226,19 @@ Additionally, when Matterbridge updates the `matter.js` version, it should be co
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
-A plugin must never install Matterbridge (neither as a dependency, devDependency, nor peerDependency).
+A plugin must never declare Matterbridge as a dependency, devDependency, or peerDependency.
 
-Matterbridge must be linked to the plugin in development only. At runtime the plugin is loaded directly from the running Mattebridge instance.
+For local development only, Matterbridge may be linked to the plugin with `npm link matterbridge`. At runtime the plugin is loaded directly from the running Matterbridge instance.
 
 ```json
-"scripts": {
-    '''
-    "dev:link": "npm link matterbridge",
-    '''
+{
+  "scripts": {
+    "dev:link": "npm link matterbridge"
+  }
 }
 ```
 
-If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, built it locally and link it globally (npm link from the matterbridge package root).
+If you don't use Dev Container from the Matterbridge Plugin Template, on the host you use for the development of your plugin, you need to clone matterbridge, build it locally and link it globally (npm link from the matterbridge package root).
 
 ```bash
 git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge.git
@@ -236,7 +270,7 @@ Always keep your local instance of matterbridge up to date.
 
 ### \***\*\*\*\*\*** WARNING \***\*\*\*\*\***
 
-Some error messages are logged on start when a plugin has wrong imports or configurations and the plugin will be disabled to prevent instability and crashes.
+Some error messages are logged on start when a plugin has invalid imports or configuration and the plugin will be disabled to prevent instability and crashes.
 
 ## How to install and register a plugin for development (from github)
 
@@ -653,6 +687,12 @@ The properties of the schema file shall correspond to the properties of the conf
 | ----------------------------------------------- | ------------------------------------------------------------ |
 | `MatterbridgeEndpoint.getChildEndpointByName()` | `getChildEndpointById()` or `getChildEndpointByOriginalId()` |
 | `MatterbridgeEndpointCommands` interface        | `CommandHandlers`                                            |
+
+### Package exports
+
+| Deprecated export        | Replacement               |
+| ------------------------ | ------------------------- |
+| `matterbridge/jestutils` | `matterbridge/jest-utils` |
 
 # Frequently asked questions
 

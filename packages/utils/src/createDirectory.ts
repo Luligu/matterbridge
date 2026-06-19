@@ -26,7 +26,12 @@
 import { promises as fs } from 'node:fs';
 
 // AnsiLogger module
-import { AnsiLogger } from 'node-ansi-logger';
+import type { AnsiLogger } from 'node-ansi-logger';
+
+import { isErrnoException, logError } from './error.js';
+import { logModuleLoaded } from './loader.js';
+
+logModuleLoaded('CreateDirectory');
 
 /**
  * Creates a directory at the specified path if it doesn't already exist.
@@ -41,15 +46,15 @@ export async function createDirectory(path: string, name: string, log: AnsiLogge
     await fs.access(path);
     log.debug(`Directory ${name} already exists at path: ${path}`);
   } catch (err) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+    if (isErrnoException(err) && err.code === 'ENOENT') {
       try {
         await fs.mkdir(path, { recursive: true });
         log.info(`Created ${name}: ${path}`);
       } catch (err) {
-        log.error(`Error creating dir ${name} path ${path}: ${err}`);
+        logError(log, `Error creating dir ${name} path ${path}`, err);
       }
     } else {
-      log.error(`Error accessing dir ${name} path ${path}: ${err}`);
+      logError(log, `Error accessing dir ${name} path ${path}`, err);
     }
   }
 }

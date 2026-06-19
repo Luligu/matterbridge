@@ -21,10 +21,13 @@
  * limitations under the License.
  */
 
+// oxlint-disable unicorn/no-negated-condition
+
 // Node.js imports
-import { AddressInfo } from 'node:net';
+import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+import { getErrorMessage } from '@matterbridge/utils/error';
 // AnsiLogger imports
 import { BLUE, CYAN, db, RED, YELLOW } from 'node-ansi-logger';
 
@@ -79,7 +82,7 @@ export class Multicast extends Dgram {
   /**
    * Starts the dgram multicast socket.
    */
-  start() {
+  start(): void {
     // Get the local ipv4 or ipv6 address to bind to.
     if (this.socketType === 'udp4') {
       this.log.debug(`Starting ipv4 dgram multicast socket...`);
@@ -101,7 +104,7 @@ export class Multicast extends Dgram {
    *
    * @param {AddressInfo} [address] - The address info.
    */
-  override onListening(address: AddressInfo) {
+  override onListening(address: AddressInfo): void {
     this.log.debug(`Dgram multicast socket listening on ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram multicast socket broadcast enabled`);
@@ -161,12 +164,12 @@ export class Multicast extends Dgram {
           );
         } catch (error) {
           this.log.debug(
-            `Dgram multicast socket failed to join multicast group ${BLUE}${this.multicastAddress}${db} on interface ${CYAN}${name}${db} ${BLUE}${iface.family}${db} ${BLUE}${iface.address}${db} ${BLUE}${iface.scopeid}${db} >>> ${RED}${membershipInterface}${db}: ${error instanceof Error ? error.message : error}`,
+            `Dgram multicast socket failed to join multicast group ${BLUE}${this.multicastAddress}${db} on interface ${CYAN}${name}${db} ${BLUE}${iface.family}${db} ${BLUE}${iface.address}${db} ${BLUE}${iface.scopeid}${db} >>> ${RED}${membershipInterface}${db}: ${getErrorMessage(error)}`,
           );
         }
       }
     });
-    let interfaceAddress = this.outgoingInterfaceAddress || this.interfaceAddress;
+    let interfaceAddress = this.outgoingInterfaceAddress ?? this.interfaceAddress;
     // If the interfaceAddress is 0.0.0.0, we need to set the default outgoing multicast interface to the first found IPv4 address.
     if (!this.outgoingInterfaceAddress && this.socketType === 'udp4' && this.interfaceAddress === '0.0.0.0') {
       interfaceAddress = this.getIpv4InterfaceAddress(this.interfaceName);
@@ -175,25 +178,31 @@ export class Multicast extends Dgram {
     if (!this.outgoingInterfaceAddress && this.socketType === 'udp6' && this.interfaceAddress === '::') {
       interfaceAddress = '::' + this.getIpv6ScopeId(this.interfaceName);
     }
-    this.log.debug(
-      `Dgram multicast socket setting multicastInterface to ${BLUE}${interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`,
-    );
-    this.socket.setMulticastInterface(interfaceAddress as string);
-    this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${interfaceAddress}${db}`);
+    if (interfaceAddress) {
+      this.log.debug(
+        `Dgram multicast socket setting multicastInterface to ${BLUE}${interfaceAddress}${db} for ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`,
+      );
+      this.socket.setMulticastInterface(interfaceAddress);
+      this.log.debug(`Dgram multicast socket multicastInterface set to ${BLUE}${interfaceAddress}${db}`);
+    } else {
+      this.log.debug(`Dgram multicast socket no outgoing interface address resolved; using system default multicast interface`);
+    }
     this.emit('ready', address);
   }
 
   /**
    * Stops the dgram multicast socket.
    */
-  stop() {
+  stop(): void {
     this.log.debug('Stopping dgram multicast socket...');
     this.joinedInterfaces.forEach((membershipInterface) => {
       try {
         this.socket.dropMembership(this.multicastAddress, membershipInterface);
         this.log.debug(`Dgram multicast socket dropped multicast group ${BLUE}${this.multicastAddress}${db} on interface ${YELLOW}${membershipInterface}${db}`);
       } catch (error) {
-        this.log.debug(`Dgram multicast socket failed to drop multicast group ${BLUE}${this.multicastAddress}${db} on interface ${RED}${membershipInterface}${db}: ${error}`);
+        this.log.debug(
+          `Dgram multicast socket failed to drop multicast group ${BLUE}${this.multicastAddress}${db} on interface ${RED}${membershipInterface}${db}: ${getErrorMessage(error)}`,
+        );
       }
     });
     this.joinedInterfaces = [];

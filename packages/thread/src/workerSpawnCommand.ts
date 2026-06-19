@@ -22,16 +22,14 @@
  * limitations under the License.
  */
 
-// istanbul ignore next -- Loader logs are not relevant for coverage
-// prettier-ignore
-// eslint-disable-next-line no-console
-if (process.argv.includes('--loader')) console.log('\u001B[35m[' + new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) + '] SpawnCommand loaded.\u001B[40;0m');
-
 import { isSpawnWorkerData } from '@matterbridge/types';
+import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
 import { spawnCommand } from './spawnCommand.js';
 import { WorkerWrapper } from './workerWrapper.js';
+
+logModuleLoaded('SpawnCommand', '\u001B[35m');
 
 export default new WorkerWrapper('SpawnCommand', async (worker) => {
   if (!isSpawnWorkerData(worker.workerData)) {

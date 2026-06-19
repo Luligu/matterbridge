@@ -24,7 +24,6 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
-import type { jest } from '@jest/globals';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // Freeze the original process arguments and environment variables to allow resetting them in tests
@@ -52,13 +51,19 @@ export let HOMEDIR: string;
 
 export let log: AnsiLogger;
 
+const noop = (): void => undefined;
+
 /**
  * Setup the Jest environment:
  * - it will remove any existing home directory
  * - setup the spies for logging
+ * - process.argv will be set to ['jest', name, ...argv]
+ * - the provided environment variables will be set on process.env
  *
  * @param {string} name The name of the test suite.
  * @param {boolean} debug If true, the logging is not mocked.
+ * @param {string[]} argv Additional process.argv arguments to set after the 'jest' and name entries.
+ * @param {Record<string, string>} env Environment variables to set on process.env.
  *
  * @example
  * ```typescript
@@ -66,14 +71,23 @@ export let log: AnsiLogger;
  *
  * // Setup the test environment
  * await setupTest(NAME, false);
+ *
+ * // Setup the test environment with extra argv and environment variables
+ * await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
  * ```
  */
-export async function setupTest(name: string, debug: boolean = false): Promise<void> {
+export async function setupTest(name: string, debug: boolean = false, argv: string[] = [], env: Record<string, string> = {}): Promise<void> {
   expect(name).toBeDefined();
   expect(typeof name).toBe('string');
   expect(name.length).toBeGreaterThanOrEqual(4);
   NAME = name;
   HOMEDIR = path.join('.cache', 'jest', name);
+  process.argv = ['jest', name, ...argv];
+
+  // Set the provided environment variables
+  for (const [key, value] of Object.entries(env)) {
+    process.env[key] = value;
+  }
 
   // Create the exported log
   log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
@@ -82,7 +96,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
   rmSync(HOMEDIR, { recursive: true, force: true });
   mkdirSync(HOMEDIR, { recursive: true });
 
-  const { jest } = await import('@jest/globals');
+  const { jest } = await import('@jest/globals' as string);
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');
   loggerInfoSpy = jest.spyOn(AnsiLogger.prototype, 'info');
   loggerNoticeSpy = jest.spyOn(AnsiLogger.prototype, 'notice');
@@ -97,12 +111,12 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
     consoleWarnSpy = jest.spyOn(console, 'warn');
     consoleErrorSpy = jest.spyOn(console, 'error');
   } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(noop);
   }
 }
 
@@ -124,7 +138,7 @@ export async function setupTest(name: string, debug: boolean = false): Promise<v
  * ```
  */
 export async function setDebug(debug: boolean): Promise<void> {
-  const { jest } = await import('@jest/globals');
+  const { jest } = await import('@jest/globals' as string);
   if (debug) {
     loggerLogSpy.mockRestore();
     consoleLogSpy.mockRestore();
@@ -139,11 +153,11 @@ export async function setDebug(debug: boolean): Promise<void> {
     consoleWarnSpy = jest.spyOn(console, 'warn');
     consoleErrorSpy = jest.spyOn(console, 'error');
   } else {
-    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(() => {});
-    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(() => {});
-    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => {});
-    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    loggerLogSpy = jest.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(noop);
+    consoleDebugSpy = jest.spyOn(console, 'debug').mockImplementation(noop);
+    consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(noop);
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(noop);
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(noop);
   }
 }

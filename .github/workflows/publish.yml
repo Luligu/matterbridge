@@ -43,15 +43,14 @@ jobs:
       - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build matterbridge for production
-        run: npm run buildProduction
+      - name: Build matterbridge
+        run: npm run build
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
-        run: |
-          matterbridge --version
+        run: matterbridge --version
 
       - name: Lint matterbridge
         run: npm run lint
@@ -76,11 +75,8 @@ jobs:
         run: npm publish --tag latest --access public || true
         working-directory: apps/frontend
 
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |
@@ -195,15 +191,14 @@ jobs:
       - name: Install matterbridge dependencies
         run: npm ci --no-fund --no-audit
 
-      - name: Build matterbridge for production
-        run: npm run buildProduction
+      - name: Build matterbridge
+        run: npm run build
 
       - name: Install matterbridge globally
         run: npm install --no-fund --no-audit --global .
 
       - name: Test matterbridge cli
-        run: |
-          matterbridge --version
+        run: matterbridge --version
 
       - name: Lint matterbridge
         run: npm run lint
@@ -224,23 +219,8 @@ jobs:
         run: npm run test
         working-directory: apps/frontend
 
-      - name: Publish frontend to npm under tag dev with trusted publishing / OIDC
-        working-directory: apps/frontend
-        run: |
-          BASE=$(jq -r '.version' package.json)
-          DATE=$(date -u +'%Y%m%d')
-          SHA=$(git rev-parse --short=7 HEAD)
-          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
-          echo "Publishing frontend with tag ${DEV_TAG}"
-          npm version "${DEV_TAG}" --no-git-tag-version --ignore-scripts
-          npm publish --tag dev --access public || true
-          npm version "${BASE}" --no-git-tag-version --ignore-scripts
-
-      - name: Run matterbridge Jest tests
+      - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
-
-      - name: Run matterbridge Vitest tests
-        run: npm run test:vitest -- --testTimeout=30000
 
       - name: Stamp build metadata into package.json
         run: |
@@ -274,7 +254,7 @@ jobs:
           PKG=$(node -p "require('./package.json').name")
           PUBLISHED=$(npm view "$PKG" dist-tags.dev 2>/dev/null || echo "")
           PUBLISHED_SHA=${PUBLISHED##*-}
-          CURRENT_SHA=${ORIG_SHA}
+          CURRENT_SHA="${{ steps.meta.outputs.ORIG_SHA }}"
 
           echo "Published dev tag: $PUBLISHED"
           echo "Published SHA: $PUBLISHED_SHA"
@@ -288,7 +268,20 @@ jobs:
             echo "should_publish=true"  >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to npm under tag dev with trusted publishing / OIDC
+      - name: Publish frontend to npm under tag dev with trusted publishing / OIDC
+        if: steps.check_new.outputs.should_publish == 'true'
+        working-directory: apps/frontend
+        run: |
+          BASE=$(jq -r '.version' package.json)
+          DATE=$(date -u +'%Y%m%d')
+          SHA=$(git rev-parse --short=7 HEAD)
+          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
+          echo "Publishing frontend with tag ${DEV_TAG}"
+          npm version "${DEV_TAG}" --no-git-tag-version --ignore-scripts
+          npm publish --tag dev --access public || true
+          npm version "${BASE}" --no-git-tag-version --ignore-scripts
+
+      - name: Publish matterbridge to npm under tag dev with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
           npm version "${{ steps.meta.outputs.ORIG_BASE }}" --no-git-tag-version --ignore-scripts

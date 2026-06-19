@@ -21,6 +21,9 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable unicorn/no-negated-condition typescript/no-misused-spread
+
 // @matter
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
@@ -56,7 +59,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto,
+      speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.targetState = nextTarget;
@@ -86,8 +89,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     let nextPosition = isIncrease ? currentPosition + delta : currentPosition - delta;
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
-    const speed: ThreeLevelAuto =
-      request?.speed ?? (previousCurrent as ClosureDimension.DimensionState).speed ?? (previousTarget as ClosureDimension.DimensionState).speed ?? ThreeLevelAuto.Auto;
+    const speed: ThreeLevelAuto = request?.speed ?? previousCurrent.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto;
 
     this.state.currentState = {
       ...previousCurrent,

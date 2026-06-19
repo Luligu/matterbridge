@@ -21,6 +21,9 @@
  * limitations under the License.
  */
 
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable unicorn/no-negated-condition typescript/no-misused-spread
+
 // @matter
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
@@ -56,7 +59,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? (previousTarget as ClosureControl.OverallTargetState).speed ?? ThreeLevelAuto.Auto,
+      speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
     };
 
     this.state.overallTargetState = nextTarget;

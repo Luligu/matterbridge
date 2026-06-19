@@ -8,10 +8,12 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
-[![codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
-[![styled with prettier](https://img.shields.io/badge/styled_with-Prettier-f8bc45.svg?logo=prettier)](https://prettier.io/)
-[![linted with eslint](https://img.shields.io/badge/linted_with-ES_Lint-4B32C3.svg?logo=eslint)](https://eslint.org/)
+[![Codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
+[![tested with Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white)](https://vitest.dev)
+[![styled with Oxc](https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/formatter.html)
+[![linted with Oxc](https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
@@ -41,7 +43,7 @@ Simply pair Matterbridge once, and it will load all your registered plugins.
 
 This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything ([Development](README-DEV.md)).
 
-The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, ESLint, Prettier, Jest and Vitest) already loaded and configured.
+The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, Jest, Vitest, and the shared Matterbridge Oxc/oxlint/oxfmt configs) already loaded and configured.
 
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
@@ -810,7 +812,9 @@ graph TD
   thread --> utils
   thread --> types
   dgram --> utils
+  jestutils --> utils
   jestutils --> types
+  vitestutils --> utils
   vitestutils --> types
 ```
 
@@ -818,7 +822,7 @@ The graph is acyclic and layered:
 
 - **Foundation (no internal dependencies):** `@matterbridge/types`, `@matterbridge/utils`.
 - **Networking & workers:** `@matterbridge/dgram` (→ `utils`), `@matterbridge/thread` (→ `utils`, `types`).
-- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `types`).
+- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `utils`, `types`).
 - **Core:** `@matterbridge/core` (→ `dgram`, `thread`, `utils`, `types`).
 - **Top level:** `matterbridge` declares all scoped packages as direct dependencies; `core` pulls in the rest transitively.
 
