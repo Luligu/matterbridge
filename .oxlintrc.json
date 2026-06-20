@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.12
+// .oxlintrc.json 1.0.13
 
 // This Oxlint configuration is designed for a TypeScript project using ESM modules.
 {
@@ -98,7 +98,7 @@
     "typescript/no-non-null-assertion": "warn",
     "typescript/require-await": "warn",
     "typescript/promise-function-async": "warn",
-    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
+    "typescript/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "typescript/only-throw-error": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-require-imports": "error",

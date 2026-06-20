@@ -79,9 +79,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
       "extensions": [
         "typescriptteam.native-preview",
         "oxc.oxc-vscode",
+        "vitest.explorer",
         "firsttris.vscode-jest-runner",
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
         "ms-azuretools.vscode-containers",
         "anthropic.claude-code",
         "github.copilot-chat",

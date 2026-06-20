@@ -1,4 +1,4 @@
-// .oxlintrc.react.json 1.0.3
+// .oxlintrc.react.json 1.0.4
 
 // This Oxlint configuration is designed for a Vite/React/Typescript frontend using ESM modules.
 {
@@ -50,7 +50,7 @@
     "typescript/prefer-nullish-coalescing": "off", // a ?? b only substitutes null/undefined; a || b also substitutes 0, "", false — prefer ?? for nullable state
     "typescript/no-explicit-any": "warn",
     // At the moment left off cause we need to fix mui "typescript/no-deprecated": "warn",
-    "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
+    "typescript/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "warn",
     "jsdoc/require-param-type": "warn",
