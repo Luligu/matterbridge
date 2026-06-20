@@ -68,9 +68,12 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.2.
 - [matterbridge]: Update dependencies.
-- [oxlint]: Bump `Oxlint configuration` to v.1.0.12.
+- [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
+- [matterbridge]: Bump `@types/node` to v.26.0.0.
 - [frontend]: Bump `frontend` version to v.3.4.18.
 - [frontend]: Update dependencies.
+- [frontend]: Bump `Oxlint configuration` to v.1.0.3.
+- [frontend]: Bump `@types/node` to v.26.0.0.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

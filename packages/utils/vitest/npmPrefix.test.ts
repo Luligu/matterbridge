@@ -33,7 +33,7 @@ describe('getGlobalNodeModules()', () => {
   it('rejects on exec error', async () => {
     mockedExec.mockImplementationOnce((command, callback) => {
       if (command === 'npm root -g' && callback) {
-        callback(new Error('fail'), '', '');
+        callback(Object.assign(new Error('fail'), { cmd: command }), '', '');
       }
       return {} as ChildProcess;
     });

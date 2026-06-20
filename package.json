@@ -286,8 +286,8 @@
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
-    "@types/node": "25.9.3",
-    "@typescript/native-preview": "7.0.0-dev.20260618.1",
+    "@types/node": "26.0.0",
+    "@typescript/native-preview": "7.0.0-dev.20260619.1",
     "@vitest/coverage-v8": "4.1.9",
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
