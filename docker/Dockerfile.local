@@ -16,7 +16,7 @@ WORKDIR /matterbridge
 COPY . .
 RUN \
   npm ci --no-fund --no-audit && \
-  npm run buildProduction && \
+  npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../.. && \
   find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
   npm link --no-fund --no-audit && \
