@@ -40,6 +40,10 @@ jobs:
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
+      - name: Check format of the project
+        run: npm run format:check
+        working-directory: apps/frontend
+
       - name: Lint the project
         run: npm run lint
         working-directory: apps/frontend

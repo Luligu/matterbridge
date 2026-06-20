@@ -6,7 +6,7 @@ import './App.css';
 import { ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 // React
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router';
 
 // Global app state
@@ -58,35 +58,40 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
     backgroundColor: 'var(--div-bg-color)',
   };
 
-  const logIn = async (password: string) => {
-    try {
-      const response = await fetch('./api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (response.ok) {
-        const { valid } = await response.json();
-        if (valid) {
-          setLoggedIn(true);
-          if (password !== '') setWssPassword(password);
+  const logIn = useCallback(
+    async (password: string) => {
+      try {
+        const response = await fetch('./api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        });
+        if (response.ok) {
+          const { valid } = await response.json();
+          if (valid) {
+            setLoggedIn(true);
+            if (password !== '') setWssPassword(password);
+          } else {
+            if (password !== '') setErrorMessage('Incorrect password!');
+          }
         } else {
-          if (password !== '') setErrorMessage('Incorrect password!');
+          console.error('Failed to log in:', response.statusText);
         }
-      } else {
-        console.error('Failed to log in:', response.statusText);
+      } catch (error) {
+        console.error('Failed to log in:', error);
       }
-    } catch (error) {
-      console.error('Failed to log in:', error);
-    }
-  };
+    },
+    [setLoggedIn],
+  );
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    logIn(password);
+    void logIn(password);
   };
 
-  logIn(''); // Auto login if no password is required
+  useEffect(() => {
+    void logIn(''); // Auto login if no password is required
+  }, [logIn]);
 
   return (
     <div style={containerStyle}>

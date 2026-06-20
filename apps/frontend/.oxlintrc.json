@@ -47,8 +47,9 @@
     "typescript/explicit-function-return-type": "off", // React components/inline callbacks infer their return type
     "typescript/explicit-module-boundary-types": "off", // return types on exported module boundaries clutter code with what TypeScript already infers
     "typescript/no-import-type-side-effects": "off", // conflicts with the inline type-imports style enforced below
+    "typescript/prefer-nullish-coalescing": "off", // a ?? b only substitutes null/undefined; a || b also substitutes 0, "", false — prefer ?? for nullable state
     "typescript/no-explicit-any": "warn",
-    "typescript/prefer-nullish-coalescing": "warn", // a ?? b only substitutes null/undefined; a || b also substitutes 0, "", false — prefer ?? for nullable state
+    // At the moment need to fix mui "typescript/no-deprecated": "warn",
     "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "warn",
@@ -99,6 +100,8 @@
         "typescript/no-explicit-any": "off", // test mocks and fixtures frequently require `any` for flexibility
         "typescript/unbound-method": "off", // test mocks don't need full type context
         "typescript/no-non-null-assertion": "off", // tests often know values exist; ! is acceptable in test code
+        "typescript/non-nullable-type-assertion-style": "off", // tests often use it for concise non-null assertions
+        "typescript/no-misused-spread": "off", // test fixtures often use spread for concise object cloning and overrides
         "unicorn/consistent-function-scoping": "off", // test callbacks and helpers can be inline for readability
         "react/jsx-no-constructed-context-values": "off", // test mocks can have inline context values
         "vitest/require-to-throw-message": "off", // not all errors need explicit messages in tests

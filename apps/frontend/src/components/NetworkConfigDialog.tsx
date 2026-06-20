@@ -69,6 +69,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfig
       <DialogContent dividers>
         <FormControl component="fieldset" fullWidth>
           <FormLabel component="legend">Select IP Configuration</FormLabel>
+          {/* oxlint-disable-next-line typescript/no-unsafe-type-assertion -- MUI RadioGroup emits string values; the controls below restrict the allowed values. */}
           <RadioGroup row value={networkType} onChange={(e) => setNetworkType(e.target.value as 'dhcp' | 'static')}>
             <FormControlLabel value="dhcp" control={<Radio />} label="DHCP" />
             <FormControlLabel value="static" control={<Radio />} label="Static" />

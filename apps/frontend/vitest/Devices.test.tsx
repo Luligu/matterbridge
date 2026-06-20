@@ -158,7 +158,7 @@ describe('Devices', () => {
     });
 
     // MUI Select renders items in a listbox; in some setups MenuItem role is option, in others it's menuitem.
-    const itemA = (await screen.findByRole('option', { name: 'PluginA' }).catch(() => screen.findByRole('menuitem', { name: 'PluginA' }))) as HTMLElement;
+    const itemA = await screen.findByRole('option', { name: 'PluginA' }).catch(async () => screen.findByRole('menuitem', { name: 'PluginA' }));
     expect(itemA).toBeInTheDocument();
 
     act(() => {
@@ -223,7 +223,7 @@ describe('Devices', () => {
       fireEvent.mouseDown(combobox!);
     });
 
-    const itemA = (await screen.findByRole('option', { name: 'PluginA' }).catch(() => screen.findByRole('menuitem', { name: 'PluginA' }))) as HTMLElement;
+    const itemA = await screen.findByRole('option', { name: 'PluginA' }).catch(async () => screen.findByRole('menuitem', { name: 'PluginA' }));
 
     act(() => {
       fireEvent.click(itemA);

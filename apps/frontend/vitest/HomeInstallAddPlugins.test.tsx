@@ -157,7 +157,7 @@ describe('HomeInstallAddPlugins', () => {
       fireEvent.mouseDown(combo);
     });
 
-    const option = await screen.findByRole('option', { name: '1.2.3' }).catch(() => screen.findByRole('menuitem', { name: '1.2.3' }));
+    const option = await screen.findByRole('option', { name: '1.2.3' }).catch(async () => await screen.findByRole('menuitem', { name: '1.2.3' }));
     fireEvent.click(option);
 
     // Choose plugin name via dialog callback.
@@ -213,7 +213,7 @@ describe('HomeInstallAddPlugins', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith('./api/uploadpackage', expect.objectContaining({ method: 'POST' }));
 
     await waitFor(() => {
-      expect(logMessage.mock.calls.some((call: unknown[]) => String(call?.[1] ?? '').startsWith('Server response:'))).toBe(true);
+      expect(logMessage.mock.calls.some((call: unknown[]) => typeof call[1] === 'string' && call[1].startsWith('Server response:'))).toBe(true);
     });
 
     const content = screen.getByTestId('window-content');
@@ -228,7 +228,7 @@ describe('HomeInstallAddPlugins', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith('./api/uploadpackage', expect.objectContaining({ method: 'POST' }));
 
     await waitFor(() => {
-      expect(logMessage.mock.calls.some((call: unknown[]) => String(call?.[1] ?? '').startsWith('Server response:'))).toBe(true);
+      expect(logMessage.mock.calls.some((call: unknown[]) => typeof call[1] === 'string' && call[1].startsWith('Server response:'))).toBe(true);
     });
   });
 

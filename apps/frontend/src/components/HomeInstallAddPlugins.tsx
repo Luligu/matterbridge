@@ -43,7 +43,7 @@ function HomeInstallAddPlugins() {
   const uniqueId = useRef(getUniqueId());
 
   const splitPackageNameAndSpecifier = (input: string): { name: string; specifier: string | null } => {
-    const s = String(input ?? '').trim();
+    const s = (input ?? '').trim();
     if (!s) return { name: '', specifier: null };
 
     // Scoped package: @scope/name@specifier
@@ -260,7 +260,7 @@ function HomeInstallAddPlugins() {
                     id="plugin-version"
                     value={selectedPluginVersion}
                     label="Tag or version"
-                    onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}
+                    onChange={(event) => setSelectedPluginVersion(event.target.value ?? '')}
                     sx={{
                       '& .MuiSelect-icon': {
                         color: 'var(--main-label-color)',

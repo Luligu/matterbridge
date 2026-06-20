@@ -81,11 +81,11 @@ describe('ConfigPluginDialog', () => {
     }
     return {
       ...currentConfig,
-      name: currentConfig.name!,
-      type: currentConfig.type!,
-      version: currentConfig.version!,
-      debug: currentConfig.debug!,
-      unregisterOnShutdown: currentConfig.unregisterOnShutdown!,
+      name: currentConfig.name,
+      type: currentConfig.type,
+      version: currentConfig.version,
+      debug: currentConfig.debug,
+      unregisterOnShutdown: currentConfig.unregisterOnShutdown,
       ...extra,
     } as ApiPlugin['configJson'];
   };
@@ -198,7 +198,7 @@ describe('ConfigPluginDialog', () => {
     const itemsSection = itemsTitle.closest('div')?.parentElement;
     expect(itemsSection).not.toBeNull();
 
-    const getArrayInputs = () => within(itemsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getArrayInputs = () => within(itemsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getArrayInputs().map((input) => input.value)).toEqual(['one', 'two']);
 
@@ -230,7 +230,7 @@ describe('ConfigPluginDialog', () => {
     const mappingsSection = mappingsTitle.closest('div')?.parentElement;
     expect(mappingsSection).not.toBeNull();
 
-    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
 
@@ -282,7 +282,7 @@ describe('ConfigPluginDialog', () => {
     const mappingsSection = mappingsTitle.closest('div')?.parentElement;
     expect(mappingsSection).not.toBeNull();
 
-    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
 
