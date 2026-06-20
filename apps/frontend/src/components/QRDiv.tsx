@@ -176,8 +176,8 @@ function QRDiv({ id }: QRDivProps) {
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
         <MbfWindowText style={{ fontWeight: 'bold' }}>Server offline</MbfWindowText>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );
@@ -247,8 +247,8 @@ function QRDiv({ id }: QRDivProps) {
             </div>
           ))}
         </MbfWindowContent>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );
@@ -261,8 +261,8 @@ function QRDiv({ id }: QRDivProps) {
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
         <Button onClick={handleStartCommissioningClick} endIcon={<Icon path={mdiShareOutline} size={1}/>} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>Turn on pairing</Button>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );

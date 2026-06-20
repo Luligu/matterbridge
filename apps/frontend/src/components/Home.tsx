@@ -45,6 +45,13 @@ function Home(): React.JSX.Element {
         setPlugins([]);
         sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      } else if (msg.method === 'update_required') {
+        if (debug) console.log('Home received update_required', msg.response);
+        if (msg.response.devVersion) {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeDevVersion: msg.response.version } : null));
+        } else {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeLatestVersion: msg.response.version } : null));
+        }
       }
       // Local messages
       if (msg.method === '/api/settings' && msg.id === uniqueId.current) {
@@ -72,8 +79,7 @@ function Home(): React.JSX.Element {
             setHomePageMode('devices');
           }
         }
-      }
-      if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
+      } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
         if (debug) console.log(`Home received plugins:`, msg.response);
         setPlugins(msg.response);
       }

@@ -317,11 +317,17 @@ function Header() {
       } else if (msg.method === 'update_required') {
         if (debug) console.log('Header received update_required');
         if (msg.response.devVersion) {
+          setSettings((prevSettings) =>
+            prevSettings ? { ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, matterbridgeDevVersion: msg.response.version } } : null,
+          );
           setUpdateDev(true);
         } else {
+          setSettings((prevSettings) =>
+            prevSettings ? { ...prevSettings, matterbridgeInformation: { ...prevSettings.matterbridgeInformation, matterbridgeLatestVersion: msg.response.version } } : null,
+          );
           setUpdate(true);
         }
-        sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        // sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === 'shelly_sys_update') {
         if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
         setSettings((prevSettings) =>

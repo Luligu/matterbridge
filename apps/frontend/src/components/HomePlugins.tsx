@@ -311,6 +311,17 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
         if (debug) console.log(`HomePlugins received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
         sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      } else if (msg.method === 'plugin_update_required') {
+        if (debug) console.log('HomePlugins received plugin_update_required', msg.response);
+        setPlugins((prevPlugins) =>
+          prevPlugins.map((plugin) =>
+            plugin.name === msg.response.plugin
+              ? msg.response.devVersion
+                ? { ...plugin, devVersion: msg.response.version }
+                : { ...plugin, latestVersion: msg.response.version }
+              : plugin,
+          ),
+        );
       }
       // Local messages
       if (msg.id === uniqueId.current && msg.method === '/api/settings') {
