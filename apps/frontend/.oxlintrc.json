@@ -49,7 +49,7 @@
     "typescript/no-import-type-side-effects": "off", // conflicts with the inline type-imports style enforced below
     "typescript/prefer-nullish-coalescing": "off", // a ?? b only substitutes null/undefined; a || b also substitutes 0, "", false — prefer ?? for nullable state
     "typescript/no-explicit-any": "warn",
-    // At the moment need to fix mui "typescript/no-deprecated": "warn",
+    // At the moment left off cause we need to fix mui "typescript/no-deprecated": "warn",
     "typescript/consistent-type-imports": ["error", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
     "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "warn",
