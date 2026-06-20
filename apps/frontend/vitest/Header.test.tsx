@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { LogLevel } from 'node-ansi-logger';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -25,7 +24,7 @@ import Header from '../src/components/Header';
 import { UiContext, type UiContextType } from '../src/components/UiContext';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 
-const settings: ApiSettings = {
+const settings = {
   matterbridgeInformation: {
     rootDirectory: '',
     homeDirectory: '',
@@ -49,9 +48,9 @@ const settings: ApiSettings = {
     shellyBoard: false,
     shellySysUpdate: false,
     shellyMainUpdate: false,
-    loggerLevel: LogLevel.INFO,
+    loggerLevel: 'info',
     fileLogger: false,
-    matterLoggerLevel: LogLevel.INFO,
+    matterLoggerLevel: 'info',
     matterFileLogger: false,
     matterMdnsInterface: undefined,
     matterIpv4Address: undefined,
@@ -85,7 +84,7 @@ const settings: ApiSettings = {
     heapTotal: '',
     heapUsed: '',
   },
-};
+} as ApiSettings;
 
 const uiContext: UiContextType = {
   mobile: false,
