@@ -71,6 +71,6 @@
     "@matter/main": "0.17.3",
     "@matterbridge/types": "3.9.2",
     "@matterbridge/utils": "3.9.2",
-    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
+    "node-ansi-logger": "3.3.0"
   }
 }

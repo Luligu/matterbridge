@@ -222,6 +222,7 @@
     "docker:build:local": "docker build --no-cache -f docker/Dockerfile.local -t matterbridge:local .",
     "docker:run:local": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --name matterbridge-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:local",
     "docker:exec:local": "docker exec -it matterbridge-local bash",
+    "docker:log:local": "docker logs -f matterbridge-local --tail 100",
     "docker:build:local:latest": "docker build --no-cache --pull -f docker/Dockerfile.latest -t matterbridge:latest .",
     "docker:run:local:latest": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --name matterbridge-latest-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:latest",
     "docker:run:local:user:latest": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --name matterbridge-latest-local --user 1000:1000 -p 8283:8283 matterbridge:latest",
@@ -281,8 +282,8 @@
     "@matterbridge/types": "3.9.2",
     "@matterbridge/utils": "3.9.2",
     "@matterbridge/vitest-utils": "3.9.2",
-    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7",
-    "node-persist-manager": "2.1.0-dev-20260617-3224082"
+    "node-ansi-logger": "3.3.0",
+    "node-persist-manager": "2.1.0"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
