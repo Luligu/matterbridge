@@ -443,9 +443,9 @@ export class Backend extends EventEmitter<BackendEvents> {
    *
    * @returns {ApiSettings} The api settings object.
    */
-  getApiSettings(): ApiSettings {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    return {} as ApiSettings;
+  async getApiSettings(): Promise<ApiSettings> {
+    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
+    return response.result.data;
   }
 
   /**
@@ -453,18 +453,21 @@ export class Backend extends EventEmitter<BackendEvents> {
    *
    * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
    */
-  getApiPlugins(): ApiPlugin[] {
-    return [];
+  async getApiPlugins(): Promise<ApiPlugin[]> {
+    const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
+    return response.result.plugins;
   }
 
   /**
    * Retrieves the devices from Matterbridge.
    *
-   * @param {string} [_pluginName] - The name of the plugin to filter devices by.
+   * @param {string} [pluginName] - The name of the plugin to filter devices by.
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
-  getApiDevices(_pluginName?: string): ApiDevice[] {
+  async getApiDevices(pluginName?: string): Promise<ApiDevice[]> {
+    const _response = await this.server.fetch({ type: 'devices_basearray', src: 'frontend', dst: 'devices', params: { pluginName } });
     return [];
+    // return response.result.devices;
   }
 
   /**

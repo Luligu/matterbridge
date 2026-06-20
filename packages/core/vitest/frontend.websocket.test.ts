@@ -1484,7 +1484,7 @@ describe('Matterbridge frontend', () => {
       };
       ws.addEventListener('message', onMessage);
     });
-    matterbridge.frontend.wssSendUpdateRequired();
+    matterbridge.frontend.wssSendUpdateRequired('3.3.0');
     const response = await received;
     expect(response).toBeDefined();
     const data = JSON.parse(response as string);
@@ -1493,7 +1493,33 @@ describe('Matterbridge frontend', () => {
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('update_required');
-    expect(data.response).toEqual({ devVersion: false });
+    expect(data.response).toEqual({ version: '3.3.0', devVersion: false });
+    expect(data.error).toBeUndefined();
+  });
+
+  test('Websocket SendPluginUpdateRequired', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const received = new Promise((resolve) => {
+      const onMessage = (event: WebSocket.MessageEvent) => {
+        const data = JSON.parse(event.data as string);
+        if (data.method === 'plugin_update_required') {
+          ws.removeEventListener('message', onMessage);
+          resolve(event.data);
+        }
+      };
+      ws.addEventListener('message', onMessage);
+    });
+    matterbridge.frontend.wssSendPluginUpdateRequired('matterbridge-example', '1.2.3', true);
+    const response = await received;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(0);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Frontend');
+    expect(data.method).toBe('plugin_update_required');
+    expect(data.response).toEqual({ plugin: 'matterbridge-example', version: '1.2.3', devVersion: true });
     expect(data.error).toBeUndefined();
   });
 

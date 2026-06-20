@@ -195,7 +195,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_updaterequired':
-          this.wssSendUpdateRequired(msg.params.devVersion);
+          this.wssSendUpdateRequired(msg.params.version, msg.params.devVersion);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_pluginupdaterequired':
+          this.wssSendPluginUpdateRequired(msg.params.plugin, msg.params.version, msg.params.devVersion);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_snackbarmessage':
@@ -2560,14 +2564,29 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a need to update WebSocket message to all connected clients.
    *
+   * @param {string} version - The version of the update required.
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
-  wssSendUpdateRequired(devVersion: boolean = false): void {
+  wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending an update required message to all connected clients');
     this.updateRequired = true;
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
+  }
+
+  /**
+   * Sends a need to update WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {string} version - The version of the update required.
+   * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
+   */
+  wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a plugin update required message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_update_required', success: true, response: { plugin, version, devVersion } });
   }
 
   /**

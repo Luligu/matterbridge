@@ -158,7 +158,23 @@ describe('Matterbridge frontend', () => {
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_updaterequired', src: 'manager', dst: 'frontend', params: { devVersion: true } } as any);
+    await (frontend as any).broadcastMsgHandler({
+      id: 123456,
+      type: 'frontend_updaterequired',
+      src: 'manager',
+      dst: 'frontend',
+      params: { version: '3.3.0-dev-1', devVersion: true },
+    } as any);
+    const pluginUpdateSpy = vi.spyOn(frontend, 'wssSendPluginUpdateRequired');
+    await (frontend as any).broadcastMsgHandler({
+      id: 123456,
+      type: 'frontend_pluginupdaterequired',
+      src: 'manager',
+      dst: 'frontend',
+      params: { plugin: 'matterbridge-example', version: '1.2.3', devVersion: true },
+    } as any);
+    expect(pluginUpdateSpy).toHaveBeenCalledWith('matterbridge-example', '1.2.3', true);
+    pluginUpdateSpy.mockRestore();
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_snackbarmessage',
@@ -599,17 +615,74 @@ describe('Matterbridge frontend', () => {
     const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
 
     (frontend as any).listening = false;
-    expect(frontend.wssSendUpdateRequired()).toBeUndefined();
+    expect(frontend.wssSendUpdateRequired('3.3.0')).toBeUndefined();
     expect(spy).toHaveBeenCalledTimes(0);
     vi.clearAllMocks();
     (frontend as any).listening = true;
     (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
-    expect(frontend.wssSendUpdateRequired()).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(1);
+    expect(frontend.wssSendUpdateRequired('3.3.0')).toBeUndefined();
+    expect(frontend.wssSendUpdateRequired('3.3.0', true)).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenNthCalledWith(1, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'update_required',
+      success: true,
+      response: { version: '3.3.0', devVersion: false },
+    });
+    expect(spy).toHaveBeenNthCalledWith(2, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'update_required',
+      success: true,
+      response: { version: '3.3.0', devVersion: true },
+    });
+    expect((frontend as any).updateRequired).toBe(true);
 
     // Restore for next tests
     (frontend as any).webSocketServer = savedWss;
     (frontend as any).listening = false;
+    (frontend as any).updateRequired = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendPluginUpdateRequired', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendPluginUpdateRequired('matterbridge-example', '1.2.3')).toBeUndefined();
+    expect(spy).not.toHaveBeenCalled();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendPluginUpdateRequired('matterbridge-example', '1.2.3')).toBeUndefined();
+    expect(frontend.wssSendPluginUpdateRequired('matterbridge-example', '1.2.4', true)).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenNthCalledWith(1, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'plugin_update_required',
+      success: true,
+      response: { plugin: 'matterbridge-example', version: '1.2.3', devVersion: false },
+    });
+    expect(spy).toHaveBeenNthCalledWith(2, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'plugin_update_required',
+      success: true,
+      response: { plugin: 'matterbridge-example', version: '1.2.4', devVersion: true },
+    });
+    expect((frontend as any).updateRequired).toBe(false);
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    (frontend as any).updateRequired = false;
     spy.mockRestore();
   });
 

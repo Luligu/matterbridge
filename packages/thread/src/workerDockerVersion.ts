@@ -71,6 +71,7 @@ export default new WorkerWrapper('DockerVersion', async (worker) => {
     worker.snackBar(`A new dev Docker image is available: v.${dockerVersionDev}. Pull the dev Docker image and recreate the container to apply it.`, 0, 'info');
   }
 
+  // Send the docker version info to matterbridge to store it.
   worker.server.request({
     type: 'matterbridge_docker_version',
     src: `manager`,

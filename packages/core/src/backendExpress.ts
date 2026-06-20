@@ -256,24 +256,24 @@ export class BackendExpress {
     });
 
     // Endpoint to provide settings (debug only reasons - not used in production)
-    this.expressApp.get('/api/settings', (req, res) => {
+    this.expressApp.get('/api/settings', async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
-      res.json(this.backend.getApiSettings());
+      res.json(await this.backend.getApiSettings());
     });
 
     // Endpoint to provide plugins (debug only reasons - not used in production)
-    this.expressApp.get('/api/plugins', (req, res) => {
+    this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       if (!this.validateReq(req, res)) return;
-      res.json(this.backend.getApiPlugins());
+      res.json(await this.backend.getApiPlugins());
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
-    this.expressApp.get('/api/devices', (req, res) => {
+    this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(this.backend.getApiDevices());
+      res.json(await this.backend.getApiDevices());
     });
 
     // Endpoint to view the matterbridge log

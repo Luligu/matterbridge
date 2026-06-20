@@ -419,15 +419,32 @@ export class BackendWsServer {
   /**
    * Sends a need to update WebSocket message to all connected clients.
    *
+   * @param {string} version - The version of the update required.
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
-  wssSendUpdateRequired(devVersion: boolean = false): void {
+  wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
     if (this.verbose) this.log.debug('Sending an update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
+  }
+
+  /**
+   * Sends a need to update WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {string} version - The version of the update required.
+   * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
+   */
+  wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
+    if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
+    if (this.verbose) this.log.debug('Sending a plugin update required message to all connected clients');
+    // TODO check
+    // this.backend.updateRequired = true;
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_update_required', success: true, response: { plugin, version, devVersion } });
   }
 
   /**

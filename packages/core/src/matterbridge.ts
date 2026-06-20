@@ -25,7 +25,15 @@
 // oxlint-disable max-lines
 
 // TODO: analyze each rule
-// oxlint-disable default-case typescript/no-unsafe-type-assertion unicorn/no-negated-condition typescript/no-unnecessary-template-expression typescript/non-nullable-type-assertion-style typescript/prefer-nullish-coalescing typescript/require-await typescript/no-misused-promises no-param-reassign typescript/restrict-template-expressions
+// oxlint-disable default-case
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable unicorn/no-negated-condition
+// oxlint-disable typescript/non-nullable-type-assertion-style
+// oxlint-disable typescript/prefer-nullish-coalescing
+// oxlint-disable typescript/require-await
+// oxlint-disable typescript/no-misused-promises
+// oxlint-disable no-param-reassign
+// oxlint-disable typescript/restrict-template-expressions
 // oxlint-disable complexity
 // oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -63,6 +71,7 @@ import { ManualPairingCodeCodec } from '@matter/types/schema';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiMatter,
+  ApiSettings,
   MaybePromise,
   PlatformMatterbridge,
   SanitizedExposedFabricInformation,
@@ -75,7 +84,7 @@ import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, 
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
-import { inspectError, logError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
@@ -409,8 +418,54 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       port: this.port,
       discriminator: this.discriminator,
       passcode: this.passcode,
-      // shellySysUpdate: this.shellySysUpdate,
-      // shellyMainUpdate: this.shellyMainUpdate,
+    };
+  }
+
+  /**
+   *  Get a shared matterbridge object
+   *
+   * @returns {ApiSettings} The API settings object.
+   */
+  getApiSettings(): ApiSettings {
+    return {
+      systemInformation: { ...this.systemInformation },
+      matterbridgeInformation: {
+        rootDirectory: this.rootDirectory,
+        homeDirectory: this.homeDirectory,
+        matterbridgeDirectory: this.matterbridgeDirectory,
+        matterbridgePluginDirectory: this.matterbridgePluginDirectory,
+        matterbridgeCertDirectory: this.matterbridgeCertDirectory,
+        globalModulesDirectory: this.globalModulesDirectory,
+        matterbridgeVersion: this.matterbridgeVersion,
+        matterbridgeLatestVersion: this.matterbridgeLatestVersion,
+        matterbridgeDevVersion: this.matterbridgeDevVersion,
+        frontendVersion: this.frontendVersion,
+        dockerDev: this.dockerDev,
+        dockerVersion: this.dockerVersion,
+        dockerLatestVersion: this.dockerLatestVersion,
+        dockerDevVersion: this.dockerDevVersion,
+        bridgeMode: this.bridgeMode,
+        restartMode: this.restartMode,
+        virtualMode: this.virtualMode,
+        profile: this.profile,
+        readOnly: hasParameter('readonly'),
+        shellyBoard: false,
+        shellySysUpdate: false,
+        shellyMainUpdate: false,
+        loggerLevel: this.logLevel,
+        fileLogger: this.fileLogger,
+        matterLoggerLevel: this.matterLogLevel,
+        matterFileLogger: this.matterFileLogger,
+        matterMdnsInterface: this.mdnsInterface,
+        matterIpv4Address: this.ipv4Address,
+        matterIpv6Address: this.ipv6Address,
+        matterPort: this.port ?? 5540,
+        matterDiscriminator: this.discriminator,
+        matterPasscode: this.passcode,
+        restartRequired: false,
+        fixedRestartRequired: false,
+        updateRequired: false,
+      },
     };
   }
 
@@ -453,6 +508,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           break;
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
+          break;
+        case 'matterbridge_apisettings':
+          this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;
         case 'matterbridge_start_plugin_server':
           {
@@ -979,13 +1037,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Log system info and create .matterbridge directory
     await this.logNodeAndSystemInfo();
     this.log.notice(
-      // prettier-ignore
-      `Matterbridge version ${this.matterbridgeVersion} ` +
-        `${hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : ''}` +
-        `${hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : ''}` +
-        `${hasParameter('controller') ? 'mode controller ' : ''}` +
-        `${this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : ''}` +
-        `running on ${this.systemInformation.osType} (v.${this.systemInformation.osRelease}) platform ${this.systemInformation.osPlatform} arch ${this.systemInformation.osArch}`,
+      // oxfmt-ignore
+      'Matterbridge version ' + this.matterbridgeVersion + ' ' +
+        (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : '') +
+        (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : '') +
+        (hasParameter('controller') ? 'mode controller ' : '') +
+        (this.restartMode !== '' ? 'restart mode ' + this.restartMode + ' ' : '') +
+        'running on ' + this.systemInformation.osType + ' (v.' + this.systemInformation.osRelease + ') platform ' + this.systemInformation.osPlatform + ' arch ' + this.systemInformation.osArch,
     );
 
     // Check node version and throw error
@@ -1282,17 +1340,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     process.removeAllListeners('unhandledRejection');
 
     this.exceptionHandler = async (error: Error): Promise<void> => {
-      const errorMessage = error instanceof Error ? error.message : error;
+      const errorMessage = getErrorMessage(error);
       const errorInspect = inspect(error, { depth: 10 });
       this.log.error(`Unhandled Exception detected: ${errorMessage}\nstack: ${errorInspect}}`);
     };
     process.on('uncaughtException', this.exceptionHandler);
 
-    this.rejectionHandler = async (reason, promise): Promise<void> => {
-      const errorMessage = reason instanceof Error ? reason.message : reason;
+    this.rejectionHandler = async (reason, _promise): Promise<void> => {
+      const errorMessage = getErrorMessage(reason);
       const errorInspect = inspect(reason, { depth: 10 });
-      // oxlint-disable-next-line typescript/no-base-to-string
-      this.log.error(`Unhandled Rejection detected: ${promise}\nreason: ${errorMessage}\nstack: ${errorInspect}`);
+      this.log.error(`Unhandled Rejection detected: ${errorMessage}\nstack: ${errorInspect}`);
     };
     process.on('unhandledRejection', this.rejectionHandler);
 

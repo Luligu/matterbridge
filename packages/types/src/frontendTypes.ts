@@ -554,6 +554,17 @@ export interface WsMessageApiUpdateRequired extends WsMessageSuccessApiResponse 
   id: 0;
   method: 'update_required';
   response: {
+    version: string;
+    devVersion: boolean;
+  };
+}
+
+export interface WsMessageApiPluginUpdateRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'plugin_update_required';
+  response: {
+    plugin: string;
+    version: string;
     devVersion: boolean;
   };
 }
@@ -686,6 +697,7 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartRequired
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
+  | WsMessageApiPluginUpdateRequired
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate
@@ -703,6 +715,7 @@ export type WsMessageBroadcast =
   | WsMessageApiRestartRequired
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
+  | WsMessageApiPluginUpdateRequired
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate
