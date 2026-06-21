@@ -64,6 +64,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
 
   const [online, setOnline] = useState(false);
+  const [retry, setRetry] = useState(1);
 
   // Contexts
   const {
@@ -345,6 +346,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setOnline(true);
       closeSnackbar();
       retryCountRef.current = 1;
+      setRetry(1);
 
       startTimeoutRef.current = setTimeout(() => {
         pingIntervalRef.current = setInterval(() => {
@@ -377,6 +379,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
       }
       retryCountRef.current = retryCountRef.current + 1;
+      setRetry(retryCountRef.current);
     };
 
     wsRef.current.onerror = (error) => {
@@ -427,7 +430,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setLogFilterSearch,
       filterLogMessages,
       online,
-      retry: retryCountRef.current,
+      retry,
       getUniqueId,
       addListener,
       removeListener,
@@ -435,7 +438,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       logMessage,
     }),
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, addListener, removeListener, sendMessage, logMessage],
+    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, retry, addListener, removeListener, sendMessage, logMessage],
   );
 
   return (

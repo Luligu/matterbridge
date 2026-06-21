@@ -15,7 +15,19 @@ export type {
   ApiSelectEntity,
   WsMessage,
 } from '../../../../packages/types/src/frontendTypes';
-export type { ApiPlugin, ApiDevice, ApiClusters, ApiMatter, MatterbridgeInformation, SystemInformation, Cluster } from '../../../../packages/types/src/matterbridgeTypes';
+export type {
+  ApiPlugin,
+  ApiDevice,
+  ApiClusters,
+  ApiMatter,
+  MatterbridgeInformation,
+  SystemInformation,
+  Cluster,
+  BridgeMode,
+  BridgeStatus,
+  RestartMode,
+  VirtualMode,
+} from '../../../../packages/types/src/matterbridgeTypes';
 
 // Duplicated locally on purpose: these values are used at runtime by the frontend.
 export const NODE_STORAGE_DIR = 'storage';

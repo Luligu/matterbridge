@@ -21,7 +21,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { useContext, useEffect, useState, useRef, memo, type SyntheticEvent } from 'react';
 
 import { debug, enableMobile } from '../appState';
-import { type ApiPlugin, type MatterbridgeInformation, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
+import { type BridgeStatus, type ApiPlugin, type MatterbridgeInformation, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { Connecting } from './Connecting';
@@ -48,6 +48,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
   const [selectedPluginFrontend, setSelectedPluginFrontend] = useState<{ name: string; path: string } | null>(null);
+  const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   const pluginsColumns: MbfTableColumn<ApiPlugin>[] = [
     {
@@ -322,12 +323,19 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               : plugin,
           ),
         );
+      } else if (msg.method === 'plugin_status_update') {
+        if (debug) console.log('HomePlugins received plugin_status_update', msg.response);
+        setPlugins((prevPlugins) => prevPlugins.map((plugin) => (plugin.name === msg.response.plugin ? { ...plugin, ...msg.response.status } : plugin)));
+      } else if (msg.method === 'matterbridge_status_update') {
+        if (debug) console.log(`HomePlugins received matterbridge_status_update: ${msg.response.status}`);
+        setStatus(msg.response.status);
       }
       // Local messages
       if (msg.id === uniqueId.current && msg.method === '/api/settings') {
         if (debug) console.log(`HomePlugins (id: ${msg.id}) received settings:`, msg.response);
         setSystemInfo(msg.response.systemInformation);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
+        setStatus(msg.response.matterbridgeInformation.bridgeStatus);
       } else if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
         if (debug) console.log(`HomePlugins (id: ${msg.id}) received ${msg.response.length} plugins:`, msg.response);
         setPlugins(msg.response);
@@ -441,7 +449,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   };
 
   const handleFrontendPlugin = (plugin: ApiPlugin) => {
-    const pluginFrontendPath = `/plugins/${plugin.name}`;
+    const pluginFrontendPath = `./plugins/${plugin.name}`;
     if (debug) console.log('handleFrontendPlugin plugin:', plugin.name, 'frontend:', plugin.frontendPath, 'path:', pluginFrontendPath);
     if (plugin.frontendPath) setSelectedPluginFrontend({ name: plugin.name, path: pluginFrontendPath });
   };

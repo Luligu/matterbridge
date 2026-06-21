@@ -25,7 +25,7 @@ import { useState, useContext, useEffect, useRef, memo } from 'react';
 import { Link, useNavigate } from 'react-router';
 
 import { clearEnableMobile, debug, enableMobile, setEnableMobile, toggleDebug } from '../appState';
-import { type ApiSettings, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, type WsMessageApiResponse } from '../utils/backendShared';
+import { type ApiSettings, type BridgeStatus, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, type WsMessageApiResponse } from '../utils/backendShared';
 import { MbfLsk, resetLocalStorage } from '../utils/localStorage';
 import { viewportHeight, viewportWidth } from '../viewport';
 import { UiContext } from './UiContext';
@@ -42,6 +42,7 @@ function Header() {
   const [update, setUpdate] = useState(false);
   const [updateDev, setUpdateDev] = useState(false);
   const [settings, setSettings] = useState<ApiSettings | null>(null);
+  const [status, setStatus] = useState<BridgeStatus>('inactive');
   // Refs
   const uniqueId = useRef(getUniqueId());
   // Menu states
@@ -129,7 +130,7 @@ function Header() {
   };
 
   const handleRestartClick = () => {
-    if (settings?.matterbridgeInformation.restartMode === '') {
+    if (settings?.matterbridgeInformation.restartMode === 'none') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/restart', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/shutdown', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -304,6 +305,7 @@ function Header() {
         setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
         setFixedRestart(msg.response.matterbridgeInformation.fixedRestartRequired);
         setUpdate(msg.response.matterbridgeInformation.updateRequired);
+        setStatus(msg.response.matterbridgeInformation.bridgeStatus);
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
         if (debug) console.log(`Header received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
         sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -314,6 +316,9 @@ function Header() {
       } else if (msg.method === 'restart_not_required') {
         if (debug) console.log(`Header received restart_not_required`);
         setRestart(false);
+      } else if (msg.method === 'matterbridge_status_update') {
+        if (debug) console.log(`Header received matterbridge_status_update: ${msg.response.status}`);
+        setStatus(msg.response.status);
       } else if (msg.method === 'update_required') {
         if (debug) console.log('Header received update_required');
         if (msg.response.devVersion) {
@@ -327,7 +332,6 @@ function Header() {
           );
           setUpdate(true);
         }
-        // sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === 'shelly_sys_update') {
         if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
         setSettings((prevSettings) =>
@@ -417,7 +421,7 @@ function Header() {
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
         {!settings.matterbridgeInformation.readOnly && (
           <Tooltip title={`Matterbridge v.${settings.matterbridgeInformation.matterbridgeVersion}`}>
-            <span className="status-information" style={{ cursor: 'default' }}>
+            <span className="status-information" style={{ cursor: 'default', backgroundColor: update ? 'var(--primary-color)' : updateDev ? 'var(--secondary-color)' : 'green' }}>
               v.
               {settings.matterbridgeInformation.matterbridgeVersion.split('-')[0] +
                 (settings.matterbridgeInformation.matterbridgeVersion.includes('-dev-') ? '@dev' : '') +
@@ -428,29 +432,29 @@ function Header() {
           </Tooltip>
         )}
         {settings.matterbridgeInformation.shellyBoard && <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
-        {settings.matterbridgeInformation.bridgeMode !== '' && !settings.matterbridgeInformation.readOnly ? (
+        {settings.matterbridgeInformation.bridgeMode !== 'none' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title="Bridge mode">
-            <span className="status-information" style={{ cursor: 'default' }}>
+            <span className="status-information" style={{ cursor: 'default', backgroundColor: status === 'started' ? 'green' : status === 'error' ? 'red' : undefined }}>
               {settings.matterbridgeInformation.bridgeMode}
             </span>
           </Tooltip>
         ) : null}
-        {settings.matterbridgeInformation.restartMode !== '' && !settings.matterbridgeInformation.readOnly ? (
+        {settings.matterbridgeInformation.restartMode !== 'none' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title="Restart mode">
-            <span className="status-information" style={{ cursor: 'default' }}>
+            <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
               {settings.matterbridgeInformation.restartMode}
             </span>
           </Tooltip>
         ) : null}
         {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title="Current profile">
-            <span className="status-information" style={{ cursor: 'default' }}>
+            <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
               {settings.matterbridgeInformation.profile}
             </span>
           </Tooltip>
         ) : null}
         {debug && (
-          <span className="status-information" style={{ cursor: 'default' }}>
+          <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
             {` enabled ${localStorage.getItem(MbfLsk.enableMobile) !== 'false'}`}
@@ -531,7 +535,7 @@ function Header() {
             <RestartAltIcon />
           </IconButton>
         </Tooltip>
-        {settings.matterbridgeInformation.restartMode === '' ? (
+        {settings.matterbridgeInformation.restartMode === 'none' ? (
           <Tooltip title="Shut down matterbridge">
             <IconButton
               style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }}
@@ -626,7 +630,7 @@ function Header() {
             </ListItemIcon>
             <ListItemText primary="Restart" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
           </MenuItem>
-          {settings.matterbridgeInformation.restartMode === '' ? (
+          {settings.matterbridgeInformation.restartMode === 'none' ? (
             <MenuItem onClick={() => handleMenuCloseConfirm('shutdown')}>
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />

@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.4.18",
+  "version": "3.5.0",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -103,7 +103,7 @@
     "jsdom": "29.1.1",
     "vite": "8.0.16",
     "vitest": "4.1.9",
-    "@typescript/native-preview": "7.0.0-dev.20260619.1",
+    "@typescript/native-preview": "7.0.0-dev.20260620.1",
     "oxfmt": "0.55.0",
     "oxlint": "1.70.0",
     "oxlint-tsgolint": "0.23.0"

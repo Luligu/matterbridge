@@ -16,7 +16,7 @@ import { useContext, useEffect, useState, useRef, useCallback, memo, type Synthe
 // @mdi/js
 
 import { debug, enableMobile } from '../appState';
-import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin } from '../utils/backendShared';
+import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin, type BridgeStatus } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
 import { Connecting } from './Connecting';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
@@ -97,6 +97,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table show these ones, mix of devices and selectDevices
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
+  const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -297,6 +298,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.method === 'restart_not_required') {
         if (debug) console.log('HomeDevices received restart_not_required');
         setRestart(false);
+      } else if (msg.method === 'matterbridge_status_update') {
+        if (debug) console.log(`HomeDevices received matterbridge_status_update: ${msg.response.status}`);
+        setStatus(msg.response.status);
       } else if (msg.method === 'state_update') {
         if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformation') && msg.response.attribute === 'reachable') {
           if (debug) console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
@@ -315,8 +319,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       // Local messages
       if (msg.id === uniqueId.current && msg.method === '/api/settings') {
         if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
-        setSettings(msg.response); // Store the settings response
-        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
+        setSettings(msg.response);
+        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+        setStatus(msg.response.matterbridgeInformation.bridgeStatus);
       } else if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
         if (debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
         if (msg.response) {
@@ -460,11 +465,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     }
   };
 
-  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/), show it in the dialog iframe, otherwise open it in a new tab.
+  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/ or ./plugins/), show it in the dialog iframe, otherwise open it in a new tab.
   const handleConfigUrl = (device: MixedApiDevices) => {
     if (debug) console.log('handleConfigUrl device:', device.name, 'configUrl:', device.configUrl);
     if (!device.configUrl) return;
-    if (device.configUrl.startsWith('/plugins/')) {
+    if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
       setSelectedDeviceFrontend({ name: device.name, path: device.configUrl });
     } else {
       window.open(device.configUrl, '_blank');
