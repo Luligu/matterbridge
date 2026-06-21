@@ -832,7 +832,7 @@ describe('PluginManager', () => {
     plugins.install('matterbridge-websocket');
     plugins.uninstall('matterbridge-websocket');
     expect(plugins.length).toBe(3);
-    matterbridge.restartMode = '';
+    matterbridge.restartMode = 'none';
   });
 
   test('parse plugin', async () => {

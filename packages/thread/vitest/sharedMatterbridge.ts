@@ -66,7 +66,7 @@ export const matterbridge: Writable<SharedMatterbridge> = {
   dockerLatestVersion: undefined,
   dockerDevVersion: undefined,
   bridgeMode: 'bridge',
-  restartMode: '',
+  restartMode: 'none',
   virtualMode: 'mounted_switch',
   profile: undefined,
   logLevel: LogLevel.DEBUG,

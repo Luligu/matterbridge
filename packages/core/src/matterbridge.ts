@@ -61,12 +61,16 @@ import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiMatter,
   ApiSettings,
+  BridgeMode,
+  BridgeStatus,
   MaybePromise,
   PlatformMatterbridge,
+  RestartMode,
   SanitizedExposedFabricInformation,
   SanitizedSession,
   SharedMatterbridge,
   SystemInformation,
+  VirtualMode,
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
@@ -206,11 +210,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** It indicates the latest docker image version of matterbrdge with tag dev. */
   public dockerDevVersion: string | undefined;
   /** It indicates the mode of the Matterbridge instance. It can be 'bridge', 'childbridge', 'controller' or empty. */
-  public bridgeMode: 'bridge' | 'childbridge' | 'controller' | '' = '';
+  public bridgeMode: BridgeMode = 'none';
   /** It indicates the restart mode of the Matterbridge instance. It can be 'service', 'docker' or empty. */
-  public restartMode: 'service' | 'docker' | '' = '';
+  public restartMode: RestartMode = 'none';
   /** It indicates whether virtual mode is enabled and its type. The virtual mode control the creation of "Update matterbridge" and "Restart matterbridge" endpoints. */
-  public virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch' = 'outlet';
+  public virtualMode: VirtualMode = 'outlet'; // Default to 'outlet' for backward compatibility, but can be overridden by CLI parameter
+  /** It indicates the current status of the Matterbridge instance. */
+  public bridgeStatus: BridgeStatus = 'inactive';
   /** It indicates the Matterbridge profile in use. */
   public readonly profile = getParameter('profile');
 
@@ -436,6 +442,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         bridgeMode: this.bridgeMode,
         restartMode: this.restartMode,
         virtualMode: this.virtualMode,
+        bridgeStatus: this.bridgeStatus,
         profile: this.profile,
         readOnly: hasParameter('readonly'),
         shellyBoard: false,
@@ -545,7 +552,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
             if (packageName === 'matterbridge') {
               this.log.info('Matterbridge has been updated. Full restart required.');
-              if (this.restartMode !== '') await this.cleanup('updating...', false);
+              if (this.restartMode !== 'none') await this.cleanup('updating...', false);
             }
           }
           break;
@@ -1037,7 +1044,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge') ? 'mode bridge ' : '') +
         (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge') ? 'mode childbridge ' : '') +
         (hasParameter('controller') ? 'mode controller ' : '') +
-        (this.restartMode === '' ? '' : 'restart mode ' + this.restartMode + ' ') +
+        (this.restartMode === 'none' ? '' : 'restart mode ' + this.restartMode + ' ') +
         'running on ' + this.systemInformation.osType + ' (v.' + this.systemInformation.osRelease + ') platform ' + this.systemInformation.osPlatform + ' arch ' + this.systemInformation.osArch,
     );
 
@@ -1706,6 +1713,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.hasCleanupStarted = true;
       this.log.info(message);
 
+      // Notify the frontend that Matterbridge is stopping
+      this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'stopping') } });
+
       // Clear the start matter interval
       if (this.startMatterInterval) {
         clearInterval(this.startMatterInterval);
@@ -1884,6 +1894,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
       }
 
+      // Notify the frontend that Matterbridge is stopped
+      this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'stopped') } });
+
       // Stop the frontend
       await this.frontend.stop();
       this.frontend.destroy();
@@ -1998,6 +2011,31 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
+   * Sends a plugin status update to the frontend.
+   *
+   * @param {Plugin} plugin - The plugin for which to send the status update.
+   * @returns {void}
+   */
+  private sendPluginStatusUpdate(plugin: Plugin): void {
+    this.server.request({
+      type: 'frontend_pluginstatusupdate',
+      src: 'matterbridge',
+      dst: 'frontend',
+      params: {
+        plugin: plugin.name,
+        status: {
+          locked: plugin.locked,
+          error: plugin.error,
+          enabled: plugin.enabled,
+          loaded: plugin.loaded,
+          started: plugin.started,
+          configured: plugin.configured,
+          registeredDevices: plugin.registeredDevices,
+        },
+      },
+    });
+  }
+  /**
    * Starts the Matterbridge in bridge mode.
    *
    * @private
@@ -2008,6 +2046,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
     if (!this.matterbridgeContext) throw new Error('No storage context initialized');
 
+    // Notify the frontend that Matterbridge is starting
+    this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'starting') } });
+
+    // Create the Matter server node and the aggregator node and add the aggregator node to the server node
     this.serverNode = await this.createServerNode(
       this.matterbridgeContext,
       this.port ? this.port++ : undefined,
@@ -2017,9 +2059,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.aggregatorNode = await this.createAggregatorNode(this.matterbridgeContext);
     await this.serverNode.add(this.aggregatorNode);
 
+    // Add the virtual devices to the aggregator node in bridge mode (TODO: in childbridge mode the virtual devices are not added)
     await addVirtualDevices(this, this.aggregatorNode);
 
-    await this.startPlugins();
+    // Load and start all plugins without awaiting them to start
+    await this.startPlugins(false, true);
 
     this.log.debug('Starting start matter interval in bridge mode...');
     this.frontend.wssSendSnackbarMessage(`The bridge is starting...`, 0, 'info');
@@ -2031,7 +2075,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // istanbul ignore if cause is just a logging statement
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
-            this.frontend.wssSendRefreshRequired('plugins');
           }
           for (const plugin of this.plugins) {
             if (!plugin.enabled) continue;
@@ -2046,8 +2089,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
               this.frontend.wssSendRefreshRequired('plugins');
               this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
+              // Notify the frontend that Matterbridge is in error state due to a plugin error
+              this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'error') } });
               return;
             }
+            // Update the frontend about the plugin status
+            this.sendPluginStatusUpdate(plugin);
 
             if (!plugin.loaded || !plugin.started) {
               this.log.debug(
@@ -2089,23 +2136,24 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
                   plugin.error = true;
                   this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
                 }
+                // Update the frontend about the plugin status after configuring the plugin
+                this.sendPluginStatusUpdate(plugin);
               }
-              this.frontend.wssSendRefreshRequired('plugins');
             })();
           }, 30 * 1000).unref();
 
           // Setting reachability to true
           this.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
-            if (this.aggregatorNode) fireAndForget(this.setAggregatorReachability(this.aggregatorNode, true), this.log, `Set aggregator node reachability for Matterbridge`);
+            if (this.aggregatorNode)
+              fireAndForget(this.setAggregatorReachability(this.aggregatorNode, true), this.log, `Failed to set aggregator node reachability for Matterbridge`);
           }, 60 * 1000).unref();
 
-          // Logger.get('LogServerNode').info(this.serverNode);
           this.emit('bridge_started');
           this.log.notice('Matterbridge bridge started successfully');
-          this.frontend.wssSendRefreshRequired('settings');
-          this.frontend.wssSendRefreshRequired('plugins');
-          this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
+          this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'started') } });
+          this.server.request({ type: 'frontend_refreshrequired', src: 'matterbridge', dst: 'frontend', params: { changed: 'plugins' } });
+          this.server.request({ type: 'frontend_closesnackbarmessage', src: 'matterbridge', dst: 'frontend', params: { message: `The bridge is starting...` } });
         })();
       },
       Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
@@ -2122,6 +2170,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async startChildbridge(delay: number = 1000): Promise<void> {
     if (!this.matterStorageManager) throw new Error('No storage manager initialized');
     const { wait } = await import('@matterbridge/utils/wait');
+
+    // Notify the frontend that Matterbridge is starting
+    this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'starting') } });
 
     // Load with await all plugins but don't start them. We get the platform.type to pre-create server nodes for DynamicPlatform plugins
     this.log.debug('Loading all plugins in childbridge mode...');
@@ -2144,7 +2195,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // istanbul ignore if cause is just a logging statement
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
-            this.frontend.wssSendRefreshRequired('plugins');
           }
           let allStarted = true;
           for (const plugin of this.plugins.array()) {
@@ -2160,8 +2210,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.frontend.wssSendSnackbarMessage(`The bridge is offline. Startup halted due to plugin errors.`, 0, 'error');
               this.frontend.wssSendRefreshRequired('plugins');
               this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
+              // Notify the frontend that Matterbridge is in error state due to a plugin error
+              this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'error') } });
               return;
             }
+            // Update the frontend about the plugin status
+            this.sendPluginStatusUpdate(plugin);
 
             this.log.debug(`Checking plugin ${plg}${plugin.name}${db} to start matter in childbridge mode...`);
             if (!plugin.loaded || !plugin.started) {
@@ -2195,8 +2249,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
                   plugin.error = true;
                   this.log.error(`Error configuring plugin ${plg}${plugin.name}${er}`, error);
                 }
+                // Update the frontend about the plugin status after configuring the plugin
+                this.sendPluginStatusUpdate(plugin);
               }
-              this.frontend.wssSendRefreshRequired('plugins');
             })();
           }, 30 * 1000).unref();
 
@@ -2238,12 +2293,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             }
           }
 
-          // Logger.get('LogServerNode').info(this.serverNode);
           this.emit('childbridge_started');
           this.log.notice('Matterbridge childbridge started successfully');
-          this.frontend.wssSendRefreshRequired('settings');
-          this.frontend.wssSendRefreshRequired('plugins');
-          this.frontend.wssSendCloseSnackbarMessage(`The bridge is starting...`);
+          this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'started') } });
+          this.server.request({ type: 'frontend_refreshrequired', src: 'matterbridge', dst: 'frontend', params: { changed: 'plugins' } });
+          this.server.request({ type: 'frontend_closesnackbarmessage', src: 'matterbridge', dst: 'frontend', params: { message: `The bridge is starting...` } });
         })();
       },
       Number(process.env['MATTERBRIDGE_START_MATTER_INTERVAL_MS']) || this.startMatterIntervalMs,
@@ -3464,7 +3518,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Sets the reachability of the specified aggregator node bridged devices and trigger.
+   * Sets the reachability of the specified aggregator node bridged devices and trigger the corresponding event.
    *
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.

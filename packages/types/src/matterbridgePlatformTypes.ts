@@ -26,7 +26,7 @@
 import type { VendorId } from '@matter/types';
 
 // Matterbridge
-import type { SystemInformation } from './matterbridgeTypes.js';
+import type { BridgeMode, RestartMode, SystemInformation, VirtualMode } from './matterbridgeTypes.js';
 
 /** Platform configuration value type. */
 export type PlatformConfigValue = string | number | boolean | bigint | object | undefined | null;
@@ -81,9 +81,9 @@ export type PlatformMatterbridge = {
   readonly matterbridgeLatestVersion: string;
   readonly matterbridgeDevVersion: string;
   readonly frontendVersion: string;
-  readonly bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
-  readonly restartMode: 'service' | 'docker' | '';
-  readonly virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  readonly bridgeMode: BridgeMode;
+  readonly restartMode: RestartMode;
+  readonly virtualMode: VirtualMode;
   readonly aggregatorVendorId: VendorId;
   readonly aggregatorVendorName: string;
   readonly aggregatorProductId: number;

@@ -25,7 +25,7 @@
 import type { EndpointNumber } from '@matter/types';
 
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
-import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BridgeStatus, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
@@ -569,6 +569,33 @@ export interface WsMessageApiPluginUpdateRequired extends WsMessageSuccessApiRes
   };
 }
 
+export interface PluginStatusUpdate {
+  locked?: boolean;
+  error?: boolean;
+  enabled?: boolean;
+  loaded?: boolean;
+  started?: boolean;
+  configured?: boolean;
+  registeredDevices?: number;
+}
+
+export interface WsMessageApiPluginStatusUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'plugin_status_update';
+  response: {
+    plugin: string;
+    status: PluginStatusUpdate;
+  };
+}
+
+export interface WsMessageApiMatterbridgeStatusUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'matterbridge_status_update';
+  response: {
+    status: BridgeStatus;
+  };
+}
+
 export interface WsMessageApiStateUpdate extends WsMessageSuccessApiResponse {
   id: 0;
   method: 'state_update';
@@ -698,6 +725,8 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
   | WsMessageApiPluginUpdateRequired
+  | WsMessageApiPluginStatusUpdate
+  | WsMessageApiMatterbridgeStatusUpdate
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate
@@ -716,6 +745,8 @@ export type WsMessageBroadcast =
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
   | WsMessageApiPluginUpdateRequired
+  | WsMessageApiPluginStatusUpdate
+  | WsMessageApiMatterbridgeStatusUpdate
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate

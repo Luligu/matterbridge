@@ -63,8 +63,12 @@ These classes will run as threads in the next releases:
 
 - [frontend]: Add type aware linting with `oxlint` and format with `oxfmt`.
 - [frontend]: Remove eslint prettier typescript packages. The total package count drops from ~430 to ~220. Oxlint, Oxfmt and Tsgo run in a fraction of second.
-- [checkUpdates]: Improved workflow sending only the updated versions to the frontend.
-- [checkUpdates]: Add also plugin notification and a no update found notification.
+- [frontend]: Add wssSendPluginUpdateRequired(), wssSendPluginStatusUpdate() and wssSendMatterbridgeStatusUpdate() to allow updates without full refresh.
+- [checkUpdates]: Improve workflow sending only the updated versions to the frontend.
+- [checkUpdates]: Add new plugin version notification.
+- [checkUpdates]: Add no updates found notification.
+- [startup]: Improve workflow sending only the updated data to the frontend.
+- [configure]: Improve workflow sending only the updated data to the frontend.
 
 ### Changed
 
@@ -74,10 +78,14 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `@types/node` to v.26.0.0.
 - [package]: Bump `node-ansi-logger` to v.3.3.0.
 - [package]: Bump `node-persist-manager` to v.2.1.0.
-- [frontend]: Bump `frontend` version to v.3.4.18.
+- [frontend]: Bump `frontend` version to v.3.5.0.
 - [frontend]: Update dependencies.
 - [frontend]: Bump `Oxlint configuration` to v.1.0.3.
 - [frontend]: Bump `@types/node` to v.26.0.0.
+
+### Fixed
+
+- [frontend]: Serve plugin frontend from `./plugins/` for compatibility with Ingress.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

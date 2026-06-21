@@ -156,7 +156,7 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
   if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
     await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
-      if (matterbridge.restartMode === '') await matterbridge.restartProcess();
+      if (matterbridge.restartMode === 'none') await matterbridge.restartProcess();
       else await matterbridge.shutdownProcess();
     });
     await addVirtualDevice(aggregatorEndpoint, 'Update Matterbridge', matterbridge.virtualMode, async () => {

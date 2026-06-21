@@ -34,6 +34,8 @@ import type { EndpointNumber } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import type {
   ApiMatter,
+  BridgeStatus,
+  PluginStatusUpdate,
   RefreshRequiredChanged,
   SharedMatterbridge,
   WorkerMessage,
@@ -417,7 +419,7 @@ export class BackendWsServer {
   }
 
   /**
-   * Sends a need to update WebSocket message to all connected clients.
+   * Sends a matterbridge version update required WebSocket message to all connected clients.
    *
    * @param {string} version - The version of the update required.
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
@@ -425,14 +427,14 @@ export class BackendWsServer {
   wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
-    if (this.verbose) this.log.debug('Sending an update required message to all connected clients');
+    if (this.verbose) this.log.debug('Sending a matterbridge version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
   }
 
   /**
-   * Sends a need to update WebSocket message to all connected clients.
+   * Sends a plugin version update required WebSocket message to all connected clients.
    *
    * @param {string} plugin - The name of the plugin that requires an update.
    * @param {string} version - The version of the update required.
@@ -441,10 +443,37 @@ export class BackendWsServer {
   wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
     // istanbul ignore next debug/verbose branch
-    if (this.verbose) this.log.debug('Sending a plugin update required message to all connected clients');
+    if (this.verbose) this.log.debug('Sending a plugin version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_update_required', success: true, response: { plugin, version, devVersion } });
+  }
+
+  /**
+   * Sends a plugin status update WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {PluginStatusUpdate} status - The status of the plugin.
+   */
+  wssSendPluginStatusUpdate(plugin: string, status: PluginStatusUpdate): void {
+    if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
+    if (this.verbose) this.log.debug('Sending a plugin status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin, status } });
+  }
+
+  /**
+   * Sends a matterbridge status update WebSocket message to all connected clients.
+   *
+   * @param {BridgeStatus} status - The status of the matterbridge.
+   */
+  wssSendMatterbridgeStatusUpdate(status: BridgeStatus): void {
+    if (!this.hasActiveClients()) return;
+    // istanbul ignore next debug/verbose branch
+    if (this.verbose) this.log.debug('Sending a matterbridge status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
   }
 
   /**

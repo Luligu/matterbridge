@@ -53,6 +53,18 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export type PluginName = string;
 
+/** It indicates the mode of the Matterbridge instance. It can be 'bridge', 'childbridge', 'controller' or 'none'. */
+export type BridgeMode = 'bridge' | 'childbridge' | 'controller' | 'none';
+
+/** It indicates the restart mode of the Matterbridge instance. It can be 'service', 'docker' or 'none'. */
+export type RestartMode = 'service' | 'docker' | 'none';
+
+/** It indicates whether virtual mode is enabled and its type. The virtual mode control the creation of "Update matterbridge" and "Restart matterbridge" endpoints. */
+export type VirtualMode = 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+
+/** It indicates the current status of the Matterbridge instance. */
+export type BridgeStatus = 'inactive' | 'starting' | 'started' | 'stopping' | 'stopped' | 'error';
+
 /**
  * A type representing a read-only subset of the Matterbridge properties.
  */
@@ -94,9 +106,9 @@ export type SharedMatterbridge = Readonly<{
   dockerVersion: string | undefined;
   dockerLatestVersion: string | undefined;
   dockerDevVersion: string | undefined;
-  bridgeMode: 'bridge' | 'childbridge' | 'controller' | '';
-  restartMode: 'service' | 'docker' | '';
-  virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  bridgeMode: BridgeMode;
+  restartMode: RestartMode;
+  virtualMode: VirtualMode;
   profile: string | undefined;
   logLevel: LogLevel;
   fileLogger: boolean;
@@ -108,8 +120,6 @@ export type SharedMatterbridge = Readonly<{
   port: number | undefined;
   discriminator: number | undefined;
   passcode: number | undefined;
-  // shellySysUpdate: boolean;
-  // shellyMainUpdate: boolean;
 }>;
 
 /** Define an interface for the frontend */
@@ -202,9 +212,10 @@ export interface MatterbridgeInformation {
   dockerVersion: string | undefined;
   dockerLatestVersion: string | undefined;
   dockerDevVersion: string | undefined;
-  bridgeMode: string;
-  restartMode: string;
-  virtualMode: 'disabled' | 'outlet' | 'light' | 'switch' | 'mounted_switch';
+  bridgeMode: BridgeMode;
+  restartMode: RestartMode;
+  virtualMode: VirtualMode;
+  bridgeStatus: BridgeStatus;
   profile: string | undefined;
   readOnly: boolean;
   shellyBoard: boolean;

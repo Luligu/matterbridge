@@ -186,8 +186,8 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterbridgeVersion).toBe('');
     expect(matterbridge.matterbridgeLatestVersion).toBe('');
     expect(matterbridge.matterbridgeDevVersion).toBe('');
-    expect(matterbridge.bridgeMode).toBe('');
-    expect(matterbridge.restartMode).toBe('');
+    expect(matterbridge.bridgeMode).toBe('none');
+    expect(matterbridge.restartMode).toBe('none');
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.shutdown).toBe(false);
     expect((matterbridge as any).edge).toBe(undefined);

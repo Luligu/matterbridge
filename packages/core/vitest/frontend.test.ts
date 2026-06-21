@@ -1,5 +1,11 @@
 // vitest\frontend.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 // oxlint-disable typescript/require-await typescript/explicit-function-return-type typescript/consistent-return typescript/no-floating-promises
 /* eslint-disable no-console */
 
@@ -14,16 +20,17 @@ import { Lifecycle } from '@matter/general';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
+import { BridgeStatus } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { flushAsync, HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
-import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF, YELLOW } from 'node-ansi-logger';
+import { db, LogLevel, YELLOW } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 import { WebSocket } from 'ws';
 
 import { cliEmitter } from '../src/cliEmitter.js';
 import type { Frontend as FrontendType } from '../src/frontend.js';
 import type { Matterbridge as MatterbridgeType } from '../src/matterbridge.js';
-import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
+import { destroyInstance } from './vitestUtils.js';
 
 // Mock node:http so createServer can be spied on and overridden in specific tests
 vi.mock('node:http', async () => {
@@ -175,6 +182,26 @@ describe('Matterbridge frontend', () => {
     } as any);
     expect(pluginUpdateSpy).toHaveBeenCalledWith('matterbridge-example', '1.2.3', true);
     pluginUpdateSpy.mockRestore();
+    const pluginStatusSpy = vi.spyOn(frontend, 'wssSendPluginStatusUpdate');
+    await (frontend as any).broadcastMsgHandler({
+      id: 123456,
+      type: 'frontend_pluginstatusupdate',
+      src: 'manager',
+      dst: 'frontend',
+      params: { plugin: 'matterbridge-example', status: { plugin: 'matterbridge-example', enabled: true } },
+    } as any);
+    expect(pluginStatusSpy).toHaveBeenCalledWith('matterbridge-example', { plugin: 'matterbridge-example', enabled: true });
+    pluginStatusSpy.mockRestore();
+    const matterbridgeStatusSpy = vi.spyOn(frontend, 'wssSendMatterbridgeStatusUpdate');
+    await (frontend as any).broadcastMsgHandler({
+      id: 123456,
+      type: 'frontend_matterbridgestatusupdate',
+      src: 'manager',
+      dst: 'frontend',
+      params: { status: 'started' },
+    } as any);
+    expect(matterbridgeStatusSpy).toHaveBeenCalledWith('started');
+    matterbridgeStatusSpy.mockRestore();
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_snackbarmessage',
@@ -683,6 +710,78 @@ describe('Matterbridge frontend', () => {
     (frontend as any).webSocketServer = savedWss;
     (frontend as any).listening = false;
     (frontend as any).updateRequired = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendPluginStatusUpdate', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendPluginStatusUpdate('matterbridge-example', { enabled: true })).toBeUndefined();
+    expect(spy).not.toHaveBeenCalled();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendPluginStatusUpdate('matterbridge-example', { enabled: true })).toBeUndefined();
+    expect(frontend.wssSendPluginStatusUpdate('matterbridge-example', { loaded: true, started: true, configured: true })).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenNthCalledWith(1, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'plugin_status_update',
+      success: true,
+      response: { plugin: 'matterbridge-example', status: { enabled: true } },
+    });
+    expect(spy).toHaveBeenNthCalledWith(2, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'plugin_status_update',
+      success: true,
+      response: { plugin: 'matterbridge-example', status: { loaded: true, started: true, configured: true } },
+    });
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
+    spy.mockRestore();
+  });
+
+  test('Frontend wssSendMatterbridgeStatusUpdate', async () => {
+    // Mocks
+    const savedWss = (frontend as any).webSocketServer;
+    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
+
+    (frontend as any).listening = false;
+    expect(frontend.wssSendMatterbridgeStatusUpdate('started')).toBeUndefined();
+    expect(spy).not.toHaveBeenCalled();
+    (frontend as any).listening = true;
+    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
+    expect(frontend.wssSendMatterbridgeStatusUpdate('starting')).toBeUndefined();
+    expect(frontend.wssSendMatterbridgeStatusUpdate('started')).toBeUndefined();
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(spy).toHaveBeenNthCalledWith(1, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'matterbridge_status_update',
+      success: true,
+      response: { status: 'starting' },
+    });
+    expect(spy).toHaveBeenNthCalledWith(2, {
+      id: 0,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: 'matterbridge_status_update',
+      success: true,
+      response: { status: 'started' },
+    });
+
+    // Restore for next tests
+    (frontend as any).webSocketServer = savedWss;
+    (frontend as any).listening = false;
     spy.mockRestore();
   });
 

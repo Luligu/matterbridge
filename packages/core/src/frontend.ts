@@ -25,7 +25,17 @@
 // oxlint-disable max-lines
 
 // TODO: analyze each rule
-// oxlint-disable complexity typescript/no-base-to-string typescript/restrict-template-expressions typescript/no-misused-promises typescript/prefer-nullish-coalescing typescript/consistent-return typescript/require-await typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style unicorn/no-negated-condition no-param-reassign
+// oxlint-disable complexity
+// oxlint-disable typescript/no-base-to-string
+// oxlint-disable typescript/restrict-template-expressions
+// oxlint-disable typescript/no-misused-promises
+// oxlint-disable typescript/prefer-nullish-coalescing
+// oxlint-disable typescript/consistent-return
+// oxlint-disable typescript/require-await
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable typescript/non-nullable-type-assertion-style
+// oxlint-disable unicorn/no-negated-condition
+// oxlint-disable no-param-reassign
 
 // Node.js built-in modules
 import EventEmitter from 'node:events';
@@ -50,9 +60,11 @@ import type {
   ApiMatter,
   ApiPlugin,
   ApiSettings,
+  BridgeStatus,
   Cluster,
   MatterbridgeInformation,
   PlatformConfig,
+  PluginStatusUpdate,
   RefreshRequiredChanged,
   WorkerMessage,
   WsMessageApiRequest,
@@ -202,8 +214,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendPluginUpdateRequired(msg.params.plugin, msg.params.version, msg.params.devVersion);
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'frontend_pluginstatusupdate':
+          this.wssSendPluginStatusUpdate(msg.params.plugin, msg.params.status);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_matterbridgestatusupdate':
+          this.wssSendMatterbridgeStatusUpdate(msg.params.status);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
         case 'frontend_snackbarmessage':
           this.wssSendSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_closesnackbarmessage':
+          this.wssSendCloseSnackbarMessage(msg.params.message);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_attributechanged':
@@ -1257,6 +1281,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       bridgeMode: this.matterbridge.bridgeMode,
       restartMode: this.matterbridge.restartMode,
       virtualMode: this.matterbridge.virtualMode,
+      bridgeStatus: this.matterbridge.bridgeStatus,
       profile: this.matterbridge.profile,
       loggerLevel: this.matterbridge.logLevel,
       fileLogger: this.matterbridge.fileLogger,
@@ -2562,21 +2587,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Sends a need to update WebSocket message to all connected clients.
+   * Sends a matterbridge version update required WebSocket message to all connected clients.
    *
    * @param {string} version - The version of the update required.
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
   wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    this.log.debug('Sending an update required message to all connected clients');
+    this.log.debug('Sending a matterbridge version update required message to all connected clients');
     this.updateRequired = true;
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
   }
 
   /**
-   * Sends a need to update WebSocket message to all connected clients.
+   * Sends a plugin version update required WebSocket message to all connected clients.
    *
    * @param {string} plugin - The name of the plugin that requires an update.
    * @param {string} version - The version of the update required.
@@ -2584,9 +2609,34 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    this.log.debug('Sending a plugin update required message to all connected clients');
+    this.log.debug('Sending a plugin version update required message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_update_required', success: true, response: { plugin, version, devVersion } });
+  }
+
+  /**
+   * Sends a plugin status update WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {PluginStatusUpdate} status - The status of the plugin.
+   */
+  wssSendPluginStatusUpdate(plugin: string, status: PluginStatusUpdate): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a plugin status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin, status } });
+  }
+
+  /**
+   * Sends a matterbridge status update WebSocket message to all connected clients.
+   *
+   * @param {BridgeStatus} status - The status of the matterbridge.
+   */
+  wssSendMatterbridgeStatusUpdate(status: BridgeStatus): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a matterbridge status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
   }
 
   /**

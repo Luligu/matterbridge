@@ -1,5 +1,11 @@
 // vitest\frontend.websocket.test.ts
 
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
 // oxlint-disable typescript/no-misused-promises typescript/require-await typescript/explicit-function-return-type
 
 const MATTER_PORT = 9200;
@@ -13,7 +19,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
-import { isApiRequest, isApiResponse, isBroadcast, plg } from '@matterbridge/types';
+import { isApiRequest, isApiResponse, isBroadcast, BridgeStatus, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -25,7 +31,7 @@ import { Matterbridge } from '../src/matterbridge.js';
 import { onOffLight, onOffLightSwitch, onOffPlugInUnit, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
-import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
+import { destroyInstance } from './vitestUtils.js';
 
 // Inlined spies (jest equivalents lived in jestBroadcastServerSpy / jestFrontendSpy / jestPluginManagerSpy)
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
@@ -1520,6 +1526,58 @@ describe('Matterbridge frontend', () => {
     expect(data.dst).toBe('Frontend');
     expect(data.method).toBe('plugin_update_required');
     expect(data.response).toEqual({ plugin: 'matterbridge-example', version: '1.2.3', devVersion: true });
+    expect(data.error).toBeUndefined();
+  });
+
+  test('Websocket SendPluginStatusUpdate', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const received = new Promise((resolve) => {
+      const onMessage = (event: WebSocket.MessageEvent) => {
+        const data = JSON.parse(event.data as string);
+        if (data.method === 'plugin_status_update') {
+          ws.removeEventListener('message', onMessage);
+          resolve(event.data);
+        }
+      };
+      ws.addEventListener('message', onMessage);
+    });
+    matterbridge.frontend.wssSendPluginStatusUpdate('matterbridge-example', { enabled: true });
+    const response = await received;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(0);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Frontend');
+    expect(data.method).toBe('plugin_status_update');
+    expect(data.response).toEqual({ plugin: 'matterbridge-example', status: { enabled: true } });
+    expect(data.error).toBeUndefined();
+  });
+
+  test('Websocket SendMatterbridgeStatusUpdate', async () => {
+    expect(ws).toBeDefined();
+    expect(ws.readyState).toBe(WebSocket.OPEN);
+    const received = new Promise((resolve) => {
+      const onMessage = (event: WebSocket.MessageEvent) => {
+        const data = JSON.parse(event.data as string);
+        if (data.method === 'matterbridge_status_update') {
+          ws.removeEventListener('message', onMessage);
+          resolve(event.data);
+        }
+      };
+      ws.addEventListener('message', onMessage);
+    });
+    matterbridge.frontend.wssSendMatterbridgeStatusUpdate('started');
+    const response = await received;
+    expect(response).toBeDefined();
+    const data = JSON.parse(response as string);
+    expect(data).toBeDefined();
+    expect(data.id).toBe(0);
+    expect(data.src).toBe('Matterbridge');
+    expect(data.dst).toBe('Frontend');
+    expect(data.method).toBe('matterbridge_status_update');
+    expect(data.response).toEqual({ status: 'started' });
     expect(data.error).toBeUndefined();
   });
 
