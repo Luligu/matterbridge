@@ -87,7 +87,8 @@ These classes will run as threads in the next releases:
 
 ### Fixed
 
-- [frontend]: Serve plugin frontend from `./plugins/` for compatibility with Ingress.
+- [frontend]: Serve plugin frontend from `base/plugins/plugin/` for compatibility with Ingress.
+- [matterstorage]: Close the matter storage as many times as opened. Thanks Apollon77 and Alexander Thoukydides (https://github.com/matter-js/matter.js/issues/3945).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

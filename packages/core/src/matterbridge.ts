@@ -283,6 +283,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   matterStorageService: StorageService | undefined;
   /** Matter storage manager created with name 'Matterbridge' */
   matterStorageManager: StorageManager | undefined;
+  /** Storage managers opened by createServerNodeContext(), keyed by storeId, kept open for the node lifetime and closed in stopMatterStorage() */
+  private serverNodeStorageManagers = new Map<string, StorageManager>();
   /** Matter matterbridge storage context created in the storage manager with name 'persist' */
   matterbridgeContext: StorageContext | undefined;
   /** Matter controller storage context created in the storage manager with name 'persist' */
@@ -1180,6 +1182,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         const storageContext = storageManager?.createContext('persist');
         await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
         await storageContext?.set('uniqueId', this.aggregatorUniqueId);
+        await storageManager.close();
       }
     } catch (error) {
       this.log.fatal(`Fatal error creating matter storage: ${getErrorMessage(error)}`);
@@ -1207,6 +1210,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await matterStorageManager.createContext('root')?.clearAll();
           await matterStorageManager.createContext('sessions')?.clearAll();
           await matterStorageManager.createContext('persist')?.clearAll();
+          await matterStorageManager.close();
           this.log.notice(`Reset commissioning for plugin ${plg}${plugin.name}${nt} done! Remove the device from the controller.`);
         } else {
           /* istanbul ignore next */
@@ -1823,6 +1827,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             await storageManager?.createContext('fabrics')?.clearAll();
             await storageManager?.createContext('root')?.clearAll();
             await storageManager?.createContext('sessions')?.clearAll();
+            await storageManager?.close();
           }
         }
         for (const device of this.devices.array()) {
@@ -1833,6 +1838,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             await storageManager?.createContext('fabrics')?.clearAll();
             await storageManager?.createContext('root')?.clearAll();
             await storageManager?.createContext('sessions')?.clearAll();
+            await storageManager?.close();
           }
         }
         this.log.info('Matter storage reset done! Remove the bridge from the controller.');
@@ -1858,6 +1864,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Stop matter storage
       await this.stopMatterStorage();
+
       /**
        * Unlink a file safely, ignoring errors.
        *
@@ -1874,6 +1881,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           // Ignore errors if the file does not exist
         }
       }
+
       // Remove the resumption records and subscriptions. It forces the clients to do a full re-commissioning and re-subscribe to the bridge after the restart. It solves some issues with stale sessions and subscriptions that can cause problems after a restart.
       if (hasParameter('reset-sessions')) {
         this.log.debug(`Cleaning matter storage context for ${GREEN}Matterbridge${db}...`);
@@ -2687,6 +2695,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async stopMatterStorage(): Promise<void> {
     this.log.info('Closing matter node storage...');
     await this.matterStorageManager?.close();
+    // Close every server node storage context manager opened by createServerNodeContext() to release its ref-counted lock
+    for (const [storeId, storageManager] of this.serverNodeStorageManagers) {
+      this.log.debug(`Closing server node storage context manager for ${plg}${storeId}${db}...`);
+      await storageManager.close();
+    }
+    this.serverNodeStorageManagers.clear();
     this.matterStorageService = undefined;
     this.matterStorageManager = undefined;
     this.matterbridgeContext = undefined;
@@ -2725,6 +2739,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.info(`Creating server node storage context "${storeId}.persist" for ${storeId}...`);
     await createDirectory(path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, storeId), `Matter node storage directory for ${storeId}`, this.log);
     const storageManager = await this.matterStorageService.open(storeId);
+    // Keep the manager open for the node lifetime (the context is read again at runtime, e.g. during reset) and track it
+    // so stopMatterStorage() can release the ref-counted storage lock. Close any stale handle for the same storeId first.
+    await this.serverNodeStorageManagers.get(storeId)?.close();
+    this.serverNodeStorageManagers.set(storeId, storageManager);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
     await storageContext.set('storeId', storeId);

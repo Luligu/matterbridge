@@ -1072,6 +1072,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const { existsSync } = await import('node:fs');
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
         this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        // Add logging middleware for plugin frontend routes
+        /*
+        this.expressApp.use(`/plugins/${plugin.name}`, (req, res, next) => {
+          const requestUrl = req.originalUrl ?? req.url;
+          this.log.debug(`Plugin frontend request for ${plg}${plugin.name}${db}: ${req.method} ${requestUrl}`);
+          res.on('finish', () => {
+            this.log.debug(`Plugin frontend response for ${plg}${plugin.name}${db}: ${req.method} ${requestUrl} ${res.statusCode}`);
+          });
+          next();
+        });
+        */
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
 
         // Unified API route handler for GET, POST, PUT, PATCH, DELETE

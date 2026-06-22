@@ -20,7 +20,7 @@ import Tooltip from '@mui/material/Tooltip';
 // React
 import { useContext, useEffect, useState, useRef, memo, type SyntheticEvent } from 'react';
 
-import { debug, enableMobile } from '../appState';
+import { basePath, debug, enableMobile } from '../appState';
 import { type BridgeStatus, type ApiPlugin, type MatterbridgeInformation, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
@@ -449,8 +449,8 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   };
 
   const handleFrontendPlugin = (plugin: ApiPlugin) => {
-    const pluginFrontendPath = `./plugins/${plugin.name}`;
-    if (debug) console.log('handleFrontendPlugin plugin:', plugin.name, 'frontend:', plugin.frontendPath, 'path:', pluginFrontendPath);
+    const pluginFrontendPath = `${basePath}plugins/${plugin.name}/`;
+    console.log('handleFrontendPlugin plugin:', plugin.name, 'basePath:', basePath, 'frontendPath:', plugin.frontendPath, 'computed pluginFrontendPath:', pluginFrontendPath);
     if (plugin.frontendPath) setSelectedPluginFrontend({ name: plugin.name, path: pluginFrontendPath });
   };
 

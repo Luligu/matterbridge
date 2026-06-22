@@ -15,7 +15,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
 // @mdi/js
 
-import { debug, enableMobile } from '../appState';
+import { basePath, debug, enableMobile } from '../appState';
 import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin, type BridgeStatus } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
 import { Connecting } from './Connecting';
@@ -470,7 +470,19 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     if (debug) console.log('handleConfigUrl device:', device.name, 'configUrl:', device.configUrl);
     if (!device.configUrl) return;
     if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
-      setSelectedDeviceFrontend({ name: device.name, path: device.configUrl });
+      const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
+      const pluginFrontendPathWithTrailingSlash = pluginFrontendPath.endsWith('/') ? pluginFrontendPath : `${pluginFrontendPath}/`;
+      console.log(
+        'handleConfigUrl opening plugin frontend for device:',
+        device.name,
+        'basePath:',
+        basePath,
+        'configUrl:',
+        device.configUrl,
+        'computed pluginFrontendPath:',
+        pluginFrontendPathWithTrailingSlash,
+      );
+      setSelectedDeviceFrontend({ name: device.name, path: pluginFrontendPathWithTrailingSlash });
     } else {
       window.open(device.configUrl, '_blank');
     }
