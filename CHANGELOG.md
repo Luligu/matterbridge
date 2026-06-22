@@ -69,6 +69,7 @@ These classes will run as threads in the next releases:
 - [checkUpdates]: Add no updates found notification.
 - [startup]: Improve workflow sending only the updated data to the frontend.
 - [configure]: Improve workflow sending only the updated data to the frontend.
+- [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
 
 ### Changed
 
