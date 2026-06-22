@@ -216,9 +216,9 @@
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && node scripts/prepublish-clean.mjs --workspace && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu && npm run softReset",
     "updateDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu -u && npm run softReset",
-    "updateMatter:latest": "npm --workspace packages/core uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core install  --no-fund --no-audit --save-exact @matter/main@latest && npm run reset",
-    "updateMatter:dev": "npm --workspace packages/core uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core install --no-fund --no-audit --save-exact @matter/main@dev && npm run reset",
-    "updateMatter:loc": "npm --workspace packages/core install ../matter.js/packages/general ../matter.js/packages/main ../matter.js/packages/model ../matter.js/packages/node ../matter.js/packages/nodejs ../matter.js/packages/protocol ../matter.js/packages/types && npm run reset",
+    "updateMatter:latest": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact @matter/main@latest && npm run reset",
+    "updateMatter:dev": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact @matter/main@dev && npm run reset",
+    "updateMatter:loc": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact ../matter.js/packages/main && npm run reset",
     "docker:build:local": "docker build --no-cache -f docker/Dockerfile.local -t matterbridge:local .",
     "docker:run:local": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --name matterbridge-local -v matterbridge-local-storage:/root/.matterbridge -v matterbridge-local-plugins:/root/Matterbridge -p 8283:8283 matterbridge:local",
     "docker:exec:local": "docker exec -it matterbridge-local bash",
@@ -272,7 +272,9 @@
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",
     "publish:latest": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest && npm run reset",
     "pack:local": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag local && npm run reset",
-    "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset"
+    "pack:latest": "node scripts/pack-workspaces.mjs --scope @matterbridge --tag latest && npm run reset",
+    "pack:local:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag local && npm run reset",
+    "pack:latest:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag latest && npm run reset"
   },
   "dependencies": {
     "@matterbridge/core": "3.9.2",
