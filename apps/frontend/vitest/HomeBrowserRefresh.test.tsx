@@ -66,7 +66,6 @@ describe('HomeBrowserRefresh', () => {
     const reloadSpy = vi.fn();
     const originalLocation = window.location;
     Object.defineProperty(window, 'location', {
-      // oxlint-disable-next-line typescript/no-misused-spread
       value: { ...originalLocation, reload: reloadSpy },
       configurable: true,
       writable: true,

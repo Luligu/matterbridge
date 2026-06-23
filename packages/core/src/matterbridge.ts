@@ -3259,11 +3259,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         }
       }
     }
-    if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     // Add the device to the DeviceManager
     this.devices.set(device);
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
+    if (plugin.registeredDevices !== undefined) plugin.registeredDevices++;
     this.log.info(
       `Added and registered bridged endpoint (${plugin.registeredDevices}) ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) for plugin ${plg}${pluginName}${nf}`,
     );

@@ -1,5 +1,4 @@
 // TODO: verify each rule
-// oxlint-disable typescript/no-misused-spread
 // oxlint-disable react/button-has-type
 
 import '@testing-library/jest-dom';
