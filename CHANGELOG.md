@@ -70,6 +70,7 @@ These classes will run as threads in the next releases:
 - [startup]: Improve workflow sending only the updated data to the frontend.
 - [configure]: Improve workflow sending only the updated data to the frontend.
 - [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
+- [thread]: Add check for thread path existence.
 
 ### Changed
 
@@ -77,7 +78,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
 - [matterbridge]: Bump `@types/node` to v.26.0.0.
-- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260621-81ba50a6a.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260624-ef5aefa3b.
 - [package]: Bump `node-ansi-logger` to v.3.3.0.
 - [package]: Bump `node-persist-manager` to v.2.1.0.
 - [frontend]: Bump `frontend` version to v.3.5.0.

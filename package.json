@@ -163,6 +163,59 @@
     "README-SERVICE-OPT.md",
     "README-SERVICE.md"
   ],
+  "automator": {
+    "library": true,
+    "vitest": true,
+    "native": true,
+    "git": true,
+    "version": true,
+    "publish": true,
+    "frontend": true,
+    "coverage": {
+      "lines": 100,
+      "functions": 100,
+      "branches": 90,
+      "statements": 90
+    },
+    "entryPoints": [
+      {
+        "in": "packages/thread/src/workerArchiveCommand.ts",
+        "out": "workers/workerArchiveCommand"
+      },
+      {
+        "in": "packages/thread/src/workerCheckUpdates.ts",
+        "out": "workers/workerCheckUpdates"
+      },
+      {
+        "in": "packages/thread/src/workerDockerVersion.ts",
+        "out": "workers/workerDockerVersion"
+      },
+      {
+        "in": "packages/thread/src/workerGlobalPrefix.ts",
+        "out": "workers/workerGlobalPrefix"
+      },
+      {
+        "in": "packages/thread/src/workerSpawnCommand.ts",
+        "out": "workers/workerSpawnCommand"
+      },
+      {
+        "in": "packages/thread/src/workerSystemCheck.ts",
+        "out": "workers/workerSystemCheck"
+      }
+    ],
+    "external": [
+      "@jest/globals"
+    ],
+    "copyEntries": [
+      {
+        "from": "packages/core/dist/matter",
+        "to": "matter",
+        "include": [
+          "**/*.js"
+        ]
+      }
+    ]
+  },
   "scripts": {
     "start": "node ./bin/matterbridge.js",
     "start:bridge": "node ./bin/matterbridge.js --bridge --port 5540",
@@ -292,13 +345,13 @@
   "devDependencies": {
     "@types/jest": "30.0.0",
     "@types/node": "26.0.0",
-    "@typescript/native-preview": "7.0.0-dev.20260620.1",
+    "@typescript/native-preview": "7.0.0-dev.20260624.1",
     "@vitest/coverage-v8": "4.1.9",
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
     "marked": "18.0.5",
-    "oxfmt": "0.55.0",
-    "oxlint": "1.70.0",
+    "oxfmt": "0.56.0",
+    "oxlint": "1.71.0",
     "oxlint-tsgolint": "0.23.0",
     "typescript": "6.0.3",
     "vitest": "4.1.9"
