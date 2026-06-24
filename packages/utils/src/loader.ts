@@ -31,7 +31,7 @@
  * @param {string} [color] - The color code for the log message.
  */
 export function logModuleLoaded(moduleName: string, color: string = '\u001B[32m'): void {
-  if (process.argv.includes('--loader') || process.argv.includes('-loader')) {
+  if (process.argv.includes('--loader')) {
     // eslint-disable-next-line no-console
     console.log(
       `${color}[` +

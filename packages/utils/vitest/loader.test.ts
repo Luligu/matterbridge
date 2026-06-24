@@ -30,12 +30,6 @@ describe('logModuleLoaded()', () => {
     expect(consoleLogSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('logs when -loader is in process.argv', () => {
-    process.argv = [...process.argv, '-loader'];
-    logModuleLoaded('my-module');
-    expect(consoleLogSpy).toHaveBeenCalledTimes(1);
-  });
-
   it('uses the default green ANSI color', () => {
     process.argv = [...process.argv, '--loader'];
     logModuleLoaded('my-module');
