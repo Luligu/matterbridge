@@ -33,7 +33,7 @@ import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { AnsiLogger, CYAN, db, debugStringify, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
+import { AnsiLogger, CYAN, db, debugStringify, ft, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
 import type { WorkerWrapper } from './workerWrapper.js';
@@ -213,6 +213,9 @@ export class ThreadsManager {
     }
 
     const path = this.resolvePath(threadInfo.path);
+    if (!fs.existsSync(path)) {
+      throw new Error(`Thread ${name} file not found at path ${path}`);
+    }
     this.log.debug(`Starting thread ${threadInfo.name} from path ${path} type ${threadInfo.type}...`);
 
     threadInfo.lastStarted = undefined;
@@ -264,13 +267,15 @@ export class ThreadsManager {
       this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date().toISOString()}`);
     });
 
-    worker.once('error', () => {
+    worker.once('error', (error) => {
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       const stoppedAt = Date.now();
       threadInfo.lastStopped = stoppedAt;
       threadInfo.lastDuration = Math.max(0, stoppedAt - (threadInfo.lastStarted ?? stoppedAt));
       threadInfo.worker = undefined;
-      this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms`);
+      this.log.error(
+        `Thread ${threadInfo.name} encountered an error at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`,
+      );
     });
 
     this.log.debug(`Started thread ${threadInfo.name} from path ${path} type ${threadInfo.type} with thread id ${worker.threadId}`);
@@ -317,8 +322,10 @@ export class ThreadsManager {
    *   and the worker file is usually alongside the current module.
    * - **Development / tests**: `import.meta.url` may point inside `.../packages/thread/src/...`
    *   while the worker file exists in `.../packages/thread/dist/...`.
+   * - **Bundled**: when the package is bundled, the worker files live in a `workers/`
+   *   subdirectory alongside the current module (`.../dist/workers/...`).
    *
-   * This helper tries both locations and returns the first existing candidate.
+   * This helper tries all three locations and returns the first existing candidate.
    *
    * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
    * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
@@ -328,11 +335,13 @@ export class ThreadsManager {
     // This core package's src or dist directory or the global installation dist directory for thread package
     const candidates = [
       path.join(currentModuleDirectory, fileName), // Current dist directory for production
-      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for jest tests
+      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for tests
+      path.join(currentModuleDirectory, 'workers', fileName), // Current dist workers directory for bundled workers
     ];
     for (const candidate of candidates) {
       if (fs.existsSync(candidate)) return candidate;
     }
+    this.log.fatal(`Could not find "${fileName}" in any of the candidate paths: ${debugStringify(candidates)}${ft}. Returning the first candidate as a best effort.`);
     return candidates[0];
   }
 

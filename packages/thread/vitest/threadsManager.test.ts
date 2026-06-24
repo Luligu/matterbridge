@@ -101,6 +101,15 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
+    test('throws when the resolved worker file does not exist', () => {
+      const manager = new ThreadsManager();
+      const fileName = `runThread.does-not-exist.${Date.now()}.js`;
+      const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+      threads.push({ name: 'MissingFileWorker', path: fileName, type: 'worker' });
+      expect(() => manager.runThread('MissingFileWorker')).toThrow(/Thread MissingFileWorker file not found at path/);
+      manager.destroy();
+    });
+
     test('starts a thread and creates a worker with expected workerData and argv', async () => {
       const manager = new ThreadsManager();
 
@@ -613,6 +622,8 @@ describe('ThreadsManager', () => {
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
       const threads = (manager as any).threads as Array<any>;
       threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
@@ -664,6 +675,8 @@ describe('ThreadsManager', () => {
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
       const errorSpy = vi.spyOn((manager as any).log, 'error');
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
       const threads = (manager as any).threads as Array<any>;
       threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
@@ -707,6 +720,8 @@ describe('ThreadsManager', () => {
       createSpy.mockReturnValue({ log: logSpy } as any);
 
       const manager = new ThreadsManagerMocked();
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
       const threads = (manager as any).threads as Array<any>;
       threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
 
@@ -745,6 +760,8 @@ describe('ThreadsManager', () => {
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
       const threads = (manager as any).threads as Array<any>;
       threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
@@ -787,6 +804,9 @@ describe('ThreadsManager', () => {
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
       const manager = new ThreadsManagerMocked();
+      const errorSpy = vi.spyOn((manager as any).log, 'error');
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
       const threads = (manager as any).threads as Array<any>;
       threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
@@ -803,6 +823,7 @@ describe('ThreadsManager', () => {
       expect(threadInfo.lastDuration).toBeDefined();
       expect(threadInfo.errorCount).toBe(1);
       expect(threadInfo.worker).toBeUndefined();
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('boom'));
 
       manager.destroy();
     });
