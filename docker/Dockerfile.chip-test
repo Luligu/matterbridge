@@ -287,4 +287,4 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
 COPY ./docker/entrypoint.chip-test.sh ./
 RUN chmod +x ./entrypoint.chip-test.sh
 ENTRYPOINT ["./entrypoint.chip-test.sh"]
-CMD ["matterbridge", "-docker"]
+CMD ["matterbridge", "--docker"]

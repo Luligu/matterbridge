@@ -1,0 +1,64 @@
+# Build context ignore rules for docker/Dockerfile.local ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.local`).
+# It does NOT merge with the root .dockerignore — it fully replaces it, so this
+# file must list every pattern the local build needs.
+#
+# Unlike the root .dockerignore, the local image builds from source with
+# `npm run build` and never reads git, so we CAN drop `.git` and `chip` here.
+# Do not remove `.git` from the root .dockerignore: Dockerfile.dev stamps the
+# dev image version from git (scripts/version.mjs git) and needs it in context.
+
+# Not needed by the local build (saves ~150 MB of context)
+.agents
+.claude
+.devcontainer
+.env
+.git
+.github
+chip
+docker
+!docker/Dockerfile.local
+!docker/Dockerfile.local.dockerignore
+!docker/entrypoint.local.sh
+docs
+reflector
+screenshots
+scripts
+systemd
+**/vitest
+*.md
+
+# Dependencies
+**/node_modules/
+
+# Test output
+**/coverage/
+
+# Build output (rebuilt inside the image)
+**/dist/
+**/build/
+**/*.tsbuildinfo
+
+# Tooling caches
+**/.cache/
+
+# VS Code settings
+**/.vscode/
+
+# Logs
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/pnpm-debug.log*
+
+# Other assets not needed for builds
+docker-downloads-history.json
+tmp
+temp
+jest
+**/tmp/
+**/temp/
+**/jest/
+**/*.tgz

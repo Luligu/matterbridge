@@ -1,0 +1,17 @@
+# Build context ignore rules for docker/Dockerfile.chip-test ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.chip-test`).
+# It fully replaces the root .dockerignore (no merge).
+#
+# This image clones Matterbridge, the plugins and connectedhomeip from GitHub and
+# builds them; it uses no local source. From the context it copies only the
+# docker/chip-test/ fixtures and docker/entrypoint.chip-test.sh, so we ignore
+# everything else.
+
+# Ignore everything...
+*
+
+# ...except the files this Dockerfile copies.
+!docker/chip-test
+!docker/entrypoint.chip-test.sh
