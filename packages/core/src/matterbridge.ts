@@ -625,9 +625,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Set the matterbridge root directory
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
-    // Adjust the path for packages core dist directory or node_modules @matterbridge core dist directory
-    // prettier-ignore
-    this.rootDirectory = currentFileDirectory.includes(path.join('packages', 'core')) ? path.resolve(currentFileDirectory, '../', '../', '../') : path.resolve(currentFileDirectory, '../', '../', '..', '../');
+    // v8 ignore next - the following code is used to determine the root directory of the matterbridge application based on the current file directory. It is not coverable by tests.
+    if (currentFileDirectory.includes(path.join('packages', 'core'))) {
+      // development - adjust the path for packages core dist directory (3).
+      this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..');
+    } else if (path.basename(currentFileDirectory) === 'dist') {
+      // bundler - adjust the path for bundled core into Matterbridge's own dist directory (1).
+      this.rootDirectory = path.resolve(currentFileDirectory, '..');
+    } else {
+      // production - adjust the path for node_modules @matterbridge core dist directory (4).
+      this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..', '..');
+    }
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
