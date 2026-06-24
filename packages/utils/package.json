@@ -50,6 +50,10 @@
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
     },
+    "./bun": {
+      "types": "./dist/bunPrefix.d.ts",
+      "import": "./dist/bunPrefix.js"
+    },
     "./cli": {
       "types": "./dist/commandLine.d.ts",
       "import": "./dist/commandLine.js"

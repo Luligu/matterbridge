@@ -39,4 +39,17 @@ describe('getGlobalNodeModules()', () => {
     });
     await expect(getGlobalNodeModules()).rejects.toThrow('fail');
   });
+
+  it('returns the global Bun modules path when --bun is present', async () => {
+    const originalArgv = process.argv;
+    process.argv = ['node', 'matterbridge', '--bun'];
+    mockedExec.mockClear();
+    try {
+      const { getGlobalBunModules } = await import('../src/bunPrefix.js');
+      await expect(getGlobalNodeModules()).resolves.toBe(getGlobalBunModules());
+      expect(mockedExec).not.toHaveBeenCalled();
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
 });
