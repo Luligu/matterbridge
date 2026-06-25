@@ -628,9 +628,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.log.debug(`Determining root directory from currentFileDirectory = ${CYAN}${currentFileDirectory}${db}`);
     // v8 ignore next - the following code is used to determine the root directory of the matterbridge application based on the current file directory. It is not coverable by tests.
-    if (currentFileDirectory.includes(path.join('matterbridge', 'packages', 'core'))) {
-      // ...\matterbridge\packages\core\dist
-      // development - adjust the path for packages core dist directory (3).
+    if (
+      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'src')) ||
+      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'dist'))
+    ) {
+      // ...\matterbridge\packages\core\src on test
+      // ...\matterbridge\packages\core\dist on development
+      // development - adjust the path for packages core src/dist directory (3).
       this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..');
       this.log.debug(`Found packages core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
     } else if (currentFileDirectory.endsWith(path.join('matterbridge', 'dist'))) {
