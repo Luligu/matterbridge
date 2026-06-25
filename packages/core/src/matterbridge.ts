@@ -643,10 +643,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.rootDirectory = path.resolve(currentFileDirectory, '..');
       this.log.debug(`Found bundled core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
     } else {
-      // ...\matterbridge\node_modules\@matterbridge\core\dist
-      // production - adjust the path for node_modules @matterbridge core dist directory (4).
-      this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..', '..');
-      this.log.debug(`Found production core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
+      if (isBun()) {
+        // bun installs matterbridge into the global prefix alongside its own dependencies.
+        this.rootDirectory = path.join(getGlobalBunModules(), 'matterbridge');
+        this.log.debug(`Found bun global core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
+      } else {
+        // node installs matterbridge into the global prefix and its own dependencies into ...\matterbridge\node_modules\@matterbridge\core\dist
+        // production - adjust the path for node_modules @matterbridge core dist directory (4).
+        this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..', '..');
+        this.log.debug(`Found production core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
+      }
     }
 
     // Setup the matter environment with default values
