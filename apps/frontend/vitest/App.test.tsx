@@ -165,7 +165,7 @@ describe('toggleDebug', () => {
       json: async () => ({ valid: false }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'wrong' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -198,7 +198,7 @@ describe('toggleDebug', () => {
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -234,7 +234,7 @@ describe('toggleDebug', () => {
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -271,7 +271,7 @@ describe('toggleDebug', () => {
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -308,7 +308,7 @@ describe('toggleDebug', () => {
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -357,7 +357,7 @@ describe('App', () => {
       json: async () => ({ valid: false }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'wrong' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -372,7 +372,7 @@ describe('App', () => {
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
@@ -385,7 +385,7 @@ describe('App', () => {
   it('handles fetch error gracefully', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
     render(<App />);
-    const input = screen.getByPlaceholderText('password') as HTMLInputElement;
+    const input = screen.getByPlaceholderText('password');
     await act(async () => {
       fireEvent.input(input, { target: { value: 'test' } });
       fireEvent.click(screen.getByRole('button', { name: /log in/i }));
