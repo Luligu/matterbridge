@@ -118,9 +118,13 @@ describe('ThreadsManager', () => {
       writeFileSync(
         tempWorkerPath,
         [
-          "import { parentPort, workerData } from 'node:worker_threads';",
-          'parentPort?.postMessage({ workerData, argv: process.argv });',
-          'setInterval(() => undefined, 1000);',
+          "import { parentPort, threadId, workerData } from 'node:worker_threads';",
+          "parentPort?.postMessage({ type: 'init', threadId, threadName: workerData.threadName, success: true });",
+          "parentPort?.postMessage({ type: 'payload', workerData, argv: process.argv });",
+          'setTimeout(() => {',
+          "  parentPort?.postMessage({ type: 'exit', threadId, threadName: workerData.threadName, success: true });",
+          '  parentPort?.close();',
+          '}, 0);',
         ].join('\n'),
         { encoding: 'utf8' },
       );
@@ -150,19 +154,21 @@ describe('ThreadsManager', () => {
         expect(threadInfo?.worker).toBeDefined();
         expect(threadInfo?.worker.threadId).toBeGreaterThan(0);
 
-        // runCount/lastStarted are updated on the worker's built-in 'online' event.
-        // We'll assert them after we receive the first message from the worker.
+        // runCount/lastStarted are updated when the worker sends its init control message.
         expect(threadInfo?.lastStopped).toBeUndefined();
         expect(threadInfo?.lastDuration).toBeUndefined();
 
+        const worker = threadInfo!.worker;
         const exitPromise = new Promise<void>((resolve, reject) => {
-          threadInfo!.worker.once('exit', () => resolve());
-          threadInfo!.worker.once('error', reject);
+          worker.once('exit', () => resolve());
+          worker.once('error', reject);
         });
 
         const message = await new Promise<any>((resolve, reject) => {
-          threadInfo!.worker.once('message', resolve);
-          threadInfo!.worker.once('error', reject);
+          worker.on('message', (payload: { type?: string }) => {
+            if (payload.type === 'payload') resolve(payload);
+          });
+          worker.once('error', reject);
         });
 
         expect(message).toBeDefined();
@@ -177,7 +183,6 @@ describe('ThreadsManager', () => {
         expect(threadInfo?.lastStarted).toBeDefined();
         expect(typeof threadInfo?.lastStarted).toBe('number');
 
-        await threadInfo!.worker.terminate();
         await exitPromise;
 
         // Lifecycle timestamps should be set on stop.
@@ -594,14 +599,15 @@ describe('ThreadsManager', () => {
   });
 
   describe('runThread (lifecycle branch coverage)', () => {
-    test('updates lastStarted/runCount on online and computes duration from it', async () => {
+    test('updates lifecycle state from init and exit worker messages', async () => {
       vi.resetModules();
 
       const nowSpy = vi.spyOn(Date, 'now');
       // ThreadsManager uses Date.now() multiple times across the lifecycle handlers:
-      // - online: lastStarted + lastSeen
-      // - exit: stoppedAt + lastSeen
-      const times = [1000, 1001, 2000, 2001];
+      // - native online: log timestamp only
+      // - init message: lastSeen + lastStarted
+      // - exit message: lastSeen + lastStopped
+      const times = [1000, 1001, 2000];
       nowSpy.mockImplementation(() => times.shift() ?? 9999);
 
       const { EventEmitter } = await import('node:events');
@@ -630,23 +636,135 @@ describe('ThreadsManager', () => {
 
       manager.runThread('TestWorker');
       const threadInfo = threads.find((t) => t.name === 'TestWorker');
+      const worker = threadInfo.worker;
 
-      // lastStarted/runCount are set only after the worker emits 'online'.
+      // lastStarted/runCount are set only after the worker sends the init control message.
       expect(threadInfo.lastStarted).toBeUndefined();
       expect(threadInfo.runCount).toBeUndefined();
 
-      // 'online' should update lastStarted
-      threadInfo.worker.emit('online');
-      expect(threadInfo.lastStarted).toBe(1000);
+      // Native worker online only logs after the refactor.
+      worker.emit('online');
+      expect(threadInfo.lastStarted).toBeUndefined();
+      expect(threadInfo.runCount).toBeUndefined();
+
+      worker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
+      expect(threadInfo.lastSeen).toBe(1001);
+      expect(threadInfo.lastStarted).toBe(1001);
       expect(threadInfo.runCount).toBe(1);
 
-      // 'exit' should compute duration from the online timestamp
-      threadInfo.worker.emit('exit', 0);
+      worker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: true });
+      expect(threadInfo.lastSeen).toBe(2000);
       expect(threadInfo.lastStopped).toBe(2000);
-      expect(threadInfo.lastDuration).toBe(1000);
+      expect(threadInfo.lastDuration).toBe(999);
       expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted);
 
       // Worker reference should be cleared on exit.
+      expect(threadInfo.worker).toBeUndefined();
+
+      // Native worker exit is a no-op after the explicit exit message has already cleared this worker.
+      threadInfo.lastSeen = 3000;
+      threadInfo.lastStopped = 3000;
+      threadInfo.lastDuration = 1999;
+      worker.emit('exit', 0);
+      expect(threadInfo.lastSeen).toBe(3000);
+      expect(threadInfo.lastStopped).toBe(3000);
+      expect(threadInfo.lastDuration).toBe(1999);
+
+      manager.destroy();
+      nowSpy.mockRestore();
+    });
+
+    test('clears worker on native exit when no exit message was received', async () => {
+      vi.resetModules();
+
+      const nowSpy = vi.spyOn(Date, 'now');
+      const times = [1000, 2000];
+      nowSpy.mockImplementation(() => times.shift() ?? 9999);
+
+      const { EventEmitter } = await import('node:events');
+      class WorkerMock extends EventEmitter {
+        threadId = 1;
+        constructor(_specifier: unknown, _options: unknown) {
+          super();
+        }
+      }
+
+      vi.doMock('node:worker_threads', async () => {
+        const actual = await vi.importActual<any>('node:worker_threads');
+        return {
+          ...actual,
+          Worker: WorkerMock,
+        };
+      });
+
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
+      const manager = new ThreadsManagerMocked();
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+
+      const threads = (manager as any).threads as Array<any>;
+      threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
+
+      manager.runThread('TestWorker');
+      const threadInfo = threads.find((t) => t.name === 'TestWorker');
+      const worker = threadInfo.worker;
+
+      worker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
+      expect(threadInfo.lastStarted).toBe(1000);
+      expect(threadInfo.worker).toBe(worker);
+
+      worker.emit('exit', 0);
+
+      expect(threadInfo.lastSeen).toBe(2000);
+      expect(threadInfo.lastStopped).toBe(2000);
+      expect(threadInfo.lastDuration).toBe(1000);
+      expect(threadInfo.worker).toBeUndefined();
+
+      manager.destroy();
+      nowSpy.mockRestore();
+    });
+
+    test('computes zero duration when exit message arrives before init', async () => {
+      vi.resetModules();
+
+      const nowSpy = vi.spyOn(Date, 'now');
+      nowSpy.mockReturnValue(2000);
+
+      const { EventEmitter } = await import('node:events');
+      class WorkerMock extends EventEmitter {
+        threadId = 1;
+        constructor(_specifier: unknown, _options: unknown) {
+          super();
+        }
+      }
+
+      vi.doMock('node:worker_threads', async () => {
+        const actual = await vi.importActual<any>('node:worker_threads');
+        return {
+          ...actual,
+          Worker: WorkerMock,
+        };
+      });
+
+      const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
+      const manager = new ThreadsManagerMocked();
+      // Worker is mocked, so the resolved path only needs to exist to pass the file check.
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+
+      const threads = (manager as any).threads as Array<any>;
+      threads.push({ name: 'TestWorker', path: 'does-not-exist.js', type: 'worker' });
+
+      manager.runThread('TestWorker');
+      const threadInfo = threads.find((t) => t.name === 'TestWorker');
+      const worker = threadInfo.worker;
+
+      expect(threadInfo.lastStarted).toBeUndefined();
+
+      worker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: true });
+
+      expect(threadInfo.lastSeen).toBe(2000);
+      expect(threadInfo.lastStopped).toBe(2000);
+      expect(threadInfo.lastDuration).toBe(0);
       expect(threadInfo.worker).toBeUndefined();
 
       manager.destroy();
@@ -773,7 +891,7 @@ describe('ThreadsManager', () => {
 
       expect(() => manager.runThread('TestWorker')).toThrow('Thread TestWorker is already running');
 
-      // After exit, the worker reference is cleared and we can start again.
+      // Native worker exit is a fallback cleanup path when no explicit exit message was received.
       (first as any).emit('exit', 0);
       expect(threadInfo.worker).toBeUndefined();
 

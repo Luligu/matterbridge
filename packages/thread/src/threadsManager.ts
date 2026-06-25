@@ -4,7 +4,7 @@
  * @file threadsManager.ts
  * @author Luca Liguori
  * @created 2026-03-07
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -235,47 +235,58 @@ export class ThreadsManager {
     const worker = threadInfo.worker;
 
     worker.once('online', () => {
-      threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
-      threadInfo.lastStarted = Date.now();
-      threadInfo.lastSeen = Date.now();
-      this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(threadInfo.lastStarted).toISOString()} with thread id ${worker.threadId}`);
+      const now = Date.now();
+      this.log.debug(`Thread ${threadInfo.name} is online at ${new Date(now).toISOString()}`);
     });
 
     worker.once('exit', () => {
-      const stoppedAt = Date.now();
-      threadInfo.lastStopped = stoppedAt;
-      threadInfo.lastDuration = Math.max(0, stoppedAt - (threadInfo.lastStarted ?? stoppedAt));
-      threadInfo.worker = undefined;
-      threadInfo.lastSeen = Date.now();
-      this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms`);
+      const now = Date.now();
+      // If for any reason the worker exited without sending an 'exit' message, we still want to update the threadInfo
+      if (threadInfo.worker === worker) {
+        threadInfo.lastSeen = now;
+        threadInfo.lastStopped = now;
+        threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+        threadInfo.worker = undefined;
+      }
+      this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()}`);
     });
 
     worker.on('message', (message: ParentPortMessage) => {
-      threadInfo.lastSeen = Date.now();
+      const now = Date.now();
+      threadInfo.lastSeen = now;
       // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
-      if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date().toISOString()}: ${debugStringify(message)}`);
+      if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date(now).toISOString()}: ${debugStringify(message)}`);
       if (message.type === 'log') {
         AnsiLogger.create({ logName: threadInfo.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.log.logLevel }).log(
           message.logLevel,
           message.message,
         );
+      } else if (message.type === 'init') {
+        threadInfo.lastStarted = now;
+        threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
+        this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
+      } else if (message.type === 'exit') {
+        threadInfo.lastStopped = now;
+        threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+        threadInfo.worker = undefined;
+        this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId} after running for ${threadInfo.lastDuration} ms`);
       }
     });
 
     worker.on('messageerror', () => {
+      const now = Date.now();
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
-      this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date().toISOString()}`);
+      this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date(now).toISOString()}`);
     });
 
     worker.once('error', (error) => {
+      const now = Date.now();
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
-      const stoppedAt = Date.now();
-      threadInfo.lastStopped = stoppedAt;
-      threadInfo.lastDuration = Math.max(0, stoppedAt - (threadInfo.lastStarted ?? stoppedAt));
+      threadInfo.lastStopped = now;
+      threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
       threadInfo.worker = undefined;
-      this.log.error(
-        `Thread ${threadInfo.name} encountered an error at ${new Date(threadInfo.lastStopped).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`,
-      );
+      threadInfo.lastSeen = now;
+      this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`);
     });
 
     this.log.debug(`Started thread ${threadInfo.name} from path ${path} type ${threadInfo.type} with thread id ${worker.threadId}`);

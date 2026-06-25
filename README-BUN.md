@@ -12,7 +12,7 @@
 # Bun local development in container
 
 ```bash
-docker pull oven/bun:latest && docker run -it --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
+docker pull oven/bun:latest && docker run -dit --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
 docker exec -it bun-development bash
 ```
 
@@ -100,8 +100,9 @@ package-manager command and global-modules paths to Bun where needed.
 - [x] **`--add` local plugin.** When running on Bun, the plugin is no longer treated as
       "local", so the `npm link matterbridge` step is skipped (`bun link` already
       provides resolution). ([`matterbridge.ts`](packages/core/src/matterbridge.ts))
+- [x] **The threads doesn't flag no running after exit.**
 
-## Known limitations
+## Known issue
 
 - [ ] **Bun cannot resolve the container user name.** In the official Bun images,
       both `node:os` and `bun:os` return `username: "unknown"` and `shell: "unknown"`
@@ -109,10 +110,6 @@ package-manager command and global-modules paths to Bun where needed.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
-
-## Known issue
-
-- [ ] **The threads doesn't flag no running after exit.**
 
 ## TODO
 

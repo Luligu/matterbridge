@@ -75,8 +75,9 @@ This release adds support for [bun](https://bun.sh/). Support for bun is stil un
 - [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
 - [thread]: Add check for thread path existence.
 - [docker]: Refactor Dockerfiles for all images to improve speed.
-- [bun]: Add isBun() and getGlobalBunModules(). Support for [bun](https://bun.sh/) is stil under development and is purely experimental.
-- [bun]: Add the `luligu/matterbridge:bun` docker image. Support for [bun](https://bun.sh/) is stil under development and is purely experimental.
+- [bun]: Add isBun() and getGlobalBunModules().
+- [bun]: Add the `luligu/matterbridge:bun` docker image.
+- [bun]: Refactor thread manager lifecycle (init and exit) to work consistently with node and bun.
 
 ### Changed
 
