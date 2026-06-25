@@ -177,6 +177,8 @@ export interface SystemInformation {
   ipv6Address: string;
   // Node.js properties
   nodeVersion: string;
+  // Bun properties
+  bunVersion?: string;
   // Fixed system properties
   hostname: string;
   user: string;

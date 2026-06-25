@@ -1509,6 +1509,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.nodeVersion = process.versions.node;
     const [versionMajor, versionMinor, versionPatch] = this.systemInformation.nodeVersion.split('.').map(Number);
 
+    // Bun information
+    if (process.versions.bun) {
+      this.systemInformation.bunVersion = process.versions.bun;
+    }
+
     // Host system information
     this.systemInformation.hostname = os.hostname();
     this.systemInformation.user = os.userInfo().username;

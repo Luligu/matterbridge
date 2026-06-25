@@ -169,6 +169,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
                       .replace('ipv4Address', 'IPv4 address')
                       .replace('ipv6Address', 'IPv6 address')
                       .replace('nodeVersion', 'Node version')
+                      .replace('bunVersion', 'Bun version')
                       .replace('hostname', 'Hostname')
                       .replace('user', 'User')
                       .replace('osType', 'Os')
