@@ -2,8 +2,8 @@
 
 FLAG_FILE="/matterbridge/.initialized"
 
-echo "Welcome to the Matterbridge local docker image."
-echo "This image is built from the local source files."
+echo "Welcome to the Matterbridge local docker image for Node.js."
+echo "This image is built from the local source files and runs on Node.js."
 
 if [ ! -f "$FLAG_FILE" ]; then
 

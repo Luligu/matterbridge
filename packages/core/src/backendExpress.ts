@@ -44,6 +44,7 @@ import {
   type SharedMatterbridge,
   type WorkerMessage,
 } from '@matterbridge/types';
+import { isBun } from '@matterbridge/utils/bun';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
@@ -546,8 +547,8 @@ export class BackendExpress {
               name: 'SpawnCommand',
               workerData: {
                 threadName: 'SpawnCommand',
-                command: 'npm',
-                args: ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                command: isBun() ? 'bun' : 'npm',
+                args: isBun() ? ['install', '-g', filePath, '--production'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
                 packageCommand: 'install',
                 packageName: filename,
               },

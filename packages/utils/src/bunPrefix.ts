@@ -29,14 +29,28 @@ import { logModuleLoaded } from './loader.js';
 logModuleLoaded('BunPrefix');
 
 /**
+ * Checks if the current runtime environment is Bun.
+ *
+ * @returns {boolean} True if the current runtime is Bun, false otherwise.
+ */
+export function isBun(): boolean {
+  return typeof process !== 'undefined' && process.versions?.bun !== undefined;
+}
+
+/**
  * Retrieves the path to the global Bun modules directory.
  *
  * Bun has no `bun root -g` equivalent of `npm root -g`, so the path is derived from
  * `$BUN_INSTALL` (falling back to `~/.bun`) as `<bunInstall>/install/global/node_modules`.
  *
  * @returns {string} The path of the global Bun modules directory.
+ * @remarks This function is only relevant when running in a Bun environment. If called in a non-Bun environment, it will throw an error.
+ * Call getGlobalNodeModules() instead, which will return the appropriate global modules directory for the current runtime (Bun or Node.js).
  */
 export function getGlobalBunModules(): string {
+  if (!isBun()) {
+    throw new Error('getGlobalBunModules can only be called in a Bun environment.');
+  }
   const bunInstall = process.env.BUN_INSTALL ?? path.join(os.homedir(), '.bun');
   return path.join(bunInstall, 'install', 'global', 'node_modules');
 }

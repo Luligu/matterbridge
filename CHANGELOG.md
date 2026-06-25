@@ -71,6 +71,9 @@ These classes will run as threads in the next releases:
 - [configure]: Improve workflow sending only the updated data to the frontend.
 - [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
 - [thread]: Add check for thread path existence.
+- [docker]: Refactor Dockerfiles for all images to improve speed.
+- [bun]: Add isBun() and getGlobalBunModules(). Support for bun is stil under development and is purely experimental.
+- [bun]: Add the `luligu/matterbridge:bun` docker image. Support for bun is stil under development and is purely experimental.
 
 ### Changed
 

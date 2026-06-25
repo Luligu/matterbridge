@@ -37,6 +37,7 @@ import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
+import { isBun } from '@matterbridge/utils/bun';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -678,7 +679,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     let packageJsonPath = path.resolve(nameOrPath);
     this.log.debug(`Resolving plugin path ${plg}${packageJsonPath}${db}`);
 
-    // Check if the package.json file exists at the specified path or next try in the global modules directory
+    // Check if the package.json file exists at the specified path or next try in the global modules directory if matterbridge.globalModulesDirectory is set,
+    // otherwise try in the node / bun global modules directory
     try {
       await promises.access(packageJsonPath);
     } catch {
@@ -686,7 +688,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       packageJsonPath = path.join(this.matterbridge.globalModulesDirectory, nameOrPath);
       this.log.debug(`Trying at ${plg}${packageJsonPath}${db}`);
     }
-    // Check if the package.json file exists at the global modules directory or next try in the matterbridge plugin directory
+    // Check if the package.json file exists at the node / bun global modules directory or next try in the matterbridge plugin directory
     try {
       await promises.access(packageJsonPath);
     } catch {
@@ -747,8 +749,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         name: 'SpawnCommand',
         workerData: {
           threadName: 'SpawnCommand',
-          command: 'npm',
-          args: ['install', '-g', packageName, '--omit=dev', '--verbose'],
+          command: isBun() ? 'bun' : 'npm',
+          args: isBun() ? ['install', '-g', packageName, '--production'] : ['install', '-g', packageName, '--omit=dev', '--verbose'],
           packageCommand: 'install',
           packageName: packageName,
         },
@@ -771,8 +773,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         name: 'SpawnCommand',
         workerData: {
           threadName: 'SpawnCommand',
-          command: 'npm',
-          args: ['uninstall', '-g', packageName, '--omit=dev', '--verbose'],
+          command: isBun() ? 'bun' : 'npm',
+          args: isBun() ? ['uninstall', '-g', packageName] : ['uninstall', '-g', packageName, '--verbose'],
           packageCommand: 'uninstall',
           packageName: packageName,
         },
@@ -920,7 +922,19 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       plugin = p;
     }
     try {
-      this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db}`);
+      const { existsSync } = await import('node:fs');
+
+      this.log.debug(`Parsing package.json of plugin ${plg}${plugin.name}${db} at path ${CYAN}${plugin.path}${db}`);
+
+      if (!existsSync(plugin.path) && existsSync(path.join(this.matterbridge.globalModulesDirectory, plugin.name, 'package.json'))) {
+        plugin.path = path.join(this.matterbridge.globalModulesDirectory, plugin.name, 'package.json');
+        this.log.debug(`Found package.json of plugin ${plg}${plugin.name}${db} in global npm modules directory: ${CYAN}${plugin.path}${db}`);
+      }
+      if (!existsSync(plugin.path) && existsSync(path.join(this.matterbridge.matterbridgePluginDirectory, plugin.name, 'package.json'))) {
+        plugin.path = path.join(this.matterbridge.matterbridgePluginDirectory, plugin.name, 'package.json');
+        this.log.debug(`Found package.json of plugin ${plg}${plugin.name}${db} in matterbridge plugin directory: ${CYAN}${plugin.path}${db}`);
+      }
+
       const packageJson = JSON.parse(await promises.readFile(plugin.path, 'utf8'));
       if (!packageJson.name) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no name in package.json`);
       if (!packageJson.version) this.log.warn(`Plugin ${plg}${plugin.name}${wr} has no version in package.json`);
@@ -941,7 +955,6 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
       // Test if frontend build exists and set frontendPath if it does
       const frontendPath = path.join(plugin.path.replace('package.json', ''), 'apps', 'frontend', 'build', 'index.html');
-      const { existsSync } = await import('node:fs');
       // istanbul ignore next - frontendPath is optional, so we don't need to test it in unit tests
       if (existsSync(frontendPath)) plugin.frontendPath = frontendPath;
 

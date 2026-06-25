@@ -81,6 +81,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
+import { isBun } from '@matterbridge/utils/bun';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
@@ -1049,8 +1050,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               name: 'SpawnCommand',
               workerData: {
                 threadName: 'SpawnCommand',
-                command: 'npm',
-                args: ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                command: isBun() ? 'bun' : 'npm',
+                args: isBun() ? ['install', '-g', filePath, '--production'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
                 packageCommand: 'install',
                 packageName: filename,
               },
@@ -2815,8 +2816,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         name: 'SpawnCommand',
         workerData: {
           threadName: 'SpawnCommand',
-          command: 'npm',
-          args: [command, '-g', packageName, '--omit=dev', '--verbose'],
+          command: isBun() ? 'bun' : 'npm',
+          args: isBun() ? [command, '-g', packageName, '--production'] : [command, '-g', packageName, '--omit=dev', '--verbose'],
           packageCommand: command,
           packageName: packageName,
         },

@@ -4,55 +4,13 @@
 # when the build targets this Dockerfile (`-f docker/Dockerfile.bun`).
 # It fully replaces the root .dockerignore (no merge).
 #
-# Like Dockerfile.local, the bun image builds Matterbridge from local source, so
-# it keeps src/, packages/ and apps/. It does not read git, chip or scripts.
+# This image installs Matterbridge from npm and uses no source. The only files
+# it copies from the context are ./.dockerbuild.json and
+# docker/entrypoint.bun.sh, so we ignore everything else.
 
-# Not needed by the bun build (saves ~150 MB of context)
-.agents
-.claude
-.devcontainer
-.env
-.git
-.github
-chip
-docker
-!docker/Dockerfile.bun
-!docker/Dockerfile.bun.dockerignore
+# Ignore everything...
+*
+
+# ...except the two files this Dockerfile copies.
+!.dockerbuild.json
 !docker/entrypoint.bun.sh
-docs
-reflector
-screenshots
-scripts
-systemd
-**/vitest
-*.md
-
-# Dependencies
-**/node_modules/
-
-# Test output
-**/coverage/
-
-# Build output (rebuilt inside the image)
-**/dist/
-**/build/
-**/*.tsbuildinfo
-
-# Tooling caches
-**/.cache/
-
-# VS Code settings
-**/.vscode/
-
-# Logs
-**/*.log
-**/npm-debug.log*
-**/yarn-debug.log*
-**/pnpm-debug.log*
-
-# Other assets not needed for builds
-docker-downloads-history.json
-**/tmp/
-**/temp/
-**/jest/
-**/*.tgz

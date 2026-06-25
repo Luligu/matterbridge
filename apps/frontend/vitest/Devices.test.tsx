@@ -148,7 +148,7 @@ describe('Devices', () => {
       });
     });
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLElement | null;
+    const combobox = document.querySelector<HTMLElement>('[role="combobox"]');
     expect(combobox).toBeTruthy();
 
     mockElementRect(combobox!);
@@ -214,7 +214,7 @@ describe('Devices', () => {
       });
     });
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLElement | null;
+    const combobox = document.querySelector<HTMLElement>('[role="combobox"]');
     expect(combobox).toBeTruthy();
 
     mockElementRect(combobox!);
@@ -300,7 +300,7 @@ describe('Devices', () => {
     expect(screen.getByTestId('devices-table')).toBeInTheDocument();
     expect(screen.queryByTestId('devices-icons')).not.toBeInTheDocument();
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLInputElement | null;
+    const combobox = document.querySelector('[role="combobox"]');
     expect(combobox?.textContent).toContain('All plugins');
 
     act(() => {

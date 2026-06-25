@@ -74,6 +74,7 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
+import { isBun, getGlobalBunModules } from '@matterbridge/utils/bun';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -965,6 +966,33 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     this.log.debug(`Virtual mode ${this.virtualMode}.`);
 
+    // Global node_modules directory. Transition from bun to node can disable the first plugin because the stored global node_modules directory is wrong before the thread run.
+    if (isBun()) {
+      this.globalModulesDirectory = getGlobalBunModules();
+      this.log.debug(`Global node_modules Directory (Bun): ${this.globalModulesDirectory}`);
+      await this.nodeContext.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+    } else {
+      this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+    }
+    if (this.globalModulesDirectory === '') {
+      // First run of Matterbridge so the node storage is empty
+      this.log.debug(`Getting global node_modules directory...`);
+      try {
+        const { getGlobalNodeModules } = await import('@matterbridge/utils/npm-prefix');
+        this.globalModulesDirectory = await getGlobalNodeModules();
+        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+        await this.nodeContext.set<string>('globalModulesDirectory', this.globalModulesDirectory);
+      } catch (error) {
+        logError(this.log, `Error getting global node_modules directory`, error);
+      }
+    } else {
+      // The global node_modules directory is already set in the node storage and we check if it is still valid
+      if (!isBun()) {
+        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix' } });
+      }
+    }
+
     // Initialize PluginManager
     this.plugins.logLevel = this.log.logLevel;
     await this.plugins.loadFromStorage();
@@ -974,8 +1002,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
-      const globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-      const isLocal = globalModulesDirectory.length > 0 && !plugin.path.startsWith(globalModulesDirectory);
+      const isLocal = fs.existsSync(plugin.path) && this.globalModulesDirectory.length > 0 && !plugin.path.startsWith(this.globalModulesDirectory);
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +
           `with version ${CYAN}${plugin.version}${db} type ${CYAN}${plugin.type}${db} local ${CYAN}${isLocal}${db} ` +
@@ -993,7 +1020,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       ) {
         const { execSync } = await import('node:child_process');
         try {
-          execSync('npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
+          execSync(isBun() ? 'bun link matterbridge --silent' : 'npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
           this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
         } catch (error) {
           plugin.error = true;
@@ -1015,10 +1042,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         try {
           if (plugin.private && plugin.tarballPath && fs.existsSync(path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath))) {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
-            execSync(`${sudo ? 'sudo ' : ''}npm install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} --no-fund --no-audit --silent --omit=dev`);
+            execSync(
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+            );
           } else {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm${plugin.version.includes('-dev-') ? ' with tag @dev' : ''}...`);
-            execSync(`${sudo ? 'sudo ' : ''}npm install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} --no-fund --no-audit --silent --omit=dev`);
+            execSync(
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+            );
           }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
         } catch (error) {
@@ -1505,25 +1536,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`Matterbridge Directory: ${this.matterbridgeDirectory}`);
     this.log.debug(`Matterbridge Plugin Directory: ${this.matterbridgePluginDirectory}`);
     this.log.debug(`Matterbridge Matter Certificate Directory: ${this.matterbridgeCertDirectory}`);
-
-    // Global node_modules directory
-    if (this.nodeContext) this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
-    if (this.globalModulesDirectory === '') {
-      // First run of Matterbridge so the node storage is empty
-      this.log.debug(`Getting global node_modules directory...`);
-      try {
-        const { getGlobalNodeModules } = await import('@matterbridge/utils/npm-prefix');
-        this.globalModulesDirectory = await getGlobalNodeModules();
-        this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-        await this.nodeContext?.set<string>('globalModulesDirectory', this.globalModulesDirectory);
-      } catch (error) {
-        logError(this.log, `Error getting global node_modules directory`, error);
-      }
-    } else {
-      // The global node_modules directory is already set in the node storage and we check if it is still valid
-      this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
-      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix' } });
-    }
+    this.log.debug(`Global node_modules Directory: ${this.globalModulesDirectory}`);
 
     // Matterbridge version
     this.log.debug(`Reading matterbridge package.json...`);
@@ -1656,8 +1669,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         name: 'SpawnCommand',
         workerData: {
           threadName: 'SpawnCommand',
-          command: 'npm',
-          args: ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
+          command: isBun() ? 'bun' : 'npm',
+          args: isBun() ? ['install', '-g', 'matterbridge', '--production'] : ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
           packageCommand: 'install',
           packageName: 'matterbridge',
         },
