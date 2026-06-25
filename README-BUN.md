@@ -3,12 +3,37 @@
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge on Bun
 
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
+[![Docker Image Size](https://img.shields.io/docker/image-size/luligu/matterbridge/bun?label=bun%20image%20size)](https://hub.docker.com/r/luligu/matterbridge/tags?name=bun)
+[![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![ESM](https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white)](https://bun.com)
 
 ---
 
+# Bun local develpment in container
+
+```bash
+docker pull oven/bun:latest && docker run -it --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
+docker exec -it bun-development bash
+```
+
+## inside the container clone, build and run matterbridge
+
+```bash
+apt-get update && apt-get install -y git
+git clone --depth 1 --single-branch --no-tags --branch dev https://github.com/Luligu/matterbridge.git && cd matterbridge
+bun install
+bun run build
+cd apps/frontend
+bun install
+bun run build
+cd ../..
+bun link
+matterbridge --docker --logger debug --debug
+```
+
 # Bun docker hub image (experimental — for test and development only)
 
-The image (tag **bun** 80 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
+The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
 # Bun local image (experimental — for test and development only)
 
@@ -84,17 +109,12 @@ package-manager command and global-modules paths to Bun where needed.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
-      Matterbridge should fall back to resolving the reported UID from `/etc/passwd`
-      when Bun reports an unknown user name.
+
+## Known issue
+
+- [ ] **The threads doesn't flag no running after exit.**
 
 ## TODO
 
-- [ ] **Clean up local-plugin detection after a Node-to-Bun Docker migration.**
-      [`matterbridge.ts`](packages/core/src/matterbridge.ts) intentionally forces
-      `isLocal = false` when running on Bun until stored Node plugin paths can be
-      migrated safely.
-- [ ] **Shrink the image further.** `oven/bun:slim` yields ~596 MB vs ~396 MB for
-      the Node `local` image. `oven/bun:alpine` (142 MB base vs 269 MB slim) is the
-      next lever if musl/Bun compatibility checks out.
 - [ ] **Validate Bun/Node compatibility** of the full runtime over a longer run
       (commissioning, mDNS, plugin behaviors) — only short smoke starts verified.

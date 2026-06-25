@@ -634,7 +634,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     ) {
       // ...\matterbridge\packages\core\src on test
       // ...\matterbridge\packages\core\dist on development
-      // development - adjust the path for packages core src/dist directory (3).
+      // test and development - adjust the path for packages core src/dist directory (3).
       this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..');
       this.log.debug(`Found packages core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
     } else if (currentFileDirectory.endsWith(path.join('matterbridge', 'dist'))) {
@@ -1084,7 +1084,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         plugin.enabled = false;
         continue;
       }
-      this.log.debug(`Creating node storage context for plugin  ${plg}${plugin.name}${db}`);
+      this.log.debug(`Creating node storage context for plugin ${plg}${plugin.name}${db}`);
       plugin.nodeContext = await this.nodeStorage.createStorage(plugin.name);
       await plugin.nodeContext.set<string>('name', plugin.name);
       await plugin.nodeContext.set<string>('type', plugin.type);

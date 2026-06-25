@@ -15,6 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![ESM](https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white)](https://bun.com)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -59,6 +60,8 @@ These classes will run as threads in the next releases:
 
 ## [3.9.2] - Dev branch
 
+This release adds support for [bun](https://bun.sh/). Support for bun is stil under [development](README-BUN.md) and is purely experimental.
+
 ### Added
 
 - [frontend]: Add type aware linting with `oxlint` and format with `oxfmt`.
@@ -72,8 +75,8 @@ These classes will run as threads in the next releases:
 - [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
 - [thread]: Add check for thread path existence.
 - [docker]: Refactor Dockerfiles for all images to improve speed.
-- [bun]: Add isBun() and getGlobalBunModules(). Support for bun is stil under development and is purely experimental.
-- [bun]: Add the `luligu/matterbridge:bun` docker image. Support for bun is stil under development and is purely experimental.
+- [bun]: Add isBun() and getGlobalBunModules(). Support for [bun](https://bun.sh/) is stil under development and is purely experimental.
+- [bun]: Add the `luligu/matterbridge:bun` docker image. Support for [bun](https://bun.sh/) is stil under development and is purely experimental.
 
 ### Changed
 
