@@ -9,7 +9,7 @@
 
 ---
 
-# Bun local develpment in container
+# Bun local development in container
 
 ```bash
 docker pull oven/bun:latest && docker run -it --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash

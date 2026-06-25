@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<!-- eslint-disable markdown/no-multiple-h1 --><h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-on-bun"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge on Bun</h1>
+<p><a href="https://matterbridge.io"><img src="https://img.shields.io/badge/matterbridge.io-online-brightgreen" alt="matterbridge.io"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge/tags?name=bun"><img src="https://img.shields.io/docker/image-size/luligu/matterbridge/bun?label=bun%20image%20size" alt="Docker Image Size"></a>
+<a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
+<a href="https://bun.com"><img src="https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white" alt="ESM"></a></p>
+<hr>
+<h1 id="bun-local-development-in-container">Bun local development in container</h1>
+<pre><code class="language-bash">docker pull oven/bun:latest &amp;&amp; docker run -it --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
+docker exec -it bun-development bash
+</code></pre>
+<h2 id="inside-the-container-clone-build-and-run-matterbridge">inside the container clone, build and run matterbridge</h2>
+<pre><code class="language-bash">apt-get update &amp;&amp; apt-get install -y git
+git clone --depth 1 --single-branch --no-tags --branch dev https://github.com/Luligu/matterbridge.git &amp;&amp; cd matterbridge
+bun install
+bun run build
+cd apps/frontend
+bun install
+bun run build
+cd ../..
+bun link
+matterbridge --docker --logger debug --debug
+</code></pre>
+<h1 id="bun-docker-hub-image-experimental-for-test-and-development-only">Bun docker hub image (experimental — for test and development only)</h1>
+<p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
+<h1 id="bun-local-image-experimental-for-test-and-development-only">Bun local image (experimental — for test and development only)</h1>
+<p>The <strong>bun</strong> image builds Matterbridge from the <strong>local source files</strong> and runs it on the
+<a href="https://bun.com">Bun</a> runtime instead of Node.js.</p>
+<ul>
+<li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun), mirroring the <code>node:24-trixie-slim</code> base of the <code>local</code> image.</li>
+<li>Builds exactly like the <code>local</code> image, with the npm commands adapted to Bun:<ul>
+<li><code>npm ci</code> → <code>bun install</code></li>
+<li><code>npm run build</code> → <code>bun run build</code> (backend <code>tsgo</code> build and frontend <code>vite</code> build are still run; the runtime uses the compiled <code>dist/</code>)</li>
+<li><code>npm prune --omit=dev</code> → <code>bun install --production</code></li>
+<li><code>npm cache clean</code> → <code>bun pm cache rm</code></li>
+<li><code>npm link</code> → <code>bun link</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="files">Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="docker/Dockerfile.local.bun"><code>docker/Dockerfile.local.bun</code></a></td>
+<td>The Bun image definition</td>
+</tr>
+<tr>
+<td><a href="docker/Dockerfile.local.bun.dockerignore"><code>docker/Dockerfile.local.bun.dockerignore</code></a></td>
+<td>Per-Dockerfile build context (keeps source, drops <code>.git</code>/<code>chip</code>/<code>scripts</code>/…)</td>
+</tr>
+<tr>
+<td><a href="docker/entrypoint.local.bun.sh"><code>docker/entrypoint.local.bun.sh</code></a></td>
+<td>Entrypoint banner (prints the Bun version)</td>
+</tr>
+</tbody></table>
+<h2 id="scripts">Scripts</h2>
+<pre><code class="language-bash">npm run docker:build:localbun   # build the image (matterbridge:local-bun)
+npm run docker:run:localbun     # run it (container matterbridge-local-bun, port 8283)
+npm run docker:exec:localbun    # open a shell in the running container
+npm run docker:log:localbun     # follow the container logs
+</code></pre>
+<h2 id="status">Status</h2>
+<p>The core bridge runs on Bun: it creates its directories, initializes the Matter
+node storage, and brings up the server node and endpoints. The web frontend is
+built and served. See the TODO list below for the known limitations.</p>
+<hr>
+<h1 id="bun-port-status">Bun port status</h1>
+<p>The approach is to detect if running in <code>bun</code> with isBun() and switch the
+package-manager command and global-modules paths to Bun where needed.</p>
+<h2 id="done">Done</h2>
+<ul>
+<li><input checked="" disabled="" type="checkbox"> <strong>Global package resolution.</strong> <code>bun link</code> (in <code>Dockerfile.bun</code>) registers the
+local build as the global <code>matterbridge</code> package — and installs all CLI bins
+and their exec bits — so plugins resolve <code>import &#39;matterbridge&#39;</code>. This is the
+full <code>npm link</code> replacement.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong><code>npm root -g</code> discovery.</strong> <code>getGlobalNodeModules()</code> returns
+<code>getGlobalBunModules()</code> when running on Bun (there is no <code>bun root -g</code>; the path is
+derived from <code>$BUN_INSTALL</code> / <code>~/.bun</code>).
+(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/bunPrefix.ts"><code>bunPrefix.ts</code></a>)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Plugin path resolution.</strong> <code>PluginManager</code> resolves plugins from the Bun
+global modules dir when running on Bun. (<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Runtime-aware package management.</strong> Plugin installation, uninstallation,
+uploaded tarball installation, Matterbridge updates, and Docker-recreate
+recovery use Bun commands when running on Bun. The SpawnCommand worker also
+supports Bun on Windows and through <code>sudo</code>.
+(<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>, <a href="packages/core/src/frontend.ts"><code>frontend.ts</code></a>, <a href="packages/core/src/backendExpress.ts"><code>backendExpress.ts</code></a>, <a href="packages/thread/src/spawnCommand.ts"><code>spawnCommand.ts</code></a>)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Auto-reinstall on Docker recreate.</strong> Uses <code>isBun() ? &#39;bun&#39; : &#39;npm&#39;</code>.
+(<a href="packages/core/src/matterbridge.ts"><code>matterbridge.ts</code></a>)</li>
+<li><input checked="" disabled="" type="checkbox"> <strong><code>--add</code> local plugin.</strong> When running on Bun, the plugin is no longer treated as
+&quot;local&quot;, so the <code>npm link matterbridge</code> step is skipped (<code>bun link</code> already
+provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterbridge.ts</code></a>)</li>
+</ul>
+<h2 id="known-limitations">Known limitations</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>Bun cannot resolve the container user name.</strong> In the official Bun images,
+both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
+from <code>os.userInfo()</code>, even though they correctly return the UID, GID, and home
+directory. Consequently, Matterbridge sends <code>User: unknown</code> to the frontend
+system-information view instead of the container account (for example, <code>root</code>).
+Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
+</ul>
+<h2 id="known-issue">Known issue</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>The threads doesn&#39;t flag no running after exit.</strong></li>
+</ul>
+<h2 id="todo">TODO</h2>
+<ul>
+<li><input disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
+(commissioning, mDNS, plugin behaviors) — only short smoke starts verified.</li>
+</ul>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>
