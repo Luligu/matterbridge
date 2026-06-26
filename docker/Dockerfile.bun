@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.title="matterbridge:bun" \
 WORKDIR /matterbridge
 COPY ./.dockerbuild.json ./
 RUN \
-  bun install matterbridge@dev --global --production && \
+  bun install matterbridge --global --production && \
   bun pm cache rm 2>/dev/null || true && \
   rm -rf /tmp/* /var/tmp/* /root/.bun/install/cache /root/.cache /var/lib/apt/lists/* && \
   GLOBAL_NODE_MODULES="${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules" && \

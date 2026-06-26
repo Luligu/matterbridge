@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/vitest-utils",
-  "version": "3.9.2",
+  "version": "3.9.3",
   "description": "Matterbridge vitest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -69,8 +69,8 @@
   },
   "dependencies": {
     "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
-    "@matterbridge/types": "3.9.2",
-    "@matterbridge/utils": "3.9.2",
+    "@matterbridge/types": "3.9.3",
+    "@matterbridge/utils": "3.9.3",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {

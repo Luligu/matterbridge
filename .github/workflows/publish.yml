@@ -142,6 +142,18 @@ jobs:
               ref: 'main'
             })
 
+      - name: Trigger Matterbridge Docker Build Bun
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-bun.yml',
+              ref: 'main'
+            })
+
       - name: Trigger Matterbridge Docker Build s6-rc
         uses: actions/github-script@v8
         with:
