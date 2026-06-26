@@ -48,7 +48,7 @@ WORKDIR /matterbridge-hass
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-hass.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
-  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \  
+  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
   npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-webhooks
@@ -67,6 +67,13 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
 
 WORKDIR /matterbridge-irobot
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-irobot.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
+  npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
+
+WORKDIR /matterbridge-mqtt
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-mqtt.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
   npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
@@ -162,6 +169,7 @@ COPY --from=builder \
   /matterbridge-webhooks/*.tgz \
   /matterbridge-security/*.tgz \
   /matterbridge-irobot/*.tgz \
+  /matterbridge-mqtt/*.tgz \
   /matterbridge-test/*.tgz \
   /matterbridge-example-accessory-platform/*.tgz \
   /matterbridge-example-dynamic-platform/*.tgz \
