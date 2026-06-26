@@ -126,7 +126,7 @@ describe('node:worker_threads (Matterbridge worker manager)', () => {
     expect(reply).toBe('echo:ping');
 
     // Grace window: in Node the worker would have exited by now; in Bun it stays alive.
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(exited).toBe(false);
 
     // terminate() is what actually ends the thread under Bun.

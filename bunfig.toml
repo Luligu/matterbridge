@@ -1,4 +1,4 @@
-# Matterbridge — Bun-native test runner config.
+# Matterbridge — Bun-native test runner config v 1.0.0.
 # Only `bun test` reads this. Vitest and Jest ignore it entirely.
 
 [test]

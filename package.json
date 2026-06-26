@@ -245,6 +245,7 @@
     "test:verbose": "vitest run --reporter verbose",
     "test:coverage": "vitest run --coverage",
     "test:bun": "bun test",
+    "test:bun:watch": "bun test --watch",
     "lint": "oxlint --config .oxlintrc.json",
     "lint:fix": "oxlint --config .oxlintrc.json --fix",
     "format": "oxfmt",

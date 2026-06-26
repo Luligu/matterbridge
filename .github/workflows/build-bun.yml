@@ -48,5 +48,9 @@ jobs:
         run: bun install
         working-directory: apps/frontend
 
+      - name: Build frontend
+        run: bun run build
+        working-directory: apps/frontend
+
       - name: Test matterbridge
         run: bun test

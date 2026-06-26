@@ -7,8 +7,6 @@ agent: 'agent'
 
 Transform the given Jest test file (e.g. `packages/core/src/foo.test.ts`) into a Vitest test file (`packages/core/vitest/foo.test.ts`).
 
-The reference pair for this transformation is [packages/core/src/matterbridgeFactory.test.ts](../../packages/core/src/matterbridgeFactory.test.ts) (Jest) vs [packages/core/vitest/matterbridgeFactory.test.ts](../../packages/core/vitest/matterbridgeFactory.test.ts) (Vitest). When in doubt, diff those two files and follow the Vitest one.
-
 Ground rules:
 
 - Create the new file under `packages/<pkg>/vitest/`. The root [vite.config.ts](../../vite.config.ts) only picks up `**/vitest/**/*.{spec,test}.{ts,mts,cts}`. Do NOT delete the Jest original unless explicitly asked.
@@ -83,9 +81,9 @@ Transformation steps:
    - Types: `jest.Mock` / `jest.SpiedFunction` → `Mock` / `MockInstance` imported type-only from `'vitest'`.
 
 5. Validate:
-   - Typecheck uses the root [tsconfig.vitest.json](../../tsconfig.vitest.json) (includes `**/vitest/**/*.test.ts`).
-   - Run the single file from the repo root: `npm run test:vitest -- packages/core/vitest/foo.test.ts`.
-   - Coverage variant: `npm run test:vitest:coverage -- packages/core/vitest/foo.test.ts`.
+   - Typecheck uses the root [tsconfig.json](../../tsconfig.json) (includes `**/vitest/**/*.test.ts`).
+   - Run the single file from the repo root: `npm run test -- packages/core/vitest/foo.test.ts`.
+   - Coverage variant: `npm run test:coverage -- packages/core/vitest/foo.test.ts`.
    - Run the whole converted file, not isolated tests — these are multi-step flow suites.
 
 Final checklist:
