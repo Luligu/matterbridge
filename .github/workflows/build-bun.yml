@@ -1,0 +1,52 @@
+name: Bun CI
+
+on:
+  push:
+    branches: [main, dev]
+    paths-ignore:
+      - 'docs/**' # any file under docs/
+      - 'screenshots/**' # any file under screenshots/
+      - '**/*.md' # any .md anywhere
+  pull_request:
+    branches: [main, dev]
+    paths-ignore:
+      - 'docs/**' # any file under docs/
+      - 'screenshots/**' # any file under screenshots/
+      - '**/*.md' # any .md anywhere
+  workflow_dispatch:
+
+# Cancel previous runs when a new one is triggered (same branch/PR)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Verify Bun version
+        run: bun --version
+
+      - name: Install matterbridge dependencies
+        run: bun install
+
+      - name: Install frontend dependencies
+        run: bun install
+        working-directory: apps/frontend
+
+      - name: Test matterbridge
+        run: bun test

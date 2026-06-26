@@ -63,6 +63,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [bun]: Add ban test runtime check.
+- [bun]: Add ban test workflow.
 
 ### Changed
 
