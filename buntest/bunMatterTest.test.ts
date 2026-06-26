@@ -44,7 +44,6 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { VendorId } from '@matter/types/datatype';
 
-import { setupTest } from './bunSetupTest.js';
 import {
   addDevice,
   aggregator,
@@ -57,6 +56,7 @@ import {
   getMatterbridge,
   server,
 } from './bunMatterTest.js';
+import { setupTest } from './bunSetupTest.js';
 
 const NAME = 'BunMatter';
 const MATTER_PORT = 6010;

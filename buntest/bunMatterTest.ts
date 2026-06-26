@@ -42,9 +42,9 @@ import { inspectError } from '@matterbridge/utils/error';
 // node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
+import { HOMEDIR, log, NAME } from './bunSetupTest.js';
 // local modules
 import { flushAsync } from './flushAsync.js';
-import { HOMEDIR, log, NAME } from './bunSetupTest.js';
 
 export let environment: Environment;
 export let server: ServerNode;
