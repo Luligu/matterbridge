@@ -60,6 +60,10 @@ These classes will run as threads in the next releases:
 
 ## [3.9.3] - Dev branch
 
+### Added
+
+- [bun]: Add ban test runtime check.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
