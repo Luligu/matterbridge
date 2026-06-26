@@ -1,9 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "paths": {
-      "@matterbridge/*": ["./packages/*/src/export.ts"]
-    },
     "rootDir": ".",
     "noEmit": true
   },

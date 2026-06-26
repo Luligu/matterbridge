@@ -44,22 +44,22 @@ jobs:
       - name: Install matterbridge dependencies
         run: bun install
 
-      - name: Typecheck matterbridge
-        run: bun run typecheck
-
       - name: Build matterbridge
         run: bun run build
+
+      - name: Typecheck matterbridge
+        run: bun run typecheck
 
       - name: Install frontend dependencies
         run: bun install
         working-directory: apps/frontend
 
-      - name: Typecheck frontend
-        run: bun run typecheck
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: bun run build
+        working-directory: apps/frontend
+
+      - name: Typecheck frontend
+        run: bun run typecheck
         working-directory: apps/frontend
 
       - name: Test matterbridge
