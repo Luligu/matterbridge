@@ -68,8 +68,12 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
+- [matterbridge]: Update dependencies.
 - [workflows]: Update all GitHub Actions to their latest major versions.
 - [docker]: Add `matterbridge-mqtt` to the dev Docker image.
+
+- [frontend]: Bump `frontend` version to v.3.5.1.
+- [frontend]: Update dependencies.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

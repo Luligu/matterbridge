@@ -364,7 +364,7 @@
     "@types/bun": "1.3.14",
     "@types/jest": "30.0.0",
     "@types/node": "26.0.1",
-    "@typescript/native-preview": "7.0.0-dev.20260624.1",
+    "@typescript/native-preview": "7.0.0-dev.20260626.1",
     "@vitest/coverage-v8": "4.1.9",
     "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
