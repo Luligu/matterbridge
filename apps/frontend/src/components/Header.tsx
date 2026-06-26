@@ -446,6 +446,13 @@ function Header() {
             </span>
           </Tooltip>
         ) : null}
+        {settings.systemInformation.bunVersion ? (
+          <Tooltip title="Bun version">
+            <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
+              bun v.{settings.systemInformation.bunVersion}
+            </span>
+          </Tooltip>
+        ) : null}
         {settings.matterbridgeInformation.profile && settings.matterbridgeInformation.profile !== '' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title="Current profile">
             <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>

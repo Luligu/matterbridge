@@ -1020,19 +1020,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
       const isLocal = fs.existsSync(plugin.path) && this.globalModulesDirectory.length > 0 && !plugin.path.startsWith(this.globalModulesDirectory);
+      const isLinked = fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge'));
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +
-          `with version ${CYAN}${plugin.version}${db} type ${CYAN}${plugin.type}${db} local ${CYAN}${isLocal}${db} ` +
+          `with version ${CYAN}${plugin.version}${db} type ${CYAN}${plugin.type}${db} local ${CYAN}${isLocal}${db} linked ${CYAN}${isLinked}${db} ` +
           `private ${CYAN}${plugin.private}${db} tarball ${CYAN}${plugin.tarballPath}${db}.`,
       );
 
       // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
       if (
-        (isLocal &&
-          fs.existsSync(plugin.path) &&
-          !fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge')) &&
-          !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
+        (isLocal && fs.existsSync(plugin.path) && !isLinked && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
         process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
       ) {
         const { execSync } = await import('node:child_process');

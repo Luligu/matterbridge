@@ -159,7 +159,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
           </colgroup>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
             {Object.entries(localSystemInfo)
-              .filter(([_key, value]) => value !== undefined && value !== '')
+              .filter(([key, value]) => key !== 'bunVersion' && value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>

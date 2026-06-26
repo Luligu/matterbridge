@@ -110,6 +110,7 @@ package-manager command and global-modules paths to Bun where needed.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
+- [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});"
 
 ## TODO
 
