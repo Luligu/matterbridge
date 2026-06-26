@@ -41,6 +41,15 @@ jobs:
       - name: Verify Bun version
         run: bun --version
 
+      # No bun.lock in the repo, so key the cache on the package.json files.
+      - name: Cache Bun install cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('package.json', 'apps/frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
       - name: Install matterbridge dependencies
         run: bun install
 
