@@ -1258,6 +1258,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       const plugin = this.plugins.get(resetPlugin);
       if (plugin) {
         const matterStorageManager = await this.matterStorageService?.open(plugin.name);
+        /* v8 ignore else -- is just for precaution */
         if (matterStorageManager) {
           await matterStorageManager.createContext('events')?.clearAll();
           await matterStorageManager.createContext('fabrics')?.clearAll();
@@ -1267,7 +1268,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await matterStorageManager.close();
           this.log.notice(`Reset commissioning for plugin ${plg}${plugin.name}${nt} done! Remove the device from the controller.`);
         } else {
-          /* istanbul ignore next */
           this.log.error(`Plugin ${plg}${plugin.name}${er} storageManager not found`);
         }
       } else {

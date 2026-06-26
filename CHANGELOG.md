@@ -58,7 +58,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.9.2] - Dev branch
+## [3.9.2] - 2026-06-26
 
 This release adds support for [bun](https://bun.sh/). Support for bun is stil under [development](README-BUN.md) and is purely experimental.
 
