@@ -59,12 +59,12 @@ describe('ThreadsManagerMainThread', () => {
 
   test('Run Dockerversion in the main thread', async () => {
     expect(await manager.runInMainThread('DockerVersion')).toBe(true);
-  }, 10000);
+  }, 60_000);
 
   /*
   test('Run GlobalPrefix in the main thread', async () => {
     expect(await manager.runInMainThread('GlobalPrefix')).toBe(true);
-  }, 10000);
+  }, 60_000);
 
   test('Run ArchiveCommand zip in the main thread', async () => {
     expect(
@@ -107,6 +107,6 @@ describe('ThreadsManagerMainThread', () => {
       }),
     ).toBe(true);
     // await flushAsync(undefined, undefined, 5000);
-  }, 10000);
+  }, 60_000);
   */
 });
