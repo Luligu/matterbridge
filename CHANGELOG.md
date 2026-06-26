@@ -84,14 +84,14 @@ This release adds support for [bun](https://bun.sh/). Support for bun is stil un
 - [matterbridge]: Bump `matterbridge` version to v.3.9.2.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
-- [matterbridge]: Bump `@types/node` to v.26.0.0.
+- [matterbridge]: Bump `@types/node` to v.26.0.1.
 - [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260624-ef5aefa3b.
 - [package]: Bump `node-ansi-logger` to v.3.3.0.
 - [package]: Bump `node-persist-manager` to v.2.1.0.
 - [frontend]: Bump `frontend` version to v.3.5.0.
 - [frontend]: Update dependencies.
 - [frontend]: Bump `Oxlint configuration` to v.1.0.3.
-- [frontend]: Bump `@types/node` to v.26.0.0.
+- [frontend]: Bump `@types/node` to v.26.0.1.
 
 ### Fixed
 
