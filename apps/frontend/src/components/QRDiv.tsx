@@ -1,27 +1,22 @@
+// oxlint-disable no-empty-function
+
+// @mdi/js
+import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
+import { Icon } from '@mdi/react';
+// @mui/material
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+// QRCode
+import { QRCodeSVG } from 'qrcode.react';
 // React
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
-// QRCode
-import { QRCodeSVG } from 'qrcode.react';
-
-// @mui/material
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Button from '@mui/material/Button';
-
-// @mdi/js
-import { Icon } from '@mdi/react';
-import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
-
-// Backend
-import { ApiMatter, WsMessageApiResponse } from '../utils/backendShared';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { type ApiMatter, type WsMessageApiResponse } from '../utils/backendShared';
 import { MbfWindow, MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons, MbfWindowText } from './MbfWindow';
-import { debug, enableMobile } from '../App';
-// const debug = true; // Debug flag for this component
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
@@ -39,7 +34,7 @@ const iconBtnSx = {
 // Format manual pairing code as 0000-000-0000; non-digit characters are stripped.
 const formatManualCode = (code: string) => {
   if (!code) return '';
-  const digits = code.toString().replace(/[^0-9]/g, '');
+  const digits = code.replace(/[^0-9]/g, '');
   if (digits.length < 5) return digits; // too short to format fully
   const part1 = digits.slice(0, 4);
   const part2 = digits.slice(4, 7);
@@ -63,7 +58,7 @@ function QRDiv({ id }: QRDivProps) {
   // Ui context
   const { mobile, showConfirmCancelDialog } = useContext(UiContext);
 
-  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeIdRef.current}" timeout = ${advertiseTimeoutRef.current} and  matter:`, matter);
+  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeIdRef.current}" timeout = ${advertiseTimeoutRef.current ? 'set' : 'none'} and  matter:`, matter);
 
   // Request server data when id changes
   useEffect(() => {
@@ -146,7 +141,7 @@ function QRDiv({ id }: QRDivProps) {
 
   const handleCopyManualCode = async () => {
     if (!matter || !matter.manualPairingCode) return;
-    const text = matter.manualPairingCode.toString();
+    const text = matter.manualPairingCode;
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
@@ -181,8 +176,8 @@ function QRDiv({ id }: QRDivProps) {
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
         <MbfWindowText style={{ fontWeight: 'bold' }}>Server offline</MbfWindowText>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );
@@ -245,15 +240,15 @@ function QRDiv({ id }: QRDivProps) {
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Vendor: {fabric.rootVendorId} {fabric.rootVendorName}</p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
-                Sessions: {matter.sessionInformations ? matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive === true).length : '0'}
+                Sessions: {matter.sessionInformations ? matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive).length : '0'}
                 {' '}
-                subscriptions: {matter.sessionInformations ? matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive === true && session.numberOfActiveSubscriptions > 0).length : '0'}
+                subscriptions: {matter.sessionInformations ? matter.sessionInformations.filter(session => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive && session.numberOfActiveSubscriptions > 0).length : '0'}
               </p>
             </div>
           ))}
         </MbfWindowContent>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );
@@ -266,8 +261,8 @@ function QRDiv({ id }: QRDivProps) {
         </MbfWindowHeader>
         <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
         <Button onClick={handleStartCommissioningClick} endIcon={<Icon path={mdiShareOutline} size={1}/>} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>Turn on pairing</Button>
-        <MbfWindowFooter style={{ justifyContent: 'center' }}>
-          <MbfWindowFooterText style={{ fontWeight: 'normal' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
+        <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
+          <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
         </MbfWindowFooter>
       </MbfWindow>
     );

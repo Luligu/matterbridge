@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+import { isBun } from '@matterbridge/utils/bun';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -68,7 +69,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
   const cmdLine = command + ' ' + args.join(' ');
   if (process.platform === 'win32' && command === 'npm') {
     // Must be spawn('cmd.exe', ['/c', 'npm -g install <package>']);
-    const argstring = 'npm ' + args.join(' ');
+    const argstring = isBun() ? 'bun ' + args.join(' ') : 'npm ' + args.join(' ');
     args.splice(0, args.length, '/c', argstring);
     // oxlint-disable-next-line no-param-reassign
     command = 'cmd.exe';
@@ -78,9 +79,13 @@ export async function spawnCommand(command: string, args: string[], packageComma
   // When you don't need sudo: Failed to start child process "npm install -g matterbridge-eve-door": spawn sudo ENOENT
   if (
     hasParameter('sudo') ||
-    (process.platform !== 'win32' && command === 'npm' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'))
+    (process.platform !== 'win32' &&
+      (command === 'npm' || command === 'bun') &&
+      !hasParameter('docker') &&
+      !hasParameter('nosudo') &&
+      !process.env.PATH?.includes('/.nvm/versions/node/'))
   ) {
-    args.unshift(command);
+    args.unshift(command === 'npm' && isBun() ? 'bun' : command);
     // oxlint-disable-next-line no-param-reassign
     command = 'sudo';
   }
@@ -90,7 +95,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
     if (packageCommand === 'install') sendLog('Matterbridge:spawn-init', `Installing ${packageName}`);
     else if (packageCommand === 'uninstall') sendLog('Matterbridge:spawn-init', `Uninstalling ${packageName}`);
 
-    const childProcess = spawn(command, args, {
+    const childProcess = spawn(command === 'npm' && isBun() ? 'bun' : command, args, {
       stdio: ['inherit', 'pipe', 'pipe'],
     });
 

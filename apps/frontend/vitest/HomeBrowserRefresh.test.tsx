@@ -1,6 +1,7 @@
-import React from 'react';
 import '@testing-library/jest-dom';
+
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../src/components/WebSocketProvider', () => ({
@@ -8,27 +9,32 @@ vi.mock('../src/components/WebSocketProvider', () => ({
 }));
 
 vi.mock('../src/components/Connecting', () => ({
-  Connecting: () => <div data-testid='connecting'>Connecting</div>,
+  Connecting: () => <div data-testid="connecting">Connecting</div>,
 }));
 
 vi.mock('../src/components/MbfWindow', () => ({
-  MbfWindow: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window'>{children}</div>,
-  MbfWindowContent: ({ children, ...props }: { children: React.ReactNode }) => <div data-testid='mbf-window-content' {...props}>{children}</div>,
-  MbfWindowHeader: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window-header'>{children}</div>,
-  MbfWindowHeaderText: ({ children }: { children: React.ReactNode }) => <div data-testid='mbf-window-header-text'>{children}</div>,
+  MbfWindow: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window">{children}</div>,
+  MbfWindowContent: ({ children, ...props }: { children: React.ReactNode }) => (
+    <div data-testid="mbf-window-content" {...props}>
+      {children}
+    </div>
+  ),
+  MbfWindowHeader: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window-header">{children}</div>,
+  MbfWindowHeaderText: ({ children }: { children: React.ReactNode }) => <div data-testid="mbf-window-header-text">{children}</div>,
 }));
 
 vi.mock('@mui/material/Button', () => ({
+  // oxlint-disable-next-line react/button-has-type
   default: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => <button onClick={onClick}>{children}</button>,
 }));
 
 vi.mock('@mui/icons-material/Refresh', () => ({
-  default: () => <span data-testid='refresh-icon' />,
+  default: () => <span data-testid="refresh-icon" />,
 }));
 
 async function loadHomeBrowserRefresh(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/components/HomeBrowserRefresh');
 }
 
@@ -40,7 +46,7 @@ async function renderHomeBrowserRefresh(online: boolean, debug = false, version 
   return render(
     <WebSocketContext.Provider value={{ online } as never}>
       <HomeBrowserRefresh version={version} />
-    </WebSocketContext.Provider>
+    </WebSocketContext.Provider>,
   );
 }
 

@@ -1,6 +1,6 @@
 // vitest\mb_health.test.ts
 
-// oxlint-disable typescript/explicit-function-return-type vitest/require-mock-type-parameters
+// oxlint-disable typescript/explicit-function-return-type
 
 import type { Mock } from 'vitest';
 

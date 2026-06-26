@@ -1,3 +1,7 @@
+// Global styles
+// oxlint-disable-next-line import/no-unassigned-import
+import './main.css';
+
 // React
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -5,10 +9,13 @@ import ReactDOM from 'react-dom/client';
 // Frontend app
 import App from './App';
 
-// Global styles
-import './main.css';
+const rootElement = document.getElementById('root');
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+if (rootElement === null) {
+  throw new Error('Root element not found');
+}
+
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

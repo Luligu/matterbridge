@@ -1,0 +1,47 @@
+FROM oven/bun:slim
+
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:bun" \
+  org.opencontainers.image.description="Matterbridge plugin manager for Matter running on Bun" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
+
+# Install matterbridge
+WORKDIR /matterbridge
+COPY ./.dockerbuild.json ./
+RUN \
+  bun install matterbridge@dev --global --production && \
+  bun pm cache rm 2>/dev/null || true && \
+  rm -rf /tmp/* /var/tmp/* /root/.bun/install/cache /root/.cache /var/lib/apt/lists/* && \
+  GLOBAL_NODE_MODULES="${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules" && \
+  if [ -d "$GLOBAL_NODE_MODULES" ]; then \
+  find "$GLOBAL_NODE_MODULES" -type d -name ".github" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type d -name ".vscode" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type d -name "docs" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES" -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete; \
+  fi && \
+  if [ -d "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" ]; then \
+  find "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" -type d -name "src" -exec rm -rf {} + && \
+  find "$GLOBAL_NODE_MODULES/matterbridge/node_modules/@matter" -type d -name "cjs" -exec rm -rf {} +; \
+  fi
+
+# Add Docker HEALTHCHECK
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
+  CMD mb_health
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.bun.sh ./
+RUN chmod +x ./entrypoint.bun.sh
+ENTRYPOINT ["./entrypoint.bun.sh"]
+CMD ["matterbridge", "--docker"]

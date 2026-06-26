@@ -1,15 +1,16 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+// oxlint-disable unicorn/prefer-add-event-listener
+// oxlint-disable unicorn/no-array-for-each
+
+// TODO: verify each rule
+// oxlint-disable react/only-export-components
+
 // React
-import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, ReactNode } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, createContext, useContext, type ReactNode } from 'react';
 
-// Backend
-import { WsMessageApiRequest, WsMessageApiResponse, WsMessageErrorApiResponse } from '../utils/backendShared';
-
-// Frontend modules
-import { UiContext } from './UiProvider';
+import { debug, isIngress, wssPassword } from '../appState';
+import { type WsMessageApiRequest, type WsMessageApiResponse, type WsMessageErrorApiResponse } from '../utils/backendShared';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, isIngress, wssPassword } from '../App';
-// const debug = true;
+import { UiContext } from './UiContext';
 
 // TypeScript interface for log messages
 export interface WsLogMessage {
@@ -50,8 +51,10 @@ export interface WebSocketContextType {
   logMessage: (badge: string, message: string) => void;
 }
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- WebSocketMessagesContext is always provided by WebSocketProvider; this keeps consumers non-nullable without repetitive null checks.
 export const WebSocketMessagesContext = createContext<WebSocketMessagesContextType>(null as unknown as WebSocketMessagesContextType);
 
+// oxlint-disable-next-line typescript/no-unsafe-type-assertion -- WebSocketContext is always provided by WebSocketProvider; this keeps consumers non-nullable without repetitive null checks.
 export const WebSocketContext = createContext<WebSocketContextType>(null as unknown as WebSocketContextType);
 
 export function WebSocketProvider({ children }: { children: ReactNode }) {
@@ -61,9 +64,19 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
 
   const [online, setOnline] = useState(false);
+  const [retry, setRetry] = useState(1);
 
   // Contexts
-  const { showSnackbarMessage, closeSnackbarMessage, closeSnackbar, showInstallProgress, hideInstallProgress, exitInstallProgressSuccess, exitInstallProgressError, addInstallProgress } = useContext(UiContext);
+  const {
+    showSnackbarMessage,
+    closeSnackbarMessage,
+    closeSnackbar,
+    showInstallProgress,
+    hideInstallProgress,
+    exitInstallProgressSuccess,
+    exitInstallProgressError,
+    addInstallProgress,
+  } = useContext(UiContext);
 
   // Refs
   const listenersRef = useRef<{ listener: (msg: WsMessageApiResponse) => void; id: number }[]>([]);
@@ -78,7 +91,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const messagesCounterRef = useRef(0);
   const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
-  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) === 'false' ? false : true);
+  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) !== 'false'); // default true
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
@@ -94,7 +107,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     if (debug) console.log(`WebSocket messages started counter interval`);
     messagesCounterIntervalRef.current = setInterval(() => {
       if (messagesCounterRef.current > 0) {
-        if (debug) console.log(`WebSocket messages received in the last ${messagesCounterSeconds} seconds: ${messagesCounterRef.current * (60 / messagesCounterSeconds)} messages/minute`);
+        if (debug)
+          console.log(`WebSocket messages received in the last ${messagesCounterSeconds} seconds: ${messagesCounterRef.current * (60 / messagesCounterSeconds)} messages/minute`);
         messagesCounterRef.current = 0;
       }
     }, messagesCounterSeconds * 1000);
@@ -131,7 +145,15 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (level === 'fatal' && (msg.level === 'debug' || msg.level === 'info' || msg.level === 'notice' || msg.level === 'warn' || msg.level === 'error')) return false;
         }
         // Process log filtering by normal search
-        if (search !== '*' && search !== '' && !search.startsWith('/') && !search.endsWith('/') && !msg.message.toLowerCase().includes(search.toLowerCase()) && !msg.name.toLowerCase().includes(search.toLowerCase())) return false;
+        if (
+          search !== '*' &&
+          search !== '' &&
+          !search.startsWith('/') &&
+          !search.endsWith('/') &&
+          !msg.message.toLowerCase().includes(search.toLowerCase()) &&
+          !msg.name.toLowerCase().includes(search.toLowerCase())
+        )
+          return false;
 
         // Process log filtering by regex search
         if (
@@ -163,7 +185,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         wsRef.current.send(msg);
         if (debug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-        if (debug) console.error(`WebSocket error sending message: ${error}`);
+        if (debug) console.error(`WebSocket error sending message: ${String(error)}`);
       }
     } else {
       if (debug) console.error(`WebSocket message not sent, WebSocket not connected:`, message);
@@ -176,7 +198,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
   const addListener = useCallback((listener: (msg: WsMessageApiResponse) => void, id: number) => {
     if (debug) console.log(`WebSocket addListener id ${id}:`, listener);
-    if (id === undefined || id === null || isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
+    if (id === undefined || id === null || Number.isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
     // listenersRef.current = [...listenersRef.current, listener];
     listenersRef.current = [...listenersRef.current, { listener, id }];
     if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
@@ -207,6 +229,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (debug) console.error(`WebSocket invalid message src/dst:`, msg);
           return;
         }
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((msg as unknown as WsMessageErrorApiResponse).error) {
           if (debug) console.error(`WebSocket error message response:`, msg);
           return;
@@ -242,8 +265,20 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             if (logFilterLevelRef.current === 'info' && msg.response.level === 'debug') return;
             if (logFilterLevelRef.current === 'notice' && (msg.response.level === 'debug' || msg.response.level === 'info')) return;
             if (logFilterLevelRef.current === 'warn' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice')) return;
-            if (logFilterLevelRef.current === 'error' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn')) return;
-            if (logFilterLevelRef.current === 'fatal' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn' || msg.response.level === 'error')) return;
+            if (
+              logFilterLevelRef.current === 'error' &&
+              (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn')
+            )
+              return;
+            if (
+              logFilterLevelRef.current === 'fatal' &&
+              (msg.response.level === 'debug' ||
+                msg.response.level === 'info' ||
+                msg.response.level === 'notice' ||
+                msg.response.level === 'warn' ||
+                msg.response.level === 'error')
+            )
+              return;
           }
 
           // Process log filtering by normal search
@@ -301,7 +336,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           return;
         }
       } catch (error) {
-        console.error(`WebSocket error parsing message: ${error}`, error instanceof Error ? error.stack : null);
+        console.error(`WebSocket error parsing message: ${String(error)}`, error instanceof Error ? error.stack : null);
       }
     };
 
@@ -311,6 +346,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setOnline(true);
       closeSnackbar();
       retryCountRef.current = 1;
+      setRetry(1);
 
       startTimeoutRef.current = setTimeout(() => {
         pingIntervalRef.current = setInterval(() => {
@@ -343,17 +379,20 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
       }
       retryCountRef.current = retryCountRef.current + 1;
+      setRetry(retryCountRef.current);
     };
 
     wsRef.current.onerror = (error) => {
       if (debug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [wssHost]); // Intentionally left out dependencies to avoid reconnect loops
 
   const attemptReconnect = useCallback(() => {
     if (debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
     connectWebSocket();
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [connectWebSocket]);
 
   useEffect(() => {
@@ -391,14 +430,15 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       setLogFilterSearch,
       filterLogMessages,
       online,
-      retry: retryCountRef.current,
+      retry,
       getUniqueId,
       addListener,
       removeListener,
       sendMessage,
       logMessage,
     }),
-    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, retryCountRef.current, addListener, removeListener, sendMessage, logMessage],
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, retry, addListener, removeListener, sendMessage, logMessage],
   );
 
   return (

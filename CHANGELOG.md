@@ -15,6 +15,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![ESM](https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white)](https://bun.com)
 [![matterbridge.io](https://img.shields.io/badge/matterbridge.io-online-brightgreen)](https://matterbridge.io)
 
 [![powered by](https://img.shields.io/badge/powered%20by-matter--history-blue)](https://www.npmjs.com/package/matter-history)
@@ -56,6 +57,48 @@ These classes will run as threads in the next releases:
 - frontend;
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
+
+## [3.9.2] - 2026-06-26
+
+This release adds support for [bun](https://bun.sh/). Support for bun is stil under [development](README-BUN.md) and is purely experimental.
+
+### Added
+
+- [frontend]: Add type aware linting with `oxlint` and format with `oxfmt`.
+- [frontend]: Remove eslint prettier typescript packages. The total package count drops from ~430 to ~220. Oxlint, Oxfmt and Tsgo run in a fraction of second.
+- [frontend]: Add wssSendPluginUpdateRequired(), wssSendPluginStatusUpdate() and wssSendMatterbridgeStatusUpdate() to allow updates without full refresh.
+- [checkUpdates]: Improve workflow sending only the updated versions to the frontend.
+- [checkUpdates]: Add new plugin version notification.
+- [checkUpdates]: Add no updates found notification.
+- [startup]: Improve workflow sending only the updated data to the frontend.
+- [configure]: Improve workflow sending only the updated data to the frontend.
+- [pack]: Add scripts\pack-monorepo.mjs to improve performance with monorepo pack.
+- [thread]: Add check for thread path existence.
+- [docker]: Refactor Dockerfiles for all images to improve speed.
+- [bun]: Add isBun() and getGlobalBunModules().
+- [bun]: Add the `luligu/matterbridge:bun` docker image.
+- [bun]: Refactor thread manager lifecycle (init and exit) to work consistently with node and bun.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.9.2.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
+- [matterbridge]: Bump `@types/node` to v.26.0.1.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260624-ef5aefa3b.
+- [package]: Bump `node-ansi-logger` to v.3.3.0.
+- [package]: Bump `node-persist-manager` to v.2.1.0.
+- [frontend]: Bump `frontend` version to v.3.5.0.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `Oxlint configuration` to v.1.0.3.
+- [frontend]: Bump `@types/node` to v.26.0.1.
+
+### Fixed
+
+- [frontend]: Serve plugin frontend from `base/plugins/plugin/` for compatibility with Ingress.
+- [matterstorage]: Close the matter storage as many times as opened. Thanks Apollon77 and Alexander Thoukydides (https://github.com/matter-js/matter.js/issues/3945).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.9.1] - 2026-06-19
 

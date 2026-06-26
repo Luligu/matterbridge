@@ -1,0 +1,16 @@
+# Build context ignore rules for docker/Dockerfile.s6-rc-legacy ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.s6-rc-legacy`).
+# It fully replaces the root .dockerignore (no merge).
+#
+# This image installs Matterbridge from npm and uses no source. From the context
+# it copies only ./.dockerbuild.json and the docker/rootfs/ tree (s6-rc service
+# files), so we ignore everything else.
+
+# Ignore everything...
+*
+
+# ...except the files this Dockerfile copies.
+!.dockerbuild.json
+!docker/rootfs

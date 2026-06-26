@@ -1,16 +1,12 @@
 // React
 import { useContext, useEffect, useState, useRef, memo } from 'react';
 
-// Backend
-import { ApiSettings, WsMessageApiResponse, ApiClusters, ApiDevice, ApiPlugin } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
+import { debug } from '../appState';
+import { type ApiSettings, type WsMessageApiResponse, type ApiClusters, type ApiDevice, type ApiPlugin } from '../utils/backendShared';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
 import { MbfPage } from './MbfPage';
-// const debug = true;
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Test() {
   // WebSocket context
@@ -76,10 +72,18 @@ function Test() {
         setDevices(msg.response);
         for (const device of msg.response) {
           if (debug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
-          sendMessage({ id: uniqueId.current, method: '/api/clusters', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: { plugin: device.pluginName, endpoint: device.endpoint || 0 } });
+          sendMessage({
+            id: uniqueId.current,
+            method: '/api/clusters',
+            sender: 'Test',
+            src: 'Frontend',
+            dst: 'Matterbridge',
+            params: { plugin: device.pluginName, endpoint: device.endpoint || 0 },
+          });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
-        if (debug) console.log(`Test received ${msg.response.clusters.length} clusters for device ${msg.response.deviceName} endpoint ${msg.response.id}:${msg.response.number}:`, msg);
+        if (debug)
+          console.log(`Test received ${msg.response.clusters.length} clusters for device ${msg.response.deviceName} endpoint ${msg.response.id}:${msg.response.number}:`, msg);
         showSnackbarMessage(`Test received /api/clusters for ${msg.response.plugin}::${msg.response.deviceName}`, 0);
         setClusters(msg.response);
       }
@@ -117,9 +121,11 @@ function Test() {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Test'>
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', alignContent: 'center', gap: '20px', height: '100vh', width: '100vw' }}>
-        <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '256px', width: '256px', margin: '10px' }} />
+    <MbfPage name="Test">
+      <div
+        style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', alignContent: 'center', gap: '20px', height: '100vh', width: '100vw' }}
+      >
+        <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '256px', width: '256px', margin: '10px' }} />
         <p>Welcome to the Test page of the Matterbridge frontend</p>
       </div>
     </MbfPage>

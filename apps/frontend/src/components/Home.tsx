@@ -1,33 +1,29 @@
 // React
 import { useEffect, useState, useContext, useRef, memo } from 'react';
 
-// Backend
-import { WsMessageApiResponse, ApiPlugin, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { type WsMessageApiResponse, type ApiPlugin, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
-import SystemInfoTable from './SystemInfoTable';
-import QRDiv from './QRDiv';
-import HomeInstallAddPlugins from './HomeInstallAddPlugins';
-import HomePlugins from './HomePlugins';
-import HomeDevices from './HomeDevices';
-import { MbfPage } from './MbfPage';
-import HomeLogs from './HomeLogs';
 import HomeBrowserRefresh from './HomeBrowserRefresh';
+import HomeDevices from './HomeDevices';
+import HomeInstallAddPlugins from './HomeInstallAddPlugins';
+import HomeLogs from './HomeLogs';
+import HomePlugins from './HomePlugins';
 import HomeShowChangelog from './HomeShowChangelog';
 import MatterbridgeInfoTable from './MatterbridgeInfoTable';
-import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile } from '../App';
-// const debug = true;
+import { MbfPage } from './MbfPage';
+import QRDiv from './QRDiv';
+import SystemInfoTable from './SystemInfoTable';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Home(): React.JSX.Element {
   // States
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
-  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
+  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
   const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);
@@ -49,6 +45,13 @@ function Home(): React.JSX.Element {
         setPlugins([]);
         sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, sender: 'Home', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      } else if (msg.method === 'update_required') {
+        if (debug) console.log('Home received update_required', msg.response);
+        if (msg.response.devVersion) {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeDevVersion: msg.response.version } : null));
+        } else {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeLatestVersion: msg.response.version } : null));
+        }
       }
       // Local messages
       if (msg.method === '/api/settings' && msg.id === uniqueId.current) {
@@ -76,8 +79,7 @@ function Home(): React.JSX.Element {
             setHomePageMode('devices');
           }
         }
-      }
-      if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
+      } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
         if (debug) console.log(`Home received plugins:`, msg.response);
         setPlugins(msg.response);
       }
@@ -122,7 +124,7 @@ function Home(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Home' style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
+    <MbfPage name="Home" style={enableMobile && mobile ? { alignItems: 'center', gap: '10px' } : { flexDirection: 'row' }}>
       {/* Left column */}
       {((enableMobile && !mobile) || !enableMobile) && (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '302px', minWidth: '302px', gap: '20px' }}>

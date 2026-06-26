@@ -25,7 +25,7 @@
 import type { EndpointNumber } from '@matter/types';
 
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
-import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BridgeStatus, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
@@ -554,7 +554,45 @@ export interface WsMessageApiUpdateRequired extends WsMessageSuccessApiResponse 
   id: 0;
   method: 'update_required';
   response: {
+    version: string;
     devVersion: boolean;
+  };
+}
+
+export interface WsMessageApiPluginUpdateRequired extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'plugin_update_required';
+  response: {
+    plugin: string;
+    version: string;
+    devVersion: boolean;
+  };
+}
+
+export interface PluginStatusUpdate {
+  locked?: boolean;
+  error?: boolean;
+  enabled?: boolean;
+  loaded?: boolean;
+  started?: boolean;
+  configured?: boolean;
+  registeredDevices?: number;
+}
+
+export interface WsMessageApiPluginStatusUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'plugin_status_update';
+  response: {
+    plugin: string;
+    status: PluginStatusUpdate;
+  };
+}
+
+export interface WsMessageApiMatterbridgeStatusUpdate extends WsMessageSuccessApiResponse {
+  id: 0;
+  method: 'matterbridge_status_update';
+  response: {
+    status: BridgeStatus;
   };
 }
 
@@ -686,6 +724,9 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartRequired
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
+  | WsMessageApiPluginUpdateRequired
+  | WsMessageApiPluginStatusUpdate
+  | WsMessageApiMatterbridgeStatusUpdate
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate
@@ -703,6 +744,9 @@ export type WsMessageBroadcast =
   | WsMessageApiRestartRequired
   | WsMessageApiRestartNotRequired
   | WsMessageApiUpdateRequired
+  | WsMessageApiPluginUpdateRequired
+  | WsMessageApiPluginStatusUpdate
+  | WsMessageApiMatterbridgeStatusUpdate
   | WsMessageApiCpuUpdate
   | WsMessageApiMemoryUpdate
   | WsMessageApiUptimeUpdate

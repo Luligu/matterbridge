@@ -1,13 +1,12 @@
+// @mui/material
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 // React
 import { useContext } from 'react';
 
-// @mui/material
-import CircularProgress from '@mui/material/CircularProgress';
-import Button from '@mui/material/Button';
-
+import { MatterbridgeLogo } from './MatterbridgeLogo';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-import { MatterbridgeLogo } from './MatterbridgeLogo';
 
 export function Connecting() {
   // Contexts
@@ -47,7 +46,7 @@ export function Connecting() {
             <span>Please check your network connection.</span>
             <br />
           </div>
-          <Button variant='contained' color='primary' onClick={handleRefresh} style={{ marginTop: '20px' }}>
+          <Button variant="contained" color="primary" onClick={handleRefresh} style={{ marginTop: '20px' }}>
             Refresh the Page
           </Button>
         </>

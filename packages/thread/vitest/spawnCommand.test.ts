@@ -211,6 +211,88 @@ describe('Spawn', () => {
     });
   });
 
+  it('should use Bun in the Windows command wrapper when running on Bun', async () => {
+    const originalPlatform = process.platform;
+    const originalVersions = process.versions;
+    const originalArgv = process.argv;
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'win32', writable: true });
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+    process.argv = ['node', 'spawn.test.js'];
+
+    (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
+          if (event === 'disconnect') callback();
+        }),
+      } as any;
+    });
+
+    try {
+      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawn).toHaveBeenCalledWith('cmd.exe', ['/c', 'bun install -g test-package'], expect.anything());
+    } finally {
+      process.argv = originalArgv;
+      Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+    }
+  });
+
+  it('should spawn Bun instead of npm when running on Bun without sudo', async () => {
+    const originalPlatform = process.platform;
+    const originalVersions = process.versions;
+    const originalArgv = process.argv;
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'linux', writable: true });
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+    process.argv = ['node', 'spawn.test.js', '--nosudo'];
+
+    (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
+          if (event === 'disconnect') callback();
+        }),
+      } as any;
+    });
+
+    try {
+      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawn).toHaveBeenCalledWith('bun', ['install', '-g', 'test-package'], expect.anything());
+    } finally {
+      process.argv = originalArgv;
+      Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+    }
+  });
+
+  it('should use sudo with Bun when running on Bun', async () => {
+    const originalPath = process.env.PATH;
+    const originalPlatform = process.platform;
+    const originalVersions = process.versions;
+    const originalArgv = process.argv;
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'linux', writable: true });
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+    process.env.PATH = '/usr/local/bin';
+    process.argv = ['node', 'spawn.test.js'];
+
+    (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
+      return {
+        on: vi.fn<(...args: any[]) => any>((event: string, callback: () => void) => {
+          if (event === 'disconnect') callback();
+        }),
+      } as any;
+    });
+
+    try {
+      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawn).toHaveBeenCalledWith('sudo', ['bun', 'install', '-g', 'test-package'], expect.anything());
+    } finally {
+      process.argv = originalArgv;
+      if (originalPath === undefined) delete process.env.PATH;
+      else process.env.PATH = originalPath;
+      Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+    }
+  });
+
   it('should use sudo on non-win32 platform for npm command without docker or nosudo flags', async () => {
     const originalPlatform = process.platform;
     Object.defineProperty(process, 'platform', {

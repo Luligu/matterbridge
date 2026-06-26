@@ -1,32 +1,27 @@
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import Select, { type SelectChangeEvent } from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
 // React
 import { useState, useEffect, useContext, useRef, memo, useMemo } from 'react';
 
-// @mui/material
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import TextField from '@mui/material/TextField';
-import Select, { SelectChangeEvent } from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-
-// Backend
-import { WsMessageApiResponse, MatterbridgeInformation, SystemInformation } from '../utils/backendShared';
-
-// Frontend
-import { Connecting } from './Connecting';
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
-import { NetworkConfigDialog } from './NetworkConfigDialog';
-import { ChangePasswordDialog } from './ChangePasswordDialog';
-import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { MbfPage } from './MbfPage';
+import { debug, enableMobile, setWssPassword } from '../appState';
+import { type WsMessageApiResponse, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
 import { createDebouncer } from '../utils/createDebouncer';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile, setWssPassword } from '../App';
-// const debug = true;
+import { ChangePasswordDialog } from './ChangePasswordDialog';
+import { Connecting } from './Connecting';
+import { MbfPage } from './MbfPage';
+import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
+import { NetworkConfigDialog } from './NetworkConfigDialog';
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 const widthPx = 330;
 
@@ -48,6 +43,13 @@ function Settings(): React.JSX.Element {
       if (msg.method === 'refresh_required' && msg.response.changed === 'settings') {
         if (debug) console.log(`Settings received refresh_required: changed=${msg.response.changed} and sending /api/settings request`);
         sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      } else if (msg.method === 'update_required') {
+        if (debug) console.log('Settings received update_required', msg.response);
+        if (msg.response.devVersion) {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeDevVersion: msg.response.version } : null));
+        } else {
+          setMatterbridgeInfo((prevSettings) => (prevSettings ? { ...prevSettings, matterbridgeLatestVersion: msg.response.version } : null));
+        }
       } else if (msg.method === '/api/settings') {
         if (debug) console.log('Settings received /api/settings:', msg.response);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
@@ -75,7 +77,7 @@ function Settings(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Settings'>
+    <MbfPage name="Settings">
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: enableMobile && mobile ? '10px' : '20px' }}>
         <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
         <MatterSettings matterbridgeInfo={matterbridgeInfo} />
@@ -95,7 +97,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info');
   const [logOnFileMb, setLogOnFileMb] = useState(false);
   const [frontendTheme, setFrontendTheme] = useState('dark');
-  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) === 'false' ? false : true); // default true
+  const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
   const [virtualMode, setVirtualMode] = useState(localStorage.getItem(MbfLsk.virtualMode) ?? 'outlet'); // default outlet
 
@@ -139,21 +141,42 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const handleChangeBridgeMode = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleChangeBridgeMode called with value:', event.target.value);
     setSelectedBridgeMode(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setbridgemode', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setbridgemode', value: event.target.value },
+    });
   };
 
   // Define a function to handle change debug level
   const handleChangeMbLoggerLevel = (event: SelectChangeEvent) => {
     if (debug) console.log('handleChangeMbLoggerLevel called with value:', event.target.value);
     setSelectedMbLoggerLevel(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmbloglevel', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmbloglevel', value: event.target.value },
+    });
   };
 
   // Define a function to handle change matterbridge log file
   const handleLogOnFileMbChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleLogOnFileMbChange called with value:', event.target.checked);
     setLogOnFileMb(event.target.checked);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmblogfile', value: event.target.checked } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmblogfile', value: event.target.checked },
+    });
   };
 
   // Define a function to handle change theme
@@ -200,78 +223,78 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
       <ChangePasswordDialog open={openChangePassword} onClose={handleCloseChangePassword} onSave={handleSaveChangePassword} />
       <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '0px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='matterbridgeInfo-mode'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="matterbridgeInfo-mode">
             Mode:
           </FormLabel>
-          <RadioGroup row name='mode-buttons-group' value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
-            <FormControlLabel value='bridge' control={<Radio />} label='Bridge' disabled={matterbridgeInfo.readOnly === true} />
-            <FormControlLabel value='childbridge' control={<Radio />} label='Childbridge' disabled={matterbridgeInfo.readOnly === true} />
+          <RadioGroup row name="mode-buttons-group" value={selectedBridgeMode} onChange={handleChangeBridgeMode}>
+            <FormControlLabel value="bridge" control={<Radio />} label="Bridge" disabled={matterbridgeInfo.readOnly} />
+            <FormControlLabel value="childbridge" control={<Radio />} label="Childbridge" disabled={matterbridgeInfo.readOnly} />
           </RadioGroup>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-level-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="mblogger-level-label">
             Logger level:
           </FormLabel>
-          <Select style={{ height: '30px' }} labelId='mblogger-level-label' id='mblogger-level' value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
-            <MenuItem value='Debug'>Debug</MenuItem>
-            <MenuItem value='Info'>Info</MenuItem>
-            <MenuItem value='Notice'>Notice</MenuItem>
-            <MenuItem value='Warn'>Warn</MenuItem>
-            <MenuItem value='Error'>Error</MenuItem>
-            <MenuItem value='Fatal'>Fatal</MenuItem>
+          <Select style={{ height: '30px' }} labelId="mblogger-level-label" id="mblogger-level" value={selectedMbLoggerLevel} onChange={handleChangeMbLoggerLevel}>
+            <MenuItem value="Debug">Debug</MenuItem>
+            <MenuItem value="Info">Info</MenuItem>
+            <MenuItem value="Notice">Notice</MenuItem>
+            <MenuItem value="Warn">Warn</MenuItem>
+            <MenuItem value="Error">Error</MenuItem>
+            <MenuItem value="Fatal">Fatal</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mblogger-file-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="mblogger-file-label">
             Log on file:
           </FormLabel>
-          <Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} id='mblogger-file' name='logOnFileMb' />
+          <Checkbox checked={logOnFileMb} onChange={handleLogOnFileMbChange} id="mblogger-file" name="logOnFileMb" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-theme-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="frontend-theme-label">
             Frontend theme:
           </FormLabel>
-          <Select style={{ height: '30px' }} labelId='frontend-theme-label' id='frontend-theme' value={frontendTheme} onChange={handleChangeTheme}>
-            <MenuItem value='classic'>Classic</MenuItem>
-            <MenuItem value='light'>Light</MenuItem>
-            <MenuItem value='dark'>Dark</MenuItem>
+          <Select style={{ height: '30px' }} labelId="frontend-theme-label" id="frontend-theme" value={frontendTheme} onChange={handleChangeTheme}>
+            <MenuItem value="classic">Classic</MenuItem>
+            <MenuItem value="light">Light</MenuItem>
+            <MenuItem value="dark">Dark</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-plugin-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="frontend-home-plugin-label">
             Home page plugins:
           </FormLabel>
-          <Checkbox checked={homePagePlugins} onChange={handleChangeHomePagePlugins} name='showPlugins' />
+          <Checkbox checked={homePagePlugins} onChange={handleChangeHomePagePlugins} name="showPlugins" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-home-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="frontend-home-label">
             Home page bottom panel:
           </FormLabel>
-          <Select style={{ height: '30px' }} labelId='frontend-home-label' id='frontend-home' value={homePageMode} onChange={handleChangeHomePageMode}>
-            <MenuItem value='logs'>Logs</MenuItem>
-            <MenuItem value='devices'>Devices</MenuItem>
+          <Select style={{ height: '30px' }} labelId="frontend-home-label" id="frontend-home" value={homePageMode} onChange={handleChangeHomePageMode}>
+            <MenuItem value="logs">Logs</MenuItem>
+            <MenuItem value="devices">Devices</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '10px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='frontend-virtual-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="frontend-virtual-label">
             Virtual devices:
           </FormLabel>
-          <Select style={{ height: '30px' }} labelId='frontend-virtual-label' id='frontend-virtual' value={virtualMode} onChange={handleChangeVirtualMode}>
-            <MenuItem value='disabled'>Disabled</MenuItem>
-            <MenuItem value='outlet'>Outlet</MenuItem>
-            <MenuItem value='light'>Light</MenuItem>
-            <MenuItem value='switch'>Switch</MenuItem>
-            <MenuItem value='mounted_switch'>Mounted Switch</MenuItem>
+          <Select style={{ height: '30px' }} labelId="frontend-virtual-label" id="frontend-virtual" value={virtualMode} onChange={handleChangeVirtualMode}>
+            <MenuItem value="disabled">Disabled</MenuItem>
+            <MenuItem value="outlet">Outlet</MenuItem>
+            <MenuItem value="light">Light</MenuItem>
+            <MenuItem value="switch">Switch</MenuItem>
+            <MenuItem value="mounted_switch">Mounted Switch</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-          <Button variant='contained' color='primary' onClick={() => setOpenChangePassword(true)}>
+          <Button variant="contained" color="primary" onClick={() => setOpenChangePassword(true)}>
             Change password
           </Button>
         </div>
         {matterbridgeInfo.shellyBoard && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-            <Button variant='contained' color='primary' onClick={() => setOpenNetConfig(true)}>
+            <Button variant="contained" color="primary" onClick={() => setOpenNetConfig(true)}>
               Configure IP
             </Button>
           </div>
@@ -329,14 +352,28 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   const handleChangeMjLoggerLevel = (event: SelectChangeEvent) => {
     if (debug) console.log('handleChangeMjLoggerLevel called with value:', event.target.value);
     setSelectedMjLoggerLevel(event.target.value);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmjloglevel', value: event.target.value } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmjloglevel', value: event.target.value },
+    });
   };
 
   // Define a function to handle change matter log file
   const handleLogOnFileMjChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (debug) console.log('handleLogOnFileMjChange called with value:', event.target.checked);
     setLogOnFileMj(event.target.checked);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setmjlogfile', value: event.target.checked } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'Settings',
+      method: '/api/config',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { name: 'setmjlogfile', value: event.target.checked },
+    });
   };
 
   // Define a function to handle change mdnsInterface
@@ -413,34 +450,34 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
       </MbfWindowHeader>
       <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '0px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '15px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-level-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="mjlogger-level-label">
             Logger level:
           </FormLabel>
-          <Select style={{ height: '30px' }} labelId='mjlogger-level-label' id='mjlogger-level' value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
-            <MenuItem value='Debug'>Debug</MenuItem>
-            <MenuItem value='Info'>Info</MenuItem>
-            <MenuItem value='Notice'>Notice</MenuItem>
-            <MenuItem value='Warn'>Warn</MenuItem>
-            <MenuItem value='Error'>Error</MenuItem>
-            <MenuItem value='Fatal'>Fatal</MenuItem>
+          <Select style={{ height: '30px' }} labelId="mjlogger-level-label" id="mjlogger-level" value={selectedMjLoggerLevel} onChange={handleChangeMjLoggerLevel}>
+            <MenuItem value="Debug">Debug</MenuItem>
+            <MenuItem value="Info">Info</MenuItem>
+            <MenuItem value="Notice">Notice</MenuItem>
+            <MenuItem value="Warn">Warn</MenuItem>
+            <MenuItem value="Error">Error</MenuItem>
+            <MenuItem value="Fatal">Fatal</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px', gap: '10px' }}>
-          <FormLabel style={{ padding: '0px', margin: '0px' }} id='mjlogger-file-label'>
+          <FormLabel style={{ padding: '0px', margin: '0px' }} id="mjlogger-file-label">
             Log on file:
           </FormLabel>
-          <Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} id='mjlogger-file' name='logOnFileMj' />
+          <Checkbox checked={logOnFileMj} onChange={handleLogOnFileMjChange} id="mjlogger-file" name="logOnFileMj" />
         </div>
         <div style={{ display: 'flex', alignItems: 'center', width: '100%', marginBottom: '10px', gap: '15px' }}>
           <FormLabel style={{ padding: '0px', margin: '0px', textWrap: 'nowrap' }}>Mdns interface:</FormLabel>
           <TextField
             value={mdnsInterface}
             onChange={handleChangeMdnsInterface}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -453,11 +490,11 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
           <TextField
             value={ipv4Address}
             onChange={handleChangeIpv4Address}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -470,11 +507,11 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
           <TextField
             value={ipv6Address}
             onChange={handleChangeIpv6Address}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -487,11 +524,11 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
           <TextField
             value={matterPort}
             onChange={handleChangeMatterPort}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -504,11 +541,11 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
           <TextField
             value={matterDiscriminator}
             onChange={handleChangeMatterDiscriminator}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -521,11 +558,11 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
           <TextField
             value={matterPasscode}
             onChange={handleChangemMatterPasscode}
-            size='small'
-            variant='outlined'
+            size="small"
+            variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
             InputProps={{
-              readOnly: matterbridgeInfo.readOnly === true,
+              readOnly: matterbridgeInfo.readOnly,
               style: {
                 height: '30px',
                 padding: '0',
@@ -547,13 +584,13 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
         <MbfWindowHeaderText>Matterbridge info</MbfWindowHeaderText>
       </MbfWindowHeader>
       <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '5px' }}>
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label='Current Version' />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label='Latest Version' />
-        <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label='Root Directory' />
-        <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label='Home Directory' />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label='Matterbridge Storage Directory' />
-        <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label='Matterbridge Plugin Directory' />
-        <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label='Global Module Directory' />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeVersion} label="Current Version" />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeLatestVersion} label="Latest Version" />
+        <ReadOnlyTextField value={matterbridgeInfo.rootDirectory} label="Root Directory" />
+        <ReadOnlyTextField value={matterbridgeInfo.homeDirectory} label="Home Directory" />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgeDirectory} label="Matterbridge Storage Directory" />
+        <ReadOnlyTextField value={matterbridgeInfo.matterbridgePluginDirectory} label="Matterbridge Plugin Directory" />
+        <ReadOnlyTextField value={matterbridgeInfo.globalModulesDirectory} label="Global Module Directory" />
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -568,13 +605,13 @@ function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
         <MbfWindowHeaderText>System info</MbfWindowHeaderText>
       </MbfWindowHeader>
       <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '5px' }}>
-        <ReadOnlyTextField value={systemInfo.interfaceName} label='Interface name' />
-        <ReadOnlyTextField value={systemInfo.macAddress} label='MAC Address' />
-        <ReadOnlyTextField value={systemInfo.ipv4Address} label='IPv4 Address' />
-        <ReadOnlyTextField value={systemInfo.ipv6Address} label='IPv6 Address' />
-        <ReadOnlyTextField value={systemInfo.nodeVersion} label='Node Version' />
-        <ReadOnlyTextField value={systemInfo.hostname} label='Hostname' />
-        <ReadOnlyTextField value={systemInfo.user} label='User' />
+        <ReadOnlyTextField value={systemInfo.interfaceName} label="Interface name" />
+        <ReadOnlyTextField value={systemInfo.macAddress} label="MAC Address" />
+        <ReadOnlyTextField value={systemInfo.ipv4Address} label="IPv4 Address" />
+        <ReadOnlyTextField value={systemInfo.ipv6Address} label="IPv6 Address" />
+        <ReadOnlyTextField value={systemInfo.nodeVersion} label="Node Version" />
+        <ReadOnlyTextField value={systemInfo.hostname} label="Hostname" />
+        <ReadOnlyTextField value={systemInfo.user} label="User" />
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -586,9 +623,9 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
     <TextField
       focused
       value={value}
-      size='small'
+      size="small"
       label={label}
-      variant='standard'
+      variant="standard"
       sx={{
         width: width ? `${width - 20}px` : '100%',
         // idle/blur underline

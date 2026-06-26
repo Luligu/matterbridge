@@ -1,16 +1,16 @@
-// VS Code extension v. 1.0.2
+// VS Code extension v. 1.0.4
 {
   "recommendations": [
     "typescriptteam.native-preview",
     "oxc.oxc-vscode",
+    "vitest.explorer",
     "firsttris.vscode-jest-runner",
     "ms-azuretools.vscode-containers",
-    "dbaeumer.vscode-eslint",
-    "esbenp.prettier-vscode",
     "anthropic.claude-code",
     "github.copilot-chat",
     "github.vscode-github-actions",
     "github.vscode-pull-request-github",
     "openai.chatgpt"
-  ]
+  ],
+  "unwantedRecommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
 }

@@ -22,8 +22,20 @@
  * limitations under the License.
  */
 
+// oxlint-disable max-lines
+
 // TODO: analyze each rule
-// oxlint-disable complexity typescript/no-base-to-string typescript/restrict-template-expressions typescript/no-misused-promises typescript/prefer-nullish-coalescing typescript/consistent-return typescript/require-await typescript/no-unsafe-type-assertion typescript/non-nullable-type-assertion-style unicorn/no-negated-condition no-param-reassign
+// oxlint-disable complexity
+// oxlint-disable typescript/no-base-to-string
+// oxlint-disable typescript/restrict-template-expressions
+// oxlint-disable typescript/no-misused-promises
+// oxlint-disable typescript/prefer-nullish-coalescing
+// oxlint-disable typescript/consistent-return
+// oxlint-disable typescript/require-await
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable typescript/non-nullable-type-assertion-style
+// oxlint-disable unicorn/no-negated-condition
+// oxlint-disable no-param-reassign
 
 // Node.js built-in modules
 import EventEmitter from 'node:events';
@@ -48,9 +60,11 @@ import type {
   ApiMatter,
   ApiPlugin,
   ApiSettings,
+  BridgeStatus,
   Cluster,
   MatterbridgeInformation,
   PlatformConfig,
+  PluginStatusUpdate,
   RefreshRequiredChanged,
   WorkerMessage,
   WsMessageApiRequest,
@@ -67,6 +81,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
+import { isBun } from '@matterbridge/utils/bun';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
@@ -193,11 +208,27 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_updaterequired':
-          this.wssSendUpdateRequired(msg.params.devVersion);
+          this.wssSendUpdateRequired(msg.params.version, msg.params.devVersion);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_pluginupdaterequired':
+          this.wssSendPluginUpdateRequired(msg.params.plugin, msg.params.version, msg.params.devVersion);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_pluginstatusupdate':
+          this.wssSendPluginStatusUpdate(msg.params.plugin, msg.params.status);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_matterbridgestatusupdate':
+          this.wssSendMatterbridgeStatusUpdate(msg.params.status);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_snackbarmessage':
           this.wssSendSnackbarMessage(msg.params.message, msg.params.timeout, msg.params.severity);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
+        case 'frontend_closesnackbarmessage':
+          this.wssSendCloseSnackbarMessage(msg.params.message);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_attributechanged':
@@ -320,6 +351,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {number} [port] - TCP port to listen on. Defaults to 8283.
    * @returns {Promise<void>} Resolves when startup completes.
    */
+  // oxlint-disable-next-line max-lines-per-function
   async start(port: number = 8283): Promise<void> {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
@@ -1018,8 +1050,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               name: 'SpawnCommand',
               workerData: {
                 threadName: 'SpawnCommand',
-                command: 'npm',
-                args: ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                command: isBun() ? 'bun' : 'npm',
+                args: isBun() ? ['install', '-g', filePath, '--production'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
                 packageCommand: 'install',
                 packageName: filename,
               },
@@ -1041,6 +1073,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       const { existsSync } = await import('node:fs');
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
         this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
+        // Add logging middleware for plugin frontend routes
+        /*
+        this.expressApp.use(`/plugins/${plugin.name}`, (req, res, next) => {
+          const requestUrl = req.originalUrl ?? req.url;
+          this.log.debug(`Plugin frontend request for ${plg}${plugin.name}${db}: ${req.method} ${requestUrl}`);
+          res.on('finish', () => {
+            this.log.debug(`Plugin frontend response for ${plg}${plugin.name}${db}: ${req.method} ${requestUrl} ${res.statusCode}`);
+          });
+          next();
+        });
+        */
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));
 
         // Unified API route handler for GET, POST, PUT, PATCH, DELETE
@@ -1250,6 +1293,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       bridgeMode: this.matterbridge.bridgeMode,
       restartMode: this.matterbridge.restartMode,
       virtualMode: this.matterbridge.virtualMode,
+      bridgeStatus: this.matterbridge.bridgeStatus,
       profile: this.matterbridge.profile,
       loggerLevel: this.matterbridge.logLevel,
       fileLogger: this.matterbridge.fileLogger,
@@ -1686,6 +1730,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {WebSocket.RawData} message - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
+  // oxlint-disable-next-line max-lines-per-function
   private async wsMessageHandler(client: WebSocket, message: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 
@@ -2554,16 +2599,56 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Sends a need to update WebSocket message to all connected clients.
+   * Sends a matterbridge version update required WebSocket message to all connected clients.
    *
+   * @param {string} version - The version of the update required.
    * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
    */
-  wssSendUpdateRequired(devVersion: boolean = false): void {
+  wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    this.log.debug('Sending an update required message to all connected clients');
+    this.log.debug('Sending a matterbridge version update required message to all connected clients');
     this.updateRequired = true;
     // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { devVersion } });
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
+  }
+
+  /**
+   * Sends a plugin version update required WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {string} version - The version of the update required.
+   * @param {boolean} devVersion - If true, the update is for a development version. Default is false.
+   */
+  wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a plugin version update required message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_update_required', success: true, response: { plugin, version, devVersion } });
+  }
+
+  /**
+   * Sends a plugin status update WebSocket message to all connected clients.
+   *
+   * @param {string} plugin - The name of the plugin that requires an update.
+   * @param {PluginStatusUpdate} status - The status of the plugin.
+   */
+  wssSendPluginStatusUpdate(plugin: string, status: PluginStatusUpdate): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a plugin status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin, status } });
+  }
+
+  /**
+   * Sends a matterbridge status update WebSocket message to all connected clients.
+   *
+   * @param {BridgeStatus} status - The status of the matterbridge.
+   */
+  wssSendMatterbridgeStatusUpdate(status: BridgeStatus): void {
+    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
+    this.log.debug('Sending a matterbridge status update message to all connected clients');
+    // Send the message to all connected clients
+    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
   }
 
   /**
@@ -2731,8 +2816,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         name: 'SpawnCommand',
         workerData: {
           threadName: 'SpawnCommand',
-          command: 'npm',
-          args: [command, '-g', packageName, '--omit=dev', '--verbose'],
+          command: isBun() ? 'bun' : 'npm',
+          args: isBun() ? [command, '-g', packageName, '--production'] : [command, '-g', packageName, '--omit=dev', '--verbose'],
           packageCommand: command,
           packageName: packageName,
         },

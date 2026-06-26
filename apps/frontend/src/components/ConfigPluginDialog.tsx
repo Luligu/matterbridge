@@ -1,42 +1,41 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// React
-import { useContext, useEffect, useState, useRef } from 'react';
+// oxlint-disable max-lines unicorn/no-array-for-each
 
+// TODO: verify each rule
+// oxlint-disable react/no-unstable-nested-components
+// oxlint-disable typescript/no-unsafe-type-assertion
+
+// @mui/icons-material
+import Add from '@mui/icons-material/Add'; // For AddButton
+import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
+import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
+import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For ErrorListTemplate
+import HubIcon from '@mui/icons-material/Hub'; // For selectDevice icon=hub
+import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
+import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
+import ListIcon from '@mui/icons-material/List';
+import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
+import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
 // @mui/material
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Checkbox from '@mui/material/Checkbox';
 import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Tooltip from '@mui/material/Tooltip';
-import Checkbox from '@mui/material/Checkbox';
-import MenuItem from '@mui/material/MenuItem';
 import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import TextField from '@mui/material/TextField';
 import ListItemButton from '@mui/material/ListItemButton';
-import DialogActions from '@mui/material/DialogActions';
-
-// @mui/icons-material
-import DeleteForever from '@mui/icons-material/DeleteForever'; // For RemoveButton
-import Add from '@mui/icons-material/Add'; // For AddButton
-import ListIcon from '@mui/icons-material/List';
-import WifiIcon from '@mui/icons-material/Wifi'; // For selectDevice icon=wifi
-import BluetoothIcon from '@mui/icons-material/Bluetooth'; // For selectDevice icon=ble
-import HubIcon from '@mui/icons-material/Hub'; // For selectDevice icon=hub
-import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp';
-import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'; // For ErrorListTemplate
-import ViewInArIcon from '@mui/icons-material/ViewInAr'; // For entities icon=component
-import DeviceHubIcon from '@mui/icons-material/DeviceHub'; // For entities icon=matter
-
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 // @rjsf
-import Form, { IChangeEvent } from '@rjsf/core';
-import validator from '@rjsf/validator-ajv8';
+import Form, { type IChangeEvent } from '@rjsf/core';
 import {
   getSubmitButtonOptions,
   getUiOptions,
@@ -45,33 +44,33 @@ import {
   ariaDescribedByIds,
   enumOptionsIndexForValue,
   ADDITIONAL_PROPERTY_FLAG,
-  WidgetProps,
-  SubmitButtonProps,
-  IconButtonProps,
-  FieldTemplateProps,
-  DescriptionFieldProps,
-  TitleFieldProps,
-  FieldHelpProps,
-  ErrorListProps,
-  FieldErrorProps,
-  BaseInputTemplateProps,
-  ArrayFieldTitleProps,
-  ArrayFieldDescriptionProps,
-  ArrayFieldTemplateProps,
-  ArrayFieldItemTemplateProps,
-  ObjectFieldTemplateProps,
-  WrapIfAdditionalTemplateProps,
-  UiSchema,
-  RJSFSchema,
+  type WidgetProps,
+  type SubmitButtonProps,
+  type IconButtonProps,
+  type FieldTemplateProps,
+  type DescriptionFieldProps,
+  type TitleFieldProps,
+  type FieldHelpProps,
+  type ErrorListProps,
+  type FieldErrorProps,
+  type BaseInputTemplateProps,
+  type ArrayFieldTitleProps,
+  type ArrayFieldDescriptionProps,
+  type ArrayFieldTemplateProps,
+  type ArrayFieldItemTemplateProps,
+  type ObjectFieldTemplateProps,
+  type WrapIfAdditionalTemplateProps,
+  type UiSchema,
+  type RJSFSchema,
 } from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
+// React
+import { useContext, useEffect, useState, useRef } from 'react';
 
-// Backend
-import { ApiPlugin, ApiSelectDevice, ApiSelectDeviceEntity, ApiSelectEntity, isApiResponse, WsMessage } from '../utils/backendShared';
-
-// Frontend
+import { debug } from '../appState';
+import { type ApiPlugin, type ApiSelectDevice, type ApiSelectDeviceEntity, type ApiSelectEntity, isApiResponse, type WsMessage } from '../utils/backendShared';
 import { WebSocketContext } from './WebSocketProvider';
-import { debug } from '../App';
-// const debug = false;
+
 const rjsfDebug = false;
 
 const titleSx = { fontSize: '16px', fontWeight: 'bold', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)' };
@@ -85,6 +84,8 @@ const listItemButtonSx = {};
 const listItemIconStyle = {};
 const listItemTextPrimaryStyle = {};
 const listItemTextSecondaryStyle = {};
+// Stable empty default for the optional rawErrors prop, so the destructuring default keeps a single reference across renders.
+const emptyRawErrors: string[] = [];
 let selectDevices: ApiSelectDevice[] = [];
 let selectEntities: ApiSelectEntity[] = [];
 
@@ -131,6 +132,7 @@ export interface ConfigPluginDialogProps {
   plugin: ApiPlugin;
 }
 
+// oxlint-disable-next-line max-lines-per-function
 export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {
   // Contexts
   const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
@@ -145,7 +147,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   const [schema, setSchema] = useState(plugin.schemaJson);
   const [uiSchema, setUiSchema] = useState<UiSchema>({
     'ui:submitButtonOptions': {
-      'submitText': 'Confirm',
+      submitText: 'Confirm',
     },
     'ui:globalOptions': { orderable: true },
   });
@@ -209,7 +211,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                 });
                 currentUiSchema[subkey] = property[subkey];
 
-                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                // oxlint-disable-next-line typescript/no-dynamic-delete
                 delete property[subkey];
               }
             });
@@ -256,18 +258,25 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     };
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
 
-  const handleFormChange = (data: IChangeEvent<any, RJSFSchema, any>, id?: string) => {
+  const handleFormChange = (data: IChangeEvent, id?: string) => {
     currentFormData = data.formData;
     if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, data.formData);
   };
 
-  const handleSaveChanges = (data: IChangeEvent<any, RJSFSchema, any>) => {
+  const handleSaveChanges = (data: IChangeEvent) => {
     if (debug) console.log('ConfigPluginDialog handleSaveChanges:', data.formData);
     // Save the configuration
     setFormData(data.formData);
     plugin.configJson = data.formData;
     plugin.restartRequired = true;
-    sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/savepluginconfig', src: 'Frontend', dst: 'Matterbridge', params: { pluginName: data.formData.name, formData: data.formData } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'ConfigPlugin',
+      method: '/api/savepluginconfig',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { pluginName: data.formData.name, formData: data.formData },
+    });
     // Close the dialog
     onClose();
   };
@@ -290,10 +299,25 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     }, [additional, label, onKeyRenameBlur]);
 
     if (!additional) {
-      return <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>{children}</Box>;
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            flexGrow: 1,
+            padding: rjsfDebug ? '2px' : 0,
+            margin: rjsfDebug ? '2px' : 0,
+            border: rjsfDebug ? '2px solid magenta' : 'none',
+          }}
+        >
+          {children}
+        </Box>
+      );
     }
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}>
+      <Box
+        sx={{ display: 'flex', flexDirection: 'row', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid magenta' : 'none' }}
+      >
         <TextField
           id={`${id}-key`}
           name={`${id}-key`}
@@ -302,8 +326,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           defaultValue={label}
           inputRef={keyInputRef}
           onBlur={!readonly ? onKeyRenameBlur : undefined}
-          type='text'
-          variant='outlined'
+          type="text"
+          variant="outlined"
           sx={{ width: '250px', minWidth: '250px', maxWidth: '250px', marginRight: '20px' }}
         />
         <Box sx={{ flex: 1 }}>{children}</Box>
@@ -322,7 +346,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       return <div style={{ display: 'none' }}>{children}</div>;
     }
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid cyan' : 'none' }}>
+      <Box
+        sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1, padding: rjsfDebug ? '2px' : 0, margin: rjsfDebug ? '2px' : 0, border: rjsfDebug ? '2px solid cyan' : 'none' }}
+      >
         <WrapIfAdditionalTemplate {...props}>
           {/* displayLabel===true && !isArray && <Typography sx={titleSx}>id: {id} label: {label} {required && <mark>***</mark>}</Typography> */}
           {displayLabel === true && description}
@@ -380,14 +406,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (!errors) return null;
     return (
       <Box sx={{ padding: '10px', margin: '10px', border: '1px solid grey' }}>
-        <Typography color='error' sx={errorTitleSx}>
+        <Typography color="error" sx={errorTitleSx}>
           Please fix the following errors:
         </Typography>
         <List>
           {errors.map((error, index) => (
             <ListItem key={index}>
               <ListItemIcon>
-                <ErrorOutlineIcon color='error' />
+                <ErrorOutlineIcon color="error" />
               </ListItemIcon>
               <ListItemText primary={error.stack} />
             </ListItem>
@@ -405,7 +431,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     return (
       <Box sx={{ padding: '0px', margin: '0px', marginTop: '5px' }}>
         {errors.map((error, index) => (
-          <Typography key={index} color='error' variant='body2' sx={{ marginLeft: 1 }}>
+          <Typography key={index} color="error" variant="body2" sx={{ marginLeft: 1 }}>
             This field {error}
           </Typography>
         ))}
@@ -414,28 +440,52 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   }
 
   function BaseInputTemplate(props: BaseInputTemplateProps) {
-    const { id, name, _schema, _uiSchema, value, options, label, type, placeholder, required, disabled, readonly, autofocus, onChange, onChangeOverride, onBlur, onFocus, _rawErrors, _hideError, _registry, _formContext } = props;
+    const {
+      id,
+      name,
+      _schema,
+      _uiSchema,
+      value,
+      options,
+      label,
+      type,
+      placeholder,
+      required,
+      disabled,
+      readonly,
+      autofocus,
+      onChange,
+      onChangeOverride,
+      onBlur,
+      onFocus,
+      _rawErrors,
+      _hideError,
+      _registry,
+      _formContext,
+    } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
-    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
-    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
-    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
+    const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
         <TextField
           id={id}
           name={id}
           label={placeholder && placeholder !== '' ? label : undefined}
-          variant='outlined'
+          variant="outlined"
           placeholder={placeholder && placeholder !== '' ? placeholder : label}
           required={required}
           disabled={disabled || readonly}
+          // autofocus is an RJSF WidgetProps value carrying the config schema's ui:autofocus directive; honoring it is intended behavior.
+          // oxlint-disable-next-line jsx-a11y/no-autofocus
           autoFocus={autofocus}
           value={value || value === 0 ? value : ''}
           type={type}
           autoComplete={type === 'password' ? 'current-password' : name}
-          onChange={onChangeOverride || _onChange}
-          onBlur={_onBlur}
-          onFocus={_onFocus}
+          onChange={onChangeOverride || handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
           fullWidth
         />
       </Box>
@@ -459,14 +509,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     return (
       <Box sx={{ margin: '2px 0px', padding: '0px', display: 'flex', alignItems: 'center' }}>
         <Box sx={{ flexGrow: 1, marginRight: '10px' }}>{children}</Box>
-        <IconButton disabled={!buttonsProps.hasMoveUp} onClick={buttonsProps.onMoveUpItem} size='small' color='primary' sx={iconButtonSx}>
+        <IconButton disabled={!buttonsProps.hasMoveUp} onClick={buttonsProps.onMoveUpItem} size="small" color="primary" sx={iconButtonSx}>
           <KeyboardDoubleArrowUpIcon />
         </IconButton>
-        <IconButton disabled={!buttonsProps.hasMoveDown} onClick={buttonsProps.onMoveDownItem} size='small' color='primary' sx={iconButtonSx}>
+        <IconButton disabled={!buttonsProps.hasMoveDown} onClick={buttonsProps.onMoveDownItem} size="small" color="primary" sx={iconButtonSx}>
           <KeyboardDoubleArrowDownIcon />
         </IconButton>
         {buttonsProps.hasRemove && (
-          <IconButton onClick={buttonsProps.onRemoveItem} size='small' color='primary' sx={iconButtonSx}>
+          <IconButton onClick={buttonsProps.onRemoveItem} size="small" color="primary" sx={iconButtonSx}>
             <DeleteForever />
           </IconButton>
         )}
@@ -539,28 +589,28 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             {canAdd && (
               <Box sx={{ margin: '0px', padding: '0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {schema.selectFrom && (
-                  <Tooltip title='Add a device from the list'>
-                    <IconButton onClick={handleDialogDeviceToggle} size='small' color='primary' sx={iconButtonSx}>
+                  <Tooltip title="Add a device from the list">
+                    <IconButton onClick={handleDialogDeviceToggle} size="small" color="primary" sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
                 )}
                 {schema.selectEntityFrom && (
-                  <Tooltip title='Add an entity from the list'>
-                    <IconButton onClick={handleDialogEntityToggle} size='small' color='primary' sx={iconButtonSx}>
+                  <Tooltip title="Add an entity from the list">
+                    <IconButton onClick={handleDialogEntityToggle} size="small" color="primary" sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
                 )}
                 {schema.selectDeviceEntityFrom && (
-                  <Tooltip title='Add a device entity from the list'>
-                    <IconButton onClick={handleDialogDeviceEntityToggle} size='small' color='primary' sx={iconButtonSx}>
+                  <Tooltip title="Add a device entity from the list">
+                    <IconButton onClick={handleDialogDeviceEntityToggle} size="small" color="primary" sx={iconButtonSx}>
                       <ListIcon />
                     </IconButton>
                   </Tooltip>
                 )}
-                <Tooltip title='Add a new item'>
-                  <IconButton onClick={onAddClick} size='small' color='primary' sx={iconButtonSx}>
+                <Tooltip title="Add a new item">
+                  <IconButton onClick={onAddClick} size="small" color="primary" sx={iconButtonSx}>
                     <Add />
                   </IconButton>
                 </Tooltip>
@@ -586,10 +636,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>
                 Filter by:
               </Typography>
-              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter serial or name' />
+              <TextField fullWidth variant="outlined" value={filter} onChange={handleFilterChange} placeholder="Enter serial or name" />
             </Box>
             <List dense>
               {selectDevices
@@ -612,7 +662,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                         <HubIcon style={listItemIconStyle} />
                       </ListItemIcon>
                     )}
-                    <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                    <ListItemText
+                      primary={value.name}
+                      secondary={value.serial}
+                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
+                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                    />
                   </ListItemButton>
                 ))}
             </List>
@@ -637,10 +692,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           <DialogTitle>Select an entity</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>
                 Filter by:
               </Typography>
-              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter name or description' />
+              <TextField fullWidth variant="outlined" value={filter} onChange={handleFilterChange} placeholder="Enter name or description" />
             </Box>
             <List dense>
               {selectEntities
@@ -673,7 +728,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                         <DeviceHubIcon style={listItemIconStyle} />
                       </ListItemIcon>
                     )}
-                    <ListItemText primary={value.name} secondary={value.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                    <ListItemText
+                      primary={value.name}
+                      secondary={value.description}
+                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
+                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                    />
                   </ListItemButton>
                 ))}
             </List>
@@ -704,7 +764,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
                   return value.entities
-                    ?.filter((entity) => !schema.uniqueItems || !Array.isArray(formData) || !formData.includes(schema.selectDeviceEntityFrom === 'name' ? entity.name : entity.description))
+                    ?.filter(
+                      (entity) =>
+                        !schema.uniqueItems || !Array.isArray(formData) || !formData.includes(schema.selectDeviceEntityFrom === 'name' ? entity.name : entity.description),
+                    )
                     .map((entity, index) => (
                       <ListItemButton onClick={() => handleSelectDeviceEntityValue(entity)} key={index} sx={listItemButtonSx}>
                         {entity.icon === 'wifi' && (
@@ -732,7 +795,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                             <DeviceHubIcon style={listItemIconStyle} />
                           </ListItemIcon>
                         )}
-                        <ListItemText primary={entity.name} secondary={entity.description} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                        <ListItemText
+                          primary={entity.name}
+                          secondary={entity.description}
+                          primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
+                          secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                        />
                       </ListItemButton>
                     ));
                 })}
@@ -797,14 +865,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
             <Typography sx={titleSx}>{title}</Typography>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0px', margin: '0px' }}>
               {schema.selectFrom && (
-                <Tooltip title='Add a device from the list'>
-                  <IconButton onClick={handleDialogDeviceToggle} size='small' color='primary' sx={iconButtonSx}>
+                <Tooltip title="Add a device from the list">
+                  <IconButton onClick={handleDialogDeviceToggle} size="small" color="primary" sx={iconButtonSx}>
                     <ListIcon />
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title='Add a new item'>
-                <IconButton onClick={handleAddItem} size='small' color='primary' sx={iconButtonSx}>
+              <Tooltip title="Add a new item">
+                <IconButton onClick={handleAddItem} size="small" color="primary" sx={iconButtonSx}>
                   <Add />
                 </IconButton>
               </Tooltip>
@@ -835,7 +903,9 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                 border: isObjectOrArrayProperty && !isArrayMultiSelectProperty ? 'none' : rjsfDebug ? '2px solid blue' : '1px solid grey',
               }}
             >
-              {hasStringTypeProperty && !['object', 'array', 'boolean'].includes(schema.properties[name].type) && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
+              {hasStringTypeProperty && !['object', 'array', 'boolean'].includes(schema.properties[name].type) && (
+                <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>
+              )}
               {isArrayMultiSelectProperty && <Typography sx={titleSx}>{schema.properties[name].title || name}</Typography>}
               <Box sx={{ flexGrow: 1, padding: '0px', margin: '0px' }}>{content}</Box>
             </Box>
@@ -857,10 +927,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
           <DialogTitle>Select a device</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-              <Typography variant='subtitle1' sx={{ whiteSpace: 'nowrap' }}>
+              <Typography variant="subtitle1" sx={{ whiteSpace: 'nowrap' }}>
                 Filter by:
               </Typography>
-              <TextField fullWidth variant='outlined' value={filter} onChange={handleFilterChange} placeholder='Enter serial or name' />
+              <TextField fullWidth variant="outlined" value={filter} onChange={handleFilterChange} placeholder="Enter serial or name" />
             </Box>
             <List dense>
               {selectDevices
@@ -882,7 +952,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                         <HubIcon style={listItemIconStyle} />
                       </ListItemIcon>
                     )}
-                    <ListItemText primary={value.name} secondary={value.serial} primaryTypographyProps={{ style: listItemTextPrimaryStyle }} secondaryTypographyProps={{ style: listItemTextSecondaryStyle }} />
+                    <ListItemText
+                      primary={value.name}
+                      secondary={value.serial}
+                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
+                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                    />
                   </ListItemButton>
                 ))}
             </List>
@@ -904,10 +979,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     }
     return (
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', margin: '10px', padding: '0px', gap: '20px' }}>
-        <Button type='submit' variant='contained' color='primary'>
+        <Button type="submit" variant="contained" color="primary">
           {submitText}
         </Button>
-        <Button variant='contained' color='primary' onClick={onClose}>
+        <Button variant="contained" color="primary" onClick={onClose}>
           Cancel
         </Button>
       </div>
@@ -918,8 +993,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { className, disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('RemoveButton:', otherProps);
     return (
-      <Tooltip title='Remove the item'>
-        <IconButton disabled={disabled} size='small' color='primary' onClick={onClick}>
+      <Tooltip title="Remove the item">
+        <IconButton disabled={disabled} size="small" color="primary" onClick={onClick}>
           <DeleteForever />
         </IconButton>
       </Tooltip>
@@ -930,8 +1005,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { className, disabled, onClick, registry, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('AddButton:', otherProps);
     return (
-      <Tooltip title='Add an item'>
-        <IconButton size='small' color='primary' onClick={onClick}>
+      <Tooltip title="Add an item">
+        <IconButton size="small" color="primary" onClick={onClick}>
           <Add />
         </IconButton>
       </Tooltip>
@@ -942,8 +1017,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveUpButton:', otherProps);
     return (
-      <Tooltip title='Move up the item'>
-        <IconButton size='small' color='primary' onClick={onClick}>
+      <Tooltip title="Move up the item">
+        <IconButton size="small" color="primary" onClick={onClick}>
           <KeyboardDoubleArrowUpIcon />
         </IconButton>
       </Tooltip>
@@ -954,8 +1029,8 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     const { disabled, onClick, registry, style, uiSchema, ...otherProps } = props;
     if (rjsfDebug) console.log('MoveDownButton:', otherProps);
     return (
-      <Tooltip title='Move down the item'>
-        <IconButton size='small' color='primary' onClick={onClick}>
+      <Tooltip title="Move down the item">
+        <IconButton size="small" color="primary" onClick={onClick}>
           <KeyboardDoubleArrowDownIcon />
         </IconButton>
       </Tooltip>
@@ -976,8 +1051,16 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
     const onClick = () => {
       if (debug) console.log(`CheckboxWidget onClick plugin="${plugin.name}" action="${name}" value="${fieldValue}"`);
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/action', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'ConfigPlugin',
+        method: '/api/action',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id },
+      });
       if (schema.buttonClose === true) onClose();
+      // oxlint-disable-next-line typescript/no-explicit-any
       else if (schema.buttonSave === true) handleSaveChanges({ formData } as any); // Save changes and we don't close (no need for other props).
     };
 
@@ -986,7 +1069,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       return (
         <Box sx={{ margin: '0px', padding: '5px 0px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionButtonSx}>{schema.title || schema.description}</Typography>
-          <Button variant='contained' color='primary' onClick={() => onClick()}>
+          <Button variant="contained" color="primary" onClick={() => onClick()}>
             {schema.buttonText}
           </Button>
         </Box>
@@ -996,8 +1079,15 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
       return (
         <Box sx={{ margin: '0px', padding: '5px 0px', gap: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography sx={descriptionButtonSx}>{schema.title || schema.description}</Typography>
-          <TextField id={name + '-input'} name={name} label={schema.textLabel} placeholder={schema.textPlaceholder} onChange={(event) => onChangeField(event.target.value)} sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }} />
-          <Button id={name + '-button'} variant='contained' color='primary' disabled={fieldValue === undefined} onClick={() => onClick()}>
+          <TextField
+            id={name + '-input'}
+            name={name}
+            label={schema.textLabel}
+            placeholder={schema.textPlaceholder}
+            onChange={(event) => onChangeField(event.target.value)}
+            sx={{ width: '250px', minWidth: '250px', maxWidth: '250px' }}
+          />
+          <Button id={name + '-button'} variant="contained" color="primary" disabled={fieldValue === undefined} onClick={() => onClick()}>
             {schema.buttonField}
           </Button>
         </Box>
@@ -1034,7 +1124,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     onBlur,
     onFocus,
     errorSchema,
-    rawErrors = [],
+    rawErrors = emptyRawErrors,
     registry,
     uiSchema,
     hideError,
@@ -1063,14 +1153,12 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         textFieldProps,
       });
 
-    multiple = typeof multiple === 'undefined' ? false : !!multiple;
-
     const emptyValue = multiple ? [] : '';
     const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
 
-    const _onChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
-    const _onBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
-    const _onFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
     const renderSelectedValues = (selected: unknown) => {
       if (!Array.isArray(selected) || !Array.isArray(enumOptions)) return '';
@@ -1088,12 +1176,14 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         value={!isEmpty && typeof selectedIndexes !== 'undefined' ? selectedIndexes : emptyValue}
         required={required}
         disabled={disabled || readonly}
+        // autofocus is an RJSF WidgetProps value carrying the config schema's ui:autofocus directive; honoring it is intended behavior.
+        // oxlint-disable-next-line jsx-a11y/no-autofocus
         autoFocus={autofocus}
         // placeholder={placeholder} is not used cause we have the name, title and description
         error={rawErrors.length > 0}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onFocus={handleFocus}
         select
         slotProps={{
           select: {
@@ -1128,7 +1218,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     <Dialog open={open} onClose={onClose} slotProps={{ paper: { sx: { maxWidth: '800px' } } }}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h3>Matterbridge plugin configuration</h3>
         </div>
       </DialogTitle>

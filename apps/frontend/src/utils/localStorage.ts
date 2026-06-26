@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-array-for-each
+
 export const LOCAL_STORAGE_PREFIX = '';
 
 export const MbfLsk = {

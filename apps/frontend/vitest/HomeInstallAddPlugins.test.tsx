@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UiContext } from '../src/components/UiProvider';
+import { UiContext } from '../src/components/UiContext';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 
 // Keep MUI Tooltip from using Popper in tests.
@@ -50,7 +50,7 @@ vi.mock('../src/components/SearchPluginsDialog', () => ({
 }));
 
 // Silence debug logs and keep enableMobile stable.
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
   enableMobile: false,
 }));
@@ -63,19 +63,17 @@ describe('HomeInstallAddPlugins', () => {
     // JSDOM returns 0x0 rects by default; MUI Popper warns that anchorEl isn't in layout.
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function () {
-      return (
-        {
-          width: 100,
-          height: 20,
-          top: 0,
-          left: 0,
-          bottom: 20,
-          right: 100,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        } as DOMRect
-      );
+      return {
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 20,
+        right: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
     };
 
     HomeInstallAddPlugins = (await import('../src/components/HomeInstallAddPlugins')).default;
@@ -159,7 +157,7 @@ describe('HomeInstallAddPlugins', () => {
       fireEvent.mouseDown(combo);
     });
 
-    const option = await screen.findByRole('option', { name: '1.2.3' }).catch(() => screen.findByRole('menuitem', { name: '1.2.3' }));
+    const option = await screen.findByRole('option', { name: '1.2.3' }).catch(async () => await screen.findByRole('menuitem', { name: '1.2.3' }));
     fireEvent.click(option);
 
     // Choose plugin name via dialog callback.
@@ -215,7 +213,7 @@ describe('HomeInstallAddPlugins', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith('./api/uploadpackage', expect.objectContaining({ method: 'POST' }));
 
     await waitFor(() => {
-      expect(logMessage.mock.calls.some((call: unknown[]) => String(call?.[1] ?? '').startsWith('Server response:'))).toBe(true);
+      expect(logMessage.mock.calls.some((call: unknown[]) => typeof call[1] === 'string' && call[1].startsWith('Server response:'))).toBe(true);
     });
 
     const content = screen.getByTestId('window-content');
@@ -230,7 +228,7 @@ describe('HomeInstallAddPlugins', () => {
     expect(globalThis.fetch).toHaveBeenCalledWith('./api/uploadpackage', expect.objectContaining({ method: 'POST' }));
 
     await waitFor(() => {
-      expect(logMessage.mock.calls.some((call: unknown[]) => String(call?.[1] ?? '').startsWith('Server response:'))).toBe(true);
+      expect(logMessage.mock.calls.some((call: unknown[]) => typeof call[1] === 'string' && call[1].startsWith('Server response:'))).toBe(true);
     });
   });
 

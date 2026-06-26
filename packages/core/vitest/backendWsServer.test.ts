@@ -1,7 +1,5 @@
 // vitest\backendWsServer.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters
-
 const NAME = 'BackendWsServer';
 
 import { EventEmitter } from 'node:events';
@@ -181,8 +179,10 @@ describe('BackendWsServer', () => {
     wsServer.wssSendRestartRequired(true, true);
     wsServer.wssSendRestartNotRequired();
     wsServer.wssSendRestartNotRequired(true);
-    wsServer.wssSendUpdateRequired();
-    wsServer.wssSendUpdateRequired(true);
+    wsServer.wssSendUpdateRequired('3.0.0', false);
+    wsServer.wssSendUpdateRequired('3.0.0', true);
+    wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', false);
+    wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', true);
     wsServer.wssSendCpuUpdate(1, 2);
     wsServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
     wsServer.wssSendUptimeUpdate('sys', 'proc');
@@ -215,7 +215,7 @@ describe('BackendWsServer', () => {
     wsServer.wssSendRestartNotRequired(true);
     // expect((mockedBackend as any).restartRequired).toBe(false);
 
-    wsServer.wssSendUpdateRequired(true);
+    wsServer.wssSendUpdateRequired('3.3.0', true);
     // TODO: re-enable when the backend state mutation is restored in wssSendUpdateRequired() (see the "// TODO check" line in backendWsServer.ts).
     // expect((mockedBackend as any).updateRequired).toBe(true);
 

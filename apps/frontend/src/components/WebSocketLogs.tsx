@@ -1,19 +1,17 @@
 // React
 import { useState, useEffect, useRef, useContext, useMemo, memo } from 'react';
 
-// Frontend
+import { debug } from '../appState';
 import { WebSocketMessagesContext } from './WebSocketProvider';
-import { debug } from '../App';
 
 /**
  * Function to detect if the device has a touchscreen
+ * @returns {boolean} True if a touchscreen is detected.
  */
 const detectTouchscreen = (): boolean => {
-  if (
-    'ontouchstart' in window ||
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (typeof (window as any).DocumentTouch !== 'undefined' && document instanceof (window as any).DocumentTouch)
-  ) {
+  // DocumentTouch is a legacy interface missing from modern lib.dom typings, so narrow window locally instead of casting to any.
+  const legacyWindow = window as Window & { DocumentTouch?: new () => unknown };
+  if ('ontouchstart' in window || (typeof legacyWindow.DocumentTouch !== 'undefined' && document instanceof legacyWindow.DocumentTouch)) {
     if (debug) console.log(`WebSocketLogs detectTouchscreen = true`);
     return true;
   }
@@ -31,8 +29,8 @@ function WebSocketLogs() {
   // Detect touchscreen only once per component mount
   const isTouchscreen = useMemo(() => detectTouchscreen(), []);
 
-  const handleMouseEnter = (_e: React.MouseEvent<HTMLUListElement>) => setIsHovering(true);
-  const handleMouseLeave = (_e: React.MouseEvent<HTMLUListElement>) => setIsHovering(false);
+  const handleMouseEnter = () => setIsHovering(true);
+  const handleMouseLeave = () => setIsHovering(false);
 
   // Scroll to the bottom of the message list on every update, only if the user is not hovering and not on a touchscreen
   useEffect(() => {
@@ -87,11 +85,23 @@ function WebSocketLogs() {
   };
 
   return (
-    <div style={{ margin: '0px', padding: '0px' }}>
-      <ul style={{ margin: '0px', padding: '0px' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div style={{ margin: '0px', padding: '0px' }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <ul style={{ margin: '0px', padding: '0px' }}>
         {messages.map((msg, index) => (
           <li key={index} style={{ wordWrap: 'break-word', maxHeight: '200px', overflow: 'hidden' }}>
-            <span style={{ marginRight: '5px', padding: '1px 5px', backgroundColor: getLevelMessageBgColor(msg.level), color: getLevelMessageColor(msg.level), fontSize: '12px', borderRadius: '3px', textAlign: 'center' }}>{msg.level}</span>
+            <span
+              style={{
+                marginRight: '5px',
+                padding: '1px 5px',
+                backgroundColor: getLevelMessageBgColor(msg.level),
+                color: getLevelMessageColor(msg.level),
+                fontSize: '12px',
+                borderRadius: '3px',
+                textAlign: 'center',
+              }}
+            >
+              {msg.level}
+            </span>
             {msg.time && <span style={{ marginRight: '3px', color: '#505050' }}>{'[' + msg.time + ']'}</span>}
             {msg.name && <span style={{ marginRight: '3px', color: '#09516d' }}>{'[' + msg.name + ']'}</span>}
             <span style={{ color: 'var(--main-log-color)' }}>{msg.message}</span>

@@ -1,47 +1,24 @@
-// React
-import React, { useState, useCallback, useMemo, createContext, useRef, ReactNode } from 'react';
-
 // @mui/material
+import CloseIcon from '@mui/icons-material/Close';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
-
 // Notistack
-import { SnackbarKey, useSnackbar } from 'notistack';
+import { useSnackbar } from 'notistack';
+// React
+import React, { useState, useCallback, useMemo, useRef, type ReactNode } from 'react';
 
-// Frontend
+import { debug } from '../appState';
+import { MbfLsk } from '../utils/localStorage';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
 import { InstallProgressDialog } from './InstallProgressDialog';
-import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
-// const debug = true;
+import { UiContext } from './UiContext';
 
 interface PersistMessage {
   message: string;
   key: string | number;
 }
 const persistMessages: PersistMessage[] = [];
-
-export interface UiContextType {
-  mobile: boolean;
-  setMobile: (mobile: boolean) => void;
-  currentPage: string | null;
-  setCurrentPage: (page: string | null) => void;
-  showSnackbarMessage: (message: string, timeout?: number, severity?: 'info' | 'warning' | 'error' | 'success') => void;
-  closeSnackbarMessage: (message: string) => void;
-  closeSnackbar: (key?: SnackbarKey | undefined) => void;
-  showConfirmCancelDialog: (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => void;
-  showInstallProgress: (title: string, command: string, packageName: string) => void;
-  exitInstallProgressSuccess: () => void;
-  exitInstallProgressError: () => void;
-  hideInstallProgress: () => void;
-  addInstallProgress: (output: string) => void;
-  installAutoExit: boolean;
-  setInstallAutoExit: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const UiContext = createContext<UiContextType>(null as unknown as UiContextType);
 
 interface UiProviderProps {
   children: ReactNode;
@@ -77,12 +54,14 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
         variant: 'default',
         autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null,
         persist: timeout === 0,
+        // notistack render prop, not a nested component definition: enqueueSnackbar calls content(key, message) to render custom snackbar markup.
+        // oxlint-disable-next-line react/no-unstable-nested-components
         content: (key) => (
           <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}>
             <Alert
               key={key}
               severity={severity ?? 'info'}
-              variant='filled'
+              variant="filled"
               sx={{
                 color: '#fff',
                 fontWeight: 'normal',
@@ -92,8 +71,8 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
               }}
               onClick={() => closeSnackbar(key)}
               action={
-                <IconButton size='small' onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
-                  <CloseIcon fontSize='small' />
+                <IconButton size="small" onClick={() => closeSnackbar(key)} sx={{ color: '#fff' }}>
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               }
             >
@@ -134,15 +113,18 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     }
   };
 
-  const showConfirmCancelDialog = useCallback((title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
-    if (debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
-    setConfirmCancelFormTitle(title);
-    setConfirmCancelFormMessage(message);
-    setConfirmCancelFormCommand(command);
-    confirmCancelFormHandleConfirmRef.current = handleConfirm;
-    confirmCancelFormHandleCancelRef.current = handleCancel;
-    setShowConfirmCancelForm(true);
-  }, []);
+  const showConfirmCancelDialog = useCallback(
+    (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => {
+      if (debug) console.log(`UiProvider showConfirmCancelDialog for command ${command}`);
+      setConfirmCancelFormTitle(title);
+      setConfirmCancelFormMessage(message);
+      setConfirmCancelFormCommand(command);
+      confirmCancelFormHandleConfirmRef.current = handleConfirm;
+      confirmCancelFormHandleCancelRef.current = handleCancel;
+      setShowConfirmCancelForm(true);
+    },
+    [],
+  );
 
   // ******************************** InstallProgressDialog ********************************
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
@@ -150,7 +132,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [installCommand, setInstallCommand] = useState('');
   const [installPackageName, setInstallPackageName] = useState('');
   const [installOutput, setInstallOutput] = useState('');
-  const [installAutoExit, setInstallAutoExit] = useState(localStorage.getItem(MbfLsk.installAutoExit) === 'false' ? false : true);
+  const [installAutoExit, setInstallAutoExit] = useState(localStorage.getItem(MbfLsk.installAutoExit) !== 'false'); // default true
 
   const showInstallProgress = useCallback((title: string, command: string, packageName: string) => {
     if (debug) console.log(`UiProvider show install progress for package ${title}`);
@@ -169,7 +151,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const exitInstallProgressSuccess = useCallback(() => {
     if (debug) console.log(`UiProvider exitInstallProgressSuccess: package ${installPackageName}`);
     // setInstallOutput((prevOutput) => prevOutput + `Successfully installed ${installPackageName}\n`);
-    const installAutoExitLocal = localStorage.getItem(MbfLsk.installAutoExit) === 'false' ? false : true;
+    const installAutoExitLocal = localStorage.getItem(MbfLsk.installAutoExit) !== 'false'; // default true
     if (installAutoExitLocal) {
       setInstallDialogOpen(false);
     }
@@ -232,7 +214,14 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   return (
     <UiContext.Provider value={contextValue}>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
-      <InstallProgressDialog open={installDialogOpen} title={installTitle} _command={installCommand} _packageName={installPackageName} output={installOutput} onClose={handleInstallClose} />
+      <InstallProgressDialog
+        open={installDialogOpen}
+        title={installTitle}
+        _command={installCommand}
+        _packageName={installPackageName}
+        output={installOutput}
+        onClose={handleInstallClose}
+      />
       {children}
     </UiContext.Provider>
   );

@@ -1,7 +1,7 @@
 // Vite/Vitest configuration file for a React project
 
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig(({ mode }) => {
   const debugBuild = mode === 'debug';
@@ -37,7 +37,14 @@ export default defineConfig(({ mode }) => {
             if (id.includes('@emotion')) {
               return 'vendor_emotion';
             }
-            if (id.includes('/@rjsf/') || id.includes('/ajv/') || id.includes('/ajv-formats/') || id.includes('/json-schema-compare/') || id.includes('/json-schema-traverse/') || id.includes('/json-schema-merge/')) {
+            if (
+              id.includes('/@rjsf/') ||
+              id.includes('/ajv/') ||
+              id.includes('/ajv-formats/') ||
+              id.includes('/json-schema-compare/') ||
+              id.includes('/json-schema-traverse/') ||
+              id.includes('/json-schema-merge/')
+            ) {
               return 'vendor_rjsf';
             }
             if (id.includes('notistack')) {

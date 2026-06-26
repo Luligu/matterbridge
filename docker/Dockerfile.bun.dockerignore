@@ -1,0 +1,16 @@
+# Build context ignore rules for docker/Dockerfile.bun ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.bun`).
+# It fully replaces the root .dockerignore (no merge).
+#
+# This image installs Matterbridge from npm and uses no source. The only files
+# it copies from the context are ./.dockerbuild.json and
+# docker/entrypoint.bun.sh, so we ignore everything else.
+
+# Ignore everything...
+*
+
+# ...except the two files this Dockerfile copies.
+!.dockerbuild.json
+!docker/entrypoint.bun.sh

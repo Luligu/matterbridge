@@ -39,8 +39,7 @@ import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('CheckUpdates');
 
-let refreshSettingsRequired = false;
-let refreshPluginsRequired = false;
+let noUpdatesAvailable = true;
 
 /**
  * Checks for updates for Matterbridge and its plugins.
@@ -52,6 +51,7 @@ let refreshPluginsRequired = false;
 export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<void> {
   const log = new AnsiLogger({ logName: 'MatterbridgeUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.logLevel });
   const server = new BroadcastServer('updates', log);
+  noUpdatesAvailable = true;
 
   const checkUpdatePromise = checkUpdatesAndLog(matterbridge, log, server);
   const latestVersionPromise = getMatterbridgeLatestVersion(matterbridge, log, server);
@@ -72,11 +72,9 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
 
   await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises]);
 
-  // Send only once the refresh required messages to the frontend if needed, instead of sending one for each update check
-  if (refreshSettingsRequired) server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
-  if (refreshPluginsRequired) server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
-  refreshSettingsRequired = false;
-  refreshPluginsRequired = false;
+  if (noUpdatesAvailable) {
+    server.request({ type: 'frontend_snackbarmessage', src: server.name, dst: 'frontend', params: { message: 'No updates available', timeout: 5, severity: 'info' } });
+  }
 
   server.close();
 }
@@ -140,20 +138,20 @@ export async function getMatterbridgeLatestVersion(matterbridge: SharedMatterbri
 
   try {
     const version = await getNpmPackageVersion('matterbridge');
+    // Send the latest version info to matterbridge to store it
     server.request({ type: 'matterbridge_latest_version', src: server.name, dst: 'matterbridge', params: { version } });
     if (matterbridge.matterbridgeVersion === version) {
       log.debug(`Matterbridge is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${version}.`);
     } else {
+      noUpdatesAvailable = false;
       log.notice(`Matterbridge is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest version: ${version}.`);
       server.request({
         type: 'frontend_snackbarmessage',
         src: server.name,
         dst: 'frontend',
-        params: { message: 'Matterbridge latest update available', timeout: 0, severity: 'info' },
+        params: { message: 'Matterbridge latest update available', timeout: 60, severity: 'info' },
       });
-      server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { devVersion: false } });
-      refreshSettingsRequired = true;
-      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
+      server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { version, devVersion: false } });
     }
     return version;
   } catch (error) {
@@ -176,18 +174,18 @@ export async function getMatterbridgeDevVersion(matterbridge: SharedMatterbridge
 
   try {
     const version = await getNpmPackageVersion('matterbridge', 'dev');
+    // Send the dev version info to matterbridge to store it
     server.request({ type: 'matterbridge_dev_version', src: server.name, dst: 'matterbridge', params: { version } });
     if ((matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-')) && matterbridge.matterbridgeVersion !== version) {
+      noUpdatesAvailable = false;
       log.notice(`Matterbridge@dev is out of date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${version}.`);
       server.request({
         type: 'frontend_snackbarmessage',
         src: server.name,
         dst: 'frontend',
-        params: { message: 'Matterbridge dev update available', timeout: 0, severity: 'info' },
+        params: { message: 'Matterbridge dev update available', timeout: 60, severity: 'info' },
       });
-      server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { devVersion: true } });
-      refreshSettingsRequired = true;
-      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'settings' } });
+      server.request({ type: 'frontend_updaterequired', src: server.name, dst: 'frontend', params: { version, devVersion: true } });
     } else if ((matterbridge.matterbridgeVersion.includes('-dev-') || matterbridge.matterbridgeVersion.includes('-git-')) && matterbridge.matterbridgeVersion === version) {
       log.debug(`Matterbridge@dev is up to date. Current version: ${matterbridge.matterbridgeVersion}. Latest dev version: ${version}.`);
     }
@@ -213,13 +211,21 @@ export async function getPluginLatestVersion(log: AnsiLogger, server: BroadcastS
   try {
     const version = await getNpmPackageVersion(plugin.name);
     plugin.latestVersion = version;
+    // Send the latest version info to plugin manager to store it
     server.request({ type: 'plugins_set_latest_version', src: server.name, dst: 'plugins', params: { plugin, version } });
+    // Send the latest version info to frontend to store it
+    server.request({ type: 'frontend_pluginupdaterequired', src: server.name, dst: 'frontend', params: { plugin: plugin.name, version, devVersion: false } });
     if (plugin.version === plugin.latestVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
     } else {
+      noUpdatesAvailable = false;
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: ${plugin.latestVersion}.`);
-      refreshPluginsRequired = true;
-      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
+      server.request({
+        type: 'frontend_snackbarmessage',
+        src: server.name,
+        dst: 'frontend',
+        params: { message: `Plugin ${plugin.name} latest update available`, timeout: 60, severity: 'info' },
+      });
     }
     return version;
   } catch (error) {
@@ -243,11 +249,19 @@ export async function getPluginDevVersion(log: AnsiLogger, server: BroadcastServ
   try {
     const version = await getNpmPackageVersion(plugin.name, 'dev');
     plugin.devVersion = version;
+    // Send the dev version info to plugin manager to store it
     server.request({ type: 'plugins_set_dev_version', src: server.name, dst: 'plugins', params: { plugin, version } });
+    // Send the dev version info to frontend to store it
+    server.request({ type: 'frontend_pluginupdaterequired', src: server.name, dst: 'frontend', params: { plugin: plugin.name, version, devVersion: true } });
     if ((plugin.version.includes('-dev-') || plugin.version.includes('-git-')) && plugin.version !== plugin.devVersion) {
+      noUpdatesAvailable = false;
       log.notice(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
-      refreshPluginsRequired = true;
-      // server.request({ type: 'frontend_refreshrequired', src: server.name, dst: 'frontend', params: { changed: 'plugins' } });
+      server.request({
+        type: 'frontend_snackbarmessage',
+        src: server.name,
+        dst: 'frontend',
+        params: { message: `Plugin ${plugin.name} dev update available`, timeout: 60, severity: 'info' },
+      });
     } else if (plugin.version.includes('-dev-') && plugin.version === plugin.devVersion) {
       log.debug(`The plugin ${plg}${plugin.name}${db} is up to date. Current version: ${plugin.version}. Latest dev version: ${plugin.devVersion}.`);
     }

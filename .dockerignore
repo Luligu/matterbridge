@@ -1,5 +1,21 @@
-# Docker build context ignore rules
-# We intentionally DO NOT ignore `.git/` here.
+# General docker build context ignore rules
+
+# Not needed by the local build (saves ~150 MB of context)
+.agents
+.claude
+.devcontainer
+.env
+.git
+.github
+chip
+docker
+docs
+reflector
+screenshots
+scripts
+systemd
+**/vitest
+*.md
 
 # Dependencies
 **/node_modules/
@@ -7,7 +23,7 @@
 # Test output
 **/coverage/
 
-# Build output
+# Build output (rebuilt inside the image)
 **/dist/
 **/build/
 **/*.tsbuildinfo
@@ -25,12 +41,9 @@
 **/pnpm-debug.log*
 
 # Other assets not needed for builds
-.devcontainer
-.github
-docs
-reflector
-screenshots
-tmp
-jest
+docker-downloads-history.json
 **/tmp/
+**/temp/
+**/jest/
 **/*.tgz
+**/*.zip

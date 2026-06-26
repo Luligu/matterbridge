@@ -28,9 +28,9 @@ import type { EndpointNumber } from '@matter/types/datatype';
 import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
-import type { RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiMatter, ApiPlugin, BaseDevice, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
@@ -215,6 +215,10 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
+  matterbridge_apisettings: {
+    request: { params: undefined };
+    response: { result: { data: ApiSettings; success: true } };
+  };
   matterbridge_start_plugin_server: {
     request: { params: { pluginName: string } };
     response: { result: { success: boolean } };
@@ -264,11 +268,27 @@ export type WorkerMessageTypes = {
     response: { result: { success: true } };
   };
   frontend_updaterequired: {
-    request: { params: { devVersion: boolean } };
+    request: { params: { version: string; devVersion: boolean } };
+    response: { result: { success: true } };
+  };
+  frontend_pluginupdaterequired: {
+    request: { params: { plugin: string; version: string; devVersion: boolean } };
+    response: { result: { success: true } };
+  };
+  frontend_pluginstatusupdate: {
+    request: { params: { plugin: string; status: PluginStatusUpdate } };
+    response: { result: { success: true } };
+  };
+  frontend_matterbridgestatusupdate: {
+    request: { params: { status: BridgeStatus } };
     response: { result: { success: true } };
   };
   frontend_snackbarmessage: {
     request: { params: { message: string; timeout?: number; severity?: 'info' | 'success' | 'warning' | 'error' } };
+    response: { result: { success: true } };
+  };
+  frontend_closesnackbarmessage: {
+    request: { params: { message: string } };
     response: { result: { success: true } };
   };
   frontend_attributechanged: {

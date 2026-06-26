@@ -1,6 +1,6 @@
 // vitest\backendExpress.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters typescript/prefer-nullish-coalescing no-use-before-define
+// oxlint-disable typescript/prefer-nullish-coalescing no-use-before-define
 
 const NAME = 'BackendExpress';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);

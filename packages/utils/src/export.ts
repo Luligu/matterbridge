@@ -7,6 +7,7 @@
  * @license Apache-2.0
  */
 
+export * from './bunPrefix.js';
 export * from './colorUtils.js';
 export * from './commandLine.js';
 export * from './copyDirectory.js';

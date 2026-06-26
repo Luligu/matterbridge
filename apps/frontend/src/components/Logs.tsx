@@ -1,32 +1,36 @@
-// React
-import { useState, useContext, memo } from 'react';
-
+// @mui/icons-material
+import DeleteForever from '@mui/icons-material/DeleteForever';
 // @mui/material
-import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import type { SelectChangeEvent } from '@mui/material/Select';
-import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
+// React
+import { useState, useContext, memo } from 'react';
 
-// @mui/icons-material
-import DeleteForever from '@mui/icons-material/DeleteForever';
-
-// Frontend
-import WebSocketLogs from './WebSocketLogs';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
-import { MbfLsk } from '../utils/localStorage';
-import { debug } from '../App';
-// const debug = true;
+import WebSocketLogs from './WebSocketLogs';
+import { WebSocketContext } from './WebSocketProvider';
 
 function Logs(): React.JSX.Element {
   // Contexts
-  const { logLength, logAutoScroll, setMessages, setLogFilterLevel: setContextLogFilterLevel, setLogFilterSearch: setContextLogFilterSearch, online, filterLogMessages } = useContext(WebSocketContext);
+  const {
+    logLength,
+    logAutoScroll,
+    setMessages,
+    setLogFilterLevel: setContextLogFilterLevel,
+    setLogFilterSearch: setContextLogFilterSearch,
+    online,
+    filterLogMessages,
+  } = useContext(WebSocketContext);
   // States
   const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
   const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
@@ -78,34 +82,40 @@ function Logs(): React.JSX.Element {
     return <Connecting />;
   }
   return (
-    <MbfPage name='Logs'>
+    <MbfPage name="Logs">
       {/* Filter and Clear Button */}
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', margin: '0px', padding: '0px', gap: '10px' }}>
         {/* Filter */}
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-            <InputLabel id='select-level' style={{ color: 'var(--div-text-color)' }}>
+            <InputLabel id="select-level" style={{ color: 'var(--div-text-color)' }}>
               Filter log by level:
             </InputLabel>
-            <Select style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }} labelId='select-level' id='debug-level' value={logFilterLevel} onChange={handleLogFilterLevelChange}>
-              <MenuItem value='debug'>Debug</MenuItem>
-              <MenuItem value='info'>Info</MenuItem>
-              <MenuItem value='notice'>Notice</MenuItem>
-              <MenuItem value='warn'>Warn</MenuItem>
-              <MenuItem value='error'>Error</MenuItem>
-              <MenuItem value='fatal'>Fatal</MenuItem>
+            <Select
+              style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }}
+              labelId="select-level"
+              id="debug-level"
+              value={logFilterLevel}
+              onChange={handleLogFilterLevelChange}
+            >
+              <MenuItem value="debug">Debug</MenuItem>
+              <MenuItem value="info">Info</MenuItem>
+              <MenuItem value="notice">Notice</MenuItem>
+              <MenuItem value="warn">Warn</MenuItem>
+              <MenuItem value="error">Error</MenuItem>
+              <MenuItem value="fatal">Fatal</MenuItem>
             </Select>
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-            <InputLabel id='search' style={{ color: 'var(--div-text-color)' }}>
+            <InputLabel id="search" style={{ color: 'var(--div-text-color)' }}>
               Filter log by text:
             </InputLabel>
-            <Tooltip title='Use /text/ for case-insensitive regex search'>
+            <Tooltip title="Use /text/ for case-insensitive regex search">
               <TextField
                 style={{ width: '210px' }}
-                size='small'
-                id='logsearch'
-                variant='outlined'
+                size="small"
+                id="logsearch"
+                variant="outlined"
                 value={logFilterSearch}
                 onChange={handleLogFilterSearchChange}
                 slotProps={{
@@ -120,21 +130,35 @@ function Logs(): React.JSX.Element {
               />
             </Tooltip>
           </div>
-          <FormControlLabel control={<Checkbox checked={localLogAutoScroll} onChange={handleLogAutoScrollChange} />} label='Auto scroll' style={{ color: 'var(--div-text-color)' }} />
+          <FormControlLabel
+            control={<Checkbox checked={localLogAutoScroll} onChange={handleLogAutoScrollChange} />}
+            label="Auto scroll"
+            style={{ color: 'var(--div-text-color)' }}
+          />
         </div>
         {/* Clear Button */}
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <InputLabel id='select-size-label' style={{ color: 'var(--div-text-color)' }}>
+          <InputLabel id="select-size-label" style={{ color: 'var(--div-text-color)' }}>
             Log length:
           </InputLabel>
-          <Select style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }} labelId='select-size-label' id='select-size' value={localLogLength} onChange={handleLogLengthChange}>
+          <Select
+            style={{ height: '30px', backgroundColor: 'var(--main-bg-color)' }}
+            labelId="select-size-label"
+            id="select-size"
+            value={localLogLength}
+            onChange={handleLogLengthChange}
+          >
             <MenuItem value={100}>100</MenuItem>
             <MenuItem value={200}>200</MenuItem>
             <MenuItem value={500}>500</MenuItem>
             <MenuItem value={1000}>1000</MenuItem>
           </Select>
-          <Tooltip title='Clear the logs'>
-            <Button onClick={handleClearLogsClick} endIcon={<DeleteForever />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}>
+          <Tooltip title="Clear the logs">
+            <Button
+              onClick={handleClearLogsClick}
+              endIcon={<DeleteForever />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px' }}
+            >
               Clear
             </Button>
           </Tooltip>

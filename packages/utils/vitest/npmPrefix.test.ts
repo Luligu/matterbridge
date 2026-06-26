@@ -33,10 +33,23 @@ describe('getGlobalNodeModules()', () => {
   it('rejects on exec error', async () => {
     mockedExec.mockImplementationOnce((command, callback) => {
       if (command === 'npm root -g' && callback) {
-        callback(new Error('fail'), '', '');
+        callback(Object.assign(new Error('fail'), { cmd: command }), '', '');
       }
       return {} as ChildProcess;
     });
     await expect(getGlobalNodeModules()).rejects.toThrow('fail');
+  });
+
+  it('returns the global Bun modules path when running on Bun', async () => {
+    const originalVersions = process.versions;
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+    mockedExec.mockClear();
+    try {
+      const { getGlobalBunModules } = await import('../src/bunPrefix.js');
+      await expect(getGlobalNodeModules()).resolves.toBe(getGlobalBunModules());
+      expect(mockedExec).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+    }
   });
 });

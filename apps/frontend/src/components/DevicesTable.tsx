@@ -1,21 +1,16 @@
+// @mui/icons-material
+import SettingsIcon from '@mui/icons-material/Settings';
+// @mui/material
+import IconButton from '@mui/material/IconButton';
 // React
 import { useContext, useEffect, useState, useRef, memo, useCallback } from 'react';
 
-// @mui/material
-import IconButton from '@mui/material/IconButton';
-
-// @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
-
-// Backend
-import { ApiDevice, Cluster, WsMessageApiResponse, WsMessageApiStateUpdate } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
+import { debug } from '../appState';
+import { type ApiDevice, type Cluster, type WsMessageApiResponse, type WsMessageApiStateUpdate } from '../utils/backendShared';
 import { Connecting } from './Connecting';
-import { debug } from '../App';
-import MbfTable, { MbfTableColumn } from './MbfTable';
+import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
+import { WebSocketContext } from './WebSocketProvider';
 
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
@@ -55,8 +50,8 @@ const devicesColumns: MbfTableColumn<ApiDevice>[] = [
     noSort: true,
     render: (value, rowKey, device, _column) =>
       device.configUrl ? (
-        <IconButton onClick={() => window.open(device.configUrl, '_blank')} aria-label='Open Config' sx={{ margin: 0, padding: 0 }}>
-          <SettingsIcon fontSize='small' />
+        <IconButton onClick={() => window.open(device.configUrl, '_blank')} aria-label="Open Config" sx={{ margin: 0, padding: 0 }}>
+          <SettingsIcon fontSize="small" />
         </IconButton>
       ) : null,
   },
@@ -143,22 +138,34 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   const updateDevices = useCallback(
     (msg: WsMessageApiStateUpdate) => {
-      if (debug) console.log(`DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`, msg.response);
+      if (debug)
+        console.log(
+          `DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
+          msg.response,
+        );
       const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
       if (!updateDevice) {
         if (debug) console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
         return;
       }
       if (pluginName && endpoint && updateDevice.pluginName === pluginName && updateDevice.uniqueId === selectedDeviceUniqueId && msg.response.number.toString() === endpoint) {
-        const updatedCluster = clusters.find((c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute);
+        const updatedCluster = clusters.find(
+          (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
+        );
         if (!updatedCluster) {
-          if (debug) console.warn(`DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`);
+          if (debug)
+            console.warn(
+              `DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`,
+            );
           return;
         }
         updatedCluster.attributeValue = typeof msg.response.value === 'object' ? JSON.stringify(msg.response.value, undefined, 1).replaceAll('"', '') : String(msg.response.value);
         updatedCluster.attributeLocalValue = msg.response.value;
         setClusters([...clusters]);
-        if (debug) console.log(`DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`);
+        if (debug)
+          console.log(
+            `DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+          );
       }
     },
     [clusters, endpoint, pluginName, selectedDeviceUniqueId],
@@ -215,7 +222,14 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   useEffect(() => {
     if (pluginName && endpoint && selectedDeviceUniqueId) {
       if (debug) console.log('DevicesTable sending /api/clusters');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/clusters', src: 'Frontend', dst: 'Matterbridge', params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'DevicesTable',
+        method: '/api/clusters',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId },
+      });
       // console.log(`DevicesTable useEffect: selected device "${deviceName}" with uniqueId "${selectedDeviceUniqueId}", plugin "${pluginName}", endpoint "${endpoint}"`);
     }
   }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
@@ -258,14 +272,28 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   return (
     <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
       {/* Devices Table */}
-      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: `${pluginName && endpoint ? '30%' : '100%'}`, flex: '1 1 auto', overflow: 'hidden' }}>
-        <MbfTable name='Registered devices' getRowKey={getDeviceRowKey} onRowClick={handleDeviceClick} rows={filteredDevices} columns={devicesColumns} footerLeft={`Total devices: ${filteredDevices.length.toString()}`} />
+      <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: pluginName && endpoint ? '30%' : '100%', flex: '1 1 auto', overflow: 'hidden' }}>
+        <MbfTable
+          name="Registered devices"
+          getRowKey={getDeviceRowKey}
+          onRowClick={handleDeviceClick}
+          rows={filteredDevices}
+          columns={devicesColumns}
+          footerLeft={`Total devices: ${filteredDevices.length.toString()}`}
+        />
       </MbfWindow>
 
       {/* Clusters Table */}
       {pluginName && endpoint && (
         <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
-          <MbfTable name='Clusters' title={deviceName || ''} getRowKey={getClusterRowKey} rows={clusters} columns={clustersColumns} footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`} />
+          <MbfTable
+            name="Clusters"
+            title={deviceName || ''}
+            getRowKey={getClusterRowKey}
+            rows={clusters}
+            columns={clustersColumns}
+            footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`}
+          />
         </MbfWindow>
       )}
     </div>

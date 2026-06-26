@@ -1,40 +1,33 @@
+// TODO: verify each rule
+// oxlint-disable typescript/promise-function-async
+// oxlint-disable promise/always-return
+// oxlint-disable promise/prefer-await-to-callbacks
+// oxlint-disable typescript/use-unknown-in-catch-callback-variable
+
+// @mui/icons-material
+import Add from '@mui/icons-material/Add';
+import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
+import Download from '@mui/icons-material/Download';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+// @mui/material
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useState, useContext, useRef, memo } from 'react';
 
-// @mui/material
-import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-
-// @mui/icons-material
-import Download from '@mui/icons-material/Download';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
-import Add from '@mui/icons-material/Add';
-import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
-import ManageSearchIcon from '@mui/icons-material/ManageSearch';
-
-// Frontend
-import { UiContext } from './UiProvider';
-import { WebSocketContext } from './WebSocketProvider';
+import { debug, enableMobile } from '../appState';
+import { pluginIgnoreList } from '../pluginIgnoreList';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { SearchPluginsDialog } from './SearchPluginsDialog';
-import { debug, enableMobile } from '../App';
-
-export const pluginIgnoreList = [
-  'matterbridge-', // invalid name
-  'matterbridge-plugin-template', // standard template repository - someone published on hist name!!!!!!!
-  'matterbridge-dyson', // my package
-  'matterbridge-tuya', // my package
-  'matterbridge-matter', // my package
-  'matterbridge-automations', // my package
-  'matterbridge-securitysystem', // empty place holder
-  'matterbridge-adapter', // 5 years ago
-];
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 function HomeInstallAddPlugins() {
   // Contexts
@@ -50,7 +43,7 @@ function HomeInstallAddPlugins() {
   const uniqueId = useRef(getUniqueId());
 
   const splitPackageNameAndSpecifier = (input: string): { name: string; specifier: string | null } => {
-    const s = String(input ?? '').trim();
+    const s = (input ?? '').trim();
     if (!s) return { name: '', specifier: null };
 
     // Scoped package: @scope/name@specifier
@@ -158,7 +151,14 @@ function HomeInstallAddPlugins() {
       showSnackbarMessage(`Installation of plugin "${installName}" is blocked by the ignore list.`);
       return;
     }
-    sendMessage({ id: uniqueId.current, sender: 'InstallPlugins', method: '/api/install', src: 'Frontend', dst: 'Matterbridge', params: { packageName: installName, restart: false } });
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'InstallPlugins',
+      method: '/api/install',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { packageName: installName, restart: false },
+    });
   };
 
   const handleUninstallPluginClick = () => {
@@ -233,7 +233,7 @@ function HomeInstallAddPlugins() {
 
         {/* Input and search IconButton */}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-          <Tooltip title='Provide the npm name or the local path of the plugin to install, uninstall, or add'>
+          <Tooltip title="Provide the npm name or the local path of the plugin to install, uninstall, or add">
             <TextField
               value={pluginName}
               onChange={(event) => {
@@ -243,24 +243,24 @@ function HomeInstallAddPlugins() {
                 setSelectedPluginVersion('latest');
                 setPluginName(next);
               }}
-              size='small'
-              id='plugin-name'
-              label='Plugin name or plugin path'
-              variant='outlined'
+              size="small"
+              id="plugin-name"
+              label="Plugin name or plugin path"
+              variant="outlined"
               fullWidth
             />
           </Tooltip>
           {pluginVersions.length > 0 && (
-            <Tooltip title='Select the npm tag/version to install'>
+            <Tooltip title="Select the npm tag/version to install">
               <span>
-                <FormControl size='small' style={{ minWidth: '150px' }}>
-                  <InputLabel id='plugin-version-label'>Tag or version</InputLabel>
+                <FormControl size="small" style={{ minWidth: '150px' }}>
+                  <InputLabel id="plugin-version-label">Tag or version</InputLabel>
                   <Select
-                    labelId='plugin-version-label'
-                    id='plugin-version'
+                    labelId="plugin-version-label"
+                    id="plugin-version"
                     value={selectedPluginVersion}
-                    label='Tag or version'
-                    onChange={(event) => setSelectedPluginVersion(String(event.target.value ?? ''))}
+                    label="Tag or version"
+                    onChange={(event) => setSelectedPluginVersion(event.target.value ?? '')}
                     sx={{
                       '& .MuiSelect-icon': {
                         color: 'var(--main-label-color)',
@@ -277,40 +277,58 @@ function HomeInstallAddPlugins() {
               </span>
             </Tooltip>
           )}
-          <Tooltip title='Search on npm the plugin to install'>
-            <IconButton size='large' onClick={handleOpenSearchDialog}>
-              <ManageSearchIcon fontSize='inherit' />
+          <Tooltip title="Search on npm the plugin to install">
+            <IconButton size="large" onClick={handleOpenSearchDialog}>
+              <ManageSearchIcon fontSize="inherit" />
             </IconButton>
           </Tooltip>
         </div>
 
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '10px' }}>
-          <Tooltip title='Install or update a plugin from npm'>
-            <Button onClick={handleInstallPluginClick} endIcon={<Download />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Install or update a plugin from npm">
+            <Button
+              onClick={handleInstallPluginClick}
+              endIcon={<Download />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Install
             </Button>
           </Tooltip>
-          <Tooltip title='Uninstall and remove a plugin'>
-            <Button onClick={handleUninstallPluginClick} endIcon={<DeleteForeverOutlinedIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Uninstall and remove a plugin">
+            <Button
+              onClick={handleUninstallPluginClick}
+              endIcon={<DeleteForeverOutlinedIcon />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Uninstall
             </Button>
           </Tooltip>
-          <Tooltip title='Upload and install a plugin from a tarball'>
-            <Button onClick={handleUploadClick} onContextMenu={handleUploadRightClick} endIcon={<FileUploadIcon />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Upload and install a plugin from a tarball">
+            <Button
+              onClick={handleUploadClick}
+              onContextMenu={handleUploadRightClick}
+              endIcon={<FileUploadIcon />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Upload
             </Button>
           </Tooltip>
-          <Tooltip title='Add an already installed plugin or a plugin from a local path'>
-            <Button onClick={handleAddPluginClick} onContextMenu={handleAddRightClick} endIcon={<Add />} style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>
+          <Tooltip title="Add an already installed plugin or a plugin from a local path">
+            <Button
+              onClick={handleAddPluginClick}
+              onContextMenu={handleAddRightClick}
+              endIcon={<Add />}
+              style={{ color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}
+            >
               {' '}
               Add
             </Button>
           </Tooltip>
-          <input id='file-upload' type='file' accept='.tgz' style={{ display: 'none' }} onChange={handleFileUpload} />
+          <input id="file-upload" type="file" accept=".tgz" style={{ display: 'none' }} onChange={handleFileUpload} />
         </div>
       </MbfWindowContent>
     </MbfWindow>

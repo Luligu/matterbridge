@@ -1,20 +1,17 @@
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControlLabel from '@mui/material/FormControlLabel';
 // React
 import { useRef, useEffect, useContext } from 'react';
 
-// @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-
-// Frontend
-import { debug, enableMobile } from '../App';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
+import { debug, enableMobile } from '../appState';
 import { MbfLsk } from '../utils/localStorage';
-import { UiContext } from './UiProvider';
-// const debug = true;
+import { UiContext } from './UiContext';
 
 interface InstallProgressDialogProps {
   open: boolean;
@@ -39,7 +36,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
 
   // Scroll to the bottom whenever the output updates.
   useEffect(() => {
-    if (debug) console.log(`InstallProgressDialog output effect mounted, scrolling to bottom: ${endOfMessagesRef.current}`);
+    if (debug) console.log('InstallProgressDialog output effect mounted, scrolling to bottom:', endOfMessagesRef.current);
     setTimeout(() => {
       if (debug) console.log('Scrolling to bottom:', endOfMessagesRef.current);
       endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -71,7 +68,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>
         </div>
       </DialogTitle>
@@ -85,7 +82,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
           paddingBottom: 0,
         }}
       >
-        <label style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Process log</label>
+        <div style={{ display: 'block', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', color: 'var(--primary-color)' }}>Process log</div>
         <ul
           style={{
             width: '100%',
@@ -116,12 +113,16 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-evenly' }}>
         {onInstall && (
-          <Button variant='contained' onClick={onInstall}>
+          <Button variant="contained" onClick={onInstall}>
             Install
           </Button>
         )}
         <Button onClick={onClose}>Close</Button>
-        <FormControlLabel control={<Checkbox checked={installAutoExit} onChange={(e) => handleInstallAutoExitChange(e)} />} label='Close on success' style={{ color: 'var(--div-text-color)' }} />
+        <FormControlLabel
+          control={<Checkbox checked={installAutoExit} onChange={(e) => handleInstallAutoExitChange(e)} />}
+          label="Close on success"
+          style={{ color: 'var(--div-text-color)' }}
+        />
       </DialogActions>
     </Dialog>
   );

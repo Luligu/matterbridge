@@ -2,9 +2,7 @@
 import { createTheme } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 
-// Frontend
-import { debug } from '../App';
-// const debug = true;
+import { debug } from '../appState';
 
 // Function to get CSS variable value
 export function getCssVariable(variableName: string, defaultValue: string): string {

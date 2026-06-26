@@ -1,7 +1,5 @@
 // vitest\mb_coap.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters
-
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
 
 const mockCoapInstances: MockCoap[] = [];

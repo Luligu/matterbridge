@@ -6,8 +6,6 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-// oxlint-disable vitest/require-mock-type-parameters
-
 const NAME = 'MatterbridgeGlobal';
 const MATTER_PORT = 6000;
 
@@ -135,6 +133,27 @@ describe('Matterbridge', () => {
     expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
   });
 
+  test('Matterbridge getApiSettings', () => {
+    const apiSettings = matterbridge.getApiSettings();
+
+    expect(apiSettings.systemInformation).toEqual(matterbridge.systemInformation);
+    expect(apiSettings.systemInformation).not.toBe(matterbridge.systemInformation);
+    expect(apiSettings.matterbridgeInformation).toMatchObject({
+      rootDirectory: matterbridge.rootDirectory,
+      homeDirectory: matterbridge.homeDirectory,
+      matterbridgeDirectory: matterbridge.matterbridgeDirectory,
+      matterbridgePluginDirectory: matterbridge.matterbridgePluginDirectory,
+      matterbridgeCertDirectory: matterbridge.matterbridgeCertDirectory,
+      globalModulesDirectory: matterbridge.globalModulesDirectory,
+      matterPort: matterbridge.port ?? 5540,
+      matterDiscriminator: matterbridge.discriminator,
+      matterPasscode: matterbridge.passcode,
+      restartRequired: false,
+      fixedRestartRequired: false,
+      updateRequired: false,
+    });
+  });
+
   test('broadcast handler', async () => {
     isWorkerRequestBroadcastServerSpy.mockImplementationOnce(() => false);
     await (matterbridge as any).msgHandler({} as any);
@@ -163,6 +182,16 @@ describe('Matterbridge', () => {
     expect(matterbridge.globalModulesDirectory).toBe('');
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_platform', src: 'manager', dst: 'matterbridge', params: {} } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_shared', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    const apiSettings = matterbridge.getApiSettings();
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params: {} } as any);
+    expect(respondBroadcastServerSpy).toHaveBeenCalledWith({
+      id: 123456,
+      type: 'matterbridge_apisettings',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {},
+      result: { data: apiSettings, success: true },
+    });
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);

@@ -5,7 +5,7 @@ const originalGetComputedStyle = window.getComputedStyle;
 
 async function loadMuiTheme(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/utils/muiTheme');
 }
 
@@ -21,7 +21,7 @@ describe('muiTheme', () => {
   it('getCssVariable returns value from CSS', async () => {
     const { getCssVariable } = await loadMuiTheme();
     window.getComputedStyle = vi.fn().mockReturnValue({
-      getPropertyValue: (name: string) => name === '--primary-color' ? 'red' : '',
+      getPropertyValue: (name: string) => (name === '--primary-color' ? 'red' : ''),
     }) as any;
     expect(getCssVariable('--primary-color', 'blue')).toBe('red');
   });

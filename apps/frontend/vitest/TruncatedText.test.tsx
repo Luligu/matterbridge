@@ -8,11 +8,12 @@ globalThis.console = {
   debug: vi.fn(),
   trace: vi.fn(),
 };
-import { vi, describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { TruncatedText } from '../src/components/TruncatedText';
 
+import { render, screen } from '@testing-library/react';
+import { vi, describe, it, expect } from 'vitest';
+
+import { TruncatedText } from '../src/components/TruncatedText';
 
 describe('TruncatedText', () => {
   it('renders full text if under maxChars', () => {

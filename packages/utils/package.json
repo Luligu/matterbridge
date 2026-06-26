@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.9.1",
+  "version": "3.9.2",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -49,6 +49,10 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./bun": {
+      "types": "./dist/bunPrefix.d.ts",
+      "import": "./dist/bunPrefix.js"
     },
     "./cli": {
       "types": "./dist/commandLine.d.ts",
@@ -140,7 +144,7 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
+    "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
     "vitest": "4.1.9"

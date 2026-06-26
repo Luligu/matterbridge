@@ -1,5 +1,14 @@
-// React
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+// TODO: verify each rule
+// oxlint-disable max-lines-per-function
+// oxlint-disable typescript/promise-function-async
+// oxlint-disable unicorn/no-array-sort
+// oxlint-disable no-await-in-loop
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable typescript/no-unnecessary-type-conversion
+// oxlint-disable typescript/non-nullable-type-assertion-style
+// oxlint-disable oxc/no-map-spread
+// oxlint-disable typescript/consistent-return
+// oxlint-disable unicorn/no-array-reduce
 
 /*
   NPM fetch map (SearchPluginsDialog)
@@ -27,27 +36,26 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
     - Cache: localStorage key MbfLsk.searchPluginsVersions (per day)
 */
 
-// @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-
 // @mui/icons-material
-import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+// @mui/material
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+// React
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 
-// Frontend
-import { pluginIgnoreList } from './HomeInstallAddPlugins';
-import MbfTable, { MbfTableColumn } from './MbfTable';
+import { debug, enableMobile } from '../appState';
+import { pluginIgnoreList } from '../pluginIgnoreList';
 import { MbfLsk } from '../utils/localStorage';
-import { debug, enableMobile } from '../App';
-import { UiContext } from './UiProvider';
-// const debug = true;
+import MbfTable, { type MbfTableColumn } from './MbfTable';
+import { UiContext } from './UiContext';
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
@@ -289,7 +297,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     if (hasDevTag) list.push('dev');
     list.push(...latestVersions);
 
-    if (debug) console.log(`[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`, list);
+    if (debug)
+      console.log(
+        `[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`,
+        list,
+      );
 
     versionsCacheRef.current[packageName] = { versions: list, asOf };
     writeVersionsCache(versionsCacheRef.current);
@@ -364,7 +376,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HomeOutlinedIcon />
               </IconButton>
@@ -386,7 +398,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HelpOutlineIcon />
               </IconButton>
@@ -408,7 +420,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
                     // Ignore invalid URLs.
                   }
                 }}
-                size='small'
+                size="small"
               >
                 <HistoryOutlinedIcon />
               </IconButton>
@@ -503,7 +515,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         const json = (await response.json()) as NpmSearchResponse;
 
         const officialUsername = 'luligu';
-        const isOfficial = (pkg: NpmSearchPackage) => pkg.publisher?.username?.toLowerCase() === officialUsername || (pkg.maintainers ?? []).some((m) => m.username?.toLowerCase() === officialUsername);
+        const isOfficial = (pkg: NpmSearchPackage) =>
+          pkg.publisher?.username?.toLowerCase() === officialUsername || (pkg.maintainers ?? []).some((m) => m.username?.toLowerCase() === officialUsername);
 
         const objects = (json.objects ?? [])
           .filter((obj): obj is NpmSearchObject => !!obj?.package && typeof obj.package.name === 'string')
@@ -561,7 +574,11 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           const nextHelp = cached.help;
           const nextChangelog = cached.changelog;
           if (debug && (nextHelp || nextChangelog || (nextHomepage && nextHomepage !== r.homepage))) {
-            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, { homepage: nextHomepage, help: nextHelp, changelog: nextChangelog });
+            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, {
+              homepage: nextHomepage,
+              help: nextHelp,
+              changelog: nextChangelog,
+            });
           }
           return { ...r, homepage: nextHomepage, help: nextHelp, changelog: nextChangelog };
         });
@@ -624,7 +641,10 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           });
         const packagesNeedingMetaFetchSet = new Set(packagesNeedingMetaFetchList);
 
-        const fetchPackageMeta = async (packageName: string, fallbackHomepage: string | null): Promise<{ homepage: string | null; help: string | null; changelog: string | null } | null> => {
+        const fetchPackageMeta = async (
+          packageName: string,
+          fallbackHomepage: string | null,
+        ): Promise<{ homepage: string | null; help: string | null; changelog: string | null } | null> => {
           const latestUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
           try {
             const latestResponse = await fetch(latestUrl, { signal: controller.signal });
@@ -738,7 +758,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
             if (rangeResponse.status === 429) {
               const retryAfterHeader = rangeResponse.headers.get('retry-after');
-              const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : NaN;
+              const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
               const backoffMs = Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 2000 * (attempt + 1);
               await sleep(backoffMs);
               continue;
@@ -883,7 +903,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>Search Plugins</h4>
         </div>
       </DialogTitle>
@@ -895,10 +915,10 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             <div style={{ padding: '20px' }}>{error}</div>
           ) : (
             <MbfTable<PluginSearchRow>
-              name='Search plugins'
+              name="Search plugins"
               rows={rows}
               columns={columns}
-              getRowKey='name'
+              getRowKey="name"
               onRowClick={(row, _rowKey, event) => {
                 selectedPluginNameRef.current = row.name;
                 setPluginName(row.name);
@@ -911,12 +931,12 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         </div>
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <Tooltip title='Select the plugin and close the dialog. Double-click a row to select and close the dialog.'>
-          <Button variant='contained' onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
+        <Tooltip title="Select the plugin and close the dialog. Double-click a row to select and close the dialog.">
+          <Button variant="contained" onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
             Select
           </Button>
         </Tooltip>
-        <Tooltip title='Close the dialog without selecting a plugin.'>
+        <Tooltip title="Close the dialog without selecting a plugin.">
           <Button onClick={handleCancel}>Cancel</Button>
         </Tooltip>
       </DialogActions>

@@ -1,4 +1,4 @@
-// .oxfmtrc.json 1.0.3
+// .oxfmtrc.json 1.0.4
 
 // This Oxfmt configuration is designed for a TypeScript project using ESM modules.
 {
@@ -39,7 +39,21 @@
   "embeddedLanguageFormatting": "auto",
   "singleAttributePerLine": false,
   "sortImports": {
-    "groups": ["side_effect", "builtin", "external", ["internal", "subpath"], ["parent", "sibling", "index"], "style", "unknown"]
+    "groups": [
+      "side_effect",
+      { "newlinesBetween": true },
+      "builtin",
+      { "newlinesBetween": true },
+      "external",
+      { "newlinesBetween": true },
+      ["internal", "subpath"],
+      { "newlinesBetween": true },
+      ["parent", "sibling", "index"],
+      { "newlinesBetween": true },
+      "style",
+      { "newlinesBetween": true },
+      "unknown"
+    ]
   },
   "sortPackageJson": false
 }

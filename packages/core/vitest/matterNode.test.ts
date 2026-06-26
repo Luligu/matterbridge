@@ -55,7 +55,7 @@ const matterbridge: SharedMatterbridge = {
   dockerLatestVersion: undefined,
   dockerDevVersion: undefined,
   bridgeMode: 'bridge',
-  restartMode: '',
+  restartMode: 'none',
   virtualMode: 'disabled',
   profile: undefined,
   logLevel: LogLevel.DEBUG,

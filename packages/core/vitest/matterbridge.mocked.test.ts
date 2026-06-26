@@ -6,7 +6,6 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-// oxlint-disable vitest/require-mock-type-parameters
 // oxlint-disable typescript/require-await
 // oxlint-disable typescript/no-misused-promises
 // oxlint-disable typescript/consistent-return
@@ -187,8 +186,8 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterbridgeVersion).toBe('');
     expect(matterbridge.matterbridgeLatestVersion).toBe('');
     expect(matterbridge.matterbridgeDevVersion).toBe('');
-    expect(matterbridge.bridgeMode).toBe('');
-    expect(matterbridge.restartMode).toBe('');
+    expect(matterbridge.bridgeMode).toBe('none');
+    expect(matterbridge.restartMode).toBe('none');
     expect(matterbridge.profile).toBe('Jest');
     expect(matterbridge.shutdown).toBe(false);
     expect((matterbridge as any).edge).toBe(undefined);
@@ -1100,8 +1099,7 @@ describe('Matterbridge mocked', () => {
     expect(networkInterfacesSpy).toHaveBeenCalled();
   }, 10000);
 
-  test('matterbridge.initialize() logNodeAndSystemInfo global node modules', async () => {
-    // Reset the process.argv to simulate command line arguments
+  test('matterbridge.initialize() loads the global node modules directory', async () => {
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1110,28 +1108,67 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
     matterbridge.globalModulesDirectory = '';
-    await (matterbridge as any).logNodeAndSystemInfo();
-    await wait(100);
+    getGlobalNodeModulesMock.mockClear();
+
+    await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('usr/local/lib/node_modules');
   });
 
-  test('Matterbridge.initialize() logNodeAndSystemInfo global node modules failed', async () => {
-    // Reset the process.argv to simulate command line arguments
+  test('matterbridge.initialize() replaces a stored Node prefix with the Bun global modules directory', async () => {
+    const bunInstall = path.resolve(path.join('.cache', '.bun'));
+    const expectedGlobalModulesDirectory = path.join(bunInstall, 'install', 'global', 'node_modules');
+    const originalBunInstall = process.env.BUN_INSTALL;
+    const originalVersions = process.versions;
     process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
-    getGlobalNodeModulesMock.mockImplementation(() => {
-      throw new Error('Test error for getGlobalNodeModules');
-    });
 
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(matterbridge.nodeContext).toBeDefined();
+    await matterbridge.nodeContext?.set<string>('globalModulesDirectory', 'usr/local/lib/node_modules');
+    matterbridge.globalModulesDirectory = 'usr/local/lib/node_modules';
+    process.env.BUN_INSTALL = bunInstall;
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+
+    try {
+      await (matterbridge as any).initialize();
+      clearTimeout((matterbridge as any).systemCheckTimeout);
+      clearTimeout((matterbridge as any).checkUpdateTimeout);
+      clearInterval((matterbridge as any).checkUpdateInterval);
+      expect(matterbridge.globalModulesDirectory).toBe(expectedGlobalModulesDirectory);
+      await expect(matterbridge.nodeContext?.get<string>('globalModulesDirectory', '')).resolves.toBe(expectedGlobalModulesDirectory);
+    } finally {
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+      if (originalBunInstall === undefined) delete process.env.BUN_INSTALL;
+      else process.env.BUN_INSTALL = originalBunInstall;
+    }
+  });
+
+  test('Matterbridge.initialize() logs global node modules lookup failures', async () => {
+    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+    getGlobalNodeModulesMock.mockImplementation(() => {
+      throw new Error('Test error for getGlobalNodeModules');
+    });
+
+    expect(matterbridge.nodeContext).toBeDefined();
     await matterbridge.nodeContext?.set<string>('globalModulesDirectory', '');
     matterbridge.globalModulesDirectory = '';
-    await (matterbridge as any).logNodeAndSystemInfo();
-    await wait(100);
+
+    await (matterbridge as any).initialize();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
     expect(getGlobalNodeModulesMock).toHaveBeenCalled();
     expect(matterbridge.globalModulesDirectory).toBe('');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Getting global node_modules directory...'));

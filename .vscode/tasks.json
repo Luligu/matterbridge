@@ -153,14 +153,14 @@
     },
     {
       "label": "Lint",
-      "detail": "Run ESLint",
+      "detail": "Run linter",
       "type": "npm",
       "script": "lint",
       "problemMatcher": ["$eslint-stylish"]
     },
     {
       "label": "Format",
-      "detail": "Run Prettier",
+      "detail": "Run formatter",
       "type": "npm",
       "script": "format",
       "problemMatcher": []

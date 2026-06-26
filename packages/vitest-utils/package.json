@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/vitest-utils",
-  "version": "3.9.1",
+  "version": "3.9.2",
   "description": "Matterbridge vitest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -68,10 +68,10 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matter/main": "0.17.3",
-    "@matterbridge/types": "3.9.1",
-    "@matterbridge/utils": "3.9.1",
-    "node-ansi-logger": "3.3.0-dev-20260617-6ebcff7"
+    "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
+    "@matterbridge/types": "3.9.2",
+    "@matterbridge/utils": "3.9.2",
+    "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
     "vitest": "4.1.9"

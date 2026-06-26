@@ -1,5 +1,0 @@
-{
-  "permissions": {
-    "allow": ["Read(//c/Users/lligu/GitHub/matterbridge-irobot/src/**)", "Read(//c/Users/lligu/GitHub/**)", "Read(//tmp/**)"]
-  }
-}

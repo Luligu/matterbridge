@@ -1,14 +1,14 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ApiPlugin } from '../src/utils/backendShared';
 import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
+import type { ApiPlugin } from '../src/utils/backendShared';
 
-vi.mock('../src/App', () => ({
+vi.mock('../src/appState', () => ({
   debug: false,
 }));
 
@@ -17,7 +17,7 @@ vi.mock('@mui/material/Tooltip', () => ({
 }));
 
 vi.mock('@mui/material/Dialog', () => ({
-  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid='dialog'>{children}</div> : null),
+  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid="dialog">{children}</div> : null),
 }));
 
 describe('ConfigPluginDialog', () => {
@@ -81,11 +81,11 @@ describe('ConfigPluginDialog', () => {
     }
     return {
       ...currentConfig,
-      name: currentConfig.name!,
-      type: currentConfig.type!,
-      version: currentConfig.version!,
-      debug: currentConfig.debug!,
-      unregisterOnShutdown: currentConfig.unregisterOnShutdown!,
+      name: currentConfig.name,
+      type: currentConfig.type,
+      version: currentConfig.version,
+      debug: currentConfig.debug,
+      unregisterOnShutdown: currentConfig.unregisterOnShutdown,
       ...extra,
     } as ApiPlugin['configJson'];
   };
@@ -98,12 +98,14 @@ describe('ConfigPluginDialog', () => {
 
     const renderResult = render(
       <WebSocketContext.Provider
-        value={{
-          sendMessage,
-          addListener,
-          removeListener,
-          getUniqueId: () => 1234,
-        } as any}
+        value={
+          {
+            sendMessage,
+            addListener,
+            removeListener,
+            getUniqueId: () => 1234,
+          } as any
+        }
       >
         <ConfigPluginDialog open={true} onClose={onClose} plugin={plugin} />
       </WebSocketContext.Provider>,
@@ -123,12 +125,14 @@ describe('ConfigPluginDialog', () => {
 
     render(
       <WebSocketContext.Provider
-        value={{
-          sendMessage: vi.fn(),
-          addListener: vi.fn(),
-          removeListener: vi.fn(),
-          getUniqueId: () => 1234,
-        } as any}
+        value={
+          {
+            sendMessage: vi.fn(),
+            addListener: vi.fn(),
+            removeListener: vi.fn(),
+            getUniqueId: () => 1234,
+          } as any
+        }
       >
         <ConfigPluginDialog open={false} onClose={vi.fn()} plugin={plugin} />
       </WebSocketContext.Provider>,
@@ -148,7 +152,10 @@ describe('ConfigPluginDialog', () => {
     const itemsSection = itemsTitle.closest('div')?.parentElement;
     expect(itemsSection).not.toBeNull();
 
-    const getItemValues = () => within(itemsSection as HTMLElement).getAllByRole('textbox').map((element) => (element as HTMLInputElement).value);
+    const getItemValues = () =>
+      within(itemsSection as HTMLElement)
+        .getAllByRole('textbox')
+        .map((element) => (element as HTMLInputElement).value);
 
     expect(getItemValues()).toEqual(['one', 'two']);
 
@@ -191,7 +198,7 @@ describe('ConfigPluginDialog', () => {
     const itemsSection = itemsTitle.closest('div')?.parentElement;
     expect(itemsSection).not.toBeNull();
 
-    const getArrayInputs = () => within(itemsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getArrayInputs = () => within(itemsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getArrayInputs().map((input) => input.value)).toEqual(['one', 'two']);
 
@@ -223,7 +230,7 @@ describe('ConfigPluginDialog', () => {
     const mappingsSection = mappingsTitle.closest('div')?.parentElement;
     expect(mappingsSection).not.toBeNull();
 
-    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
 
@@ -275,7 +282,7 @@ describe('ConfigPluginDialog', () => {
     const mappingsSection = mappingsTitle.closest('div')?.parentElement;
     expect(mappingsSection).not.toBeNull();
 
-    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole('textbox') as HTMLInputElement[];
+    const getObjectInputs = () => within(mappingsSection as HTMLElement).getAllByRole<HTMLInputElement>('textbox');
 
     expect(getObjectInputs().map((input) => input.value)).toEqual(['existing', 'value-1']);
 
@@ -373,7 +380,11 @@ describe('ConfigPluginDialog', () => {
     fireEvent.click(screen.getByText('Hub Sensor'));
 
     await waitFor(() => {
-      expect(within(deviceSerialsSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['hub-001']);
+      expect(
+        within(deviceSerialsSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['hub-001']);
     });
 
     const entityDescriptionsSection = screen.getByText('Entity Descriptions').closest('div')?.parentElement;
@@ -383,7 +394,11 @@ describe('ConfigPluginDialog', () => {
     fireEvent.click(screen.getByText('Entity Component'));
 
     await waitFor(() => {
-      expect(within(entityDescriptionsSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['Component Desc']);
+      expect(
+        within(entityDescriptionsSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['Component Desc']);
     });
 
     const deviceEntitySection = screen.getByText('Kitchen Sensor').closest('div')?.parentElement;
@@ -392,7 +407,11 @@ describe('ConfigPluginDialog', () => {
     fireEvent.click(screen.getByText('Matter Desc'));
 
     await waitFor(() => {
-      expect(within(deviceEntitySection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['Matter Desc']);
+      expect(
+        within(deviceEntitySection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['Matter Desc']);
     });
   });
 
@@ -557,7 +576,11 @@ describe('ConfigPluginDialog', () => {
     fireEvent.click(screen.getByText('Hall Sensor'));
 
     await waitFor(() => {
-      expect(within(serialMappingsSection as HTMLElement).getAllByRole('textbox').map((input) => (input as HTMLInputElement).value)).toEqual(['ble-001', '']);
+      expect(
+        within(serialMappingsSection as HTMLElement)
+          .getAllByRole('textbox')
+          .map((input) => (input as HTMLInputElement).value),
+      ).toEqual(['ble-001', '']);
     });
   });
 

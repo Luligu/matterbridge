@@ -2,8 +2,8 @@
 
 FLAG_FILE="/matterbridge/.initialized"
 
-echo "Welcome to the Matterbridge local docker image."
-echo "This image is built from the local source files."
+echo "Welcome to the Matterbridge bun docker image."
+echo "This image is built from the local source files and runs on Bun."
 
 if [ ! -f "$FLAG_FILE" ]; then
 
@@ -21,8 +21,9 @@ echo "🧩 Kernel Version: $(uname -r)"
 echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
-echo "🟢 Node.js version: $(node -v)"
-echo "🟣 Npm version: $(npm -v)"
+echo "🥟 Bun version: $(bun -v)"
+echo "📍 Bun location: $(command -v bun)"
+echo "📦 Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
 
 # Start the main process
 exec "$@"

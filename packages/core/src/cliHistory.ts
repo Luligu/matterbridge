@@ -56,6 +56,7 @@ export type GenerateHistoryPageOptions = {
  *
  * @returns {string | undefined} The absolute path to the generated HTML file, or undefined if no samples exist.
  */
+// oxlint-disable-next-line max-lines-per-function
 export function generateHistoryPage(options: GenerateHistoryPageOptions = {}): string | undefined {
   const pageTitle = options.pageTitle ?? 'Matterbridge CPU & Memory History';
   const hostname = options.hostname ?? os.hostname();

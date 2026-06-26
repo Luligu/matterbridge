@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 
-import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MbfLsk, resetLocalStorage } from '../src/utils/localStorage';
@@ -73,19 +73,17 @@ describe('Devices', () => {
     // is not part of the document layout. Override for this test file.
     originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
     HTMLElement.prototype.getBoundingClientRect = function () {
-      return (
-        {
-          width: 100,
-          height: 20,
-          top: 0,
-          left: 0,
-          bottom: 20,
-          right: 100,
-          x: 0,
-          y: 0,
-          toJSON: () => ({}),
-        } as DOMRect
-      );
+      return {
+        width: 100,
+        height: 20,
+        top: 0,
+        left: 0,
+        bottom: 20,
+        right: 100,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
     };
 
     Devices = (await import('../src/components/Devices')).default;
@@ -150,7 +148,7 @@ describe('Devices', () => {
       });
     });
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLElement | null;
+    const combobox = document.querySelector<HTMLElement>('[role="combobox"]');
     expect(combobox).toBeTruthy();
 
     mockElementRect(combobox!);
@@ -160,7 +158,7 @@ describe('Devices', () => {
     });
 
     // MUI Select renders items in a listbox; in some setups MenuItem role is option, in others it's menuitem.
-    const itemA = (await screen.findByRole('option', { name: 'PluginA' }).catch(() => screen.findByRole('menuitem', { name: 'PluginA' }))) as HTMLElement;
+    const itemA = await screen.findByRole('option', { name: 'PluginA' }).catch(async () => screen.findByRole('menuitem', { name: 'PluginA' }));
     expect(itemA).toBeInTheDocument();
 
     act(() => {
@@ -188,7 +186,7 @@ describe('Devices', () => {
     const removeListener = vi.fn();
 
     let listener: ((msg: any) => void) | undefined;
-     
+
     const addListener = vi.fn((fn: (msg: any) => void) => {
       listener = fn;
     });
@@ -216,7 +214,7 @@ describe('Devices', () => {
       });
     });
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLElement | null;
+    const combobox = document.querySelector<HTMLElement>('[role="combobox"]');
     expect(combobox).toBeTruthy();
 
     mockElementRect(combobox!);
@@ -225,7 +223,7 @@ describe('Devices', () => {
       fireEvent.mouseDown(combobox!);
     });
 
-    const itemA = (await screen.findByRole('option', { name: 'PluginA' }).catch(() => screen.findByRole('menuitem', { name: 'PluginA' }))) as HTMLElement;
+    const itemA = await screen.findByRole('option', { name: 'PluginA' }).catch(async () => screen.findByRole('menuitem', { name: 'PluginA' }));
 
     act(() => {
       fireEvent.click(itemA);
@@ -302,7 +300,7 @@ describe('Devices', () => {
     expect(screen.getByTestId('devices-table')).toBeInTheDocument();
     expect(screen.queryByTestId('devices-icons')).not.toBeInTheDocument();
 
-    const combobox = document.querySelector('[role="combobox"]') as HTMLInputElement | null;
+    const combobox = document.querySelector('[role="combobox"]');
     expect(combobox?.textContent).toContain('All plugins');
 
     act(() => {

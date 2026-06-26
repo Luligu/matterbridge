@@ -3,6 +3,7 @@
   "eslint.enable": false,
   "prettier.enable": false,
   "oxc.enable": true,
+  "oxc.typeAware": true,
   "js/ts.experimental.useTsgo": true,
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
   "jestrunner.enableESM": true,

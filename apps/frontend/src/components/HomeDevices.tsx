@@ -1,40 +1,33 @@
-// React
-import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
-
-// @mui/material
-import Checkbox from '@mui/material/Checkbox';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Button from '@mui/material/Button';
-
 // @mui/icons-material
-import SettingsIcon from '@mui/icons-material/Settings';
 import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import QrCode2 from '@mui/icons-material/QrCode2';
-
+import SettingsIcon from '@mui/icons-material/Settings';
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+// React
+import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
 // @mdi/js
 
-// Backend
-import { ApiSelectDevice, ApiSettings, WsMessageApiResponse, ApiDevice, ApiMatter, ApiPlugin } from '../utils/backendShared';
-
-// Frontend
-import { WebSocketContext } from './WebSocketProvider';
-import { UiContext } from './UiProvider';
-import { Connecting } from './Connecting';
+import { basePath, debug, enableMobile } from '../appState';
+import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin, type BridgeStatus } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
-import MbfTable, { MbfTableColumn } from './MbfTable';
-import { debug, enableMobile } from '../App';
+import { Connecting } from './Connecting';
+import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
-// const debug = true;
+import { UiContext } from './UiContext';
+import { WebSocketContext } from './WebSocketProvider';
 
 /**
  * Get the unique row ID for a device.
- * @param {*} row
- * @returns A string in the format 'pluginName::serial'.
+ * @param {MixedApiDevices} row - The device row.
+ * @returns {string} A string in the format 'pluginName::serial'.
  */
 const getRowKey = (row: MixedApiDevices) => {
   return `${row.pluginName}::${row.serial}`;
@@ -87,6 +80,8 @@ interface HomeDevicesProps {
  * The user can configure the columns to display in the table.
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
+ * @param {HomeDevicesProps} props - The component props (storeId and setStoreId).
+ * @returns {React.JSX.Element} The rendered devices table.
  */
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
@@ -102,6 +97,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table show these ones, mix of devices and selectDevices
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
+  const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -123,7 +119,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     {
       label: 'Availability',
       id: 'availability',
-      render: (value, rowKey, mixedDevice, _column) => (mixedDevice.reachable === true ? 'Online' : mixedDevice.reachable === false ? <span style={{ color: 'red' }}>Offline</span> : ''),
+      render: (value, rowKey, mixedDevice, _column) =>
+        mixedDevice.reachable === true ? 'Online' : mixedDevice.reachable === false ? <span style={{ color: 'red' }}>Offline</span> : '',
       comparator: (rowA, rowB) => {
         const a = rowA.reachable === true ? 1 : rowA.reachable === false ? 0 : -1;
         const b = rowB.reachable === true ? 1 : rowB.reachable === false ? 0 : -1;
@@ -135,31 +132,31 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       id: 'powerSource',
       render: (value, rowKey, mixedDevice, _column) => {
         if (mixedDevice.powerSource === 'ac' || mixedDevice.powerSource === 'dc') {
-          return <ElectricalServicesIcon fontSize='small' sx={{ color: 'var(--primary-color)' }} />;
+          return <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />;
         } else if (mixedDevice.powerSource === 'ok') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'green' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'green' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'gray' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'gray' }} />;
         } else if (mixedDevice.powerSource === 'warning') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'yellow' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />;
         } else if (mixedDevice.powerSource === 'critical') {
           if (mixedDevice.batteryLevel) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />
+                <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize='small' sx={{ color: 'red' }} />;
+          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />;
         } else return <span></span>;
       },
     },
@@ -178,30 +175,39 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       render: (value, rowKey, mixedDevice, _column) => (
         <div style={{ display: 'flex', flexDirection: 'row' }}>
           {mixedDevice.matter !== undefined ? (
-            <Tooltip title='Show the QRCode or the fabrics' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <Tooltip title="Show the QRCode or the fabrics" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton
-                onClick={() => setStoreId(storeId === mixedDevice.matter?.id ? (settings?.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null) : mixedDevice.matter?.id || null)}
-                aria-label='Show the QRCode'
+                onClick={() =>
+                  setStoreId(
+                    storeId === mixedDevice.matter?.id ? (settings?.matterbridgeInformation.bridgeMode === 'bridge' ? 'Matterbridge' : null) : mixedDevice.matter?.id || null,
+                  )
+                }
+                aria-label="Show the QRCode"
                 sx={{ margin: 0, padding: 0, color: getQRColor(mixedDevice.matter) }}
               >
-                <QrCode2 fontSize='small' />
+                <QrCode2 fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
           {mixedDevice.configUrl ? (
-            <Tooltip title='Open the configuration page' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label='Open config url' sx={{ margin: 0, padding: 0 }}>
-                <SettingsIcon fontSize='small' />
+            <Tooltip title="Open the configuration page" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label="Open config url" sx={{ margin: 0, padding: 0 }}>
+                <SettingsIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
           {mixedDevice.selected !== undefined ? (
-            <Tooltip title='Select/unselect the device' slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <Checkbox checked={mixedDevice.selected} onChange={(event) => handleCheckboxChange(event, mixedDevice)} sx={{ margin: '0', marginLeft: '8px', padding: '0' }} size='small' />
+            <Tooltip title="Select/unselect the device" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <Checkbox
+                checked={mixedDevice.selected}
+                onChange={(event) => handleCheckboxChange(event, mixedDevice)}
+                sx={{ margin: '0', marginLeft: '8px', padding: '0' }}
+                size="small"
+              />
             </Tooltip>
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
@@ -226,12 +232,33 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       if (postfix === '') postfix = undefined;
       if (plugin.hasWhiteList === true && plugin.hasBlackList === true && selectMode) {
         device.selected = true;
-        if (selectMode === 'serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = true;
-        if (selectMode === 'serial' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = false;
-        if (selectMode === 'serial' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)) device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name)) device.selected = true;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name)) device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name)) device.selected = false;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.whiteList &&
+          plugin.configJson.whiteList.length > 0 &&
+          plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = true;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.whiteList &&
+          plugin.configJson.whiteList.length > 0 &&
+          !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = false;
+        if (
+          selectMode === 'serial' &&
+          plugin.configJson.blackList &&
+          plugin.configJson.blackList.length > 0 &&
+          plugin.configJson.blackList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+        )
+          device.selected = false;
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name))
+          device.selected = true;
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name))
+          device.selected = false;
+        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name))
+          device.selected = false;
       }
       // if(debug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} selectMode ${selectMode} postfix ${postfix} name ${device.name} serial ${device.serial} select ${device.selected}`);
       return device.selected;
@@ -271,6 +298,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.method === 'restart_not_required') {
         if (debug) console.log('HomeDevices received restart_not_required');
         setRestart(false);
+      } else if (msg.method === 'matterbridge_status_update') {
+        if (debug) console.log(`HomeDevices received matterbridge_status_update: ${msg.response.status}`);
+        setStatus(msg.response.status);
       } else if (msg.method === 'state_update') {
         if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformation') && msg.response.attribute === 'reachable') {
           if (debug) console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
@@ -280,6 +310,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
               if (debug) console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
               return prev;
             }
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
             return [...prev];
           });
@@ -288,15 +319,16 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       // Local messages
       if (msg.id === uniqueId.current && msg.method === '/api/settings') {
         if (debug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
-        setSettings(msg.response); // Store the settings response
-        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired); // Set the restart state based on the response. Used in the footer.
+        setSettings(msg.response);
+        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+        setStatus(msg.response.matterbridgeInformation.bridgeStatus);
       } else if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
         if (debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
         if (msg.response) {
           // Check if all plugins are loaded and started and not in error state before continuing
           let running = true;
           for (const plugin of msg.response) {
-            if (plugin.enabled !== true) continue;
+            if (!plugin.enabled) continue;
             if (plugin.loaded !== true || plugin.started !== true /* || plugin.configured!==true */ || plugin.error === true) {
               running = false;
             }
@@ -305,6 +337,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
 
           if (debug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
           setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
           setDevices([]);
           setSelectDevices([]);
@@ -313,7 +346,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           if (debug) console.log(`HomeDevices sent /api/devices`);
           // Request the selected devices for each plugin
           for (const plugin of msg.response) {
-            if (plugin.enabled === true && plugin.loaded === true && plugin.started === true /* && plugin.configured===true */ && plugin.error !== true) {
+            if (plugin.enabled && plugin.loaded === true && plugin.started === true /* && plugin.configured===true */ && plugin.error !== true) {
               sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
               if (debug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
             }
@@ -328,7 +361,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           setDevices(msg.response);
         }
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
-        if (debug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`, msg.response);
+        if (debug)
+          console.log(
+            `HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`,
+            msg.response,
+          );
         if (msg.response && msg.response.length > 0) {
           setSelectDevices((prevSelectDevices) => {
             // Filter out devices not from the current plugin
@@ -408,18 +445,44 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       });
     }
     if (event.target.checked) {
-      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/command', src: 'Frontend', dst: 'Matterbridge', params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'HomeDevices',
+        method: '/api/command',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+      });
     } else {
-      sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/command', src: 'Frontend', dst: 'Matterbridge', params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name } });
+      sendMessage({
+        id: uniqueId.current,
+        sender: 'HomeDevices',
+        method: '/api/command',
+        src: 'Frontend',
+        dst: 'Matterbridge',
+        params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+      });
     }
   };
 
-  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/), show it in the dialog iframe, otherwise open it in a new tab.
+  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/ or ./plugins/), show it in the dialog iframe, otherwise open it in a new tab.
   const handleConfigUrl = (device: MixedApiDevices) => {
     if (debug) console.log('handleConfigUrl device:', device.name, 'configUrl:', device.configUrl);
     if (!device.configUrl) return;
-    if (device.configUrl.startsWith('/plugins/')) {
-      setSelectedDeviceFrontend({ name: device.name, path: device.configUrl });
+    if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
+      const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
+      const pluginFrontendPathWithTrailingSlash = pluginFrontendPath.endsWith('/') ? pluginFrontendPath : `${pluginFrontendPath}/`;
+      console.log(
+        'handleConfigUrl opening plugin frontend for device:',
+        device.name,
+        'basePath:',
+        basePath,
+        'configUrl:',
+        device.configUrl,
+        'computed pluginFrontendPath:',
+        pluginFrontendPathWithTrailingSlash,
+      );
+      setSelectedDeviceFrontend({ name: device.name, path: pluginFrontendPathWithTrailingSlash });
     } else {
       window.open(device.configUrl, '_blank');
     }
@@ -468,7 +531,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     <>
       <MbfWindow style={{ flex: '1 1 auto' }}>
         <MbfTable
-          name='Devices'
+          name="Devices"
           getRowKey={getRowKey}
           rows={mixedDevices}
           columns={devicesColumns}
@@ -497,6 +560,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       >
         <DialogContent style={{ display: 'flex', flex: '1 1 auto', minHeight: 0, padding: '0px', margin: '0px', overflow: 'hidden', backgroundColor: 'var(--div-bg-color)' }}>
           {selectedDeviceFrontend && (
+            // Plugin frontends are same-origin app content needing scripts + same-origin access (WebSocket/storage); a restrictive sandbox would break them.
+            // oxlint-disable-next-line react/iframe-missing-sandbox
             <iframe
               title={`${selectedDeviceFrontend.name} frontend`}
               src={selectedDeviceFrontend.path}

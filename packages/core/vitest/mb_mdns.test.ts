@@ -1,7 +1,5 @@
 // vitest\mb_mdns.test.ts
 
-// oxlint-disable vitest/require-mock-type-parameters
-
 import os from 'node:os';
 
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';

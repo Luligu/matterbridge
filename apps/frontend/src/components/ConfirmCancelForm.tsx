@@ -1,11 +1,11 @@
 // @mui/material
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 
 // Frontend
-import { debug } from '../App';
+import { debug } from '../appState';
 
 export interface ConfirmCancelFormProps {
   open: boolean;
@@ -33,19 +33,30 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }:
     <Dialog open={open}>
       <DialogTitle gap={'20px'}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-          <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+          <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>
         </div>
       </DialogTitle>
       <DialogContent>
-        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', margin: '0', marginBottom: '20px', maxHeight: '350px', maxWidth: '350px' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0',
+            marginBottom: '20px',
+            maxHeight: '350px',
+            maxWidth: '350px',
+          }}
+        >
           <p style={{ flex: 1, margin: '0' }}>{message}</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
-          <Button onClick={handleConfirm} variant='contained' color='primary' size='small'>
+          <Button onClick={handleConfirm} variant="contained" color="primary" size="small">
             Confirm
           </Button>
-          <Button onClick={handleCancel} variant='contained' color='primary' size='small'>
+          <Button onClick={handleCancel} variant="contained" color="primary" size="small">
             Cancel
           </Button>
         </div>

@@ -1,0 +1,15 @@
+# Build context ignore rules for docker/Dockerfile.24-ubuntu-slim ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.24-ubuntu-slim`).
+# It fully replaces the root .dockerignore (no merge).
+#
+# This image is a base image (Ubuntu + Node.js 24 from nodejs.org); it does not
+# install Matterbridge or use any source. The only thing it copies from the
+# context is docker/entrypoint.24-ubuntu-slim.sh, so we ignore everything else.
+
+# Ignore everything...
+*
+
+# ...except the single entrypoint this Dockerfile copies.
+!docker/entrypoint.24-ubuntu-slim.sh

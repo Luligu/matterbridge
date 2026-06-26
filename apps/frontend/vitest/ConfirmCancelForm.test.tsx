@@ -1,10 +1,11 @@
-import React from 'react';
 import '@testing-library/jest-dom';
+
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
 vi.mock('@mui/material/Dialog', () => ({
-  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid='dialog'>{children}</div> : null),
+  default: ({ open, children }: { open: boolean; children: React.ReactNode }) => (open ? <div data-testid="dialog">{children}</div> : null),
 }));
 
 vi.mock('@mui/material/DialogTitle', () => ({
@@ -16,12 +17,13 @@ vi.mock('@mui/material/DialogContent', () => ({
 }));
 
 vi.mock('@mui/material/Button', () => ({
+  // oxlint-disable-next-line react/button-has-type
   default: ({ children, onClick }: { children: React.ReactNode; onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void }) => <button onClick={onClick}>{children}</button>,
 }));
 
 async function loadConfirmCancelForm(debug = false) {
   vi.resetModules();
-  vi.doMock('../src/App', () => ({ debug }));
+  vi.doMock('../src/appState', () => ({ debug }));
   return import('../src/components/ConfirmCancelForm');
 }
 
@@ -33,7 +35,7 @@ describe('ConfirmCancelForm', () => {
   it('does not render when closed', async () => {
     const { ConfirmCancelForm } = await loadConfirmCancelForm();
 
-    render(<ConfirmCancelForm open={false} title='Title' message='Message' onConfirm={vi.fn()} onCancel={vi.fn()} />);
+    render(<ConfirmCancelForm open={false} title="Title" message="Message" onConfirm={vi.fn()} onCancel={vi.fn()} />);
 
     expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
   });
@@ -44,7 +46,7 @@ describe('ConfirmCancelForm', () => {
     const onCancel = vi.fn();
     const { ConfirmCancelForm } = await loadConfirmCancelForm(false);
 
-    render(<ConfirmCancelForm open={true} title='Delete Device' message='Are you sure?' onConfirm={onConfirm} onCancel={onCancel} />);
+    render(<ConfirmCancelForm open={true} title="Delete Device" message="Are you sure?" onConfirm={onConfirm} onCancel={onCancel} />);
 
     expect(screen.getByText('Delete Device')).toBeInTheDocument();
     expect(screen.getByText('Are you sure?')).toBeInTheDocument();
@@ -61,7 +63,7 @@ describe('ConfirmCancelForm', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { ConfirmCancelForm } = await loadConfirmCancelForm(true);
 
-    render(<ConfirmCancelForm open={true} title='Debug Title' message='Debug Message' onConfirm={vi.fn()} onCancel={vi.fn()} />);
+    render(<ConfirmCancelForm open={true} title="Debug Title" message="Debug Message" onConfirm={vi.fn()} onCancel={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));

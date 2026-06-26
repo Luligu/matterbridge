@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+import { getGlobalBunModules, isBun } from './bunPrefix.js';
 import { logModuleLoaded } from './loader.js';
 
 logModuleLoaded('NpmPrefix');
@@ -28,9 +29,13 @@ logModuleLoaded('NpmPrefix');
 /**
  * Retrieves the path to the global Node.js modules directory.
  *
+ * When running on Bun, the global Bun modules directory is returned instead, since
+ * Bun has no `npm root -g` equivalent.
+ *
  * @returns {Promise<string>} A promise that resolves to the path of the global Node.js modules directory.
  */
 export async function getGlobalNodeModules(): Promise<string> {
+  if (isBun()) return getGlobalBunModules();
   const { exec } = await import('node:child_process');
   return new Promise((resolve, reject) => {
     exec('npm root -g', (error, stdout) => {

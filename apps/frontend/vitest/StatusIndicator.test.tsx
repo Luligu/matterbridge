@@ -8,9 +8,11 @@ globalThis.console = {
   debug: vi.fn(),
   trace: vi.fn(),
 };
-import { vi, describe, it, expect } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
+
+import { render, screen, fireEvent } from '@testing-library/react';
+import { vi, describe, it, expect } from 'vitest';
+
 import { StatusIndicator } from '../src/components/StatusIndicator';
 
 // Helper to get element by text
@@ -45,12 +47,5 @@ describe('StatusIndicator', () => {
     fireEvent.mouseOver(screen.getByText('Enabled'));
     // Tooltip should be in the document
     expect(await screen.findByText('Tooltip info')).toBeInTheDocument();
-  });
-
-  it('calls onClick when clicked', () => {
-    const handleClick = vi.fn();
-    render(<StatusIndicator status={true} onClick={handleClick} />);
-    fireEvent.click(screen.getByText('Enabled'));
-    expect(handleClick).toHaveBeenCalled();
   });
 });

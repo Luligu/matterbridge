@@ -1,6 +1,7 @@
-import React from 'react';
 import '@testing-library/jest-dom';
+
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 vi.mock('../src/components/WebSocketProvider', () => ({
@@ -8,11 +9,15 @@ vi.mock('../src/components/WebSocketProvider', () => ({
 }));
 
 vi.mock('../src/components/MatterbridgeLogo', () => ({
-  MatterbridgeLogo: ({ style }: { style?: React.CSSProperties }) => <div data-testid='matterbridge-logo' style={style}>Logo</div>,
+  MatterbridgeLogo: ({ style }: { style?: React.CSSProperties }) => (
+    <div data-testid="matterbridge-logo" style={style}>
+      Logo
+    </div>
+  ),
 }));
 
-import { WebSocketContext } from '../src/components/WebSocketProvider';
 import { Connecting } from '../src/components/Connecting';
+import { WebSocketContext } from '../src/components/WebSocketProvider';
 
 describe('Connecting', () => {
   beforeEach(() => {
@@ -23,7 +28,7 @@ describe('Connecting', () => {
     render(
       <WebSocketContext.Provider value={{ retry: 3 } as never}>
         <Connecting />
-      </WebSocketContext.Provider>
+      </WebSocketContext.Provider>,
     );
 
     expect(screen.getByTestId('matterbridge-logo')).toBeInTheDocument();
@@ -44,7 +49,7 @@ describe('Connecting', () => {
     render(
       <WebSocketContext.Provider value={{ retry: 100 } as never}>
         <Connecting />
-      </WebSocketContext.Provider>
+      </WebSocketContext.Provider>,
     );
 
     expect(screen.getByText('Unable to connect to Matterbridge after multiple attempts.')).toBeInTheDocument();

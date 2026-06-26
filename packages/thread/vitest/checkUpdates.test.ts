@@ -60,7 +60,9 @@ describe(`Test ${NAME}`, () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
     const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
     const frontendServer = new BroadcastServer('frontend', log);
-    const refreshRequiredMessages: string[] = [];
+    const matterbridgeUpdateMessages: { version: string; devVersion: boolean }[] = [];
+    const pluginUpdateMessages: { plugin: string; version: string; devVersion: boolean }[] = [];
+    const snackbarMessages: string[] = [];
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockImplementation(async (packageName: string, tag?: string) => {
@@ -74,7 +76,9 @@ describe(`Test ${NAME}`, () => {
     if (plugin !== null) plugin.version = '1.0.0-dev-1';
 
     frontendServer.on('broadcast_message', (msg) => {
-      if (msg.type === 'frontend_refreshrequired' && 'params' in msg) refreshRequiredMessages.push(msg.params.changed);
+      if (msg.type === 'frontend_updaterequired' && 'params' in msg) matterbridgeUpdateMessages.push(msg.params);
+      if (msg.type === 'frontend_pluginupdaterequired' && 'params' in msg) pluginUpdateMessages.push(msg.params);
+      if (msg.type === 'frontend_snackbarmessage' && 'params' in msg) snackbarMessages.push(msg.params.message);
     });
 
     try {
@@ -89,15 +93,23 @@ describe(`Test ${NAME}`, () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin');
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin ? plugin.name : 'unknown-plugin', 'dev');
     expect(getGitHubUpdate).toHaveBeenCalled();
-    expect(refreshRequiredMessages.filter((changed) => changed === 'settings')).toHaveLength(1);
-    expect(refreshRequiredMessages.filter((changed) => changed === 'plugins')).toHaveLength(1);
+    expect(matterbridgeUpdateMessages).toEqual([
+      { version: '1.1.0', devVersion: false },
+      { version: '1.1.0-dev-1', devVersion: true },
+    ]);
+    expect(pluginUpdateMessages).toEqual([
+      { plugin: plugin?.name, version: '1.1.0', devVersion: false },
+      { plugin: plugin?.name, version: '1.1.0-dev-1', devVersion: true },
+    ]);
+    expect(snackbarMessages).not.toContain('No updates available');
   });
 
-  it('should not send refresh messages when no refresh is required', async () => {
+  it('should send plugin version messages when all versions are current', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
     const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
     const frontendServer = new BroadcastServer('frontend', log);
-    const refreshRequiredMessages: string[] = [];
+    const pluginUpdateMessages: { plugin: string; version: string; devVersion: boolean }[] = [];
+    const snackbarMessages: string[] = [];
 
     matterbridge.matterbridgeVersion = '1.0.0';
     if (plugin !== null) plugin.version = '1.0.1';
@@ -107,7 +119,8 @@ describe(`Test ${NAME}`, () => {
     (getGitHubUpdate as Mock).mockResolvedValue({});
 
     frontendServer.on('broadcast_message', (msg) => {
-      if (msg.type === 'frontend_refreshrequired' && 'params' in msg) refreshRequiredMessages.push(msg.params.changed);
+      if (msg.type === 'frontend_pluginupdaterequired' && 'params' in msg) pluginUpdateMessages.push(msg.params);
+      if (msg.type === 'frontend_snackbarmessage' && 'params' in msg) snackbarMessages.push(msg.params.message);
     });
 
     try {
@@ -117,7 +130,11 @@ describe(`Test ${NAME}`, () => {
       frontendServer.close();
     }
 
-    expect(refreshRequiredMessages).toHaveLength(0);
+    expect(pluginUpdateMessages).toEqual([
+      { plugin: plugin?.name, version: '1.0.1', devVersion: false },
+      { plugin: plugin?.name, version: '1.0.1', devVersion: true },
+    ]);
+    expect(snackbarMessages).toEqual(['No updates available']);
   });
 
   it('should update to the latest version if versions differ', async () => {
@@ -260,6 +277,7 @@ describe(`Test ${NAME}`, () => {
 
   it('should update to the plugin latest version if versions differ', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const requestSpy = vi.spyOn(testServer, 'request');
 
     // Set the return value for this specific test case
     (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockResolvedValueOnce('1.1.0');
@@ -271,6 +289,13 @@ describe(`Test ${NAME}`, () => {
 
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: ${plugin.version}. Latest version: 1.1.0.`);
+    expect(requestSpy).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: testServer.name,
+      dst: 'frontend',
+      params: { message: `Plugin ${plugin.name} latest update available`, timeout: 60, severity: 'info' },
+    });
+    requestSpy.mockRestore();
   });
 
   it('should log a debug message if the plugin current version is up to date', async () => {
@@ -319,6 +344,7 @@ describe(`Test ${NAME}`, () => {
 
   it('should update to the plugin dev version and log if versions differ', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const requestSpy = vi.spyOn(testServer, 'request');
 
     expect(plugin).not.toBeNull();
     if (plugin === null) return;
@@ -333,6 +359,13 @@ describe(`Test ${NAME}`, () => {
     expect(getNpmPackageVersion).toHaveBeenCalledWith(plugin.name, 'dev');
     expect(plugin.devVersion).toBe('1.1.0-dev-123456');
     expect(loggerNoticeSpy).toHaveBeenCalledWith(`The plugin ${plg}${plugin.name}${nt} is out of date. Current version: 1.0.0-dev-123456. Latest dev version: 1.1.0-dev-123456.`);
+    expect(requestSpy).toHaveBeenCalledWith({
+      type: 'frontend_snackbarmessage',
+      src: testServer.name,
+      dst: 'frontend',
+      params: { message: `Plugin ${plugin.name} dev update available`, timeout: 60, severity: 'info' },
+    });
+    requestSpy.mockRestore();
   });
 
   it('should update to the plugin dev version and log if the plugin current version is up to date', async () => {

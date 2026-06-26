@@ -1,28 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// TODO: verify each rule
+// oxlint-disable typescript/no-unsafe-type-assertion
+// oxlint-disable react/only-export-components
+// oxlint-disable no-eq-null
+
+// @mdi
+import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
+import { Icon } from '@mdi/react';
+// @mui/material
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormGroup from '@mui/material/FormGroup';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 // React
 import { useMemo, useRef, useState, memo } from 'react';
 
-// @mui/material
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import FormGroup from '@mui/material/FormGroup';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import DialogActions from '@mui/material/DialogActions';
-import Checkbox from '@mui/material/Checkbox';
-
-// @mdi
-import { Icon } from '@mdi/react';
-import { mdiSortAscending, mdiSortDescending, mdiCog } from '@mdi/js';
-
-// frontend
-import { debug } from '../App';
-import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
+import { debug } from '../appState';
 import { ConditionalTooltip } from './ConditionalTooltip';
-// const debug = true;
+import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 
 // Generic comparator used by MbfTable sorting.
 export function comparator<T extends Record<string, unknown>>(rowA: T, rowB: T, key: keyof T): number {
@@ -56,7 +56,11 @@ export interface MbfTableColumn<T extends object> {
 }
 
 interface ColumnVisibility {
-  [colId: string]: boolean;
+  // Sparse override map persisted to localStorage: a key is present only to hide a column (`false`).
+  // A missing key is `undefined` and means "visible", so the optionality must stay in the type:
+  // typing this as plain `boolean` lets `no-unnecessary-boolean-literal-compare` strip the
+  // load-bearing `!== false` checks and silently flip undefined columns to hidden.
+  [colId: string]: boolean | undefined;
 }
 
 interface MbfTableProps<T extends object> {
@@ -67,7 +71,7 @@ interface MbfTableProps<T extends object> {
   getRowKey?: string | ((row: T) => string | number);
   footerLeft?: string;
   footerRight?: string;
-  onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement, MouseEvent>) => void;
+  onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement>) => void;
 }
 
 function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, onRowClick }: MbfTableProps<T>) {
@@ -77,6 +81,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
 
   const getStableRowKey = (row: T): string | number => {
     if (typeof getRowKey === 'string') {
+      // oxlint-disable-next-line typescript/no-explicit-any
       if (row && (row as any)[getRowKey] != null) return (row as any)[getRowKey] as string | number;
     }
     if (typeof getRowKey === 'function') {
@@ -84,6 +89,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       if (k != null) return k;
     }
     const firstColId = columns?.[0]?.id;
+    // oxlint-disable-next-line typescript/no-explicit-any
     if (firstColId && row && (row as any)[firstColId] != null) return (row as any)[firstColId] as string | number;
     console.warn(`MbfTable(${name}): using fallback stable row key; consider providing getRowKey prop for better React performance`);
     let k = rowKeyMapRef.current.get(row);
@@ -110,8 +116,12 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
   });
 
   // Derived effective visibility map from columns + overrides
-  const visibleMap = useMemo<Record<string, boolean>>(() => {
-    const next: Record<string, boolean> = {};
+  // Sparse derived map: only non-hidden columns get an entry, so a missing key is `undefined` and means "hidden".
+  // The optionality must stay in the type (`boolean | undefined`): typing it as plain `boolean` lets
+  // no-unnecessary-boolean-literal-compare strip the load-bearing `!== false`/`=== false` checks below and
+  // silently flip undefined (hidden) columns to visible or vice versa.
+  const visibleMap = useMemo<Record<string, boolean | undefined>>(() => {
+    const next: Record<string, boolean | undefined> = {};
     for (const col of columns) {
       if (!col.hidden) {
         next[col.id] = col.required ? true : columnVisibility[col.id] !== false;
@@ -133,7 +143,8 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       if (typeof sortCol.comparator === 'function') {
         cmp = sortCol.comparator(a.el, b.el);
       } else {
-        cmp = comparator<any>(a.el as any, b.el as any, orderBy as string);
+        // oxlint-disable-next-line typescript/no-explicit-any
+        cmp = comparator<any>(a.el as any, b.el as any, orderBy);
       }
       if (cmp !== 0) return order === 'asc' ? cmp : -cmp;
       return a.index - b.index; // stable
@@ -174,7 +185,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       if (currentlyVisible) {
         next[id] = false; // hide
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+        // oxlint-disable-next-line typescript/no-dynamic-delete
         delete next[id]; // restore default (visible)
       }
       try {
@@ -216,7 +227,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
       >
         <DialogTitle gap={'20px'}>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
-            <img src='matterbridge.svg' alt='Matterbridge Logo' style={{ height: '32px', width: '32px' }} />
+            <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
             <h4 style={{ margin: 0 }}>{`Configure ${name} columns`}</h4>
           </div>
         </DialogTitle>
@@ -227,7 +238,13 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
               .map((column) => (
                 <FormControlLabel
                   key={column.id}
-                  control={<Checkbox disabled={!!column.required} checked={column.required ? true : visibleMap[column.id] !== false} onChange={() => handleConfigureVisibilityChange(column.id)} />}
+                  control={
+                    <Checkbox
+                      disabled={!!column.required}
+                      checked={column.required ? true : visibleMap[column.id] !== false}
+                      onChange={() => handleConfigureVisibilityChange(column.id)}
+                    />
+                  }
                   label={column.label}
                 />
               ))}
@@ -236,7 +253,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         <DialogActions>
           <Button onClick={handleResetVisibility}>Reset</Button>
           <Button
-            variant='contained'
+            variant="contained"
             onClick={(e) => {
               if (e?.currentTarget && typeof e.currentTarget.blur === 'function') {
                 try {
@@ -266,7 +283,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         {title && <MbfWindowHeaderText>{title}</MbfWindowHeaderText>}
         <MbfWindowIcons close={() => setClosed(true)}>
           <IconButton
-            size='small'
+            size="small"
             sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}
             onClick={(e) => {
               if (e?.currentTarget?.blur) {
@@ -278,16 +295,18 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
               }
               toggleConfigureVisibilityDialog();
             }}
-            aria-label='Configure Columns'
+            aria-label="Configure Columns"
           >
             <Tooltip title={`Configure ${name} columns`}>
-              <Icon path={mdiCog} size='20px' color={'var(--header-text-color)'} />
+              <Icon path={mdiCog} size="20px" color={'var(--header-text-color)'} />
             </Tooltip>
           </IconButton>
         </MbfWindowIcons>
       </MbfWindowHeader>
 
-      <MbfWindowContent style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}>
+      <MbfWindowContent
+        style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', minHeight: 0, width: '100%', overflow: 'auto', margin: '0px', padding: '0px', gap: '0' }}
+      >
         <table aria-label={`${name} table`} style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 10, border: 'none', color: 'var(--header-text-color)', backgroundColor: 'var(--header-bg-color' }}>
             <tr style={{ height: '30px', minHeight: '30px' }}>
@@ -321,8 +340,8 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                     {column.label}
                     {isActive && (
                       <span style={{ marginLeft: 6 }}>
-                        {order === 'asc' && <Icon path={mdiSortAscending} size='15px' />}
-                        {order === 'desc' && <Icon path={mdiSortDescending} size='15px' />}
+                        {order === 'asc' && <Icon path={mdiSortAscending} size="15px" />}
+                        {order === 'desc' && <Icon path={mdiSortDescending} size="15px" />}
                       </span>
                     )}
                   </th>
@@ -349,12 +368,18 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                   {columns.map((column) => {
                     if (column.hidden) return null;
                     if (!column.required && visibleMap[column.id] === false) return null;
+                    // oxlint-disable-next-line typescript/no-explicit-any
                     const value = (row as any)[column.id];
                     const cellContent =
                       typeof column.render === 'function' ? (
                         column.render(value, rowKey, row, column)
                       ) : typeof value === 'boolean' ? (
-                        <Checkbox checked={value} disabled size='small' sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }} />
+                        <Checkbox
+                          checked={value}
+                          disabled
+                          size="small"
+                          sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }}
+                        />
                       ) : column.format && typeof value === 'number' ? (
                         column.format(value)
                       ) : value !== undefined && value !== null ? (
@@ -362,7 +387,12 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                       ) : null;
 
                     const tooltipEnabled = !!column.tooltip && column.maxWidth !== undefined && column.maxWidth !== null;
-                    const cellWithTooltip = tooltipEnabled && value !== undefined && value !== null && cellContent !== null ? <ConditionalTooltip title={String(value)}>{cellContent}</ConditionalTooltip> : cellContent;
+                    const cellWithTooltip =
+                      tooltipEnabled && value !== undefined && value !== null && cellContent !== null ? (
+                        <ConditionalTooltip title={String(value)}>{cellContent}</ConditionalTooltip>
+                      ) : (
+                        cellContent
+                      );
                     return (
                       <td
                         key={column.id}
@@ -401,6 +431,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
 
 // Helper to preserve generics with React.memo
 function typedMemo<T>(c: T): T {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/no-explicit-any
   return memo(c as any) as T;
 }
 

@@ -832,7 +832,48 @@ describe('PluginManager', () => {
     plugins.install('matterbridge-websocket');
     plugins.uninstall('matterbridge-websocket');
     expect(plugins.length).toBe(3);
-    matterbridge.restartMode = '';
+    matterbridge.restartMode = 'none';
+  });
+
+  test('install and uninstall plugins with Bun commands when running on Bun', () => {
+    const originalVersions = process.versions;
+    Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
+
+    try {
+      plugins.install('matterbridge-bun-test');
+      expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: {
+            name: 'SpawnCommand',
+            workerData: {
+              threadName: 'SpawnCommand',
+              command: 'bun',
+              args: ['install', '-g', 'matterbridge-bun-test', '--production'],
+              packageCommand: 'install',
+              packageName: 'matterbridge-bun-test',
+            },
+          },
+        }),
+      );
+
+      plugins.uninstall('matterbridge-bun-test');
+      expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          params: {
+            name: 'SpawnCommand',
+            workerData: {
+              threadName: 'SpawnCommand',
+              command: 'bun',
+              args: ['uninstall', '-g', 'matterbridge-bun-test'],
+              packageCommand: 'uninstall',
+              packageName: 'matterbridge-bun-test',
+            },
+          },
+        }),
+      );
+    } finally {
+      Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
+    }
   });
 
   test('parse plugin', async () => {
@@ -1109,6 +1150,52 @@ describe('PluginManager', () => {
     plugin.error = false;
 
     (plugins as any)._plugins.delete('matterbridge-test');
+  });
+
+  test('parse plugin resolves missing package paths from global and Matterbridge plugin directories', async () => {
+    const fallbackDirectories: string[] = [];
+    const pluginNames = ['matterbridge-global-path', 'matterbridge-local-path'];
+
+    try {
+      fallbackDirectories.push(matterbridge.globalModulesDirectory, matterbridge.matterbridgePluginDirectory);
+      const globalPackagePath = path.join(matterbridge.globalModulesDirectory, pluginNames[0], 'package.json');
+      const localPackagePath = path.join(matterbridge.matterbridgePluginDirectory, pluginNames[1], 'package.json');
+      const packagePaths = [globalPackagePath, localPackagePath];
+
+      await Promise.all(
+        packagePaths.map(async (packagePath, index) => {
+          await fs.mkdir(path.dirname(packagePath), { recursive: true });
+          await fs.writeFile(
+            packagePath,
+            JSON.stringify({ name: pluginNames[index], type: 'module', main: 'index.js', version: '1.0.0', description: 'Test plugin', author: 'Test author' }),
+            'utf8',
+          );
+        }),
+      );
+
+      const pluginsToParse: Plugin[] = pluginNames.map((name) => ({
+        name,
+        path: path.join('.cache', 'missing', name, 'package.json'),
+        type: 'AnyPlatform',
+        version: '1.0.0',
+        description: 'Test plugin',
+        author: 'Test author',
+        enabled: true,
+        private: true,
+      }));
+
+      expect(await plugins.parse(pluginsToParse[0])).not.toBeNull();
+      expect(pluginsToParse[0].path).toBe(globalPackagePath);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('in global npm modules directory'));
+
+      expect(await plugins.parse(pluginsToParse[1])).not.toBeNull();
+      expect(pluginsToParse[1].path).toBe(localPackagePath);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('in matterbridge plugin directory'));
+    } finally {
+      for (const [index, directory] of fallbackDirectories.entries()) {
+        await fs.rm(path.join(directory, pluginNames[index]), { recursive: true, force: true });
+      }
+    }
   });
 
   test('parse author', () => {

@@ -1,6 +1,3 @@
-// React
-import React from 'react';
-
 // @mui/material
 import Tooltip from '@mui/material/Tooltip';
 
@@ -9,15 +6,14 @@ interface StatusIndicatorProps {
   enabledText?: string;
   disabledText?: string;
   tooltipText?: string;
-  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
-export function StatusIndicator({ status, enabledText = 'Enabled', disabledText = undefined, tooltipText = undefined, onClick }: StatusIndicatorProps) {
+export function StatusIndicator({ status, enabledText = 'Enabled', disabledText, tooltipText }: StatusIndicatorProps) {
   if (status === undefined) {
     return null;
   } else {
     const content = (
-      <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }} onClick={onClick}>
+      <div className={status ? 'status-enabled' : 'status-disabled'} style={{ cursor: 'default' }}>
         {status ? enabledText : (disabledText ?? enabledText)}
       </div>
     );

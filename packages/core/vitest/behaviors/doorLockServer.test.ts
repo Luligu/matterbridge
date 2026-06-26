@@ -1,8 +1,5 @@
 // src\behaviors\doorLockServer.test.ts
 
-// TODO: analyze each rule
-// oxlint-disable vitest/require-mock-type-parameters
-
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
