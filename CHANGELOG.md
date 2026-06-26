@@ -63,6 +63,7 @@ These classes will run as threads in the next releases:
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
+- [workflows]: Update all GitHub Actions to their latest major versions.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

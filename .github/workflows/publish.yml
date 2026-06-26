@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: main
 
@@ -95,7 +95,7 @@ jobs:
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest
 
       - name: Trigger Matterbridge Docker Build Latest
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -107,7 +107,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build Dev
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -119,7 +119,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build 24-ubuntu-slim
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -131,7 +131,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build Alpine
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -143,7 +143,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build Bun
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -155,7 +155,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build s6-rc
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -167,7 +167,7 @@ jobs:
             })
 
       - name: Trigger Matterbridge Docker Build s6-rc-legacy
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
@@ -184,7 +184,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout dev
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: dev
 
@@ -301,7 +301,7 @@ jobs:
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
