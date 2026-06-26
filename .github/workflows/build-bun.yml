@@ -53,6 +53,9 @@ jobs:
       - name: Install matterbridge dependencies
         run: bun install
 
+      - name: Build matterbridge
+        run: bun run build
+
       - name: Install frontend dependencies
         run: bun install
         working-directory: apps/frontend
