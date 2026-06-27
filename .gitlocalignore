@@ -1,0 +1,9 @@
+chip/
+heap_profile
+heap_profiles
+heap_snapshots
+TODO.md
+
+# Allow dist folders inside vendor/
+!vendor/**/dist/
+!vendor/**/dist/**

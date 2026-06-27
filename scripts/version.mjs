@@ -7,9 +7,6 @@
  *
  * Usage:
  *   node scripts/version.mjs <dev|edge|git|local> [--dry-run]
- *
- * Requirements:
- *   Node.js 18+ (for global fetch)
  */
 
 /* eslint-disable no-console */
