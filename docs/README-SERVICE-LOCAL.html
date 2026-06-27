@@ -269,13 +269,21 @@ sudo journalctl --vacuum-time=3d
 <p>If you want to make the setting permanent to prevent the journal logs to grow too much, run</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/journald.conf
 </code></pre>
-<p>add</p>
-<pre><code class="language-bash">Compress=yes            # Compress logs
-MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
-MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
-ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
-SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
-RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
+<p>add these to the [Journal] section:</p>
+<pre><code class="language-bash"># Store logs persistently in /var/log/journal so they survive reboots.
+Storage=persistent
+# Compress logs to save space.
+Compress=yes
+# Keep logs for a maximum of 3 days.
+MaxRetentionSec=3days
+# Rotate logs daily within the 3-day retention period.
+MaxFileSec=1day
+# Disable forwarding to syslog to prevent duplicate logging.
+ForwardToSyslog=no
+# Limit persistent logs in /var/log/journal to 100 MB.
+SystemMaxUse=100M
+# Limit runtime logs in /run/log/journal to 100 MB.
+RuntimeMaxUse=100M
 </code></pre>
 <p>save it and run</p>
 <pre><code class="language-bash">sudo systemctl restart systemd-journald

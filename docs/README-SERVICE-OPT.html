@@ -285,6 +285,37 @@ sudo systemctl status matterbridge.service
 <h3 id="view-the-log-of-matterbridge-in-real-time-this-will-show-the-log-with-colors">View the log of Matterbridge in real time (this will show the log with colors)</h3>
 <pre><code class="language-bash">sudo journalctl -u matterbridge -n 1000 -f --output cat
 </code></pre>
+<h3 id="delete-the-logs-older-then-3-days-all-of-them-not-only-the-ones-of-matterbridge">Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)</h3>
+<p>Check the space used</p>
+<pre><code class="language-bash">sudo journalctl --disk-usage
+</code></pre>
+<p>remove all log older then 3 days</p>
+<pre><code class="language-bash">sudo journalctl --rotate
+sudo journalctl --vacuum-time=3d
+</code></pre>
+<h2 id="prevent-the-journal-logs-to-grow">Prevent the journal logs to grow</h2>
+<p>If you want to make the setting permanent to prevent the journal logs to grow too much, run</p>
+<pre><code class="language-bash">sudo nano /etc/systemd/journald.conf
+</code></pre>
+<p>add these to the [Journal] section:</p>
+<pre><code class="language-bash"># Store logs persistently in /var/log/journal so they survive reboots.
+Storage=persistent
+# Compress logs
+Compress=yes
+# Keep logs for a maximum of 3 days.
+MaxRetentionSec=3days
+# Rotate logs daily within the 3-day retention period.
+MaxFileSec=1day
+# Disable forwarding to syslog to prevent duplicate logging.
+ForwardToSyslog=no
+# Limit persistent logs in /var/log/journal to 100 MB.
+SystemMaxUse=100M
+# Limit runtime logs in /run/log/journal to 100 MB.
+RuntimeMaxUse=100M
+</code></pre>
+<p>save it and run</p>
+<pre><code class="language-bash">sudo systemctl restart systemd-journald
+</code></pre>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

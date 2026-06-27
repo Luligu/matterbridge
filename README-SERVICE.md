@@ -182,18 +182,26 @@ If you want to make the setting permanent to prevent the journal logs to grow to
 sudo nano /etc/systemd/journald.conf
 ```
 
-add
+add these to the [Journal] section:
 
 ```bash
-Compress=yes            # Compress logs
-MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
-MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
-ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
-SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
-RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
+# Store logs persistently in /var/log/journal so they survive reboots.
+Storage=persistent
+# Compress logs
+Compress=yes
+# Keep logs for a maximum of 3 days.
+MaxRetentionSec=3days
+# Rotate logs daily within the 3-day retention period.
+MaxFileSec=1day
+# Disable forwarding to syslog to prevent duplicate logging.
+ForwardToSyslog=no
+# Limit persistent logs in /var/log/journal to 100 MB.
+SystemMaxUse=100M
+# Limit runtime logs in /run/log/journal to 100 MB.
+RuntimeMaxUse=100M
 ```
 
-save it and run
+save it and run:
 
 ```bash
 sudo systemctl restart systemd-journald
