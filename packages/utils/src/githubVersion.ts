@@ -40,26 +40,44 @@ export type UpdateJson = {
  * @param {string} branch - The branch from which to fetch the file.
  * @param {string} file - The file path to fetch.
  * @param {number} [timeout] - The timeout duration in milliseconds (default is 10000ms).
- * @returns {Promise<Record<string, boolean | string | number>>} A promise that resolves to the parsed JSON object from the file.
+ * @returns {Promise<UpdateJson>} A promise that resolves to the parsed update JSON object from the file.
  * @throws {Error} If the request fails or the JSON parsing fails.
+ * @throws {Error} If the request times out.
  */
 export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, timeout: number = 10000): Promise<UpdateJson> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://matterbridge.io/${branch}_${file}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
-    }, timeout);
+    let settled = false;
+    let req: ReturnType<typeof https.get> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    const req = https.get(url, { signal: controller.signal }, (res) => {
+    const rejectOnce = (error: Error): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(error);
+    };
+
+    const resolveOnce = (updateJson: UpdateJson): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(updateJson);
+    };
+
+    const timeoutError = new Error(`Request timed out after ${timeout / 1000} seconds`);
+    timeoutId = setTimeout(() => {
+      req?.destroy?.(timeoutError);
+      rejectOnce(timeoutError);
+    }, timeout).unref();
+
+    req = https.get(url, {}, (res) => {
       let data = '';
 
       if (res.statusCode !== 200) {
-        clearTimeout(timeoutId);
         res.resume(); // Discard response data to close the socket properly
-        reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
+        rejectOnce(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
         return;
       }
 
@@ -68,20 +86,19 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
       });
 
       res.on('end', () => {
-        clearTimeout(timeoutId);
         try {
           const jsonData = JSON.parse(data);
-          resolve(jsonData);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          resolveOnce(jsonData as UpdateJson);
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
+          rejectOnce(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
-      clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
+      rejectOnce(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

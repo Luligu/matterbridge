@@ -68,7 +68,8 @@ export function takeDockerVersionWarning(): string | undefined {
  * @param {string} url The URL.
  * @param {Record<string, string> | undefined} headers Optional request headers.
  * @param {number} timeoutMs Timeout in milliseconds.
- * @returns {Promise<T>} Parsed JSON.
+ * @returns {Promise<T>} A promise that resolves to the parsed JSON.
+ * @throws {Error} If the request fails, times out, or the JSON parsing fails.
  */
 async function httpsGetJson<T>(url: string, headers: Record<string, string> | undefined, timeoutMs: number): Promise<T> {
   const https = await import('node:https');
@@ -183,6 +184,8 @@ function getOciVersionLabel(config: DockerConfigBlob): string | undefined {
 
 /**
  * Retrieves the OCI image version label from a Docker Hub image.
+ * If Docker Hub returns a rate limit response, the warning can be read with takeDockerVersionWarning().
+ * Other lookup failures return undefined.
  *
  * Example: getDockerVersion('luligu', 'matterbridge', 'latest')
  *

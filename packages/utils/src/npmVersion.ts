@@ -30,25 +30,42 @@ import { getErrorMessage } from './error.js';
  * @param {string} [tag] - The tag of the package version to retrieve (default is 'latest').
  * @param {number} [timeout] - The timeout duration in milliseconds (default is 10000ms).
  * @returns {Promise<string>} A promise that resolves to the version string of the package.
- * @throws {Error} If the request fails or the tag is not found.
+ * @throws {Error} If the request fails, times out, or the tag is not found.
  */
 export async function getNpmPackageVersion(packageName: string, tag: string = 'latest', timeout: number = 10000): Promise<string> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://registry.npmjs.org/${packageName}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
-    }, timeout);
+    let settled = false;
+    let req: ReturnType<typeof https.get> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    const req = https.get(url, { signal: controller.signal }, (res) => {
+    const rejectOnce = (error: Error): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(error);
+    };
+
+    const resolveOnce = (version: string): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(version);
+    };
+
+    const timeoutError = new Error(`Request timed out after ${timeout / 1000} seconds`);
+    timeoutId = setTimeout(() => {
+      req?.destroy?.(timeoutError);
+      rejectOnce(timeoutError);
+    }, timeout).unref();
+
+    req = https.get(url, {}, (res) => {
       let data = '';
 
       if (res.statusCode !== 200) {
-        clearTimeout(timeoutId);
         res.resume(); // Discard response data to close the socket properly
-        reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
+        rejectOnce(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
         return;
       }
 
@@ -57,25 +74,23 @@ export async function getNpmPackageVersion(packageName: string, tag: string = 'l
       });
 
       res.on('end', () => {
-        clearTimeout(timeoutId);
         try {
           const jsonData = JSON.parse(data);
           // console.log(`Package ${packageName} tag ${tag}`, jsonData);
           const version = jsonData['dist-tags']?.[tag];
           if (version) {
-            resolve(version);
+            resolveOnce(version);
           } else {
-            reject(new Error(`Tag "${tag}" not found for package "${packageName}"`));
+            rejectOnce(new Error(`Tag "${tag}" not found for package "${packageName}"`));
           }
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
+          rejectOnce(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     req.on('error', (error) => {
-      clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
+      rejectOnce(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

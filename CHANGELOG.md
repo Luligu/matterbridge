@@ -79,7 +79,7 @@ These classes will run as threads in the next releases:
 - [oxlint]: Update `Oxfmt configuration` to v.1.0.5.
 - [readme]: Improve the journald configuration comments in `README-SERVICE.md`, `README-SERVICE-OPT.md` and `README-SERVICE-LOCAL.md`.
 - [bun]: Change bun install param from --production to --omit=dev to avoid the frozen lock.
-- [docker]: Refactor Docker version check timeout handling and warn when Docker Hub rate limits version lookups.
+- [docker]: Refactor Docker, npm and GitHub version check timeout handling and warn when Docker Hub rate limits version lookups.
 
 - [codex]: Update config to v.1.0.1.
 
