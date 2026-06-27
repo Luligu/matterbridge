@@ -8,7 +8,6 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
 
-// oxlint-disable-next-line typescript/require-await
 const loadInstance = vi.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   throw new Error('Mock implementation of loadInstance called.'); // Simulate an error by throwing an exception
 });

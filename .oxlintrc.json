@@ -1,6 +1,6 @@
-// .oxlintrc.json 1.0.14
+// .oxlintrc.json 1.0.16
 
-// This Oxlint configuration is designed for a TypeScript project using ESM modules.
+// This Oxlint configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules.
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "ignorePatterns": [
@@ -98,14 +98,26 @@
     "typescript/no-non-null-assertion": "warn",
     "typescript/require-await": "warn",
     "typescript/promise-function-async": "warn",
-    "typescript/consistent-type-imports": ["warn", { "prefer": "type-imports", "fixStyle": "inline-type-imports", "disallowTypeAnnotations": false }],
+    "typescript/consistent-type-imports": [
+      "warn",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "inline-type-imports",
+        "disallowTypeAnnotations": false
+      }
+    ],
     "typescript/only-throw-error": "error",
     "typescript/ban-ts-comment": "error",
     "typescript/no-require-imports": "error",
     "typescript/prefer-nullish-coalescing": "warn",
     "typescript/prefer-optional-chain": "warn",
     "typescript/explicit-member-accessibility": "off", // Public is the TypeScript default; require modifiers only where visibility matters.
-    "typescript/no-deprecated": ["warn", { "allow": ["ClusterType", "invokeBehaviorCommand", "invokeSubscribeHandler"] }],
+    "typescript/no-deprecated": [
+      "warn",
+      {
+        "allow": ["ClusterType", "invokeBehaviorCommand", "invokeSubscribeHandler"]
+      }
+    ],
     "node/no-process-env": "off", // Accessing environment variables is common and not a problem in this project
     "jsdoc/check-tag-names": ["warn", { "definedTags": ["created", "contributor", "remarks"] }],
     "jsdoc/require-param": "warn",
@@ -148,6 +160,7 @@
         "eslint/complexity": "off",
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-explicit-any": "off",
+        "typescript/require-await": "off",
         "typescript/unbound-method": "off",
         "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
         "jest/require-to-throw-message": "off",
@@ -184,6 +197,7 @@
         "eslint/complexity": "off",
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-explicit-any": "off",
+        "typescript/require-await": "off",
         "typescript/unbound-method": "off",
         "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
         "vitest/require-to-throw-message": "off",
@@ -220,6 +234,7 @@
         "eslint/complexity": "off",
         "typescript/no-unsafe-type-assertion": "off",
         "typescript/no-explicit-any": "off",
+        "typescript/require-await": "off",
         "typescript/unbound-method": "off",
         "typescript/no-deprecated": ["warn", { "allow": ["invokeBehaviorCommand", "invokeSubscribeHandler"] }],
         "jsdoc/require-param": "off",

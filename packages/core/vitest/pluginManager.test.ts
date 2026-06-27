@@ -195,7 +195,6 @@ describe('PluginManager', () => {
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
     expect((await testServer.fetch({ type: 'plugins_add', src: testServer.name, dst: 'plugins', params: { nameOrPath: pluginPath } }, 5000)).result.plugin).toBeDefined();
-    // oxlint-disable-next-line typescript/require-await
     addPluginSpy.mockImplementationOnce(async (nameOrPath: string) => {
       return null;
     });
@@ -345,7 +344,6 @@ describe('PluginManager', () => {
 
   test('async forEach to return', async () => {
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       count++;
     });
@@ -694,7 +692,6 @@ describe('PluginManager', () => {
 
   test('async forEach allows for iteration over plugins', async () => {
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       expect(plugin.name).toBeDefined();
       expect(plugin.path).toBeDefined();
@@ -713,7 +710,6 @@ describe('PluginManager', () => {
 
   test('async forEach to not throw', async () => {
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await plugins.forEach(async (plugin: Plugin) => {
       count++;
       throw new Error('Test error');
@@ -1710,7 +1706,6 @@ describe('PluginManager', () => {
     loggerLogSpy.mockClear();
 
     // Test save config onConfigChanged error from json
-    // oxlint-disable-next-line typescript/require-await
     vi.spyOn(plugin.platform, 'onConfigChanged').mockImplementationOnce(async () => {
       throw new Error('Test error');
     });

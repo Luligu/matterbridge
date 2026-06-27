@@ -71,6 +71,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Update dependencies.
 - [workflows]: Update all GitHub Actions to their latest major versions.
 - [docker]: Add `matterbridge-mqtt` to the dev Docker image.
+- [oxlint]: Update `Oxlint configuration` to v.1.0.16.
 
 - [frontend]: Bump `frontend` version to v.3.5.1.
 - [frontend]: Update dependencies.

@@ -6,7 +6,6 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-// oxlint-disable typescript/require-await
 // oxlint-disable typescript/no-misused-promises
 // oxlint-disable typescript/consistent-return
 // oxlint-disable typescript/non-nullable-type-assertion-style

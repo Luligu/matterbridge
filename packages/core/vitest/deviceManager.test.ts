@@ -188,7 +188,6 @@ describe('DeviceManager', () => {
 
   test('async forEach allows for iteration over devices', async () => {
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       expect(device.name).toBeDefined();
       expect(device.serialNumber).toBeDefined();
@@ -201,7 +200,6 @@ describe('DeviceManager', () => {
 
   test('async forEach to not throw', async () => {
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       count++;
       throw new Error('Test error');
@@ -299,7 +297,6 @@ describe('DeviceManager', () => {
   test('async forEach to return immediately if no devices', async () => {
     expect(devices.length).toBe(0);
     let count = 0;
-    // oxlint-disable-next-line typescript/require-await
     await devices.forEach(async (device: MatterbridgeEndpoint) => {
       count++;
     });

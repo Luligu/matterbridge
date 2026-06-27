@@ -6,8 +6,10 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-// oxlint-disable typescript/require-await typescript/explicit-function-return-type typescript/consistent-return typescript/no-floating-promises
-/* eslint-disable no-console */
+// oxlint-disable typescript/explicit-function-return-type
+// oxlint-disable typescript/consistent-return
+// oxlint-disable typescript/no-floating-promises
+// oxlint-disable no-console
 
 const MATTER_PORT = 9000;
 const FRONTEND_PORT = 8284;
