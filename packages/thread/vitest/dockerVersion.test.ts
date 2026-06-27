@@ -8,7 +8,7 @@ vi.doMock('node:https', (): { get: (...args: any[]) => any } => {
   };
 });
 
-const { getDockerVersion } = await import('../src/dockerVersion.js');
+const { getDockerVersion, takeDockerVersionWarning } = await import('../src/dockerVersion.js');
 
 function createStreamingJsonResponse(statusCode: number | undefined, jsonBody: any, raw = false, headers: Record<string, any> = {}): any {
   const handlers: Record<string, Array<(...args: any[]) => void>> = {};
@@ -39,6 +39,29 @@ describe('getDockerVersion', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  test('does not pass an AbortController signal to node:https', async () => {
+    let tokenRequestOptions: any;
+
+    httpsGetImpl.mockImplementation((_url: string, options: any, callback: (res: any) => void) => {
+      tokenRequestOptions = options;
+      const request = {
+        on: vi.fn<(...args: any[]) => any>().mockReturnThis(),
+      };
+
+      queueMicrotask(() => {
+        const response = createStreamingJsonResponse(200, { token: 'short' });
+        callback(response);
+        response.start();
+      });
+
+      return request as any;
+    });
+
+    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(tokenRequestOptions).toEqual({ headers: undefined });
+    expect(tokenRequestOptions).not.toHaveProperty('signal');
   });
 
   test('returns org.opencontainers.image.version from Docker Hub image config', async () => {
@@ -555,6 +578,37 @@ describe('getDockerVersion', () => {
     expect(resume).toHaveBeenCalled();
   });
 
+  test('sets a warning when Docker Hub rate limit is reached', async () => {
+    httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
+
+      queueMicrotask(() => {
+        if (url.startsWith('https://auth.docker.io/token')) {
+          const response = createStreamingJsonResponse(200, { token: 'token-1234567890' });
+          callback(response);
+          response.start();
+          return;
+        }
+
+        if (url.includes('/manifests/')) {
+          const response = createStreamingJsonResponse(429, {
+            errors: [{ code: 'TOOMANYREQUESTS', message: 'You have reached your unauthenticated pull rate limit.' }],
+          });
+          callback(response);
+          return;
+        }
+
+        throw new Error(`Unexpected url: ${url}`);
+      });
+
+      return request as any;
+    });
+
+    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(takeDockerVersionWarning()).toBe('Docker Hub rate limit reached while checking luligu/matterbridge:latest. Docker image version is unavailable.');
+    expect(takeDockerVersionWarning()).toBeUndefined();
+  });
+
   test('returns undefined when response JSON is invalid (parse error)', async () => {
     httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
       const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
@@ -605,9 +659,10 @@ describe('getDockerVersion', () => {
 
   test('returns undefined on request timeout', async () => {
     vi.useFakeTimers();
+    const destroy = vi.fn<(...args: any[]) => any>();
 
     httpsGetImpl.mockImplementation((_url: string, _options: any, _callback: (res: any) => void) => {
-      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
+      const request = { destroy, on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
       return request as any;
     });
 
@@ -618,6 +673,40 @@ describe('getDockerVersion', () => {
 
     await vi.advanceTimersByTimeAsync(20);
     await expect(promise).resolves.toBeUndefined();
+    expect(destroy).toHaveBeenCalledWith(expect.any(Error));
+  });
+
+  test('ignores late request error and response after timeout', async () => {
+    vi.useFakeTimers();
+
+    let responseCallback: ((res: any) => void) | undefined;
+    let errorHandler: ((err: Error) => void) | undefined;
+
+    httpsGetImpl.mockImplementation((_url: string, _options: any, callback: (res: any) => void) => {
+      responseCallback = callback;
+      const request = {
+        destroy: vi.fn<(...args: any[]) => any>((error: Error) => {
+          errorHandler?.(error);
+        }),
+        on: vi.fn<(...args: any[]) => any>((event: string, handler: (err: Error) => void) => {
+          if (event === 'error') errorHandler = handler;
+          return request;
+        }),
+      };
+      return request as any;
+    });
+
+    const promise = getDockerVersion('luligu', 'matterbridge', 'latest', 10);
+    // Allow async dynamic import + promise executor to run
+    await Promise.resolve();
+    await Promise.resolve();
+
+    await vi.advanceTimersByTimeAsync(20);
+    await expect(promise).resolves.toBeUndefined();
+
+    const lateResponse = createStreamingJsonResponse(200, { token: 'token-1234567890' });
+    responseCallback?.(lateResponse);
+    lateResponse.start();
   });
 
   test('returns undefined on request error', async () => {

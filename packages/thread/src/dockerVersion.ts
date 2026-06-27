@@ -4,7 +4,7 @@
  * @file dockerVersion.ts
  * @author Luca Liguori
  * @created 2026-02-19
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027 Luca Liguori.
@@ -28,6 +28,8 @@ import { isValidString } from '@matterbridge/utils/validate';
 
 logModuleLoaded('DockerVersion');
 
+let lastDockerVersionWarning: string | undefined;
+
 type DockerRegistryTokenResponse = {
   token?: string;
   access_token?: string;
@@ -50,6 +52,17 @@ type DockerConfigBlob = {
 };
 
 /**
+ * Takes and clears the last warning generated while checking Docker image versions.
+ *
+ * @returns {string | undefined} The last Docker version warning, if any.
+ */
+export function takeDockerVersionWarning(): string | undefined {
+  const warning = lastDockerVersionWarning;
+  lastDockerVersionWarning = undefined;
+  return warning;
+}
+
+/**
  * Fetches JSON via HTTPS GET.
  *
  * @param {string} url The URL.
@@ -60,13 +73,31 @@ type DockerConfigBlob = {
 async function httpsGetJson<T>(url: string, headers: Record<string, string> | undefined, timeoutMs: number): Promise<T> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      reject(new Error(`Request timed out after ${timeoutMs / 1000} seconds`));
+    let settled = false;
+    let req: ReturnType<typeof https.get> | undefined;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const rejectOnce = (error: Error): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      reject(error);
+    };
+
+    const resolveOnce = (value: T): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(value);
+    };
+
+    const timeoutError = new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
+    timeoutId = setTimeout(() => {
+      req?.destroy?.(timeoutError);
+      rejectOnce(timeoutError);
     }, timeoutMs).unref();
 
-    const req = https.get(url, { headers, signal: controller.signal }, (res) => {
+    req = https.get(url, { headers }, (res) => {
       let data = '';
       const statusCode = res.statusCode ?? 0;
 
@@ -74,6 +105,7 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
         const locationHeader = Array.isArray(res.headers.location) ? res.headers.location[0] : res.headers.location;
         if (locationHeader) {
           clearTimeout(timeoutId);
+          settled = true;
           res.resume();
 
           const redirectedUrl = new URL(locationHeader, url).toString();
@@ -95,9 +127,8 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       }
 
       if (statusCode < 200 || statusCode >= 300) {
-        clearTimeout(timeoutId);
         res.resume();
-        reject(new Error(`Failed to fetch data. Status code: ${statusCode}`));
+        rejectOnce(new Error(`Failed to fetch data. Status code: ${statusCode}`));
         return;
       }
 
@@ -106,20 +137,18 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       });
 
       res.on('end', () => {
-        clearTimeout(timeoutId);
         try {
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          resolve(JSON.parse(data) as T);
+          resolveOnce(JSON.parse(data) as T);
         } catch (error) {
-          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
+          rejectOnce(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
-      clearTimeout(timeoutId);
-      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
+      rejectOnce(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }
@@ -160,10 +189,11 @@ function getOciVersionLabel(config: DockerConfigBlob): string | undefined {
  * @param {string} owner Docker Hub namespace (e.g. luligu).
  * @param {string} repo Docker Hub repository (e.g. matterbridge).
  * @param {string} [tag] Docker tag (e.g. latest). Defaults to 'latest'.
- * @param {number} [timeoutMs] Timeout in milliseconds. Defaults to 5000ms.
+ * @param {number} [timeoutMs] Timeout in milliseconds. Defaults to 10000ms.
  * @returns {Promise<string | undefined>} The OCI version label (org.opencontainers.image.version) if available.
  */
-export async function getDockerVersion(owner: string, repo: string, tag: string = 'latest', timeoutMs: number = 5_000): Promise<string | undefined> {
+export async function getDockerVersion(owner: string, repo: string, tag: string = 'latest', timeoutMs: number = 10_000): Promise<string | undefined> {
+  lastDockerVersionWarning = undefined;
   if (!isValidString(owner, 1) || !isValidString(repo, 1) || !isValidString(tag, 1)) return undefined;
 
   try {
@@ -202,7 +232,10 @@ export async function getDockerVersion(owner: string, repo: string, tag: string 
     // console.log(`Config response: ${JSON.stringify(config, null, 2)}`);
 
     return getOciVersionLabel(config);
-  } catch {
+  } catch (error) {
+    if (getErrorMessage(error).includes('Status code: 429')) {
+      lastDockerVersionWarning = `Docker Hub rate limit reached while checking ${owner}/${repo}:${tag}. Docker image version is unavailable.`;
+    }
     return undefined;
   }
 }

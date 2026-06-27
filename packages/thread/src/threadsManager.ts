@@ -4,7 +4,7 @@
  * @file threadsManager.ts
  * @author Luca Liguori
  * @created 2026-03-07
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -386,9 +386,8 @@ export class ThreadsManager {
     pipedOutput: boolean = false,
   ): Worker {
     const fileURL = pathToFileURL(path.resolve(relativePath));
-    const options: WorkerOptions & { type: string } = {
+    const options: WorkerOptions = {
       workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel, tracker: this.tracker }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
-      type: 'module',
       name,
       argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker
       env: env ?? process.env, // Inherit environment variables
