@@ -1,3 +1,5 @@
+# Codex config v. 1.0.1
+
 approval_policy = "on-request"
 approvals_reviewer = "user"
 default_permissions = "matterbridge_safe"
@@ -17,4 +19,4 @@ glob_scan_max_depth = 4
 "**/secrets/**" = "deny"
 
 [permissions.matterbridge_safe.network]
-enabled = false
+enabled = true
