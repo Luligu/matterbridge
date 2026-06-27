@@ -60,6 +60,10 @@ These classes will run as threads in the next releases:
 
 ## [3.9.3] - Dev branch
 
+### Breaking changes
+
+- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is reatarting.
+
 ### Added
 
 - [bun]: Add ban test runtime check.

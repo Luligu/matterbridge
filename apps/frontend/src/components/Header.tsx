@@ -381,7 +381,8 @@ function Header() {
     if (online) {
       if (debug) console.log('Header sending /api/settings and /api/checkupdates requests');
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      // Disabled: checking for updates on connection is the wrong timing.
+      // sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
 
