@@ -103,13 +103,13 @@ describe('App debug/theme/import.meta.env.PROD coverage', () => {
 
   beforeEach(() => {
     originalDebug = debug;
-    (global as any).localStorage.clear();
+    globalThis.localStorage.clear();
     // @ts-expect-error Vitest: set debug to true
     globalThis.debug = true;
   });
 
   afterEach(() => {
-    (global as any).localStorage.clear();
+    globalThis.localStorage.clear();
     // @ts-expect-error Vitest: restore original debug
     globalThis.debug = originalDebug;
   });
@@ -159,7 +159,7 @@ describe('toggleDebug', () => {
 
   it('shows error on fetch !ok', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       statusText: 'Forbidden',
       json: async () => ({ valid: false }),
@@ -193,7 +193,7 @@ describe('toggleDebug', () => {
       configurable: true,
       writable: true,
     });
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
@@ -229,7 +229,7 @@ describe('toggleDebug', () => {
       configurable: true,
       writable: true,
     });
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
@@ -266,7 +266,7 @@ describe('toggleDebug', () => {
       configurable: true,
       writable: true,
     });
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
@@ -303,7 +303,7 @@ describe('toggleDebug', () => {
       configurable: true,
       writable: true,
     });
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
@@ -352,7 +352,7 @@ describe('App', () => {
   });
 
   it('shows error on incorrect password', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: false }),
     }) as unknown as typeof fetch;
@@ -367,7 +367,7 @@ describe('App', () => {
   });
 
   it('renders main app after login', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
     }) as unknown as typeof fetch;
@@ -383,7 +383,7 @@ describe('App', () => {
   });
 
   it('handles fetch error gracefully', async () => {
-    global.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {

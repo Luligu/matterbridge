@@ -12,6 +12,9 @@ import { type WsMessageApiRequest, type WsMessageApiResponse, type WsMessageErro
 import { MbfLsk } from '../utils/localStorage';
 import { UiContext } from './UiContext';
 
+type IntervalHandle = ReturnType<typeof window.setInterval>;
+type TimeoutHandle = ReturnType<typeof window.setTimeout>;
+
 // TypeScript interface for log messages
 export interface WsLogMessage {
   level: string;
@@ -83,13 +86,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(1);
   const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000);
-  const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const offlineTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pingIntervalRef = useRef<IntervalHandle | null>(null);
+  const offlineTimeoutRef = useRef<TimeoutHandle | null>(null);
+  const startTimeoutRef = useRef<TimeoutHandle | null>(null);
   const logFilterLevelRef = useRef(logFilterLevel);
   const logFilterSearchRef = useRef(logFilterSearch);
   const messagesCounterRef = useRef(0);
-  const messagesCounterIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesCounterIntervalRef = useRef<IntervalHandle | null>(null);
   const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
   const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) !== 'false'); // default true
 

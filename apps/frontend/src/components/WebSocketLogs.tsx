@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useContext, useMemo, memo } from 'react';
 import { debug } from '../appState';
 import { WebSocketMessagesContext } from './WebSocketProvider';
 
+type TimeoutHandle = ReturnType<typeof window.setTimeout>;
+
 /**
  * Function to detect if the device has a touchscreen
  * @returns {boolean} True if a touchscreen is detected.
@@ -24,7 +26,7 @@ function WebSocketLogs() {
   const [isHovering, setIsHovering] = useState(false);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const lastScrollTimeRef = useRef<number>(0); // throttle auto-scroll to avoid flicker
-  const lastScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTimeoutRef = useRef<TimeoutHandle | null>(null);
 
   // Detect touchscreen only once per component mount
   const isTouchscreen = useMemo(() => detectTouchscreen(), []);

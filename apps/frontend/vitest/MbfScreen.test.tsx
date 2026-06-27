@@ -159,11 +159,11 @@ describe('MbfScreen', () => {
     });
 
     it('returns false if window is undefined', () => {
-      const origWindow = global.window;
+      const origWindow = globalThis.window;
       // @ts-expect-error window is intentionally deleted for this test
-      delete global.window;
+      delete globalThis.window;
       expect(isMobile()).toBe(false);
-      global.window = origWindow;
+      globalThis.window = origWindow;
     });
   });
 

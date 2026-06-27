@@ -18,6 +18,8 @@ import { MbfWindow, MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfW
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
+type TimeoutHandle = ReturnType<typeof window.setTimeout>;
+
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
   margin: '0px',
@@ -53,7 +55,7 @@ function QRDiv({ id }: QRDivProps) {
   const [matter, setMatter] = useState<ApiMatter | null>(null);
   // Refs
   const storeIdRef = useRef<string | null>(null);
-  const advertiseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const advertiseTimeoutRef = useRef<TimeoutHandle | null>(null);
   const uniqueId = useRef(getUniqueId());
   // Ui context
   const { mobile, showConfirmCancelDialog } = useContext(UiContext);
