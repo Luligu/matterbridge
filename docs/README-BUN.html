@@ -161,7 +161,7 @@ matterbridge --docker --logger debug --debug
 <li>Builds exactly like the <code>local</code> image, with the npm commands adapted to Bun:<ul>
 <li><code>npm ci</code> → <code>bun install</code></li>
 <li><code>npm run build</code> → <code>bun run build</code> (backend <code>tsgo</code> build and frontend <code>vite</code> build are still run; the runtime uses the compiled <code>dist/</code>)</li>
-<li><code>npm prune --omit=dev</code> → <code>bun install --production</code></li>
+<li><code>npm prune --omit=dev</code> → <code>bun install --omit=dev</code></li>
 <li><code>npm cache clean</code> → <code>bun pm cache rm</code></li>
 <li><code>npm link</code> → <code>bun link</code></li>
 </ul>

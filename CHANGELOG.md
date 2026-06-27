@@ -78,6 +78,7 @@ These classes will run as threads in the next releases:
 - [oxlint]: Update `Oxlint configuration` to v.1.0.16.
 - [oxlint]: Update `Oxfmt configuration` to v.1.0.5.
 - [readme]: Improve the journald configuration comments in `README-SERVICE.md`, `README-SERVICE-OPT.md` and `README-SERVICE-LOCAL.md`.
+- [bun]: Change bun install param from --production to --omit=dev to avoid the frozen lock.
 
 - [frontend]: Bump `frontend` version to v.3.5.1.
 - [frontend]: Update dependencies.

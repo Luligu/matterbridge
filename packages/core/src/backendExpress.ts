@@ -548,7 +548,7 @@ export class BackendExpress {
               workerData: {
                 threadName: 'SpawnCommand',
                 command: isBun() ? 'bun' : 'npm',
-                args: isBun() ? ['install', '-g', filePath, '--production'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                args: isBun() ? ['install', '-g', filePath, '--omit=dev'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
                 packageCommand: 'install',
                 packageName: filename,
               },

@@ -1051,7 +1051,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               workerData: {
                 threadName: 'SpawnCommand',
                 command: isBun() ? 'bun' : 'npm',
-                args: isBun() ? ['install', '-g', filePath, '--production'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
+                args: isBun() ? ['install', '-g', filePath, '--omit=dev'] : ['install', '-g', filePath, '--omit=dev', '--verbose'],
                 packageCommand: 'install',
                 packageName: filename,
               },
@@ -2817,7 +2817,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         workerData: {
           threadName: 'SpawnCommand',
           command: isBun() ? 'bun' : 'npm',
-          args: isBun() ? [command, '-g', packageName, '--production'] : [command, '-g', packageName, '--omit=dev', '--verbose'],
+          args: isBun() ? [command, '-g', packageName, '--omit=dev'] : [command, '-g', packageName, '--omit=dev', '--verbose'],
           packageCommand: command,
           packageName: packageName,
         },

@@ -44,7 +44,7 @@ The **bun** image builds Matterbridge from the **local source files** and runs i
 - Builds exactly like the `local` image, with the npm commands adapted to Bun:
   - `npm ci` → `bun install`
   - `npm run build` → `bun run build` (backend `tsgo` build and frontend `vite` build are still run; the runtime uses the compiled `dist/`)
-  - `npm prune --omit=dev` → `bun install --production`
+  - `npm prune --omit=dev` → `bun install --omit=dev`
   - `npm cache clean` → `bun pm cache rm`
   - `npm link` → `bun link`
 

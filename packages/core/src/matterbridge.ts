@@ -1058,12 +1058,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (plugin.private && plugin.tarballPath && fs.existsSync(path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath))) {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
             execSync(
-              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} ${isBun() ? '--omit=dev --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
             );
           } else {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm${plugin.version.includes('-dev-') ? ' with tag @dev' : ''}...`);
             execSync(
-              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} ${isBun() ? '--omit=dev --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
             );
           }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
@@ -1690,7 +1690,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         workerData: {
           threadName: 'SpawnCommand',
           command: isBun() ? 'bun' : 'npm',
-          args: isBun() ? ['install', '-g', 'matterbridge', '--production'] : ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
+          args: isBun() ? ['install', '-g', 'matterbridge', '--omit=dev'] : ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
           packageCommand: 'install',
           packageName: 'matterbridge',
         },

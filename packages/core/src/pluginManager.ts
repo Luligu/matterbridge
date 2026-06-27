@@ -750,7 +750,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         workerData: {
           threadName: 'SpawnCommand',
           command: isBun() ? 'bun' : 'npm',
-          args: isBun() ? ['install', '-g', packageName, '--production'] : ['install', '-g', packageName, '--omit=dev', '--verbose'],
+          args: isBun() ? ['install', '-g', packageName, '--omit=dev'] : ['install', '-g', packageName, '--omit=dev', '--verbose'],
           packageCommand: 'install',
           packageName: packageName,
         },

@@ -844,7 +844,7 @@ describe('PluginManager', () => {
             workerData: {
               threadName: 'SpawnCommand',
               command: 'bun',
-              args: ['install', '-g', 'matterbridge-bun-test', '--production'],
+              args: ['install', '-g', 'matterbridge-bun-test', '--omit=dev'],
               packageCommand: 'install',
               packageName: 'matterbridge-bun-test',
             },

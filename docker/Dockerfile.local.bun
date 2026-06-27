@@ -24,7 +24,7 @@ RUN \
   bun run build && \
   cd apps/frontend && bun install && bun run build && cd ../.. && \
   find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
-  bun install --production && \
+  bun install --omit=dev && \
   bun pm cache rm 2>/dev/null || true && \
   bun link && \
   rm -rf /tmp/* /var/tmp/* /root/.bun/install/cache /root/.cache /var/lib/apt/lists/* && \
