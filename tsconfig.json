@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "types": ["node", "jest", "vitest/globals"],
     "rootDir": ".",
     "noEmit": true
   },

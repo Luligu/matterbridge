@@ -271,6 +271,7 @@
     "scan-deps": "node ./scripts/scan-deps.mjs",
     "sync-workspaces": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\"",
     "runMeBeforePublish": "npm run format && npm run lint && npm run update-htmls && npm run cleanBuild && npm run typecheck && npm run test:coverage",
+    "runMeBeforePublish:all": "npm run runMeBeforePublish && npm --prefix apps/frontend run runMeBeforePublish",
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && node scripts/prepublish-clean.mjs --workspace && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu && npm run softReset",
     "updateDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu -u && npm run softReset",
