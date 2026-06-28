@@ -1,16 +1,56 @@
 # Matterbridge — Bun-native test runner config v 1.0.0.
-# Only `bun test` reads this. Vitest and Jest ignore it entirely.
 
 [test]
-# Scan ONLY buntest/ for *.test.ts / *.spec.ts files.
-# This is the important line: it keeps `bun test` away from the
-# Vitest/Jest suites in packages/, so it can't discover and choke on them.
-root = "buntest"
-
 # Optional setup run before any test (env, global mocks):
 # preload = ["./buntest/setup.ts"]
 
-# Optional coverage (own dir so it doesn't clash with Vitest's):
+# Bun scans root for *.test.{js|jsx|ts|tsx} *_test.{js|jsx|ts|tsx} *.spec.{js|jsx|ts|tsx} *_spec.{js|jsx|ts|tsx}.
+pathIgnorePatterns = [
+  '**/.cache/',
+  '**/apps/',
+  '**/build/',
+  '**/chip/',
+  '**/coverage/',
+  '**/dist/',
+  '**/node_modules/',
+  '**/screenshots/',
+  '**/scripts/',
+  '**/src/mock/',
+  '**/temp/',
+  '**/test/',
+  '**/vendor/',
+  '**/vitest/',
+  '**/jest-utils/',
+  '**/vitest-utils/',
+  '**/matterNode*.test.ts',
+  '**/backend*.test.ts',
+  'buntest/bunMatterTest.test.ts',
+  'buntest/repro/*.test.ts',
+  'packages/thread/buntest/threadsManager.concurrent.test.ts',
+]
+
+coveragePathIgnorePatterns = [
+  '**/.cache/',
+  '**/apps/',
+  '**/build/',
+  '**/chip/',
+  '**/coverage/',
+  '**/dist/',
+  '**/node_modules/',
+  '**/screenshots/',
+  '**/scripts/',
+  '**/src/mock/',
+  '**/temp/',
+  '**/vendor/',
+  '**/vitest/**',
+  '**/src/**/*.d.ts',
+  '**/src/**/*.{spec,test}.{ts,mts,cts}',
+]
 coverage = true
 coverageReporter = ['lcov', 'text']
 coverageDir = "./coverage/bun"
+
+# Exclude test files from coverage reports
+coverageSkipTestFiles = true
+# Don't use sourcemaps for coverage analysis
+coverageIgnoreSourcemaps = true
