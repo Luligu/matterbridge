@@ -4,7 +4,7 @@
  * @file tracker.ts
  * @author Luca Liguori
  * @created 2025-10-10
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -127,15 +127,19 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     private readonly name: string = 'Tracker',
     private readonly debug: boolean = false,
     private readonly verbose: boolean = false,
+    private readonly tracker: boolean = false,
   ) {
     super();
-    if (process.argv.includes('--debug') || process.argv.includes('-debug') || process.argv.includes('--verbose') || process.argv.includes('-verbose')) {
+    if (process.argv.includes('--debug') || process.argv.includes('--verbose')) {
       this.debug = true;
     }
-    if (process.argv.includes('--verbose') || process.argv.includes('-verbose')) {
+    if (process.argv.includes('--verbose')) {
       this.verbose = true;
     }
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
+    if (process.argv.includes('--tracker')) {
+      this.tracker = true;
+    }
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug || this.tracker ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = YELLOW;
     if (this.verbose) {
       this.log.debug(`os.cpus():\n${RESET}`, os.cpus());
@@ -246,7 +250,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       this.emit('snapshot', entry);
 
       // Debug output
-      if (this.debug) {
+      if (this.debug || this.tracker) {
         // istanbul ignore next cause is just a precaution for debug/verbose flags which are only used for development and testing, not in production
         this.log.debug(
           `Time: ${formatTimeStamp(entry.timestamp)} ` +

@@ -58,6 +58,16 @@ describe('Tracker', () => {
     expect(spyMem).toHaveBeenCalled();
   });
 
+  test('single-dash debug and verbose flags do not enable verbose mode', async () => {
+    process.argv.push('-verbose', '-debug');
+    const spyMem = vi.spyOn(process, 'memoryUsage');
+
+    const { Tracker } = await import('../src/tracker.js');
+    new Tracker('SingleDashTester');
+
+    expect(spyMem).not.toHaveBeenCalled();
+  });
+
   test('does not print loader banner when flag is absent', async () => {
     await import('../src/tracker.js');
     expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('Tracker loaded'));
@@ -85,6 +95,20 @@ describe('Tracker', () => {
     expect(events.cpu).toBeGreaterThan(0);
     expect(events.memory).toBeGreaterThan(0);
     expect(events.tracker).toBeGreaterThan(0);
+  });
+
+  test('tracker flag enables sample debug output without debug flag', async () => {
+    vi.useFakeTimers();
+    process.argv.push('--tracker');
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('TrackerFlagTester');
+    const debugSpy = vi.spyOn((tracker as any)['log'], 'debug');
+
+    tracker.start(10);
+    vi.advanceTimersByTime(10);
+    tracker.stop();
+
+    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Time: '));
   });
 
   test('reset peaks triggers reset_done', async () => {
