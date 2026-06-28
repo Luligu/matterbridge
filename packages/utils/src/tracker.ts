@@ -27,6 +27,7 @@ import os from 'node:os';
 
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
+import { hasParameter } from './commandLine.js';
 import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
 import { logModuleLoaded } from './loader.js';
 
@@ -130,7 +131,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     private readonly tracker: boolean = false,
   ) {
     super();
-    if (process.argv.includes('--debug') || process.argv.includes('--verbose')) {
+    if (process.argv.includes('--debug') || process.argv.includes('--verbose') || process.argv.includes('--tracker')) {
       this.debug = true;
     }
     if (process.argv.includes('--verbose')) {
@@ -178,7 +179,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     this.trackerInterval = setInterval(() => {
       // Increment tryGcCount and check if we can run garbage collector each hour cause memory might grow over time because of our even small allocations
       tryGcCount += sampleIntervalMs / 1000;
-      if (tryGcCount > 60 * 60) {
+      if (tryGcCount > 60 * 60 || hasParameter('force-gc')) {
+        // runGarbageCollector() is called after at least 60 accumulated minutes of sampling.
         this.runGarbageCollector();
         tryGcCount = 0;
       }

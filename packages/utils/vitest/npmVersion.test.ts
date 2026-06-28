@@ -70,7 +70,7 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('test-package', 'latest', 5000);
 
     expect(result).toBe('2.1.0');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should resolve with version when tag exists (beta)', async () => {
@@ -80,7 +80,7 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('test-package', 'beta', 5000);
 
     expect(result).toBe('2.2.0-beta.1');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should resolve with version when tag exists (alpha)', async () => {
@@ -90,7 +90,7 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('test-package', 'alpha', 5000);
 
     expect(result).toBe('2.3.0-alpha.2');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should use default tag (latest) when not specified', async () => {
@@ -100,7 +100,7 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('test-package');
 
     expect(result).toBe('2.1.0');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should use default timeout when not specified', async () => {
@@ -110,7 +110,7 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('test-package', 'latest');
 
     expect(result).toBe('2.1.0');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject when tag does not exist', async () => {
@@ -118,21 +118,21 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = JSON.stringify(mockNpmResponse);
 
     await expect(getNpmPackageVersion('test-package', 'nonexistent', 5000)).rejects.toThrow('Tag "nonexistent" not found for package "test-package"');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on non-200 status code (404)', async () => {
     mockedGetStatusCode = 404;
 
     await expect(getNpmPackageVersion('nonexistent-package', 'latest', 5000)).rejects.toThrow('Failed to fetch data. Status code: 404');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/nonexistent-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/nonexistent-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on 500 server error', async () => {
     mockedGetStatusCode = 500;
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Failed to fetch data. Status code: 500');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on invalid JSON response', async () => {
@@ -140,7 +140,7 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = 'not-valid-json{';
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on empty response', async () => {
@@ -148,7 +148,7 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = '';
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on malformed JSON with trailing comma', async () => {
@@ -156,7 +156,7 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = '{"dist-tags": {"latest": "1.0.0",}}';
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should handle response with missing dist-tags', async () => {
@@ -164,7 +164,7 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = JSON.stringify({ versions: { '1.0.0': {} } });
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Tag "latest" not found for package "test-package"');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should handle response with empty dist-tags', async () => {
@@ -172,7 +172,7 @@ describe('getNpmPackageVersion', () => {
     mockedGetPayload = JSON.stringify({ 'dist-tags': {} });
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Tag "latest" not found for package "test-package"');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/test-package', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should handle scoped package names', async () => {
@@ -182,15 +182,16 @@ describe('getNpmPackageVersion', () => {
     const result = await getNpmPackageVersion('@scope/package-name', 'latest', 5000);
 
     expect(result).toBe('2.1.0');
-    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/@scope/package-name', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://registry.npmjs.org/@scope/package-name', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on timeout', async () => {
-    const destroy = vi.fn<(error?: Error) => void>();
-    mockedGet.mockImplementationOnce((_url, _options) => {
+    let requestOptions: RequestOptions | undefined;
+    mockedGet.mockImplementationOnce((_url, options) => {
+      requestOptions = options;
       const mockReq = {
         on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
-        destroy,
+        destroy: vi.fn<(error?: Error) => void>(),
         end: vi.fn<() => void>(),
       };
       return mockReq as unknown as ClientRequest;
@@ -199,7 +200,8 @@ describe('getNpmPackageVersion', () => {
     const promise = getNpmPackageVersion('test-package', 'latest', 100);
 
     await expect(promise).rejects.toThrow('Request timed out after 0.1 seconds');
-    expect(destroy).toHaveBeenCalledWith(expect.any(Error));
+    expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
+    expect(requestOptions?.signal?.aborted).toBe(true);
   }, 10000);
 
   it('should reject on request error', async () => {

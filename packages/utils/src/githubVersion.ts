@@ -48,36 +48,19 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
     const url = `https://matterbridge.io/${branch}_${file}`;
-    let settled = false;
-    let req: ReturnType<typeof https.get> | undefined;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const rejectOnce = (error: Error): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      reject(error);
-    };
-
-    const resolveOnce = (updateJson: UpdateJson): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      resolve(updateJson);
-    };
-
-    const timeoutError = new Error(`Request timed out after ${timeout / 1000} seconds`);
-    timeoutId = setTimeout(() => {
-      req?.destroy?.(timeoutError);
-      rejectOnce(timeoutError);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
     }, timeout).unref();
 
-    req = https.get(url, {}, (res) => {
+    const req = https.get(url, { signal: controller.signal }, (res) => {
       let data = '';
 
       if (res.statusCode !== 200) {
+        clearTimeout(timeoutId);
         res.resume(); // Discard response data to close the socket properly
-        rejectOnce(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
+        reject(new Error(`Failed to fetch data. Status code: ${res.statusCode}`));
         return;
       }
 
@@ -88,17 +71,20 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
       res.on('end', () => {
         try {
           const jsonData = JSON.parse(data);
+          clearTimeout(timeoutId);
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          resolveOnce(jsonData as UpdateJson);
+          resolve(jsonData as UpdateJson);
         } catch (error) {
-          rejectOnce(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
+          clearTimeout(timeoutId);
+          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
-      rejectOnce(new Error(`Request failed: ${getErrorMessage(error)}`));
+      clearTimeout(timeoutId);
+      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

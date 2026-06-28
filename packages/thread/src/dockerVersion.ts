@@ -74,31 +74,13 @@ export function takeDockerVersionWarning(): string | undefined {
 async function httpsGetJson<T>(url: string, headers: Record<string, string> | undefined, timeoutMs: number): Promise<T> {
   const https = await import('node:https');
   return new Promise((resolve, reject) => {
-    let settled = false;
-    let req: ReturnType<typeof https.get> | undefined;
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const rejectOnce = (error: Error): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      reject(error);
-    };
-
-    const resolveOnce = (value: T): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeoutId);
-      resolve(value);
-    };
-
-    const timeoutError = new Error(`Request timed out after ${timeoutMs / 1000} seconds`);
-    timeoutId = setTimeout(() => {
-      req?.destroy?.(timeoutError);
-      rejectOnce(timeoutError);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Request timed out after ${timeoutMs / 1000} seconds`));
     }, timeoutMs).unref();
 
-    req = https.get(url, { headers }, (res) => {
+    const req = https.get(url, { headers, signal: controller.signal }, (res) => {
       let data = '';
       const statusCode = res.statusCode ?? 0;
 
@@ -106,7 +88,6 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
         const locationHeader = Array.isArray(res.headers.location) ? res.headers.location[0] : res.headers.location;
         if (locationHeader) {
           clearTimeout(timeoutId);
-          settled = true;
           res.resume();
 
           const redirectedUrl = new URL(locationHeader, url).toString();
@@ -128,8 +109,9 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       }
 
       if (statusCode < 200 || statusCode >= 300) {
+        clearTimeout(timeoutId);
         res.resume();
-        rejectOnce(new Error(`Failed to fetch data. Status code: ${statusCode}`));
+        reject(new Error(`Failed to fetch data. Status code: ${statusCode}`));
         return;
       }
 
@@ -139,17 +121,20 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
 
       res.on('end', () => {
         try {
+          clearTimeout(timeoutId);
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          resolveOnce(JSON.parse(data) as T);
+          resolve(JSON.parse(data) as T);
         } catch (error) {
-          rejectOnce(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
+          clearTimeout(timeoutId);
+          reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
     });
 
     // istanbul ignore next cause it's just a precaution for network errors
     req.on('error', (error) => {
-      rejectOnce(new Error(`Request failed: ${getErrorMessage(error)}`));
+      clearTimeout(timeoutId);
+      reject(new Error(`Request failed: ${getErrorMessage(error)}`));
     });
   });
 }

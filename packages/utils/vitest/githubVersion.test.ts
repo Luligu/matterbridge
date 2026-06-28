@@ -70,7 +70,7 @@ describe('getGitHubUpdate', () => {
     const result = await getGitHubUpdate('dev', 'update.json', 5_000);
 
     expect(result).toEqual(mockUpdateJson);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should resolve with update data from main branch', async () => {
@@ -81,7 +81,7 @@ describe('getGitHubUpdate', () => {
     const result = await getGitHubUpdate('main', 'update.json', 10_000);
 
     expect(result).toEqual(mockUpdateJson);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should resolve with custom file data', async () => {
@@ -93,7 +93,7 @@ describe('getGitHubUpdate', () => {
     const result = await getGitHubUpdate('dev', 'custom.json', 5_000);
 
     expect(result).toEqual(customData);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_custom.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_custom.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should use default timeout when not specified', async () => {
@@ -104,7 +104,7 @@ describe('getGitHubUpdate', () => {
     const result = await getGitHubUpdate('dev', 'update.json');
 
     expect(result).toEqual(mockUpdateJson);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on non-200 status code', async () => {
@@ -112,7 +112,7 @@ describe('getGitHubUpdate', () => {
     mockedGetStatusCode = 404;
 
     await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow('Failed to fetch data. Status code: 404');
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on 500 server error', async () => {
@@ -120,7 +120,7 @@ describe('getGitHubUpdate', () => {
     mockedGetStatusCode = 500;
 
     await expect(getGitHubUpdate('main', 'update.json', 5_000)).rejects.toThrow('Failed to fetch data. Status code: 500');
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on invalid JSON response', async () => {
@@ -129,7 +129,7 @@ describe('getGitHubUpdate', () => {
     mockedGetPayload = 'not-valid-json{';
 
     await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on empty response', async () => {
@@ -138,7 +138,7 @@ describe('getGitHubUpdate', () => {
     mockedGetPayload = '';
 
     await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on malformed JSON with trailing comma', async () => {
@@ -147,7 +147,7 @@ describe('getGitHubUpdate', () => {
     mockedGetPayload = '{"version": "1.0.0",}';
 
     await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow(/Failed to parse response JSON/);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/dev_update.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should handle complex nested JSON structure', async () => {
@@ -171,16 +171,17 @@ describe('getGitHubUpdate', () => {
     const result = await getGitHubUpdate('main', 'metadata.json', 8_000);
 
     expect(result).toEqual(complexData);
-    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_metadata.json', expect.not.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
+    expect(mockedGet).toHaveBeenCalledWith('https://matterbridge.io/main_metadata.json', expect.objectContaining({ signal: expect.any(Object) }), expect.any(Function));
   });
 
   it('should reject on timeout', async () => {
-    const destroy = vi.fn<(error?: Error) => void>();
+    let requestOptions: RequestOptions | undefined;
     // Override the mock to simulate a request that never responds
     mockedGet.mockImplementationOnce((url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void) => {
+      requestOptions = options;
       const mockReq = {
         on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
-        destroy,
+        destroy: vi.fn<(error?: Error) => void>(),
         end: vi.fn<() => void>(),
       };
       // Don't call the callback - simulate hanging request
@@ -193,7 +194,8 @@ describe('getGitHubUpdate', () => {
 
     // The timeout should trigger after 100ms
     await expect(promise).rejects.toThrow('Request timed out after 0.1 seconds');
-    expect(destroy).toHaveBeenCalledWith(expect.any(Error));
+    expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
+    expect(requestOptions?.signal?.aborted).toBe(true);
   });
 
   it('should ignore duplicate response end events after resolve', async () => {

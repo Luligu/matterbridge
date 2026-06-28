@@ -41,7 +41,7 @@ describe('getDockerVersion', () => {
     vi.useRealTimers();
   });
 
-  test('does not pass an AbortController signal to node:https', async () => {
+  test('passes an AbortController signal to node:https', async () => {
     let tokenRequestOptions: any;
 
     httpsGetImpl.mockImplementation((_url: string, options: any, callback: (res: any) => void) => {
@@ -60,8 +60,7 @@ describe('getDockerVersion', () => {
     });
 
     await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
-    expect(tokenRequestOptions).toEqual({ headers: undefined });
-    expect(tokenRequestOptions).not.toHaveProperty('signal');
+    expect(tokenRequestOptions).toEqual({ headers: undefined, signal: expect.any(AbortSignal) });
   });
 
   test('returns org.opencontainers.image.version from Docker Hub image config', async () => {
@@ -659,10 +658,11 @@ describe('getDockerVersion', () => {
 
   test('returns undefined on request timeout', async () => {
     vi.useFakeTimers();
-    const destroy = vi.fn<(...args: any[]) => any>();
+    let requestOptions: any;
 
-    httpsGetImpl.mockImplementation((_url: string, _options: any, _callback: (res: any) => void) => {
-      const request = { destroy, on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
+    httpsGetImpl.mockImplementation((_url: string, options: any, _callback: (res: any) => void) => {
+      requestOptions = options;
+      const request = { destroy: vi.fn<(...args: any[]) => any>(), on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
       return request as any;
     });
 
@@ -673,7 +673,8 @@ describe('getDockerVersion', () => {
 
     await vi.advanceTimersByTimeAsync(20);
     await expect(promise).resolves.toBeUndefined();
-    expect(destroy).toHaveBeenCalledWith(expect.any(Error));
+    expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
+    expect(requestOptions?.signal?.aborted).toBe(true);
   });
 
   test('ignores late request error and response after timeout', async () => {
