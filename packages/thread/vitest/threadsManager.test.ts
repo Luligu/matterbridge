@@ -1,10 +1,8 @@
 // vitest\threadsManager.test.ts
 
-// oxlint-disable no-use-before-define
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 const NAME = 'ThreadsManager';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -21,7 +19,7 @@ await setupTest(NAME, false);
 
 describe('ThreadsManager', () => {
   const moduleDirectory = path.dirname(url.fileURLToPath(new URL('../src/threadsManager.js', import.meta.url)));
-  const tempWorkerDirectory = path.resolve(HOMEDIR, 'temp-workers');
+  const tempWorkerDirectory = path.resolve('.cache', 'vitest', NAME, 'temp-workers');
 
   beforeAll(() => {
     mkdirSync(tempWorkerDirectory, { recursive: true });

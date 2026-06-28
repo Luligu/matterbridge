@@ -192,6 +192,7 @@ export class WorkerWrapper {
       }
       try {
         parentPort.close();
+        process.exit(success ? 0 : 1);
       } catch (error) {
         this.log.error(`Worker ${this.name}:${threadId} failed to close parentPort: ${getErrorMessage(error)}`);
       }
