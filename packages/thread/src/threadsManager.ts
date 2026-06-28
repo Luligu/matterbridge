@@ -268,6 +268,9 @@ export class ThreadsManager {
       } else if (message.type === 'exit') {
         threadInfo.lastStopped = now;
         threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+        if (!message.success) {
+          threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+        }
         threadInfo.worker = undefined;
         this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId} after running for ${threadInfo.lastDuration} ms`);
       }
@@ -275,17 +278,18 @@ export class ThreadsManager {
 
     worker.on('messageerror', () => {
       const now = Date.now();
+      threadInfo.lastSeen = now;
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date(now).toISOString()}`);
     });
 
     worker.once('error', (error) => {
       const now = Date.now();
-      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+      threadInfo.lastSeen = now;
       threadInfo.lastStopped = now;
       threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       threadInfo.worker = undefined;
-      threadInfo.lastSeen = now;
       this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`);
     });
 

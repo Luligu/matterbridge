@@ -4,7 +4,7 @@
  * @file workerWrapper.ts
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -52,6 +52,13 @@ export class WorkerWrapper {
   server: BroadcastServer;
   workerData: WorkerData | null = workerData;
   tracker: Tracker | undefined;
+  private destroyed = false;
+  private readonly boundUnhandledRejectionHandler = (reason: unknown): void => {
+    this.handleUnhandledRejection(reason);
+  };
+  private readonly boundUncaughtExceptionHandler = (error: Error): void => {
+    this.handleUncaughtException(error);
+  };
 
   /**
    * Initializes the worker by sending an init message to the parent and logging the initialization if debug is enabled.
@@ -95,6 +102,12 @@ export class WorkerWrapper {
 
     // Initialize broadcast server
     this.server = new BroadcastServer('matterbridge', this.log);
+
+    // Install worker-local process guards before async work can start.
+    if (!isMainThread) {
+      process.on('unhandledRejection', this.boundUnhandledRejectionHandler);
+      process.on('uncaughtException', this.boundUncaughtExceptionHandler);
+    }
 
     // Message handler for the worker, which listens for messages from the parent and handles them accordingly
     if (!isMainThread && parentPort && this.workerData) {
@@ -153,6 +166,14 @@ export class WorkerWrapper {
    * @param {boolean} success - Indicates whether the worker completed its task successfully, which is included in the exit message sent to the parent.
    */
   destroy(success: boolean): void {
+    if (this.destroyed) return;
+    this.destroyed = true;
+
+    if (!isMainThread) {
+      process.off('unhandledRejection', this.boundUnhandledRejectionHandler);
+      process.off('uncaughtException', this.boundUncaughtExceptionHandler);
+    }
+
     // Close the tracker if it exists
     // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
     if (this.tracker) this.tracker.stop();
@@ -164,11 +185,59 @@ export class WorkerWrapper {
     if (!isMainThread && parentPort && this.workerData) {
       // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
       if (this.debug) this.parentLog(this.name, LogLevel.INFO, `Worker ${this.name}:${threadId} exiting with success: ${success}.`);
-      this.parentPost({ type: 'exit', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success });
-      parentPort.close();
+      try {
+        this.parentPost({ type: 'exit', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success });
+      } catch (error) {
+        this.log.error(`Worker ${this.name}:${threadId} failed to send exit message to parent: ${getErrorMessage(error)}`);
+      }
+      try {
+        parentPort.close();
+      } catch (error) {
+        this.log.error(`Worker ${this.name}:${threadId} failed to close parentPort: ${getErrorMessage(error)}`);
+      }
     } else {
       // istanbul ignore next - debug/verbose/tracker flags are only used for development and testing, not in production
       if (this.debug) this.log.debug(`Worker ${this.name}:${threadId} exiting with success in main thread: ${success}.`);
+    }
+  }
+
+  /**
+   * Handles an unhandled promise rejection inside the worker.
+   *
+   * @param {unknown} reason - The rejection reason.
+   * @returns {void}
+   */
+  private handleUnhandledRejection(reason: unknown): void {
+    const errorMessage = inspectError(this.log, `Worker ${this.name} unhandled rejection`, reason);
+    this.safeParentLog(LogLevel.ERROR, errorMessage);
+    this.destroy(false);
+  }
+
+  /**
+   * Handles an uncaught exception inside the worker.
+   *
+   * @param {Error} error - The uncaught error.
+   * @returns {void}
+   */
+  private handleUncaughtException(error: Error): void {
+    const errorMessage = inspectError(this.log, `Worker ${this.name} uncaught exception`, error);
+    this.safeParentLog(LogLevel.ERROR, errorMessage);
+    this.destroy(false);
+  }
+
+  /**
+   * Sends an error log to the parent without throwing while the worker is already failing.
+   *
+   * @param {LogLevel} level - The log level.
+   * @param {string} message - The message to send.
+   * @returns {void}
+   */
+  private safeParentLog(level: LogLevel, message: string): void {
+    if (this.destroyed) return;
+    try {
+      this.logger(level, message);
+    } catch (error) {
+      this.log.error(`Worker ${this.name} failed to send error log to parent: ${getErrorMessage(error)}`);
     }
   }
 

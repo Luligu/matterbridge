@@ -607,7 +607,8 @@ describe('ThreadsManager', () => {
       // - native online: log timestamp only
       // - init message: lastSeen + lastStarted
       // - exit message: lastSeen + lastStopped
-      const times = [1000, 1001, 2000];
+      // - second init/failed exit messages after a restart
+      const times = [1000, 1001, 2000, 4000, 5000];
       nowSpy.mockImplementation(() => times.shift() ?? 9999);
 
       const { EventEmitter } = await import('node:events');
@@ -657,8 +658,19 @@ describe('ThreadsManager', () => {
       expect(threadInfo.lastStopped).toBe(2000);
       expect(threadInfo.lastDuration).toBe(999);
       expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted);
+      expect(threadInfo.errorCount).toBeUndefined();
 
       // Worker reference should be cleared on exit.
+      expect(threadInfo.worker).toBeUndefined();
+
+      manager.runThread('TestWorker');
+      const failedWorker = threadInfo.worker;
+      failedWorker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
+      failedWorker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: false });
+      expect(threadInfo.lastSeen).toBe(5000);
+      expect(threadInfo.lastStopped).toBe(5000);
+      expect(threadInfo.lastDuration).toBe(1000);
+      expect(threadInfo.errorCount).toBe(1);
       expect(threadInfo.worker).toBeUndefined();
 
       // Native worker exit is a no-op after the explicit exit message has already cleared this worker.

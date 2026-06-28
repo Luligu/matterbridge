@@ -86,6 +86,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `frontend` version to v.3.5.1.
 - [frontend]: Update dependencies.
 
+### Fixed
+
+- [thread]: Add worker-local unhandled rejection and uncaught exception guards, and count failed worker exits as thread errors.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.9.2] - 2026-06-26
