@@ -4,6 +4,7 @@
 
 const NAME = 'ThreadsManager';
 
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, type Mock } from 'bun:test';
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
@@ -25,10 +26,9 @@ import {
 } from 'node:worker_threads';
 
 import { LogLevel } from 'node-ansi-logger';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, spyOn, test, type Mock } from 'bun:test';
 
-import { ThreadsManager } from '../src/threadsManager.js';
 import { setupTest } from '../../../buntest/bunSetupTest.js';
+import { ThreadsManager } from '../src/threadsManager.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

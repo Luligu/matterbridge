@@ -34,9 +34,9 @@ The image (tag **latest** 87 MB) includes only Matterbridge, using the latest re
 
 The image (tag **dev** 99 MB) includes Matterbridge and all official plugins (the BTHome plugin is not included and requires [additional setup](https://github.com/Luligu/matterbridge-bthome/blob/main/README.md)) from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
 
-The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
-The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
+The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
 
 The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 

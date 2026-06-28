@@ -1,5 +1,3 @@
-import type { ThreadNames } from '@matterbridge/types';
-import { LogLevel } from 'node-ansi-logger';
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test, type Mock } from 'bun:test';
 import {
   BroadcastChannel,
@@ -17,6 +15,9 @@ import {
   Worker,
   workerData,
 } from 'node:worker_threads';
+
+import type { ThreadNames } from '@matterbridge/types';
+import { LogLevel } from 'node-ansi-logger';
 
 type MockedParentPort = {
   postMessage: Mock<(...args: any[]) => any>;

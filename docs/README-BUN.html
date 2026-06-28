@@ -152,7 +152,7 @@ bun link
 matterbridge --docker --logger debug --debug
 </code></pre>
 <h1 id="bun-docker-hub-image-experimental-for-test-and-development-only">Bun docker hub image (experimental — for test and development only)</h1>
-<p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
+<p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
 <h1 id="bun-local-image-experimental-for-test-and-development-only">Bun local image (experimental — for test and development only)</h1>
 <p>The <strong>bun</strong> image builds Matterbridge from the <strong>local source files</strong> and runs it on the
 <a href="https://bun.com">Bun</a> runtime instead of Node.js.</p>
@@ -228,6 +228,8 @@ provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterb
 </ul>
 <h2 id="known-issue">Known issue</h2>
 <ul>
+<li><input disabled="" type="checkbox"> <strong>Bun worker module is unstable</strong> The runtime randomly crash on worker exit.</li>
+<li><input disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
 <li><input disabled="" type="checkbox"> <strong>Bun cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
 from <code>os.userInfo()</code>, even though they correctly return the UID, GID, and home

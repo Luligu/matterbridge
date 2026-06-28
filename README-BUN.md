@@ -33,7 +33,7 @@ matterbridge --docker --logger debug --debug
 
 # Bun docker hub image (experimental — for test and development only)
 
-The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
+The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
 # Bun local image (experimental — for test and development only)
 
@@ -104,6 +104,8 @@ package-manager command and global-modules paths to Bun where needed.
 
 ## Known issue
 
+- [ ] **Bun worker module is unstable** The runtime randomly crash on worker exit.
+- [ ] **Bun needs process.exit() or worker.terminate().** If not called the memory is not released.
 - [ ] **Bun cannot resolve the container user name.** In the official Bun images,
       both `node:os` and `bun:os` return `username: "unknown"` and `shell: "unknown"`
       from `os.userInfo()`, even though they correctly return the UID, GID, and home

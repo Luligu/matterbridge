@@ -73,6 +73,7 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
 - [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260628-67a669f75.
 - [workflows]: Update all GitHub Actions to their latest major versions.
 - [docker]: Add `matterbridge-mqtt` to the dev Docker image.
 - [oxlint]: Update `Oxlint configuration` to v.1.0.16.

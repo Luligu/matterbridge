@@ -46,4 +46,4 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
 COPY ./docker/entrypoint.local.bun.sh ./
 RUN chmod +x ./entrypoint.local.bun.sh
 ENTRYPOINT ["./entrypoint.local.bun.sh"]
-CMD ["matterbridge", "--docker"]
+CMD ["bun", "--expose-gc","bin/matterbridge.js", "--docker", "--force-gc", "--tracker", "--debug-threads"]
