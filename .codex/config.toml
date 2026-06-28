@@ -4,6 +4,12 @@ approval_policy = "on-request"
 approvals_reviewer = "user"
 default_permissions = "matterbridge_safe"
 
+[shell_environment_policy]
+inherit = "all"
+
+[windows]
+sandbox = "elevated"
+
 [permissions.matterbridge_safe]
 description = "Workspace access with sensitive files denied and network off."
 extends = ":workspace"
