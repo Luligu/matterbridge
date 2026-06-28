@@ -107,6 +107,52 @@ describe('node:worker_threads (Matterbridge worker manager)', () => {
     expect(await exited).toBe(0);
   });
 
+  test('spawns 4 workers simultaneously and gets all replies', async () => {
+    const workers = Array.from({ length: 4 }, (_, index) => new Worker(new URL('./parallel.worker.ts', import.meta.url), { workerData: { index } }));
+    const alive = new Set(workers);
+
+    try {
+      const online = workers.map(
+        async (worker) =>
+          new Promise<void>((resolve, reject) => {
+            worker.once('online', resolve);
+            worker.once('error', reject);
+          }),
+      );
+      const replies = workers.map(
+        async (worker) =>
+          new Promise<{ index: number; reply: string }>((resolve, reject) => {
+            worker.once('message', (message) => resolve(message as { index: number; reply: string }));
+            worker.once('error', reject);
+          }),
+      );
+      const exits = workers.map(
+        async (worker) =>
+          new Promise<number>((resolve) =>
+            worker.once('exit', (code) => {
+              alive.delete(worker);
+              resolve(code);
+            }),
+          ),
+      );
+
+      await Promise.all(online);
+      workers.forEach((worker, index) => worker.postMessage(`ping-${index}`));
+
+      expect((await Promise.all(replies)).toSorted((a, b) => a.index - b.index)).toEqual([
+        { index: 0, reply: 'echo:ping-0' },
+        { index: 1, reply: 'echo:ping-1' },
+        { index: 2, reply: 'echo:ping-2' },
+        { index: 3, reply: 'echo:ping-3' },
+      ]);
+      expect(await Promise.all(exits)).toEqual([0, 0, 0, 0]);
+    } finally {
+      // Bun quirk: terminate() never resolves on an already-exited worker, so only
+      // terminate workers still alive (e.g. if an assertion threw before they exited).
+      await Promise.allSettled([...alive].map(async (worker) => worker.terminate()));
+    }
+  });
+
   // Documents the Bun quirk above: a worker that only calls parentPort.close() keeps
   // running, so 'exit' never fires on its own. We prove the worker still replies, then
   // confirm no 'exit' arrives within a grace window, and finally use terminate() to end it.
