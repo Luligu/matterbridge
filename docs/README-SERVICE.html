@@ -177,6 +177,8 @@ sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 <pre><code class="language-text">[Unit]
 Description=matterbridge
 After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

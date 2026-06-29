@@ -211,7 +211,7 @@ full <code>npm link</code> replacement.</li>
 <li><input checked="" disabled="" type="checkbox"> <strong><code>npm root -g</code> discovery.</strong> <code>getGlobalNodeModules()</code> returns
 <code>getGlobalBunModules()</code> when running on Bun (there is no <code>bun root -g</code>; the path is
 derived from <code>$BUN_INSTALL</code> / <code>~/.bun</code>).
-(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/bunPrefix.ts"><code>bunPrefix.ts</code></a>)</li>
+(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/runtimeBun.ts"><code>runtimeBun.ts</code></a>)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Plugin path resolution.</strong> <code>PluginManager</code> resolves plugins from the Bun
 global modules dir when running on Bun. (<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Runtime-aware package management.</strong> Plugin installation, uninstallation,
@@ -228,7 +228,7 @@ provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterb
 </ul>
 <h2 id="known-issue">Known issue</h2>
 <ul>
-<li><input disabled="" type="checkbox"> <strong>Bun worker module is unstable</strong> The runtime randomly crash on worker exit.</li>
+<li><input disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crash on worker exit.</li>
 <li><input disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
 <li><input disabled="" type="checkbox"> <strong>Bun cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>

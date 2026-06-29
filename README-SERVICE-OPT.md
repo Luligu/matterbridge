@@ -120,6 +120,8 @@ Add the following to this file:
 Description=matterbridge
 After=network.target
 Wants=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

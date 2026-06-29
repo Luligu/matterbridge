@@ -65,6 +65,8 @@ You may need to adapt the configuration to your setup:
 [Unit]
 Description=matterbridge
 After=network-online.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

@@ -87,7 +87,7 @@ package-manager command and global-modules paths to Bun where needed.
 - [x] **`npm root -g` discovery.** `getGlobalNodeModules()` returns
       `getGlobalBunModules()` when running on Bun (there is no `bun root -g`; the path is
       derived from `$BUN_INSTALL` / `~/.bun`).
-      ([`npmPrefix.ts`](packages/utils/src/npmPrefix.ts), [`bunPrefix.ts`](packages/utils/src/bunPrefix.ts))
+      ([`npmPrefix.ts`](packages/utils/src/npmPrefix.ts), [`runtimeBun.ts`](packages/utils/src/runtimeBun.ts))
 - [x] **Plugin path resolution.** `PluginManager` resolves plugins from the Bun
       global modules dir when running on Bun. ([`pluginManager.ts`](packages/core/src/pluginManager.ts))
 - [x] **Runtime-aware package management.** Plugin installation, uninstallation,
@@ -104,7 +104,7 @@ package-manager command and global-modules paths to Bun where needed.
 
 ## Known issue
 
-- [ ] **Bun worker module is unstable** The runtime randomly crash on worker exit.
+- [ ] **Bun node:worker_threads module is unstable** The runtime randomly crash on worker exit.
 - [ ] **Bun needs process.exit() or worker.terminate().** If not called the memory is not released.
 - [ ] **Bun cannot resolve the container user name.** In the official Bun images,
       both `node:os` and `bun:os` return `username: "unknown"` and `shell: "unknown"`

@@ -35,7 +35,7 @@
       "name": "@matterbridge/core",
       "version": "3.9.3",
       "dependencies": {
-        "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
+        "@matter/main": "0.17.4-alpha.0-20260628-67a669f75",
         "@matterbridge/dgram": "3.9.3",
         "@matterbridge/thread": "3.9.3",
         "@matterbridge/types": "3.9.3",
@@ -72,7 +72,7 @@
       "name": "@matterbridge/jest-utils",
       "version": "3.9.3",
       "dependencies": {
-        "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
+        "@matter/main": "0.17.4-alpha.0-20260628-67a669f75",
         "@matterbridge/types": "3.9.3",
         "@matterbridge/utils": "3.9.3",
         "node-ansi-logger": "3.3.0",
@@ -96,7 +96,7 @@
       "name": "@matterbridge/types",
       "version": "3.9.3",
       "dependencies": {
-        "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
+        "@matter/main": "0.17.4-alpha.0-20260628-67a669f75",
         "node-ansi-logger": "3.3.0",
       },
       "devDependencies": {
@@ -110,6 +110,7 @@
         "node-ansi-logger": "3.3.0",
       },
       "devDependencies": {
+        "@types/bun": "1.3.14",
         "vitest": "4.1.9",
       },
     },
@@ -117,7 +118,7 @@
       "name": "@matterbridge/vitest-utils",
       "version": "3.9.3",
       "dependencies": {
-        "@matter/main": "0.17.4-alpha.0-20260624-ef5aefa3b",
+        "@matter/main": "0.17.4-alpha.0-20260628-67a669f75",
         "@matterbridge/types": "3.9.3",
         "@matterbridge/utils": "3.9.3",
         "node-ansi-logger": "3.3.0",
@@ -166,19 +167,19 @@
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.31", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.1.0", "@jridgewell/sourcemap-codec": "^1.4.14" } }, "sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw=="],
 
-    "@matter/general": ["@matter/general@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@noble/curves": "^2.2.0" } }, "sha512-+cEX3EtkaM3mZ4OtkDU6OL78asESSsuIQDCaZeOV12+2rSPWjKPbwlcwbX6zpD28kOIi/Zpp2bvs8KwdA3aqUg=="],
+    "@matter/general": ["@matter/general@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@noble/curves": "^2.2.0" } }, "sha512-d0R6kpFVsMJz3bSJmpyUCEL7m2ZpRFuftDadBhcgCqW20f1fnteKaRG4eMXte98GQsiGk+AsmTKTUmp9He6cHg=="],
 
-    "@matter/main": ["@matter/main@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/model": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/node": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/protocol": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/types": "0.17.4-alpha.0-20260624-ef5aefa3b" }, "optionalDependencies": { "@matter/nodejs": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-wEvDIfyMj3vRIRO6QYDbTVSwy03NAVd7t2s0Dj+LkUqm7jPqqHAjVVbEF4Tdj5s+erh/Ju+1Zxkak8cAJj58YA=="],
+    "@matter/main": ["@matter/main@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75", "@matter/model": "0.17.4-alpha.0-20260628-67a669f75", "@matter/node": "0.17.4-alpha.0-20260628-67a669f75", "@matter/protocol": "0.17.4-alpha.0-20260628-67a669f75", "@matter/types": "0.17.4-alpha.0-20260628-67a669f75" }, "optionalDependencies": { "@matter/nodejs": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-mYYIX3UX24WnWEEVKcyTViFu1rYgBb/4eKycnv1auLpI1yAP0HxrcNRnYptCRMux59Urskawv1lWRlt7ilix0A=="],
 
-    "@matter/model": ["@matter/model@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-jtzph5sAq/Bxc7M1ZsbQNkhtYoeSoLMl69X9ax144YTiqMIwkqoZUwMSUER+3IB0ZFovChnEonSi1bUBzLkqvw=="],
+    "@matter/model": ["@matter/model@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-/nbYjSPMm1clpAdKo+lBQvVrdwK3fqVPPwsSbGDzNviazL4htemtVkiX3dGkA233WzveFU4yOuFUaxjplwHBzA=="],
 
-    "@matter/node": ["@matter/node@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/model": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/protocol": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/types": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-kozyiW8rrNIykKFTKx0MjpRBT5olz5XMHbvRQ9tZmhktZFia0unBVIB7Nli9MRrelp8mlCIRX3MaE6Vn2BWmyg=="],
+    "@matter/node": ["@matter/node@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75", "@matter/model": "0.17.4-alpha.0-20260628-67a669f75", "@matter/protocol": "0.17.4-alpha.0-20260628-67a669f75", "@matter/types": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-gw8WuymbFg8bOfe8E/12UMGHqTAucXOi5uuXPjgEb8GccW4MT/WgcsCLBhvX5RQ8edolJC4IK8V4tdy4eVhdrQ=="],
 
-    "@matter/nodejs": ["@matter/nodejs@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/node": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/protocol": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/types": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-2wR8lCIZl5KuQLDKdbDaFgl+bW8zAV/KKmXCMfi5dMvzA3yJaPQz20Vsn5LR9ut2q9eVSg5i5HkDFdMx++koBA=="],
+    "@matter/nodejs": ["@matter/nodejs@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75", "@matter/node": "0.17.4-alpha.0-20260628-67a669f75", "@matter/protocol": "0.17.4-alpha.0-20260628-67a669f75", "@matter/types": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-c9vTt2I+pCC7B4Vr0/wXYojhl4ULwVqM/UWS7NgPZLAtLEkwWxow7MfnzjFbQGXaD78Q3rJFAu5zKabIYJZs7w=="],
 
-    "@matter/protocol": ["@matter/protocol@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/model": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/types": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-yvJqcPhdjYOrDsDtiVDbdfIRQ77v8BoeDfG1iqJ53PK1a9XF1t+P+zMGEe+wEIyZegtlpDg45DlP9UFt5wDNhg=="],
+    "@matter/protocol": ["@matter/protocol@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75", "@matter/model": "0.17.4-alpha.0-20260628-67a669f75", "@matter/types": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-UMFMGYOj/gP9RMU/n0JnvvQURuFpBEv/IHr1eQ6ThxE53auHl6uGf7Es5DcQEg/8KPxLPBMtOkSUeKje+sTclw=="],
 
-    "@matter/types": ["@matter/types@0.17.4-alpha.0-20260624-ef5aefa3b", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260624-ef5aefa3b", "@matter/model": "0.17.4-alpha.0-20260624-ef5aefa3b" } }, "sha512-xH+3O0t3JBeyxEw6r581TJmTIKpCrnNp6SDiuDiVKe9gkirrRSB2cM4ZNp7d7hDdCsk1JeMbL7KSVZaoUNwkmw=="],
+    "@matter/types": ["@matter/types@0.17.4-alpha.0-20260628-67a669f75", "", { "dependencies": { "@matter/general": "0.17.4-alpha.0-20260628-67a669f75", "@matter/model": "0.17.4-alpha.0-20260628-67a669f75" } }, "sha512-YRu/sV5V4z63pFYF/gX8Up1+x1oKL39/neo/M5XBqNTIlwkZbZVvONpiSJItdb8bdjJ7U+yx9i4zSGev7DEFRg=="],
 
     "@matterbridge/core": ["@matterbridge/core@workspace:packages/core"],
 

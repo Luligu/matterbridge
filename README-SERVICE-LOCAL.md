@@ -86,6 +86,8 @@ Add the following to this file, **replacing 5 times (!) USER with your user name
 Description=matterbridge
 After=network.target
 Wants=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple

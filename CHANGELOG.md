@@ -60,6 +60,12 @@ These classes will run as threads in the next releases:
 
 ## [3.9.3] - Dev branch
 
+### Warning
+
+The Docker run examples did not set a stop timeout. The new Matter storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason.
+
+Please update your setup.
+
 ### Breaking changes
 
 - [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is reatarting.
@@ -73,9 +79,11 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
 - [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361. This brings a great memory optimization.
 - [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260628-67a669f75.
 - [workflows]: Update all GitHub Actions to their latest major versions.
 - [docker]: Add `matterbridge-mqtt` to the dev Docker image.
+- [docker]: Add `--stop-timeout 60` to Docker Desktop examples so Matterbridge has enough time to shut down cleanly before Docker kills the container.
 - [oxlint]: Update `Oxlint configuration` to v.1.0.16.
 - [oxlint]: Update `Oxfmt configuration` to v.1.0.5.
 - [readme]: Improve the journald configuration comments in `README-SERVICE.md`, `README-SERVICE-OPT.md` and `README-SERVICE-LOCAL.md`.
@@ -120,7 +128,7 @@ This release adds support for [bun](https://bun.sh/). Support for bun is stil un
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
 - [matterbridge]: Bump `@types/node` to v.26.0.1.
-- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260624-ef5aefa3b.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361.
 - [package]: Bump `node-ansi-logger` to v.3.3.0.
 - [package]: Bump `node-persist-manager` to v.2.1.0.
 - [frontend]: Bump `frontend` version to v.3.5.0.

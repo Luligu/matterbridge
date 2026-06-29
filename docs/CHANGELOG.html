@@ -179,6 +179,9 @@
 <li>each plugin in childbridge mode;</li>
 </ul>
 <h2 id="393-dev-branch">[3.9.3] - Dev branch</h2>
+<h3 id="warning">Warning</h3>
+<p>The Docker run examples did not set a stop timeout. The new Matter storage lock system needs Matterbridge to shut down cleanly, so without <code>--stop-timeout 60</code> Docker may kill the container before the lock is released. Docker Compose setups should use <code>stop_grace_period: 60s</code> for the same reason.</p>
+<p>Please update your setup.</p>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
 <li>[frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is reatarting.</li>
@@ -194,11 +197,15 @@
 </li>
 <li><p>[matterbridge]: Update dependencies.</p>
 </li>
+<li><p>[matterbridge]: Bump <code>@matter/main</code> to v.0.17.4-alpha.0-20260627-deac80361. This brings a great memory optimization.</p>
+</li>
 <li><p>[matterbridge]: Bump <code>@matter/main</code> to v.0.17.4-alpha.0-20260628-67a669f75.</p>
 </li>
 <li><p>[workflows]: Update all GitHub Actions to their latest major versions.</p>
 </li>
 <li><p>[docker]: Add <code>matterbridge-mqtt</code> to the dev Docker image.</p>
+</li>
+<li><p>[docker]: Add <code>--stop-timeout 60</code> to Docker Desktop examples so Matterbridge has enough time to shut down cleanly before Docker kills the container.</p>
 </li>
 <li><p>[oxlint]: Update <code>Oxlint configuration</code> to v.1.0.16.</p>
 </li>
@@ -247,7 +254,7 @@
 <li>[matterbridge]: Update dependencies.</li>
 <li>[matterbridge]: Bump <code>Oxlint configuration</code> to v.1.0.12.</li>
 <li>[matterbridge]: Bump <code>@types/node</code> to v.26.0.1.</li>
-<li>[matterbridge]: Bump <code>@matter/main</code> to v.0.17.4-alpha.0-20260624-ef5aefa3b.</li>
+<li>[matterbridge]: Bump <code>@matter/main</code> to v.0.17.4-alpha.0-20260627-deac80361.</li>
 <li>[package]: Bump <code>node-ansi-logger</code> to v.3.3.0.</li>
 <li>[package]: Bump <code>node-persist-manager</code> to v.2.1.0.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.5.0.</li>

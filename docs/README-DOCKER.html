@@ -198,7 +198,7 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --network host --restart always -d luligu/matterbridge:latest
+  --network host --restart always --stop-timeout 60 -d luligu/matterbridge:latest
 </code></pre>
 <p>You may need to adapt the paths to your setup.</p>
 <h3 id="run-the-container-with-extra-parameters-eg-frontend-on-port-8585">Run the container with extra parameters (e.g. frontend on port 8585)</h3>
@@ -209,7 +209,7 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --network host --restart always -d luligu/matterbridge:latest \
+  --network host --restart always  --stop-timeout 60 -d luligu/matterbridge:latest \
   matterbridge --docker --frontend 8585
 </code></pre>
 <p>If you override the command, always start it with <code>matterbridge --docker</code>.</p>
@@ -223,10 +223,10 @@ sudo chown -R $USER:$USER ~/matterbridge-one ~/matterbridge-two
 sudo docker pull luligu/matterbridge:latest
 sudo docker stop matterbridge-one 2&gt;/dev/null
 sudo docker rm matterbridge-one 2&gt;/dev/null
-sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
+sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
 sudo docker stop matterbridge-two 2&gt;/dev/null
 sudo docker rm matterbridge-two 2&gt;/dev/null
-sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
+sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
 </code></pre>
 <p>The first instance (profile BrokerOne) has the frontend on port 8081 and Matter port starting at 5540.</p>
 <p>The second instance (profile BrokerTwo) has the frontend on port 8082 and Matter port starting at 5560.</p>
@@ -239,6 +239,7 @@ sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root
     image: luligu/matterbridge:latest # Matterbridge image with the tag latest
     network_mode: host # Ensures the Matter mDNS works
     restart: always # Ensures the container always restarts automatically
+    stop_grace_period: 60s # Sets the grace period for stopping the container to 60 seconds
     volumes:
       - &#39;${HOME}/Matterbridge:/root/Matterbridge&#39; # Mounts the Matterbridge plugin directory
       - &#39;${HOME}/.matterbridge:/root/.matterbridge&#39; # Mounts the Matterbridge storage directory
@@ -334,7 +335,7 @@ docker run --name matterbridge `
   -v ${env:USERPROFILE}/Matterbridge:/root/Matterbridge `
   -v ${env:USERPROFILE}/.matterbridge:/root/.matterbridge `
   -v ${env:USERPROFILE}/.mattercert:/root/.mattercert `
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 </code></pre>
 <p>Windows (Command Prompt) with Docker Desktop (use the <a href="https://matterbridge.io/reflector/Reflector.html"><strong>Matterbridge mDNS Reflector</strong></a> if you want to pair with a controller on the local network):</p>
 <pre><code class="language-cmd">docker pull luligu/matterbridge:latest
@@ -345,7 +346,7 @@ docker run --name matterbridge ^
   -v %USERPROFILE%/Matterbridge:/root/Matterbridge ^
   -v %USERPROFILE%/.matterbridge:/root/.matterbridge ^
   -v %USERPROFILE%/.mattercert:/root/.mattercert ^
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 </code></pre>
 <h2 id="run-with-docker-desktop-and-mdns-reflector-on-macos">Run with Docker Desktop and mDNS Reflector on macOS</h2>
 <p>macOS (bash/zsh) with Docker Desktop (use the <a href="https://matterbridge.io/reflector/Reflector.html"><strong>Matterbridge mDNS Reflector</strong></a> if you want to pair with a controller on the local network):</p>
@@ -357,7 +358,7 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 </code></pre>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';

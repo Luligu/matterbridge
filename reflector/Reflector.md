@@ -58,7 +58,7 @@ docker stop matterbridge-test
 docker rm matterbridge-test
 docker pull luligu/matterbridge:dev
 docker network inspect matterbridge || docker network create matterbridge
-docker run -dit --restart unless-stopped --network matterbridge --name matterbridge-test \
+docker run -dit --restart unless-stopped --stop-timeout 60 --network matterbridge --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
