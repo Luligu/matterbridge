@@ -4,7 +4,7 @@
  * @file frontend.ts
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.2
+ * @version 1.4.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -125,6 +125,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   storedPassword: string | undefined = undefined;
   authClients = new Set<string>();
   authClientsTimeout: NodeJS.Timeout | undefined = undefined;
+  dockerVersionTimeout: NodeJS.Timeout | undefined = undefined;
 
   private expressApp: Express | undefined;
   private httpServer: HttpServer | undefined;
@@ -171,7 +172,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    */
   destroy(): void {
     clearTimeout(this.authClientsTimeout);
+    clearTimeout(this.dockerVersionTimeout);
     this.authClientsTimeout = undefined;
+    this.dockerVersionTimeout = undefined;
     this.server.close();
   }
 
@@ -1952,7 +1955,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
       } else if (data.method === '/api/checkupdates') {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
-        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+        clearTimeout(this.dockerVersionTimeout);
+        // v8 ignore next -- with bun is better to run the workers after a delay
+        this.dockerVersionTimeout = setTimeout(() => {
+          this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+        }, 5_000).unref();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shellysysupdate') {
         /*
