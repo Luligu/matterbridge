@@ -62,7 +62,7 @@ These classes will run as threads in the next releases:
 
 ### Warning
 
-The Docker run examples did not set a stop timeout. The new Matter storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason.
+The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason.
 
 Please update your setup.
 
@@ -79,7 +79,7 @@ Please update your setup.
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.3.
 - [matterbridge]: Update dependencies.
-- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361. This brings a great memory optimization.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361. This brings a great memory optimization. Thanks @Apollon77.
 - [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260628-67a669f75.
 - [workflows]: Update all GitHub Actions to their latest major versions.
 - [docker]: Add `matterbridge-mqtt` to the dev Docker image.
@@ -89,6 +89,7 @@ Please update your setup.
 - [readme]: Improve the journald configuration comments in `README-SERVICE.md`, `README-SERVICE-OPT.md` and `README-SERVICE-LOCAL.md`.
 - [bun]: Change bun install param from --production to --omit=dev to avoid the frozen lock.
 - [thread]: Refactor Docker, npm and GitHub version check timeout handling and warn when Docker Hub rate limits version lookups.
+- [typecheck]: Refactor typecheck tsconfig.json.
 
 - [codex]: Update config to v.1.0.1.
 

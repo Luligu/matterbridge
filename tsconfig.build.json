@@ -8,6 +8,6 @@
     { "path": "./packages/thread/tsconfig.build.json" },
     { "path": "./packages/dgram/tsconfig.build.json" },
     { "path": "./packages/core/tsconfig.build.json" },
-    { "path": "./tsconfig.root.json" }
+    { "path": "./tsconfig.root.build.json" }
   ]
 }
