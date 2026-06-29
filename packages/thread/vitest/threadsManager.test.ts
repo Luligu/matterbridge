@@ -567,9 +567,9 @@ describe('ThreadsManager', () => {
       (manager as any).intervalHandler();
 
       expect(debugSpy).toHaveBeenCalledWith('Terminating 2 workers that have exited...');
-      expect(terminateWorker.terminate).toHaveBeenCalledOnce();
+      expect(terminateWorker.terminate).toHaveBeenCalledTimes(1);
       expect(debugSpy).toHaveBeenCalledWith('Terminating worker with thread id 123...');
-      expect(throwingWorker.terminate).toHaveBeenCalledOnce();
+      expect(throwingWorker.terminate).toHaveBeenCalledTimes(1);
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to terminate worker with thread id 456'));
       expect(terminateWorkers.size).toBe(0);
 

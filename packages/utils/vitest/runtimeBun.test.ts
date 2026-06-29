@@ -78,7 +78,7 @@ describe('Node fallback runtime helpers', () => {
     expect(getNodeCompatVersion()).toBe(originalVersions.node);
     expect(getGlobalBunModules).toThrow('getGlobalBunModules can only be called in a Bun environment.');
     expect(nanoseconds()).toBe(123);
-    expect(hrtimeSpy).toHaveBeenCalledOnce();
+    expect(hrtimeSpy).toHaveBeenCalledTimes(1);
     await expect(sleep(0)).resolves.toBeUndefined();
     expect(which('node')).toBeNull();
     expect(gc()).toBeUndefined();
@@ -147,7 +147,7 @@ describe('Bun runtime helpers', () => {
     expect(getNodeCompatVersion()).toBe(originalVersions.node);
     expect(getGlobalBunModules()).toBe(path.join('/opt', 'bun', 'install', 'global', 'node_modules'));
     expect(nanoseconds()).toBe(42);
-    expect(fakeBun.nanoseconds).toHaveBeenCalledOnce();
+    expect(fakeBun.nanoseconds).toHaveBeenCalledTimes(1);
     await expect(sleep(10)).resolves.toBeUndefined();
     expect(fakeBun.sleep).toHaveBeenCalledWith(10);
     expect(which('bun')).toBe(path.join('bin', 'bun'));

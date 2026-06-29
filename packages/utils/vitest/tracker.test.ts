@@ -194,7 +194,7 @@ describe('Tracker', () => {
 
     tracker.runGarbageCollector('minor', 'sync');
 
-    expect(bunGcMock).toHaveBeenCalledOnce();
+    expect(bunGcMock).toHaveBeenCalledTimes(1);
     expect(results).toContainEqual(['minor', 'sync']);
   });
 
@@ -214,7 +214,7 @@ describe('Tracker', () => {
     tracker.on('gc_done', () => gcDoneCount++);
 
     expect(() => tracker.runGarbageCollector()).not.toThrow();
-    expect(bunGcMock).toHaveBeenCalledOnce();
+    expect(bunGcMock).toHaveBeenCalledTimes(1);
     expect(gcDoneCount).toBe(0);
   });
 
