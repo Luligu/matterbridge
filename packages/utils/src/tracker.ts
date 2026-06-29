@@ -30,6 +30,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YE
 import { hasParameter } from './commandLine.js';
 import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
 import { logModuleLoaded } from './loader.js';
+import { isBun, gc } from './runtimeBun.js';
 
 logModuleLoaded('Tracker');
 
@@ -300,7 +301,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * - sync execution blocks the main thread until GC is complete, which can cause pauses.
    */
   runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async'): void {
-    if (global.gc && typeof global.gc === 'function') {
+    const bun = isBun();
+    if (!bun && global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
         // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
@@ -311,6 +313,16 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
+      }
+    } else if (bun && typeof gc === 'function') {
+      try {
+        gc();
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
+        this.emit('gc_done', type, execution);
+      } catch {
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection failed triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
       }
     } else {
       if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection not exposed. Start Node.js with --expose-gc to enable manual garbage collection.${RESET}${db}`);

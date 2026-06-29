@@ -45,7 +45,7 @@ describe('getGlobalNodeModules()', () => {
     Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
     mockedExec.mockClear();
     try {
-      const { getGlobalBunModules } = await import('../src/bunPrefix.js');
+      const { getGlobalBunModules } = await import('../src/runtimeBun.js');
       await expect(getGlobalNodeModules()).resolves.toBe(getGlobalBunModules());
       expect(mockedExec).not.toHaveBeenCalled();
     } finally {

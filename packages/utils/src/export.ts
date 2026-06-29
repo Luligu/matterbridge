@@ -7,7 +7,6 @@
  * @license Apache-2.0
  */
 
-export * from './bunPrefix.js';
 export * from './colorUtils.js';
 export * from './commandLine.js';
 export * from './copyDirectory.js';
@@ -24,6 +23,7 @@ export * from './loader.js';
 export * from './network.js';
 export * from './npmPrefix.js';
 export * from './npmVersion.js';
+export * from './runtimeBun.js';
 export * from './tracker.js';
 export * from './validate.js';
 export * from './wait.js';

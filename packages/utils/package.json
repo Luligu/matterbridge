@@ -51,8 +51,8 @@
       "import": "./dist/export.js"
     },
     "./bun": {
-      "types": "./dist/bunPrefix.d.ts",
-      "import": "./dist/bunPrefix.js"
+      "types": "./dist/runtimeBun.d.ts",
+      "import": "./dist/runtimeBun.js"
     },
     "./cli": {
       "types": "./dist/commandLine.d.ts",
@@ -147,6 +147,7 @@
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
+    "@types/bun": "1.3.14",
     "vitest": "4.1.9"
   }
 }

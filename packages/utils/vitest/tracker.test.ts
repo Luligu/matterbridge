@@ -14,6 +14,7 @@ describe('Tracker', () => {
   beforeEach(async () => {
     // Reset all modules before each test
     vi.resetModules();
+    vi.doUnmock('../src/runtimeBun.js');
     // Setup the test environment
     await setDebug(false);
     // Clear all mocks before each test
@@ -24,6 +25,7 @@ describe('Tracker', () => {
     process.argv = [...originalArgv];
     global.gc = originalGc;
     vi.useRealTimers();
+    vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -31,6 +33,7 @@ describe('Tracker', () => {
   afterAll(() => {
     process.argv = originalArgv;
     global.gc = originalGc;
+    vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -174,6 +177,45 @@ describe('Tracker', () => {
     delete (global as any).gc;
 
     expect(() => tracker.runGarbageCollector()).not.toThrow();
+  });
+
+  test('gc uses Bun garbage collector when running on Bun', async () => {
+    const bunGcMock = vi.fn();
+    vi.doMock('../src/runtimeBun.js', () => ({
+      gc: bunGcMock,
+      isBun: vi.fn(() => true),
+    }));
+
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('BunGCTester');
+
+    const results: Array<[string, string]> = [];
+    tracker.on('gc_done', (type, execution) => results.push([type, execution]));
+
+    tracker.runGarbageCollector('minor', 'sync');
+
+    expect(bunGcMock).toHaveBeenCalledOnce();
+    expect(results).toContainEqual(['minor', 'sync']);
+  });
+
+  test('gc handles Bun garbage collector errors', async () => {
+    const bunGcMock = vi.fn(() => {
+      throw new Error('bun gc failed');
+    });
+    vi.doMock('../src/runtimeBun.js', () => ({
+      gc: bunGcMock,
+      isBun: vi.fn(() => true),
+    }));
+
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('BunGCErrorTester');
+
+    let gcDoneCount = 0;
+    tracker.on('gc_done', () => gcDoneCount++);
+
+    expect(() => tracker.runGarbageCollector()).not.toThrow();
+    expect(bunGcMock).toHaveBeenCalledOnce();
+    expect(gcDoneCount).toBe(0);
   });
 
   test('hourly gc trigger inside sampling loop', async () => {
