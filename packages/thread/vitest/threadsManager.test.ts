@@ -548,6 +548,34 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
+    test('terminates workers queued for cleanup', () => {
+      const manager = new ThreadsManager();
+      const debugSpy = vi.spyOn((manager as any).log, 'debug');
+      const errorSpy = vi.spyOn((manager as any).log, 'error');
+      const terminateWorker = { threadId: 123, terminate: vi.fn(async () => 0) };
+      const throwingWorker = {
+        threadId: 456,
+        terminate: vi.fn(() => {
+          throw new Error('terminate failed');
+        }),
+      };
+
+      const terminateWorkers = (manager as any).terminateWorkers as Set<typeof terminateWorker | typeof throwingWorker>;
+      terminateWorkers.add(terminateWorker);
+      terminateWorkers.add(throwingWorker);
+
+      (manager as any).intervalHandler();
+
+      expect(debugSpy).toHaveBeenCalledWith('Terminating 2 workers that have exited...');
+      expect(terminateWorker.terminate).toHaveBeenCalledOnce();
+      expect(debugSpy).toHaveBeenCalledWith('Terminating worker with thread id 123...');
+      expect(throwingWorker.terminate).toHaveBeenCalledOnce();
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to terminate worker with thread id 456'));
+      expect(terminateWorkers.size).toBe(0);
+
+      manager.destroy();
+    });
+
     test('pings after interval and warns after 2x interval', () => {
       const manager = new ThreadsManager(1000);
       const warnSpy = vi.spyOn((manager as any).log, 'warn');

@@ -16,6 +16,10 @@ vi.mock('node:child_process', async () => {
 });
 const { spawn } = await import('node:child_process');
 
+vi.mock('@matterbridge/utils/bun', () => ({
+  isBun: (): boolean => typeof process.versions.bun === 'string',
+}));
+
 import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
 import type { Mock } from 'vitest';

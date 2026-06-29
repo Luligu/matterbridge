@@ -192,7 +192,6 @@ export class WorkerWrapper {
       }
       try {
         parentPort.close();
-        process.exit(success ? 0 : 1);
       } catch (error) {
         this.log.error(`Worker ${this.name}:${threadId} failed to close parentPort: ${getErrorMessage(error)}`);
       }
@@ -234,6 +233,7 @@ export class WorkerWrapper {
    * @returns {void}
    */
   private safeParentLog(level: LogLevel, message: string): void {
+    this.log.error(`Worker ${this.name}: ${message}`);
     if (this.destroyed) return;
     try {
       this.logger(level, message);

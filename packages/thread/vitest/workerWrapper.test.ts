@@ -25,7 +25,6 @@ type SetupResult = Readonly<{
   hasParameterMock: Mock<(...args: any[]) => any>;
   serverRequest: Mock<(...args: any[]) => any>;
   serverClose: Mock<(...args: any[]) => any>;
-  processExit: Mock<(...args: any[]) => any>;
   waitImmediate: () => Promise<void>;
 }>;
 
@@ -63,7 +62,6 @@ describe('WorkerWrapper', () => {
 
     const serverClose = vi.fn<(...args: any[]) => any>();
     const serverRequest = vi.fn<(...args: any[]) => any>();
-    const processExit = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
     const hasParameterMock = vi.fn<(...args: any[]) => any>((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
@@ -114,13 +112,12 @@ describe('WorkerWrapper', () => {
       hasParameterMock,
       serverRequest,
       serverClose,
-      processExit: processExit as unknown as Mock<(...args: any[]) => any>,
       waitImmediate,
     };
   }
 
   test('worker thread: posts init, can log, closes server, posts exit', async () => {
-    const { WorkerWrapper, parentPort, serverClose, processExit, waitImmediate } = await setup({
+    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 7,
@@ -160,11 +157,10 @@ describe('WorkerWrapper', () => {
       }),
     );
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
-    expect(processExit).toHaveBeenCalledWith(0);
   });
 
   test('worker thread: logs callback failures and exits with success false', async () => {
-    const { WorkerWrapper, parentPort, serverClose, processExit, waitImmediate } = await setup({
+    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 8,
@@ -197,7 +193,6 @@ describe('WorkerWrapper', () => {
       }),
     );
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
-    expect(processExit).toHaveBeenCalledWith(1);
   });
 
   test('worker thread: handles unhandled rejections and exits with success false', async () => {

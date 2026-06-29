@@ -33,6 +33,7 @@ import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { fireAndForget } from '@matterbridge/utils/wait';
 import { AnsiLogger, CYAN, db, debugStringify, ft, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
@@ -88,6 +89,8 @@ export class ThreadsManager {
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
   ];
 
+  private terminateWorkers = new Set<Worker>();
+
   /**
    * Initialize the ThreadsManager by setting up the check interval, broadcast server, and listeners.
    *
@@ -128,6 +131,7 @@ export class ThreadsManager {
   destroy(): void {
     // Clear the interval
     clearInterval(this.interval);
+    this.terminateExitedWorkers();
     // Close broadcast servers and remove listeners
     this.server.off('broadcast_message', this.boundMsgHandler);
     this.server.close();
@@ -171,12 +175,28 @@ export class ThreadsManager {
     }
   }
 
+  private terminateExitedWorkers(): void {
+    if (this.terminateWorkers.size > 0) {
+      this.log.debug(`Terminating ${this.terminateWorkers.size} workers that have exited...`);
+      for (const worker of this.terminateWorkers) {
+        try {
+          this.log.debug(`Terminating worker with thread id ${worker.threadId}...`);
+          fireAndForget(worker.terminate(), this.log, `Failed to terminate worker with thread id ${worker.threadId}`);
+        } catch (error) {
+          this.log.error(`Failed to terminate worker with thread id ${worker.threadId}: ${getErrorMessage(error)}`);
+        }
+      }
+      this.terminateWorkers.clear();
+    }
+  }
+
   private intervalHandler(): void {
     for (const thread of this.threads) {
       this.log.debug(
         `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
       );
     }
+    this.terminateExitedWorkers();
     for (const thread of this.threads) {
       if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs) {
         const msg: ParentPortMessage = { type: 'ping', threadId: thread.worker.threadId, threadName: thread.name };
@@ -249,6 +269,7 @@ export class ThreadsManager {
         threadInfo.worker = undefined;
       }
       this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()}`);
+      this.terminateWorkers.delete(worker);
     });
 
     worker.on('message', (message: ParentPortMessage) => {
@@ -271,6 +292,7 @@ export class ThreadsManager {
         if (!message.success) {
           threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
         }
+        this.terminateWorkers.add(worker);
         threadInfo.worker = undefined;
         this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId} after running for ${threadInfo.lastDuration} ms`);
       }
@@ -290,6 +312,7 @@ export class ThreadsManager {
       threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       threadInfo.worker = undefined;
+      this.terminateWorkers.add(worker);
       this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`);
     });
 
