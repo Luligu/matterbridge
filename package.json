@@ -230,7 +230,7 @@
     "start:tracegcverbose": "node --expose-gc --trace-gc-verbose ./bin/matterbridge.js --force-gc --tracker",
     "start:nocolor": "cross-env NO_COLOR=1 node ./bin/matterbridge.js",
     "start:noansi": "node ./bin/matterbridge.js --no-ansi",
-    "start:bun": "bun ./bin/matterbridge.js --force-gc --tracker --loader",
+    "start:bun": "bun ./bin/matterbridge.js --force-gc --tracker --debug-threads --loader",
     "build": "tsgo --build tsconfig.build.json",
     "buildProduction": "tsc --build tsconfig.build.production.json --verbose",
     "watch": "tsgo --build tsconfig.build.json --watch",

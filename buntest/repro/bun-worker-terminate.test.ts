@@ -1,17 +1,17 @@
-// buntest/repro/bun-worker-exit.test.ts
+// buntest/repro/bun-worker-terminate.test.ts
 
 /**
- * Run a worker that closes its parentPort and calls process.exit().
+ * Run a worker that closes its parentPort, then call worker.terminate() from the main thread.
  */
 
-// Run: bun test --rerun-each 100 buntest/repro/bun-worker-exit.test.ts
+// Run: bun test --rerun-each 100 buntest/repro/bun-worker-terminate.test.ts
 
 import { expect, test } from 'bun:test';
 import { isMainThread, Worker } from 'node:worker_threads';
 
-test('Worker with process.exit()', async () => {
+test('Worker with worker.terminate()', async () => {
   expect(isMainThread).toBe(true);
-  const worker = new Worker(new URL('./worker-exit.worker.ts', import.meta.url));
+  const worker = new Worker(new URL('./worker-close.worker.ts', import.meta.url));
 
   // Record the exit code if/when 'exit' fires.
   let exitCode: number | undefined;
@@ -27,8 +27,11 @@ test('Worker with process.exit()', async () => {
   });
   expect(reply).toBe('echo:ping');
 
-  // Grace window: the worker should exit well within this after the port closes and process.exit() is called.
-  await new Promise<void>((resolve) => setTimeout(resolve, 50));
+  // Grace window: Node exits the worker well within this after the port closes; Bun never does.
+  await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
+  // Ensure the thread is gone even when 'exit' never fired (Bun).
+  await worker.terminate();
 
   // Node: worker exited with code 0. Bun: 'exit' never fired, so exitCode is still undefined.
   expect(exitCode).toBe(0);

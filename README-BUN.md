@@ -114,6 +114,15 @@ package-manager command and global-modules paths to Bun where needed.
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
 - [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});"
 
+```typescript
+  // Change: FileStorageDriver.js
+  async #writeAndMoveFile(filepath, valueOrStream) {
+    const tmpName = `${filepath}.tmp`;
+    await writeFile(tmpName, valueOrStream, { encoding: "utf8", flush: true });
+    await rename(tmpName, filepath);
+  }
+```
+
 ## TODO
 
 - [ ] **Validate Bun/Node compatibility** of the full runtime over a longer run

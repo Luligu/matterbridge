@@ -238,6 +238,13 @@ system-information view instead of the container account (for example, <code>roo
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
 <li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;</li>
 </ul>
+<pre><code class="language-typescript">  // Change: FileStorageDriver.js
+  async #writeAndMoveFile(filepath, valueOrStream) {
+    const tmpName = `${filepath}.tmp`;
+    await writeFile(tmpName, valueOrStream, { encoding: &quot;utf8&quot;, flush: true });
+    await rename(tmpName, filepath);
+  }
+</code></pre>
 <h2 id="todo">TODO</h2>
 <ul>
 <li><input disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
