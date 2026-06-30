@@ -20,19 +20,12 @@ LABEL org.opencontainers.image.title="matterbridge:bun" \
 WORKDIR /matterbridge
 COPY . .
 RUN \
-  bun install && \
-  bun run build && \
+  bun install --omit=dev && \
   cd apps/frontend && bun install && bun run build && cd ../.. && \
   find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
-  bun install --omit=dev && \
   bun pm cache rm 2>/dev/null || true && \
   bun link && \
   rm -rf /tmp/* /var/tmp/* /root/.bun/install/cache /root/.cache /var/lib/apt/lists/* && \
-  rm -rf /matterbridge/docker /matterbridge/src && \
-  find /matterbridge/packages -type d -name "src" -exec rm -rf {} + && \
-  find /matterbridge -maxdepth 1 \( -name "tsconfig*.json" -o -name "*.tsbuildinfo" \) -exec rm -f {} + && \
-  find /matterbridge -type d \( -name ".github" -o -name ".vscode" -o -name "docs" \) -exec rm -rf {} + && \
-  find /matterbridge -type f \( -name "*.ts" -o -name "*.js.map" -o -name "*.d.ts" -o -name "*.d.ts.map" -o -name "LICENSE" -o -name "LICENSE.txt" -o -name "*.md" \) -delete && \
   if [ -d "/matterbridge/node_modules/@matter" ]; then \
   find "/matterbridge/node_modules/@matter" -type d -name "src" -exec rm -rf {} + && \
   find "/matterbridge/node_modules/@matter" -type d -name "cjs" -exec rm -rf {} +; \

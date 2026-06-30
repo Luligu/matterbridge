@@ -37,16 +37,12 @@ The image (tag **bun** 69 MB) includes only Matterbridge, using the latest relea
 
 # Bun local image (experimental — for test and development only)
 
-The **bun** image builds Matterbridge from the **local source files** and runs it on the
-[Bun](https://bun.com) runtime instead of Node.js.
+The **bun** image runs Matterbridge directly from the **local source files** with [Bun](https://bun.com) runtime.
 
 - Base image: `oven/bun:slim` (Debian trixie slim + Bun), mirroring the `node:24-trixie-slim` base of the `local` image.
-- Builds exactly like the `local` image, with the npm commands adapted to Bun:
-  - `npm ci` → `bun install`
-  - `npm run build` → `bun run build` (backend `tsgo` build and frontend `vite` build are still run; the runtime uses the compiled `dist/`)
-  - `npm prune --omit=dev` → `bun install --omit=dev`
-  - `npm cache clean` → `bun pm cache rm`
-  - `npm link` → `bun link`
+- Install dependencies and link only (no build!) with Bun:
+  - `bun install --omit=dev `
+  - `bun link`
 
 ## Files
 
