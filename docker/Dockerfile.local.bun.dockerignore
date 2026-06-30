@@ -25,6 +25,7 @@ docs
 reflector
 screenshots
 scripts
+!scripts/bun-exports.mjs
 systemd
 **/vitest
 *.md

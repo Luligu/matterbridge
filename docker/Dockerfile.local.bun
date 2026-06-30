@@ -20,6 +20,7 @@ LABEL org.opencontainers.image.title="matterbridge:bun" \
 WORKDIR /matterbridge
 COPY . .
 RUN \
+  bun scripts/bun-exports.mjs && \
   bun install --omit=dev && \
   cd apps/frontend && bun install && bun run build && cd ../.. && \
   find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
