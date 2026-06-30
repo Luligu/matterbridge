@@ -35,7 +35,7 @@ import { isValidString } from '@matterbridge/utils/validate';
 import { AnsiLogger, db, debugStringify, nt, TimestampFormat, wr } from 'node-ansi-logger';
 
 // matterbridge
-import { BroadcastServer } from './broadcastServer.js';
+import type { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('CheckUpdates');
 
@@ -46,11 +46,11 @@ let noUpdatesAvailable = true;
  * If the 'shelly' parameter is present, also checks for Shelly updates.
  *
  * @param {SharedMatterbridge} matterbridge - The Matterbridge instance.
+ * @param {BroadcastServer} server - The broadcast server used to communicate update results.
  * @returns {Promise<void>} A promise that resolves when the update checks are complete.
  */
-export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<void> {
+export async function checkUpdates(matterbridge: SharedMatterbridge, server: BroadcastServer): Promise<void> {
   const log = new AnsiLogger({ logName: 'MatterbridgeUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.logLevel });
-  const server = new BroadcastServer('updates', log);
   noUpdatesAvailable = true;
 
   const checkUpdatePromise = checkUpdatesAndLog(matterbridge, log, server);
@@ -75,8 +75,6 @@ export async function checkUpdates(matterbridge: SharedMatterbridge): Promise<vo
   if (noUpdatesAvailable) {
     server.request({ type: 'frontend_snackbarmessage', src: server.name, dst: 'frontend', params: { message: 'No updates available', timeout: 5, severity: 'info' } });
   }
-
-  server.close();
 }
 
 /**

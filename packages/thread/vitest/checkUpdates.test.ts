@@ -82,7 +82,7 @@ describe(`Test ${NAME}`, () => {
     });
 
     try {
-      await checkUpdates(matterbridge);
+      await checkUpdates(matterbridge, testServer);
       await flushAsync(undefined, undefined, 100);
     } finally {
       frontendServer.close();
@@ -124,7 +124,7 @@ describe(`Test ${NAME}`, () => {
     });
 
     try {
-      await checkUpdates(matterbridge);
+      await checkUpdates(matterbridge, testServer);
       await flushAsync(undefined, undefined, 100);
     } finally {
       frontendServer.close();

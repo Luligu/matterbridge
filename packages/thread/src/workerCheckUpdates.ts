@@ -36,7 +36,7 @@ export default new WorkerWrapper('CheckUpdates', async (worker) => {
   let success = false;
   try {
     const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: `matterbridge`, dst: 'matterbridge' }, 5000)).result.data;
-    await checkUpdates(shared);
+    await checkUpdates(shared, worker.server);
     worker.logger(LogLevel.INFO, `Check updates succeeded`);
     success = true;
   } catch (error) {

@@ -118,7 +118,7 @@ describe('ThreadsManagerConcurrent', () => {
   test('Run all worker threads concurrently', async () => {
     const threadRuns: { name: ThreadNames; params: Record<string, unknown> }[] = [
       { name: 'GlobalPrefix', params: { name: 'GlobalPrefix', pipedOutput: true } },
-      // { name: 'CheckUpdates', params: { name: 'CheckUpdates', pipedOutput: true } },
+      { name: 'CheckUpdates', params: { name: 'CheckUpdates', pipedOutput: true } },
       { name: 'SystemCheck', params: { name: 'SystemCheck', pipedOutput: true } },
       {
         name: 'SpawnCommand',
@@ -185,7 +185,7 @@ describe('ThreadsManagerConcurrent', () => {
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread SystemCheck has exited at/));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread SpawnCommand has exited at/));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread ArchiveCommand has exited at/));
-    // expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread CheckUpdates has exited at/));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread CheckUpdates has exited at/));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread DockerVersion has exited at/));
     process.stderr.write('All threads have been terminated\n');
 
@@ -203,8 +203,8 @@ describe('ThreadsManagerConcurrent', () => {
     // Check that the expected log messages were emitted
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting global prefix check/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Global node_modules directory/));
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting check updates/));
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Check updates succeeded/));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting check updates/));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Check updates succeeded/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting system check/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/System check succeeded/));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting spawn command/));
