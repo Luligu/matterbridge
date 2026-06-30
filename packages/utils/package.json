@@ -70,6 +70,10 @@
       "types": "./dist/error.d.ts",
       "import": "./dist/error.js"
     },
+    "./diagnostic": {
+      "types": "./dist/diagnostic.d.ts",
+      "import": "./dist/diagnostic.js"
+    },
     "./inspector": {
       "types": "./dist/inspector.d.ts",
       "import": "./dist/inspector.js"
