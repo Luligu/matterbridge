@@ -182,9 +182,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
               .filter(([key, value]) => key !== 'bunVersion' && value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
-                    {keyNameMap.get(key) ?? key}
-                  </td>
+                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>{keyNameMap.get(key) ?? key}</td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {enableMobile && mobile ? (
                       typeof value !== 'string' ? (
