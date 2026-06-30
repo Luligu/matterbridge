@@ -83,6 +83,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
       (command === 'npm' || command === 'bun') &&
       !hasParameter('docker') &&
       !hasParameter('nosudo') &&
+      !isBun() &&
       !process.env.PATH?.includes('/.nvm/versions/node/'))
   ) {
     args.unshift(command === 'npm' && isBun() ? 'bun' : command);

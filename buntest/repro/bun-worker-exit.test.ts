@@ -4,6 +4,7 @@
  * Run a worker that closes its parentPort and calls process.exit().
  */
 
+// Run: bun test buntest/repro/bun-worker-exit.test.ts
 // Run: bun test --rerun-each 100 buntest/repro/bun-worker-exit.test.ts
 
 import { expect, test } from 'bun:test';
@@ -11,6 +12,7 @@ import { isMainThread, Worker } from 'node:worker_threads';
 
 test('Worker with process.exit()', async () => {
   expect(isMainThread).toBe(true);
+
   const worker = new Worker(new URL('./worker-exit.worker.ts', import.meta.url));
 
   // Record the exit code if/when 'exit' fires.
