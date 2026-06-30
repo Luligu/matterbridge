@@ -8,38 +8,52 @@ import { TruncatedText } from './TruncatedText';
 import { UiContext } from './UiContext';
 // const debug = true;
 
+const keyNameMap = new Map<string, string>([
+  ['matterbridgeVersion', 'Matterbridge version'],
+  ['frontendVersion', 'Frontend version'],
+  ['dockerVersion', 'Docker version'],
+  ['homeDirectory', 'Home'],
+  ['rootDirectory', 'Root'],
+  ['matterbridgeDirectory', 'Storage'],
+  ['matterbridgeCertDirectory', 'Cert'],
+  ['matterbridgePluginDirectory', 'Plugins'],
+  ['globalModulesDirectory', 'Modules'],
+  ['bridgeMode', 'Bridge mode'],
+  ['restartMode', 'Restart mode'],
+  ['virtualMode', 'Virtual mode'],
+  ['bridgeStatus', 'Bridge status'],
+  ['profile', 'Profile'],
+  ['loggerLevel', 'Logger level'],
+  ['fileLogger', 'File logger'],
+  ['matterLoggerLevel', 'Matter logger level'],
+  ['matterFileLogger', 'Matter file logger'],
+  ['restartRequired', 'Restart required'],
+  ['updateRequired', 'Update required'],
+]);
+
+const excludeKeys = new Set([
+  'matterbridgeLatestVersion',
+  'matterbridgeDevVersion',
+  'dockerDev',
+  'dockerLatestVersion',
+  'dockerDevVersion',
+  'fixedRestartRequired',
+  'matterMdnsInterface',
+  'matterIpv4Address',
+  'matterIpv6Address',
+  'readOnly',
+  'shellyBoard',
+  'shellySysUpdate',
+  'shellyMainUpdate',
+  'matterPort',
+  'matterDiscriminator',
+  'matterPasscode',
+]);
+
 function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation }) {
   // Contexts
   const { mobile } = useContext(UiContext);
   if (debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
-
-  const excludeKeys = new Set([
-    'matterbridgeLatestVersion',
-    'matterbridgeDevVersion',
-    'dockerDev',
-    'dockerLatestVersion',
-    'dockerDevVersion',
-    '--matterFileLogger',
-    '--fileLogger',
-    '--matterLoggerLevel',
-    '--loggerLevel',
-    '--virtualMode',
-    '--bridgeMode',
-    '--restartMode',
-    '--restartRequired',
-    'fixedRestartRequired',
-    '--updateRequired',
-    'matterMdnsInterface',
-    'matterIpv4Address',
-    'matterIpv6Address',
-    'readOnly',
-    'shellyBoard',
-    'shellySysUpdate',
-    'shellyMainUpdate',
-    'matterPort',
-    'matterDiscriminator',
-    'matterPasscode',
-  ]);
 
   const [closed, setClosed] = useState(false);
 
@@ -70,30 +84,7 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
               .filter(([key, value]) => !excludeKeys.has(key) && value !== null && value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
-                    {key
-                      .replace('matterbridgeVersion', 'Matterbridge version')
-                      .replace('frontendVersion', 'Frontend version')
-                      .replace('dockerVersion', 'Docker version')
-                      .replace('homeDirectory', 'Home')
-                      .replace('rootDirectory', 'Root')
-                      .replace('matterbridgeDirectory', 'Storage')
-                      .replace('matterbridgeCertDirectory', 'Cert')
-                      .replace('matterbridgePluginDirectory', 'Plugins')
-                      .replace('globalModulesDirectory', 'Modules')
-                      .replace('bridgeMode', 'Bridge mode')
-                      .replace('restartMode', 'Restart mode')
-                      .replace('virtualMode', 'Virtual mode')
-                      .replace('profile', 'Profile')
-                      .replace('loggerLevel', 'Logger level')
-                      .replace('fileLogger', 'File logger')
-                      .replace('loggerLevel', 'Logger level')
-                      .replace('fileLogger', 'File logger')
-                      .replace('matterLoggerLevel', 'Matter logger level')
-                      .replace('matterFileLogger', 'Matter file logger')
-                      .replace('restartRequired', 'Restart required')
-                      .replace('updateRequired', 'Update required')}
-                  </td>
+                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>{keyNameMap.get(key) ?? key}</td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {enableMobile && mobile ? (
                       typeof value !== 'string' ? (

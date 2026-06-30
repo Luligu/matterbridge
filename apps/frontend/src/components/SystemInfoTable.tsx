@@ -14,6 +14,26 @@ import { TruncatedText } from './TruncatedText';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
+const keyNameMap = new Map<string, string>([
+  ['interfaceName', 'Interface name'],
+  ['macAddress', 'Mac address'],
+  ['ipv4Address', 'IPv4 address'],
+  ['ipv6Address', 'IPv6 address'],
+  ['nodeVersion', 'Node version'],
+  ['bunVersion', 'Bun version'],
+  ['hostname', 'Hostname'],
+  ['user', 'User'],
+  ['osType', 'Os'],
+  ['osPlatform', 'Platform'],
+  ['freeMemory', 'Memory'],
+  ['systemUptime', 'System uptime'],
+  ['processUptime', 'Process uptime'],
+  ['cpuUsage', 'Host CPU'],
+  ['processCpuUsage', 'Process CPU'],
+  ['rss', 'Rss'],
+  ['heapUsed', 'Heap'],
+]);
+
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {
   // Contexts
   const { mobile } = useContext(UiContext);
@@ -163,24 +183,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
-                    {key
-                      .replace('interfaceName', 'Interface name')
-                      .replace('macAddress', 'Mac address')
-                      .replace('ipv4Address', 'IPv4 address')
-                      .replace('ipv6Address', 'IPv6 address')
-                      .replace('nodeVersion', 'Node version')
-                      .replace('bunVersion', 'Bun version')
-                      .replace('hostname', 'Hostname')
-                      .replace('user', 'User')
-                      .replace('osType', 'Os')
-                      .replace('osPlatform', 'Platform')
-                      .replace('freeMemory', 'Memory')
-                      .replace('systemUptime', 'System uptime')
-                      .replace('processUptime', 'Process uptime')
-                      .replace('cpuUsage', 'Host CPU')
-                      .replace('processCpuUsage', 'Process CPU')
-                      .replace('rss', 'Rss')
-                      .replace('heapUsed', 'Heap')}
+                    {keyNameMap.get(key) ?? key}
                   </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {enableMobile && mobile ? (
