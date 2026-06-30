@@ -15,6 +15,7 @@ import path from 'node:path';
 import type { Worker } from 'node:worker_threads';
 
 import type { ThreadNames, WorkerMessage } from '@matterbridge/types';
+// import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { HOMEDIR, loggerDebugSpy, loggerLogSpy, setupTest } from '../../../buntest/bunSetupTest.js';
@@ -65,6 +66,7 @@ describe('ThreadsManagerConcurrent', () => {
     broadcastserverMatterbridge = new BroadcastServer('matterbridge', log);
     broadcastserverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
       if (broadcastserverMatterbridge.isWorkerRequest(msg) && msg.type === 'matterbridge_shared') {
+        // writeDiagnostic(NAME, 'responding with shared Matterbridge data');
         broadcastserverMatterbridge.respond({
           ...msg,
           result: {
@@ -84,7 +86,24 @@ describe('ThreadsManagerConcurrent', () => {
     broadcastserverPlugins = new BroadcastServer('plugins', log);
     broadcastserverPlugins.on('broadcast_message', (msg: WorkerMessage) => {
       if (broadcastserverPlugins.isWorkerRequest(msg) && msg.type === 'plugins_apipluginarray') {
-        broadcastserverPlugins.respond({ ...msg, result: { plugins: [] } });
+        // writeDiagnostic(NAME, 'responding with plugins: matterbridge-test@1.0.0');
+        broadcastserverPlugins.respond({
+          ...msg,
+          result: {
+            plugins: [
+              {
+                name: 'matterbridge-test',
+                path: '',
+                type: 'DynamicPlatform',
+                version: '1.0.0',
+                description: 'Matterbridge test plugin',
+                author: 'Matterbridge',
+                enabled: true,
+                private: false,
+              },
+            ],
+          },
+        });
       }
     });
   });
@@ -112,19 +131,27 @@ describe('ThreadsManagerConcurrent', () => {
     expect(threadInfo.lastStarted).toBeDefined();
     expect(threadInfo.lastStopped).toBeDefined();
     expect(threadInfo.lastDuration).toBeDefined();
-    // expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted ?? 0);
+  }
+
+  function writeThreadsDiagnostic(label: string): void {
+    const diagnostic = threads
+      .map(
+        (thread) =>
+          `${thread.name}{worker=${thread.worker ? thread.worker.threadId : 'none'},runs=${thread.runCount ?? 0},errors=${thread.errorCount ?? 0},started=${thread.lastStarted ?? 'none'},stopped=${thread.lastStopped ?? 'none'},seen=${thread.lastSeen ?? 'none'}}`,
+      )
+      .join(' ');
+    // writeDiagnostic(NAME, `${label}: ${diagnostic}`);
   }
 
   test('Run all worker threads concurrently', async () => {
     const threadRuns: { name: ThreadNames; params: Record<string, unknown> }[] = [
-      { name: 'GlobalPrefix', params: { name: 'GlobalPrefix', pipedOutput: true } },
-      { name: 'CheckUpdates', params: { name: 'CheckUpdates', pipedOutput: true } },
-      { name: 'SystemCheck', params: { name: 'SystemCheck', pipedOutput: true } },
+      { name: 'GlobalPrefix', params: { name: 'GlobalPrefix' } },
+      { name: 'CheckUpdates', params: { name: 'CheckUpdates' } },
+      { name: 'SystemCheck', params: { name: 'SystemCheck' } },
       {
         name: 'SpawnCommand',
         params: {
           name: 'SpawnCommand',
-          pipedOutput: true,
           workerData: { threadName: 'SpawnCommand', command: process.execPath, args: ['--version'], packageCommand: 'install', packageName: 'node' },
         },
       },
@@ -132,7 +159,6 @@ describe('ThreadsManagerConcurrent', () => {
         name: 'ArchiveCommand',
         params: {
           name: 'ArchiveCommand',
-          pipedOutput: true,
           workerData: {
             threadName: 'ArchiveCommand',
             command: 'zip',
@@ -142,19 +168,20 @@ describe('ThreadsManagerConcurrent', () => {
           },
         },
       },
-      { name: 'DockerVersion', params: { name: 'DockerVersion', pipedOutput: true } },
+      { name: 'DockerVersion', params: { name: 'DockerVersion' } },
     ];
 
     // Run all threads concurrently
-    process.stderr.write('Starting all threads concurrently...\n');
+    // writeDiagnostic(NAME, 'Starting all threads concurrently...');
     for (const thread of threadRuns) {
       const response = await broadcastserverMatterbridge.fetch({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: thread.params } as any);
       expect((response.result as { success: boolean }).success).toBe(true);
+      writeThreadsDiagnostic(`started ${thread.name}`);
     }
-    process.stderr.write('Started all threads concurrently\n');
+    // writeDiagnostic(NAME, 'Started all threads concurrently');
 
     // Wait for all threads to stop
-    process.stderr.write('Waiting for all threads to stop...\n');
+    // writeDiagnostic(NAME, 'Waiting for all threads to stop...');
     await Promise.all(
       threadRuns.map(async ({ name }) => {
         await new Promise<void>((resolve, reject) => {
@@ -173,10 +200,10 @@ describe('ThreadsManagerConcurrent', () => {
         });
       }),
     );
-    process.stderr.write('All threads have stopped\n');
+    // writeDiagnostic(NAME, 'All threads have stopped');
 
     // Terminate any remaining threads (if any) to ensure a clean exit
-    process.stderr.write('Terminating any running threads...\n');
+    // writeDiagnostic(NAME, 'Terminating any running threads...');
     for (const worker of (manager as any).terminateWorkers as Set<Worker>) {
       await worker.terminate();
     }
@@ -187,14 +214,14 @@ describe('ThreadsManagerConcurrent', () => {
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread ArchiveCommand has exited at/));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread CheckUpdates has exited at/));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Thread DockerVersion has exited at/));
-    process.stderr.write('All threads have been terminated\n');
+    // writeDiagnostic(NAME, 'All threads have been terminated');
 
     // Check that all threads have stopped and have the expected properties
-    process.stderr.write('Checking that all threads have the expected properties...\n');
+    // writeDiagnostic(NAME, 'Checking that all threads have the expected properties...');
     for (const { name } of threadRuns) {
       expectStoppedAfterRun(name);
     }
-    process.stderr.write('All threads have have the expected properties\n');
+    // writeDiagnostic(NAME, 'All threads have have the expected properties');
 
     // Check that the archive file was created and has a size greater than 0
     expect(existsSync(archivePath)).toBe(true);

@@ -4,7 +4,7 @@
  * @file checkUpdates.ts
  * @author Luca Liguori
  * @created 2025-02-24
- * @version 2.0.1
+ * @version 3.0.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -53,26 +53,35 @@ export async function checkUpdates(matterbridge: SharedMatterbridge, server: Bro
   const log = new AnsiLogger({ logName: 'MatterbridgeUpdates', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: matterbridge.logLevel });
   noUpdatesAvailable = true;
 
-  const checkUpdatePromise = checkUpdatesAndLog(matterbridge, log, server);
-  const latestVersionPromise = getMatterbridgeLatestVersion(matterbridge, log, server);
-  const devVersionPromise = getMatterbridgeDevVersion(matterbridge, log, server);
-  const pluginsVersionPromises = [];
-  const pluginsDevVersionPromises = [];
-  // const shellyUpdatesPromises = [];
+  // writeDiagnostic('CheckUpdates', 'starting check updates');
+
+  let plugins: ApiPlugin[] = [];
   try {
-    const plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
-    for (const plugin of plugins) {
-      pluginsVersionPromises.push(getPluginLatestVersion(log, server, plugin));
-      pluginsDevVersionPromises.push(getPluginDevVersion(log, server, plugin));
-    }
+    // writeDiagnostic('CheckUpdates', 'fetching plugins');
+    plugins = (await server.fetch({ type: 'plugins_apipluginarray', src: server.name, dst: 'plugins' }, 1000)).result.plugins;
   } catch (error) {
-    // istanbul ignore next cause it's just an error log
     log.debug(`Error fetching plugins for update check: ${getErrorMessage(error)}`);
   }
 
-  await Promise.all([checkUpdatePromise, latestVersionPromise, devVersionPromise, ...pluginsVersionPromises, ...pluginsDevVersionPromises]);
+  // writeDiagnostic('CheckUpdates', 'checking GitHub update message');
+  await checkUpdatesAndLog(matterbridge, log, server);
+
+  // writeDiagnostic('CheckUpdates', 'checking Matterbridge latest version');
+  await getMatterbridgeLatestVersion(matterbridge, log, server);
+
+  // writeDiagnostic('CheckUpdates', 'checking Matterbridge dev version');
+  await getMatterbridgeDevVersion(matterbridge, log, server);
+
+  for (const plugin of plugins) {
+    // writeDiagnostic('CheckUpdates', `checking plugin ${plugin.name} latest version`);
+    await getPluginLatestVersion(log, server, plugin);
+
+    // writeDiagnostic('CheckUpdates', `checking plugin ${plugin.name} dev version`);
+    await getPluginDevVersion(log, server, plugin);
+  }
 
   if (noUpdatesAvailable) {
+    // writeDiagnostic('CheckUpdates', 'sending no updates snackbar');
     server.request({ type: 'frontend_snackbarmessage', src: server.name, dst: 'frontend', params: { message: 'No updates available', timeout: 5, severity: 'info' } });
   }
 }
