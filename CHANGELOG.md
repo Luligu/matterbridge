@@ -74,6 +74,8 @@ Please update your setup.
 
 - [bun]: Add ban test runtime check.
 - [bun]: Add ban test workflow.
+- [bun]: The bun local docker image now runs from src files. No build is done.
+- [utils]: Add writeDiagnostic() in utils package.
 
 ### Changed
 
