@@ -13,6 +13,7 @@ export * from './copyDirectory.js';
 export * from './createDirectory.js';
 export * from './deepCopy.js';
 export * from './deepEqual.js';
+export * from './diagnostic.js';
 export * from './enumDescription.js';
 export * from './error.js';
 export * from './format.js';

@@ -1,12 +1,12 @@
 /**
  * version.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Updates package.json version to:
- *   <baseVersion>-<dev|edge|git|local>-<yyyymmdd>-<7charSha>
+ *   <baseVersion>-<dev|edge|git|local|bun>-<yyyymmdd>-<7charSha>
  *
  * Usage:
- *   node scripts/version.mjs <dev|edge|git|local> [--dry-run]
+ *   node scripts/version.mjs <dev|edge|git|local|bun> [--dry-run]
  */
 
 /* eslint-disable no-console */
@@ -19,11 +19,11 @@ import { fileURLToPath } from 'node:url';
 
 function usage() {
   return [
-    'Usage: node scripts/version.mjs <dev|edge|git|local> [--dry-run]',
-    '   or: node scripts/version.mjs --dry-run <dev|edge|git|local>',
+    'Usage: node scripts/version.mjs <dev|edge|git|local|bun> [--dry-run]',
+    '   or: node scripts/version.mjs --dry-run <dev|edge|git|local|bun>',
     '',
     'Updates package.json version to:',
-    '  <baseVersion>-<dev|edge|git|local>-<yyyymmdd>-<7charSha>',
+    '  <baseVersion>-<dev|edge|git|local|bun>-<yyyymmdd>-<7charSha>',
     '',
     'Options:',
     '  --dry-run, -n   Print the next version but do not write package.json',
@@ -79,10 +79,10 @@ if (unknownFlags.length > 0) {
 const dryRun = args.includes('--dry-run') || args.includes('-n');
 const positional = args.filter((a) => !a.startsWith('-'));
 const tag = positional[0]?.toLowerCase();
-if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'local') {
+if (tag !== 'dev' && tag !== 'edge' && tag !== 'git' && tag !== 'local' && tag !== 'bun') {
   console.error(usage());
   process.exitCode = 1;
-  throw new Error('Missing or invalid parameter (expected dev, edge, git, or local).');
+  throw new Error('Missing or invalid parameter (expected dev, edge, git, local, or bun).');
 }
 
 const filename = fileURLToPath(import.meta.url);

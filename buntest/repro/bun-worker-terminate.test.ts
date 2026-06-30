@@ -4,6 +4,7 @@
  * Run a worker that closes its parentPort, then call worker.terminate() from the main thread.
  */
 
+// Run: bun test buntest/repro/bun-worker-terminate.test.ts
 // Run: bun test --rerun-each 100 buntest/repro/bun-worker-terminate.test.ts
 
 import { expect, test } from 'bun:test';
@@ -11,6 +12,7 @@ import { isMainThread, Worker } from 'node:worker_threads';
 
 test('Worker with worker.terminate()', async () => {
   expect(isMainThread).toBe(true);
+
   const worker = new Worker(new URL('./worker-close.worker.ts', import.meta.url));
 
   // Record the exit code if/when 'exit' fires.
@@ -28,7 +30,7 @@ test('Worker with worker.terminate()', async () => {
   expect(reply).toBe('echo:ping');
 
   // Grace window: Node exits the worker well within this after the port closes; Bun never does.
-  await new Promise<void>((resolve) => setTimeout(resolve, 100));
+  await new Promise<void>((resolve) => setTimeout(resolve, 50));
 
   // Ensure the thread is gone even when 'exit' never fired (Bun).
   await worker.terminate();

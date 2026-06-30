@@ -154,16 +154,12 @@ matterbridge --docker --logger debug --debug
 <h1 id="bun-docker-hub-image-experimental-for-test-and-development-only">Bun docker hub image (experimental — for test and development only)</h1>
 <p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
 <h1 id="bun-local-image-experimental-for-test-and-development-only">Bun local image (experimental — for test and development only)</h1>
-<p>The <strong>bun</strong> image builds Matterbridge from the <strong>local source files</strong> and runs it on the
-<a href="https://bun.com">Bun</a> runtime instead of Node.js.</p>
+<p>The <strong>bun</strong> image runs Matterbridge directly from the <strong>local source files</strong> with <a href="https://bun.com">Bun</a> runtime.</p>
 <ul>
 <li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun), mirroring the <code>node:24-trixie-slim</code> base of the <code>local</code> image.</li>
-<li>Builds exactly like the <code>local</code> image, with the npm commands adapted to Bun:<ul>
-<li><code>npm ci</code> → <code>bun install</code></li>
-<li><code>npm run build</code> → <code>bun run build</code> (backend <code>tsgo</code> build and frontend <code>vite</code> build are still run; the runtime uses the compiled <code>dist/</code>)</li>
-<li><code>npm prune --omit=dev</code> → <code>bun install --omit=dev</code></li>
-<li><code>npm cache clean</code> → <code>bun pm cache rm</code></li>
-<li><code>npm link</code> → <code>bun link</code></li>
+<li>Install dependencies and link only (no build!) with Bun:<ul>
+<li><code>bun install --omit=dev </code></li>
+<li><code>bun link</code></li>
 </ul>
 </li>
 </ul>
@@ -228,7 +224,7 @@ provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterb
 </ul>
 <h2 id="known-issue">Known issue</h2>
 <ul>
-<li><input disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crash on worker exit.</li>
+<li><input disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crashes on worker exit. See <a href="#worker-thread-crash-sigtrap-on-arm64">Worker thread crash (SIGTRAP) on ARM64</a> for the full analysis and captured log.</li>
 <li><input disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
 <li><input disabled="" type="checkbox"> <strong>Bun cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
@@ -250,6 +246,83 @@ Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.
 <li><input disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
 (commissioning, mDNS, plugin behaviors) — only short smoke starts verified.</li>
 </ul>
+<hr>
+<h1 id="worker-thread-crash-sigtrap-on-arm64">Worker thread crash (SIGTRAP) on ARM64</h1>
+<p>Detailed analysis of the <code>node:worker_threads</code> instability listed under <a href="#known-issue">Known issue</a>.</p>
+<h2 id="symptom">Symptom</h2>
+<p>The whole process dies with <strong>no output</strong> — nothing on stdout/stderr, <code>docker logs</code> is empty, and the container reports <code>ExitCode=0</code> / <code>OOMKilled=false</code>. It then restarts under <code>--restart always</code>, so it looks like the process &quot;just killed itself.&quot;</p>
+<h2 id="environment">Environment</h2>
+<ul>
+<li><strong>Bun:</strong> 1.3.14</li>
+<li><strong>Arch:</strong> ARM64 (Apple Silicon / Windows‑ARM under WSL2)</li>
+<li><strong>Worker:</strong> <code>CheckUpdates</code> — the heaviest worker (multiple dynamic <code>import()</code>s plus <code>fetch()</code> to <code>matterbridge.io</code> and the npm registry), so it stays busy longest and is most likely to be running native work when it is torn down.</li>
+</ul>
+<h2 id="diagnosis">Diagnosis</h2>
+<p>The only trace is in the <strong>kernel ring buffer</strong> (<code>dmesg</code>), where the worker thread (named <code>CheckUpdates</code> via <code>WorkerOptions.name</code>) is reported receiving <strong>fatal signal 5 (<code>SIGTRAP</code>)</strong> — a deliberate trap instruction emitted by Bun&#39;s own native (JSC/JIT) code, i.e. an assertion / <code>unreachable</code>. A native <code>SIGTRAP</code> bypasses Bun&#39;s JS panic printer, which is why it is silent (no <code>oh no: Bun has crashed</code> report).</p>
+<p>The crash is <strong>deterministic in location, random in timing</strong>. Across three separate crashes the faulting <code>pc</code>/<code>lr</code> offsets (<code>…1ae0</code> / <code>…1ac0</code>) and registers (<code>x17 = 0x05c11250</code>, <code>x15 = 0x003c47b5</code>, <code>x8 = 0x87</code>, …) are identical — only the high base address differs (ASLR). Same instruction in the same Bun code path every time. The crashes also land ~3–5 minutes apart, matching the periodic update-check cycle.</p>
+<p>There is <strong>no <code>Code:</code> disassembly or <code>Call trace:</code></strong> line — this WSL2 ARM64 kernel stops at the <code>x0</code> register. The register dump below is the complete payload <code>dmesg</code> provides; a symbolized native backtrace would require a core dump or <code>BUN_CRASH_REPORT_DIR</code>.</p>
+<h2 id="how-to-inspect">How to inspect</h2>
+<pre><code class="language-bash">dmesg | grep -i bun                              # all bun crashes
+dmesg -T | grep -i &quot;fatal signal&quot;                # with wall-clock timestamps
+dmesg -w | grep -i bun | tee ~/bun-crashes.log   # capture future crashes
+</code></pre>
+<p><code>dmesg</code> is the WSL2 VM kernel&#39;s buffer (shared across containers and the host distro). It is volatile — cleared on <code>wsl --shutdown</code> and wrapped when full — so <code>tee</code> it to a file to keep a durable copy.</p>
+<h2 id="captured-log">Captured log</h2>
+<p>Three consecutive crashes, each immediately followed by the container&#39;s <code>veth</code> teardown as it restarts.</p>
+<pre><code class="language-text">[17065.328952] bun: CheckUpdates: potentially unexpected fatal signal 5.
+[17065.332612] CPU: 7 UID: 0 PID: 26406 Comm: CheckUpdates Not tainted 6.18.33.2-microsoft-standard-WSL2 #1 PREEMPT(none)
+[17065.332633] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
+[17065.332642] pstate: 00001000 (nzcv daif -PAN -UAO -TCO -DIT +SSBS BTYPE=--)
+[17065.332655] pc : 0000fc0f05c01ae0
+[17065.332661] lr : 0000fc0f05c01ac0
+[17065.332666] sp : 0000fc0e6d3a1600
+[17065.332671] x29: 0000fc0e6d3a16b0 x28: 0000000000000df4 x27: 0000000000000dc0
+[17065.332691] x26: fff0000000000000 x25: 0000000000000001 x24: 0000fc0e6f3fdab0
+[17065.332710] x23: 0000fc0e54fe13e0 x22: 0000000000003fff x21: 0000fc0e59ca9010
+[17065.332728] x20: 0000fc0e54e45ca8 x19: 0000fc0e5419c960 x18: 0000000000000000
+[17065.332746] x17: 0000000005c11250 x16: 0000000000000001 x15: 00000000003c47b5
+[17065.332764] x14: 0000000000000008 x13: 0000000000000000 x12: 0000fc0f05de4640
+[17065.332781] x11: 0000000000000000 x10: 0000fc0f05bf5ce8 x9 : 0000fc0e59cc1010
+[17065.332799] x8 : 0000000000000087 x7 : 0000000000000000 x6 : 0000000000000000
+[17065.336940] x5 : 0000000000000000 x4 : 0000000000000020 x3 : 0000000000000008
+[17065.336958] x2 : 0000000000000000 x1 : 0000fc0e6d3a1608 x0 : 0000000000000000
+
+[17368.725178] bun: CheckUpdates: potentially unexpected fatal signal 5.
+[17368.729999] CPU: 5 UID: 0 PID: 27987 Comm: CheckUpdates Not tainted 6.18.33.2-microsoft-standard-WSL2 #1 PREEMPT(none)
+[17368.730011] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
+[17368.730017] pstate: 00001000 (nzcv daif -PAN -UAO -TCO -DIT +SSBS BTYPE=--)
+[17368.730026] pc : 0000fd6d68f61ae0
+[17368.730031] lr : 0000fd6d68f61ac0
+[17368.730035] sp : 0000fd6d20771600
+[17368.730038] x29: 0000fd6d207716b0 x28: 0000000000000df8 x27: 0000000000000dc0
+[17368.730053] x26: ff00000000000000 x25: 0000000000000001 x24: 0000fd6d393cdaf0
+[17368.730067] x23: 0000fd6bb7fb0ea0 x22: 0000000000003fff x21: 0000fd6d3c31b010
+[17368.730079] x20: 0000fd6bb7a228c8 x19: 0000fd6bb7153b20 x18: 0000000000000000
+[17368.730092] x17: 0000000005c11250 x16: 0000000000000001 x15: 00000000003c47b5
+[17368.730105] x14: 0000000000000008 x13: 0000000000000000 x12: 0000fd6d69147640
+[17368.730117] x11: 0000000000000000 x10: 0000fd6d68f55ce8 x9 : 0000fd6d3c333010
+[17368.730130] x8 : 0000000000000087 x7 : 0000000000000000 x6 : 0000000000000000
+[17368.730142] x5 : 0000000000000000 x4 : 0000000000000020 x3 : 0000000000000008
+[17368.730154] x2 : 0000000000000000 x1 : 0000fd6d20771608 x0 : 0000000000000000
+
+[17579.904983] bun: CheckUpdates: potentially unexpected fatal signal 5.
+[17579.905014] CPU: 4 UID: 0 PID: 30820 Comm: CheckUpdates Not tainted 6.18.33.2-microsoft-standard-WSL2 #1 PREEMPT(none)
+[17579.905028] Hardware name: Microsoft Corporation Virtual Machine/Virtual Machine, BIOS Hyper-V UEFI Release v4.1 09/25/2025
+[17579.905035] pstate: 00001000 (nzcv daif -PAN -UAO -TCO -DIT +SSBS BTYPE=--)
+[17579.905046] pc : 0000f4103f781ae0
+[17579.905052] lr : 0000f4103f781ac0
+[17579.905057] sp : 0000f41000f915b0
+[17579.905063] x29: 0000f41000f91660 x28: 0000000000000df3 x27: 0000000000000dc0
+[17579.905083] x26: fff8000000000000 x25: 0000000000000001 x24: 0000f3ff9e05daa0
+[17579.905102] x23: 0000f3ff8eee1bc0 x22: 0000000000003fff x21: 0000f3ff93c71010
+[17579.905120] x20: 0000f3ff8e9514c8 x19: 0000f3ff8e444de0 x18: 0000000000000000
+[17579.905137] x17: 0000000005c11250 x16: 0000000000000001 x15: 00000000003c47b5
+[17579.905155] x14: 0000000000000008 x13: 0000000000000000 x12: 0000f4103f96f640
+[17579.905173] x11: 0000000000000000 x10: 0000f4103f775ce8 x9 : 0000f3ff93c89010
+[17579.905191] x8 : 0000000000000087 x7 : 0000000000000000 x6 : 0000000000000000
+[17579.905208] x5 : 0000000000000000 x4 : 0000000000000020 x3 : 0000000000000008
+[17579.905225] x2 : 0000000000000000 x1 : 0000f41000f915b8 x0 : 0000000000000000
+</code></pre>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

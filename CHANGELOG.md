@@ -68,12 +68,14 @@ Please update your setup.
 
 ### Breaking changes
 
-- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is reatarting.
+- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is restarting.
 
 ### Added
 
 - [bun]: Add ban test runtime check.
 - [bun]: Add ban test workflow.
+- [bun]: The bun local docker image now runs from src files. No build is done.
+- [utils]: Add writeDiagnostic() in utils package.
 
 ### Changed
 

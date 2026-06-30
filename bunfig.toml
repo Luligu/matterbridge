@@ -27,9 +27,9 @@ pathIgnorePatterns = [
   'buntest/bunMatterTest.test.ts',
   'buntest/repro/bun-rename-eperm.test.ts',
   'buntest/repro/bun-worker-exit-concurrent.test.ts',
-  'packages/thread/buntest/*.test.ts',
+  # 'packages/thread/buntest/*.test.ts',
   'packages/thread/buntest/threadsManagerthreads.test.ts',
-  'packages/thread/buntest/threadsManager.concurrent.test.ts',
+  # 'packages/thread/buntest/threadsManager.concurrent.test.ts',
   'packages/thread/buntest/workerWrapper.realworker.test.ts',
   'packages/thread/buntest/workerWrapper.test.ts',
 ]

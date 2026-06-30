@@ -360,6 +360,7 @@ export class ThreadsManager {
    *   and the worker file is usually alongside the current module.
    * - **Development / tests**: `import.meta.url` may point inside `.../packages/thread/src/...`
    *   while the worker file exists in `.../packages/thread/dist/...`.
+   * - **Bun**: the worker file exists in `.../packages/thread/src/...` (with `.ts` extension).
    * - **Bundled**: when the package is bundled, the worker files live in a `workers/`
    *   subdirectory alongside the current module (`.../dist/workers/...`).
    *
@@ -374,6 +375,7 @@ export class ThreadsManager {
     const candidates = [
       path.join(currentModuleDirectory, fileName), // Current dist directory for production
       path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for tests
+      path.join(currentModuleDirectory, '..', 'src', fileName.replace(/\.js$/, '.ts')), // Current src directory for bun
       path.join(currentModuleDirectory, 'workers', fileName), // Current dist workers directory for bundled workers
     ];
     for (const candidate of candidates) {
