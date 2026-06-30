@@ -68,7 +68,7 @@ Please update your setup.
 
 ### Breaking changes
 
-- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is reatarting.
+- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is restarting.
 
 ### Added
 
