@@ -76,6 +76,7 @@ Please update your setup.
 - [bun]: Add ban test workflow.
 - [bun]: The bun local docker image now runs from src files. No build is done.
 - [utils]: Add writeDiagnostic() in utils package.
+- [bun]: Add bunAvailable() in runtimeBun.ts.
 
 ### Changed
 
@@ -101,6 +102,7 @@ Please update your setup.
 ### Fixed
 
 - [thread]: Add worker-local unhandled rejection and uncaught exception guards, and count failed worker exits as thread errors.
+- [docs]: Fix wrong path for the frontend ceertificates: place certificates in the `.matterbridge/certs` directory.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

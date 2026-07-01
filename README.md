@@ -508,7 +508,7 @@ This will reset the internal storages. All commissioning informations will be lo
 
 ### Provide your own standard certificate, key and ca (optional)
 
-Place your own certificates in the `.matterbridge/cert` directory:
+Place your own certificates in the `.matterbridge/certs` directory:
 
 - `cert.pem`
 - `key.pem`
@@ -520,7 +520,7 @@ Matterbridge looks first for .p12 certificate and, if they are not found, it loo
 
 ### Provide your own 'PKCS#12' certificate and the passphrase
 
-Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/cert` directory:
+Place your own p12 certificate (binary file) and the passphrase (text file) in the `.matterbridge/certs` directory:
 
 - `cert.p12`
 - `cert.pass`
