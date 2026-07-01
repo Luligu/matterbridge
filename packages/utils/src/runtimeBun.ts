@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -38,6 +40,25 @@ const HAS_BUN_GLOBAL = typeof Bun !== 'undefined';
  */
 export function isBun(): boolean {
   return HAS_BUN_GLOBAL || typeof process?.versions?.bun === 'string';
+}
+
+/**
+ * Checks if Bun is available in the current environment.
+ *
+ * @returns {boolean} True if Bun is available, false otherwise.
+ */
+export function bunAvailable(): boolean {
+  if (isBun()) {
+    return true;
+  }
+  const home = process.env.HOME ?? '';
+  if (home && existsSync(`${home}/.bun/bin/bun`)) return true;
+  try {
+    execFileSync('bun', ['--version'], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false; // bun not on PATH
+  }
 }
 
 /**

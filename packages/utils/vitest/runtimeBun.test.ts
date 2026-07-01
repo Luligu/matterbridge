@@ -3,16 +3,24 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import type { Mock } from 'vitest';
+
 import { setupTest } from './vitestSetupTest.js';
 
 await setupTest('RuntimeBun');
 
 type RuntimeBunModule = typeof import('../src/runtimeBun.js');
+type ExistsSyncFn = (path: string) => boolean;
+type ExecFileSyncFn = (file: string, args: string[], options: { stdio: 'ignore' }) => Buffer;
 
 const originalBunDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'Bun');
 const originalBunInstall = process.env.BUN_INSTALL;
+const originalHome = process.env.HOME;
 const originalArgv = [...process.argv];
 const originalVersions = process.versions;
+
+let mockedExistsSync: Mock<ExistsSyncFn>;
+let mockedExecFileSync: Mock<ExecFileSyncFn>;
 
 async function importRuntimeBun(): Promise<RuntimeBunModule> {
   vi.resetModules();
@@ -34,11 +42,15 @@ function setBunGlobal(bun: unknown): void {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.doUnmock('node:child_process');
+  vi.doUnmock('node:fs');
   restoreBunGlobal();
   setProcessVersions();
   process.argv.splice(0, process.argv.length, ...originalArgv);
   if (originalBunInstall === undefined) delete process.env.BUN_INSTALL;
   else process.env.BUN_INSTALL = originalBunInstall;
+  if (originalHome === undefined) delete process.env.HOME;
+  else process.env.HOME = originalHome;
 });
 
 describe('isBun()', () => {
@@ -58,6 +70,66 @@ describe('isBun()', () => {
     const { isBun } = await importRuntimeBun();
 
     expect(isBun()).toBe(true);
+  });
+});
+
+describe('bunAvailable()', () => {
+  beforeEach(() => {
+    mockedExistsSync = vi.fn<ExistsSyncFn>(() => false);
+    mockedExecFileSync = vi.fn<ExecFileSyncFn>(() => Buffer.from('1.2.3'));
+    vi.doMock('node:fs', () => ({ existsSync: mockedExistsSync }));
+    vi.doMock('node:child_process', () => ({ execFileSync: mockedExecFileSync }));
+  });
+
+  it('should return true when running in the Bun runtime', async () => {
+    restoreBunGlobal();
+    setProcessVersions('1.2.3');
+
+    const { bunAvailable } = await importRuntimeBun();
+
+    expect(bunAvailable()).toBe(true);
+    expect(mockedExistsSync).not.toHaveBeenCalled();
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
+  });
+
+  it('should return true when the Bun executable exists under HOME', async () => {
+    restoreBunGlobal();
+    setProcessVersions();
+    process.env.HOME = '/home/tester';
+    mockedExistsSync.mockReturnValue(true);
+
+    const { bunAvailable } = await importRuntimeBun();
+
+    expect(bunAvailable()).toBe(true);
+    expect(mockedExistsSync).toHaveBeenCalledWith('/home/tester/.bun/bin/bun');
+    expect(mockedExecFileSync).not.toHaveBeenCalled();
+  });
+
+  it('should return true when Bun is available on PATH', async () => {
+    restoreBunGlobal();
+    setProcessVersions();
+    delete process.env.HOME;
+
+    const { bunAvailable } = await importRuntimeBun();
+
+    expect(bunAvailable()).toBe(true);
+    expect(mockedExistsSync).not.toHaveBeenCalled();
+    expect(mockedExecFileSync).toHaveBeenCalledWith('bun', ['--version'], { stdio: 'ignore' });
+  });
+
+  it('should return false when Bun is unavailable', async () => {
+    restoreBunGlobal();
+    setProcessVersions();
+    process.env.HOME = '/home/tester';
+    mockedExecFileSync.mockImplementation(() => {
+      throw new Error('bun not found');
+    });
+
+    const { bunAvailable } = await importRuntimeBun();
+
+    expect(bunAvailable()).toBe(false);
+    expect(mockedExistsSync).toHaveBeenCalledWith('/home/tester/.bun/bin/bun');
+    expect(mockedExecFileSync).toHaveBeenCalledWith('bun', ['--version'], { stdio: 'ignore' });
   });
 });
 
