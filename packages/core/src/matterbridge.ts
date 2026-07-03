@@ -4,7 +4,7 @@
  * @file matterbridge.ts
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.7.0
+ * @version 1.7.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -270,6 +270,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
   private systemCheckTimeout: NodeJS.Timeout | undefined;
+  private dockerVersionTimeout: NodeJS.Timeout | undefined;
   private configureTimeout: NodeJS.Timeout | undefined;
   private reachabilityTimeout: NodeJS.Timeout | undefined;
   private sigintHandler: ((...args: ProcessEventMap['SIGINT']) => void) | undefined;
@@ -1058,12 +1059,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (plugin.private && plugin.tarballPath && fs.existsSync(path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath))) {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
             execSync(
-              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath)} ${isBun() ? '--omit=dev --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
             );
           } else {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from npm${plugin.version.includes('-dev-') ? ' with tag @dev' : ''}...`);
             execSync(
-              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} ${isBun() ? '--production --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
+              `${sudo ? 'sudo ' : ''}${isBun() ? 'bun' : 'npm'} install -g ${plugin.name}${plugin.version.includes('-dev-') ? '@dev' : ''} ${isBun() ? '--omit=dev --silent' : '--no-fund --no-audit --silent --omit=dev'}`,
             );
           }
           this.log.info(`Plugin ${plg}${plugin.name}${nf} reinstalled.`);
@@ -1288,7 +1289,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     clearTimeout(this.checkUpdateTimeout);
     this.checkUpdateTimeout = setTimeout(() => {
       this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
-      this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+      clearTimeout(this.dockerVersionTimeout);
+      // v8 ignore next -- with bun is better to run the workers after a delay
+      this.dockerVersionTimeout = setTimeout(() => {
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+      }, 5_000).unref();
     }, 300 * 1000).unref();
 
     // Check each 12 hours the latest and dev versions of matterbridge and the plugins
@@ -1296,7 +1301,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.checkUpdateInterval = setInterval(
       () => {
         this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates' } });
-        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+        clearTimeout(this.dockerVersionTimeout);
+        // v8 ignore next -- with bun is better to run the workers after a delay
+        this.dockerVersionTimeout = setTimeout(() => {
+          this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
+        }, 5_000).unref();
       },
       12 * 60 * 60 * 1000, // 12 hours
     ).unref();
@@ -1690,7 +1699,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         workerData: {
           threadName: 'SpawnCommand',
           command: isBun() ? 'bun' : 'npm',
-          args: isBun() ? ['install', '-g', 'matterbridge', '--production'] : ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
+          args: isBun() ? ['install', '-g', 'matterbridge', '--omit=dev'] : ['install', '-g', 'matterbridge', '--omit=dev', '--verbose'],
           packageCommand: 'install',
           packageName: 'matterbridge',
         },
@@ -1773,6 +1782,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         clearTimeout(this.systemCheckTimeout);
         this.systemCheckTimeout = undefined;
         this.log.debug('System check timeout cleared');
+      }
+
+      // Clear the docker version timeout
+      if (this.dockerVersionTimeout) {
+        clearTimeout(this.dockerVersionTimeout);
+        this.dockerVersionTimeout = undefined;
+        this.log.debug('Docker version timeout cleared');
       }
 
       // Clear the check update timeout

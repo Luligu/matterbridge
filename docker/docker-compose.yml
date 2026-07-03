@@ -4,6 +4,7 @@ services:
     image: luligu/matterbridge:latest # Matterbridge image with the latest tag
     network_mode: host # Ensures the Matter mdns works
     restart: always # Ensures the container always restarts automatically
+    stop_grace_period: 60s # Sets the grace period for stopping the container to 60 seconds
     volumes:
       - '${HOME}/Matterbridge:/root/Matterbridge' # Mounts the Matterbridge plugin directory
       - '${HOME}/.matterbridge:/root/.matterbridge' # Mounts the Matterbridge storage directory

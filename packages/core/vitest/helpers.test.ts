@@ -69,7 +69,6 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a light virtual device', async () => {
     expect(aggregator).toBeDefined();
-    // oxlint-disable-next-line typescript/require-await
     device = await addVirtualDevice(aggregator, 'Test Device', 'light', async () => {
       // Callback function when the device is turned on
       console.log('Device turned on');

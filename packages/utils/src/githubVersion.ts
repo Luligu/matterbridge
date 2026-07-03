@@ -40,8 +40,9 @@ export type UpdateJson = {
  * @param {string} branch - The branch from which to fetch the file.
  * @param {string} file - The file path to fetch.
  * @param {number} [timeout] - The timeout duration in milliseconds (default is 10000ms).
- * @returns {Promise<Record<string, boolean | string | number>>} A promise that resolves to the parsed JSON object from the file.
+ * @returns {Promise<UpdateJson>} A promise that resolves to the parsed update JSON object from the file.
  * @throws {Error} If the request fails or the JSON parsing fails.
+ * @throws {Error} If the request times out.
  */
 export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, timeout: number = 10000): Promise<UpdateJson> {
   const https = await import('node:https');
@@ -51,7 +52,7 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
     const timeoutId = setTimeout(() => {
       controller.abort();
       reject(new Error(`Request timed out after ${timeout / 1000} seconds`));
-    }, timeout);
+    }, timeout).unref();
 
     const req = https.get(url, { signal: controller.signal }, (res) => {
       let data = '';
@@ -68,11 +69,13 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
       });
 
       res.on('end', () => {
-        clearTimeout(timeoutId);
         try {
           const jsonData = JSON.parse(data);
-          resolve(jsonData);
+          clearTimeout(timeoutId);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          resolve(jsonData as UpdateJson);
         } catch (error) {
+          clearTimeout(timeoutId);
           reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });

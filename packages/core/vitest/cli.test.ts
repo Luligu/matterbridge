@@ -12,7 +12,6 @@ import { Matterbridge } from '../src/matterbridge.js';
 // @ts-ignore cause is not included in the tsconfig include, but is needed for testing
 import { MockMatterbridge } from '../src/mock/mockMatterbridge.js';
 
-// oxlint-disable-next-line typescript/require-await
 const loadInstance = vi.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
   return MockMatterbridge.loadInstance() as unknown as Matterbridge; // Simulate a successful load by returning an instance of MockMatterbridge
 });

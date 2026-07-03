@@ -86,6 +86,8 @@ Add the following to this file, **replacing 5 times (!) USER with your user name
 Description=matterbridge
 After=network.target
 Wants=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -184,7 +186,7 @@ sudo systemctl disable matterbridge.service
 sudo journalctl -u matterbridge.service -n 1000 -f --output cat
 ```
 
-### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
+### Delete the logs older than 3 days (all of them not only the ones of Matterbridge!)
 
 Check the space used
 
@@ -192,7 +194,7 @@ Check the space used
 sudo journalctl --disk-usage
 ```
 
-remove all log older then 3 days
+remove all log older than 3 days
 
 ```bash
 sudo journalctl --rotate
@@ -207,19 +209,28 @@ If you want to make the setting permanent to prevent the journal logs to grow to
 sudo nano /etc/systemd/journald.conf
 ```
 
-add
+add these to the [Journal] section:
 
 ```bash
-Compress=yes            # Compress logs
-MaxRetentionSec=3days   # Keep logs for a maximum of 3 days.
-MaxFileSec=1day         # Rotate logs daily within the 3-day retention period.
-ForwardToSyslog=no      # Disable forwarding to syslog to prevent duplicate logging.
-SystemMaxUse=100M       # Limit persistent logs in /var/log/journal to 100 MB.
-RuntimeMaxUse=100M      # Limit runtime logs in /run/log/journal to 100 MB.
+# Store logs persistently in /var/log/journal so they survive reboots.
+Storage=persistent
+# Compress logs to save space.
+Compress=yes
+# Keep logs for a maximum of 3 days.
+MaxRetentionSec=3days
+# Rotate logs daily within the 3-day retention period.
+MaxFileSec=1day
+# Disable forwarding to syslog to prevent duplicate logging.
+ForwardToSyslog=no
+# Limit persistent (disk) logs in /var/log/journal to 100 MB.
+SystemMaxUse=100M
+# Limit runtime (memory) logs in /run/log/journal to 100 MB.
+RuntimeMaxUse=100M
 ```
 
-save it and run
+save it and check if other configs override yours:
 
 ```bash
 sudo systemctl restart systemd-journald
+sudo systemd-analyze cat-config systemd/journald.conf
 ```

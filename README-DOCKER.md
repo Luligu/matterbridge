@@ -34,9 +34,9 @@ The image (tag **latest** 87 MB) includes only Matterbridge, using the latest re
 
 The image (tag **dev** 99 MB) includes Matterbridge and all official plugins (the BTHome plugin is not included and requires [additional setup](https://github.com/Luligu/matterbridge-bthome/blob/main/README.md)) from the latest push on GitHub. It is based on `node:24-trixie-slim`. Since all official plugins are included, you can select and add a plugin without installing anything. Note: if you update to the latest **dev** from the frontend, you will override the GitHub version with the latest **dev** published on npm. The frontend shows if you are currently running the GitHub release or the latest or dev npm release.
 
-The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
+The image (tag **ubuntu** 87 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `ubuntu:latest` with Node.js 24 from NodeSource. Plugins are not included in the image: they will be reinstalled on first run. This image, on the first run, preinstalls `bluetooth`, `build-essential`, and `python` packages (useful for plugins that require native builds).
 
-The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
+The image (tag **alpine** 58 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-alpine`. Plugins are not included in the image: they will be reinstalled on first run.
 
 The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
@@ -106,7 +106,7 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --network host --restart always -d luligu/matterbridge:latest
+  --network host --restart always --stop-timeout 60 -d luligu/matterbridge:latest
 ```
 
 You may need to adapt the paths to your setup.
@@ -121,7 +121,7 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --network host --restart always -d luligu/matterbridge:latest \
+  --network host --restart always  --stop-timeout 60 -d luligu/matterbridge:latest \
   matterbridge --docker --frontend 8585
 ```
 
@@ -141,10 +141,10 @@ sudo chown -R $USER:$USER ~/matterbridge-one ~/matterbridge-two
 sudo docker pull luligu/matterbridge:latest
 sudo docker stop matterbridge-one 2>/dev/null
 sudo docker rm matterbridge-one 2>/dev/null
-sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
+sudo docker run --name matterbridge-one -v ~/matterbridge-one/Matterbridge:/root/Matterbridge -v ~/matterbridge-one/.matterbridge:/root/.matterbridge -v ~/matterbridge-one/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8081 --port 5540 --profile BrokerOne
 sudo docker stop matterbridge-two 2>/dev/null
 sudo docker rm matterbridge-two 2>/dev/null
-sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
+sudo docker run --name matterbridge-two -v ~/matterbridge-two/Matterbridge:/root/Matterbridge -v ~/matterbridge-two/.matterbridge:/root/.matterbridge -v ~/matterbridge-two/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest matterbridge --docker --frontend 8082 --port 5560 --profile BrokerTwo
 ```
 
 The first instance (profile BrokerOne) has the frontend on port 8081 and Matter port starting at 5540.
@@ -164,6 +164,7 @@ services:
     image: luligu/matterbridge:latest # Matterbridge image with the tag latest
     network_mode: host # Ensures the Matter mDNS works
     restart: always # Ensures the container always restarts automatically
+    stop_grace_period: 60s # Sets the grace period for stopping the container to 60 seconds
     volumes:
       - '${HOME}/Matterbridge:/root/Matterbridge' # Mounts the Matterbridge plugin directory
       - '${HOME}/.matterbridge:/root/.matterbridge' # Mounts the Matterbridge storage directory
@@ -320,7 +321,7 @@ docker run --name matterbridge `
   -v ${env:USERPROFILE}/Matterbridge:/root/Matterbridge `
   -v ${env:USERPROFILE}/.matterbridge:/root/.matterbridge `
   -v ${env:USERPROFILE}/.mattercert:/root/.mattercert `
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 ```
 
 Windows (Command Prompt) with Docker Desktop (use the [**Matterbridge mDNS Reflector**](https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network):
@@ -334,7 +335,7 @@ docker run --name matterbridge ^
   -v %USERPROFILE%/Matterbridge:/root/Matterbridge ^
   -v %USERPROFILE%/.matterbridge:/root/.matterbridge ^
   -v %USERPROFILE%/.mattercert:/root/.mattercert ^
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 ```
 
 ## Run with Docker Desktop and mDNS Reflector on macOS
@@ -350,5 +351,5 @@ sudo docker run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
   -v ~/.mattercert:/root/.mattercert \
-  --restart always -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
+  --restart always --stop-timeout 60 -d luligu/matterbridge:latest matterbridge --docker --frontend 8283 --port 5540
 ```

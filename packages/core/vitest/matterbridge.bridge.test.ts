@@ -34,7 +34,6 @@ vi.mock('../src/helpers.js', async () => {
   const actual = await vi.importActual<typeof import('../src/helpers.js')>('../src/helpers.js');
   return {
     ...actual,
-    // oxlint-disable-next-line typescript/require-await
     addVirtualDevice: vi.fn(async () => {
       return; // Mock the addVirtualDevice function to return immediately
     }),

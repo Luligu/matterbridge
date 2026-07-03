@@ -1,5 +1,6 @@
-// VS Code settings v. 1.0.2
+// VS Code settings native v. 1.0.4
 {
+  "npm.packageManager": "npm",
   "eslint.enable": false,
   "prettier.enable": false,
   "oxc.enable": true,

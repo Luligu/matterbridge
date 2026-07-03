@@ -152,18 +152,14 @@ bun link
 matterbridge --docker --logger debug --debug
 </code></pre>
 <h1 id="bun-docker-hub-image-experimental-for-test-and-development-only">Bun docker hub image (experimental — for test and development only)</h1>
-<p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image (<strong>for test and development only</strong>) is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
+<p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
 <h1 id="bun-local-image-experimental-for-test-and-development-only">Bun local image (experimental — for test and development only)</h1>
-<p>The <strong>bun</strong> image builds Matterbridge from the <strong>local source files</strong> and runs it on the
-<a href="https://bun.com">Bun</a> runtime instead of Node.js.</p>
+<p>The <strong>bun</strong> image runs Matterbridge directly from the <strong>local source files</strong> with <a href="https://bun.com">Bun</a> runtime.</p>
 <ul>
-<li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun), mirroring the <code>node:24-trixie-slim</code> base of the <code>local</code> image.</li>
-<li>Builds exactly like the <code>local</code> image, with the npm commands adapted to Bun:<ul>
-<li><code>npm ci</code> → <code>bun install</code></li>
-<li><code>npm run build</code> → <code>bun run build</code> (backend <code>tsgo</code> build and frontend <code>vite</code> build are still run; the runtime uses the compiled <code>dist/</code>)</li>
-<li><code>npm prune --omit=dev</code> → <code>bun install --production</code></li>
-<li><code>npm cache clean</code> → <code>bun pm cache rm</code></li>
-<li><code>npm link</code> → <code>bun link</code></li>
+<li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun).</li>
+<li>Install dependencies and link only (no build!) with Bun:<ul>
+<li><code>bun install --omit=dev </code></li>
+<li><code>bun link</code></li>
 </ul>
 </li>
 </ul>
@@ -211,7 +207,7 @@ full <code>npm link</code> replacement.</li>
 <li><input checked="" disabled="" type="checkbox"> <strong><code>npm root -g</code> discovery.</strong> <code>getGlobalNodeModules()</code> returns
 <code>getGlobalBunModules()</code> when running on Bun (there is no <code>bun root -g</code>; the path is
 derived from <code>$BUN_INSTALL</code> / <code>~/.bun</code>).
-(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/bunPrefix.ts"><code>bunPrefix.ts</code></a>)</li>
+(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/runtimeBun.ts"><code>runtimeBun.ts</code></a>)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Plugin path resolution.</strong> <code>PluginManager</code> resolves plugins from the Bun
 global modules dir when running on Bun. (<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Runtime-aware package management.</strong> Plugin installation, uninstallation,
@@ -225,6 +221,8 @@ supports Bun on Windows and through <code>sudo</code>.
 &quot;local&quot;, so the <code>npm link matterbridge</code> step is skipped (<code>bun link</code> already
 provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterbridge.ts</code></a>)</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>The threads doesn&#39;t flag no running after exit.</strong></li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crashes on worker exit. See <a href="#worker-thread-crash-sigtrap-on-arm64">Worker thread crash (SIGTRAP) on ARM64</a> for the full analysis and captured log.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
 </ul>
 <h2 id="known-issue">Known issue</h2>
 <ul>
@@ -236,6 +234,13 @@ system-information view instead of the container account (for example, <code>roo
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
 <li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;</li>
 </ul>
+<pre><code class="language-typescript">  // Change: FileStorageDriver.js
+  async #writeAndMoveFile(filepath, valueOrStream) {
+    const tmpName = `${filepath}.tmp`;
+    await writeFile(tmpName, valueOrStream, { encoding: &quot;utf8&quot;, flush: true });
+    await rename(tmpName, filepath);
+  }
+</code></pre>
 <h2 id="todo">TODO</h2>
 <ul>
 <li><input disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run

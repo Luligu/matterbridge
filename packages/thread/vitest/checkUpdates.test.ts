@@ -56,6 +56,48 @@ describe(`Test ${NAME}`, () => {
     expect(plugin).not.toBe(null);
   });
 
+  it('should keep disabled check update breadcrumbs quiet', async () => {
+    const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
+    const stderrWriteSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    matterbridge.matterbridgeVersion = '1.0.0';
+    if (plugin !== null) plugin.version = '1.0.0';
+    (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockImplementation(async () => Promise.resolve('1.0.0'));
+    (getGitHubUpdate as Mock).mockResolvedValue({});
+
+    try {
+      await checkUpdates(matterbridge, testServer);
+      expect(stderrWriteSpy).not.toHaveBeenCalled();
+    } finally {
+      stderrWriteSpy.mockRestore();
+    }
+  });
+
+  it('should log a debug message when fetching plugins for update check fails', async () => {
+    const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
+    const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
+    const fetchSpy = vi.spyOn(testServer, 'fetch').mockRejectedValueOnce(new Error('Plugin fetch failed'));
+    const stderrWriteSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    matterbridge.matterbridgeVersion = '1.0.0';
+    (getNpmPackageVersion as Mock<(packageName: string, tag?: string, timeout?: number) => Promise<string>>).mockImplementation(async () => Promise.resolve('1.0.0'));
+    (getGitHubUpdate as Mock).mockResolvedValue({});
+
+    try {
+      await checkUpdates(matterbridge, testServer);
+    } finally {
+      fetchSpy.mockRestore();
+      stderrWriteSpy.mockRestore();
+    }
+
+    expect(loggerDebugSpy).toHaveBeenCalledWith('Error fetching plugins for update check: Plugin fetch failed');
+    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge');
+    expect(getNpmPackageVersion).toHaveBeenCalledWith('matterbridge', 'dev');
+    expect(getNpmPackageVersion).toHaveBeenCalledTimes(2);
+    expect(getGitHubUpdate).toHaveBeenCalled();
+  });
+
   it('should check updates', async () => {
     const { getNpmPackageVersion } = await import('@matterbridge/utils/npm-version');
     const { getGitHubUpdate } = await import('@matterbridge/utils/github-version');
@@ -82,7 +124,7 @@ describe(`Test ${NAME}`, () => {
     });
 
     try {
-      await checkUpdates(matterbridge);
+      await checkUpdates(matterbridge, testServer);
       await flushAsync(undefined, undefined, 100);
     } finally {
       frontendServer.close();
@@ -124,7 +166,7 @@ describe(`Test ${NAME}`, () => {
     });
 
     try {
-      await checkUpdates(matterbridge);
+      await checkUpdates(matterbridge, testServer);
       await flushAsync(undefined, undefined, 100);
     } finally {
       frontendServer.close();

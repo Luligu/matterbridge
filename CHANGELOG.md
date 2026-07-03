@@ -58,6 +58,56 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.9.3] - 2026-07-03
+
+### Warning
+
+The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason. The docker guide has been updated.
+
+Please update your setup.
+
+### Breaking changes
+
+- [frontend]: Stop checking for updates automatically on connection. It is the wrong timing to check for updates when the bridge is restarting.
+
+### Added
+
+- [bun]: Add ban test runtime check.
+- [bun]: Add ban test workflow.
+- [bun]: The bun local docker image now runs from src files. No build is done.
+- [utils]: Add writeDiagnostic() in utils package.
+- [bun]: Add bunAvailable() in runtimeBun.ts.
+- [s6-rc]: Add a timeout-kill of 55 secs to the s6-rc images (same reason as the `--stop-timeout 60` in Docker run and Docker compose).
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.9.3.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361. This brings a great memory optimization. Thanks @Apollon77.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260628-67a669f75.
+- [workflows]: Update all GitHub Actions to their latest major versions.
+- [docker]: Add `matterbridge-mqtt` to the dev Docker image.
+- [docker]: Add `--stop-timeout 60` to Docker Desktop examples so Matterbridge has enough time to shut down cleanly before Docker kills the container.
+- [oxlint]: Update `Oxlint configuration` to v.1.0.16.
+- [oxlint]: Update `Oxfmt configuration` to v.1.0.5.
+- [readme]: Improve the journald configuration comments in `README-SERVICE.md`, `README-SERVICE-OPT.md` and `README-SERVICE-LOCAL.md`.
+- [bun]: Change bun install param from --production to --omit=dev to avoid the frozen lock.
+- [thread]: Refactor Docker, npm and GitHub version check timeout handling and warn when Docker Hub rate limits version lookups.
+- [typecheck]: Refactor typecheck tsconfig.json.
+- [service]: Update service configuration guides.
+
+- [codex]: Update config to v.1.0.1.
+
+- [frontend]: Bump `frontend` version to v.3.5.1.
+- [frontend]: Update dependencies.
+
+### Fixed
+
+- [thread]: Add worker-local unhandled rejection and uncaught exception guards, and count failed worker exits as thread errors.
+- [docs]: Fix wrong path for the frontend certificates: place certificates in the `.matterbridge/certs` directory.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.9.2] - 2026-06-26
 
 This release adds support for [bun](https://bun.sh/). Support for bun is stil under [development](README-BUN.md) and is purely experimental.
@@ -85,7 +135,7 @@ This release adds support for [bun](https://bun.sh/). Support for bun is stil un
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `Oxlint configuration` to v.1.0.12.
 - [matterbridge]: Bump `@types/node` to v.26.0.1.
-- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260624-ef5aefa3b.
+- [matterbridge]: Bump `@matter/main` to v.0.17.4-alpha.0-20260627-deac80361.
 - [package]: Bump `node-ansi-logger` to v.3.3.0.
 - [package]: Bump `node-persist-manager` to v.2.1.0.
 - [frontend]: Bump `frontend` version to v.3.5.0.

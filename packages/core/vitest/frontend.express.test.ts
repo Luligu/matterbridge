@@ -38,7 +38,6 @@ const broadcastServerIsWorkerResponseSpy = vi.spyOn(BroadcastServer.prototype, '
 const broadcastServerBroadcastMessageHandlerSpy = vi.spyOn(BroadcastServer.prototype as any, 'broadcastMessageHandler').mockImplementation(() => {});
 const broadcastServerRequestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
 const broadcastServerRespondSpy = vi.spyOn(BroadcastServer.prototype, 'respond').mockImplementation(() => {});
-// oxlint-disable-next-line typescript/require-await
 const broadcastServerFetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockImplementation(async () => {
   return Promise.resolve() as any;
 });

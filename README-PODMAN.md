@@ -65,7 +65,7 @@ The container must have full access to the host network (needed for matter mdns)
 podman run --name matterbridge \
   -v ~/Matterbridge:/root/Matterbridge \
   -v ~/.matterbridge:/root/.matterbridge \
-  --network host --restart always -d docker.io/luligu/matterbridge:latest
+  --network host --restart always --stop-timeout 60 -d docker.io/luligu/matterbridge:latest
 ```
 
 You may need to adapt the script to your setup:

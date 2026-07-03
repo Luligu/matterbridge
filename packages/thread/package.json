@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/thread",
-  "version": "3.9.2",
+  "version": "3.9.3",
   "description": "Matterbridge thread library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -72,13 +72,13 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matterbridge/types": "3.9.2",
-    "@matterbridge/utils": "3.9.2",
+    "@matterbridge/types": "3.9.3",
+    "@matterbridge/utils": "3.9.3",
     "@zip.js/zip.js": "2.8.26",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
-    "@matterbridge/vitest-utils": "3.9.2",
+    "@matterbridge/vitest-utils": "3.9.3",
     "vitest": "4.1.9"
   }
 }

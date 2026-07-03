@@ -28,6 +28,10 @@ type SetupResult = Readonly<{
   waitImmediate: () => Promise<void>;
 }>;
 
+type WorkerWrapperInternals = {
+  handleUnhandledRejection(reason: unknown): void;
+};
+
 const asyncTrue = async (): Promise<boolean> => await Promise.resolve(true);
 
 describe('WorkerWrapper', () => {
@@ -189,6 +193,104 @@ describe('WorkerWrapper', () => {
       }),
     );
     expect(parentPort?.close).toHaveBeenCalledTimes(1);
+  });
+
+  test('worker thread: handles unhandled rejections and exits with success false', async () => {
+    const { WorkerWrapper, parentPort, serverClose } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 13,
+      threadName: 'ThreadUnhandled',
+    });
+
+    const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
+
+    new WorkerWrapper('UnhandledWorker' as unknown as ThreadNames, callback);
+    process.emit('unhandledRejection', new Error('late rejection'), Promise.resolve());
+
+    expect(serverClose).toHaveBeenCalledTimes(1);
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'log',
+        threadId: 13,
+        threadName: 'UnhandledWorker',
+        logLevel: LogLevel.ERROR,
+        message: expect.stringContaining('late rejection'),
+      }),
+    );
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'exit',
+        threadId: 13,
+        threadName: 'UnhandledWorker',
+        success: false,
+      }),
+    );
+    expect(parentPort?.close).toHaveBeenCalledTimes(1);
+  });
+
+  test('worker thread: handles uncaught exceptions and exits with success false', async () => {
+    const { WorkerWrapper, parentPort, serverClose } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 14,
+      threadName: 'ThreadUncaught',
+    });
+
+    const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
+
+    new WorkerWrapper('UncaughtWorker' as unknown as ThreadNames, callback);
+    process.emit('uncaughtException', new Error('late exception'), 'uncaughtException');
+
+    expect(serverClose).toHaveBeenCalledTimes(1);
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'log',
+        threadId: 14,
+        threadName: 'UncaughtWorker',
+        logLevel: LogLevel.ERROR,
+        message: expect.stringContaining('late exception'),
+      }),
+    );
+    expect(parentPort?.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'exit',
+        threadId: 14,
+        threadName: 'UncaughtWorker',
+        success: false,
+      }),
+    );
+    expect(parentPort?.close).toHaveBeenCalledTimes(1);
+  });
+
+  test('worker thread: handles failures while reporting unhandled rejections', async () => {
+    const { WorkerWrapper, parentPort, serverClose } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 15,
+      threadName: 'ThreadReportFail',
+    });
+
+    const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
+
+    const worker = new WorkerWrapper('ReportFailWorker' as unknown as ThreadNames, callback);
+    const errorSpy = vi.spyOn(worker.log, 'error');
+    parentPort?.postMessage.mockImplementation(() => {
+      throw new Error('port closed');
+    });
+    parentPort?.close.mockImplementation(() => {
+      throw new Error('close failed');
+    });
+    process.emit('unhandledRejection', new Error('report failure'), Promise.resolve());
+
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('failed to send error log to parent'));
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('failed to send exit message to parent'));
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('failed to close parentPort'));
+    expect(serverClose).toHaveBeenCalledTimes(1);
+
+    (worker as unknown as WorkerWrapperInternals).handleUnhandledRejection(new Error('already destroyed'));
+
+    expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test('worker thread: responds to ping with pong', async () => {

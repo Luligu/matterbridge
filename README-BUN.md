@@ -33,20 +33,16 @@ matterbridge --docker --logger debug --debug
 
 # Bun docker hub image (experimental — for test and development only)
 
-The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image (**for test and development only**) is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
+The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
 # Bun local image (experimental — for test and development only)
 
-The **bun** image builds Matterbridge from the **local source files** and runs it on the
-[Bun](https://bun.com) runtime instead of Node.js.
+The **bun** image runs Matterbridge directly from the **local source files** with [Bun](https://bun.com) runtime.
 
-- Base image: `oven/bun:slim` (Debian trixie slim + Bun), mirroring the `node:24-trixie-slim` base of the `local` image.
-- Builds exactly like the `local` image, with the npm commands adapted to Bun:
-  - `npm ci` → `bun install`
-  - `npm run build` → `bun run build` (backend `tsgo` build and frontend `vite` build are still run; the runtime uses the compiled `dist/`)
-  - `npm prune --omit=dev` → `bun install --production`
-  - `npm cache clean` → `bun pm cache rm`
-  - `npm link` → `bun link`
+- Base image: `oven/bun:slim` (Debian trixie slim + Bun).
+- Install dependencies and link only (no build!) with Bun:
+  - `bun install --omit=dev `
+  - `bun link`
 
 ## Files
 
@@ -87,7 +83,7 @@ package-manager command and global-modules paths to Bun where needed.
 - [x] **`npm root -g` discovery.** `getGlobalNodeModules()` returns
       `getGlobalBunModules()` when running on Bun (there is no `bun root -g`; the path is
       derived from `$BUN_INSTALL` / `~/.bun`).
-      ([`npmPrefix.ts`](packages/utils/src/npmPrefix.ts), [`bunPrefix.ts`](packages/utils/src/bunPrefix.ts))
+      ([`npmPrefix.ts`](packages/utils/src/npmPrefix.ts), [`runtimeBun.ts`](packages/utils/src/runtimeBun.ts))
 - [x] **Plugin path resolution.** `PluginManager` resolves plugins from the Bun
       global modules dir when running on Bun. ([`pluginManager.ts`](packages/core/src/pluginManager.ts))
 - [x] **Runtime-aware package management.** Plugin installation, uninstallation,
@@ -101,6 +97,8 @@ package-manager command and global-modules paths to Bun where needed.
       "local", so the `npm link matterbridge` step is skipped (`bun link` already
       provides resolution). ([`matterbridge.ts`](packages/core/src/matterbridge.ts))
 - [x] **The threads doesn't flag no running after exit.**
+- [x] **Bun node:worker_threads module is unstable** The runtime randomly crashes on worker exit. See [Worker thread crash (SIGTRAP) on ARM64](#worker-thread-crash-sigtrap-on-arm64) for the full analysis and captured log.
+- [x] **Bun needs process.exit() or worker.terminate().** If not called the memory is not released.
 
 ## Known issue
 
@@ -111,6 +109,15 @@ package-manager command and global-modules paths to Bun where needed.
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
 - [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});"
+
+```typescript
+  // Change: FileStorageDriver.js
+  async #writeAndMoveFile(filepath, valueOrStream) {
+    const tmpName = `${filepath}.tmp`;
+    await writeFile(tmpName, valueOrStream, { encoding: "utf8", flush: true });
+    await rename(tmpName, filepath);
+  }
+```
 
 ## TODO
 

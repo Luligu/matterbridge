@@ -186,7 +186,9 @@ describe('getNpmPackageVersion', () => {
   });
 
   it('should reject on timeout', async () => {
-    mockedGet.mockImplementationOnce((_url, _options) => {
+    let requestOptions: RequestOptions | undefined;
+    mockedGet.mockImplementationOnce((_url, options) => {
+      requestOptions = options;
       const mockReq = {
         on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
         destroy: vi.fn<(error?: Error) => void>(),
@@ -198,6 +200,8 @@ describe('getNpmPackageVersion', () => {
     const promise = getNpmPackageVersion('test-package', 'latest', 100);
 
     await expect(promise).rejects.toThrow('Request timed out after 0.1 seconds');
+    expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
+    expect(requestOptions?.signal?.aborted).toBe(true);
   }, 10000);
 
   it('should reject on request error', async () => {
@@ -215,5 +219,54 @@ describe('getNpmPackageVersion', () => {
     });
 
     await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Request failed: Network connection failed');
+  });
+
+  it('should ignore duplicate response end events after resolve', async () => {
+    mockedGet.mockImplementationOnce((_url, _options, callback) => {
+      const mockRes = new PassThrough();
+      const mockReq = {
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
+      };
+      // @ts-expect-error statusCode is not on PassThrough
+      mockRes.statusCode = 200;
+      mockRes.resume = vi.fn<() => PassThrough>();
+
+      callback(mockRes as unknown as IncomingMessage);
+      mockRes.emit('data', Buffer.from(JSON.stringify(mockNpmResponse)));
+      mockRes.emit('end');
+      mockRes.emit('end');
+
+      return mockReq as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('test-package', 'latest', 5000)).resolves.toBe('2.1.0');
+  });
+
+  it('should ignore request errors after rejection', async () => {
+    let errorHandler: ((error: Error) => void) | undefined;
+
+    mockedGet.mockImplementationOnce((_url, _options, callback) => {
+      const mockRes = new PassThrough();
+      const mockReq = {
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>((event, listener) => {
+          if (event === 'error') errorHandler = listener as (error: Error) => void;
+        }),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
+      };
+      // @ts-expect-error statusCode is not on PassThrough
+      mockRes.statusCode = 500;
+      mockRes.resume = vi.fn<() => PassThrough>();
+
+      callback(mockRes as unknown as IncomingMessage);
+
+      return mockReq as unknown as ClientRequest;
+    });
+
+    await expect(getNpmPackageVersion('test-package', 'latest', 5000)).rejects.toThrow('Failed to fetch data. Status code: 500');
+
+    errorHandler?.(new Error('late network error'));
   });
 });

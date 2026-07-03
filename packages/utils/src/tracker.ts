@@ -4,7 +4,7 @@
  * @file tracker.ts
  * @author Luca Liguori
  * @created 2025-10-10
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -29,6 +29,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YE
 
 import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
 import { logModuleLoaded } from './loader.js';
+import { isBun, gc, setGcLevel } from './runtimeBun.js';
 
 logModuleLoaded('Tracker');
 
@@ -119,23 +120,33 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   /**
    * Creates a Tracker instance.
    *
-   * @param {string} name - Logger/instance name.
-   * @param {boolean} debug - Enables debug logging.
-   * @param {boolean} verbose - Enables verbose logging.
+   * @param {string} name - Logger and tracker instance name.
+   * @param {boolean} debug - Enables debug logging, including per-sample tracker output.
+   * @param {boolean} verbose - Enables verbose startup diagnostics for CPU and memory state.
+   * @param {boolean} tracker - Enables tracker mode and DEBUG log level for tracker lifecycle output.
+   * @param {boolean} forceGc - Forces garbage collection during each tracker sampling interval.
    */
   constructor(
     private readonly name: string = 'Tracker',
     private readonly debug: boolean = false,
     private readonly verbose: boolean = false,
+    private readonly tracker: boolean = false,
+    private readonly forceGc: boolean = false,
   ) {
     super();
-    if (process.argv.includes('--debug') || process.argv.includes('-debug') || process.argv.includes('--verbose') || process.argv.includes('-verbose')) {
+    if (process.argv.includes('--debug') || process.argv.includes('--verbose') || process.argv.includes('--tracker')) {
       this.debug = true;
     }
-    if (process.argv.includes('--verbose') || process.argv.includes('-verbose')) {
+    if (process.argv.includes('--verbose')) {
       this.verbose = true;
     }
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
+    if (process.argv.includes('--tracker')) {
+      this.tracker = true;
+    }
+    if (process.argv.includes('--force-gc')) {
+      this.forceGc = true;
+    }
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug || this.tracker ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = YELLOW;
     if (this.verbose) {
       this.log.debug(`os.cpus():\n${RESET}`, os.cpus());
@@ -174,7 +185,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     this.trackerInterval = setInterval(() => {
       // Increment tryGcCount and check if we can run garbage collector each hour cause memory might grow over time because of our even small allocations
       tryGcCount += sampleIntervalMs / 1000;
-      if (tryGcCount > 60 * 60) {
+      if (tryGcCount > 60 * 60 || this.forceGc) {
+        // runGarbageCollector() is called after at least 60 accumulated minutes of sampling.
         this.runGarbageCollector();
         tryGcCount = 0;
       }
@@ -294,7 +306,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * - sync execution blocks the main thread until GC is complete, which can cause pauses.
    */
   runGarbageCollector(type: 'major' | 'minor' = 'major', execution: 'sync' | 'async' = 'async'): void {
-    if (global.gc && typeof global.gc === 'function') {
+    const bun = isBun();
+    if (!bun && global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
         // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
@@ -305,6 +318,17 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
+      }
+    } else if (bun && typeof gc === 'function' && typeof setGcLevel === 'function') {
+      try {
+        setGcLevel(2);
+        gc(execution === 'sync');
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
+        this.emit('gc_done', type, execution);
+      } catch {
+        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection failed triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
       }
     } else {
       if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection not exposed. Start Node.js with --expose-gc to enable manual garbage collection.${RESET}${db}`);

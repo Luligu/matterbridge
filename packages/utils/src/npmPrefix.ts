@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-import { getGlobalBunModules, isBun } from './bunPrefix.js';
 import { logModuleLoaded } from './loader.js';
+import { getGlobalBunModules, isBun } from './runtimeBun.js';
 
 logModuleLoaded('NpmPrefix');
 

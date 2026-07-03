@@ -10,10 +10,12 @@
 # Not needed by the bun build (saves ~150 MB of context)
 .agents
 .claude
+.codex
 .devcontainer
 .env
 .git
 .github
+**/buntest
 chip
 docker
 !docker/Dockerfile.local.bun
@@ -23,6 +25,7 @@ docs
 reflector
 screenshots
 scripts
+!scripts/bun-exports.mjs
 systemd
 **/vitest
 *.md
@@ -51,6 +54,16 @@ systemd
 **/pnpm-debug.log*
 
 # Other assets not needed for builds
+.gitignore
+.gitattributes
+.gitlocalignore
+CODEOWNERS
+.oxlintrc*.*
+.oxfmtrc*.*
+tsconfig*.json
+packages/**/tsconfig*.json
+**/package-lock.json
+vite.config.ts
 docker-downloads-history.json
 **/tmp/
 **/temp/

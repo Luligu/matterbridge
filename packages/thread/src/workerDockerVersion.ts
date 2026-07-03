@@ -4,7 +4,7 @@
  * @file workerDockerVersion.ts
  * @author Luca Liguori
  * @created 2026-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -29,7 +29,7 @@ import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { debugStringify, LogLevel } from 'node-ansi-logger';
 
-import { getDockerVersion } from './dockerVersion.js';
+import { getDockerVersion, takeDockerVersionWarning } from './dockerVersion.js';
 import { WorkerWrapper } from './workerWrapper.js';
 
 logModuleLoaded('DockerVersion', '\u001B[35m');
@@ -49,7 +49,11 @@ export default new WorkerWrapper('DockerVersion', async (worker) => {
   }
   try {
     dockerVersionLatest = await getDockerVersion('luligu', 'matterbridge', 'latest');
+    const latestWarning = takeDockerVersionWarning();
+    if (latestWarning) worker.logger(LogLevel.WARN, latestWarning);
     dockerVersionDev = await getDockerVersion('luligu', 'matterbridge', 'dev');
+    const devWarning = takeDockerVersionWarning();
+    if (devWarning) worker.logger(LogLevel.WARN, devWarning);
     worker.logger(LogLevel.INFO, `Docker version check succeeded: latest=${dockerVersionLatest}, dev=${dockerVersionDev}, current=${dockerBuildConfig?.version ?? 'unknown'}`);
     success = true;
   } catch (error) {

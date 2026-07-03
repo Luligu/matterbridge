@@ -5,6 +5,7 @@ type RunOptions = Readonly<{
   getDockerVersionThrows?: boolean;
   dockerVersionLatest?: string;
   dockerVersionDev?: string;
+  dockerVersionWarnings?: Array<string | undefined>;
   dockerBuildConfigJson?: string;
   readDockerBuildConfigThrows?: boolean;
 }>;
@@ -16,6 +17,7 @@ type RunWorkerDockerVersionResult = Readonly<{
   snackBarMock: Mock<(...args: any[]) => any>;
   requestMock: Mock<(...args: any[]) => any>;
   getDockerVersion: Mock<(...args: any[]) => any>;
+  takeDockerVersionWarning: Mock<(...args: any[]) => any>;
   inspectError: Mock<(...args: any[]) => any>;
   readFileSync: Mock<(...args: any[]) => any>;
 }>;
@@ -44,9 +46,11 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
       })
     : vi.fn<(...args: any[]) => any>(async (_owner: string, _repo: string, tag?: string) => {
         await Promise.resolve();
-        if (tag === 'dev') return options.dockerVersionDev ?? '3.5.6-dev';
-        return options.dockerVersionLatest ?? '3.5.5';
+        if (tag === 'dev') return Object.hasOwn(options, 'dockerVersionDev') ? options.dockerVersionDev : '3.5.6-dev';
+        return Object.hasOwn(options, 'dockerVersionLatest') ? options.dockerVersionLatest : '3.5.5';
       });
+  const dockerVersionWarnings = [...(options.dockerVersionWarnings ?? [])];
+  const takeDockerVersionWarning = vi.fn<(...args: any[]) => any>(() => dockerVersionWarnings.shift());
 
   const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
   const readFileSync = options.readDockerBuildConfigThrows
@@ -65,14 +69,14 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
     },
   }));
 
-  vi.doMock('../src/dockerVersion.js', () => ({ getDockerVersion }));
+  vi.doMock('../src/dockerVersion.js', () => ({ getDockerVersion, takeDockerVersionWarning }));
   vi.doMock('@matterbridge/utils/error', () => ({ inspectError }));
   vi.doMock('node:fs', () => ({ readFileSync }));
 
   await import('../src/workerDockerVersion.js');
   const success = await (runPromise ?? Promise.resolve(false));
 
-  return { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, inspectError, readFileSync };
+  return { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, takeDockerVersionWarning, inspectError, readFileSync };
 }
 
 describe('workerDockerVersion', () => {
@@ -154,6 +158,54 @@ describe('workerDockerVersion', () => {
         dockerDev: true,
         dockerLatestVersion: '3.5.5',
         dockerDevVersion: '3.5.6-dev',
+      },
+    });
+  });
+
+  test('success: warns when Docker Hub rate limit prevents version lookup', async () => {
+    const { success, loggerMock, requestMock, takeDockerVersionWarning } = await runWorkerDockerVersion({
+      dockerVersionLatest: undefined,
+      dockerVersionDev: undefined,
+      dockerVersionWarnings: ['Docker Hub rate limit reached while checking luligu/matterbridge:latest. Docker image version is unavailable.', undefined],
+    });
+
+    expect(success).toBe(true);
+    expect(takeDockerVersionWarning).toHaveBeenCalledTimes(2);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, 'Docker Hub rate limit reached while checking luligu/matterbridge:latest. Docker image version is unavailable.');
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Docker version check succeeded: latest=undefined, dev=undefined, current=3.5.4');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: '3.5.4',
+        dockerDev: false,
+        dockerLatestVersion: undefined,
+        dockerDevVersion: undefined,
+      },
+    });
+  });
+
+  test('success: warns when Docker Hub rate limit prevents dev version lookup', async () => {
+    const { success, loggerMock, requestMock, takeDockerVersionWarning } = await runWorkerDockerVersion({
+      dockerVersionLatest: '3.5.5',
+      dockerVersionDev: undefined,
+      dockerVersionWarnings: [undefined, 'Docker Hub rate limit reached while checking luligu/matterbridge:dev. Docker image version is unavailable.'],
+    });
+
+    expect(success).toBe(true);
+    expect(takeDockerVersionWarning).toHaveBeenCalledTimes(2);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, 'Docker Hub rate limit reached while checking luligu/matterbridge:dev. Docker image version is unavailable.');
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Docker version check succeeded: latest=3.5.5, dev=undefined, current=3.5.4');
+    expect(requestMock).toHaveBeenCalledWith({
+      type: 'matterbridge_docker_version',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: {
+        dockerVersion: '3.5.4',
+        dockerDev: false,
+        dockerLatestVersion: '3.5.5',
+        dockerDevVersion: undefined,
       },
     });
   });

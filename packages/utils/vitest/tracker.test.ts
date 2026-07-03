@@ -14,6 +14,7 @@ describe('Tracker', () => {
   beforeEach(async () => {
     // Reset all modules before each test
     vi.resetModules();
+    vi.doUnmock('../src/runtimeBun.js');
     // Setup the test environment
     await setDebug(false);
     // Clear all mocks before each test
@@ -24,6 +25,7 @@ describe('Tracker', () => {
     process.argv = [...originalArgv];
     global.gc = originalGc;
     vi.useRealTimers();
+    vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -31,6 +33,7 @@ describe('Tracker', () => {
   afterAll(() => {
     process.argv = originalArgv;
     global.gc = originalGc;
+    vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
   });
@@ -56,6 +59,16 @@ describe('Tracker', () => {
     expect(spyCpus).toHaveBeenCalled();
     expect(spyCpuUsage).toHaveBeenCalled();
     expect(spyMem).toHaveBeenCalled();
+  });
+
+  test('single-dash debug and verbose flags do not enable verbose mode', async () => {
+    process.argv.push('-verbose', '-debug');
+    const spyMem = vi.spyOn(process, 'memoryUsage');
+
+    const { Tracker } = await import('../src/tracker.js');
+    new Tracker('SingleDashTester');
+
+    expect(spyMem).not.toHaveBeenCalled();
   });
 
   test('does not print loader banner when flag is absent', async () => {
@@ -85,6 +98,27 @@ describe('Tracker', () => {
     expect(events.cpu).toBeGreaterThan(0);
     expect(events.memory).toBeGreaterThan(0);
     expect(events.tracker).toBeGreaterThan(0);
+  });
+
+  test('constructor tracker flag does not enable sample debug output without debug flag', async () => {
+    vi.useFakeTimers();
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('TrackerFlagTester', false, false, true);
+    const debugSpy = vi.spyOn((tracker as any)['log'], 'debug');
+
+    tracker.start(10);
+    vi.advanceTimersByTime(10);
+    tracker.stop();
+
+    expect(debugSpy).not.toHaveBeenCalledWith(expect.stringContaining('Time: '));
+  });
+
+  test('tracker argv flag enables tracker mode', async () => {
+    process.argv.push('--tracker');
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('TrackerArgvTester');
+
+    expect((tracker as any)['tracker']).toBe(true);
   });
 
   test('reset peaks triggers reset_done', async () => {
@@ -152,6 +186,50 @@ describe('Tracker', () => {
     expect(() => tracker.runGarbageCollector()).not.toThrow();
   });
 
+  test('gc uses Bun garbage collector when running on Bun', async () => {
+    const bunGcMock = vi.fn();
+    const setGcLevelMock = vi.fn();
+    vi.doMock('../src/runtimeBun.js', () => ({
+      gc: bunGcMock,
+      isBun: vi.fn(() => true),
+      setGcLevel: setGcLevelMock,
+    }));
+
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('BunGCTester');
+
+    const results: Array<[string, string]> = [];
+    tracker.on('gc_done', (type, execution) => results.push([type, execution]));
+
+    tracker.runGarbageCollector('minor', 'sync');
+
+    expect(setGcLevelMock).toHaveBeenCalledWith(2);
+    expect(bunGcMock).toHaveBeenCalledWith(true);
+    expect(bunGcMock).toHaveBeenCalledTimes(1);
+    expect(results).toContainEqual(['minor', 'sync']);
+  });
+
+  test('gc handles Bun garbage collector errors', async () => {
+    const bunGcMock = vi.fn(() => {
+      throw new Error('bun gc failed');
+    });
+    vi.doMock('../src/runtimeBun.js', () => ({
+      gc: bunGcMock,
+      isBun: vi.fn(() => true),
+      setGcLevel: vi.fn(),
+    }));
+
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('BunGCErrorTester');
+
+    let gcDoneCount = 0;
+    tracker.on('gc_done', () => gcDoneCount++);
+
+    expect(() => tracker.runGarbageCollector()).not.toThrow();
+    expect(bunGcMock).toHaveBeenCalledTimes(1);
+    expect(gcDoneCount).toBe(0);
+  });
+
   test('hourly gc trigger inside sampling loop', async () => {
     vi.useFakeTimers();
     const { Tracker } = await import('../src/tracker.js');
@@ -162,6 +240,21 @@ describe('Tracker', () => {
     tracker.start(3_601_000);
 
     vi.advanceTimersByTime(3_601_000);
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    tracker.stop();
+  });
+
+  test('force-gc flag triggers gc inside sampling loop before hourly interval', async () => {
+    vi.useFakeTimers();
+    process.argv.push('--force-gc');
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('ForceGCTester');
+
+    const spy = vi.spyOn(tracker as any, 'runGarbageCollector');
+    tracker.start(10);
+
+    vi.advanceTimersByTime(10);
 
     expect(spy).toHaveBeenCalledTimes(1);
     tracker.stop();

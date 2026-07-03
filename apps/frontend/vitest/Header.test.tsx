@@ -138,7 +138,7 @@ describe('Header', () => {
 
     expect(container).toBeEmptyDOMElement();
     expect(sendMessage).toHaveBeenCalledWith({ id: 42, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
-    expect(sendMessage).toHaveBeenCalledWith({ id: 42, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    expect(sendMessage).toHaveBeenCalledTimes(1);
 
     act(() => {
       listener?.({ method: '/api/settings', id: 42, response: settings });

@@ -1,3 +1,6 @@
+# Codex rules v. 1.0.1
+
+# Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "Do not change local refs without explicit manual control.")
 prefix_rule(pattern = ["git", "merge"], decision = "forbidden", justification = "Do not merge automatically.")
 prefix_rule(pattern = ["git", "push"], decision = "forbidden", justification = "Do not push automatically.")
@@ -12,9 +15,17 @@ prefix_rule(pattern = ["git", "tag", "-d"], decision = "forbidden", justificatio
 prefix_rule(pattern = ["git", "reflog", "expire"], decision = "forbidden", justification = "Reflog mutation is blocked.")
 prefix_rule(pattern = ["git", "reflog", "delete"], decision = "forbidden", justification = "Reflog mutation is blocked.")
 
+# Dependency installs
 prefix_rule(pattern = ["npm", "install"], decision = "prompt", justification = "Ask before installing dependencies.")
 prefix_rule(pattern = ["npm", "i"], decision = "prompt", justification = "Ask before installing dependencies.")
+prefix_rule(pattern = ["npm", "uninstall"], decision = "prompt", justification = "Ask before uninstalling dependencies.")
+prefix_rule(pattern = ["bun", "install"], decision = "prompt", justification = "Ask before installing dependencies.")
+prefix_rule(pattern = ["bun", "i"], decision = "prompt", justification = "Ask before installing dependencies.")
+prefix_rule(pattern = ["bun", "uninstall"], decision = "prompt", justification = "Ask before uninstalling dependencies.")
+prefix_rule(pattern = ["bun", "add"], decision = "prompt", justification = "Ask before installing dependencies.")
+prefix_rule(pattern = ["bun", "remove"], decision = "prompt", justification = "Ask before uninstalling dependencies.")
 
+# Validation scripts
 prefix_rule(pattern = ["npm", "run", "typecheck"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "build"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test"], decision = "allow")
@@ -23,3 +34,10 @@ prefix_rule(pattern = ["npm", "run", "test:verbose"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test:coverage"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "lint"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "format"], decision = "allow")
+prefix_rule(pattern = ["bun", "test"], decision = "allow")
+
+# External network and containers
+prefix_rule(pattern = ["curl"], decision = "prompt", justification = "Ask before external network fetches.")
+prefix_rule(pattern = ["Invoke-WebRequest"], decision = "prompt", justification = "Ask before external network fetches.")
+prefix_rule(pattern = ["docker", "pull"], decision = "prompt", justification = "Ask before downloading Docker images.")
+prefix_rule(pattern = ["docker", "run"], decision = "prompt", justification = "Ask before running Docker containers.")

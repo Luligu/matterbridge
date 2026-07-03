@@ -1,10 +1,8 @@
 // vitest\threadsManager.test.ts
 
-// oxlint-disable no-use-before-define
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 const NAME = 'ThreadsManager';
-const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -21,7 +19,7 @@ await setupTest(NAME, false);
 
 describe('ThreadsManager', () => {
   const moduleDirectory = path.dirname(url.fileURLToPath(new URL('../src/threadsManager.js', import.meta.url)));
-  const tempWorkerDirectory = path.resolve(HOMEDIR, 'temp-workers');
+  const tempWorkerDirectory = path.resolve('.cache', 'vitest', NAME, 'temp-workers');
 
   beforeAll(() => {
     mkdirSync(tempWorkerDirectory, { recursive: true });
@@ -550,6 +548,34 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
+    test('terminates workers queued for cleanup', () => {
+      const manager = new ThreadsManager();
+      const debugSpy = vi.spyOn((manager as any).log, 'debug');
+      const errorSpy = vi.spyOn((manager as any).log, 'error');
+      const terminateWorker = { threadId: 123, terminate: vi.fn(async () => 0) };
+      const throwingWorker = {
+        threadId: 456,
+        terminate: vi.fn(() => {
+          throw new Error('terminate failed');
+        }),
+      };
+
+      const terminateWorkers = (manager as any).terminateWorkers as Set<typeof terminateWorker | typeof throwingWorker>;
+      terminateWorkers.add(terminateWorker);
+      terminateWorkers.add(throwingWorker);
+
+      (manager as any).intervalHandler();
+
+      expect(debugSpy).toHaveBeenCalledWith('Terminating 2 workers that have exited...');
+      expect(terminateWorker.terminate).toHaveBeenCalledTimes(1);
+      expect(debugSpy).toHaveBeenCalledWith('Terminating worker with thread id 123...');
+      expect(throwingWorker.terminate).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to terminate worker with thread id 456'));
+      expect(terminateWorkers.size).toBe(0);
+
+      manager.destroy();
+    });
+
     test('pings after interval and warns after 2x interval', () => {
       const manager = new ThreadsManager(1000);
       const warnSpy = vi.spyOn((manager as any).log, 'warn');
@@ -607,7 +633,8 @@ describe('ThreadsManager', () => {
       // - native online: log timestamp only
       // - init message: lastSeen + lastStarted
       // - exit message: lastSeen + lastStopped
-      const times = [1000, 1001, 2000];
+      // - second init/failed exit messages after a restart
+      const times = [1000, 1001, 2000, 4000, 5000];
       nowSpy.mockImplementation(() => times.shift() ?? 9999);
 
       const { EventEmitter } = await import('node:events');
@@ -657,8 +684,19 @@ describe('ThreadsManager', () => {
       expect(threadInfo.lastStopped).toBe(2000);
       expect(threadInfo.lastDuration).toBe(999);
       expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted);
+      expect(threadInfo.errorCount).toBeUndefined();
 
       // Worker reference should be cleared on exit.
+      expect(threadInfo.worker).toBeUndefined();
+
+      manager.runThread('TestWorker');
+      const failedWorker = threadInfo.worker;
+      failedWorker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
+      failedWorker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: false });
+      expect(threadInfo.lastSeen).toBe(5000);
+      expect(threadInfo.lastStopped).toBe(5000);
+      expect(threadInfo.lastDuration).toBe(1000);
+      expect(threadInfo.errorCount).toBe(1);
       expect(threadInfo.worker).toBeUndefined();
 
       // Native worker exit is a no-op after the explicit exit message has already cleared this worker.

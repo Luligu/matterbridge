@@ -57,7 +57,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
 ## Create the shared matterbridge bridge docker network
 
 ```shell
-docker network inspect matterbridge || docker network create matterbridge
+docker network inspect matterbridge || docker network create --ipv6 matterbridge
 docker network ls
 ```
 
@@ -68,7 +68,7 @@ Will join the matterbridge bridge docker network.
 The matterbridge-dev-container-docker-compose.yml is available [here](https://matterbridge.io/reflector/matterbridge-dev-container-docker-compose.yml).
 
 ```shell
-docker network inspect matterbridge || docker network create matterbridge
+docker network inspect matterbridge || docker network create --ipv6 matterbridge
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml down
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml pull
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml up -d --force-recreate

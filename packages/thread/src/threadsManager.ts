@@ -4,7 +4,7 @@
  * @file threadsManager.ts
  * @author Luca Liguori
  * @created 2026-03-07
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -33,6 +33,7 @@ import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { fireAndForget } from '@matterbridge/utils/wait';
 import { AnsiLogger, CYAN, db, debugStringify, ft, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
@@ -88,6 +89,8 @@ export class ThreadsManager {
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
   ];
 
+  private terminateWorkers = new Set<Worker>();
+
   /**
    * Initialize the ThreadsManager by setting up the check interval, broadcast server, and listeners.
    *
@@ -128,6 +131,7 @@ export class ThreadsManager {
   destroy(): void {
     // Clear the interval
     clearInterval(this.interval);
+    this.terminateExitedWorkers();
     // Close broadcast servers and remove listeners
     this.server.off('broadcast_message', this.boundMsgHandler);
     this.server.close();
@@ -171,12 +175,28 @@ export class ThreadsManager {
     }
   }
 
+  private terminateExitedWorkers(): void {
+    if (this.terminateWorkers.size > 0) {
+      this.log.debug(`Terminating ${this.terminateWorkers.size} workers that have exited...`);
+      for (const worker of this.terminateWorkers) {
+        try {
+          this.log.debug(`Terminating worker with thread id ${worker.threadId}...`);
+          fireAndForget(worker.terminate(), this.log, `Failed to terminate worker with thread id ${worker.threadId}`);
+        } catch (error) {
+          this.log.error(`Failed to terminate worker with thread id ${worker.threadId}: ${getErrorMessage(error)}`);
+        }
+      }
+      this.terminateWorkers.clear();
+    }
+  }
+
   private intervalHandler(): void {
     for (const thread of this.threads) {
       this.log.debug(
         `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
       );
     }
+    this.terminateExitedWorkers();
     for (const thread of this.threads) {
       if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs) {
         const msg: ParentPortMessage = { type: 'ping', threadId: thread.worker.threadId, threadName: thread.name };
@@ -249,6 +269,7 @@ export class ThreadsManager {
         threadInfo.worker = undefined;
       }
       this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()}`);
+      this.terminateWorkers.delete(worker);
     });
 
     worker.on('message', (message: ParentPortMessage) => {
@@ -268,6 +289,10 @@ export class ThreadsManager {
       } else if (message.type === 'exit') {
         threadInfo.lastStopped = now;
         threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+        if (!message.success) {
+          threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+        }
+        this.terminateWorkers.add(worker);
         threadInfo.worker = undefined;
         this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId} after running for ${threadInfo.lastDuration} ms`);
       }
@@ -275,17 +300,19 @@ export class ThreadsManager {
 
     worker.on('messageerror', () => {
       const now = Date.now();
+      threadInfo.lastSeen = now;
       threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date(now).toISOString()}`);
     });
 
     worker.once('error', (error) => {
       const now = Date.now();
-      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+      threadInfo.lastSeen = now;
       threadInfo.lastStopped = now;
       threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
+      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
       threadInfo.worker = undefined;
-      threadInfo.lastSeen = now;
+      this.terminateWorkers.add(worker);
       this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`);
     });
 
@@ -333,6 +360,7 @@ export class ThreadsManager {
    *   and the worker file is usually alongside the current module.
    * - **Development / tests**: `import.meta.url` may point inside `.../packages/thread/src/...`
    *   while the worker file exists in `.../packages/thread/dist/...`.
+   * - **Bun**: the worker file exists in `.../packages/thread/src/...` (with `.ts` extension).
    * - **Bundled**: when the package is bundled, the worker files live in a `workers/`
    *   subdirectory alongside the current module (`.../dist/workers/...`).
    *
@@ -347,6 +375,7 @@ export class ThreadsManager {
     const candidates = [
       path.join(currentModuleDirectory, fileName), // Current dist directory for production
       path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for tests
+      path.join(currentModuleDirectory, '..', 'src', fileName.replace(/\.js$/, '.ts')), // Current src directory for bun
       path.join(currentModuleDirectory, 'workers', fileName), // Current dist workers directory for bundled workers
     ];
     for (const candidate of candidates) {
@@ -386,9 +415,8 @@ export class ThreadsManager {
     pipedOutput: boolean = false,
   ): Worker {
     const fileURL = pathToFileURL(path.resolve(relativePath));
-    const options: WorkerOptions & { type: string } = {
+    const options: WorkerOptions = {
       workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel, tracker: this.tracker }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
-      type: 'module',
       name,
       argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker
       env: env ?? process.env, // Inherit environment variables

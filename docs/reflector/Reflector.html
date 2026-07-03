@@ -230,8 +230,8 @@
 <pre><code class="language-zsh">docker stop matterbridge-test
 docker rm matterbridge-test
 docker pull luligu/matterbridge:dev
-docker network inspect matterbridge || docker network create matterbridge
-docker run -dit --restart unless-stopped --network matterbridge --name matterbridge-test \
+docker network inspect matterbridge || docker network create --ipv6 matterbridge
+docker run -dit --restart unless-stopped --stop-timeout 60 --network matterbridge --name matterbridge-test \
   -p 8283:8283 -p 5550-5559:5550-5559/udp \
   -v storage:/root/.matterbridge -v plugins:/root/Matterbridge -v mattercert:/root/.mattercert \
   luligu/matterbridge:dev matterbridge --docker --frontend 8283 --port 5550
@@ -367,7 +367,7 @@ docker run --rm node:24-alpine ping -c 2 8.8.8.8
 <pre><code class="language-shell">docker stop matterbridge-reflector
 docker rm matterbridge-reflector
 docker pull luligu/reflector-client:latest
-docker network inspect matterbridge || docker network create matterbridge
+docker network inspect matterbridge || docker network create --ipv6 matterbridge
 docker run -dit --restart unless-stopped --network matterbridge --name matterbridge-reflector luligu/reflector-client:latest
 docker logs --tail 1000 -f matterbridge-reflector
 </code></pre>
@@ -380,7 +380,7 @@ docker logs --tail 1000 -f matterbridge-reflector
 <p>To test the sharing feature (it shares mDNS between all reflector clients),
 use this <a href="https://matterbridge.io/reflector/reflector-docker-compose.yml">reflector-docker-compose.yml</a>.</p>
 <p>With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with <strong>ws://matterserver:5580/ws</strong></p>
-<pre><code class="language-shell">docker network inspect matterbridge || docker network create matterbridge
+<pre><code class="language-shell">docker network inspect matterbridge || docker network create --ipv6 matterbridge
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml down
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml pull
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml up -d --force-recreate

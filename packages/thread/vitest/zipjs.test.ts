@@ -121,7 +121,6 @@ describe('zipjs', () => {
     } as any;
     const mockedFsPromises = {
       ...actualFsPromises,
-      // oxlint-disable-next-line typescript/require-await
       stat: async () => unsupportedStats,
     } as any;
 

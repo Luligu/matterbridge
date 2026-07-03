@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/utils",
-  "version": "3.9.2",
+  "version": "3.9.3",
   "description": "Matterbridge utils library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -51,8 +51,8 @@
       "import": "./dist/export.js"
     },
     "./bun": {
-      "types": "./dist/bunPrefix.d.ts",
-      "import": "./dist/bunPrefix.js"
+      "types": "./dist/runtimeBun.d.ts",
+      "import": "./dist/runtimeBun.js"
     },
     "./cli": {
       "types": "./dist/commandLine.d.ts",
@@ -69,6 +69,10 @@
     "./error": {
       "types": "./dist/error.d.ts",
       "import": "./dist/error.js"
+    },
+    "./diagnostic": {
+      "types": "./dist/diagnostic.d.ts",
+      "import": "./dist/diagnostic.js"
     },
     "./inspector": {
       "types": "./dist/inspector.d.ts",
@@ -147,6 +151,7 @@
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
+    "@types/bun": "1.3.14",
     "vitest": "4.1.9"
   }
 }

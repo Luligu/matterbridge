@@ -4,7 +4,7 @@
  * @file dockerVersion.ts
  * @author Luca Liguori
  * @created 2026-02-19
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027 Luca Liguori.
@@ -28,6 +28,8 @@ import { isValidString } from '@matterbridge/utils/validate';
 
 logModuleLoaded('DockerVersion');
 
+let lastDockerVersionWarning: string | undefined;
+
 type DockerRegistryTokenResponse = {
   token?: string;
   access_token?: string;
@@ -50,12 +52,24 @@ type DockerConfigBlob = {
 };
 
 /**
+ * Takes and clears the last warning generated while checking Docker image versions.
+ *
+ * @returns {string | undefined} The last Docker version warning, if any.
+ */
+export function takeDockerVersionWarning(): string | undefined {
+  const warning = lastDockerVersionWarning;
+  lastDockerVersionWarning = undefined;
+  return warning;
+}
+
+/**
  * Fetches JSON via HTTPS GET.
  *
  * @param {string} url The URL.
  * @param {Record<string, string> | undefined} headers Optional request headers.
  * @param {number} timeoutMs Timeout in milliseconds.
- * @returns {Promise<T>} Parsed JSON.
+ * @returns {Promise<T>} A promise that resolves to the parsed JSON.
+ * @throws {Error} If the request fails, times out, or the JSON parsing fails.
  */
 async function httpsGetJson<T>(url: string, headers: Record<string, string> | undefined, timeoutMs: number): Promise<T> {
   const https = await import('node:https');
@@ -106,11 +120,12 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       });
 
       res.on('end', () => {
-        clearTimeout(timeoutId);
         try {
+          clearTimeout(timeoutId);
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           resolve(JSON.parse(data) as T);
         } catch (error) {
+          clearTimeout(timeoutId);
           reject(new Error(`Failed to parse response JSON: ${getErrorMessage(error)}`));
         }
       });
@@ -154,16 +169,19 @@ function getOciVersionLabel(config: DockerConfigBlob): string | undefined {
 
 /**
  * Retrieves the OCI image version label from a Docker Hub image.
+ * If Docker Hub returns a rate limit response, the warning can be read with takeDockerVersionWarning().
+ * Other lookup failures return undefined.
  *
  * Example: getDockerVersion('luligu', 'matterbridge', 'latest')
  *
  * @param {string} owner Docker Hub namespace (e.g. luligu).
  * @param {string} repo Docker Hub repository (e.g. matterbridge).
  * @param {string} [tag] Docker tag (e.g. latest). Defaults to 'latest'.
- * @param {number} [timeoutMs] Timeout in milliseconds. Defaults to 5000ms.
+ * @param {number} [timeoutMs] Timeout in milliseconds. Defaults to 10000ms.
  * @returns {Promise<string | undefined>} The OCI version label (org.opencontainers.image.version) if available.
  */
-export async function getDockerVersion(owner: string, repo: string, tag: string = 'latest', timeoutMs: number = 5_000): Promise<string | undefined> {
+export async function getDockerVersion(owner: string, repo: string, tag: string = 'latest', timeoutMs: number = 10_000): Promise<string | undefined> {
+  lastDockerVersionWarning = undefined;
   if (!isValidString(owner, 1) || !isValidString(repo, 1) || !isValidString(tag, 1)) return undefined;
 
   try {
@@ -202,7 +220,10 @@ export async function getDockerVersion(owner: string, repo: string, tag: string 
     // console.log(`Config response: ${JSON.stringify(config, null, 2)}`);
 
     return getOciVersionLabel(config);
-  } catch {
+  } catch (error) {
+    if (getErrorMessage(error).includes('Status code: 429')) {
+      lastDockerVersionWarning = `Docker Hub rate limit reached while checking ${owner}/${repo}:${tag}. Docker image version is unavailable.`;
+    }
     return undefined;
   }
 }

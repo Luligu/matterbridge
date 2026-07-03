@@ -23,7 +23,7 @@ async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerChec
   const worker = {
     logger: loggerMock,
     log: { debug: vi.fn<(...args: any[]) => any>() },
-    server: { fetch: fetchMock },
+    server: { fetch: fetchMock, request: vi.fn<(...args: any[]) => any>() },
   } as any;
 
   let wrapperName: string | undefined;
@@ -69,7 +69,7 @@ describe('workerCheckUpdates', () => {
     expect(success).toBe(true);
 
     expect(fetchMock).toHaveBeenCalledWith({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 5000);
-    expect(checkUpdates).toHaveBeenCalledWith({ logLevel: LogLevel.INFO });
+    expect(checkUpdates).toHaveBeenCalledWith({ logLevel: LogLevel.INFO }, expect.objectContaining({ fetch: fetchMock }));
 
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Starting check updates...');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'Check updates succeeded');

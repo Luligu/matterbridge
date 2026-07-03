@@ -175,8 +175,10 @@ describe('getGitHubUpdate', () => {
   });
 
   it('should reject on timeout', async () => {
+    let requestOptions: RequestOptions | undefined;
     // Override the mock to simulate a request that never responds
     mockedGet.mockImplementationOnce((url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void) => {
+      requestOptions = options;
       const mockReq = {
         on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
         destroy: vi.fn<(error?: Error) => void>(),
@@ -192,5 +194,56 @@ describe('getGitHubUpdate', () => {
 
     // The timeout should trigger after 100ms
     await expect(promise).rejects.toThrow('Request timed out after 0.1 seconds');
+    expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
+    expect(requestOptions?.signal?.aborted).toBe(true);
+  });
+
+  it('should ignore duplicate response end events after resolve', async () => {
+    mockedGet.mockImplementationOnce((_url, _options, callback) => {
+      const mockRes = new PassThrough();
+      const mockReq = {
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>(),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
+      };
+      // @ts-expect-error statusCode is not on PassThrough
+      mockRes.statusCode = 200;
+      mockRes.resume = vi.fn<() => PassThrough>();
+
+      callback?.(mockRes as unknown as IncomingMessage);
+      mockRes.emit('data', Buffer.from(JSON.stringify(mockUpdateJson)));
+      mockRes.emit('end');
+      mockRes.emit('end');
+
+      return mockReq as unknown as ClientRequest;
+    });
+
+    await expect(getGitHubUpdate('dev', 'update.json', 5_000)).resolves.toEqual(mockUpdateJson);
+  });
+
+  it('should ignore request errors after rejection', async () => {
+    let errorHandler: ((error: Error) => void) | undefined;
+
+    mockedGet.mockImplementationOnce((_url, _options, callback) => {
+      const mockRes = new PassThrough();
+      const mockReq = {
+        on: vi.fn<(event: string | symbol, listener: (...args: any[]) => void) => void>((event, listener) => {
+          if (event === 'error') errorHandler = listener as (error: Error) => void;
+        }),
+        destroy: vi.fn<(error?: Error) => void>(),
+        end: vi.fn<() => void>(),
+      };
+      // @ts-expect-error statusCode is not on PassThrough
+      mockRes.statusCode = 500;
+      mockRes.resume = vi.fn<() => PassThrough>();
+
+      callback?.(mockRes as unknown as IncomingMessage);
+
+      return mockReq as unknown as ClientRequest;
+    });
+
+    await expect(getGitHubUpdate('dev', 'update.json', 5_000)).rejects.toThrow('Failed to fetch data. Status code: 500');
+
+    errorHandler?.(new Error('late network error'));
   });
 });
