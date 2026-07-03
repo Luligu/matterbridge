@@ -62,7 +62,7 @@ These classes will run as threads in the next releases:
 
 ### Warning
 
-The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason.
+The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without `--stop-timeout 60` Docker may kill the container before the lock is released. Docker Compose setups should use `stop_grace_period: 60s` for the same reason. The docker guide has been updated.
 
 Please update your setup.
 
@@ -77,6 +77,7 @@ Please update your setup.
 - [bun]: The bun local docker image now runs from src files. No build is done.
 - [utils]: Add writeDiagnostic() in utils package.
 - [bun]: Add bunAvailable() in runtimeBun.ts.
+- [s6-rc]: Add a timeout-kill of 55 secs to the s6-rc images (same reason as the `--stop-timeout 60` in Docker run and Docker compose).
 
 ### Changed
 

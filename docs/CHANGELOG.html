@@ -180,7 +180,7 @@
 </ul>
 <h2 id="393-dev-branch">[3.9.3] - Dev branch</h2>
 <h3 id="warning">Warning</h3>
-<p>The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without <code>--stop-timeout 60</code> Docker may kill the container before the lock is released. Docker Compose setups should use <code>stop_grace_period: 60s</code> for the same reason.</p>
+<p>The Docker run examples did not set a stop timeout. The new matter.js storage lock system needs Matterbridge to shut down cleanly, so without <code>--stop-timeout 60</code> Docker may kill the container before the lock is released. Docker Compose setups should use <code>stop_grace_period: 60s</code> for the same reason. The docker guide has been updated.</p>
 <p>Please update your setup.</p>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
@@ -193,6 +193,7 @@
 <li>[bun]: The bun local docker image now runs from src files. No build is done.</li>
 <li>[utils]: Add writeDiagnostic() in utils package.</li>
 <li>[bun]: Add bunAvailable() in runtimeBun.ts.</li>
+<li>[s6-rc]: Add a timeout-kill of 55 secs to the s6-rc images (same reason as the <code>--stop-timeout 60</code> in Docker run and Docker compose).</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
