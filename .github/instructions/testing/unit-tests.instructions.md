@@ -1,7 +1,7 @@
 ---
-name: 'Testing Standards'
-description: 'Testing standards for unit tests in the project.'
-applyTo: 'packages/**/*.test.ts'
+name: 'Testing Standards v.1.0.4'
+description: 'Testing standards for unit tests in the project'
+applyTo: '**/*.test.ts, **/*.spec.ts, **/test/**/*.ts, **/vitest/**/*.ts, **/buntest/**/*.ts'
 ---
 
 # Testing Standards for Unit Tests
@@ -13,7 +13,7 @@ applyTo: 'packages/**/*.test.ts'
 
 ## 2. Test Structure
 
-- Organize tests in file name `*.test.ts` adjacent to the code being tested.
+- Organize tests in file name `*.test.ts` in the `vitest` folder.
 - Use `describe` blocks to group related tests and `test` blocks for individual test cases.
 
 ## 3. Test Naming

@@ -1,14 +1,14 @@
-# Matterbridge Workspace Instructions
+# Matterbridge Workspace Instructions (v.1.0.1)
 
 - Follow [STYLEGUIDE.md](../STYLEGUIDE.md) for code style, naming, JSDoc, validation, logging, and formatting expectations.
-- JSDoc requirements are enforced by oxlint. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
-- Import and export ordering are enforced by oxlint/oxfmt. Preserve the existing grouped and sorted order unless a change requires updating it.
+- JSDoc requirements are enforced by the configured linter. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
+- Import and export ordering are enforced by the formatter. Preserve the existing grouped and sorted order unless a change requires updating it.
 - Formatting is enforced by oxfmt. Follow the existing formatting and do not fight the formatter.
 - Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
 - Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
 - Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
-- Maintain compatibility with the supported Node.js versions in this repository: 20, 22, 24 and 26.
-- This repository is a TypeScript ESM monorepo. Follow existing project patterns for imports, exports, build configuration, and test setup.
+- Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24.0, and 26.0.
+- This repository uses TypeScript and ESM. Follow existing project patterns for imports, exports, build configuration, and test setup.
 - Prefer the existing npm scripts in [package.json](../package.json) and the VS Code tasks in [tasks.json](../.vscode/tasks.json) for building, linting, and testing.
 - For frontend work, run npm scripts from `apps/frontend` (or use commands that explicitly target that package).
 - Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
