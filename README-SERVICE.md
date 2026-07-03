@@ -65,6 +65,7 @@ You may need to adapt the configuration to your setup:
 [Unit]
 Description=matterbridge
 After=network-online.target
+Wants=network.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
 
@@ -197,16 +198,17 @@ MaxRetentionSec=3days
 MaxFileSec=1day
 # Disable forwarding to syslog to prevent duplicate logging.
 ForwardToSyslog=no
-# Limit persistent logs in /var/log/journal to 100 MB.
+# Limit persistent (disk) logs in /var/log/journal to 100 MB.
 SystemMaxUse=100M
-# Limit runtime logs in /run/log/journal to 100 MB.
+# Limit runtime (memory) logs in /run/log/journal to 100 MB.
 RuntimeMaxUse=100M
 ```
 
-save it and run:
+save it and check if other configs override yours:
 
 ```bash
 sudo systemctl restart systemd-journald
+sudo systemd-analyze cat-config systemd/journald.conf
 ```
 
 ## Verify that with your distro you can run sudo npm install -g matterbridge without the password

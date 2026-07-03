@@ -93,6 +93,7 @@ Please update your setup.
 - [bun]: Change bun install param from --production to --omit=dev to avoid the frozen lock.
 - [thread]: Refactor Docker, npm and GitHub version check timeout handling and warn when Docker Hub rate limits version lookups.
 - [typecheck]: Refactor typecheck tsconfig.json.
+- [service]: Update service configuration guides.
 
 - [codex]: Update config to v.1.0.1.
 

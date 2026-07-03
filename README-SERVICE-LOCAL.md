@@ -222,14 +222,15 @@ MaxRetentionSec=3days
 MaxFileSec=1day
 # Disable forwarding to syslog to prevent duplicate logging.
 ForwardToSyslog=no
-# Limit persistent logs in /var/log/journal to 100 MB.
+# Limit persistent (disk) logs in /var/log/journal to 100 MB.
 SystemMaxUse=100M
-# Limit runtime logs in /run/log/journal to 100 MB.
+# Limit runtime (memory) logs in /run/log/journal to 100 MB.
 RuntimeMaxUse=100M
 ```
 
-save it and run
+save it and check if other configs override yours:
 
 ```bash
 sudo systemctl restart systemd-journald
+sudo systemd-analyze cat-config systemd/journald.conf
 ```
