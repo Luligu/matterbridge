@@ -231,7 +231,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
       command: 'changeToMode',
       request,
       cluster: WaterHeaterModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);

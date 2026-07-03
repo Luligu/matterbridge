@@ -64,6 +64,11 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.4.
 - [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@types/node` to v.26.1.0.
+- [matterbridge]: Bump `@typescript/native-preview` to v.7.0.0-dev.20260703.1.
+- [matterbridge]: Bump `oxfmt` to v.0.57.0.
+- [matterbridge]: Bump `oxlint` to v.1.72.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
 
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.

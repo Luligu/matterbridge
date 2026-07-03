@@ -270,8 +270,7 @@ export async function assertAllEndpointNumbersPersisted(targetServer: ServerNode
   const nodeStore = targetServer.env.get(ServerNodeStore);
   // Ensure any pending persistence finished (flush any in-flight batch promise)
   await nodeStore.endpointStores.close();
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  const all = collectAllEndpoints(targetServer as unknown as Endpoint);
+  const all = collectAllEndpoints(targetServer);
   for (const ep of all) {
     const store = nodeStore.storeForEndpoint(ep);
     if (ep.maybeNumber === 0) {

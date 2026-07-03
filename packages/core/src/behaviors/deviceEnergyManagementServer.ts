@@ -28,7 +28,6 @@ import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-ener
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -50,7 +49,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'powerAdjustRequest',
       request,
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -67,7 +66,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'cancelPowerAdjustRequest',
       request: {},
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

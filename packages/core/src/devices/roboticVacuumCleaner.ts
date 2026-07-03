@@ -234,7 +234,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcRunModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcRunMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -275,7 +275,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcCleanModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcCleanMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -314,7 +314,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 
   /**
@@ -338,7 +338,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 
   /**
@@ -363,6 +363,6 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 }

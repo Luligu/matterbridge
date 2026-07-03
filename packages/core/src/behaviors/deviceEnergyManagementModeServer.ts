@@ -31,7 +31,6 @@ import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy
 import { ModeBase } from '@matter/types/clusters/mode-base';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -51,7 +50,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       command: 'changeToMode',
       request,
       cluster: DeviceEnergyManagementModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

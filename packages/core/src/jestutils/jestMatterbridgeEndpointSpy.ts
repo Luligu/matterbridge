@@ -24,6 +24,7 @@
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 // Spy on MatterbridgeEndpoint methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const setClusterMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setCluster> = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
 export const setAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute> = jest.spyOn(

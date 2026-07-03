@@ -1419,7 +1419,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         rootVendorId: info.rootVendorId,
         rootVendorName: this.getVendorIdName(info.rootVendorId),
         label: info.label,
-      } as SanitizedExposedFabricInformation;
+      };
     });
   }
 

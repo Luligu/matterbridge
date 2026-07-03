@@ -73,7 +73,7 @@ describe('HomeInstallAddPlugins', () => {
         x: 0,
         y: 0,
         toJSON: () => ({}),
-      } as DOMRect;
+      };
     };
 
     HomeInstallAddPlugins = (await import('../src/components/HomeInstallAddPlugins')).default;

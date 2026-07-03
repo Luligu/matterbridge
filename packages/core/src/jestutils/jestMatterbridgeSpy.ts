@@ -24,6 +24,7 @@
 import { Matterbridge } from '../matterbridge.js';
 
 // Spy on Matterbridge methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const addBridgedEndpointMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.addBridgedEndpoint> = jest.spyOn(Matterbridge.prototype, 'addBridgedEndpoint');
 export const removeBridgedEndpointMatterbridgeSpy: jest.SpiedFunction<typeof Matterbridge.prototype.removeBridgedEndpoint> = jest.spyOn(

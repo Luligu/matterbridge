@@ -28,18 +28,17 @@ describe('ConditionalTooltip', () => {
     const target = screen.getByLabelText('Alpha');
     Object.defineProperty(target, 'scrollWidth', { value: 50, configurable: true });
     Object.defineProperty(target, 'clientWidth', { value: 50, configurable: true });
-    target.getBoundingClientRect = () =>
-      ({
-        width: 100,
-        height: 20,
-        top: 0,
-        left: 0,
-        bottom: 20,
-        right: 100,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }) as DOMRect;
+    target.getBoundingClientRect = () => ({
+      width: 100,
+      height: 20,
+      top: 0,
+      left: 0,
+      bottom: 20,
+      right: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
 
     await act(async () => {
       fireEvent.mouseEnter(target);
@@ -62,18 +61,17 @@ describe('ConditionalTooltip', () => {
     const target = screen.getByLabelText('Alpha');
     Object.defineProperty(target, 'scrollWidth', { value: 200, configurable: true });
     Object.defineProperty(target, 'clientWidth', { value: 50, configurable: true });
-    target.getBoundingClientRect = () =>
-      ({
-        width: 100,
-        height: 20,
-        top: 0,
-        left: 0,
-        bottom: 20,
-        right: 100,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }) as DOMRect;
+    target.getBoundingClientRect = () => ({
+      width: 100,
+      height: 20,
+      top: 0,
+      left: 0,
+      bottom: 20,
+      right: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
 
     await act(async () => {
       fireEvent.mouseEnter(target);

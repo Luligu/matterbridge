@@ -24,6 +24,7 @@
 import { BroadcastServer } from '@matterbridge/thread/server';
 
 // Spy on BroadcastServer methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const closeBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.close> = jest.spyOn(BroadcastServer.prototype, 'close');
 export const getUniqueIdBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.getUniqueId> = jest.spyOn(BroadcastServer.prototype, 'getUniqueId');

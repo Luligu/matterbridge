@@ -110,7 +110,7 @@ describe('Client clusters and behaviors', () => {
       kind: 'server',
       entry: { node: NodeId(1), endpoint: EndpointNumber(1) } as Binding.Target,
       node: { set: mockNodeSet } as any,
-      endpoint: device as any,
+      endpoint: device,
     };
 
     await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
@@ -126,7 +126,7 @@ describe('Client clusters and behaviors', () => {
       kind: 'client',
       entry: { node: NodeId(2), endpoint: EndpointNumber(2) } as Binding.Target,
       node: { set: mockNodeSet } as any,
-      endpoint: device as any,
+      endpoint: device,
     };
 
     await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
@@ -141,7 +141,7 @@ describe('Client clusters and behaviors', () => {
       kind: 'server',
       entry: { node: NodeId(3), endpoint: EndpointNumber(3) } as Binding.Target,
       node: {} as any,
-      endpoint: device as any,
+      endpoint: device,
     };
 
     await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
@@ -159,7 +159,7 @@ describe('Client clusters and behaviors', () => {
       kind: 'server',
       entry: { node: NodeId(4), endpoint: EndpointNumber(4), cluster: OnOff.id } as Binding.Target,
       node: {} as any,
-      endpoint: device as any,
+      endpoint: device,
     };
 
     await device.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
@@ -233,7 +233,7 @@ describe('Client clusters and behaviors', () => {
       kind: 'server',
       entry: { node: NodeId(sensor.number), endpoint: EndpointNumber(sensor.number), cluster: OccupancySensing.id } as Binding.Target,
       node: {} as any,
-      endpoint: sensor as any,
+      endpoint: sensor,
     };
     await light.eventsOf(MatterbridgeBindingServer).established.emit(resolution);
 

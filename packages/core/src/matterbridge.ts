@@ -3554,7 +3554,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         rootVendorId: info.rootVendorId,
         rootVendorName: this.getVendorIdName(info.rootVendorId),
         label: info.label,
-      } as SanitizedExposedFabricInformation;
+      };
     });
   }
 

@@ -24,6 +24,7 @@
 import { MatterbridgePlatform } from '../matterbridgePlatform.js';
 
 // Spy on MatterbridgePlatform methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 // @ts-expect-error - TypeScript does not recognize the private method, but we want to spy on it anyway
 export const destroyMatterbridgePlatformSpy: jest.SpiedFunction<typeof MatterbridgePlatform.prototype.destroy> = jest.spyOn(MatterbridgePlatform.prototype, 'destroy');

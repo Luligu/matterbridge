@@ -230,7 +230,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
   test('Should log error if addBridgedEndpoint fails', async () => {
     // Simulate no server node
     const server = matterbridge.serverNode;
-    matterbridge.serverNode = undefined as any;
+    matterbridge.serverNode = undefined;
     await matterbridge.addBridgedEndpoint('matterdevicetest', { mode: 'matter' } as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Server node not found for Matterbridge`);
     matterbridge.serverNode = server; // Restore server node

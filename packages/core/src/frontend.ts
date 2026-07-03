@@ -63,7 +63,6 @@ import type {
   BridgeStatus,
   Cluster,
   MatterbridgeInformation,
-  PlatformConfig,
   PluginStatusUpdate,
   RefreshRequiredChanged,
   WorkerMessage,
@@ -2178,7 +2177,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         this.log.notice(`Action ${CYAN}${data.params.action}${nt}${data.params.value ? ' with ' + CYAN + data.params.value + nt : ''} for plugin ${CYAN}${plugin.name}${nt}`);
         plugin.platform
-          ?.onAction(data.params.action, data.params.value, data.params.id, data.params.formData as unknown as PlatformConfig)
+          ?.onAction(data.params.action, data.params.value, data.params.id, data.params.formData)
           .then(() => {
             sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, success: true });
             return;

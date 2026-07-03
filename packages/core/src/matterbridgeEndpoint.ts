@@ -509,6 +509,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     if (!behavior || !this.behaviors.supported[behavior.id]) return false;
     const normalizedAttribute = lowercaseFirstLetter(attribute);
     const options = this.behaviors.optionsFor(behavior) as Record<string, boolean | number | bigint | string | object | null> | undefined;
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
     const defaults = defaultFor(behavior, options) as Record<string, boolean | number | bigint | string | object | null> | undefined;
     const behaviorDefaults = behavior.defaults as Record<string, unknown>;
     return (

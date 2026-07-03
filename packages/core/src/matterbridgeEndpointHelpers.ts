@@ -734,6 +734,7 @@ export function addClusterClients(endpoint: MatterbridgeEndpoint, clientList: Cl
   if (!endpoint.behaviors.has(MatterbridgeBindingServer)) {
     endpoint.behaviors.require(MatterbridgeBindingServer, { clientList });
   } else {
+    // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
     const existing = (endpoint.behaviors.optionsFor(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList ?? [];
     endpoint.behaviors.inject(MatterbridgeBindingServer, { clientList: [...new Set([...existing, ...clientList])] });
   }

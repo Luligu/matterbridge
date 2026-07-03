@@ -256,7 +256,7 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
       command: 'changeToMode',
       request,
       cluster: EnergyEvseModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvseMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);

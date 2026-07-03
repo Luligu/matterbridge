@@ -96,6 +96,7 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
   rmSync(HOMEDIR, { recursive: true, force: true });
   mkdirSync(HOMEDIR, { recursive: true });
 
+  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
   const { jest } = await import('@jest/globals' as string);
   loggerDebugSpy = jest.spyOn(AnsiLogger.prototype, 'debug');
   loggerInfoSpy = jest.spyOn(AnsiLogger.prototype, 'info');
@@ -138,6 +139,7 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
  * ```
  */
 export async function setDebug(debug: boolean): Promise<void> {
+  // oxlint-disable-next-line typescript/no-unnecessary-type-assertion
   const { jest } = await import('@jest/globals' as string);
   if (debug) {
     loggerLogSpy.mockRestore();

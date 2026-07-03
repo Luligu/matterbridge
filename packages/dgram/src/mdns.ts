@@ -625,12 +625,14 @@ export class Mdns extends Multicast {
     offset += 2;
 
     let data: string;
-    if (type === (DnsRecordType.PTR as number)) {
+    // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    if (type === DnsRecordType.PTR) {
       // PTR record (type 12): decode its RDATA as a domain name.
       const ptrResult = this.decodeDnsName(msg, offset);
       data = ptrResult.name;
       offset += rdlength;
-    } else if (type === (DnsRecordType.TXT as number)) {
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    } else if (type === DnsRecordType.TXT) {
       // TXT record: may consist of one or more length-prefixed strings.
       const txtStrings: string[] = [];
       const end = offset + rdlength;
@@ -642,7 +644,8 @@ export class Mdns extends Multicast {
         offset += txtLen;
       }
       data = txtStrings.join(', ');
-    } else if (type === (DnsRecordType.SRV as number)) {
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    } else if (type === DnsRecordType.SRV) {
       // SRV record (type === 33): consists of 2 bytes for priority, 2 for weight, 2 for port, followed by the target domain name.
       const priority = msg.readUInt16BE(offset);
       const weight = msg.readUInt16BE(offset + 2);
@@ -656,12 +659,14 @@ export class Mdns extends Multicast {
         target: srvTargetResult.name,
       });
       offset = srvTargetResult.newOffset;
-    } else if (type === (DnsRecordType.A as number)) {
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    } else if (type === DnsRecordType.A) {
       // A record (type 1): an IPv4 address stored in 4 bytes.
       const ipBytes = msg.subarray(offset, offset + 4);
       data = Array.from(ipBytes).join('.');
       offset += 4;
-    } else if (type === (DnsRecordType.AAAA as number)) {
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    } else if (type === DnsRecordType.AAAA) {
       // AAAA record (type 28): IPv6 address stored in 16 bytes.
       const ipBytes = msg.subarray(offset, offset + 16);
       // Convert the 16 bytes into an IPv6 address string (colon-separated)
@@ -671,7 +676,8 @@ export class Mdns extends Multicast {
       }
       data = ipv6Parts.join(':');
       offset += 16;
-    } else if (type === (DnsRecordType.NSEC as number)) {
+      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
+    } else if (type === DnsRecordType.NSEC) {
       // NSEC record: RDATA consists of:
       //   - Next Domain Name (in DNS label format)
       //   - Type Bit Maps (variable length)

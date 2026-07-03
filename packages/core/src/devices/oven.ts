@@ -234,7 +234,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 
   /**
@@ -251,6 +251,6 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 }

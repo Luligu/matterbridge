@@ -87,7 +87,7 @@ describe('ConfigPluginDialog', () => {
       debug: currentConfig.debug,
       unregisterOnShutdown: currentConfig.unregisterOnShutdown,
       ...extra,
-    } as ApiPlugin['configJson'];
+    };
   };
 
   const renderDialog = (plugin: ApiPlugin = createPlugin()) => {

@@ -88,31 +88,27 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   static historyIndex = 0;
   // History for 8h at 1 sample each 10 seconds = 2880 entries
   static readonly historySize = 2880;
-  static readonly history: TrackerSnapshot[] = Array.from(
-    { length: this.historySize },
-    () =>
-      ({
-        timestamp: 0,
-        freeMemory: 0,
-        peakFreeMemory: 0,
-        totalMemory: 0,
-        peakTotalMemory: 0,
-        osCpu: 0,
-        peakOsCpu: 0,
-        processCpu: 0,
-        peakProcessCpu: 0,
-        rss: 0,
-        peakRss: 0,
-        heapUsed: 0,
-        peakHeapUsed: 0,
-        heapTotal: 0,
-        peakHeapTotal: 0,
-        external: 0,
-        peakExternal: 0,
-        arrayBuffers: 0,
-        peakArrayBuffers: 0,
-      }) as TrackerSnapshot,
-  );
+  static readonly history: TrackerSnapshot[] = Array.from({ length: this.historySize }, () => ({
+    timestamp: 0,
+    freeMemory: 0,
+    peakFreeMemory: 0,
+    totalMemory: 0,
+    peakTotalMemory: 0,
+    osCpu: 0,
+    peakOsCpu: 0,
+    processCpu: 0,
+    peakProcessCpu: 0,
+    rss: 0,
+    peakRss: 0,
+    heapUsed: 0,
+    peakHeapUsed: 0,
+    heapTotal: 0,
+    peakHeapTotal: 0,
+    external: 0,
+    peakExternal: 0,
+    arrayBuffers: 0,
+    peakArrayBuffers: 0,
+  }));
   private prevCpus = os.cpus();
   private prevCpuUsage = process.cpuUsage();
   private log: AnsiLogger;
