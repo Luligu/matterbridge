@@ -104,7 +104,7 @@ Please update your setup.
 ### Fixed
 
 - [thread]: Add worker-local unhandled rejection and uncaught exception guards, and count failed worker exits as thread errors.
-- [docs]: Fix wrong path for the frontend ceertificates: place certificates in the `.matterbridge/certs` directory.
+- [docs]: Fix wrong path for the frontend certificates: place certificates in the `.matterbridge/certs` directory.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

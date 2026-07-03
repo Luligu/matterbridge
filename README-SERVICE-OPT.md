@@ -226,7 +226,7 @@ sudo systemctl disable matterbridge
 sudo journalctl -u matterbridge -n 1000 -f --output cat
 ```
 
-### Delete the logs older then 3 days (all of them not only the ones of Matterbridge!)
+### Delete the logs older than 3 days (all of them not only the ones of Matterbridge!)
 
 Check the space used
 
@@ -234,7 +234,7 @@ Check the space used
 sudo journalctl --disk-usage
 ```
 
-remove all log older then 3 days
+remove all log older than 3 days
 
 ```bash
 sudo journalctl --rotate
