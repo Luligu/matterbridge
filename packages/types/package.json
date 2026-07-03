@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/types",
-  "version": "3.9.3",
+  "version": "3.9.4",
   "description": "Matterbridge types library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -64,7 +64,7 @@
     "automator": "node scripts/run-automator.mjs --monorepo-package"
   },
   "dependencies": {
-    "@matter/main": "0.17.4-alpha.0-20260628-67a669f75",
+    "@matter/main": "0.17.4",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
