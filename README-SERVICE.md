@@ -55,7 +55,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, **replacing USER with your user name** (e.g. User=pi):
+Add the following to this file, **replacing 3 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):
 
 You may need to adapt the configuration to your setup:
 
@@ -72,7 +72,7 @@ StartLimitBurst=5
 [Service]
 Type=simple
 ExecStart=matterbridge --service
-WorkingDirectory=%h/Matterbridge
+WorkingDirectory=/home/<USER>/Matterbridge
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
 StandardOutput=journal
 StandardError=journal
@@ -81,7 +81,7 @@ Restart=always
 RestartSec=5
 TimeoutStopSec=60
 User=<USER>
-Group=%u
+Group=<USER>
 
 [Install]
 WantedBy=multi-user.target

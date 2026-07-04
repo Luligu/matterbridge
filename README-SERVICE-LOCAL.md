@@ -79,7 +79,7 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, **replacing USER with your user name** (e.g. User=pi):
+Add the following to this file, **replacing 5 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global" and Environment="NPM_CONFIG_CACHE=/home/pi/.npm-cache"):
 
 ```text
 [Unit]
@@ -91,10 +91,10 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-Environment="NPM_CONFIG_PREFIX=%h/.npm-global"
-Environment="NPM_CONFIG_CACHE=%h/.npm-cache"
+Environment="NPM_CONFIG_PREFIX=/home/<USER>/.npm-global"
+Environment="NPM_CONFIG_CACHE=/home/<USER>/.npm-cache"
 ExecStart=matterbridge --service --nosudo
-WorkingDirectory=%h/Matterbridge
+WorkingDirectory=/home/<USER>/Matterbridge
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
 StandardOutput=journal
 StandardError=journal
@@ -103,7 +103,7 @@ Restart=always
 RestartSec=5
 TimeoutStopSec=60
 User=<USER>
-Group=%u
+Group=<USER>
 
 [Install]
 WantedBy=multi-user.target

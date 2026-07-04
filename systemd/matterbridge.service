@@ -1,3 +1,5 @@
+# Replace <USER> with your user (e.g. pi) in WorkingDirectory, User and Group.
+
 [Unit]
 Description=matterbridge
 After=network-online.target
@@ -10,7 +12,7 @@ Type=simple
 # PATH for any child process Matterbridge/plugins spawn (bun/node/npm lookups).
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 ExecStart=matterbridge --service
-WorkingDirectory=%h/Matterbridge
+WorkingDirectory=/home/<USER>/Matterbridge
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
 StandardOutput=journal
 StandardError=journal
@@ -18,9 +20,8 @@ SyslogIdentifier=matterbridge
 Restart=always
 RestartSec=5
 TimeoutStopSec=60
-# Replace <USER> with your user (e.g. pi)
 User=<USER>
-Group=%u
+Group=<USER>
 
 [Install]
 WantedBy=multi-user.target
