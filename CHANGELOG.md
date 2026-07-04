@@ -71,6 +71,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
 - [package]: Apply style to all files.
 - [service]: Update service configuration example `systemd/matterbridge.service`.
+- [service]: Update service configuration guides.
 
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.

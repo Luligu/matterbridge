@@ -79,27 +79,31 @@ Create a systemctl configuration file for Matterbridge
 sudo nano /etc/systemd/system/matterbridge.service
 ```
 
-Add the following to this file, **replacing 5 times (!) USER with your user name** (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment="NPM_CONFIG_PREFIX=/home/pi/.npm-global" and Environment="NPM_CONFIG_CACHE=/home/pi/.npm-cache"):
+Add the following to this file, **replacing USER with your user name** (e.g. User=pi):
 
 ```text
 [Unit]
 Description=matterbridge
-After=network.target
-Wants=network.target
+After=network-online.target
+Wants=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
 
 [Service]
 Type=simple
-Environment="NPM_CONFIG_PREFIX=/home/<USER>/.npm-global"
-Environment="NPM_CONFIG_CACHE=/home/<USER>/.npm-cache"
+Environment="NPM_CONFIG_PREFIX=%h/.npm-global"
+Environment="NPM_CONFIG_CACHE=%h/.npm-cache"
 ExecStart=matterbridge --service --nosudo
-WorkingDirectory=/home/<USER>/Matterbridge
-StandardOutput=inherit
-StandardError=inherit
+WorkingDirectory=%h/Matterbridge
+# Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=matterbridge
 Restart=always
+RestartSec=5
+TimeoutStopSec=60
 User=<USER>
-Group=<USER>
+Group=%u
 
 [Install]
 WantedBy=multi-user.target
@@ -127,18 +131,16 @@ One possible fix, add this line to the existing [Service] section:
 Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 ```
 
-If you use the frontend with **-ssl** --frontend 443 and get an error message: "Port 443 requires elevated privileges",
-add this:
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the **matterbridge-bthome** plugin add this:
+If you use the matterbridge-bthome plugin add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 

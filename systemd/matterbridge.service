@@ -10,7 +10,7 @@ Type=simple
 # PATH for any child process Matterbridge/plugins spawn (bun/node/npm lookups).
 Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 ExecStart=matterbridge --service
-WorkingDirectory=%h
+WorkingDirectory=%h/Matterbridge
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
 StandardOutput=journal
 StandardError=journal
@@ -20,7 +20,7 @@ RestartSec=5
 TimeoutStopSec=60
 # Replace <USER> with your user (e.g. pi)
 User=<USER>
-Group=<USER>
+Group=%u
 
 [Install]
 WantedBy=multi-user.target
