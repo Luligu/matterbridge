@@ -12,8 +12,9 @@ Environment="PATH=/usr/local/bin:/usr/bin:/bin"
 ExecStart=matterbridge --service
 WorkingDirectory=%h
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
-StandardOutput=inherit
-StandardError=inherit
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=matterbridge
 Restart=always
 RestartSec=5
 TimeoutStopSec=60
