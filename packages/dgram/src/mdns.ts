@@ -1,6 +1,6 @@
 /**
+ * @file packages/dgram/src/mdns.ts
  * @description This file contains the class Mdns.
- * @file mdns.ts
  * @author Luca Liguori
  * @created 2025-03-22
  * @version 1.0.1
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
-// oxlint-disable no-bitwise
-// oxlint-disable no-param-reassign
+/* oxlint-disable no-bitwise */
+/* oxlint-disable no-param-reassign */
+/* oxlint-disable typescript/no-duplicate-enum-values */
 
 // Node.js imports
 import type dgram from 'node:dgram';
@@ -1050,7 +1050,7 @@ export class Mdns extends Multicast {
         const diff = (partsA[i] || 0) - (partsB[i] || 0);
         if (diff !== 0) return diff;
       }
-      // istanbul ignore next
+      /* v8 ignore next */
       return 0;
     });
     // Log the sorted devices
@@ -1069,7 +1069,7 @@ export class Mdns extends Multicast {
         const diff = (partsA[i] || 0) - (partsB[i] || 0);
         if (diff !== 0) return diff;
       }
-      // istanbul ignore next
+      /* v8 ignore next */
       return 0;
     });
     // Log the sorted devices

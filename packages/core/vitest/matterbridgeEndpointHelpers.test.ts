@@ -1,4 +1,8 @@
-// vitest\matterbridgeEndpointHelpers.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpointHelpers.test.ts
+ * @description This file contains the tests for matterbridgeEndpointHelpers.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

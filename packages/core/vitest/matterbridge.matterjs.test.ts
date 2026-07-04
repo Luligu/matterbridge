@@ -1,4 +1,8 @@
-// vitest\matterbridge.matterjs.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.matterjs.test.ts
+ * @description This file contains the tests for Matterbridge with matter.js.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

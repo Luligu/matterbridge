@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/oven.ts
  * @description This file contains the Oven class.
- * @file src/devices/oven.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import type { MaybePromise } from '@matter/general';
 import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
 import { OvenModeServer } from '@matter/node/behaviors/oven-mode';

@@ -1,4 +1,8 @@
-// vitest\npmVersion.test.ts
+/**
+ * @file packages/utils/vitest/npmVersion.test.ts
+ * @description This file contains the tests for npmVersion.
+ * @author Luca Liguori
+ */
 
 import type { ClientRequest, IncomingMessage } from 'node:http';
 import type { RequestOptions } from 'node:https';

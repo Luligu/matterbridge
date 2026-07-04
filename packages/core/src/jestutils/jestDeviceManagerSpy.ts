@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestDeviceManagerSpy.ts
  * @description This file contains the Jest DeviceManager spy.
- * @file src/jestDeviceManagerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0

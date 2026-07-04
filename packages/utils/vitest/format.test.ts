@@ -1,3 +1,9 @@
+/**
+ * @file packages/utils/vitest/format.test.ts
+ * @description This file contains the tests for format.
+ * @author Luca Liguori
+ */
+
 import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from '../src/format.js';
 
 describe('formatTimeStamp(), formatBytes() and formatUptime()', () => {

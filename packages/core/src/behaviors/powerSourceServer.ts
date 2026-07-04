@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgePowerSourceServer class of Matterbridge.
- *
- * @file powerSourceServer.ts
+ * @file packages/core/src/behaviors/powerSourceServer.ts
+ * @description This file contains the MatterbridgePowerSourceServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0

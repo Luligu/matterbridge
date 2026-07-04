@@ -1,4 +1,8 @@
-// vitest\matterbridge.bridge.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.bridge.test.ts
+ * @description This file contains the tests for Matterbridge in bridge mode.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!
@@ -6,7 +10,7 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-/* eslint-disable vitest/no-conditional-expect */
+/* oxlint-disable vitest/no-conditional-expect */
 
 const MATTER_PORT = 6500;
 const FRONTEND_PORT = 8801;

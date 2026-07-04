@@ -1,4 +1,8 @@
-// vitest\clusters\soil-measurement.test.ts
+/**
+ * @file packages/core/vitest/clusters/soil-measurement.test.ts
+ * @description This file contains the tests for the SoilMeasurement cluster.
+ * @author Luca Liguori
+ */
 
 const NAME = 'SoilMeasurementCluster';
 

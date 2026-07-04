@@ -1,13 +1,12 @@
 /**
- * This file contains the getDockerVersion function.
- *
- * @file dockerVersion.ts
+ * @file packages/thread/src/dockerVersion.ts
+ * @description This file contains the getDockerVersion function.
  * @author Luca Liguori
  * @created 2026-02-19
  * @version 1.1.0
  * @license Apache-2.0
  *
- * Copyright 2026, 2027 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +130,7 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
       });
     });
 
-    // istanbul ignore next cause it's just a precaution for network errors
+    /* v8 ignore next cause it's just a precaution for network errors */
     req.on('error', (error) => {
       clearTimeout(timeoutId);
       reject(new Error(`Request failed: ${getErrorMessage(error)}`));

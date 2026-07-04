@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeThermostatServer and MatterbridgePresetThermostatServer classes of Matterbridge.
- *
- * @file thermostatServer.ts
+ * @file packages/core/src/behaviors/thermostatServer.ts
+ * @description This file contains the MatterbridgeThermostatServer and MatterbridgePresetThermostatServer classes of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { Thermostat } from '@matter/types/clusters/thermostat';

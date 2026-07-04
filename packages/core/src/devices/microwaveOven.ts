@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/microwaveOven.ts
  * @description This file contains the MicrowaveOven class.
- * @file src/devices/microwaveOven.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-// oxlint-disable unicorn/no-negated-condition typescript/no-unsafe-type-assertion
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
 import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';

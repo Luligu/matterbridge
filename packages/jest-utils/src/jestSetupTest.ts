@@ -1,6 +1,6 @@
 /**
+ * @file packages/jest-utils/src/jestSetupTest.ts
  * @description This file contains the Jest Setup helpers.
- * @file src/jestSetupTest.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0

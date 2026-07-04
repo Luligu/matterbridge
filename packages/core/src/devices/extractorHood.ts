@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/extractorHood.ts
  * @description This file contains the ExtractorHood class.
- * @file src/devices/extractorHood.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';

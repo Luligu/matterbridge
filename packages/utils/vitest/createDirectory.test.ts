@@ -1,4 +1,8 @@
-// vitest\createDirectory.test.ts
+/**
+ * @file packages/utils/vitest/createDirectory.test.ts
+ * @description This file contains the tests for createDirectory.
+ * @author Luca Liguori
+ */
 
 const NAME = 'CreateDirectory';
 

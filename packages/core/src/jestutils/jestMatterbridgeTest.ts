@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestMatterbridgeTest.ts
  * @description This file contains the Jest Matterbridge Test Environment.
- * @file src/jestMatterbridgeTest.ts
  * @author Luca Liguori
  * @created 2025-09-03
  * @version 1.0.15
@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-explicit-any */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 /*
  *  Jest Matterbridge Test Environment helpers.

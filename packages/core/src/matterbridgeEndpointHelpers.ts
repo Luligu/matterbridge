@@ -1,7 +1,6 @@
 /**
- * This file contains the helpers for the class MatterbridgeEndpoint.
- *
- * @file matterbridgeEndpointHelpers.ts
+ * @file packages/core/src/matterbridgeEndpointHelpers.ts
+ * @description This file contains the helpers for the class MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2024-10-01
  * @version 2.1.0
@@ -22,10 +21,15 @@
  * limitations under the License.
  */
 
-// oxlint-disable max-lines
+/* oxlint-disable max-lines */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable no-param-reassign */
+/* oxlint-disable typescript/explicit-function-return-type */
+/* oxlint-disable typescript/explicit-module-boundary-types */
 
 // TODO: analyze each rule
-// oxlint-disable typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing unicorn/no-negated-condition no-param-reassign typescript/explicit-function-return-type typescript/explicit-module-boundary-types
 
 // Other modules
 import { createHash } from 'node:crypto';
@@ -311,7 +315,7 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
     return {};
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
-  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
+  /* v8 ignore next -- This should never happen as the supported behavior is checked in getBehavior. */
   if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
   return supportedBehavior.features ?? {};
 }
@@ -342,7 +346,7 @@ export async function internalFor<T extends object = Record<string, unknown>>(
     return undefined;
   }
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
-  // istanbul ignore next -- This should never happen as the supported behavior is checked in getBehavior.
+  /* v8 ignore next -- This should never happen as the supported behavior is checked in getBehavior. */
   if (!supportedBehavior) return undefined;
 
   return endpoint.act(() => endpoint.behaviors.internalsOf(supportedBehavior)) as Promise<T | undefined>;
@@ -369,7 +373,7 @@ export function optionsFor<T extends Behavior.Type>(type: T, options: Behavior.O
 export function defaultFor<T extends Behavior.Type>(type: T, options?: Behavior.Options<T>): Partial<Behavior.Options<T>> | undefined {
   let defaults: Record<string, unknown> | undefined;
 
-  // istanbul ignore else
+  /* v8 ignore next */
   if (options) {
     for (const key in type.defaults) {
       if (key in options) {
@@ -512,7 +516,7 @@ export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): Clust
  */
 export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string): Behavior.Type | undefined {
   let behavior: Behavior.Type | undefined;
-  // istanbul ignore else -- The cluster parameter is expected to be one of the specified types, so we can ignore the case where it is not.
+  /* v8 ignore next -- The cluster parameter is expected to be one of the specified types, so we can ignore the case where it is not. */
   if (typeof cluster === 'string') {
     behavior = endpoint.behaviors.supported[lowercaseFirstLetter(cluster)];
   } else if (typeof cluster === 'number') {
@@ -569,7 +573,7 @@ export async function invokeBehaviorCommand(
 
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
-    // istanbul ignore next -- This is only used in Jest tests, so we don't need to cover it in production.
+    /* v8 ignore next -- This is only used in Jest tests, so we don't need to cover it in production. */
     const patchedContext = new Proxy(agent.context, { get: (t, k): unknown => (k === 'fabric' ? 1 : k === 'subject' ? injectedSubject : Reflect.get(t, k, t)) });
     Object.defineProperty(behavior, 'context', { configurable: true, value: patchedContext });
     try {
@@ -661,7 +665,7 @@ export function addOptionalClusterServers(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalServerClusters.forEach((clusterId) => {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (!optionalServerList.includes(clusterId) && !endpoint.hasClusterServer(clusterId)) {
         optionalServerList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -766,7 +770,7 @@ export function addRequiredClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.requiredClientClusters.forEach((clusterId) => {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (!requiredClientList.includes(clusterId)) {
         requiredClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -788,7 +792,7 @@ export function addOptionalClusterClients(endpoint: MatterbridgeEndpoint): void 
   Array.from(endpoint.deviceTypes.values()).forEach((deviceType) => {
     endpoint.log.debug(`- for deviceType: ${zb}${'0x' + deviceType.code.toString(16).padStart(4, '0')}${db}-${zb}${deviceType.name}${db}`);
     deviceType.optionalClientClusters.forEach((clusterId) => {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (!optionalClientList.includes(clusterId)) {
         optionalClientList.push(clusterId);
         endpoint.log.debug(`- cluster: ${hk}${'0x' + clusterId.toString(16).padStart(4, '0')}${db}-${hk}${getClusterNameById(clusterId)}${db}`);
@@ -815,7 +819,7 @@ export async function addFixedLabel(endpoint: MatterbridgeEndpoint, label: strin
   }
   endpoint.log.debug(`addFixedLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(FixedLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
-  // istanbul ignore else
+  /* v8 ignore next */
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
@@ -840,7 +844,7 @@ export async function addUserLabel(endpoint: MatterbridgeEndpoint, label: string
   }
   endpoint.log.debug(`addUserLabel: add label ${CYAN}${label}${db} value ${CYAN}${value}${db}`);
   let labelList = endpoint.getAttribute(UserLabel.id, 'labelList', endpoint.log) as { label: string; value: string }[];
-  // istanbul ignore else
+  /* v8 ignore next */
   if (isValidArray(labelList)) {
     labelList = labelList.filter((entry) => entry.label !== label.substring(0, 16));
     labelList.push({ label: label.substring(0, 16), value: value.substring(0, 16) });
@@ -882,7 +886,7 @@ export function getAttributeId(endpoint: Endpoint, cluster: string, attribute: s
  * @param {AnsiLogger} [log] - (Optional) The logger to use for logging the retrieve. Errors are logged to the endpoint logger.
  * @returns {any} The value of the attribute, or undefined if the attribute is not found.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// oxlint-disable-next-line typescript/no-explicit-any
 export function getAttribute(endpoint: MatterbridgeEndpoint, cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
   const clusterName = getBehavior(endpoint, cluster)?.id;
   if (!clusterName) {
@@ -1034,7 +1038,7 @@ export function subscribeAttribute(
   endpoint: MatterbridgeEndpoint,
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   attribute: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   listener: (newValue: any, oldValue: any, context: ActionContext) => void,
   log?: AnsiLogger,
 ): MatterbridgeEndpoint {
@@ -1044,7 +1048,7 @@ export function subscribeAttribute(
     return endpoint;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   const events = endpoint.events as Record<string, Record<string, any>>;
   attribute = lowercaseFirstLetter(attribute) + '$Changed';
   if (!(clusterName in events) || !(attribute in events[clusterName])) {
@@ -1160,14 +1164,14 @@ export async function triggerEvent(
     return false;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   const events = endpoint.events as Record<string, Record<string, any>>;
   if (!(clusterName in events) || !(event in events[clusterName])) {
     endpoint.log.error(`triggerEvent ${hk}${event}${er} error: cluster ${clusterName} not found on endpoint ${or}${endpoint.id}${er}:${or}${endpoint.number}${er}`);
     return false;
   }
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // oxlint-disable-next-line typescript/ban-ts-comment
   // @ts-ignore
   await endpoint.act((agent) => agent[clusterName].events[event].emit(payload, agent.context));
   log?.info(

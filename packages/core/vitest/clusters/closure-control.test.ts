@@ -1,4 +1,8 @@
-// vitest\clusters\closure-control.test.ts
+/**
+ * @file packages/core/vitest/clusters/closure-control.test.ts
+ * @description This file contains the tests for the ClosureControl cluster.
+ * @author Luca Liguori
+ */
 
 const NAME = 'ClosureControlCluster';
 

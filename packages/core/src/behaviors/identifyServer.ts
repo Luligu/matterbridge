@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeIdentifyServer class of Matterbridge.
- *
- * @file identifyServer.ts
+ * @file packages/core/src/behaviors/identifyServer.ts
+ * @description This file contains the MatterbridgeIdentifyServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { IdentifyServer } from '@matter/node/behaviors/identify';
 import type { Identify } from '@matter/types/clusters/identify';

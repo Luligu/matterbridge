@@ -1,4 +1,8 @@
-// buntest/bunSetupTest.test.ts
+/**
+ * @file buntest/bunSetupTest.test.ts
+ * @description This file contains the tests for the bunSetupTest helpers.
+ * @author Luca Liguori
+ */
 
 // Verifies the Bun setup helpers in ./bunSetupTest.ts actually do their job:
 //   - they set NAME / HOMEDIR / process.argv and create the home directory,

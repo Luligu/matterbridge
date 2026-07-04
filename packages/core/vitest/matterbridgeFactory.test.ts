@@ -1,4 +1,8 @@
-// src\matterbridgeFactory.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeFactory.test.ts
+ * @description This file contains the tests for matterbridgeFactory.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Factory';
 const MATTER_PORT = 11280;

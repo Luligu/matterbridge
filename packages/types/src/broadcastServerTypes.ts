@@ -1,7 +1,6 @@
 /**
- * This file contains the BroadcastServer types.
- *
- * @file broadcastServerTypes.ts
+ * @file packages/types/src/broadcastServerTypes.ts
+ * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
  * @version 2.0.0

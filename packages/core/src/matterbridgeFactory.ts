@@ -1,13 +1,12 @@
 /**
- * This file contains a generic, data-driven factory to create cluster servers on a MatterbridgeEndpoint.
- *
- * @file matterbridgeFactory.ts
+ * @file packages/core/src/matterbridgeFactory.ts
+ * @description This file contains a generic, data-driven factory to create cluster servers on a MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2026-06-10
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2026 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,13 +133,13 @@ export async function getServerBehaviorFromClusterId(clusterId: ClusterId, featu
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     mod = (await import(`@matter/node/behaviors/${snakeCase(name)}`)) as Record<string, unknown>;
   } catch {
-    // istanbul ignore next -- Defensive: every known matter.js cluster resolves to a behavior module.
+    /* v8 ignore next -- Defensive: every known matter.js cluster resolves to a behavior module. */
     return undefined;
   }
 
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const base = mod[`${name}Server`] as Behavior.Type | undefined;
-  // istanbul ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Server.
+  /* v8 ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Server. */
   if (!base || !ClusterBehavior.isType(base)) return undefined;
 
   const featureNames = (

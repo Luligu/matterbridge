@@ -1,4 +1,8 @@
-// src\behaviors\doorLockServer.test.ts
+/**
+ * @file packages/core/vitest/behaviors/doorLockServer.test.ts
+ * @description This file contains the tests for doorLockServer.
+ * @author Luca Liguori
+ */
 
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;

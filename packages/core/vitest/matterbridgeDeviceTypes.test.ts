@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.test.ts
+ * @description This file contains the tests for matterbridgeDeviceTypes.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypes';
 
@@ -139,7 +143,7 @@ describe('Matterbridge device types', () => {
   const expectWithLog = (label: string, actual: unknown, expected: unknown): void => {
     if (actual !== expected) {
       // Provide a helpful diff on failure to ease Matter spec migration
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.error(`Discrepancy in ${label}: actual=${String(actual)} expected=${String(expected)}`);
     }
     expect(actual).toBe(expected);

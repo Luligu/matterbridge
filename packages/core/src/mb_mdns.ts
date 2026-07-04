@@ -1,7 +1,6 @@
-// oxlint-disable no-bitwise
 /**
- * @description This file contains the bin mb_mdns for the class Mdns.
  * @file packages/core/src/mb_mdns.ts
+ * @description This file contains the bin mb_mdns for the class Mdns.
  * @author Luca Liguori
  * @created 2025-07-22
  * @version 2.0.0
@@ -22,7 +21,8 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/prefer-nullish-coalescing
+/* oxlint-disable no-bitwise */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
@@ -72,7 +72,7 @@ export interface MbMdnsRuntime {
  * @param {string} message The message to print.
  */
 function defaultConsoleLog(message: string): void {
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.log(message);
 }
 

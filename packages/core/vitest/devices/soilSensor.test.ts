@@ -1,4 +1,8 @@
-// vitest/devices/soilSensor.test.ts
+/**
+ * @file packages/core/vitest/devices/soilSensor.test.ts
+ * @description This file contains the tests for the SoilSensor device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'SoilSensor';
 const MATTER_PORT = 8020;

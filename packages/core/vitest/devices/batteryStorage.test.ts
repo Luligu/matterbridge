@@ -1,4 +1,8 @@
-// vitest/devices/batteryStorage.test.ts
+/**
+ * @file packages/core/vitest/devices/batteryStorage.test.ts
+ * @description This file contains the tests for the BatteryStorage device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BatteryStorage';
 const MATTER_PORT = 8002;

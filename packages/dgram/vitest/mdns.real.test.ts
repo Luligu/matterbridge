@@ -1,11 +1,7 @@
 /**
+ * @file packages/dgram/vitest/mdns.real.test.ts
  * @description Real-world mDNS test with two instances communicating with each other.
- * @file mdns.real.test.ts
  * @author Luca Liguori
- * @created 2025-07-21
- * @version 1.0.0
- * @license Apache-2.0
- * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
 import type { RemoteInfo } from 'node:dgram';

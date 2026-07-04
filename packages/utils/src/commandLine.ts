@@ -1,7 +1,6 @@
 /**
- * This file contains the parameters functions.
- *
- * @file parameter.ts
+ * @file packages/utils/src/commandLine.ts
+ * @description This file contains the parameters functions.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.0

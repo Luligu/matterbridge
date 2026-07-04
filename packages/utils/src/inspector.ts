@@ -1,7 +1,6 @@
 /**
- * This file contains the Inspector class.
- *
- * @file inspector.ts
+ * @file packages/utils/src/inspector.ts
+ * @description This file contains the Inspector class.
  * @author Luca Liguori
  * @created 2025-10-12
  * @version 1.0.0
@@ -142,7 +141,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
         clearInterval(this.snapshotInterval);
         this.snapshotInterval = setInterval(() => {
           if (this.snapshotInProgress) {
-            // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+            /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
             if (this.debug) this.log.debug(`Skip heap snapshot: previous snapshot still in progress`);
             return;
           }
@@ -220,7 +219,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     }
 
     if (this.snapshotInProgress) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.debug) this.log.debug('Heap snapshot already in progress, skipping.');
       return;
     }
@@ -235,7 +234,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     this.runGarbageCollector('minor', 'async');
     this.runGarbageCollector('major', 'async');
 
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.debug) this.log.debug(`Taking heap snapshot to ${CYAN}${filename}${db}...`);
 
     const stream = createWriteStream(filename, { flags: 'w' });
@@ -248,7 +247,7 @@ export class Inspector extends EventEmitter<InspectorEvents> {
 
     const chunksListener = (notification: InspectorNotification<HeapProfiler.AddHeapSnapshotChunkEventDataType>): void => {
       // notification.params.chunk is a string; write directly to the stream
-      // istanbul ignore next
+      /* v8 ignore next */
       if (!stream.write(notification.params.chunk)) {
         // If backpressure engages, it's fine; the stream will buffer internally. We don't block the inspector.
       }
@@ -260,9 +259,9 @@ export class Inspector extends EventEmitter<InspectorEvents> {
           // Detach chunk listener and close the stream, then perform post-actions
           this.session?.off('HeapProfiler.addHeapSnapshotChunk', chunksListener);
           const finalize = (): void => {
-            // istanbul ignore else
+            /* v8 ignore next */
             if (!err && !streamErrored) {
-              // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+              /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
               if (this.debug) this.log.debug(`Heap sampling snapshot saved to ${CYAN}${filename}${db}`);
               this.runGarbageCollector('minor', 'async');
               this.runGarbageCollector('major', 'async');
@@ -303,17 +302,17 @@ export class Inspector extends EventEmitter<InspectorEvents> {
     if (global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (${type}-${execution}) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
         global.gc();
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
       }
     } else {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection not exposed. Start Node.js with --expose-gc to enable manual garbage collection.${RESET}${db}`);
     }
   }

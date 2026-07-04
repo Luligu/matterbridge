@@ -1,4 +1,8 @@
-// vitest\tracker.test.ts
+/**
+ * @file packages/utils/vitest/tracker.test.ts
+ * @description This file contains the tests for tracker.
+ * @author Luca Liguori
+ */
 
 import os, { type CpuInfo } from 'node:os';
 

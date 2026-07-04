@@ -1,7 +1,6 @@
 /**
- * This file contains the createDirectory function.
- *
- * @file createDirectory.ts
+ * @file packages/utils/src/createDirectory.ts
+ * @description This file contains the createDirectory function.
  * @author Luca Liguori
  * @created 2025-06-08
  * @version 1.0.0

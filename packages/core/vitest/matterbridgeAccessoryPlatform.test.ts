@@ -1,4 +1,8 @@
-// vitest\matterbridgeAccessoryPlatform.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeAccessoryPlatform.test.ts
+ * @description This file contains the tests for the MatterbridgeAccessoryPlatform class.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeAccessoryPlatform';
 const MATTER_PORT = 7200;

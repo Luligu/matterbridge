@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/laundryWasher.ts
  * @description This file contains the LaundryWasher class.
- * @file src/devices/laundryWasher.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
@@ -167,7 +167,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // istanbul ignore else
+    /* v8 ignore next */
     if (!onOff) {
       device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;

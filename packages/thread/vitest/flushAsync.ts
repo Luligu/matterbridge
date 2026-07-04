@@ -1,6 +1,6 @@
 /**
+ * @file packages/thread/vitest/flushAsync.ts
  * @description This file contains the flushAsync helper.
- * @file src/flushAsync.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.2
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// istanbul ignore file - this file is only used for setting up the Jest environment and is tested in the jest-utils package
+/* v8 ignore file - this file is only used for setting up the Jest environment and is tested in the jest-utils package */
 
 /**
  * Advance the Node.js event loop deterministically to allow chained asynchronous work (Promises scheduled in

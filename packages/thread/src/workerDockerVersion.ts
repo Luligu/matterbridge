@@ -1,7 +1,6 @@
 /**
- * This file contains the workerDockerVersion thread.
- *
- * @file workerDockerVersion.ts
+ * @file packages/thread/src/workerDockerVersion.ts
+ * @description This file contains the workerDockerVersion thread.
  * @author Luca Liguori
  * @created 2026-03-22
  * @version 1.0.1

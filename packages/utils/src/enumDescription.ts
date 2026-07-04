@@ -1,6 +1,6 @@
 /**
+ * @file packages/utils/src/enumDescription.ts
  * @description Helpers to derive human-readable descriptions from enum values.
- * @file enumDescription.ts
  * @author Luca Liguori
  * @created 2026-03-23
  * @version 1.0.0

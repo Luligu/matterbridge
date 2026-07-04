@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeHepaFilterMonitoringServer class of Matterbridge.
- *
- * @file hepaFilterMonitoringServer.ts
+ * @file packages/core/src/behaviors/hepaFilterMonitoringServer.ts
+ * @description This file contains the MatterbridgeHepaFilterMonitoringServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import type { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';

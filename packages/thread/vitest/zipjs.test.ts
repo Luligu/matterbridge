@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/zipjs.test.ts
+ * @description This file contains the tests for zipjs.
+ * @author Luca Liguori
+ */
+
 import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

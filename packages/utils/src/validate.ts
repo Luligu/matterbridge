@@ -1,7 +1,6 @@
 /**
- * This file contains the validation functions.
- *
- * @file validate.ts
+ * @file packages/utils/src/validate.ts
+ * @description This file contains the validation functions.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.1

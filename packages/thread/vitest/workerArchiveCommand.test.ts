@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/workerArchiveCommand.test.ts
+ * @description This file contains the tests for the ArchiveCommand worker.
+ * @author Luca Liguori
+ */
+
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -57,7 +63,7 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
   vi.doMock('../src/zipjs.js', () => ({ createZip, readZip, unZip }));
 
   vi.doMock('../src/workerWrapper.js', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+    // oxlint-disable-next-line typescript/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;

@@ -1,6 +1,10 @@
-// vitest\mb_health.test.ts
+/**
+ * @file packages/core/vitest/mb_health.test.ts
+ * @description This file contains the tests for the mb_health cli.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable typescript/explicit-function-return-type
+/* oxlint-disable typescript/explicit-function-return-type */
 
 import type { Mock } from 'vitest';
 

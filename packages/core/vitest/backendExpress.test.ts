@@ -1,6 +1,11 @@
-// vitest\backendExpress.test.ts
+/**
+ * @file packages/core/vitest/backendExpress.test.ts
+ * @description This file contains the tests for the BackendExpress class.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable typescript/prefer-nullish-coalescing no-use-before-define
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable no-use-before-define */
 
 const NAME = 'BackendExpress';
 const HOMEDIR = path.join('.cache', 'vitest', NAME);

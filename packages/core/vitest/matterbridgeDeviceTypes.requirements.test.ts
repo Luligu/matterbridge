@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.requirements.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.requirements.test.ts
+ * @description This file contains the tests for the matterbridgeDeviceTypes requirements.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypesRequirements';
 
@@ -271,7 +275,7 @@ describe('Matterbridge device cluster mappings', () => {
       if (!serverRequiredOk) {
         const failure = `${name}: required mismatch -> mb=[${[...mbServerRequired].join(',')}] md=[${[...mandatoryServerSet].join(',')}]`;
         failures.push(failure);
-        // console.warn('Required validation failure:', failure); // eslint-disable-line no-console
+        // console.warn('Required validation failure:', failure); // oxlint-disable-line no-console
       }
 
       // Server optional clusters
@@ -279,7 +283,7 @@ describe('Matterbridge device cluster mappings', () => {
       if (!serverOptionalOk) {
         const failure = `${name}: optional mismatch -> mb=[${[...mbServerOptional].join(',')}] md=[${[...optionalServerSet].join(',')}]`;
         failures.push(failure);
-        // console.warn('Optional validation failure:', failure); // eslint-disable-line no-console
+        // console.warn('Optional validation failure:', failure); // oxlint-disable-line no-console
       }
 
       // Ensure no overlap between server required and optional in Matterbridge definition
@@ -289,7 +293,7 @@ describe('Matterbridge device cluster mappings', () => {
           serverOverlapOk = false;
           const failure = `${name}: cluster ${id} listed in both required and optional`;
           failures.push(failure);
-          // console.warn('Overlap validation failure:', failure); // eslint-disable-line no-console
+          // console.warn('Overlap validation failure:', failure); // oxlint-disable-line no-console
         }
       }
 
@@ -303,7 +307,7 @@ describe('Matterbridge device cluster mappings', () => {
       if (!clientRequiredOk) {
         const failure = `${name}: client required mismatch -> mb=[${[...mbClientRequired].join(',')}] md=[${[...mandatoryClientSet].join(',')}]`;
         failures.push(failure);
-        // console.warn('Client required validation failure:', failure); // eslint-disable-line no-console
+        // console.warn('Client required validation failure:', failure); // oxlint-disable-line no-console
       }
 
       // Client optional clusters
@@ -311,7 +315,7 @@ describe('Matterbridge device cluster mappings', () => {
       if (!clientOptionalOk) {
         const failure = `${name}: client optional mismatch -> mb=[${[...mbClientOptional].join(',')}] md=[${[...optionalClientSet].join(',')}]`;
         failures.push(failure);
-        // console.warn('Client optional validation failure:', failure); // eslint-disable-line no-console
+        // console.warn('Client optional validation failure:', failure); // oxlint-disable-line no-console
       }
 
       // Ensure no overlap between client required and optional in Matterbridge definition
@@ -321,7 +325,7 @@ describe('Matterbridge device cluster mappings', () => {
           clientOverlapOk = false;
           const failure = `${name}: client cluster ${id} listed in both required and optional`;
           failures.push(failure);
-          // console.warn('Client overlap validation failure:', failure); // eslint-disable-line no-console
+          // console.warn('Client overlap validation failure:', failure); // oxlint-disable-line no-console
         }
       }
 
@@ -336,7 +340,7 @@ describe('Matterbridge device cluster mappings', () => {
 
   test('summary of all cluster validation failures', () => {
     if (failures.length) {
-      console.warn('Cluster validation failures:', failures); // eslint-disable-line no-console
+      console.warn('Cluster validation failures:', failures); // oxlint-disable-line no-console
     }
     expect(failures).toEqual([
       // Failures are listed in device-definition order; for each device: server checks then client checks

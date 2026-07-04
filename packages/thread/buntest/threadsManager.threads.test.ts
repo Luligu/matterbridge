@@ -1,6 +1,10 @@
-// buntest\threadsManager.threads.test.ts
+/**
+ * @file packages/thread/buntest/threadsManager.threads.test.ts
+ * @description This file contains the bun tests for the ThreadsManager class with threads.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable no-use-before-define
+/* oxlint-disable no-use-before-define */
 
 const NAME = 'ThreadsManagerThreads';
 const HOMEDIR = path.join('.cache', 'bun', NAME);

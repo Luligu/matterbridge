@@ -1,6 +1,10 @@
-// vitest\threadsManager.test.ts
+/**
+ * @file packages/thread/vitest/threadsManager.test.ts
+ * @description This file contains the tests for the ThreadsManager class.
+ * @author Luca Liguori
+ */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* oxlint-disable typescript/no-non-null-assertion */
 
 const NAME = 'ThreadsManager';
 

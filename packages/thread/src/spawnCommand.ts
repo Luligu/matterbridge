@@ -1,6 +1,6 @@
 /**
+ * @file packages/thread/src/spawnCommand.ts
  * @description This file contains the spawnCommand function.
- * @file spawnCommand.ts
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.2.0
@@ -44,7 +44,7 @@ export async function spawnCommand(command: string, args: string[], packageComma
   const { spawn } = await import('node:child_process');
 
   /** Broadcast server */
-  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
   const debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-spawn') || hasParameter('verbose-spawn');
   const verbose = hasParameter('verbose') || hasParameter('verbose-spawn');
   const log = new AnsiLogger({ logName: 'Spawn', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: debug ? LogLevel.DEBUG : LogLevel.INFO });
@@ -54,12 +54,12 @@ export async function spawnCommand(command: string, args: string[], packageComma
     try {
       server.request({ type: 'frontend_logmessage', src: 'spawn', dst: 'frontend', params: { level: 'spawn', time: log.now(), name, message } });
     } catch (err) {
-      // istanbul ignore next cause it's a precaution
+      /* v8 ignore next cause it's a precaution */
       log.debug(`Failed to send log message to frontend: ${getErrorMessage(err)}`);
     }
   };
 
-  // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+  /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
   if (verbose) log.debug(`Spawning command: ${command} with ${args.join(' ')} ${packageCommand} ${packageName}`);
 
   /*

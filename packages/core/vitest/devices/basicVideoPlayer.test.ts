@@ -1,4 +1,8 @@
-// vitest/devices/basicVideoPlayer.test.ts
+/**
+ * @file packages/core/vitest/devices/basicVideoPlayer.test.ts
+ * @description This file contains the tests for the BasicVideoPlayer device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BasicVideoPlayer';
 const MATTER_PORT = 8017;

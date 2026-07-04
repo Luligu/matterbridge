@@ -1,4 +1,8 @@
-// vitest/devices/closurePanel.test.ts
+/**
+ * @file packages/core/vitest/devices/closurePanel.test.ts
+ * @description This file contains the tests for the ClosurePanel device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'ClosurePanel';
 const MATTER_PORT = 8023;

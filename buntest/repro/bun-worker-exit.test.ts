@@ -1,4 +1,8 @@
-// buntest/repro/bun-worker-exit.test.ts
+/**
+ * @file buntest/repro/bun-worker-exit.test.ts
+ * @description This file contains the Bun repro tests for worker exit.
+ * @author Luca Liguori
+ */
 
 /**
  * Run a worker that closes its parentPort and calls process.exit().

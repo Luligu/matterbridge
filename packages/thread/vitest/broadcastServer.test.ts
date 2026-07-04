@@ -1,4 +1,8 @@
-// vitest\broadcastServer.test.ts
+/**
+ * @file packages/thread/vitest/broadcastServer.test.ts
+ * @description This file contains the tests for the BroadcastServer class.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BroadcastServer';
 const MATTER_PORT = 0;

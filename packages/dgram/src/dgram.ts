@@ -1,6 +1,6 @@
 /**
+ * @file packages/dgram/src/dgram.ts
  * @description This file contains the class Dgram.
- * @file dgram.ts
  * @author Luca Liguori
  * @created 2025-03-22
  * @version 1.0.4
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable no-param-reassign
+/* oxlint-disable no-param-reassign */
 
 // Node.js imports
 import dgram from 'node:dgram';

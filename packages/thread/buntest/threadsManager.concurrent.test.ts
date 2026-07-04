@@ -1,4 +1,8 @@
-// packages/thread/buntest/threadsManager.concurrent.test.ts
+/**
+ * @file packages/thread/buntest/threadsManager.concurrent.test.ts
+ * @description This file contains the bun tests for the ThreadsManager class with concurrent workers.
+ * @author Luca Liguori
+ */
 
 /**
  * Run all workers concurrently.

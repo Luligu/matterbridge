@@ -1,4 +1,8 @@
-// vitest\checkUpdates.test.ts
+/**
+ * @file packages/thread/vitest/checkUpdates.test.ts
+ * @description This file contains the tests for checkUpdates.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeUpdate';
 

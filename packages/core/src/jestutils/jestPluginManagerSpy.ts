@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestPluginManagerSpy.ts
  * @description This file contains the Jest PluginManager spy.
- * @file src/jestPluginManagerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0

@@ -1,7 +1,6 @@
 /**
- * This file contains the class Matterbridge.
- *
- * @file matterbridge.ts
+ * @file packages/core/src/matterbridge.ts
+ * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
  * @version 1.7.1
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable max-lines
+/* oxlint-disable max-lines */
 
 // oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -471,7 +470,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -547,7 +546,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     }
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'manager_spawn_response':
@@ -578,7 +577,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   static async loadInstance(initialize: boolean = false): Promise<Matterbridge> {
     if (!Matterbridge.instance) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
@@ -960,7 +959,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           isValid = true;
           break;
         }
-        /* istanbul ignore next */
+        /* v8 ignore next */
         if (ifaces?.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
@@ -1181,7 +1180,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    /* istanbul ignore next since the worker is tested in a separate test unit */
+    /* v8 ignore next since the worker is tested in a separate test unit */
     if (hasParameter('systemcheck')) {
       const { systemCheck } = await import('@matterbridge/thread');
       await systemCheck();
@@ -1317,7 +1316,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Start the matterbridge in mode controller
-    // istanbul ignore next cause controller is under development and not tested yet
+    /* v8 ignore next cause controller is under development and not tested yet */
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
       await this.startController();
@@ -1658,7 +1657,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
       } catch (_error) {
-        // istanbul ignore next
+        /* v8 ignore next */
         this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
     };
@@ -1859,7 +1858,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       this.log.notice('Stopped matter server nodes');
 
-      // istanbul ignore next cause controller is under development and not tested yet
+      /* v8 ignore next cause controller is under development and not tested yet */
       if (this.controllerNode) {
         this.log.notice(`Stopping matter controller...`);
         await this.stopServerNode(this.controllerNode);
@@ -1932,7 +1931,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         try {
           log.debug(`Removing ${path}...`);
           unlinkSync(path);
-          // istanbul ignore next
+          /* v8 ignore next */
           log.debug(`Removed ${path}`);
         } catch {
           // Ignore errors if the file does not exist
@@ -2020,7 +2019,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
-          // istanbul ignore next if
+          /* v8 ignore next if */
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matter storage directory: ${error}`);
           }
@@ -2034,7 +2033,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
-          // istanbul ignore next if
+          /* v8 ignore next if */
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
@@ -2137,7 +2136,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       () => {
         // oxlint-disable-next-line typescript/require-await
         void (async (): Promise<void> => {
-          // istanbul ignore if cause is just a logging statement
+          /* v8 ignore next cause is just a logging statement */
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           }
@@ -2257,7 +2256,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.startMatterInterval = setInterval(
       () => {
         void (async (): Promise<void> => {
-          // istanbul ignore if cause is just a logging statement
+          /* v8 ignore next cause is just a logging statement */
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           }
@@ -2326,7 +2325,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
               continue;
             }
-            // istanbul ignore next if cause is just a safety check
+            /* v8 ignore next if cause is just a safety check */
             if (!plugin.serverNode) {
               this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
               continue;
@@ -2375,7 +2374,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  // istanbul ignore next cause controller is under development and not tested yet
+  /* v8 ignore next cause controller is under development and not tested yet */
   private async startController(): Promise<void> {
     /*
     if (!this.matterStorageManager) {
@@ -3464,7 +3463,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // oxlint-disable-next-line typescript/no-non-null-assertion
         this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, 'BasicInformation', 'reachable', reachable);
       });
     }
@@ -3517,7 +3516,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(
             `Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
           );
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          // oxlint-disable-next-line typescript/no-non-null-assertion
           this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
         });
       }
@@ -3530,7 +3529,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.debug(
               `Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
             );
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
           });
         }
@@ -3598,7 +3597,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // oxlint-disable-next-line typescript/no-unused-vars
   private async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean): Promise<void> {
     /*
     for (const child of aggregatorNode.parts) {

@@ -1,4 +1,8 @@
-// vitest\colorUtils.test.ts
+/**
+ * @file packages/utils/vitest/colorUtils.test.ts
+ * @description This file contains the tests for colorUtils.
+ * @author Luca Liguori
+ */
 
 import { hslColorToRgbColor, kelvinToMireds, kelvinToRGB, miredsToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from '../src/colorUtils.js';
 

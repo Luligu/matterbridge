@@ -1,4 +1,8 @@
-// vitest/devices/cooktop.test.ts
+/**
+ * @file packages/core/vitest/devices/cooktop.test.ts
+ * @description This file contains the tests for the Cooktop device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Cooktop';
 const MATTER_PORT = 8003;

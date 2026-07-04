@@ -1,4 +1,8 @@
-// vitest\deepCopy.test.ts
+/**
+ * @file packages/utils/vitest/deepCopy.test.ts
+ * @description This file contains the tests for deepCopy.
+ * @author Luca Liguori
+ */
 
 import { deepCopy } from '../src/deepCopy.js';
 

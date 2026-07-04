@@ -1,13 +1,12 @@
 /**
- * This file contains the class MatterbridgeDynamicPlatform.
- *
- * @file matterbridgeDynamicPlatform.ts
+ * @file packages/core/src/matterbridgeDynamicPlatform.ts
+ * @description This file contains the class MatterbridgeDynamicPlatform.
  * @author Luca Liguori
  * @created 2023-12-29
  * @version 1.0.6
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +44,7 @@ const MATTERBRIDGE_DYNAMIC_PLATFORM_BRAND = Symbol('MatterbridgeDynamicPlatform.
 export function isMatterbridgeDynamicPlatform(value: unknown): value is MatterbridgeDynamicPlatform {
   if (!value || typeof value !== 'object') return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any typescript/no-unsafe-type-assertion
+  // oxlint-disable-next-line typescript/no-explicit-any typescript/no-unsafe-type-assertion
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.

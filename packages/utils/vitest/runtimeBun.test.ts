@@ -1,4 +1,8 @@
-// vitest\runtimeBun.test.ts
+/**
+ * @file packages/utils/vitest/runtimeBun.test.ts
+ * @description This file contains the tests for runtimeBun.
+ * @author Luca Liguori
+ */
 
 import os from 'node:os';
 import path from 'node:path';

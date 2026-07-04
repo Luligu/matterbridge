@@ -1,15 +1,19 @@
-// vitest\frontend.test.ts
+/**
+ * @file packages/core/vitest/frontend.test.ts
+ * @description This file contains the tests for the Frontend class.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/explicit-function-return-type */
+/* oxlint-disable typescript/consistent-return */
+/* oxlint-disable typescript/no-floating-promises */
+/* oxlint-disable no-console */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable typescript/explicit-function-return-type
-// oxlint-disable typescript/consistent-return
-// oxlint-disable typescript/no-floating-promises
-// oxlint-disable no-console
 
 const MATTER_PORT = 9000;
 const FRONTEND_PORT = 8284;

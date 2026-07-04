@@ -1,6 +1,6 @@
 /**
+ * @file packages/dgram/src/multicast.ts
  * @description This file contains the class Multicast.
- * @file multicast.ts
  * @author Luca Liguori
  * @created 2025-03-22
  * @version 1.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable unicorn/no-negated-condition
+/* oxlint-disable unicorn/no-negated-condition */
 
 // Node.js imports
 import type { AddressInfo } from 'node:net';

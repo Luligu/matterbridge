@@ -1,4 +1,8 @@
-// src\matterbridgeEndpoint.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpoint.test.ts
+ * @description This file contains the tests for the MatterbridgeEndpoint class.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!
@@ -6,7 +10,7 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
 
 const NAME = 'Endpoint';
 const MATTER_PORT = 11000;

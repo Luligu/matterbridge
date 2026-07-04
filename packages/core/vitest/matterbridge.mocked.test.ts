@@ -1,14 +1,18 @@
-// vitest\matterbridge.mocked.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.mocked.test.ts
+ * @description This file contains the tests for the Matterbridge class with mocks.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/no-misused-promises */
+/* oxlint-disable typescript/consistent-return */
+/* oxlint-disable typescript/non-nullable-type-assertion-style */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable typescript/no-misused-promises
-// oxlint-disable typescript/consistent-return
-// oxlint-disable typescript/non-nullable-type-assertion-style
 
 const NAME = 'MatterbridgeMocked';
 

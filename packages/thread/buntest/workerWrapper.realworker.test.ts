@@ -1,4 +1,8 @@
-// buntest\workerWrapper.realworker.test.ts
+/**
+ * @file packages/thread/buntest/workerWrapper.realworker.test.ts
+ * @description This file contains the bun tests for the WorkerWrapper class with real workers.
+ * @author Luca Liguori
+ */
 
 import { describe, expect, test } from 'bun:test';
 import { Worker } from 'node:worker_threads';

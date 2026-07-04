@@ -1,7 +1,6 @@
 /**
- * This file contains the deepCopy function.
- *
- * @file deepCopy.ts
+ * @file packages/utils/src/deepCopy.ts
+ * @description This file contains the deepCopy function.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.0
@@ -22,8 +21,8 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable typescript/no-explicit-any */
 
 import { logModuleLoaded } from './loader.js';
 
@@ -70,7 +69,7 @@ export function deepCopy<T>(value: T): T {
     const proto = Object.getPrototypeOf(value);
     const copy = Object.create(proto);
     for (const key in value) {
-      // istanbul ignore else - Only copy own properties
+      /* v8 ignore next - Only copy own properties */
       if (Object.prototype.hasOwnProperty.call(value, key)) {
         copy[key] = deepCopy(value[key]);
       }

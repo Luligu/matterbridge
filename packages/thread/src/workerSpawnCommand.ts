@@ -1,7 +1,6 @@
 /**
- * This file contains the workerSpawnCommand thread.
- *
- * @file workerSpawnCommand.ts
+ * @file packages/thread/src/workerSpawnCommand.ts
+ * @description This file contains the workerSpawnCommand thread.
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0

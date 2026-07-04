@@ -1,7 +1,6 @@
 /**
- * This file contains the loader function.
- *
- * @file loader.ts
+ * @file packages/utils/src/loader.ts
+ * @description This file contains the loader function.
  * @author Luca Liguori
  * @created 2025-10-12
  * @version 1.0.0
@@ -32,7 +31,7 @@
  */
 export function logModuleLoaded(moduleName: string, color: string = '\u001B[32m'): void {
   if (process.argv.includes('--loader')) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.log(
       `${color}[` +
         new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit', fractionalSecondDigits: 3 }) +

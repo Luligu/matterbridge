@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestMatterbridgeSpy.ts
  * @description This file contains the Jest Matterbridge spy.
- * @file src/jestMatterbridgeSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestMatterTest.ts
  * @description This file contains the Jest Matter Test Environment.
- * @file src/jestMatterTest.test.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0
@@ -442,7 +442,7 @@ export async function createServerNode(
 export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
-    // istanbul ignore next
+    /* v8 ignore next */
     throw new Error('Server node and aggregator must be created before starting the server. Call createServerNode() first.');
   }
 
@@ -602,7 +602,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   const rootServerNode = getRootServerNode(owner);
   await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
 
-  // istanbul ignore next
+  /* v8 ignore next */
   try {
     await owner.add(device);
   } catch (error) {
@@ -646,7 +646,7 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   const rootServerNode = getRootServerNode(owner);
   await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
 
-  // istanbul ignore next
+  /* v8 ignore next */
   try {
     await device.delete();
   } catch (error) {

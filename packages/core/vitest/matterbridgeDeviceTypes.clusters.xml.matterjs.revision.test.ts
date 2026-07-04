@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.clusters.xml.matterjs.revision.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.clusters.xml.matterjs.revision.test.ts
+ * @description This file contains the tests for the matterbridgeDeviceTypes clusters revisions against the matter.js xml.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypesClustersZclRevision';
 
@@ -272,11 +276,11 @@ if (!hasXmlDir) {
       const xmlRev = xmlIndex.get(key);
       const typesRev = getClusterRevision(entry);
       if (typeof xmlRev !== 'number') {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`No XML entry found for ${display} (likely a template or derived cluster). types=${typesRev}`);
         return; // not all clusters have individual 1.5.1 XML files
       }
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.info(`${display}: xml=${xmlRev} types=${typesRev}`);
       expect(typeof xmlRev).toBe('number');
     });

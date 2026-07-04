@@ -1,4 +1,8 @@
-// vitest\cli.error2.test.ts
+/**
+ * @file packages/core/vitest/cli.error2.test.ts
+ * @description This file contains the tests for cli.error2.
+ * @author Luca Liguori
+ */
 
 const NAME = 'CliError2';
 

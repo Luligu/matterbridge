@@ -1,12 +1,16 @@
-// vitest\frontend.express.test.ts
+/**
+ * @file packages/core/vitest/frontend.express.test.ts
+ * @description This file contains the tests for the Frontend with express.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable typescript/prefer-nullish-coalescing
 
 const MATTER_PORT = 9100;
 const FRONTEND_PORT = 8285;

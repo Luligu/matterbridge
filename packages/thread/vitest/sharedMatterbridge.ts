@@ -1,18 +1,27 @@
 /**
+ * @file packages/thread/vitest/sharedMatterbridge.ts
  * @description Local shared Matterbridge test helper for the checkUpdates vitest suite.
- * @file vitest/sharedMatterbridge.ts
  * @author Luca Liguori
  * @created 2026-06-12
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Instead of booting a real Matterbridge instance (as the jest harness does), this helper provides:
- * - a local mutable `matterbridge` instance built on top of vitest-utils `getMatterbridge()`;
- * - `startMatterbridge()` / `stopMatterbridge()` that spin up the minimal BroadcastServer responders
- *   (`matterbridge` and `plugins`) needed by checkUpdates, so the test server gets real answers.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import type { ApiPlugin, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';

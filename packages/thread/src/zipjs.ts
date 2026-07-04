@@ -1,7 +1,6 @@
 /**
- * This file contains zip.js utility functions.
- *
- * @file zipjs.ts
+ * @file packages/thread/src/zipjs.ts
+ * @description This file contains zip.js utility functions.
  * @author Luca Liguori
  * @created 2026-03-11
  * @version 1.0.0

@@ -1,7 +1,6 @@
 /**
- * This file contains the class MatterbridgeEndpoint that extends the Endpoint class from the Matter.js library.
- *
- * @file matterbridgeEndpoint.ts
+ * @file packages/core/src/matterbridgeEndpoint.ts
+ * @description This file contains the class MatterbridgeEndpoint that extends the Endpoint class from the Matter.js library.
  * @author Luca Liguori
  * @created 2024-10-01
  * @version 2.1.1
@@ -22,10 +21,11 @@
  * limitations under the License.
  */
 
-// oxlint-disable max-lines
+/* oxlint-disable max-lines */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable unicorn/no-negated-condition */
 
 // TODO: analyze each rule
-// oxlint-disable typescript/no-unsafe-type-assertion unicorn/no-negated-condition
 
 // @matter/general
 import { type AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
@@ -207,7 +207,7 @@ type BehaviorEventPayload<T extends Behavior.Type, E extends string> = E extends
 
 /** ClusterType utilities */
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// oxlint-disable-next-line typescript/no-empty-object-type
 type ClusterAttributesOf<T extends ClusterType> = T['Typing'] extends { Attributes: infer Attributes } ? Attributes : {};
 
 type ClusterCommandsOf<T extends ClusterType> = T['Typing'] extends { Commands: infer Commands } ? Commands : Record<string, never>;
@@ -231,7 +231,7 @@ type ClusterEventPayload<T extends ClusterType, E extends string> = E extends ke
 export function isMatterbridgeEndpoint(value: unknown): value is MatterbridgeEndpoint {
   if (!value || typeof value !== 'object') return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.
@@ -608,7 +608,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   getAttribute(cluster: ClusterId | string, attribute: string, log?: AnsiLogger): any;
   /**
    * Retrieves the value of the provided attribute from the given cluster.
@@ -635,7 +635,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * ```
    * The last has the advantage of being able to retrieve cluster attributes without imports. Just use the names found in the Matter specs.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   getAttribute(cluster: Behavior.Type | ClusterType | ClusterId | string, attribute: string, log?: AnsiLogger): any {
     return getAttribute(this, cluster, attribute, log);
   }
@@ -993,7 +993,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   subscribeAttribute(
     cluster: ClusterId | string,
     attribute: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
   ): MatterbridgeEndpoint;
@@ -1032,7 +1032,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   subscribeAttribute(
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     attribute: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     listener: (newValue: any, oldValue: any, context: ActionContext) => void,
     log?: AnsiLogger,
   ): MatterbridgeEndpoint {
@@ -1726,14 +1726,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
+      /* v8 ignore next cause is only a safety check and .add() doesn't throw synchronously */
       void this.add(child).catch((error: unknown) => { inspectError(this.log, `addChildDeviceType: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
         this.parts.add(child);
       } catch (error) {
-        // istanbul ignore next cause is only a safety check
+        /* v8 ignore next cause is only a safety check */
         inspectError(this.log, `addChildDeviceType: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     }
@@ -1811,14 +1811,14 @@ export class MatterbridgeEndpoint extends Endpoint {
     // prettier-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
-      // istanbul ignore next cause is only a safety check and .add() doesn't throw synchronously
+      /* v8 ignore next cause is only a safety check and .add() doesn't throw synchronously */
       void this.add(child).catch( (error: unknown) => { inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle installed) child endpoint ${CYAN}${endpointName}${db}`, error); } );
     } else {
       this.log.debug(`- with lifecycle NOT installed`);
       try {
         this.parts.add(child);
       } catch (error) {
-        // istanbul ignore next cause is only a safety check
+        /* v8 ignore next cause is only a safety check */
         inspectError(this.log, `addChildDeviceTypeWithClusterServer: error adding (with lifecycle NOT installed) child endpoint ${CYAN}${endpointName}${db}`, error);
       }
     }

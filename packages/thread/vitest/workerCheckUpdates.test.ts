@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/workerCheckUpdates.test.ts
+ * @description This file contains the tests for the CheckUpdates worker.
+ * @author Luca Liguori
+ */
+
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -39,7 +45,7 @@ async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerChec
   const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
 
   vi.doMock('../src/workerWrapper.js', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+    // oxlint-disable-next-line typescript/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;

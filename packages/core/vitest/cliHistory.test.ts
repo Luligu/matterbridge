@@ -1,4 +1,8 @@
-// vitest\cliHistory.test.ts
+/**
+ * @file packages/core/vitest/cliHistory.test.ts
+ * @description This file contains the tests for cliHistory.
+ * @author Luca Liguori
+ */
 
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -195,7 +199,7 @@ describe('cliHistory', () => {
         const summaryMatch = html.match(/const SUMMARY_DATA = (\{.*?\});/s);
         expect(summaryMatch?.[1]).toBeTruthy();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // oxlint-disable-next-line typescript/no-non-null-assertion
         const summary = JSON.parse(summaryMatch![1]) as {
           entries: number;
           timeRange: string;

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestBroadcastServerSpy.ts
  * @description This file contains the Jest BroadcastServer spy.
- * @file src/jestBroadcastServerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0

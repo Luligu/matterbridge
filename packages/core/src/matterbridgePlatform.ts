@@ -1,7 +1,6 @@
 /**
- * This file contains the class MatterbridgePlatform.
- *
- * @file matterbridgePlatform.ts
+ * @file packages/core/src/matterbridgePlatform.ts
+ * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
  * @version 1.6.1
@@ -62,7 +61,7 @@ export type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformM
 export function isMatterbridgePlatform(value: unknown): value is MatterbridgePlatform {
   if (!value || typeof value !== 'object') return false;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any typescript/no-unsafe-type-assertion
+  // oxlint-disable-next-line typescript/no-explicit-any typescript/no-unsafe-type-assertion
   const v = value as any;
 
   // 1. Brand: must be branded by *this* module instance.
@@ -207,9 +206,9 @@ export class MatterbridgePlatform {
       configurable: false,
     });
 
-    // istanbul ignore next Debug logs are not relevant for coverage
+    /* v8 ignore next Debug logs are not relevant for coverage */
     if (this.#debug && !this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name}`);
-    // istanbul ignore next Debug logs are not relevant for coverage
+    /* v8 ignore next Debug logs are not relevant for coverage */
     if (this.#verbose) this.log.debug(`Creating MatterbridgePlatform for plugin ${this.config.name} with config:\n${JSON.stringify(this.config, null, 2)}\n`);
 
     // create the NodeStorageManager for the plugin platform
@@ -267,7 +266,7 @@ export class MatterbridgePlatform {
    * Destroys the platform, clean up memory, close storage and broadcast server.
    */
   private async destroy(): Promise<void> {
-    // istanbul ignore next Debug logs are not relevant for coverage
+    /* v8 ignore next Debug logs are not relevant for coverage */
     if (this.#verbose) this.log.debug(`Destroying MatterbridgePlatform for plugin ${this.config.name}`);
 
     // Cleanup memory
@@ -283,7 +282,7 @@ export class MatterbridgePlatform {
     // Close the broadcast server
     this.#server.close();
 
-    // istanbul ignore next Debug logs are not relevant for coverage
+    /* v8 ignore next Debug logs are not relevant for coverage */
     if (this.#verbose) this.log.debug(`Destroyed MatterbridgePlatform for plugin ${this.config.name}`);
     this.isReady = false;
   }
@@ -631,19 +630,19 @@ export class MatterbridgePlatform {
     }
 
     // Validate bridgedNode and BridgedDeviceBasicInformation cluster
-    // istanbul ignore else
+    /* v8 ignore next */
     if (device.mode === undefined && (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform'))) {
       // If the device is a bridged device, we add the bridgedNode to the deviceTypes map and to the Descriptor Cluster options
-      // istanbul ignore else
+      /* v8 ignore next */
       if (!device.deviceTypes.has(bridgedNode.code)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no bridgedNode device type. Adding it...`);
         device.deviceTypes.set(bridgedNode.code, bridgedNode);
         const options = device.getClusterServerOptions(Descriptor.id);
-        // istanbul ignore else
+        /* v8 ignore next */
         if (options) {
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           const deviceTypeList = options.deviceTypeList as { deviceType: number; revision: number }[];
-          // istanbul ignore else
+          /* v8 ignore next */
           if (!deviceTypeList.find((dt) => dt.deviceType === bridgedNode.code)) {
             deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
           }
@@ -651,7 +650,7 @@ export class MatterbridgePlatform {
       }
 
       // If the device is a bridged device, we add the BridgedDeviceBasicInformation cluster
-      // istanbul ignore else
+      /* v8 ignore next */
       if (!device.hasClusterServer(BridgedDeviceBasicInformation.id)) {
         this.log.debug(`Device with name ${CYAN}${device.deviceName}${db} has no BridgedDeviceBasicInformation cluster. Adding it...`);
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
@@ -680,7 +679,7 @@ export class MatterbridgePlatform {
   async unregisterDevice(device: MatterbridgeEndpoint): Promise<void> {
     assertMatterbridgeEndpoint(device, `MatterbridgePlatform.unregisterDevice for plugin ${this.name}`);
     await this.#removeBridgedEndpoint?.(this.name, device);
-    // istanbul ignore else
+    /* v8 ignore next */
     if (device.uniqueId) this.#registeredEndpoints.delete(device.uniqueId);
   }
 
@@ -703,7 +702,7 @@ export class MatterbridgePlatform {
    * @returns {Promise<void>} A promise that resolves when the save operation is complete.
    */
   private async saveSelects(): Promise<void> {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.#storage) {
       this.log.debug(`Saving ${this.#selectDevices.size} selectDevice...`);
       const selectDevice = await this.#storage.createStorage('selectDevice');
@@ -779,11 +778,11 @@ export class MatterbridgePlatform {
     if (device) {
       device.serial = serial;
       device.name = name;
-      // istanbul ignore else
+      /* v8 ignore next */
       if (configUrl) device.configUrl = configUrl;
-      // istanbul ignore else
+      /* v8 ignore next */
       if (icon) device.icon = icon;
-      // istanbul ignore else
+      /* v8 ignore next */
       if (entities) device.entities = entities;
     } else {
       this.#selectDevices.set(serial, { serial, name, configUrl, icon, entities });
@@ -833,7 +832,7 @@ export class MatterbridgePlatform {
    */
   setSelectDeviceEntity(serial: string, entityName: string, entityDescription: string, entityIcon?: string): void {
     const device = this.#selectDevices.get(serial);
-    // istanbul ignore else
+    /* v8 ignore next */
     if (device) {
       // oxlint-disable-next-line typescript/prefer-nullish-coalescing
       if (!device.entities) device.entities = [];
@@ -938,7 +937,7 @@ export class MatterbridgePlatform {
     };
 
     if (!compareVersions(this.matterbridge.matterbridgeVersion, requiredVersion)) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (destroy) fireAndForget(this.destroy(), this.log, `Destroy platform due to incompatible Matterbridge version`);
       return false;
     }
@@ -962,7 +961,7 @@ export class MatterbridgePlatform {
       for (const d of device) if (this.config.blackList.includes(d)) blackListBlocked++;
     }
     if (blackListBlocked > 0) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because in blacklist`);
       return false;
     }
@@ -974,7 +973,7 @@ export class MatterbridgePlatform {
     if (whiteListPassed > 0) {
       return true;
     }
-    // istanbul ignore else
+    /* v8 ignore next */
     if (log) this.log.info(`Skipping device ${CYAN}${device.join(', ')}${nf} because not in whitelist`);
     return false;
   }
@@ -989,12 +988,12 @@ export class MatterbridgePlatform {
    */
   validateEntity(device: string, entity: string, log: boolean = true): boolean {
     if (isValidArray(this.config.entityBlackList, 1) && this.config.entityBlackList.find((e) => e === entity)) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because in entityBlackList`);
       return false;
     }
     if (isValidArray(this.config.entityWhiteList, 1) && !this.config.entityWhiteList.find((e) => e === entity)) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} because not in entityWhiteList`);
       return false;
     }
@@ -1004,7 +1003,7 @@ export class MatterbridgePlatform {
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       (this.config.deviceEntityBlackList as Record<string, string[]>)[device].includes(entity)
     ) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (log) this.log.info(`Skipping entity ${CYAN}${entity}${nf} for device ${CYAN}${device}${nf} because in deviceEntityBlackList`);
       return false;
     }
@@ -1052,7 +1051,7 @@ export class MatterbridgePlatform {
         endpointMap.set(device.uniqueId, device.maybeNumber);
       }
       for (const child of device.getChildEndpoints()) {
-        // istanbul ignore next because is just defensive
+        /* v8 ignore next because is just defensive */
         if (!child.maybeId || !child.maybeNumber) continue;
         if (endpointMap.has(device.uniqueId + separator + child.id) && endpointMap.get(device.uniqueId + separator + child.id) !== child.maybeNumber) {
           this.log.warn(

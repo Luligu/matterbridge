@@ -1,4 +1,8 @@
-// buntest/runtime.test.ts
+/**
+ * @file buntest/runtime.test.ts
+ * @description This file contains the Bun runtime starter tests.
+ * @author Luca Liguori
+ */
 
 // A starter Bun-native test suite. Run from the repo root with:  bun test
 // (bunfig.toml's `root = "buntest"` scopes discovery here.)

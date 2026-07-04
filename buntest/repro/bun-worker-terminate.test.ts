@@ -1,4 +1,8 @@
-// buntest/repro/bun-worker-terminate.test.ts
+/**
+ * @file buntest/repro/bun-worker-terminate.test.ts
+ * @description This file contains the Bun repro tests for worker terminate.
+ * @author Luca Liguori
+ */
 
 /**
  * Run a worker that closes its parentPort, then call worker.terminate() from the main thread.

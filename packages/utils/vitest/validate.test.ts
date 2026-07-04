@@ -1,6 +1,10 @@
-// vitest\validate.test.ts
+/**
+ * @file packages/utils/vitest/validate.test.ts
+ * @description This file contains the tests for validate.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable unicorn/no-useless-undefined
+/* oxlint-disable unicorn/no-useless-undefined */
 
 import {
   isValidArray,

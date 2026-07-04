@@ -1,4 +1,8 @@
-// buntest/repro/bun-worker-wrapper.test.ts
+/**
+ * @file buntest/repro/bun-worker-wrapper.test.ts
+ * @description This file contains the Bun repro tests for the WorkerWrapper class.
+ * @author Luca Liguori
+ */
 
 /**
  * Run a worker with WorkerWrapper.

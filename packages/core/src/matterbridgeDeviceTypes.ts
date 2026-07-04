@@ -1,7 +1,6 @@
 /**
- * This file contains the matter device type definitions for MatterbridgeEndpoint.
- *
- * @file matterbridgeDeviceTypes.ts
+ * @file packages/core/src/matterbridgeDeviceTypes.ts
+ * @description This file contains the matter device type definitions for MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2024-11-08
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable max-lines
+/* oxlint-disable max-lines */
 
 // @matter clusters
 import type { ClusterType } from '@matter/types';

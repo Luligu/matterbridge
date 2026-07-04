@@ -1,13 +1,12 @@
 /**
- * This file contains the types for Matterbridge.
- *
- * @file matterbridgeTypes.ts
+ * @file packages/types/src/matterbridgeTypes.ts
+ * @description This file contains the types for Matterbridge.
  * @author Luca Liguori
  * @created 2024-07-12
  * @version 1.0.3
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

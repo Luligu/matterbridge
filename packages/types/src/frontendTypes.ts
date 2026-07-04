@@ -1,7 +1,6 @@
 /**
- * This file contains the types for WebSocket messages.
- *
- * @file frontendTypes.ts
+ * @file packages/types/src/frontendTypes.ts
+ * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
  * @version 1.0.0
@@ -432,7 +431,7 @@ export interface WsMessageApiActionRequest extends WsMessageBaseApiRequest {
     action: string;
     value?: string;
     id?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     formData?: any;
   };
 }

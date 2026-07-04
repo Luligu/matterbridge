@@ -1,4 +1,8 @@
-// vitest/devices/laundryWasher.test.ts
+/**
+ * @file packages/core/vitest/devices/laundryWasher.test.ts
+ * @description This file contains the tests for the LaundryWasher device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'LaundryWasher';
 const MATTER_PORT = 8009;

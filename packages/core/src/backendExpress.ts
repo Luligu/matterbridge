@@ -1,7 +1,6 @@
 /**
- * This file contains the class BackendExpress.
- *
- * @file backendExpress.ts
+ * @file packages/core/src/backendExpress.ts
+ * @description This file contains the class BackendExpress.
  * @author Luca Liguori
  * @created 2026-03-30
  * @version 1.0.0
@@ -90,12 +89,12 @@ export class BackendExpress {
    * @param {Backend} backend - The backend instance to which this Express server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
     this.backend = backend;
     this.matterbridge = matterbridge;
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'BackendExpress',
       logNameColor: '\x1b[38;5;97m',
@@ -121,7 +120,7 @@ export class BackendExpress {
    */
   // oxlint-disable-next-line typescript/require-await
   private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -171,7 +170,7 @@ export class BackendExpress {
     this.expressApp = express();
 
     // Log all requests to the server for debugging
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.verbose) {
       this.expressApp.use((req, res, next) => {
         this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
@@ -190,7 +189,7 @@ export class BackendExpress {
       if (this.backend.storedPassword === '' || password === this.backend.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });
-        // istanbul ignore else
+        /* v8 ignore next */
         if (req.ip) this.backend.authClients.add(req.ip);
       } else {
         this.log.warn('/api/login error wrong password');
@@ -386,7 +385,7 @@ export class BackendExpress {
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
       } catch (error) {
-        // istanbul ignore next
+        /* v8 ignore next */
         this.log.debug(`Error in /api/download-diagnostic: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');
@@ -570,7 +569,7 @@ export class BackendExpress {
 
     for (const plugin of plugins.filter((p) => p.enabled && !p.error)) {
       const { existsSync } = await import('node:fs');
-      // istanbul ignore next cause is under development and will be tested in the future
+      // v8 ignore next cause is under development and will be tested in the future
       if (plugin.frontendPath && existsSync(plugin.frontendPath)) {
         this.log.debug(`Registering frontend route for plugin ${plg}${plugin.name}${db} at ${GREEN}/plugins/${plugin.name}${db} with path ${CYAN}${plugin.frontendPath}${db}`);
         this.expressApp.use(`/plugins/${plugin.name}`, express.static(path.dirname(plugin.frontendPath)));

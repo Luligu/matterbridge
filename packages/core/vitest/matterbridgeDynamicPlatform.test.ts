@@ -1,4 +1,8 @@
-// vitest\matterbridgeDynamicPlatform.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDynamicPlatform.test.ts
+ * @description This file contains the tests for the MatterbridgeDynamicPlatform class.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDynamicPlatform';
 const MATTER_PORT = 7300;

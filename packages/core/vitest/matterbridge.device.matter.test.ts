@@ -1,4 +1,8 @@
-// vitest\matterbridge.device.matter.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.device.matter.test.ts
+ * @description This file contains the tests for Matterbridge devices in matter mode.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeSwitchServer class of Matterbridge.
- *
- * @file switchServer.ts
+ * @file packages/core/src/behaviors/switchServer.ts
+ * @description This file contains the MatterbridgeSwitchServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0

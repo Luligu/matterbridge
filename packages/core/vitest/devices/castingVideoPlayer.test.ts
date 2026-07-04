@@ -1,4 +1,8 @@
-// vitest/devices/castingVideoPlayer.test.ts
+/**
+ * @file packages/core/vitest/devices/castingVideoPlayer.test.ts
+ * @description This file contains the tests for the CastingVideoPlayer device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'CastingVideoPlayer';
 const MATTER_PORT = 8018;

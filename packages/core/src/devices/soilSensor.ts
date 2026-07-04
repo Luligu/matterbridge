@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/soilSensor.ts
  * @description Soil Sensor device class exposing the Matter 1.5 SoilMeasurement custom cluster.
- * @file src/devices/soilSensor.ts
  * @author Luca Liguori
  * @created 2026-03-02
  * @version 1.0.0

@@ -1,4 +1,8 @@
-// vitest/devices/evse.test.ts
+/**
+ * @file packages/core/vitest/devices/evse.test.ts
+ * @description This file contains the tests for the Evse device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Evse';
 const MATTER_PORT = 8005;

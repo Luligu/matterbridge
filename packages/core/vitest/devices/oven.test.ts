@@ -1,4 +1,8 @@
-// vitest/devices/oven.test.ts
+/**
+ * @file packages/core/vitest/devices/oven.test.ts
+ * @description This file contains the tests for the Oven device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Oven';
 const MATTER_PORT = 8011;

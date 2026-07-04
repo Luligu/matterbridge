@@ -1,7 +1,6 @@
 /**
- * This file contains the types for MatterbridgePlatform.
- *
- * @file matterbridgePlatformTypes.ts
+ * @file packages/types/src/matterbridgePlatformTypes.ts
+ * @description This file contains the types for MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
  * @version 1.7.0

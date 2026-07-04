@@ -1,6 +1,12 @@
-// vitest\matterNode.dynamic.test.ts
+/**
+ * @file packages/core/vitest/matterNode.dynamic.test.ts
+ * @description This file contains the tests for the MatterNode class in dynamic mode.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing typescript/explicit-function-return-type
+/* oxlint-disable no-use-before-define */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable typescript/explicit-function-return-type */
 
 const MATTER_PORT = 10030;
 const NAME = 'MatterNodeDynamic';

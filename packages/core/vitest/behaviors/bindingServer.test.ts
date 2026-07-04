@@ -1,4 +1,8 @@
-// src\behaviors\bindingServer.test.ts
+/**
+ * @file packages/core/vitest/behaviors/bindingServer.test.ts
+ * @description This file contains the tests for bindingServer.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BindingServer';
 const MATTER_PORT = 11400;

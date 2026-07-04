@@ -1,4 +1,8 @@
-// vitest\loader.test.ts
+/**
+ * @file packages/utils/vitest/loader.test.ts
+ * @description This file contains the tests for loader.
+ * @author Luca Liguori
+ */
 
 import { logModuleLoaded } from '../src/loader.js';
 import { consoleLogSpy, setupTest } from './vitestSetupTest.js';

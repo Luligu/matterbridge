@@ -1,4 +1,8 @@
-// buntest/repro/bun-rename-eperm.test.ts
+/**
+ * @file buntest/repro/bun-rename-eperm.test.ts
+ * @description This file contains the Bun repro tests for rename EPERM on Windows.
+ * @author Luca Liguori
+ */
 
 // Bug repro: on Bun for Windows, FileHandle.createWriteStream({ flush: true }) followed by
 // handle.close() does not release the underlying OS file handle before close() resolves. A

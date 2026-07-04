@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeValveConfigurationAndControlServer class of Matterbridge.
- *
- * @file valveConfigurationAndControlServer.ts
+ * @file packages/core/src/behaviors/valveConfigurationAndControlServer.ts
+ * @description This file contains the MatterbridgeValveConfigurationAndControlServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';

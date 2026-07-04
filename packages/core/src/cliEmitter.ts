@@ -1,7 +1,6 @@
 /**
- * This file contains the CLI emitter.
- *
- * @file cliEmitter.ts
+ * @file packages/core/src/cliEmitter.ts
+ * @description This file contains the CLI emitter.
  * @author Luca Liguori
  * @created 2025-07-04
  * @version 1.0.2

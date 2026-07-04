@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/evse.ts
  * @description This file contains the Evse class.
- * @file src/devices/energy-evse.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-27
@@ -22,9 +22,11 @@
  * limitations under the License.
  */
 
-// oxlint-disable unicorn/no-negated-condition typescript/prefer-nullish-coalescing typescript/no-unsafe-type-assertion
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import type { MaybePromise } from '@matter/general';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
@@ -163,7 +165,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     });
     device.log.debug(`MatterbridgeEnergyEvseServer disable called`);
     this.state.supplyState = EnergyEvse.SupplyState.Disabled;
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.state.state === EnergyEvse.State.PluggedInCharging) {
       this.state.state = EnergyEvse.State.PluggedInDemand;
     }
@@ -187,7 +189,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     });
     device.log.debug(`MatterbridgeEnergyEvseServer enableCharging called`);
     this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.state.state === EnergyEvse.State.PluggedInDemand) {
       this.state.state = EnergyEvse.State.PluggedInCharging;
     }

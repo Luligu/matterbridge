@@ -1,8 +1,6 @@
-// oxlint-disable unicorn/no-negated-condition no-param-reassign
 /**
- * This file contains the class MatterNode.
- *
- * @file matterNode.ts
+ * @file packages/core/src/matterNode.ts
+ * @description This file contains the class MatterNode.
  * @author Luca Liguori
  * @created 2025-10-01
  * @version 1.0.0
@@ -23,9 +21,11 @@
  * limitations under the License.
  */
 
-// WARNING: Not released yet and excluded from Vitest coverage
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable no-param-reassign */
+/* oxlint-disable max-lines */
 
-// oxlint-disable max-lines
+// WARNING: Not released yet and excluded from Vitest coverage
 
 // @matter
 // oxlint-disable-next-line import/no-unassigned-import
@@ -495,7 +495,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
       } catch (_error) {
-        // istanbul ignore next
+        /* v8 ignore next */
         this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
     };
@@ -533,7 +533,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await copyDirectory(storageName, backupName);
       this.log.info('Created matter node storage backup');
     } catch (error) {
-      // istanbul ignore next if
+      /* v8 ignore next if */
       if (error instanceof Error && (error as NodeJS.ErrnoException)?.code === 'ENOENT') {
         this.log.info(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
       } else {
@@ -860,7 +860,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await withTimeout(this.serverNode.start(), timeout);
       this.log.notice(`Started ${this.serverNode.id} server node`);
     } catch (error) {
-      // istanbul ignore next
+      /* v8 ignore next */
       this.log.error(`Failed to start ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }
@@ -881,7 +881,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await withTimeout(this.serverNode.close(), timeout);
       this.log.info(`Closed ${this.serverNode.id} server node`);
     } catch (error) {
-      // istanbul ignore next
+      /* v8 ignore next */
       this.log.error(`Failed to close ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
   }

@@ -1,6 +1,6 @@
 /**
+ * @file packages/dgram/src/coap.ts
  * @description This file contains the class Coap.
- * @file src/dgram/coap.ts
  * @author Luca Liguori
  * @created 2025-03-22
  * @version 1.0.1
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable no-bitwise
+/* oxlint-disable no-bitwise */
 
 // Node.js imports
 import type dgram from 'node:dgram';
@@ -491,7 +491,7 @@ export class Coap extends Multicast {
   sendRequest(
     messageId: number,
     options: CoapOption[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // oxlint-disable-next-line typescript/no-explicit-any
     payload: Record<string, any> | undefined,
     token: string | undefined,
     address: string | undefined,

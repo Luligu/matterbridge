@@ -1,6 +1,10 @@
-// vitest\inspector.test.ts
+/**
+ * @file packages/utils/vitest/inspector.test.ts
+ * @description This file contains the tests for the Inspector class.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable typescript/explicit-function-return-type
+/* oxlint-disable typescript/explicit-function-return-type */
 
 import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
 

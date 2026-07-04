@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/roboticVacuumCleaner.ts
  * @description This file contains the RoboticVacuumCleaner class.
- * @file src/devices/roboticVacuumCleaner.ts
  * @author Luca Liguori
  * @created 2025-05-01
  * @version 1.1.0
@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-// oxlint-disable unicorn/no-negated-condition typescript/no-unsafe-type-assertion
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';

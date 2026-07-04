@@ -1,4 +1,8 @@
-// vitest\wait.test.ts
+/**
+ * @file packages/utils/vitest/wait.test.ts
+ * @description This file contains the tests for wait.
+ * @author Luca Liguori
+ */
 
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import type { MockInstance } from 'vitest';

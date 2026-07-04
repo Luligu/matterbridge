@@ -69,6 +69,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxfmt` to v.0.57.0.
 - [matterbridge]: Bump `oxlint` to v.1.72.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
+- [package]: Apply style to all files.
 
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.

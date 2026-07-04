@@ -1,7 +1,6 @@
 /**
- * This file contains the class Backend.
- *
- * @file backend.ts
+ * @file packages/core/src/backend.ts
+ * @description This file contains the class Backend.
  * @author Luca Liguori
  * @created 2026-03-30
  * @version 1.0.0
@@ -22,9 +21,9 @@
  * limitations under the License.
  */
 
-// WARNING: Not released yet and excluded from Vitest coverage
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
-// oxlint-disable typescript/prefer-nullish-coalescing
+// WARNING: Not released yet and excluded from Vitest coverage
 
 // Node.js built-in modules
 import EventEmitter from 'node:events';
@@ -88,11 +87,11 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   constructor(matterbridge: SharedMatterbridge) {
     super();
-    // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
     this.matterbridge = matterbridge;
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'Backend',
       logNameColor: '\x1b[38;5;97m',
@@ -118,7 +117,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   // oxlint-disable-next-line typescript/require-await
   private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
       // oxlint-disable-next-line default-case
       switch (msg.type) {
@@ -166,14 +165,14 @@ export class Backend extends EventEmitter<BackendEvents> {
       // Listen on the specified port
       this.httpServer.listen(this.port, getParameter('bind'), () => {
         const addr = this.httpServer?.address();
-        // istanbul ignore else
+        /* v8 ignore next */
         if (addr && typeof addr !== 'string') {
           this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
         }
-        // istanbul ignore else
+        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-        // istanbul ignore else
+        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
         this.listening = true;
@@ -183,7 +182,7 @@ export class Backend extends EventEmitter<BackendEvents> {
       this.httpServer.on('upgrade', (req, socket, head) => {
         try {
           // Only proceed for real WebSocket upgrades
-          // istanbul ignore next cause is only a safety check
+          /* v8 ignore next cause is only a safety check */
           if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
             this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
@@ -203,13 +202,13 @@ export class Backend extends EventEmitter<BackendEvents> {
 
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
-          // istanbul ignore else
+          /* v8 ignore next */
           if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
           this.backendWsServer?.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.backendWsServer?.webSocketServer?.emit('connection', ws, req);
           });
         } catch (err) {
-          /* istanbul ignore next: only triggered on unexpected internal error */
+          /* v8 ignore next : only triggered on unexpected internal error */
           {
             inspectError(this.log, 'WebSocket upgrade error:', err);
             socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
@@ -317,14 +316,14 @@ export class Backend extends EventEmitter<BackendEvents> {
       // Listen on the specified port
       this.httpsServer.listen(this.port, getParameter('bind'), () => {
         const addr = this.httpsServer?.address();
-        // istanbul ignore else
+        /* v8 ignore next */
         if (addr && typeof addr !== 'string') {
           this.log.info(`The frontend https server is bound to ${addr.family} ${addr.address}:${addr.port}`);
         }
-        // istanbul ignore else
+        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-        // istanbul ignore else
+        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
         this.listening = true;
@@ -334,7 +333,7 @@ export class Backend extends EventEmitter<BackendEvents> {
       this.httpsServer.on('upgrade', (req, socket, head) => {
         try {
           // Only proceed for real WebSocket upgrades
-          // istanbul ignore next cause is only a safety check
+          /* v8 ignore next cause is only a safety check */
           if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
             return socket.destroy();
@@ -353,13 +352,13 @@ export class Backend extends EventEmitter<BackendEvents> {
 
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
-          // istanbul ignore else
+          /* v8 ignore next */
           if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
           this.backendWsServer?.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.backendWsServer?.webSocketServer?.emit('connection', ws, req);
           });
         } catch (err) {
-          /* istanbul ignore next: only triggered on unexpected internal error */
+          /* v8 ignore next : only triggered on unexpected internal error */
           {
             inspectError(this.log, 'WebSocket upgrade error:', err);
             socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');

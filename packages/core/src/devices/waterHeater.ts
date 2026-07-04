@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/waterHeater.ts
  * @description This file contains the WaterHeater class.
- * @file src/devices/waterHeater.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-18
@@ -22,9 +22,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';

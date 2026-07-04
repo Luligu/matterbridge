@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/dishwasher.ts
  * @description This file contains the Dishwasher class.
- * @file src/devices/dishwasher.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
@@ -141,7 +141,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   // Dead Front OnOff Cluster
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // istanbul ignore else
+    /* v8 ignore next */
     if (!onOff) {
       device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;

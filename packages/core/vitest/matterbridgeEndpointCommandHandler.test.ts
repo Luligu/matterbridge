@@ -1,4 +1,8 @@
-// vitest\matterbridgeEndpointCommandHandler.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpointCommandHandler.test.ts
+ * @description This file contains the tests for matterbridgeEndpointCommandHandler.
+ * @author Luca Liguori
+ */
 
 import { NamedHandler } from '@matter/general';
 

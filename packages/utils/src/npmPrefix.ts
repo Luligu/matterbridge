@@ -1,6 +1,6 @@
 /**
+ * @file packages/utils/src/npmPrefix.ts
  * @description This file contains the getGlobalNodeModules function.
- * @file npmRoot.ts
  * @author Luca Liguori
  * @created 2024-02-17
  * @version 1.0.0

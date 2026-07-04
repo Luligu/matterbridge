@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/castingVideoPlayer.ts
  * @description This file contains the CastingVideoPlayer class.
- * @file src/devices/castingVideoPlayer.ts
  * @author Luca Liguori
  * @created 2026-01-25
  * @version 1.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 

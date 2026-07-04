@@ -1,4 +1,8 @@
-// vitest\backendWsServer.test.ts
+/**
+ * @file packages/core/vitest/backendWsServer.test.ts
+ * @description This file contains the tests for backendWsServer.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BackendWsServer';
 

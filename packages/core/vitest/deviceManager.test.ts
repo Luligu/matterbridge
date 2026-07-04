@@ -1,4 +1,8 @@
-// vitest\deviceManager.test.ts
+/**
+ * @file packages/core/vitest/deviceManager.test.ts
+ * @description This file contains the tests for deviceManager.
+ * @author Luca Liguori
+ */
 
 const NAME = 'DeviceManager';
 
@@ -138,7 +142,7 @@ describe('DeviceManager', () => {
       serialNumber: 'DeviceSerial1bis',
       uniqueId: 'DeviceUniqueId1bis',
     });
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     getDevice = (await testServer.fetch({ type: 'devices_get', src: testServer.name, dst: 'devices', params: { uniqueId: baseDevice.uniqueId! } })).result.device;
     expect(getDevice).toEqual({
       deviceName: 'Device1bis',

@@ -1,7 +1,6 @@
 /**
- * This file contains the helpers functions of Matterbridge.
- *
- * @file helpers.ts
+ * @file packages/core/src/helpers.ts
+ * @description This file contains the helpers functions of Matterbridge.
  * @author Luca Liguori
  * @created 2025-05-12
  * @version 1.0.0
@@ -97,12 +96,12 @@ export async function addVirtualDevice(
     // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
     if (value) {
       void callback().catch(
-        /* istanbul ignore next */ () => {
+        /* v8 ignore next */ () => {
           // Noop
         },
       );
       void device.setStateOf(OnOffServer, { onOff: false }).catch(
-        /* istanbul ignore next */ () => {
+        /* v8 ignore next */ () => {
           // Noop
         },
       );
@@ -136,7 +135,7 @@ export async function addVirtualDevice(
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
   /*
-  // istanbul ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
+  // v8 ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
   if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
     lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(

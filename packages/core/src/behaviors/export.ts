@@ -1,7 +1,6 @@
 /**
- * This file exports the behavior modules of Matterbridge.
- *
- * @file export.ts
+ * @file packages/core/src/behaviors/export.ts
+ * @description This file exports the behavior modules of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-04
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable oxc/no-barrel-file
+/* oxlint-disable oxc/no-barrel-file */
 
 export * from './activatedCarbonFilterMonitoringServer.js';
 export * from './bindingServer.js';

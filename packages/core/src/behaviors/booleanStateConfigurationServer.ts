@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeBooleanStateConfigurationServer class of Matterbridge.
- *
- * @file booleanStateConfigurationServer.ts
+ * @file packages/core/src/behaviors/booleanStateConfigurationServer.ts
+ * @description This file contains the MatterbridgeBooleanStateConfigurationServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
