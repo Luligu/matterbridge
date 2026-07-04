@@ -191,7 +191,7 @@ matterbridge --version
 <p>Create a systemctl configuration file for Matterbridge</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
 </code></pre>
-<p>Add the following to this file, <strong>replacing USER with your user name</strong> (e.g. User=pi):</p>
+<p>Add the following to this file, <strong>replacing 5 times (!) USER with your user name</strong> (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi, Environment=&quot;NPM_CONFIG_PREFIX=/home/pi/.npm-global&quot; and Environment=&quot;NPM_CONFIG_CACHE=/home/pi/.npm-cache&quot;):</p>
 <pre><code class="language-text">[Unit]
 Description=matterbridge
 After=network-online.target
@@ -201,10 +201,10 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-Environment=&quot;NPM_CONFIG_PREFIX=%h/.npm-global&quot;
-Environment=&quot;NPM_CONFIG_CACHE=%h/.npm-cache&quot;
+Environment=&quot;NPM_CONFIG_PREFIX=/home/&lt;USER&gt;/.npm-global&quot;
+Environment=&quot;NPM_CONFIG_CACHE=/home/&lt;USER&gt;/.npm-cache&quot;
 ExecStart=matterbridge --service --nosudo
-WorkingDirectory=%h/Matterbridge
+WorkingDirectory=/home/&lt;USER&gt;/Matterbridge
 # Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
 StandardOutput=journal
 StandardError=journal
@@ -213,7 +213,7 @@ Restart=always
 RestartSec=5
 TimeoutStopSec=60
 User=&lt;USER&gt;
-Group=%u
+Group=&lt;USER&gt;
 
 [Install]
 WantedBy=multi-user.target
