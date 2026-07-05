@@ -176,10 +176,12 @@ chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-c
 npm install matterbridge --omit=dev --verbose --global --prefix=~/.npm-global --cache=~/.npm-cache
 # ✅ Create a link to matterbridge bin
 sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
-# ✅ Create a link to mb_mdns bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns
-# ✅ Create a link to mb_coap bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap
+# ✅ Create a link to mb-health bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-health /usr/local/bin/mb-health
+# ✅ Create a link to mb-mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-mdns /usr/local/bin/mb-mdns
+# ✅ Create a link to mb-coap bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-coap /usr/local/bin/mb-coap
 # ✅ Clear bash command cache as a precaution
 hash -r
 # ✅ Check which matterbridge

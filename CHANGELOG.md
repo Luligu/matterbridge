@@ -60,6 +60,10 @@ These classes will run as threads in the next releases:
 
 ## [3.9.4] - Dev branch
 
+### Added
+
+- [matterbridge]: Add running statistics and improper shutdown detection.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.4.

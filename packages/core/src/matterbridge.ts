@@ -244,11 +244,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Whether to log Matter to a file */
   public matterFileLogger = false;
 
-  // Managers
+  /** Matterbridge plugin manager */
   public readonly plugins = new PluginManager(this);
+  /** Matterbridge device manager */
   public readonly devices = new DeviceManager();
 
-  // Frontend
+  /** Matterbridge frontend */
   public readonly frontend = new Frontend(this);
 
   /** Matterbridge node storage manager created in the directory 'storage' in matterbridgeDirectory */
@@ -260,21 +261,47 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   protected static instance: Matterbridge | undefined;
 
   // Instance properties
+  /** Whether the Matterbridge instance has to be shut down */
   public shutdown = false;
+  /** Number of consecutive failures */
   private readonly failCountLimit = 300; // 5 minutes if check every second
+  /** Whether the Matterbridge instance has started cleanup */
   public hasCleanupStarted = false;
+  /** Whether the Matterbridge instance has been initialized */
   private initialized = false;
+  /** Whether the Matterbridge instance is a shutdown command */
+  private readonly isShutdownCommand = hasAnyParameter('list', 'logstorage', 'loginterfaces', 'systemcheck', 'add', 'remove', 'enable', 'disable', 'reset', 'factoryreset');
+  /** Timestamp when the Matterbridge instance started */
+  private startupAt = 0;
+  /** Timestamp when the Matterbridge instance shut down */
+  private shutdownAt = 0;
+  /** Total running time of the Matterbridge instance */
+  private runningTimes = 0;
+  /** Total running days of the Matterbridge instance */
+  private runningDays = 0;
+  /** Interval for starting Matterbridge */
   private startMatterInterval: NodeJS.Timeout | undefined;
+  /** Interval for starting Matterbridge in milliseconds */
   private readonly startMatterIntervalMs = 1000;
+  /** Interval for checking updates */
   private checkUpdateInterval: NodeJS.Timeout | undefined;
+  /** Timeout for checking updates */
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for system checks */
   private systemCheckTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for checking Docker version */
   private dockerVersionTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for configuring Matterbridge */
   private configureTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for checking reachability */
   private reachabilityTimeout: NodeJS.Timeout | undefined;
+  /** Handler for SIGINT signal */
   private sigintHandler: ((...args: ProcessEventMap['SIGINT']) => void) | undefined;
+  /** Handler for SIGTERM signal */
   private sigtermHandler: ((...args: ProcessEventMap['SIGTERM']) => void) | undefined;
+  /** Handler for uncaught exceptions */
   private exceptionHandler: ((...args: ProcessEventMap['uncaughtException']) => void) | undefined;
+  /** Handler for unhandled promise rejections */
   private rejectionHandler: ((...args: ProcessEventMap['unhandledRejection']) => void) | undefined;
 
   /** Matter environment default */
@@ -707,6 +734,25 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
     }
 
+    if (!this.isShutdownCommand) {
+      // Check if the last shutdown was not proper and log a warning if so
+      const lastStartupAt = await this.nodeContext.get('lastStartupAt', 0);
+      const lastShutdownAt = await this.nodeContext.get('lastShutdownAt', 0);
+      if (lastStartupAt && lastShutdownAt && lastShutdownAt < lastStartupAt) {
+        this.log.warn(
+          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${db}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${db}`,
+        );
+      }
+
+      // Set the running times and running days from the node context, defaulting to 1 if is the first time running.
+      this.startupAt = Date.now();
+      this.runningTimes = (await this.nodeContext.get<number>('runningTimes', 0)) + 1;
+      this.runningDays = await this.nodeContext.get<number>('runningDays', 0);
+      await this.nodeContext.set('runningTimes', this.runningTimes);
+      await this.nodeContext.set('runningDays', this.runningDays);
+      await this.nodeContext.set('lastStartupAt', this.startupAt);
+    }
+
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
     this.initialPort = this.port = getIntParameter('port') ?? (await this.nodeContext.get<number>('matterport', 5540)) ?? 5540;
 
@@ -1029,10 +1075,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        (isLocal && fs.existsSync(plugin.path) && !isLinked && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
-        process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
-      ) {
+      if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand) || process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         try {
           execSync(isBun() ? 'bun link matterbridge --silent' : 'npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
@@ -1047,10 +1090,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        (!isLocal && !fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
-        process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest'
-      ) {
+      if ((!isLocal && !fs.existsSync(plugin.path) && !this.isShutdownCommand) || process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
@@ -1960,6 +2000,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Notify the frontend that Matterbridge is stopped
       this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'stopped') } });
+
+      // Set running days and last shutdown timestamp in the node context
+      if (!this.isShutdownCommand) {
+        this.shutdownAt = Date.now();
+        this.runningDays = this.runningDays + Math.floor((this.shutdownAt - this.startupAt) / (1000 * 60 * 60 * 24));
+        await this.nodeContext?.set('runningDays', this.runningDays);
+        await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
+        this.log.info(`Matterbridge has run ${this.runningTimes} times for a total of ${this.runningDays} days.`);
+        this.log.info(`Matterbridge last started at ${new Date(this.startupAt).toLocaleString()} and shut down at ${new Date(this.shutdownAt).toLocaleString()}`);
+      }
 
       // Stop the frontend
       await this.frontend.stop();
