@@ -63,6 +63,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [matterbridge]: Add running statistics and improper shutdown detection.
+- [matter]: Add Matter 1.6.0 specs and the [Matter 1.6.0 changes from 1.5.1](Matter-1.6.0.md) document.
 
 ### Changed
 
@@ -77,6 +78,7 @@ These classes will run as threads in the next releases:
 - [service]: Update service configuration example `systemd/matterbridge.service`.
 - [service]: Update service configuration guides.
 - [matterbridge]: Bump `@matter/main` to v.0.17.4.
+- [matter]: Update the data model script to support Matter 1.6.0 generation.
 
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.
