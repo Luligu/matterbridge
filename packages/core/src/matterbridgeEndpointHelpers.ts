@@ -700,6 +700,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(PumpConfigurationAndControl.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
   if (serverList.includes(SmokeCoAlarm.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
   if (serverList.includes(Switch.id)) endpoint.createDefaultSwitchClusterServer();
+  if (serverList.includes(Chime.id)) endpoint.createDefaultChimeClusterServer();
   if (serverList.includes(OperationalState.id)) endpoint.createDefaultOperationalStateClusterServer();
   if (serverList.includes(BooleanState.id)) endpoint.createDefaultBooleanStateClusterServer();
   if (serverList.includes(BooleanStateConfiguration.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();

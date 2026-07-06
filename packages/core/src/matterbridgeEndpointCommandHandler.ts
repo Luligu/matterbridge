@@ -31,6 +31,7 @@ import type { ActionContext } from '@matter/main';
 import type { ClusterType } from '@matter/types/cluster';
 import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import type { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import type { Chime } from '@matter/types/clusters/chime';
 import type { ColorControl } from '@matter/types/clusters/color-control';
 import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
@@ -134,6 +135,9 @@ export interface MatterbridgeEndpointCommands {
   // Valve Configuration and Control
   open: HandlerFunction;
   close: HandlerFunction;
+
+  // Chime
+  playChimeSound: HandlerFunction;
 
   // Boolean State Configuration
   suppressAlarm: HandlerFunction;
@@ -711,6 +715,16 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'valveConfigurationAndControl';
     attributes: ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Chime
+  'playChimeSound': CommandHandlerData<'Chime.playChimeSound'>;
+  'Chime.playChimeSound': {
+    command: 'playChimeSound';
+    request: Chime.PlayChimeSoundRequest;
+    cluster: 'chime';
+    attributes: ClusterAttributeValues<(typeof Chime)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
