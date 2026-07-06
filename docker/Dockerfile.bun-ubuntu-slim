@@ -1,0 +1,77 @@
+# ─────────────── BUN STAGE ───────────────
+FROM ubuntu:latest AS bun
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates curl unzip \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/* \
+  && \
+  set -eux \
+  && DPKG_ARCH=$(dpkg --print-architecture) \
+  && if [ "${DPKG_ARCH}" = "armhf" ]; then \
+  echo >&2 "ERROR: docker/Dockerfile.bun-ubuntu-slim does not support linux/arm/v7 (armhf)."; \
+  echo >&2 "       Bun does not publish linux-armv7 binaries."; \
+  exit 1; \
+  fi \
+  && case "${DPKG_ARCH}" in \
+  amd64) BUN_ARCH="x64" ;; \
+  arm64) BUN_ARCH="aarch64" ;; \
+  *) BUN_ARCH="${DPKG_ARCH}" ;; \
+  esac \
+  && BUN_TARBALL="bun-linux-${BUN_ARCH}.zip" \
+  && BUN_BASE_URL="https://github.com/oven-sh/bun/releases/latest/download" \
+  && curl -fsSL "${BUN_BASE_URL}/${BUN_TARBALL}" -o /tmp/bun.zip \
+  && mkdir -p /opt/bun/bin \
+  && unzip -q /tmp/bun.zip -d /tmp/bun \
+  && mv /tmp/bun/bun-linux-${BUN_ARCH}/bun /opt/bun/bin/bun \
+  && chmod +x /opt/bun/bin/bun \
+  && rm -rf /tmp/bun.zip /tmp/bun \
+  && rm -rf /tmp/* /var/tmp/* \
+  && export PATH=/opt/bun/bin:$PATH
+
+# ─────────────── RELEASE STAGE ───────────────
+FROM ubuntu:latest AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Copy Bun from the bun stage
+COPY --from=bun /opt/bun /opt/bun
+
+# Set environment variables for Bun
+ENV PATH=/usr/local/bin:/opt/bun/bin:$PATH
+
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:bun-ubuntu-slim" \
+  org.opencontainers.image.description="Ubuntu 24.04.4 LTS (noble) with Bun from github.com/oven-sh/bun" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/*
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.bun-ubuntu-slim.sh ./
+RUN chmod +x ./entrypoint.bun-ubuntu-slim.sh
+ENTRYPOINT ["./entrypoint.bun-ubuntu-slim.sh"]
+CMD ["bash"]

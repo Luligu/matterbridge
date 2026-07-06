@@ -64,6 +64,7 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Add running statistics and improper shutdown detection.
 - [matter]: Add Matter 1.6.0 specs and the [Matter 1.6.0 changes from 1.5.1](Matter-1.6.0.md) document.
+- [docker]: Add the `bun-ubuntu-slim` base image and build workflow.
 
 ### Changed
 
