@@ -67,6 +67,7 @@ import { type ClusterType, type ClusterTyping, getClusterNameById } from '@matte
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import type { Chime } from '@matter/types/clusters/chime';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { ConcentrationMeasurement } from '@matter/types/clusters/concentration-measurement';
 import { Descriptor } from '@matter/types/clusters/descriptor';
@@ -104,6 +105,7 @@ import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat
 // matterbridge
 import { MatterbridgeActivatedCarbonFilterMonitoringServer } from './behaviors/activatedCarbonFilterMonitoringServer.js';
 import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeChimeServer } from './behaviors/chimeServer.js';
 import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
 import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
@@ -3938,6 +3940,28 @@ export class MatterbridgeEndpoint extends Endpoint {
       {
         numberOfPositions: 2,
         currentPosition: 0,
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default Chime cluster server.
+   *
+   * @param {Chime.ChimeSound[]} [installedChimeSounds] - The list of installed chime sounds (default: a single 'Default' chime sound with ChimeID 0).
+   * @param {number} [selectedChime] - The ChimeID, within installedChimeSounds, of the chime sound played when PlayChimeSound is invoked without an explicit ChimeID (default: 0).
+   * @param {boolean} [enabled] - Whether chime sounds can currently be played (default: true).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createDefaultChimeClusterServer(installedChimeSounds: Chime.ChimeSound[] = [{ chimeId: 0, name: 'Default' }], selectedChime: number = 0, enabled: boolean = true): this {
+    this.behaviors.require(
+      MatterbridgeChimeServer.enable({
+        events: { chimeStartedPlaying: true },
+      }),
+      {
+        installedChimeSounds,
+        selectedChime,
+        enabled,
       },
     );
     return this;

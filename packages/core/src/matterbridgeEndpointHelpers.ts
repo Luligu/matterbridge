@@ -89,6 +89,7 @@ import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { Chime } from '@matter/types/clusters/chime';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
@@ -697,6 +698,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(PumpConfigurationAndControl.id)) endpoint.createDefaultPumpConfigurationAndControlClusterServer();
   if (serverList.includes(SmokeCoAlarm.id)) endpoint.createDefaultSmokeCOAlarmClusterServer();
   if (serverList.includes(Switch.id)) endpoint.createDefaultSwitchClusterServer();
+  if (serverList.includes(Chime.id)) endpoint.createDefaultChimeClusterServer();
   if (serverList.includes(OperationalState.id)) endpoint.createDefaultOperationalStateClusterServer();
   if (serverList.includes(BooleanState.id)) endpoint.createDefaultBooleanStateClusterServer();
   if (serverList.includes(BooleanStateConfiguration.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();

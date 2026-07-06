@@ -26,6 +26,7 @@ import { Endpoint } from '@matter/node';
 import {
   BooleanStateConfigurationServer,
   BooleanStateServer,
+  ChimeServer,
   ColorControlServer,
   DescriptorBehavior,
   DescriptorServer,
@@ -96,6 +97,7 @@ import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushS
 import { AnsiLogger, debugStringify, er, hk, LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeBooleanStateConfigurationServer } from '../src/behaviors/booleanStateConfigurationServer.js';
+import { MatterbridgeChimeServer } from '../src/behaviors/chimeServer.js';
 import { MatterbridgeColorControlServer } from '../src/behaviors/colorControlServer.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../src/behaviors/deviceEnergyManagementModeServer.js';
 import { MatterbridgeDeviceEnergyManagementServer } from '../src/behaviors/deviceEnergyManagementServer.js';
@@ -114,6 +116,7 @@ import { Evse, MatterbridgeEnergyEvseServer } from '../src/devices/evse.js';
 import { MatterbridgeRvcCleanModeServer, MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer, RoboticVacuumCleaner } from '../src/devices/roboticVacuumCleaner.js';
 import { WaterHeater } from '../src/devices/waterHeater.js';
 import {
+  chime,
   doorLock,
   extendedColorLight,
   fan,
@@ -148,6 +151,7 @@ describe('Matterbridge ' + NAME, () => {
   let vent: MatterbridgeEndpoint;
   let thermo: MatterbridgeEndpoint;
   let valve: MatterbridgeEndpoint;
+  let chimeDevice: MatterbridgeEndpoint;
   let mode: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
   let leak: MatterbridgeEndpoint;
@@ -361,6 +365,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(valve).toBeDefined();
     expect(valve.id).toBe('WaterValve');
     expect(valve.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'valveConfigurationAndControl']);
+  });
+
+  test('create a chime device', () => {
+    chimeDevice = new MatterbridgeEndpoint(chime, { id: 'Chime' });
+    chimeDevice.addRequiredClusterServers();
+    expect(chimeDevice).toBeDefined();
+    expect(chimeDevice.id).toBe('Chime');
+    expect(chimeDevice.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'chime']);
   });
 
   test('create a mode device', () => {
@@ -580,6 +592,11 @@ describe('Matterbridge ' + NAME, () => {
   test('add valve device to serverNode', async () => {
     expect(await server.add(valve)).toBeDefined();
     // (matterbridge as any).frontend.getClusterTextFromDevice(valve);
+  });
+
+  test('add chime device to serverNode', async () => {
+    expect(await server.add(chimeDevice)).toBeDefined();
+    // (matterbridge as any).frontend.getClusterTextFromDevice(chimeDevice);
   });
 
   test('add mode device to serverNode', async () => {
@@ -1203,6 +1220,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing valve (endpoint ${valve.id}.${valve.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`MatterbridgeValveConfigurationAndControlServer: open called`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeValveConfigurationAndControlServer: close called`);
+  });
+
+  test('invoke MatterbridgeChimeServer commands', async () => {
+    expect(chimeDevice.behaviors.has(ChimeServer)).toBeTruthy();
+    expect(chimeDevice.behaviors.has(MatterbridgeChimeServer)).toBeTruthy();
+    expect(chimeDevice.behaviors.elementsOf(MatterbridgeChimeServer).commands.has('playChimeSound')).toBeTruthy();
+    expect((chimeDevice.stateOf(MatterbridgeChimeServer) as any).acceptedCommandList).toEqual([0]);
+    expect((chimeDevice.stateOf(MatterbridgeChimeServer) as any).generatedCommandList).toEqual([]);
+    expect((chimeDevice.stateOf(MatterbridgeChimeServer) as any).installedChimeSounds).toEqual([{ chimeId: 0, name: 'Default' }]);
+    await chimeDevice.invokeBehaviorCommand('chime', 'playChimeSound', {});
+    await chimeDevice.invokeBehaviorCommand('chime', 'playChimeSound', { chimeId: 0 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Playing chime sound 0 (endpoint ${chimeDevice.id}.${chimeDevice.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeChimeServer: playChimeSound called with chimeId 0`);
   });
 
   test('invoke MatterbridgeSmokeCoAlarmServer commands', async () => {

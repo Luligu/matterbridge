@@ -41,6 +41,7 @@ import {
   BooleanState,
   BooleanStateConfiguration,
   BridgedDeviceBasicInformation,
+  Chime,
   ColorControl,
   DeviceEnergyManagement,
   DeviceEnergyManagementMode,
@@ -94,6 +95,7 @@ import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 import {
   airPurifier,
   airQualitySensor,
+  chime,
   contactSensor,
   doorLock,
   electricalSensor,
@@ -1601,6 +1603,21 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
     expect(device.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
     expect(device.getAttribute(ValveConfigurationAndControl.id, 'currentLevel')).toBe(0);
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultChimeClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(chime, { id: 'Chime' });
+    expect(device).toBeDefined();
+    device.createDefaultChimeClusterServer();
+    expect(device.hasAttributeServer(Chime, 'installedChimeSounds')).toBe(true);
+    expect(device.hasAttributeServer(Chime, 'selectedChime')).toBe(true);
+    expect(device.hasAttributeServer(Chime, 'enabled')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(Chime.id, 'installedChimeSounds')).toEqual([{ chimeId: 0, name: 'Default' }]);
+    expect(device.getAttribute(Chime.id, 'selectedChime')).toBe(0);
+    expect(device.getAttribute(Chime.id, 'enabled')).toBe(true);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
