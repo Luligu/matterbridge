@@ -1,4 +1,4 @@
-// VS Code settings native v. 1.0.6
+// VS Code settings native v. 1.0.7
 {
   "npm.packageManager": "npm",
   "eslint.enable": false,
@@ -44,20 +44,29 @@
   "git.autofetch": true,
   "git.autoRepositoryDetection": false,
   // VS Code's Copilot Chat extension settings
-  "chat.useCustomizationsInParentRepositories": true,
-  "chat.useAgentsMdFile": true,
-  "chat.useClaudeMdFile": true,
-  "chat.instructionsFilesLocations": {
-    ".github/instructions": true,
-    ".claude/rules": true,
-    "~/.copilot/instructions": true,
-    "~/.claude/rules": true
-  },
+  "chat.useCustomizationsInParentRepositories": true, // Default false.
   "chat.tools.terminal.autoApprove": {
     "npx tsc": true,
     "npx tsgo": true,
     "npx oxlint": true,
     "npx oxfmt": true,
-    "npx vitest": true
+    "npx vitest": true,
+    "npm run build": true,
+    "npm run typecheck": true,
+    "npm run lint": true,
+    "npm run format:check": true,
+    "npm run test": true,
+    "npm run test:coverage": true,
+    "npm run update-htmls": true,
+    "git status": true,
+    "git diff": true,
+    "git diff --check": true,
+    "git diff --stat": true,
+    "git log": true,
+    "git show": true,
+    "git branch -vv": true,
+    "git ls-files": true,
+    "git --no-pager diff --stat": true,
+    "git --no-pager diff --check": true
   }
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "_comment": "Claude settings v. 1.0.3",
+  "_comment": "Claude settings v. 1.0.4",
   "permissions": {
     "deny": [
       "Read(.env)",
@@ -33,12 +33,12 @@
       "Bash(bun remove:*)"
     ],
     "allow": [
-      "Bash(npm run typecheck)",
-      "Bash(npm run build)",
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run build:*)",
       "Bash(npm run test:*)",
-      "Bash(npm run lint)",
-      "Bash(npm run format)",
-      "Bash(bun test)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(bun test:*)",
       "Bash(npx vitest:*)",
       "Bash(vitest:*)",
       "Bash(npx oxfmt:*)",
@@ -48,7 +48,9 @@
       "Bash(npx tsc:*)",
       "Bash(tsc:*)",
       "Bash(npx tsgo:*)",
-      "Bash(tsgo:*)"
+      "Bash(tsgo:*)",
+      "Bash(cd:*)",
+      "Bash(tail:*)"
     ]
   }
 }
