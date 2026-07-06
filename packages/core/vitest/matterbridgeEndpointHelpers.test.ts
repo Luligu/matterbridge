@@ -18,6 +18,7 @@ import { CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { VendorId } from '@matter/types';
+import { Chime } from '@matter/types/clusters/chime';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
@@ -38,7 +39,7 @@ import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
-import { closureController, doorLock, irrigationSystem, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { closureController, doorbell, doorLock, irrigationSystem, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -437,5 +438,13 @@ describe('Options helpers', () => {
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
     await addDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toContain(FlowMeasurement.id);
+  });
+
+  test('addRequiredClusterClients maps the Chime client cluster required by the Doorbell device type', async () => {
+    device = new MatterbridgeEndpoint(doorbell, { id: 'DoorbellClusterClients' });
+    device.addRequiredClusterClients();
+    expect(loggerWarnSpy).not.toHaveBeenCalledWith(expect.stringContaining('no client behavior found'));
+    await addDevice(aggregator, device);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(Chime.id);
   });
 });

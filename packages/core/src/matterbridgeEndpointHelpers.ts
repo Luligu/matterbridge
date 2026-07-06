@@ -44,6 +44,7 @@ import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ChimeClient } from '@matter/node/behaviors/chime';
 import { ColorControlClient } from '@matter/node/behaviors/color-control';
 import { DoorLockClient } from '@matter/node/behaviors/door-lock';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
@@ -89,6 +90,7 @@ import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { Chime } from '@matter/types/clusters/chime';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
@@ -489,6 +491,7 @@ export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): Clust
   if (clusterId === OnOff.id) return OnOffClient;
   if (clusterId === LevelControl.id) return LevelControlClient;
   if (clusterId === ColorControl.id) return ColorControlClient;
+  if (clusterId === Chime.id) return ChimeClient;
   if (clusterId === OccupancySensing.id) return OccupancySensingClient;
   if (clusterId === ScenesManagement.id) return ScenesManagementClient;
   if (clusterId === DoorLock.id) return DoorLockClient;
