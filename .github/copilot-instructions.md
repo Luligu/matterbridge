@@ -9,13 +9,13 @@
 - Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
 - Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24.0, and 26.0.
 - This repository uses TypeScript and ESM. Follow existing project patterns for imports, exports, build configuration, and test setup.
-- Prefer the existing npm scripts in [package.json](../package.json) and the VS Code tasks in [tasks.json](../.vscode/tasks.json) for building, linting, and testing.
+- Prefer the existing npm scripts in [package.json](../package.json) and the VS Code tasks in [tasks.json](../.vscode/tasks.json) when validating changes.
 - For frontend work, run npm scripts from `apps/frontend` (or use commands that explicitly target that package).
 - Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
 - Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
 - For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
 - When behavior changes, update the relevant tests and documentation.
+- Use dedicated instruction files under [.github/instructions](instructions/) when a rule applies only to specific file types or workflows.
 - The full Matter 1.6.0 specifications are available locally as HTML files under [chip/1.6.0/specs](../chip/1.6.0/specs/). Treat those HTML specs as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
 - The full Matter 1.5.1 specifications are available locally as HTML files under [chip/1.5.1/specs](../chip/1.5.1/specs/). Treat those HTML specs as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
 - The full Matter 1.4.2 specifications are also available locally as HTML files under [chip/1.4.2/specs](../chip/1.4.2/specs/). Use those HTML specs for historical comparisons and delta analysis against Matter 1.5.1, but keep 1.5.1 as the authoritative source.
-- Use dedicated instruction files under [.github/instructions](instructions/) when a rule applies only to specific file types or workflows.
