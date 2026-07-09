@@ -27,7 +27,6 @@ import { ChimeServer } from '@matter/node/behaviors/chime';
 import type { Chime } from '@matter/types/clusters/chime';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -48,7 +47,7 @@ export class MatterbridgeChimeServer extends ChimeServer {
       command: 'playChimeSound',
       request,
       cluster: ChimeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof Chime)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
