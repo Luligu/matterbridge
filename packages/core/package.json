@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.9.4",
+  "version": "3.9.5",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -128,15 +128,16 @@
     "npm-shrinkwrap.json",
     "CHANGELOG.md"
   ],
-  "scripts": {
-    "automator": "node scripts/run-automator.mjs --monorepo-package"
+  "automator": {
+    "skipPackageJson": true,
+    "skipTsconfig": true
   },
   "dependencies": {
     "@matter/main": "0.17.4",
-    "@matterbridge/dgram": "3.9.4",
-    "@matterbridge/thread": "3.9.4",
-    "@matterbridge/types": "3.9.4",
-    "@matterbridge/utils": "3.9.4",
+    "@matterbridge/dgram": "3.9.5",
+    "@matterbridge/thread": "3.9.5",
+    "@matterbridge/types": "3.9.5",
+    "@matterbridge/utils": "3.9.5",
     "escape-html": "1.0.3",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
@@ -146,11 +147,11 @@
     "ws": "8.21.0"
   },
   "devDependencies": {
-    "@matterbridge/vitest-utils": "3.9.4",
+    "@matterbridge/vitest-utils": "3.9.5",
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/multer": "2.2.0",
     "@types/ws": "8.18.1",
-    "vitest": "4.1.9"
+    "vitest": "4.1.10"
   }
 }

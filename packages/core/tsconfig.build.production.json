@@ -5,10 +5,11 @@
     "outDir": "dist",
     "rootDir": "src",
     "composite": true,
+    "incremental": true,
+    "removeComments": true,
     "declaration": true,
     "declarationMap": false,
-    "sourceMap": false,
-    "removeComments": true
+    "sourceMap": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],

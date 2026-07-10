@@ -47,7 +47,6 @@
   "chat.useCustomizationsInParentRepositories": true, // Default false.
   "chat.tools.terminal.autoApprove": {
     "npx tsc": true,
-    "npx tsgo": true,
     "npx oxlint": true,
     "npx oxfmt": true,
     "npx vitest": true,

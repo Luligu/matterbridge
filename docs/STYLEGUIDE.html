@@ -205,9 +205,9 @@
 </ul>
 <h2 id="8-typecheck-build">8. Typecheck &amp; Build</h2>
 <ul>
-<li><code>tsgo</code> is the default TypeScript engine for development validation.</li>
-<li>Run <code>npm run typecheck</code> for no-emit type checking (<code>tsgo --build tsconfig.json --noEmit</code>).</li>
-<li>Run <code>npm run build</code> for the normal build (<code>tsgo --build tsconfig.build.json</code>).</li>
+<li><code>tsc</code> (native version) is the default TypeScript engine for development validation.</li>
+<li>Run <code>npm run typecheck</code> for no-emit type checking (<code>tsc --build tsconfig.json --noEmit</code>).</li>
+<li>Run <code>npm run build</code> for the normal build (<code>tsc --build tsconfig.build.json</code>).</li>
 <li><code>npm run buildProduction</code> still uses <code>tsc</code> for the production build path.</li>
 <li>Keep all TypeScript ESM-compatible and compatible with supported Node.js versions: 20, 22, 24, and 26.</li>
 </ul>
