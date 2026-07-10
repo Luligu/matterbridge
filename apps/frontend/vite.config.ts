@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
   const debugBuild = mode === 'debug';
 
   return {
-    plugins: [react()],
+    plugins: react(),
     test: {
       environment: 'jsdom',
       globals: true,
