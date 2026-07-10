@@ -1,10 +1,7 @@
 /**
+ * @file packages/types/vitest/matterbridgeTypes.test.ts
  * @description Tests for exported constants in matterbridgeTypes.
- * @file matterbridgeTypes.test.ts
  * @author Luca Liguori
- * @created 2026-05-31
- * @version 1.0.0
- * @license Apache-2.0
  */
 
 import {

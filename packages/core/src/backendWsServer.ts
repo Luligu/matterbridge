@@ -1,7 +1,6 @@
 /**
- * This file contains the class BackendWsServer.
- *
- * @file backendWsServer.ts
+ * @file packages/core/src/backendWsServer.ts
+ * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
  * @version 1.0.0
@@ -22,10 +21,11 @@
  * limitations under the License.
  */
 
+/* oxlint-disable no-param-reassign */
+
 // WARNING: Not released yet and excluded from Vitest coverage
 
 // TODO: analyze each rule
-// oxlint-disable no-param-reassign
 
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
@@ -82,12 +82,12 @@ export class BackendWsServer {
    * @param {Backend} backend - The backend instance to which this WebSocket server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
     this.backend = backend;
     this.matterbridge = matterbridge;
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'BackendWsServer',
       logNameColor: '\x1b[38;5;97m',
@@ -111,7 +111,7 @@ export class BackendWsServer {
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
   private broadcastMsgHandler(msg: WorkerMessage): void {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -137,7 +137,7 @@ export class BackendWsServer {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer({ noServer: true });
-    // istanbul ignore next
+    /* v8 ignore next */
     this.backend.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (websocket, request) => {
@@ -171,7 +171,7 @@ export class BackendWsServer {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
           setTimeout(() => {
-            // istanbul ignore else
+            /* v8 ignore next */
             if (this.webSocketServer?.clients.size === 0) {
               this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
               this.backend.authClients.clear();
@@ -209,7 +209,7 @@ export class BackendWsServer {
       this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
-        // istanbul ignore else
+        /* v8 ignore next */
         if (client.readyState === WebSocket.OPEN) {
           client.close();
         }
@@ -260,7 +260,7 @@ export class BackendWsServer {
 
     const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse): void => {
       if (client.readyState === client.OPEN) {
-        // istanbul ignore else
+        /* v8 ignore next */
         if ('response' in data) {
           const { response, ...rest } = data;
           this.log.debug(`Sending api response message: ${debugStringify(rest)}`);
@@ -302,10 +302,10 @@ export class BackendWsServer {
     if (!this.hasActiveClients()) return;
     try {
       const stringifiedMsg = JSON.stringify(msg);
-      // istanbul ignore next debug/verbose branch
+      /* v8 ignore next debug/verbose branch */
       if (this.verbose) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
       this.webSocketServer?.clients.forEach((client) => {
-        // istanbul ignore else
+        /* v8 ignore next */
         if (client.readyState === client.OPEN) {
           client.send(stringifiedMsg);
         }
@@ -332,14 +332,14 @@ export class BackendWsServer {
     if (!this.hasActiveClients()) return;
     if (!level || !time || !name || !message) return;
     // Remove ANSI escape codes from the message
-    // eslint-disable-next-line no-control-regex
+    // oxlint-disable-next-line no-control-regex
     message = message.replace(/\x1B\[[0-9;]*[m|s|u|K]/g, '');
     // Remove leading asterisks from the message
     message = message.replace(/^\*+/, '');
     // Replace all occurrences of \t and \n
     message = message.replace(/[\t\n]/g, '');
     // Remove non-printable characters
-    // eslint-disable-next-line no-control-regex
+    // oxlint-disable-next-line no-control-regex
     message = message.replace(/[\x00-\x1F\x7F]/g, '');
     // Replace all occurrences of \" with "
     message = message.replace(/\\"/g, '"');
@@ -379,7 +379,7 @@ export class BackendWsServer {
    */
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a refresh required message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, lock: params?.lock, ...params } });
   }
@@ -392,12 +392,12 @@ export class BackendWsServer {
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a restart required message to all connected clients');
     // TODO check
     // this.backend.restartRequired = true;
     // this.backend.fixedRestartRequired = fixed;
-    // istanbul ignore else
+    /* v8 ignore next */
     if (snackbar) this.wssSendSnackbarMessage(`Restart required`, 0);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
@@ -409,11 +409,11 @@ export class BackendWsServer {
    */
   wssSendRestartNotRequired(snackbar: boolean = true): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a restart not required message to all connected clients');
     // TODO check
     // this.backend.restartRequired = false;
-    // istanbul ignore else
+    /* v8 ignore next */
     if (snackbar) this.wssSendCloseSnackbarMessage(`Restart required`);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
@@ -426,7 +426,7 @@ export class BackendWsServer {
    */
   wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a matterbridge version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
@@ -442,7 +442,7 @@ export class BackendWsServer {
    */
   wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a plugin version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
@@ -457,7 +457,7 @@ export class BackendWsServer {
    */
   wssSendPluginStatusUpdate(plugin: string, status: PluginStatusUpdate): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a plugin status update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin, status } });
@@ -470,7 +470,7 @@ export class BackendWsServer {
    */
   wssSendMatterbridgeStatusUpdate(status: BridgeStatus): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a matterbridge status update message to all connected clients');
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
@@ -484,7 +484,7 @@ export class BackendWsServer {
    */
   wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -509,7 +509,7 @@ export class BackendWsServer {
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -529,7 +529,7 @@ export class BackendWsServer {
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
@@ -547,7 +547,7 @@ export class BackendWsServer {
    */
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
   }
@@ -560,7 +560,7 @@ export class BackendWsServer {
    */
   wssSendCloseSnackbarMessage(message: string): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a close snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
   }
@@ -588,7 +588,7 @@ export class BackendWsServer {
     value: number | string | boolean | null,
   ): void {
     if (!this.hasActiveClients()) return;
-    // istanbul ignore next debug/verbose branch
+    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending an attribute update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,

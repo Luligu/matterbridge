@@ -1,12 +1,12 @@
 /**
+ * @file packages/core/src/clusters/closure-dimension.ts
  * @description Closure Dimension Cluster Matter 1.5.0 - 5.5. Closure Dimension Cluster
- * @file src/clusters/closure-dimension.ts
  * @author Luca Liguori
  * @created 2026-03-02
  * @version 1.0.0
  * @license Apache-2.0
  *
- * Copyright 2026 Luca Liguori.
+ * Copyright 2026, 2027, 2028 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-empty-object-type */
-/* eslint-disable @typescript-eslint/no-namespace */
+/* oxlint-disable typescript/no-empty-object-type */
+/* oxlint-disable typescript/no-namespace */
 
 import type { MaybePromise } from '@matter/general';
 import { AttributeElement, ClusterElement, ClusterModel, CommandElement, DatatypeElement, FieldElement, Matter, MatterDefinition } from '@matter/main/model';
@@ -160,13 +160,13 @@ export const ClosureDimensionDefinition = ClusterElement(
 export const ClosureDimensionModel = new ClusterModel(ClosureDimensionDefinition);
 
 // Register the cluster definition with the Matter definition so it can be referenced by devices and endpoints.
-// istanbul ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster.
+/* v8 ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster. */
 if (!MatterDefinition.children.some((child) => child.id === ClosureDimensionDefinition.id)) {
   MatterDefinition.children.push(ClosureDimensionDefinition);
 }
 
 // Register the cluster model with the canonical Matter model so helper utilities like `getClusterNameById()` can resolve the name for this custom cluster ID.
-// istanbul ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster.
+/* v8 ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster. */
 if (Matter.clusters(ClosureDimensionModel.id) === undefined) {
   Matter.children.push(ClosureDimensionModel);
 }

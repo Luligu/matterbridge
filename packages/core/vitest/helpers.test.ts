@@ -1,6 +1,10 @@
-// src\helpers.test.ts
+/**
+ * @file packages/core/vitest/helpers.test.ts
+ * @description This file contains the tests for helpers.
+ * @author Luca Liguori
+ */
 
-/* eslint-disable no-console */
+/* oxlint-disable no-console */
 
 const NAME = 'Helpers';
 const MATTER_PORT = 6600;

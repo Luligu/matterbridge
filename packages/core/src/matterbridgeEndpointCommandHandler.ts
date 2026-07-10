@@ -1,7 +1,6 @@
 /**
- * This file contains the command handler for MatterbridgeEndpoint.
- *
- * @file matterbridgeEndpointCommandHandler.ts
+ * @file packages/core/src/matterbridgeEndpointCommandHandler.ts
+ * @description This file contains the command handler for MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2026-03-17
  * @version 1.0.0
@@ -22,8 +21,9 @@
  * limitations under the License.
  */
 
+/* oxlint-disable typescript/no-empty-object-type */
+
 // TODO: analyze each rule
-// oxlint-disable typescript/no-empty-object-type
 
 // @matter
 import type { HandlerFunction } from '@matter/general';

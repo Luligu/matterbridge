@@ -1,7 +1,6 @@
 /**
- * This file contains the worker types.
- *
- * @file workerTypes.ts
+ * @file packages/types/src/workerTypes.ts
+ * @description This file contains the worker types.
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0

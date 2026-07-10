@@ -1,4 +1,8 @@
-// vitest\mb_coap.test.ts
+/**
+ * @file packages/core/vitest/mb_coap.test.ts
+ * @description This file contains the tests for the mb_coap cli.
+ * @author Luca Liguori
+ */
 
 import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
 

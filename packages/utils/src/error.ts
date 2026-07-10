@@ -1,7 +1,6 @@
 /**
- * This file contains the error functions.
- *
- * @file error.ts
+ * @file packages/utils/src/error.ts
+ * @description This file contains the error functions.
  * @author Luca Liguori
  * @created 2025-07-17
  * @version 1.0.0

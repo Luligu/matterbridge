@@ -1,7 +1,6 @@
 /**
- * This file contains the wait, waiter and withTimeout functions.
- *
- * @file wait.ts
+ * @file packages/utils/src/wait.ts
+ * @description This file contains the wait, waiter and withTimeout functions.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.2

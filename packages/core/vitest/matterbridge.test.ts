@@ -1,4 +1,8 @@
-// vitest\matterbridge.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.test.ts
+ * @description This file contains the tests for the Matterbridge class.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

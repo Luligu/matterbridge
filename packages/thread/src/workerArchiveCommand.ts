@@ -1,7 +1,6 @@
 /**
- * This file contains the workerArchiveCommand thread.
- *
- * @file workerArchiveCommand.ts
+ * @file packages/thread/src/workerArchiveCommand.ts
+ * @description This file contains the workerArchiveCommand thread.
  * @author Luca Liguori
  * @created 2026-03-14
  * @version 1.0.0
@@ -41,7 +40,7 @@ export default new WorkerWrapper('ArchiveCommand', async (worker) => {
     `Starting archive command ${worker.workerData.command} on ${worker.workerData.archivePath} with source paths ${worker.workerData.sourcePaths.join(', ')} and destination path ${worker.workerData.destinationPath}...`,
   );
   let success: boolean = false;
-  // istanbul ignore else
+  /* v8 ignore next */
   if (worker.workerData.command === 'zip') success = (await createZip(worker.workerData.archivePath, worker.workerData.sourcePaths)) > 0;
   else if (worker.workerData.command === 'verify') success = (await readZip(worker.workerData.archivePath)).length > 0;
   else if (worker.workerData.command === 'unzip') success = (await unZip(worker.workerData.archivePath, worker.workerData.destinationPath)).length > 0;

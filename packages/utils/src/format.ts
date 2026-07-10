@@ -1,6 +1,6 @@
 /**
+ * @file packages/utils/src/format.ts
  * @description This file contains the format functions.
- * @file format.ts
  * @author Luca Liguori
  * @created 2025-10-20
  * @version 1.0.0

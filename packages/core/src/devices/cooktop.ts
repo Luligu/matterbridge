@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/cooktop.ts
  * @description This file contains the Cooktop class.
- * @file src/devices/cooktop.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import type { Semtag } from '@matter/types';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';

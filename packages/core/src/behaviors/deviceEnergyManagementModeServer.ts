@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeDeviceEnergyManagementModeServer class of Matterbridge.
- *
- * @file deviceEnergyManagementModeServer.ts
+ * @file packages/core/src/behaviors/deviceEnergyManagementModeServer.ts
+ * @description This file contains the MatterbridgeDeviceEnergyManagementModeServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
@@ -31,7 +30,6 @@ import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy
 import { ModeBase } from '@matter/types/clusters/mode-base';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -51,7 +49,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       command: 'changeToMode',
       request,
       cluster: DeviceEnergyManagementModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagementMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

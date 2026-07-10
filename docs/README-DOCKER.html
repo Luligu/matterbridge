@@ -163,6 +163,7 @@
 <p>The image (tag <strong>chip-test</strong> 400MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource and includes the connectedhomeip repository with chip-tool, chip-cert and all components required for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.</p>
 <h3 id="matterbridge-docker-base-images">Matterbridge docker base images</h3>
 <p>The image (tag <strong>24-ubuntu-slim</strong> 83 MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
+<p>The image (tag <strong>bun-ubuntu-slim</strong> 79 MB) is based on <code>ubuntu:latest</code> with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun.</p>
 <h3 id="docker-health-check">Docker health check</h3>
 <p>All images include a health check.</p>
 <p>How health checks work in different scenarios:</p>
@@ -171,7 +172,7 @@
 <li>With <code>docker run</code>: the health check still runs, but the container will not restart automatically when it becomes unhealthy.</li>
 </ul>
 <p>You can manually check the health status:</p>
-<pre><code class="language-bash">docker exec -it matterbridge mb_health
+<pre><code class="language-bash">docker exec -it matterbridge mb-health
 </code></pre>
 <h3 id="create-the-matterbridge-directories-first">Create the Matterbridge directories first</h3>
 <p>This creates the required directories in your home directory (if they don&#39;t already exist):</p>

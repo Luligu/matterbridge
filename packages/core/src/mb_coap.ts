@@ -1,6 +1,6 @@
 /**
- * @description This file contains the bin mb_coap for the class Coap.
  * @file packages/core/src/mb_coap.ts
+ * @description This file contains the bin mb_coap for the class Coap.
  * @author Luca Liguori
  * @created 2025-07-22
  * @version 2.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/prefer-nullish-coalescing
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 import type { AddressInfo } from 'node:net';
 
@@ -58,7 +58,7 @@ export interface MbCoapRuntime {
  * @param {string} message The message to print.
  */
 function defaultConsoleLog(message: string): void {
-  // eslint-disable-next-line no-console
+  // oxlint-disable-next-line no-console
   console.log(message);
 }
 

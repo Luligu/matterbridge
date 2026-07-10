@@ -1,9 +1,11 @@
-# Codex config v. 1.0.1
+# Codex config v. 1.0.2
 
 approval_policy = "on-request"
 approvals_reviewer = "user"
-default_permissions = "matterbridge_safe"
+
 web_search = "live"
+
+default_permissions = "matterbridge_safe"
 
 [shell_environment_policy]
 inherit = "core"
@@ -11,12 +13,12 @@ inherit = "core"
 [windows]
 sandbox = "elevated"
 
-[permissions.matterbridge_safe.network]
-enabled = false
-
 [permissions.matterbridge_safe]
 description = "Workspace access with sensitive files denied and network disabled."
 extends = ":workspace"
+
+[permissions.matterbridge_safe.network]
+enabled = false
 
 [permissions.matterbridge_safe.filesystem]
 glob_scan_max_depth = 4

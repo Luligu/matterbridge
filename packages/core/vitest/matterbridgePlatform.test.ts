@@ -1,7 +1,11 @@
-// vitest\matterbridgePlatform.test.ts
+/**
+ * @file packages/core/vitest/matterbridgePlatform.test.ts
+ * @description This file contains the tests for the MatterbridgePlatform class.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable typescript/prefer-nullish-coalescing
-/* eslint-disable vitest/no-conditional-expect */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable vitest/no-conditional-expect */
 
 const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;

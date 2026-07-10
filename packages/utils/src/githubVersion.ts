@@ -1,6 +1,6 @@
 /**
+ * @file packages/utils/src/githubVersion.ts
  * @description This file contains the getGitHubUpdate function.
- * @file githubVersion.ts
  * @author Luca Liguori
  * @created 2024-02-17
  * @version 1.0.0
@@ -81,7 +81,7 @@ export async function getGitHubUpdate(branch: 'main' | 'dev', file: string, time
       });
     });
 
-    // istanbul ignore next cause it's just a precaution for network errors
+    /* v8 ignore next cause it's just a precaution for network errors */
     req.on('error', (error) => {
       clearTimeout(timeoutId);
       reject(new Error(`Request failed: ${getErrorMessage(error)}`));

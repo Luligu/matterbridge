@@ -1,4 +1,8 @@
-// vitest\copyDirectory.test.ts
+/**
+ * @file packages/utils/vitest/copyDirectory.test.ts
+ * @description This file contains the tests for copyDirectory.
+ * @author Luca Liguori
+ */
 
 const NAME = 'CopyDirectory';
 

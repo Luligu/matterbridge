@@ -1,4 +1,8 @@
-// vitest/devices/microwaveOven.test.ts
+/**
+ * @file packages/core/vitest/devices/microwaveOven.test.ts
+ * @description This file contains the tests for the MicrowaveOven device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MicrowaveOven';
 const MATTER_PORT = 8010;

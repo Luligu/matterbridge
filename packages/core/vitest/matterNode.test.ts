@@ -1,6 +1,11 @@
-// vitest\matterNode.test.ts
+/**
+ * @file packages/core/vitest/matterNode.test.ts
+ * @description This file contains the tests for the MatterNode class.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing
+/* oxlint-disable no-use-before-define */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';

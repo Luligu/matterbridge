@@ -1,6 +1,6 @@
 /**
+ * @file packages/utils/src/npmVersion.ts
  * @description This file contains the getNpmPackageVersion function.
- * @file npmVersion.ts
  * @author Luca Liguori
  * @created 2024-02-17
  * @version 1.0.0

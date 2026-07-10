@@ -1,4 +1,8 @@
-// vitest\matterbridge.device.server.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.device.server.test.ts
+ * @description This file contains the tests for Matterbridge devices in server mode.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

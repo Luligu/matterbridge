@@ -1,6 +1,6 @@
 /**
+ * @file packages/dgram/vitest/vitestSetupTest.ts
  * @description This file contains the Vitest Setup helpers.
- * @file vitest/vitestSetupTest.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// istanbul ignore file - this file is only used for setting up the Vitest environment
+/* v8 ignore file - this file is only used for setting up the Vitest environment */
 
 import { mkdirSync, rmSync } from 'node:fs';
 import path from 'node:path';

@@ -1,4 +1,8 @@
-// vitest\clusters\closure-dimension.test.ts
+/**
+ * @file packages/core/vitest/clusters/closure-dimension.test.ts
+ * @description This file contains the tests for the ClosureDimension cluster.
+ * @author Luca Liguori
+ */
 
 const NAME = 'ClosureDimensionCluster';
 

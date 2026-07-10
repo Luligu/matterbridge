@@ -1,6 +1,10 @@
-// vitest\hex.test.ts
+/**
+ * @file packages/utils/vitest/hex.test.ts
+ * @description This file contains the tests for hex.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable no-use-before-define
+/* oxlint-disable no-use-before-define */
 
 import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from '../src/hex.js';
 

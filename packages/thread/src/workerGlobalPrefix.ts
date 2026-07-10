@@ -1,7 +1,6 @@
 /**
- * This file contains the workerGlobalPrefix thread.
- *
- * @file workerGlobalPrefix.ts
+ * @file packages/thread/src/workerGlobalPrefix.ts
+ * @description This file contains the workerGlobalPrefix thread.
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0

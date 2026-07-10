@@ -1,7 +1,6 @@
-// oxlint-disable typescript/no-unsafe-type-assertion typescript/explicit-function-return-type
 /**
+ * @file packages/core/src/jestutils/logKeepAlives.ts
  * @description This file contains the Jest logKeepAlives helper.
- * @file src/logKeepAlive.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.1
@@ -22,7 +21,9 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable typescript/explicit-function-return-type */
+/* oxlint-disable typescript/no-explicit-any */
 
 import { inspect } from 'node:util';
 
@@ -39,7 +40,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
   const handles = (process as any)._getActiveHandles?.() ?? [];
   const requests = (process as any)._getActiveRequests?.() ?? [];
 
-  // istanbul ignore next
+  /* v8 ignore next */
   const fmtHandle = (h: unknown, i: number) => {
     const ctor = (h as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     // Timer-like?
@@ -51,7 +52,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
     return { i, type: ctor, hasRef, isPort, fd };
   };
 
-  // istanbul ignore next
+  /* v8 ignore next */
   const fmtReq = (r: unknown, i: number) => {
     const ctor = (r as { constructor?: { name?: string } })?.constructor?.name ?? 'Unknown';
     return { i, type: ctor };
@@ -62,7 +63,7 @@ export function logKeepAlives(log?: AnsiLogger): number {
     requests: requests.map(fmtReq),
   };
 
-  // istanbul ignore next if
+  /* v8 ignore next if */
   if (summary.handles.length === 0 && summary.requests.length === 0) {
     log?.debug('KeepAlive: no active handles or requests.');
   } else {

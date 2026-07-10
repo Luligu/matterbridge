@@ -1,4 +1,8 @@
-// vitest\network.test.ts
+/**
+ * @file packages/utils/vitest/network.test.ts
+ * @description This file contains the tests for network.
+ * @author Luca Liguori
+ */
 
 import dns from 'node:dns';
 import os from 'node:os';

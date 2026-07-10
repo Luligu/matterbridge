@@ -59,10 +59,12 @@ chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global ~/.npm-c
 npm install matterbridge --omit=dev --verbose --global --prefix=~/.npm-global --cache=~/.npm-cache
 # ✅ Create a link to matterbridge bin
 sudo ln -sf /home/$USER/.npm-global/bin/matterbridge /usr/local/bin/matterbridge
-# ✅ Create a link to mb_mdns bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_mdns /usr/local/bin/mb_mdns
-# ✅ Create a link to mb_coap bin
-sudo ln -sf /home/$USER/.npm-global/bin/mb_coap /usr/local/bin/mb_coap
+# ✅ Create a link to mb-health bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-health /usr/local/bin/mb-health
+# ✅ Create a link to mb-mdns bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-mdns /usr/local/bin/mb-mdns
+# ✅ Create a link to mb-coap bin
+sudo ln -sf /home/$USER/.npm-global/bin/mb-coap /usr/local/bin/mb-coap
 # ✅ Clear bash command cache as a precaution
 hash -r
 # ✅ Check which matterbridge
@@ -84,8 +86,8 @@ Add the following to this file, **replacing 5 times (!) USER with your user name
 ```text
 [Unit]
 Description=matterbridge
-After=network.target
-Wants=network.target
+After=network-online.target
+Wants=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
 
@@ -95,9 +97,13 @@ Environment="NPM_CONFIG_PREFIX=/home/<USER>/.npm-global"
 Environment="NPM_CONFIG_CACHE=/home/<USER>/.npm-cache"
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/home/<USER>/Matterbridge
-StandardOutput=inherit
-StandardError=inherit
+# Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=matterbridge
 Restart=always
+RestartSec=5
+TimeoutStopSec=60
 User=<USER>
 Group=<USER>
 
@@ -127,18 +133,16 @@ One possible fix, add this line to the existing [Service] section:
 Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 ```
 
-If you use the frontend with **-ssl** --frontend 443 and get an error message: "Port 443 requires elevated privileges",
-add this:
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the **matterbridge-bthome** plugin add this:
+If you use the matterbridge-bthome plugin add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 

@@ -1,4 +1,8 @@
-// vitest\tracker.test.ts
+/**
+ * @file packages/utils/vitest/tracker.test.ts
+ * @description This file contains the tests for tracker.
+ * @author Luca Liguori
+ */
 
 import os, { type CpuInfo } from 'node:os';
 
@@ -266,8 +270,8 @@ describe('Tracker', () => {
     const tracker = new Tracker('CpuBranchTester');
 
     const cpuTimes = { user: 100, nice: 0, sys: 50, idle: 200, irq: 0 };
-    const cpu: CpuInfo = { model: 'x', speed: 1000, times: { ...cpuTimes } } as unknown as CpuInfo;
-    const spyCpus = vi.spyOn(os, 'cpus').mockImplementation(() => [cpu] as any);
+    const cpu: CpuInfo = { model: 'x', speed: 1000, times: { ...cpuTimes } };
+    const spyCpus = vi.spyOn(os, 'cpus').mockImplementation(() => [cpu]);
 
     let cpuEvents = 0;
     tracker.on('cpu', () => cpuEvents++);

@@ -1,4 +1,8 @@
-// vitest\githubVersion.test.ts
+/**
+ * @file packages/utils/vitest/githubVersion.test.ts
+ * @description This file contains the tests for githubVersion.
+ * @author Luca Liguori
+ */
 
 import type { ClientRequest, IncomingMessage } from 'node:http';
 import type { get, RequestOptions } from 'node:https';

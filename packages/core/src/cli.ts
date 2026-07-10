@@ -1,13 +1,12 @@
 /**
- * This file contains the CLI entry point of Matterbridge.
- *
- * @file cli.ts
+ * @file packages/core/src/cli.ts
+ * @description This file contains the CLI entry point of Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
  * @version 3.0.0
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +21,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
-/* eslint-disable n/no-process-exit */
+/* oxlint-disable no-console */
+/* oxlint-disable n/no-process-exit */
 
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
@@ -49,9 +48,9 @@ export const inspector = new Inspector('Cli', false, false);
 const manager = new ThreadsManager();
 
 /** Minimal ANSI styling */
-// istanbul ignore next cause colorEnabled is not relevant for coverage
+/* v8 ignore next cause colorEnabled is not relevant for coverage */
 const colorEnabled = !process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi');
-// istanbul ignore else
+/* v8 ignore next */
 if (!colorEnabled) process.env.NO_COLOR = '1';
 
 const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
@@ -130,7 +129,7 @@ function triggerGarbageCollection(): void {
  */
 function registerHandlers(): void {
   log.debug('Registering event handlers...');
-  // istanbul ignore next cause registerHandlers is called only if instance is defined
+  /* v8 ignore next cause registerHandlers is called only if instance is defined */
   if (!instance) return;
   instance.on('shutdown', () => void shutdown().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to shutdown', error)));
   instance.on('restart', () => void restart().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to restart', error)));
@@ -252,7 +251,7 @@ if (hasAnyParameter('version', 'v')) await version();
 
 main().catch((error: unknown) => {
   inspectError(log, 'Matterbridge.loadInstance() failed with error', error);
-  // istanbul ignore next cause process.exit is not relevant for coverage
+  /* v8 ignore next cause process.exit is not relevant for coverage */
   // oxlint-disable-next-line promise/no-nesting
   shutdown().catch(/* v8 ignore next -- @preserve */ () => process.exit(1));
 });

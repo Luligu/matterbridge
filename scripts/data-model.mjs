@@ -390,6 +390,7 @@ const MATTER_DATATYPE_TS_MAP = {
   'group-id': 'GroupId',
   'node-id': 'NodeId',
   'subject-id': 'SubjectId',
+  'endpoint-id': 'EndpointNumber',
   'tlsendpointid': 'TLSEndpointId',
   'tlscaid': 'TLSCAId',
   'tlsccdid': 'TLSCCDId',
@@ -404,6 +405,7 @@ const MATTER_DATATYPE_TS_MAP = {
   'octstr': 'Bytes',
   'elapsed-s': 'ElapsedS',
   'epoch-us': 'EpochUs',
+  'posix-ms': 'PosixMs',
 
   // Compact temperature aliases (0.1°C resolution, value = °C × 10)
   'signedtemperature': 'SignedTemperature10Ths',
@@ -1110,6 +1112,9 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, 
   lines.push('');
   lines.push('/** Epoch time in microseconds since the Matter epoch (2000-01-01 00:00:00 UTC) - commonly represented as number or bigint. */');
   lines.push('export type EpochUs = number | bigint;');
+  lines.push('');
+  lines.push('/** Posix time in milliseconds since the Unix epoch (1970-01-01 00:00:00 UTC). */');
+  lines.push('export type PosixMs = number | bigint;');
   lines.push('');
   lines.push('/** Elapsed time in seconds. */');
   lines.push('export type ElapsedS = number;');
@@ -2587,25 +2592,32 @@ const parseDeviceTypeXml = (xmlContent, contextLabel) => {
     throw new Error(`Invalid revision "${revision}" for device type ${name}.`);
   }
 
-  const revisionMatches = [...xmlContent.matchAll(/<revision\b[^>]*>/gi)];
-  const revisionHistory = revisionMatches.map((match) => {
-    const revisionAttributes = parseAttributes(match[0]);
-    const { revision: revisionAttr, summary = '' } = revisionAttributes;
+  const revisionHistoryMatch = xmlContent.match(/<revisionHistory\b[^>]*>([\s\S]*?)<\/revisionHistory>/i);
+  const revisionHistory = [];
 
-    if (!revisionAttr) {
-      throw new Error(`Revision entry missing revision attribute for device type ${name}.`);
+  if (revisionHistoryMatch) {
+    const [, revisionHistoryBody] = revisionHistoryMatch;
+    const revisionMatches = [...revisionHistoryBody.matchAll(/<revision\b[^>]*>/gi)];
+
+    for (const revisionMatchEntry of revisionMatches) {
+      const revisionAttributes = parseAttributes(revisionMatchEntry[0]);
+      const { revision: revisionAttr, summary = '' } = revisionAttributes;
+
+      if (!revisionAttr) {
+        throw new Error(`Revision entry missing revision attribute for device type ${name}.`);
+      }
+
+      const revisionNumber = Number.parseInt(revisionAttr, 10);
+      if (Number.isNaN(revisionNumber)) {
+        throw new Error(`Invalid revision value "${revisionAttr}" in revision history for device type ${name}.`);
+      }
+
+      revisionHistory.push({
+        revision: revisionNumber,
+        summary,
+      });
     }
-
-    const revisionNumber = Number.parseInt(revisionAttr, 10);
-    if (Number.isNaN(revisionNumber)) {
-      throw new Error(`Invalid revision value "${revisionAttr}" in revision history for device type ${name}.`);
-    }
-
-    return {
-      revision: revisionNumber,
-      summary,
-    };
-  });
+  }
 
   const classificationMatch = xmlContent.match(/<classification\b[^>]*>/i);
   let classificationClass;

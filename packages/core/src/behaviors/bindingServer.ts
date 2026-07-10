@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeBindingServer class of Matterbridge.
- *
- * @file bindingServer.ts
+ * @file packages/core/src/behaviors/bindingServer.ts
+ * @description This file contains the MatterbridgeBindingServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-02-25
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
+/* oxlint-disable typescript/no-namespace */
 
 import type { Endpoint } from '@matter/main/node';
 import { BindingBehavior, type BindingResolution, BindingServer } from '@matter/node/behaviors/binding';
@@ -55,7 +54,7 @@ export class MatterbridgeBindingServer extends BindingServer {
     this.endpoint.construction.onSuccess(async () => {
       const currentClientList = this.endpoint.stateOf(DescriptorServer).clientList;
       const toAddClientList = clientList.filter((id) => !currentClientList.includes(id));
-      // istanbul ignore else
+      /* v8 ignore next */
       if (toAddClientList.length > 0) {
         device.log.info(`Adding client clusters to endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: ${toAddClientList.join(', ')}`);
         await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
@@ -112,7 +111,7 @@ export class MatterbridgeBindingServer extends BindingServer {
   }
 }
 
-/* istanbul ignore start */
+/* v8 ignore start */
 export namespace MatterbridgeBindingServer {
   /**
    * Internal state for binding behavior.
@@ -130,4 +129,4 @@ export namespace MatterbridgeBindingServer {
     clientList: ClusterId[] = [];
   }
 }
-/* istanbul ignore stop */
+/* v8 ignore stop */

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/roboticVacuumCleaner.ts
  * @description This file contains the RoboticVacuumCleaner class.
- * @file src/devices/roboticVacuumCleaner.ts
  * @author Luca Liguori
  * @created 2025-05-01
  * @version 1.1.0
@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-// oxlint-disable unicorn/no-negated-condition typescript/no-unsafe-type-assertion
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
@@ -234,7 +235,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcRunModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcRunMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -275,7 +276,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       command: 'changeToMode',
       request,
       cluster: RvcCleanModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof RvcCleanMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -314,7 +315,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 
   /**
@@ -338,7 +339,7 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 
   /**
@@ -363,6 +364,6 @@ export class MatterbridgeRvcOperationalStateServer extends RvcOperationalStateSe
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
-    } as OperationalState.OperationalCommandResponse;
+    };
   }
 }

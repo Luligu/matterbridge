@@ -1,10 +1,13 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "_comment": "Claude settings v. 1.0.4",
   "permissions": {
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./**/secrets/**)",
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
       "Bash(git pull:*)",
       "Bash(git merge:*)",
       "Bash(git push:*)",
@@ -16,12 +19,38 @@
       "Bash(git branch -d:*)",
       "Bash(git tag -d:*)",
       "Bash(git reflog expire:*)",
-      "Bash(git reflog delete:*)",
-      "Bash(git push --delete:*)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)"
+      "Bash(git reflog delete:*)"
     ],
-    "ask": ["Bash(git commit:*)", "Bash(npm install:*)", "Bash(npm i:*)"],
-    "allow": ["Bash(npm run typecheck)", "Bash(npm run build)", "Bash(npm run test:*)", "Bash(npm run lint)", "Bash(npm run format)"]
+    "ask": [
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "Bash(npm i:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(bun install:*)",
+      "Bash(bun i:*)",
+      "Bash(bun uninstall:*)",
+      "Bash(bun add:*)",
+      "Bash(bun remove:*)"
+    ],
+    "allow": [
+      "Bash(npm run typecheck:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:*)",
+      "Bash(bun test:*)",
+      "Bash(npx vitest:*)",
+      "Bash(vitest:*)",
+      "Bash(npx oxfmt:*)",
+      "Bash(oxfmt:*)",
+      "Bash(npx oxlint:*)",
+      "Bash(oxlint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(tsc:*)",
+      "Bash(npx tsgo:*)",
+      "Bash(tsgo:*)",
+      "Bash(cd:*)",
+      "Bash(tail:*)"
+    ]
   }
 }

@@ -1,4 +1,8 @@
-// vitest\matterbridgeEndpointCommandHandler.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpointCommandHandler.test.ts
+ * @description This file contains the tests for matterbridgeEndpointCommandHandler.
+ * @author Luca Liguori
+ */
 
 import { NamedHandler } from '@matter/general';
 
@@ -31,11 +35,11 @@ function createOnOffCommandData<T extends keyof LocalHandlers>(command: T): Comm
 function createDoorLockGetUserCommandData(): CommandHandlerData<'DoorLock.getUser'> {
   return {
     command: 'getUser',
-    request: { userIndex: 1 } as CommandHandlerData<'DoorLock.getUser'>['request'],
+    request: { userIndex: 1 },
     cluster: 'doorLock',
     attributes: {} as unknown as CommandHandlerData<'DoorLock.getUser'>['attributes'],
     endpoint: {} as MatterbridgeEndpoint,
-  } as CommandHandlerData<'DoorLock.getUser'>;
+  };
 }
 
 describe('CommandHandler', () => {

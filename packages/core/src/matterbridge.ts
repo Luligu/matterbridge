@@ -1,7 +1,6 @@
 /**
- * This file contains the class Matterbridge.
- *
- * @file matterbridge.ts
+ * @file packages/core/src/matterbridge.ts
+ * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
  * @version 1.7.1
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable max-lines
+/* oxlint-disable max-lines */
 
 // oxlint-disable-next-line import/no-unassigned-import
 import '@matter/nodejs'; // Set up Node.js environment for matter.js
@@ -245,11 +244,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Whether to log Matter to a file */
   public matterFileLogger = false;
 
-  // Managers
+  /** Matterbridge plugin manager */
   public readonly plugins = new PluginManager(this);
+  /** Matterbridge device manager */
   public readonly devices = new DeviceManager();
 
-  // Frontend
+  /** Matterbridge frontend */
   public readonly frontend = new Frontend(this);
 
   /** Matterbridge node storage manager created in the directory 'storage' in matterbridgeDirectory */
@@ -261,21 +261,47 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   protected static instance: Matterbridge | undefined;
 
   // Instance properties
+  /** Whether the Matterbridge instance has to be shut down */
   public shutdown = false;
+  /** Number of consecutive failures */
   private readonly failCountLimit = 300; // 5 minutes if check every second
+  /** Whether the Matterbridge instance has started cleanup */
   public hasCleanupStarted = false;
+  /** Whether the Matterbridge instance has been initialized */
   private initialized = false;
+  /** Whether the Matterbridge instance is a shutdown command */
+  private readonly isShutdownCommand = hasAnyParameter('list', 'logstorage', 'loginterfaces', 'systemcheck', 'add', 'remove', 'enable', 'disable', 'reset', 'factoryreset');
+  /** Timestamp when the Matterbridge instance started */
+  private startupAt = 0;
+  /** Timestamp when the Matterbridge instance shut down */
+  private shutdownAt = 0;
+  /** Total running time of the Matterbridge instance */
+  private runningTimes = 0;
+  /** Total running days of the Matterbridge instance */
+  private runningDays = 0;
+  /** Interval for starting Matterbridge */
   private startMatterInterval: NodeJS.Timeout | undefined;
+  /** Interval for starting Matterbridge in milliseconds */
   private readonly startMatterIntervalMs = 1000;
+  /** Interval for checking updates */
   private checkUpdateInterval: NodeJS.Timeout | undefined;
+  /** Timeout for checking updates */
   private checkUpdateTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for system checks */
   private systemCheckTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for checking Docker version */
   private dockerVersionTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for configuring Matterbridge */
   private configureTimeout: NodeJS.Timeout | undefined;
+  /** Timeout for checking reachability */
   private reachabilityTimeout: NodeJS.Timeout | undefined;
+  /** Handler for SIGINT signal */
   private sigintHandler: ((...args: ProcessEventMap['SIGINT']) => void) | undefined;
+  /** Handler for SIGTERM signal */
   private sigtermHandler: ((...args: ProcessEventMap['SIGTERM']) => void) | undefined;
+  /** Handler for uncaught exceptions */
   private exceptionHandler: ((...args: ProcessEventMap['uncaughtException']) => void) | undefined;
+  /** Handler for unhandled promise rejections */
   private rejectionHandler: ((...args: ProcessEventMap['unhandledRejection']) => void) | undefined;
 
   /** Matter environment default */
@@ -471,7 +497,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -547,7 +573,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
     }
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'manager_spawn_response':
@@ -578,7 +604,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   static async loadInstance(initialize: boolean = false): Promise<Matterbridge> {
     if (!Matterbridge.instance) {
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
       Matterbridge.instance = new Matterbridge();
       if (initialize) await Matterbridge.instance.initialize();
@@ -706,6 +732,25 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     if (!this.nodeStorage || !this.nodeContext) {
       throw new Error('Fatal error creating node storage manager and context for matterbridge');
+    }
+
+    if (!this.isShutdownCommand) {
+      // Check if the last shutdown was not proper and log a warning if so
+      const lastStartupAt = await this.nodeContext.get('lastStartupAt', 0);
+      const lastShutdownAt = await this.nodeContext.get('lastShutdownAt', 0);
+      if (lastStartupAt && lastShutdownAt && lastShutdownAt < lastStartupAt) {
+        this.log.warn(
+          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${db}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${db}`,
+        );
+      }
+
+      // Set the running times and running days from the node context, defaulting to 1 if is the first time running.
+      this.startupAt = Date.now();
+      this.runningTimes = (await this.nodeContext.get<number>('runningTimes', 0)) + 1;
+      this.runningDays = await this.nodeContext.get<number>('runningDays', 0);
+      await this.nodeContext.set('runningTimes', this.runningTimes);
+      await this.nodeContext.set('runningDays', this.runningDays);
+      await this.nodeContext.set('lastStartupAt', this.startupAt);
     }
 
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
@@ -960,7 +1005,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           isValid = true;
           break;
         }
-        /* istanbul ignore next */
+        /* v8 ignore next */
         if (ifaces?.find((iface) => iface.scopeid && iface.scopeid > 0 && iface.address + '%' + (process.platform === 'win32' ? iface.scopeid : ifaceName) === this.ipv6Address)) {
           this.log.info(`Using ipv6address ${CYAN}${this.ipv6Address}${nf} on interface ${CYAN}${ifaceName}${nf} for the Matter server node.`);
           isValid = true;
@@ -1030,10 +1075,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        (isLocal && fs.existsSync(plugin.path) && !isLinked && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
-        process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest'
-      ) {
+      if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand) || process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         try {
           execSync(isBun() ? 'bun link matterbridge --silent' : 'npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
@@ -1048,10 +1090,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if (
-        (!isLocal && !fs.existsSync(plugin.path) && !hasAnyParameter('add', 'remove', 'enable', 'disable', 'reset', 'factoryreset', 'systemcheck')) ||
-        process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest'
-      ) {
+      if ((!isLocal && !fs.existsSync(plugin.path) && !this.isShutdownCommand) || process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
@@ -1181,7 +1220,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       return;
     }
 
-    /* istanbul ignore next since the worker is tested in a separate test unit */
+    /* v8 ignore next since the worker is tested in a separate test unit */
     if (hasParameter('systemcheck')) {
       const { systemCheck } = await import('@matterbridge/thread');
       await systemCheck();
@@ -1317,7 +1356,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Start the matterbridge in mode controller
-    // istanbul ignore next cause controller is under development and not tested yet
+    /* v8 ignore next cause controller is under development and not tested yet */
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
       await this.startController();
@@ -1658,7 +1697,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
       } catch (_error) {
-        // istanbul ignore next
+        /* v8 ignore next */
         this.log.debug(`Error parsing matter log message facility ${message.facility}`);
       }
     };
@@ -1859,7 +1898,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
       this.log.notice('Stopped matter server nodes');
 
-      // istanbul ignore next cause controller is under development and not tested yet
+      /* v8 ignore next cause controller is under development and not tested yet */
       if (this.controllerNode) {
         this.log.notice(`Stopping matter controller...`);
         await this.stopServerNode(this.controllerNode);
@@ -1932,7 +1971,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         try {
           log.debug(`Removing ${path}...`);
           unlinkSync(path);
-          // istanbul ignore next
+          /* v8 ignore next */
           log.debug(`Removed ${path}`);
         } catch {
           // Ignore errors if the file does not exist
@@ -1961,6 +2000,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Notify the frontend that Matterbridge is stopped
       this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'stopped') } });
+
+      // Set running days and last shutdown timestamp in the node context
+      if (!this.isShutdownCommand) {
+        this.shutdownAt = Date.now();
+        this.runningDays = this.runningDays + Math.floor((this.shutdownAt - this.startupAt) / (1000 * 60 * 60 * 24));
+        await this.nodeContext?.set('runningDays', this.runningDays);
+        await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
+        this.log.info(`Matterbridge has run ${this.runningTimes} times for a total of ${this.runningDays} days.`);
+        this.log.info(`Matterbridge last started at ${new Date(this.startupAt).toLocaleString()} and shut down at ${new Date(this.shutdownAt).toLocaleString()}`);
+      }
 
       // Stop the frontend
       await this.frontend.stop();
@@ -2020,7 +2069,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matter storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
-          // istanbul ignore next if
+          /* v8 ignore next if */
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matter storage directory: ${error}`);
           }
@@ -2034,7 +2083,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.info(`Removing matterbridge storage backup directory: ${backup}`);
           await fs.promises.rm(backup, { recursive: true });
         } catch (error) {
-          // istanbul ignore next if
+          /* v8 ignore next if */
           if (error instanceof Error && (error as NodeJS.ErrnoException).code !== 'ENOENT') {
             this.log.error(`Error removing matterbridge storage directory: ${error}`);
           }
@@ -2137,7 +2186,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       () => {
         // oxlint-disable-next-line typescript/require-await
         void (async (): Promise<void> => {
-          // istanbul ignore if cause is just a logging statement
+          /* v8 ignore next cause is just a logging statement */
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           }
@@ -2257,7 +2306,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.startMatterInterval = setInterval(
       () => {
         void (async (): Promise<void> => {
-          // istanbul ignore if cause is just a logging statement
+          /* v8 ignore next cause is just a logging statement */
           if (failCount && failCount % 10 === 0) {
             this.frontend.wssSendSnackbarMessage(`The bridge is still starting...`, 10, 'info');
           }
@@ -2326,7 +2375,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.log.error(`Plugin ${plg}${plugin.name}${er} didn't register any devices to Matterbridge. Verify the plugin configuration.`);
               continue;
             }
-            // istanbul ignore next if cause is just a safety check
+            /* v8 ignore next if cause is just a safety check */
             if (!plugin.serverNode) {
               this.log.error(`Server node not found for plugin ${plg}${plugin.name}${er}`);
               continue;
@@ -2375,7 +2424,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @private
    * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
    */
-  // istanbul ignore next cause controller is under development and not tested yet
+  /* v8 ignore next cause controller is under development and not tested yet */
   private async startController(): Promise<void> {
     /*
     if (!this.matterStorageManager) {
@@ -3464,7 +3513,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (this.bridgeMode === 'childbridge' && plugin.type === 'AccessoryPlatform' && plugin.serverNode) {
       plugin.serverNode.eventsOf(BasicInformationServer).reachable$Changed?.on((reachable: boolean) => {
         this.log.info(`Accessory endpoint ${dev}${device.deviceName}${nf} (${dev}${device.id}${nf}) is ${reachable ? 'reachable' : 'unreachable'}`);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // oxlint-disable-next-line typescript/no-non-null-assertion
         this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, 'BasicInformation', 'reachable', reachable);
       });
     }
@@ -3517,7 +3566,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.log.debug(
             `Bridged endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
           );
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          // oxlint-disable-next-line typescript/no-non-null-assertion
           this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, device.number, device.id, sub.cluster, sub.attribute, value);
         });
       }
@@ -3530,7 +3579,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             this.log.debug(
               `Bridged child endpoint ${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
             );
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            // oxlint-disable-next-line typescript/no-non-null-assertion
             this.frontend.wssSendAttributeChangedMessage(device.plugin!, device.serialNumber!, device.uniqueId!, child.number, child.id, sub.cluster, sub.attribute, value);
           });
         }
@@ -3554,7 +3603,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         rootVendorId: info.rootVendorId,
         rootVendorName: this.getVendorIdName(info.rootVendorId),
         label: info.label,
-      } as SanitizedExposedFabricInformation;
+      };
     });
   }
 
@@ -3598,7 +3647,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // oxlint-disable-next-line typescript/no-unused-vars
   private async setAggregatorReachability(aggregatorNode: Endpoint<AggregatorEndpoint>, reachable: boolean): Promise<void> {
     /*
     for (const child of aggregatorNode.parts) {

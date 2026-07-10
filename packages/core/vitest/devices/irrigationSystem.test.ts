@@ -1,4 +1,8 @@
-// vitest/devices/irrigationSystem.test.ts
+/**
+ * @file packages/core/vitest/devices/irrigationSystem.test.ts
+ * @description This file contains the tests for the IrrigationSystem device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'IrrigationSystem';
 const MATTER_PORT = 8021;

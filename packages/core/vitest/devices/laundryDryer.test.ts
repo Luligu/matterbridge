@@ -1,4 +1,8 @@
-// vitest/devices/laundryDryer.test.ts
+/**
+ * @file packages/core/vitest/devices/laundryDryer.test.ts
+ * @description This file contains the tests for the LaundryDryer device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'LaundryDryer';
 const MATTER_PORT = 8008;

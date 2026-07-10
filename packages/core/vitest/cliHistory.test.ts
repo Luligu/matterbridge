@@ -1,4 +1,8 @@
-// vitest\cliHistory.test.ts
+/**
+ * @file packages/core/vitest/cliHistory.test.ts
+ * @description This file contains the tests for cliHistory.
+ * @author Luca Liguori
+ */
 
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
@@ -144,38 +148,38 @@ describe('cliHistory', () => {
 
     test('falls back to non-peak values when peak fields are undefined', () => {
       configureHistoryEntry(0, {
-        timestamp: undefined as unknown as number,
+        timestamp: undefined,
         osCpu: 11,
-        peakOsCpu: undefined as unknown as number,
+        peakOsCpu: undefined,
         processCpu: 3,
-        peakProcessCpu: undefined as unknown as number,
+        peakProcessCpu: undefined,
         rss: 10,
-        peakRss: undefined as unknown as number,
+        peakRss: undefined,
         heapUsed: 20,
-        peakHeapUsed: undefined as unknown as number,
+        peakHeapUsed: undefined,
         heapTotal: 30,
-        peakHeapTotal: undefined as unknown as number,
+        peakHeapTotal: undefined,
         external: 40,
-        peakExternal: undefined as unknown as number,
+        peakExternal: undefined,
         arrayBuffers: 50,
-        peakArrayBuffers: undefined as unknown as number,
+        peakArrayBuffers: undefined,
       });
       configureHistoryEntry(1, {
-        timestamp: undefined as unknown as number,
+        timestamp: undefined,
         osCpu: 22,
-        peakOsCpu: undefined as unknown as number,
+        peakOsCpu: undefined,
         processCpu: 6,
-        peakProcessCpu: undefined as unknown as number,
+        peakProcessCpu: undefined,
         rss: 100,
-        peakRss: undefined as unknown as number,
+        peakRss: undefined,
         heapUsed: 200,
-        peakHeapUsed: undefined as unknown as number,
+        peakHeapUsed: undefined,
         heapTotal: 300,
-        peakHeapTotal: undefined as unknown as number,
+        peakHeapTotal: undefined,
         external: 400,
-        peakExternal: undefined as unknown as number,
+        peakExternal: undefined,
         arrayBuffers: 500,
-        peakArrayBuffers: undefined as unknown as number,
+        peakArrayBuffers: undefined,
       });
 
       Tracker.historyIndex = 0;
@@ -195,7 +199,7 @@ describe('cliHistory', () => {
         const summaryMatch = html.match(/const SUMMARY_DATA = (\{.*?\});/s);
         expect(summaryMatch?.[1]).toBeTruthy();
 
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        // oxlint-disable-next-line typescript/no-non-null-assertion
         const summary = JSON.parse(summaryMatch![1]) as {
           entries: number;
           timeRange: string;

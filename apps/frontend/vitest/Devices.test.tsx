@@ -46,18 +46,17 @@ vi.mock('../src/components/WebSocketProvider', async () => {
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 
 const mockElementRect = (el: HTMLElement) => {
-  el.getBoundingClientRect = () =>
-    ({
-      width: 100,
-      height: 20,
-      top: 0,
-      left: 0,
-      bottom: 20,
-      right: 100,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-    }) as DOMRect;
+  el.getBoundingClientRect = () => ({
+    width: 100,
+    height: 20,
+    top: 0,
+    left: 0,
+    bottom: 20,
+    right: 100,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+  });
 };
 
 describe('Devices', () => {
@@ -83,7 +82,7 @@ describe('Devices', () => {
         x: 0,
         y: 0,
         toJSON: () => ({}),
-      } as DOMRect;
+      };
     };
 
     Devices = (await import('../src/components/Devices')).default;

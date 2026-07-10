@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.xml.revision.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.xml.revision.test.ts
+ * @description This file contains the tests for the matterbridgeDeviceTypes revisions against the xml.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypesXmlRevision';
 
@@ -167,7 +171,7 @@ async function buildXmlIndex(): Promise<Map<number, XmlDeviceTypeInfo>> {
       const xml = await readFile(xmlPath, 'utf8');
       const tagMatch = xml.match(/<deviceType\b[^>]*>/i);
       if (!tagMatch) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`No <deviceType> tag found in ${f}`);
         continue;
       }
@@ -176,7 +180,7 @@ async function buildXmlIndex(): Promise<Map<number, XmlDeviceTypeInfo>> {
       const revMatch = tag.match(/\brevision\s*=\s*"(\d+)"/i);
       const idMatch = tag.match(/\bid\s*=\s*"([^"]+)"/i);
       if (!nameMatch || !idMatch) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`Missing name or id attribute in <deviceType> tag in ${f}`);
         continue;
       }
@@ -329,7 +333,7 @@ if (!hasXmlDir) {
     test.each(cases)('Device type %s matches Matter 1.5.1 XML (id, revision, name, deviceClass, deviceScope)', (display, mb) => {
       const xmlInfo = xmlIndex.get(mb.code);
       if (!xmlInfo) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`No XML entry found for ${display} (code=0x${mb.code.toString(16).padStart(4, '0')})`);
         return;
       }

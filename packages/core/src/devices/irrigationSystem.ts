@@ -1,6 +1,6 @@
 /**
- * @description  Matter 1.5 Irrigation System device class.
- * @file src/devices/irrigationSystem.ts
+ * @file packages/core/src/devices/irrigationSystem.ts
+ * @description Matter 1.5 Irrigation System device class.
  * @author Luca Liguori
  * @created 2026-03-02
  * @version 1.0.0

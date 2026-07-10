@@ -1,4 +1,8 @@
-// vitest\deepEqual.test.ts
+/**
+ * @file packages/utils/vitest/deepEqual.test.ts
+ * @description This file contains the tests for deepEqual.
+ * @author Luca Liguori
+ */
 
 import { deepEqual } from '../src/deepEqual.js';
 

@@ -1,7 +1,6 @@
 /**
- * This file contains the BroadcastServer class.
- *
- * @file broadcastServer.ts
+ * @file packages/thread/src/broadcastServer.ts
+ * @description This file contains the BroadcastServer class.
  * @author Luca Liguori
  * @created 2025-10-05
  * @version 2.0.1
@@ -51,7 +50,7 @@ interface BroadcastServerEvents {
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
   private closed = false;
-  // istanbul ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production
+  /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
   private readonly debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
   private readonly verbose = hasParameter('verbose') || hasParameter('verbose-threads');
 

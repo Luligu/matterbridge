@@ -19,6 +19,7 @@ temp/
 *.log
 
 # Package specific directories and files that should be ignored
+
 chip/
 heap_profile
 heap_profiles

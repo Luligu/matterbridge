@@ -1,4 +1,8 @@
-// vitest\commandLine.test.ts
+/**
+ * @file packages/utils/vitest/commandLine.test.ts
+ * @description This file contains the tests for commandLine.
+ * @author Luca Liguori
+ */
 
 import { getIntArrayParameter, getIntParameter, getParameter, getStringArrayParameter, hasAnyParameter, hasParameter } from '../src/commandLine.js';
 

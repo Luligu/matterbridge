@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/batteryStorage.ts
  * @description This file contains the BatteryStorage class.
- * @file src/devices/batteryStorage.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-20
@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { PowerSourceTag } from '@matter/node';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';

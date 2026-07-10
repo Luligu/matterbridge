@@ -1,6 +1,10 @@
-// buntest\threadsManager.test.ts
+/**
+ * @file packages/thread/buntest/threadsManager.test.ts
+ * @description This file contains the bun tests for the ThreadsManager class.
+ * @author Luca Liguori
+ */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* oxlint-disable typescript/no-non-null-assertion */
 
 const NAME = 'ThreadsManager';
 

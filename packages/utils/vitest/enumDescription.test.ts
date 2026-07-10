@@ -1,3 +1,9 @@
+/**
+ * @file packages/utils/vitest/enumDescription.test.ts
+ * @description This file contains the tests for enumDescription.
+ * @author Luca Liguori
+ */
+
 import { getEnumDescription } from '../src/enumDescription.js';
 
 enum DoorState {

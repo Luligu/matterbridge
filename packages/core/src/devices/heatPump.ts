@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/heatPump.ts
  * @description This file contains the HeatPump class.
- * @file src/devices/heatPump.ts
  * @author Luca Liguori
  * @created 2025-06-29
  * @version 1.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { CommonAreaNamespaceTag, CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 // @matterbridge

@@ -1,4 +1,8 @@
-// vitest/devices/airConditioner.test.ts
+/**
+ * @file packages/core/vitest/devices/airConditioner.test.ts
+ * @description This file contains the tests for the AirConditioner device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'AirConditioner';
 const MATTER_PORT = 8001; // Unique test port (ensure no collision with other device tests)

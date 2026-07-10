@@ -1,7 +1,6 @@
 /**
- * This file contains the PluginManager class.
- *
- * @file pluginManager.ts
+ * @file packages/core/src/pluginManager.ts
+ * @description This file contains the PluginManager class.
  * @author Luca Liguori
  * @created 2024-07-14
  * @version 1.4.0
@@ -22,8 +21,8 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/prefer-nullish-coalescing
-// oxlint-disable max-lines
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable max-lines */
 
 // Node.js import
 import EventEmitter from 'node:events';
@@ -117,7 +116,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   constructor(private readonly matterbridge: Matterbridge) {
     super();
-    // istanbul ignore next - Loader logs are not relevant for coverage
+    /* v8 ignore next - Loader logs are not relevant for coverage */
     this.log = new AnsiLogger({ logName: 'PluginManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge plugin manager starting...');
     this.server = new BroadcastServer('plugins', this.log);
@@ -182,9 +181,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
   }
 
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
-      // istanbul ignore next - Loader logs are not relevant for coverage
+      /* v8 ignore next - Loader logs are not relevant for coverage */
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -366,13 +365,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           }
           break;
         default:
-          // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+          /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'plugins')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       // oxlint-disable-next-line default-case
       switch (msg.type) {
@@ -386,29 +385,29 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             if (msg.result.packageName.endsWith('.tgz')) {
               const packageName = msg.result.packageName.replace(/-\d.*$/, ''); // Remove version suffix: matterbridge-plugin-template-1.0.18-dev-20260430-ed287ff.tgz → matterbridge-plugin-template
               this.log.info(`Installed package ${plg}${packageName}${nf} from ${CYAN}${msg.result.packageName}${nf} successfully`);
-              // istanbul ignore else
+              /* v8 ignore next */
               if (msg.result.packageName.startsWith('matterbridge-') && msg.result.packageName.endsWith('.tgz')) {
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (!this.has(packageName)) await this.add(packageName);
                 const plugin = this.get(packageName);
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (plugin) plugin.tarballPath = msg.result.packageName;
                 await this.saveToStorage();
-                // istanbul ignore next
+                /* v8 ignore next */
                 if (plugin && !plugin.loaded) await this.load(plugin);
               }
             } else {
               const packageName = msg.result.packageName.replace(/@.*$/, ''); // Remove @version if present
               this.log.info(`Installed plugin ${plg}${packageName}${db} successfully`);
-              // istanbul ignore else
+              /* v8 ignore next */
               if (packageName !== 'matterbridge') {
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (!this.has(packageName)) await this.add(packageName);
                 const plugin = this.get(packageName);
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (plugin) plugin.tarballPath = undefined;
                 await this.saveToStorage();
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (plugin && !plugin.loaded) await this.load(plugin);
               }
             }
@@ -416,10 +415,10 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           if (msg.result?.packageCommand === 'uninstall') {
             // this.log.debug(`***Received broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
             if (msg.result.success) {
-              // istanbul ignore else
+              /* v8 ignore next */
               if (this.has(msg.result.packageName)) {
                 const plugin = this.get(msg.result.packageName);
-                // istanbul ignore else
+                /* v8 ignore next */
                 if (plugin?.loaded) await this.shutdown(plugin, 'Matterbridge is uninstalling the plugin');
                 await this.remove(msg.result.packageName);
               }
@@ -880,7 +879,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    * @param {Record<string, any>} packageJson - The package.json object of the plugin.
    * @returns {string | undefined} The first funding URLs, or undefined if not found.
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // oxlint-disable-next-line typescript/no-explicit-any
   getFunding(packageJson: Record<string, any>): string | undefined {
     const funding = packageJson.funding;
     if (!funding) return undefined;
@@ -890,7 +889,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Normalize funding into an array.
     const fundingEntries = Array.isArray(funding) ? funding : [funding];
     for (const entry of fundingEntries) {
-      // istanbul ignore else
+      /* v8 ignore next */
       if (entry && typeof entry === 'string' && entry.startsWith('http')) {
         // If the funding entry is a string, assume it is a URL.
         return entry;
@@ -955,7 +954,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
 
       // Test if frontend build exists and set frontendPath if it does
       const frontendPath = path.join(plugin.path.replace('package.json', ''), 'apps', 'frontend', 'build', 'index.html');
-      // istanbul ignore next - frontendPath is optional, so we don't need to test it in unit tests
+      /* v8 ignore next - frontendPath is optional, so we don't need to test it in unit tests */
       if (existsSync(frontendPath)) plugin.frontendPath = frontendPath;
 
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
@@ -1223,7 +1222,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         config.name = packageJson.name;
         config.version = packageJson.version;
 
-        // istanbul ignore next - if the plugin is loaded in debug mode, it will log in debug mode, otherwise it will use the matterbridge log level
+        /* v8 ignore next - if the plugin is loaded in debug mode, it will log in debug mode, otherwise it will use the matterbridge log level */
         const log = new AnsiLogger({
           logName: plugin.description,
           logTimestampFormat: TimestampFormat.TIME_MILLIS,

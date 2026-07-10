@@ -1,11 +1,7 @@
 /**
- * This file contains the tests for the diagnostic functions.
- *
- * @file diagnostic.test.ts
+ * @file packages/utils/vitest/diagnostic.test.ts
+ * @description This file contains the tests for the diagnostic functions.
  * @author Luca Liguori
- * @created 2026-06-30
- * @version 1.0.0
- * @license Apache-2.0
  */
 
 import { writeDiagnostic } from '../src/diagnostic.js';

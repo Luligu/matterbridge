@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeServer class of Matterbridge.
- *
- * @file matterbridgeServer.ts
+ * @file packages/core/src/behaviors/matterbridgeServer.ts
+ * @description This file contains the MatterbridgeServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-namespace */
+/* oxlint-disable typescript/no-namespace */
 
 import { Behavior } from '@matter/node';
 import type { AnsiLogger } from 'node-ansi-logger';
@@ -45,7 +44,7 @@ export class MatterbridgeServer extends Behavior {
   }
 }
 
-/* istanbul ignore start */
+/* v8 ignore start */
 export namespace MatterbridgeServer {
   /**
    * State shared by Matterbridge servers.
@@ -55,4 +54,4 @@ export namespace MatterbridgeServer {
     commandHandler!: CommandHandler;
   }
 }
-/* istanbul ignore stop */
+/* v8 ignore stop */

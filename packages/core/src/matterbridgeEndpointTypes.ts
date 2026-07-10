@@ -1,7 +1,6 @@
 /**
- * This file contains the types for MatterbridgeEndpoint.
- *
- * @file matterbridgeEndpointTypes.ts
+ * @file packages/core/src/matterbridgeEndpointTypes.ts
+ * @description This file contains the types for MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2025-11-10
  * @version 1.0.0
@@ -30,7 +29,7 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 // matterbridge
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 
-// istanbul ignore next
+/* v8 ignore next */
 logModuleLoaded('MatterbridgeEndpointTypes');
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;

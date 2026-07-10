@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/workerSystemCheck.test.ts
+ * @description This file contains the tests for the SystemCheck worker.
+ * @author Luca Liguori
+ */
+
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -73,7 +79,7 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
   let runPromise: Promise<boolean> | undefined;
 
   vi.doMock('../src/workerWrapper.js', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+    // oxlint-disable-next-line typescript/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;

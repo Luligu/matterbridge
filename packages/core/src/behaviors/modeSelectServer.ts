@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeModeSelectServer class of Matterbridge.
- *
- * @file modeSelectServer.ts
+ * @file packages/core/src/behaviors/modeSelectServer.ts
+ * @description This file contains the MatterbridgeModeSelectServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
 import type { ModeSelect } from '@matter/types/clusters/mode-select';

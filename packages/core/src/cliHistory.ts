@@ -1,7 +1,6 @@
 /**
- * This file contains the CLI history page generator.
- *
- * @file cliHistory.ts
+ * @file packages/core/src/cliHistory.ts
+ * @description This file contains the CLI history page generator.
  * @author Luca Liguori
  * @created 2025-10-09
  * @version 1.0.1

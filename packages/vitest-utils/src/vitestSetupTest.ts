@@ -1,6 +1,6 @@
 /**
+ * @file packages/vitest-utils/src/vitestSetupTest.ts
  * @description This file contains the Vitest base helpers.
- * @file src/helpers.test.ts
  * @author Luca Liguori
  * @created 2025-12-31
  * @version 1.0.0

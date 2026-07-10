@@ -1,13 +1,17 @@
-// vitest\pluginManager.test.ts
+/**
+ * @file packages/core/vitest/pluginManager.test.ts
+ * @description This file contains the tests for the PluginManager class.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable no-use-before-define */
+/* oxlint-disable vitest/no-commented-out-tests */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable no-use-before-define
-// oxlint-disable vitest/no-commented-out-tests
 
 const NAME = 'PluginManager';
 const MATTER_PORT = 12000;
@@ -290,7 +294,7 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       expect(plugins.has('matterbridge-mock1')).toBe(true);
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      // oxlint-disable-next-line typescript/no-non-null-assertion
       plugins.get('matterbridge-mock1')!.loaded = true;
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);

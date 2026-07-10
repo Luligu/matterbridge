@@ -1,12 +1,17 @@
-// vitest\matterbridgeEndpoint-matterjs.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpoint-matterjs.test.ts
+ * @description This file contains the tests for the MatterbridgeEndpoint class with matter.js.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/no-misused-promises */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable typescript/no-misused-promises typescript/prefer-nullish-coalescing
 
 const NAME = 'EndpointMatterJs';
 const MATTER_PORT = 11100;

@@ -135,7 +135,7 @@ interface RenderProps {
 }
 
 function Render({ icon, iconColor, cluster, value, unit, prefix }: RenderProps): React.JSX.Element {
-  if (debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof value}-${Number.isNaN(value as unknown)}) "${value}" unit "${unit}"`);
+  if (debug) console.log(`Render cluster "${cluster.clusterName}.${cluster.attributeName}" value(${typeof value}-${Number.isNaN(value)}) "${value}" unit "${unit}"`);
   // oxlint-disable-next-line no-param-reassign
   prefix = prefix ?? false;
   return (

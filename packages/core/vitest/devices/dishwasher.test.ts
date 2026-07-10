@@ -1,4 +1,8 @@
-// vitest/devices/dishwasher.test.ts
+/**
+ * @file packages/core/vitest/devices/dishwasher.test.ts
+ * @description This file contains the tests for the Dishwasher device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Dishwasher';
 const MATTER_PORT = 8004;

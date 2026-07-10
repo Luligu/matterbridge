@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/closurePanel.ts
  * @description Closure Panel device class exposing the Matter 1.5 ClosureDimension cluster.
- * @file src/devices/closurePanel.ts
  * @author Luca Liguori
  * @created 2026-03-02
  * @version 1.0.0
@@ -21,8 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
-// oxlint-disable unicorn/no-negated-condition typescript/no-misused-spread
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable unicorn/no-negated-condition */
+/* oxlint-disable typescript/no-misused-spread */
 
 // @matter
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';

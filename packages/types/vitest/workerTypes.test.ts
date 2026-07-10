@@ -1,10 +1,7 @@
 /**
+ * @file packages/types/vitest/workerTypes.test.ts
  * @description Tests for worker data type guards in workerTypes.
- * @file workerTypes.test.ts
  * @author Luca Liguori
- * @created 2026-05-31
- * @version 1.0.0
- * @license Apache-2.0
  */
 
 import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';

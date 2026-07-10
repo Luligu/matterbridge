@@ -1,4 +1,8 @@
-// vitest\mb_mdns.test.ts
+/**
+ * @file packages/core/vitest/mb_mdns.test.ts
+ * @description This file contains the tests for the mb_mdns cli.
+ * @author Luca Liguori
+ */
 
 import os from 'node:os';
 

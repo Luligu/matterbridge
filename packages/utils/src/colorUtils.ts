@@ -1,7 +1,6 @@
 /**
- * This file contains the color utilities.
- *
- * @file colorUtils.ts
+ * @file packages/utils/src/colorUtils.ts
+ * @description This file contains the color utilities.
  * @author Luca Liguori
  * @created 2023-10-05
  * @version 1.3.2
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable no-param-reassign
+/* oxlint-disable no-param-reassign */
 
 export interface RGB {
   r: number;
@@ -157,7 +156,7 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   let blue = X * 0.051713 - Number(Y) * 0.121364 + Z * 1.01153;
 
   // If red, green or blue is larger than 1.0 set it back to the maximum of 1.0
-  // istanbul ignore else
+  /* v8 ignore next */
   if (red > blue && red > green && red > 1.0) {
     green = green / red;
     blue = blue / red;
@@ -183,15 +182,15 @@ export function xyColorToRgbColor(x: number, y: number, brightness: number = 254
   blue = Math.round(blue * 255);
 
   // Normalize even if this code should never be reached...
-  // istanbul ignore next
+  /* v8 ignore next */
   if (Number.isNaN(red) || red < 0) {
     red = 0;
   }
-  // istanbul ignore next
+  /* v8 ignore next */
   if (Number.isNaN(green) || green < 0) {
     green = 0;
   }
-  // istanbul ignore next
+  /* v8 ignore next */
   if (Number.isNaN(blue) || blue < 0) {
     blue = 0;
   }

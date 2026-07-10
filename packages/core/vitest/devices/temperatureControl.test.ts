@@ -1,4 +1,8 @@
-// vitest/devices/temperatureControl.test.ts
+/**
+ * @file packages/core/vitest/devices/temperatureControl.test.ts
+ * @description This file contains the tests for the TemperatureControl cluster helpers.
+ * @author Luca Liguori
+ */
 
 const NAME = 'TemperatureControl';
 const MATTER_PORT = 8024;

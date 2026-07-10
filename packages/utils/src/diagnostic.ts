@@ -1,7 +1,6 @@
 /**
- * This file contains the diagnostic functions.
- *
- * @file diagnostic.ts
+ * @file packages/utils/src/diagnostic.ts
+ * @description This file contains the diagnostic functions.
  * @author Luca Liguori
  * @created 2026-06-30
  * @version 1.0.0

@@ -1,4 +1,10 @@
-// vitest\matterbridgeEndpoint.typed.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpoint.typed.test.ts
+ * @description This file contains the tests for the MatterbridgeEndpoint class typed behaviors.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/no-floating-promises */
 
 /**
  * WARNING!!!
@@ -7,7 +13,6 @@
  */
 
 // TODO: refactor
-// oxlint-disable typescript/no-floating-promises
 
 const MATTER_PORT = 11700;
 const NAME = 'EndpointTypeChecks';

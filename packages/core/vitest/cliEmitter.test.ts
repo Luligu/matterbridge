@@ -1,4 +1,8 @@
-// vitest\cliEmitter.test.ts
+/**
+ * @file packages/core/vitest/cliEmitter.test.ts
+ * @description This file contains the tests for cliEmitter.
+ * @author Luca Liguori
+ */
 
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage, setLastOsCpuUsage, setLastProcessCpuUsage } from '../src/cliEmitter.js';
 

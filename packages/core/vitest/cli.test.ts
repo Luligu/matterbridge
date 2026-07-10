@@ -1,4 +1,8 @@
-// vitest\cli.test.ts
+/**
+ * @file packages/core/vitest/cli.test.ts
+ * @description This file contains the tests for cli.
+ * @author Luca Liguori
+ */
 
 const NAME = 'CliMain';
 
@@ -8,7 +12,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { cliEmitter } from '../src/cliEmitter.js';
 import { Matterbridge } from '../src/matterbridge.js';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// oxlint-disable-next-line typescript/ban-ts-comment
 // @ts-ignore cause is not included in the tsconfig include, but is needed for testing
 import { MockMatterbridge } from '../src/mock/mockMatterbridge.js';
 

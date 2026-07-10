@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/basicVideoPlayer.ts
  * @description This file contains the BasicVideoPlayer class.
- * @file src/devices/basicVideoPlayer.ts
  * @author Luca Liguori
  * @created 2026-01-25
  * @version 1.0.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
 import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
 import { KeypadInput } from '@matter/types/clusters/keypad-input';

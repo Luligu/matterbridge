@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/solarPower.ts
  * @description This file contains the SolarPower class.
- * @file src/devices/solarPower.ts
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-14
@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { PowerSourceTag } from '@matter/node';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { Semtag } from '@matter/types/globals';

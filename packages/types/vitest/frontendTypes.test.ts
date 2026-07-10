@@ -1,10 +1,7 @@
 /**
+ * @file packages/types/vitest/frontendTypes.test.ts
  * @description Tests for WsMessage type guards in frontendTypes.
- * @file frontendTypes.test.ts
  * @author Luca Liguori
- * @created 2026-05-31
- * @version 1.0.0
- * @license Apache-2.0
  */
 
 import type { WsMessage } from '../src/frontendTypes.js';

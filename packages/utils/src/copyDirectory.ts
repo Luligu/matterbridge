@@ -1,7 +1,6 @@
 /**
- * This file contains the copyDirectory function.
- *
- * @file copyDirectory.ts
+ * @file packages/utils/src/copyDirectory.ts
+ * @description This file contains the copyDirectory function.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.2

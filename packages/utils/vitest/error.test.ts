@@ -1,10 +1,7 @@
 /**
+ * @file packages/utils/vitest/error.test.ts
  * @description This file contains the tests for the error functions.
- * @file error.test.ts
  * @author Luca Liguori
- * @created 2025-07-17
- * @version 1.0.0
- * @license Apache-2.0
  */
 
 import { getErrorMessage, inspectError, logError } from '../src/error.js';

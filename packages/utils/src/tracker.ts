@@ -1,7 +1,6 @@
 /**
- * This file contains the Tracker class.
- *
- * @file tracker.ts
+ * @file packages/utils/src/tracker.ts
+ * @description This file contains the Tracker class.
  * @author Luca Liguori
  * @created 2025-10-10
  * @version 1.0.1
@@ -88,31 +87,27 @@ export class Tracker extends EventEmitter<TrackerEvents> {
   static historyIndex = 0;
   // History for 8h at 1 sample each 10 seconds = 2880 entries
   static readonly historySize = 2880;
-  static readonly history: TrackerSnapshot[] = Array.from(
-    { length: this.historySize },
-    () =>
-      ({
-        timestamp: 0,
-        freeMemory: 0,
-        peakFreeMemory: 0,
-        totalMemory: 0,
-        peakTotalMemory: 0,
-        osCpu: 0,
-        peakOsCpu: 0,
-        processCpu: 0,
-        peakProcessCpu: 0,
-        rss: 0,
-        peakRss: 0,
-        heapUsed: 0,
-        peakHeapUsed: 0,
-        heapTotal: 0,
-        peakHeapTotal: 0,
-        external: 0,
-        peakExternal: 0,
-        arrayBuffers: 0,
-        peakArrayBuffers: 0,
-      }) as TrackerSnapshot,
-  );
+  static readonly history: TrackerSnapshot[] = Array.from({ length: this.historySize }, () => ({
+    timestamp: 0,
+    freeMemory: 0,
+    peakFreeMemory: 0,
+    totalMemory: 0,
+    peakTotalMemory: 0,
+    osCpu: 0,
+    peakOsCpu: 0,
+    processCpu: 0,
+    peakProcessCpu: 0,
+    rss: 0,
+    peakRss: 0,
+    heapUsed: 0,
+    peakHeapUsed: 0,
+    heapTotal: 0,
+    peakHeapTotal: 0,
+    external: 0,
+    peakExternal: 0,
+    arrayBuffers: 0,
+    peakArrayBuffers: 0,
+  }));
   private prevCpus = os.cpus();
   private prevCpuUsage = process.cpuUsage();
   private log: AnsiLogger;
@@ -207,19 +202,19 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       const currentCpus = os.cpus();
       const loads = currentCpus.map((cpu, idx) => {
         const prev = this.prevCpus[idx]?.times;
-        // istanbul ignore if - is just a precaution
+        /* v8 ignore next - is just a precaution */
         if (!prev) return 0;
         const cur = cpu.times;
         const idleDelta = cur.idle - prev.idle;
         const busyDelta = cur.user - prev.user + (cur.nice - prev.nice) + (cur.sys - prev.sys) + (cur.irq - prev.irq);
         const totalDelta = busyDelta + idleDelta;
-        // istanbul ignore else
+        /* v8 ignore next */
         if (totalDelta <= 0) return 0;
-        // istanbul ignore next cause is practically impossible to hit this branch
+        /* v8 ignore next cause is practically impossible to hit this branch */
         return busyDelta / totalDelta;
       });
       this.prevCpus = currentCpus;
-      // istanbul ignore next cause is practically impossible to hit this branch
+      /* v8 ignore next cause is practically impossible to hit this branch */
       const avgLoad = loads.length === 0 ? 0 : loads.reduce((sum, value) => sum + value, 0) / loads.length;
       const osCpu = Number((avgLoad * 100).toFixed(2));
       entry.osCpu = osCpu;
@@ -259,7 +254,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
 
       // Debug output
       if (this.debug) {
-        // istanbul ignore next cause is just a precaution for debug/verbose flags which are only used for development and testing, not in production
+        /* v8 ignore next cause is just a precaution for debug/verbose flags which are only used for development and testing, not in production */
         this.log.debug(
           `Time: ${formatTimeStamp(entry.timestamp)} ` +
             `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +
@@ -310,12 +305,12 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     if (!bun && global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (${type}-${execution}) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
         global.gc();
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
       }
@@ -323,11 +318,11 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       try {
         setGcLevel(2);
         gc(execution === 'sync');
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
-        // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection failed triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
       }
     } else {

@@ -1,4 +1,8 @@
-// vitest/devices/heatPump.test.ts
+/**
+ * @file packages/core/vitest/devices/heatPump.test.ts
+ * @description This file contains the tests for the HeatPump device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'HeatPump';
 const MATTER_PORT = 8007;

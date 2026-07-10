@@ -1,4 +1,8 @@
-// buntest\broadcastServer.test.ts
+/**
+ * @file packages/thread/buntest/broadcastServer.test.ts
+ * @description This file contains the bun tests for the BroadcastServer class.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BroadcastServer';
 

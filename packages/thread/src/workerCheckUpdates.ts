@@ -1,7 +1,6 @@
 /**
- * This file contains the workerCheckUpdates thread.
- *
- * @file workerCheckUpdates.ts
+ * @file packages/thread/src/workerCheckUpdates.ts
+ * @description This file contains the workerCheckUpdates thread.
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.1.0

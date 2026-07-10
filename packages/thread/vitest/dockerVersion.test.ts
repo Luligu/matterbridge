@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/dockerVersion.test.ts
+ * @description This file contains the tests for dockerVersion.
+ * @author Luca Liguori
+ */
+
 import type { Mock } from 'vitest';
 
 let httpsGetImpl: Mock<(...args: any[]) => any>;

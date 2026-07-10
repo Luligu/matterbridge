@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.clusters.revision.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.clusters.revision.test.ts
+ * @description This file contains the tests for the matterbridgeDeviceTypes clusters revisions.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypesClustersRevision';
 

@@ -1,6 +1,10 @@
-// vitest\threadsManager.mainthread.test.ts
+/**
+ * @file packages/thread/vitest/threadsManager.mainthread.test.ts
+ * @description This file contains the tests for the ThreadsManager class in the main thread.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable vitest/no-commented-out-tests
+/* oxlint-disable vitest/no-commented-out-tests */
 
 const NAME = 'ThreadsManagerMainThread';
 

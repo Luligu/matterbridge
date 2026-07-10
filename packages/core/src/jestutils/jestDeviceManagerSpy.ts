@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestDeviceManagerSpy.ts
  * @description This file contains the Jest DeviceManager spy.
- * @file src/jestDeviceManagerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0
@@ -24,6 +24,7 @@
 import { DeviceManager } from '../deviceManager.js';
 
 // Spy on DeviceManager methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const destroyDeviceManagerSpy: jest.SpiedFunction<typeof DeviceManager.prototype.destroy> = jest.spyOn(DeviceManager.prototype, 'destroy');
 export const lengthDeviceManagerSpy: jest.SpiedGetter<typeof DeviceManager.prototype.length> = jest.spyOn(DeviceManager.prototype, 'length', 'get');

@@ -1,4 +1,8 @@
-// vitest/devices/roboticVacuumCleaner.test.ts
+/**
+ * @file packages/core/vitest/devices/roboticVacuumCleaner.test.ts
+ * @description This file contains the tests for the RoboticVacuumCleaner device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Vacuum';
 const MATTER_PORT = 8013;

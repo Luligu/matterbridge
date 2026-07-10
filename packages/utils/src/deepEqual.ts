@@ -1,7 +1,6 @@
 /**
- * This file contains the deepEqual function.
- *
- * @file deepEqual.ts
+ * @file packages/utils/src/deepEqual.ts
+ * @description This file contains the deepEqual function.
  * @author Luca Liguori
  * @created 2025-02-16
  * @version 1.0.0
@@ -22,8 +21,8 @@
  * limitations under the License.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* oxlint-disable typescript/no-explicit-any */
+/* oxlint-disable typescript/no-unused-vars */
 
 import { logModuleLoaded } from './loader.js';
 

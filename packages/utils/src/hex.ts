@@ -1,7 +1,6 @@
 /**
- * This file contains the hex functions.
- *
- * @file hex.ts
+ * @file packages/utils/src/hex.ts
+ * @description This file contains the hex functions.
  * @author Luca Liguori
  * @created 2025-05-06
  * @version 1.0.1
@@ -178,18 +177,18 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
           // Use X509Certificate for robust certificate validation
           const cert = new X509Certificate(pem);
           // Check validity period
-          // istanbul ignore else
+          /* v8 ignore next */
           if (cert.validFrom && cert.validTo) {
             const now = Date.now();
             const from = Date.parse(cert.validFrom);
             const to = Date.parse(cert.validTo);
-            // istanbul ignore next if
+            /* v8 ignore next if */
             if (now < from || now > to) {
               throw new Error('Certificate is not currently valid');
             }
           }
           // Check subject/issuer fields
-          // istanbul ignore next if
+          /* v8 ignore next if */
           if (!cert.subject || !cert.issuer) {
             throw new Error('Certificate missing subject or issuer');
           }
@@ -203,14 +202,14 @@ export function pemToBuffer(pem: string, validate: boolean = false): Uint8Array 
         }
         // If no specific type is detected, skip validation
       } catch (validationError) {
-        // istanbul ignore next
+        /* v8 ignore next */
         throw new Error(`PEM validation failed: ${getErrorMessage(validationError)}`, { cause: validationError });
       }
     }
 
     return result;
   } catch (error) {
-    // istanbul ignore next
+    /* v8 ignore next */
     throw new Error(`Failed to decode base64 content: ${getErrorMessage(error)}`, { cause: error });
   }
 }
@@ -258,7 +257,7 @@ export function extractPrivateKeyRaw(pemPrivateKey: string): Uint8Array {
     const pkcs8Der = privateKey.export({ format: 'der', type: 'pkcs8' }) as Buffer;
 
     // For P-256 curves, the private scalar is the last 32 bytes of the PKCS#8 DER
-    // istanbul ignore next
+    /* v8 ignore next */
     if (pkcs8Der.length < 32) {
       throw new Error('Invalid private key: DER data too short');
     }

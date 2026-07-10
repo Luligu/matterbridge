@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeDeviceEnergyManagementServer class of Matterbridge.
- *
- * @file deviceEnergyManagementServer.ts
+ * @file packages/core/src/behaviors/deviceEnergyManagementServer.ts
+ * @description This file contains the MatterbridgeDeviceEnergyManagementServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,13 +21,12 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -50,7 +48,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'powerAdjustRequest',
       request,
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -67,7 +65,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       command: 'cancelPowerAdjustRequest',
       request: {},
       cluster: DeviceEnergyManagementServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof DeviceEnergyManagement)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });

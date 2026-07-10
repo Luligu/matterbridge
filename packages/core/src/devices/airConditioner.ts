@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/airConditioner.ts
  * @description This file contains the AirConditioner class.
- * @file src/devices/airConditioner.ts
  * @author Luca Liguori
  * @created 2025-09-04
  * @version 1.0.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 

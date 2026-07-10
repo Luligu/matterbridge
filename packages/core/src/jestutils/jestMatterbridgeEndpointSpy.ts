@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestMatterbridgeEndpointSpy.ts
  * @description This file contains the Jest MatterbridgeEndpoint spy.
- * @file src/jestMatterbridgeEndpointSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0
@@ -24,6 +24,7 @@
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 
 // Spy on MatterbridgeEndpoint methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const setClusterMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setCluster> = jest.spyOn(MatterbridgeEndpoint.prototype, 'setCluster');
 export const setAttributeMatterbridgeEndpointSpy: jest.SpiedFunction<typeof MatterbridgeEndpoint.prototype.setAttribute> = jest.spyOn(

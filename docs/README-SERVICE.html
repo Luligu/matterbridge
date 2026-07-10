@@ -169,15 +169,15 @@ sudo chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
 <p>Create a systemctl configuration file for Matterbridge</p>
 <pre><code class="language-bash">sudo nano /etc/systemd/system/matterbridge.service
 </code></pre>
-<p>Add the following to this file, replacing 3 times (!) USER with your user name (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):</p>
+<p>Add the following to this file, <strong>replacing 3 times (!) USER with your user name</strong> (e.g. WorkingDirectory=/home/pi/Matterbridge, User=pi and Group=pi):</p>
 <p>You may need to adapt the configuration to your setup:</p>
 <ul>
-<li>ExecStart on some linux distribution can also be ExecStart==/usr/bin/matterbridge --service</li>
+<li>On some Linux distributions, ExecStart can also be ExecStart=/usr/bin/matterbridge --service</li>
 </ul>
 <pre><code class="language-text">[Unit]
 Description=matterbridge
 After=network-online.target
-Wants=network.target
+Wants=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
 
@@ -185,9 +185,13 @@ StartLimitBurst=5
 Type=simple
 ExecStart=matterbridge --service
 WorkingDirectory=/home/&lt;USER&gt;/Matterbridge
-StandardOutput=inherit
-StandardError=inherit
+# Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=matterbridge
 Restart=always
+RestartSec=5
+TimeoutStopSec=60
 User=&lt;USER&gt;
 Group=&lt;USER&gt;
 

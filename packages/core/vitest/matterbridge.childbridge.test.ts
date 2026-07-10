@@ -1,4 +1,8 @@
-// vitest\matterbridge.childbridge.test.ts
+/**
+ * @file packages/core/vitest/matterbridge.childbridge.test.ts
+ * @description This file contains the tests for Matterbridge in childbridge mode.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!
@@ -6,8 +10,8 @@
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
 
-/* eslint-disable no-console */
-/* eslint-disable vitest/no-conditional-expect */
+/* oxlint-disable no-console */
+/* oxlint-disable vitest/no-conditional-expect */
 
 const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;

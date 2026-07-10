@@ -1,4 +1,8 @@
-// vitest/devices/solarPower.test.ts
+/**
+ * @file packages/core/vitest/devices/solarPower.test.ts
+ * @description This file contains the tests for the SolarPower device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'SolarPower';
 const MATTER_PORT = 8014;

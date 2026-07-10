@@ -1,11 +1,7 @@
 /**
+ * @file packages/dgram/vitest/mdns.test.ts
  * @description Mdns class test
- * @file mdns.test.ts
  * @author Luca Liguori
- * @created 2025-03-22
- * @version 1.0.0
- * @license Apache-2.0
- * @copyright 2025, 2026, 2027 Luca Liguori.
  */
 
 import type dgram from 'node:dgram';
@@ -395,9 +391,9 @@ describe('Mdns', () => {
       authorities: [],
       additionals: [],
     };
-    mdns.logMdnsMessage(msg as any);
-    mdns.deviceQueries.set('1.2.3.4', { rinfo: mockRinfo, query: msg as any });
-    mdns.deviceResponses.set('1.2.3.4', { rinfo: mockRinfo, response: msg as any, dataPTR: 'foo.local' });
+    mdns.logMdnsMessage(msg);
+    mdns.deviceQueries.set('1.2.3.4', { rinfo: mockRinfo, query: msg });
+    mdns.deviceResponses.set('1.2.3.4', { rinfo: mockRinfo, response: msg, dataPTR: 'foo.local' });
     mdns.logDevices();
     expect(loggerInfoSpy).toHaveBeenCalled();
   });
@@ -531,7 +527,7 @@ describe('Mdns', () => {
 
   it('should set QU bit when sending query with unicastResponse=true', () => {
     const query = mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true }]);
-    const decoded = mdns.decodeMdnsMessage(query as any);
+    const decoded = mdns.decodeMdnsMessage(query);
     // oxlint-disable-next-line no-bitwise
     expect(decoded.questions?.[0].class).toBe(DnsClass.IN | DnsClassFlag.QU);
   });
@@ -739,7 +735,7 @@ describe('Mdns', () => {
       additionals: [{ name: 'add.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 60, data: '1.2.3.4' }],
     };
 
-    mdns.logMdnsMessage(msg as any);
+    mdns.logMdnsMessage(msg);
     expect(loggerInfoSpy).toHaveBeenCalled();
   });
 

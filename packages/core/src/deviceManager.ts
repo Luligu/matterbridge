@@ -1,7 +1,6 @@
 /**
- * This file contains the DeviceManager class.
- *
- * @file deviceManager.ts
+ * @file packages/core/src/deviceManager.ts
+ * @description This file contains the DeviceManager class.
  * @author Luca Liguori
  * @created 2024-07-26
  * @version 1.1.2
@@ -84,7 +83,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
-    // istanbul ignore next cause debug logs are not relevant for coverage
+    /* v8 ignore next cause debug logs are not relevant for coverage */
     this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
@@ -100,9 +99,9 @@ export class DeviceManager {
   }
 
   private msgHandler(msg: WorkerMessage): void {
-    // istanbul ignore else
+    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
-      // istanbul ignore next cause debug logs are not relevant for coverage
+      /* v8 ignore next cause debug logs are not relevant for coverage */
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -143,7 +142,7 @@ export class DeviceManager {
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
           break;
         default:
-          // istanbul ignore next cause debug logs are not relevant for coverage
+          /* v8 ignore next cause debug logs are not relevant for coverage */
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }

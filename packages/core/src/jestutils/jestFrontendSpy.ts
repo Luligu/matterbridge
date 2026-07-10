@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestFrontendSpy.ts
  * @description This file contains the Jest Frontend spy.
- * @file src/jestFrontendSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0
@@ -24,6 +24,7 @@
 import { Frontend } from '../frontend.js';
 
 // Spy on Frontend methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const wssSendSnackbarMessageFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendSnackbarMessage> = jest.spyOn(Frontend.prototype, 'wssSendSnackbarMessage');
 export const wssSendCloseSnackbarMessageFrontendSpy: jest.SpiedFunction<typeof Frontend.prototype.wssSendCloseSnackbarMessage> = jest.spyOn(

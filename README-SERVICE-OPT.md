@@ -88,10 +88,10 @@ matterbridge --version
 
 The storage position is **not compatible** with the traditional setup (~/Matterbridge ~/.matterbridge ~/.mattercert).
 
-If you are migrating from the traditional service setup, before removing the old diretories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
-This will save all the plugin configs and the fabrics but you need to remove all plugins and readd them cause the path will be different.
+If you are migrating from the traditional service setup, before removing the old directories, you may want to copy the contents of ~/Matterbridge ~/.matterbridge ~/.mattercert to the new directories /opt/matterbridge/Matterbridge /opt/matterbridge/.matterbridge /opt/matterbridge/.mattercert.
+This will save all the plugin configs and the fabrics, but you need to remove all plugins and add them again because the path will be different.
 
-Copy the old diretories content
+Copy the old directories content
 
 ```bash
 sudo cp -a ~/Matterbridge/. /opt/matterbridge/Matterbridge/
@@ -99,7 +99,7 @@ sudo cp -a ~/.matterbridge/. /opt/matterbridge/.matterbridge/
 sudo cp -a ~/.mattercert/. /opt/matterbridge/.mattercert/
 ```
 
-Remove the old diretories
+Remove the old directories
 
 ```bash
 sudo rm -rf ~/Matterbridge ~/.matterbridge ~/.mattercert ~/.npm-global
@@ -118,8 +118,8 @@ Add the following to this file:
 ```text
 [Unit]
 Description=matterbridge
-After=network.target
-Wants=network.target
+After=network-online.target
+Wants=network-online.target
 StartLimitIntervalSec=60
 StartLimitBurst=5
 
@@ -130,9 +130,13 @@ Environment="NPM_CONFIG_PREFIX=/opt/matterbridge/.npm-global"
 Environment="NPM_CONFIG_CACHE=/opt/matterbridge/.npm-cache"
 ExecStart=matterbridge --service --nosudo
 WorkingDirectory=/opt/matterbridge/Matterbridge
-StandardOutput=inherit
-StandardError=inherit
+# Logs go to the journal (should be persistent). Read with: journalctl -u matterbridge -n 1000 -f --output cat
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=matterbridge
 Restart=always
+RestartSec=5
+TimeoutStopSec=60
 User=matterbridge
 Group=matterbridge
 NoNewPrivileges=true
@@ -167,18 +171,16 @@ One possible fix, add this line to the existing [Service] section:
 Environment="NODE_OPTIONS=--dns-result-order=ipv4first"
 ```
 
-If you use the frontend with **-ssl** -frontend 443 and get an error message: "Port 443 requires elevated privileges",
-add this:
+If you use the frontend with --ssl --frontend 443 and get an error message: "Port 443 requires elevated privileges",
+add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 ```
 
-If you use the **matterbridge-bthome** plugin add this:
+If you use the matterbridge-bthome plugin add this line to the existing [Service] section:
 
 ```text
-[Service]
 AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
 ```
 

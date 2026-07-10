@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/refrigerator.ts
  * @description This file contains the Refrigerator class.
- * @file src/devices/refrigerator.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import type { MaybePromise } from '@matter/general';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/speaker.ts
  * @description Speaker device class controlling mute (On/Off) and volume level (Level Control).
- * @file src/devices/speaker.ts
  * @author Luca Liguori
  * @created 2025-09-04
  * @version 1.0.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable no-param-reassign
+/* oxlint-disable no-param-reassign */
 
-// Imports from @matter
+// @matter
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 

@@ -1,4 +1,8 @@
-// vitest\matterbridgeDeviceTypes.clusters.xml.revision.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeDeviceTypes.clusters.xml.revision.test.ts
+ * @description This file contains the tests for the matterbridgeDeviceTypes clusters revisions against the xml.
+ * @author Luca Liguori
+ */
 
 const NAME = 'MatterbridgeDevicetypesClustersXmlRevision';
 
@@ -142,7 +146,7 @@ async function buildXmlIndex(): Promise<Map<string, XmlClusterInfo>> {
       const xml = await readFile(xmlPath, 'utf8');
       const tagMatch = xml.match(/<cluster\b[^>]*>/i);
       if (!tagMatch) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`No <cluster> tag found in ${f}`);
         continue;
       }
@@ -151,7 +155,7 @@ async function buildXmlIndex(): Promise<Map<string, XmlClusterInfo>> {
       const revMatch = tag.match(/\brevision\s*=\s*"(\d+)"/i);
       const idMatch = tag.match(/\bid\s*=\s*"([^"]+)"/i);
       if (!nameMatch) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(`No name attribute in <cluster> tag in ${f}`);
         continue;
       }
@@ -287,13 +291,13 @@ if (!hasXmlDir) {
       const xmlInfo = xmlIndex.get(key);
       const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);
       if (!xmlInfo) {
-        // eslint-disable-next-line no-console
+        // oxlint-disable-next-line no-console
         console.warn(
           `No XML entry found for ${display} (likely a template or derived cluster). types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`,
         );
         return; // not all clusters have individual 1.5.1 XML files
       }
-      // eslint-disable-next-line no-console
+      // oxlint-disable-next-line no-console
       console.info(`${display}: xml=${JSON.stringify(xmlInfo)} types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`);
       expect(typeof xmlInfo.revision).toBe('number');
       expect(typesId).toBe(xmlInfo.id);

@@ -1,4 +1,8 @@
-// vitest/devices/closure.test.ts
+/**
+ * @file packages/core/vitest/devices/closure.test.ts
+ * @description This file contains the tests for the Closure device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Closure';
 const MATTER_PORT = 8022;

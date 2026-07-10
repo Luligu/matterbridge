@@ -1,4 +1,8 @@
-// buntest/bunMatterTest.test.ts
+/**
+ * @file buntest/bunMatterTest.test.ts
+ * @description This file contains the tests for the bunMatterTest helpers.
+ * @author Luca Liguori
+ */
 
 // Exercises the Bun Matter test environment helpers in ./bunMatterTest.ts against the real matter.js
 // runtime on Bun: create the environment, create a server node + aggregator, add and remove a bridged

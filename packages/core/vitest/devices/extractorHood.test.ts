@@ -1,4 +1,8 @@
-// vitest/devices/extractorHood.test.ts
+/**
+ * @file packages/core/vitest/devices/extractorHood.test.ts
+ * @description This file contains the tests for the ExtractorHood device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'ExtractorHood';
 const MATTER_PORT = 8006;

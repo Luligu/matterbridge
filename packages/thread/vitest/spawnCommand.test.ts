@@ -1,6 +1,10 @@
-// vitest\spawnCommand.test.ts
+/**
+ * @file packages/thread/vitest/spawnCommand.test.ts
+ * @description This file contains the tests for spawnCommand.
+ * @author Luca Liguori
+ */
 
-/* eslint-disable vitest/no-conditional-expect */
+/* oxlint-disable vitest/no-conditional-expect */
 
 // Mock the spawn function from the child_process module. We use vi.doMock to ensure that the mock is applied correctly and can be used in the tests.
 vi.mock('node:child_process', async () => {

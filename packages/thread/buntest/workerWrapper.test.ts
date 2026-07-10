@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/buntest/workerWrapper.test.ts
+ * @description This file contains the bun tests for the WorkerWrapper class.
+ * @author Luca Liguori
+ */
+
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test, type Mock } from 'bun:test';
 import {
   BroadcastChannel,
@@ -125,13 +131,13 @@ describe('WorkerWrapper', () => {
       BroadcastServer: class {
         request = serverRequest;
         close = serverClose;
-        // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+        // oxlint-disable-next-line typescript/no-useless-constructor
         constructor() {}
       },
     }));
 
     void mock.module('../src/threadsManager.js', () => ({
-      // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+      // oxlint-disable-next-line typescript/no-extraneous-class
       ThreadsManager: class {
         static logLevel = LogLevel.DEBUG;
       },
@@ -349,7 +355,7 @@ describe('WorkerWrapper', () => {
     expect(onMessageHandler).toBeDefined();
     onMessageHandler?.({ type: 'ping' });
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     const sent = (parentPort!.postMessage as Mock<(...args: any[]) => any>).mock.calls.map((c: any[]) => c[0]);
     expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
@@ -373,7 +379,7 @@ describe('WorkerWrapper', () => {
 
     await waitImmediate();
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     const sent = (parentPort!.postMessage as Mock<(...args: any[]) => any>).mock.calls.map((c: any[]) => c[0]);
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.DEBUG }));
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.WARN }));
@@ -417,9 +423,9 @@ describe('WorkerWrapper', () => {
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     expect((parentPort!.postMessage as Mock<(...args: any[]) => any>).mock.calls.map((c: any[]) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    // oxlint-disable-next-line typescript/no-non-null-assertion
     expect((parentPort!.postMessage as Mock<(...args: any[]) => any>).mock.calls.map((c: any[]) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
     expect(serverClose).toHaveBeenCalledTimes(1);
   });

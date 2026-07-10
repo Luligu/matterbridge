@@ -1,4 +1,8 @@
-// vitest\npmPrefix.test.ts
+/**
+ * @file packages/utils/vitest/npmPrefix.test.ts
+ * @description This file contains the tests for npmPrefix.
+ * @author Luca Liguori
+ */
 
 import type { ChildProcess, ExecException } from 'node:child_process';
 

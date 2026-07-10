@@ -1,7 +1,6 @@
 /**
- * This file contains the workerSystemCheck thread.
- *
- * @file workerSystemCheck.ts
+ * @file packages/thread/src/workerSystemCheck.ts
+ * @description This file contains the workerSystemCheck thread.
  * @author Luca Liguori
  * @created 2026-02-12
  * @version 1.0.0

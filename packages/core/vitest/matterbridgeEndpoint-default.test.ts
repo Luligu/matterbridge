@@ -1,4 +1,8 @@
-// vitest\matterbridgeEndpoint-default.test.ts
+/**
+ * @file packages/core/vitest/matterbridgeEndpoint-default.test.ts
+ * @description This file contains the tests for the MatterbridgeEndpoint default cluster servers.
+ * @author Luca Liguori
+ */
 
 /**
  * WARNING!!!

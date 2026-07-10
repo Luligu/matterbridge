@@ -1,3 +1,9 @@
+/**
+ * @file packages/thread/vitest/workerDockerVersion.test.ts
+ * @description This file contains the tests for the DockerVersion worker.
+ * @author Luca Liguori
+ */
+
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -60,7 +66,7 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
     : vi.fn<(...args: any[]) => any>(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
 
   vi.doMock('../src/workerWrapper.js', () => ({
-    // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+    // oxlint-disable-next-line typescript/no-extraneous-class
     WorkerWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;

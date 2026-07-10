@@ -163,7 +163,7 @@ describe('toggleDebug', () => {
       ok: false,
       statusText: 'Forbidden',
       json: async () => ({ valid: false }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -196,7 +196,7 @@ describe('toggleDebug', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -232,7 +232,7 @@ describe('toggleDebug', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -269,7 +269,7 @@ describe('toggleDebug', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -306,7 +306,7 @@ describe('toggleDebug', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -355,7 +355,7 @@ describe('App', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: false }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -370,7 +370,7 @@ describe('App', () => {
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ valid: true }),
-    }) as unknown as typeof fetch;
+    });
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {
@@ -383,7 +383,7 @@ describe('App', () => {
   });
 
   it('handles fetch error gracefully', async () => {
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error')) as unknown as typeof fetch;
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
     render(<App />);
     const input = screen.getByPlaceholderText('password');
     await act(async () => {

@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeFanControlServer class of Matterbridge.
- *
- * @file fanControlServer.ts
+ * @file packages/core/src/behaviors/fanControlServer.ts
+ * @description This file contains the MatterbridgeFanControlServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { FanControl } from '@matter/types/clusters/fan-control';

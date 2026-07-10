@@ -1,4 +1,8 @@
-// buntest/repro/bun-worker-exit-concurrent.test.ts
+/**
+ * @file buntest/repro/bun-worker-exit-concurrent.test.ts
+ * @description This file contains the Bun repro tests for concurrent worker exit.
+ * @author Luca Liguori
+ */
 
 // Repro: start multiple workers together, then assert each one replies and exits.
 //

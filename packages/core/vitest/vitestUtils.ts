@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/vitest/vitestUtils.ts
  * @description This file contains shared Vitest helpers for the Matterbridge core tests.
- * @file vitest/vitestUtils.ts
  * @author Luca Liguori
  * @created 2026-06-14
  * @version 1.0.0

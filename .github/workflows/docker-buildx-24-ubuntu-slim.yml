@@ -12,22 +12,11 @@ concurrency:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code to main branch
         uses: actions/checkout@v7
-
-      - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24.x'
-          cache: npm
-
-      - name: Verify Node.js version
-        run: node -v
-
-      - name: Verify Npm version
-        run: npm -v
 
       - name: Set metadata
         id: meta
@@ -67,7 +56,6 @@ jobs:
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
           docker manifest inspect luligu/matterbridge:24-ubuntu-slim
-        timeout-minutes: 60
 
       - name: Trigger Matterbridge Docker Build Ubuntu
         uses: actions/github-script@v9

@@ -1,4 +1,8 @@
-// vitest/devices/speaker.test.ts
+/**
+ * @file packages/core/vitest/devices/speaker.test.ts
+ * @description This file contains the tests for the Speaker device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'Speaker';
 const MATTER_PORT = 8015;

@@ -1,4 +1,8 @@
-// vitest/devices/waterHeater.test.ts
+/**
+ * @file packages/core/vitest/devices/waterHeater.test.ts
+ * @description This file contains the tests for the WaterHeater device.
+ * @author Luca Liguori
+ */
 
 const NAME = 'WaterHeater';
 const MATTER_PORT = 8016;

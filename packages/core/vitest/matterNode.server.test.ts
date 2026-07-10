@@ -1,6 +1,12 @@
-// vitest\matterNode.server.test.ts
+/**
+ * @file packages/core/vitest/matterNode.server.test.ts
+ * @description This file contains the tests for the MatterNode class in server mode.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable no-use-before-define typescript/prefer-nullish-coalescing typescript/explicit-function-return-type
+/* oxlint-disable no-use-before-define */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable typescript/explicit-function-return-type */
 
 const MATTER_PORT = 10020;
 const NAME = 'MatterNodeServer';

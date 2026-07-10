@@ -1,6 +1,6 @@
 /**
- * @description This file contains the bin mb_health to check the Matterbridge health endpoint.
  * @file packages/core/src/mb_health.ts
+ * @description This file contains the bin mb_health to check the Matterbridge health endpoint.
  * @author Luca Liguori
  * @created 2026-01-28
  * @version 1.0.0
@@ -145,13 +145,13 @@ export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code:
   const { ok, statusCode, body, json } = await fetchHealth(url, timeoutMs);
 
   if (json !== undefined) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.log(JSON.stringify(json, null, 2));
   } else if (body) {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.log(body);
   } else {
-    // eslint-disable-next-line no-console
+    // oxlint-disable-next-line no-console
     console.log(JSON.stringify({ ok, statusCode }, null, 2));
   }
 

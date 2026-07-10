@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, and MatterbridgeLiftTiltWindowCoveringServer classes of Matterbridge.
- *
- * @file windowCoveringServer.ts
+ * @file packages/core/src/behaviors/windowCoveringServer.ts
+ * @description This file contains the MatterbridgeWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, and MatterbridgeLiftTiltWindowCoveringServer classes of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { type WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
@@ -43,7 +42,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   declare protected internal: WindowCoveringBaseServer.Internal;
   lookupMovementStatus = ['Stopped', 'Opening', 'Closing', 'Unknown'];
 
-  // istanbul ignore next
+  /* v8 ignore next */
   private getMovementStatusLabel(status?: number | null): string {
     return this.lookupMovementStatus[status ?? 3];
   }
@@ -176,7 +175,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   /**
    * No-op: movement is handled by the device implementation.
    */
-  // istanbul ignore next
+  /* v8 ignore next */
   override handleMovement(): void {
     // Do nothing here, as the device will handle the movement
   }

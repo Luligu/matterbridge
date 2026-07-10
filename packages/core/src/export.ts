@@ -1,12 +1,12 @@
 /**
+ * @file packages/core/src/export.ts
  * @description This file contains the entry point of Matterbridge.
- * @file index.ts
  * @author Luca Liguori
  * @created 2023-12-29
  * @version 1.0.9
  * @license Apache-2.0
  *
- * Copyright 2023, 2024, 2025 Luca Liguori.
+ * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@
  * limitations under the License.
  */
 
-// oxlint-disable oxc/no-barrel-file
+/* oxlint-disable oxc/no-barrel-file */
 
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 
-// istanbul ignore next
+/* v8 ignore next */
 logModuleLoaded('Index');
 
 export * from './behaviors/activatedCarbonFilterMonitoringServer.js';

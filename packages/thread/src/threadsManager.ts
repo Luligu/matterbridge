@@ -1,7 +1,6 @@
 /**
- * This file contains the ThreadsManager class.
- *
- * @file threadsManager.ts
+ * @file packages/thread/src/threadsManager.ts
+ * @description This file contains the ThreadsManager class.
  * @author Luca Liguori
  * @created 2026-03-07
  * @version 1.1.1
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-/* eslint-disable jsdoc/no-defaults */
+/* oxlint-disable jsdoc/no-defaults */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -97,7 +96,7 @@ export class ThreadsManager {
    * @param {number} [intervalMs=60_000] - The delay in milliseconds for the interval handler. Defaults to 60 seconds (60000 ms).
    */
   constructor(intervalMs: number = 60_000) {
-    // istanbul ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production
+    /* v8 ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
     this.tracker = hasParameter('tracker') || hasParameter('tracker-threads');
@@ -106,7 +105,7 @@ export class ThreadsManager {
       logName: 'ThreadsManager',
       logNameColor: MAGENTA,
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
       logWithColors: !hasParameter('no-ansi') && process.env.NO_COLOR !== '1',
     });
@@ -121,7 +120,7 @@ export class ThreadsManager {
     this.intervalMs = intervalMs;
     this.interval = setInterval(this.intervalHandler.bind(this), this.intervalMs);
 
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.notice(`ThreadsManager initialized. Listening for broadcast messages...`);
   }
 
@@ -135,7 +134,7 @@ export class ThreadsManager {
     // Close broadcast servers and remove listeners
     this.server.off('broadcast_message', this.boundMsgHandler);
     this.server.close();
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.notice(`ThreadsManager destroyed. Broadcast server closed.`);
   }
 
@@ -146,7 +145,7 @@ export class ThreadsManager {
    */
   private msgHandler(msg: WorkerMessage): void {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'manager')) {
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -169,7 +168,7 @@ export class ThreadsManager {
           }
           break;
         default:
-          // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+          /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
@@ -275,7 +274,7 @@ export class ThreadsManager {
     worker.on('message', (message: ParentPortMessage) => {
       const now = Date.now();
       threadInfo.lastSeen = now;
-      // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date(now).toISOString()}: ${debugStringify(message)}`);
       if (message.type === 'log') {
         AnsiLogger.create({ logName: threadInfo.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.log.logLevel }).log(
@@ -424,7 +423,7 @@ export class ThreadsManager {
       stdout: pipedOutput, // When true, worker.stdout becomes a Readable stream (otherwise null)
       stderr: pipedOutput, // When true, worker.stderr becomes a Readable stream (otherwise null)
     };
-    // istanbul ignore next - debug/verbose flags are only used for development and testing, not in production
+    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.debug(`Creating ESM Worker ${name} with file URL ${fileURL.href} and options ${debugStringify(options)}`);
     return new Worker(fileURL, options);
   }

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/laundryWasher.ts
  * @description This file contains the LaundryWasher class.
- * @file src/devices/laundryWasher.ts
  * @author Luca Liguori
  * @created 2025-05-25
  * @version 1.1.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
@@ -36,7 +36,6 @@ import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 /**
@@ -168,7 +167,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`HandleOnOffChange (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // istanbul ignore else
+    /* v8 ignore next */
     if (!onOff) {
       device.log.notice('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
       this.state.currentMode = 2;
@@ -188,7 +187,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
       command: 'changeToMode',
       request,
       cluster: LaundryWasherModeServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof LaundryWasherMode)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);

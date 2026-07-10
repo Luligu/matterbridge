@@ -1,9 +1,14 @@
-// src\behaviors\matterbridgeServer.test.ts
+/**
+ * @file packages/core/vitest/behaviors/matterbridgeServer.test.ts
+ * @description This file contains the tests for the MatterbridgeServer behavior.
+ * @author Luca Liguori
+ */
 
-// oxlint-disable vitest/no-commented-out-tests
+/* oxlint-disable vitest/no-commented-out-tests */
+/* oxlint-disable vitest/no-conditional-expect */
+/* oxlint-disable typescript/explicit-function-return-type */
 
 // TODO: analyze each rule
-// oxlint-disable vitest/no-conditional-expect typescript/explicit-function-return-type
 
 const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;

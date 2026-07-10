@@ -1,7 +1,6 @@
 /**
- * This file contains the MatterbridgeActivatedCarbonFilterMonitoringServer class of Matterbridge.
- *
- * @file activatedCarbonFilterMonitoringServer.ts
+ * @file packages/core/src/behaviors/activatedCarbonFilterMonitoringServer.ts
+ * @description This file contains the MatterbridgeActivatedCarbonFilterMonitoringServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -22,7 +21,7 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';

@@ -1,4 +1,8 @@
-// vitest/devices/base.test.ts
+/**
+ * @file packages/core/vitest/devices/base.test.ts
+ * @description This file contains the tests for the base device class.
+ * @author Luca Liguori
+ */
 
 const NAME = 'BaseTest';
 const MATTER_PORT = 8000;

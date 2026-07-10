@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/temperatureControl.ts
  * @description This file contains the TemperatureControlCluster helper functions.
- * @file src/devices/temperatureControl.ts
  * @author Luca Liguori
  * @created 2025-05-18
  * @version 1.0.0
@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// oxlint-disable typescript/no-unsafe-type-assertion
+/* oxlint-disable typescript/no-unsafe-type-assertion */
 
-// Imports from @matter
+// @matter
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 

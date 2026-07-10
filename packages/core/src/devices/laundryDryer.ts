@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/devices/laundryDryer.ts
  * @description This file contains the LaundryDryer class.
- * @file src/devices/laundryDryer.ts
  * @author Luca Liguori
  * @created 2025-06-29
  * @version 1.1.0
@@ -21,7 +21,7 @@
  * limitations under the License.
  */
 
-// Imports from @matter
+// @matter
 import { LaundryDryerControlsServer } from '@matter/node/behaviors/laundry-dryer-controls';
 import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';

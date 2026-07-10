@@ -1,12 +1,16 @@
-// vitest\frontend.express.test.ts
+/**
+ * @file packages/core/vitest/frontend.express.test.ts
+ * @description This file contains the tests for the Frontend with express.
+ * @author Luca Liguori
+ */
+
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-// oxlint-disable typescript/prefer-nullish-coalescing
 
 const MATTER_PORT = 9100;
 const FRONTEND_PORT = 8285;
@@ -195,12 +199,12 @@ describe('Matterbridge frontend express with http', () => {
 
   // oxlint-disable-next-line typescript/explicit-function-return-type
   const mockDownloadErrorOnce = () =>
-    vi.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+    vi.spyOn(expressResponse, 'download').mockImplementation((...args: unknown[]) => {
       const done = args[args.length - 1];
       if (typeof done === 'function') {
         (done as (error: Error) => void)(new Error('Test download error'));
       }
-    }) as typeof expressResponse.download);
+    });
 
   // oxlint-disable-next-line typescript/explicit-function-return-type
   const seedTempZip = async (filename: string) => {
@@ -387,12 +391,12 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/view-diagnostic error', async () => {
-    const readFileSpy = vi.spyOn(nodeFs.promises, 'readFile').mockImplementation((async (filePath, ...args) => {
+    const readFileSpy = vi.spyOn(nodeFs.promises, 'readFile').mockImplementation(async (filePath, ...args) => {
       if (typeof filePath === 'string' && filePath.endsWith(MATTERBRIDGE_DIAGNOSTIC_FILE)) {
         throw new Error('Test diagnostic read error');
       }
       return Reflect.apply(fs.readFile, fs, [filePath, ...args]);
-    }) as typeof nodeFs.promises.readFile);
+    });
 
     try {
       const response = await makeRequest('/api/view-diagnostic', 'GET');
@@ -457,12 +461,12 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/downloadhistory error', async () => {
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
-    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation((...args: unknown[]) => {
       const done = args[args.length - 1];
       if (typeof done === 'function') {
         (done as (error: Error) => void)(new Error('Test download error'));
       }
-    }) as typeof expressResponse.download);
+    });
 
     try {
       const response = await makeRequest('/api/downloadhistory', 'GET');
@@ -496,12 +500,12 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-mblog error', async () => {
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'Test error content', 'utf8');
-    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation((...args: unknown[]) => {
       const done = args[args.length - 1];
       if (typeof done === 'function') {
         (done as (error: Error) => void)(new Error('Test download error'));
       }
-    }) as typeof expressResponse.download);
+    });
 
     try {
       const response = await makeRequest('/api/download-mblog', 'GET');
@@ -535,12 +539,12 @@ describe('Matterbridge frontend express with http', () => {
 
   test('GET /api/download-mjlog error', async () => {
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE), 'Test error content', 'utf8');
-    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation(((...args: unknown[]) => {
+    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation((...args: unknown[]) => {
       const done = args[args.length - 1];
       if (typeof done === 'function') {
         (done as (error: Error) => void)(new Error('Test download error'));
       }
-    }) as typeof expressResponse.download);
+    });
 
     try {
       const response = await makeRequest('/api/download-mjlog', 'GET');

@@ -1,6 +1,6 @@
 /**
+ * @file packages/core/src/jestutils/jestBroadcastServerSpy.ts
  * @description This file contains the Jest BroadcastServer spy.
- * @file src/jestBroadcastServerSpy.ts
  * @author Luca Liguori
  * @created 2026-04-15
  * @version 1.0.0
@@ -24,6 +24,7 @@
 import { BroadcastServer } from '@matterbridge/thread/server';
 
 // Spy on BroadcastServer methods
+// oxlint-disable-next-line typescript/no-unnecessary-type-assertion
 const { jest } = await import('@jest/globals' as string);
 export const closeBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.close> = jest.spyOn(BroadcastServer.prototype, 'close');
 export const getUniqueIdBroadcastServerSpy: jest.SpiedFunction<typeof BroadcastServer.prototype.getUniqueId> = jest.spyOn(BroadcastServer.prototype, 'getUniqueId');
