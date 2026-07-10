@@ -3,6 +3,8 @@
 [install]
 # installation strategy: "hoisted" or "isolated"
 linker = "isolated"
+# Make @matter/main's transitive @matter/* packages available to all workspaces.
+publicHoistPattern = ["@matter/*"]
 
 [test]
 # Optional setup run before any test (env, global mocks):
