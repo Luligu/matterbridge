@@ -1,4 +1,8 @@
-# Matterbridge — Bun-native test runner config v 1.0.0.
+# Matterbridge — Bun config v 1.0.2.
+
+[install]
+# installation strategy: "hoisted" or "isolated"
+linker = "isolated"
 
 [test]
 # Optional setup run before any test (env, global mocks):

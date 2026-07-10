@@ -71,6 +71,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
 - [matterbridge]: Bump `vitest` to v.4.1.10.
 - [matterbridge]: Bump `marked` to v.18.0.6.
+- [package]: Update tsconfigs `typescript` to v.7.0.2.
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.
 
