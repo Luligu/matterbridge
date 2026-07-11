@@ -379,10 +379,8 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.14",
-    "@types/jest": "30.0.0",
     "@types/node": "26.1.1",
     "@vitest/coverage-v8": "4.1.10",
-    "cross-env": "10.1.0",
     "cross-spawn": "7.0.6",
     "marked": "18.0.6",
     "oxfmt": "0.58.0",
