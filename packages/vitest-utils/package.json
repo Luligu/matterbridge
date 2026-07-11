@@ -65,7 +65,7 @@
     "CHANGELOG.md"
   ],
   "automator": {
-    "vitest": true,
+    "vitestTypes": true,
     "skipPackageJson": true,
     "skipTsconfig": true
   },
