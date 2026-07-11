@@ -145,6 +145,7 @@
     "CHANGELOG.md"
   ],
   "automator": {
+    "node": true,
     "bun": true,
     "vitest": true,
     "skipPackageJson": true,

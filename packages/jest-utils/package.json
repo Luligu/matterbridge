@@ -65,6 +65,7 @@
     "CHANGELOG.md"
   ],
   "automator": {
+    "node": true,
     "jestTypes": true,
     "skipPackageJson": true,
     "skipTsconfig": true
