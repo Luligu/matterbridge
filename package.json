@@ -171,6 +171,7 @@
     "version": true,
     "publish": true,
     "frontend": true,
+    "vitest": true,
     "skipPackageJson": true,
     "skipTsconfig": true,
     "skipDevContainer": true,
