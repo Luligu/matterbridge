@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.16
+// .oxlintrc.json 1.0.17
 
 // This Oxlint configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules.
 {
@@ -12,8 +12,8 @@
     "**/coverage/**",
     "**/dist/**",
     "**/temp/**",
-    "**/jest/**",
     "**/node_modules/**",
+    "**/out/**",
     "**/scripts/**",
     "**/screenshots/**",
     "vendor/**",
@@ -27,7 +27,7 @@
   },
   "options": {
     "reportUnusedDisableDirectives": "warn",
-    "respectEslintDisableDirectives": true,
+    "respectEslintDisableDirectives": false,
     "typeAware": true,
     "typeCheck": true,
     "maxWarnings": 0
