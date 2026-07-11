@@ -145,6 +145,8 @@
     "CHANGELOG.md"
   ],
   "automator": {
+    "bun": true,
+    "vitest": true,
     "skipPackageJson": true,
     "skipTsconfig": true
   },
