@@ -167,8 +167,6 @@
     "node": true,
     "bun": true,
     "library": true,
-    "vitest": true,
-    "buntest": true,
     "native": true,
     "git": true,
     "version": true,
