@@ -1,8 +1,4 @@
----
-description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package v.1.0.1'
----
-
-# Matterbridge Endpoint Guide
+# Matterbridge Endpoint Guide (v.1.0.0)
 
 Use this guide when writing Matterbridge code in this repository or when authoring a plugin that consumes Matterbridge.
 
@@ -303,7 +299,7 @@ For most plugins, follow this order:
 2. Create the endpoint or single-class device.
 3. Set device identity with one of the Basic Information helpers if you are using a raw `MatterbridgeEndpoint`.
 4. Add explicit cluster servers you need.
-5. Call `addRequiredClusterServers()` last.
+5. Call `addRequiredClusters()` last.
 6. Register the device with `await this.registerDevice(device)`.
 7. Optionally add UI metadata with `setSelectDevice()` and `setSelectEntity()`.
 

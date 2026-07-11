@@ -1,4 +1,4 @@
-# Codex config v. 1.0.2
+# Codex config v.1.0.2
 
 approval_policy = "on-request"
 approvals_reviewer = "user"
