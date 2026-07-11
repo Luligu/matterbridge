@@ -1,4 +1,5 @@
-# .gitignore 1.0.1
+# .gitignore 1.0.2
+
 # This file specifies intentionally untracked directories and files that Git should ignore.
 
 # Specific directories that should be ignored
@@ -6,8 +7,8 @@
 build/
 coverage/
 dist/
-jest/
 node_modules/
+out/
 temp/
 
 # Specific files that should be ignored
@@ -17,8 +18,11 @@ temp/
 *.tsbuildinfo
 *.tgz
 *.log
+.env
+.env.*
+!.env.example
 
-# Package specific directories and files that should be ignored
+# Package specific directories and files that should be ignored (mb-run --upgrade merges the .localignore .gitlocalignore files from packages)
 
 chip/
 heap_profile
