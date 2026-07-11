@@ -165,7 +165,6 @@
   ],
   "automator": {
     "node": true,
-    "bun": true,
     "library": true,
     "native": true,
     "git": true,
