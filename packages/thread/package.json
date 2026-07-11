@@ -81,7 +81,9 @@
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
+    "@matterbridge/types": "3.9.5",
     "@matterbridge/vitest-utils": "3.9.5",
+    "@types/node": "26.1.1",
     "vitest": "4.1.10"
   }
 }

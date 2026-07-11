@@ -75,5 +75,9 @@
     "@matterbridge/types": "3.9.5",
     "@matterbridge/utils": "3.9.5",
     "node-ansi-logger": "3.3.0"
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "26.1.1"
   }
 }
