@@ -1,4 +1,4 @@
-// .oxfmtrc.json 1.0.5
+// .oxfmtrc.json 1.0.6
 
 // This Oxfmt configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules.
 {
@@ -13,8 +13,8 @@
     "docs",
     "**/dist/**",
     "**/temp/**",
-    "**/jest/**",
     "**/node_modules/**",
+    "**/out/**",
     "**/screenshots/**",
     "vendor/**",
     "**/package-lock.json",
