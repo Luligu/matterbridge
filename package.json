@@ -270,7 +270,6 @@
     "reset:all": "npm run reset && npm --prefix apps/frontend run reset",
     "softReset": "npm install --workspaces --include-workspace-root --no-fund --no-audit && npm prune --workspaces --include-workspace-root && npm run build && npm run typecheck && node scripts/npm-link.mjs",
     "softReset:all": "npm run softReset && npm --prefix apps/frontend run softReset",
-    "automator": "node scripts/run-automator.mjs --monorepo-root && npm --workspaces run automator && npm run reset",
     "data-model": "node ./scripts/data-model.mjs",
     "update-htmls": "node ./scripts/update-htmls.mjs",
     "scan-deps": "node ./scripts/scan-deps.mjs",
