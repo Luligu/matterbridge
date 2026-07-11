@@ -1,6 +1,6 @@
 /**
  * deep-clean.mjs
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Dependency-free replacement for:
  *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp package-lock.json npm-shrinkwrap.json \
@@ -9,15 +9,17 @@
  * Fully removes the *.tsbuildinfo files, build/test output directories and lock files,
  * then empties the contents of .cache and node_modules while keeping those directories.
  *
- * With `--workspace`, it first cleans the root directory and then cleans every
- * workspace listed in the root package.json `workspaces` array.
+ * With `--workspaces`, it first cleans the root directory and then cleans every
+ * workspace listed in the root package.json `workspaces` array. Simple workspace
+ * globs ending in `/*` (for example `packages/*` and `apps/*`) are expanded to
+ * concrete child directories that contain a package.json.
  *
  * Usage:
  *   node scripts/deep-clean.mjs
- *   node scripts/deep-clean.mjs --workspace
+ *   node scripts/deep-clean.mjs --workspaces
  */
 
-import { readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = process.cwd();
@@ -67,11 +69,40 @@ const clean = (dir) => {
   }
 };
 
+const getWorkspaceDirs = () => {
+  const { workspaces = [] } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+  const patterns = Array.isArray(workspaces) ? workspaces : (workspaces.packages ?? []);
+  const dirs = [];
+
+  for (const pattern of patterns) {
+    if (!pattern.endsWith('/*')) {
+      const dir = resolve(root, pattern);
+      if (existsSync(resolve(dir, 'package.json'))) dirs.push(dir);
+      continue;
+    }
+
+    const parentDir = resolve(root, pattern.slice(0, -2));
+    let entries;
+    try {
+      entries = readdirSync(parentDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const dir = resolve(parentDir, entry.name);
+      if (existsSync(resolve(dir, 'package.json'))) dirs.push(dir);
+    }
+  }
+
+  return dirs;
+};
+
 clean(root);
 
-if (process.argv.includes('--workspace')) {
-  const { workspaces = [] } = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
-  for (const workspace of workspaces) {
-    clean(resolve(root, workspace));
+if (process.argv.includes('--workspaces')) {
+  for (const workspaceDir of getWorkspaceDirs()) {
+    clean(workspaceDir);
   }
 }
