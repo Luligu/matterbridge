@@ -372,9 +372,7 @@
     "@matterbridge/thread": "3.9.5",
     "@matterbridge/types": "3.9.5",
     "@matterbridge/utils": "3.9.5",
-    "@matterbridge/vitest-utils": "3.9.5",
-    "node-ansi-logger": "3.3.0",
-    "node-persist-manager": "2.1.0"
+    "@matterbridge/vitest-utils": "3.9.5"
   },
   "devDependencies": {
     "@types/bun": "1.3.14",
