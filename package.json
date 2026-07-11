@@ -176,6 +176,7 @@
     "frontend": true,
     "skipPackageJson": true,
     "skipTsconfig": true,
+    "skipDevContainer": true,
     "coverage": {
       "lines": 100,
       "functions": 100,
