@@ -49,6 +49,7 @@
         "@matterbridge/vitest-utils": "3.9.5",
         "@types/escape-html": "1.0.4",
         "@types/express": "5.0.6",
+        "@types/jest": "30.0.0",
         "@types/multer": "2.2.0",
         "@types/node": "26.1.1",
         "@types/ws": "8.18.1",
