@@ -1093,7 +1093,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if ((!isLocal && !fs.existsSync(plugin.path) && !this.isShutdownCommand) || process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         const sudo =
-          hasParameter('sudo') || (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !process.env.PATH?.includes('/.nvm/versions/node/'));
+          hasParameter('sudo') ||
+          (process.platform !== 'win32' && !hasParameter('docker') && !hasParameter('nosudo') && !isBun() && !process.env.PATH?.includes('/.nvm/versions/node/'));
         try {
           if (plugin.private && plugin.tarballPath && fs.existsSync(path.join(this.matterbridgeDirectory, 'uploads', plugin.tarballPath))) {
             this.log.info(`Plugin ${plg}${plugin.name}${nf} not found. Trying to reinstall it from last tarball...`);
