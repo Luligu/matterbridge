@@ -50,11 +50,13 @@ No new device types were added in Matter 1.6.0.
 | TemperatureMeasurement                                | 0x0402 | 5     | 6     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
 | Thermostat                                            | 0x0201 | 10    | 11    | Added support for Thermostat suggestions; added events                                                              |
 | TotalVolatileOrganicCompoundsConcentrationMeasurement | 0x042E | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Uncertainty attributes                                    |
-| WaterContentMeasurementClusters                       | 0x0000 | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
+| WaterContentMeasurementClusters (1)                   | 0x0000 | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
 
 ### Remarks
 
 Quality F = Fixed: the attribute has fixed persistence and is not expected to change during normal operation.
+
+(1) In matter.js, this family maps to the concrete `RelativeHumidityMeasurement` cluster export rather than a separate `WaterContentMeasurementClusters` module.
 
 ## New Cluster Types
 

@@ -67,7 +67,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.4",
+    "@matter/main": "0.17.5",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {

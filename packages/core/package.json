@@ -135,7 +135,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.4",
+    "@matter/main": "0.17.5",
     "@matterbridge/dgram": "3.9.5",
     "@matterbridge/thread": "3.9.5",
     "@matterbridge/types": "3.9.5",
@@ -152,8 +152,8 @@
     "@matterbridge/vitest-utils": "3.9.5",
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
-    "@types/multer": "2.2.0",
     "@types/jest": "30.0.0",
+    "@types/multer": "2.2.0",
     "@types/node": "26.1.1",
     "@types/ws": "8.18.1",
     "vitest": "4.1.10"

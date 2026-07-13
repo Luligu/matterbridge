@@ -60,6 +60,10 @@ These classes will run as threads in the next releases:
 
 ## [3.9.5] - Dev branch
 
+### Breaking changes
+
+- [matter]: Bump `matter.js` to 0.17.5 and Matter to 1.6.0. See [Matter 1.6.0 changes from 1.5.1](Matter-1.6.0.md) for delta from 1.5.1.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.4.
