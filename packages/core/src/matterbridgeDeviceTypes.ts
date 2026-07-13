@@ -30,6 +30,7 @@ import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { ApplicationBasic } from '@matter/types/clusters/application-basic';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
@@ -117,6 +118,7 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
@@ -1115,7 +1117,7 @@ export const waterFreezeDetector = DeviceTypeDefinition({
   code: 0x0041,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1135,7 +1137,7 @@ export const waterLeakDetector = DeviceTypeDefinition({
   code: 0x0043,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1155,7 +1157,7 @@ export const rainSensor = DeviceTypeDefinition({
   code: 0x0044,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1334,7 +1336,7 @@ export const closureController = DeviceTypeDefinition({
   requiredServerClusters: [],
   optionalServerClusters: [],
   requiredClientClusters: [ClosureControl.id],
-  optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
+  optionalClientClusters: [Identify.id, ClosureDimension.id],
 });
 
 /** Chapter 9. HVAC Device Types */
@@ -1354,11 +1356,11 @@ export const thermostat = DeviceTypeDefinition({
   code: 0x301,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [Identify.id, Thermostat.id],
   optionalServerClusters: [Groups.id, ThermostatUserInterfaceConfiguration.id, EnergyPreference.id],
   requiredClientClusters: [],
-  optionalClientClusters: [FanControl.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, OccupancySensing.id],
+  optionalClientClusters: [FanControl.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, OccupancySensing.id, AmbientContextSensing.id],
 });
 
 /**
@@ -1797,9 +1799,9 @@ export const refrigerator = DeviceTypeDefinition({
   code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 2,
+  revision: 3,
   requiredServerClusters: [],
-  optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id],
+  optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id, ActivatedCarbonFilterMonitoring.id],
 });
 
 /**
@@ -1878,9 +1880,9 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [TemperatureControl.id, RefrigeratorAndTemperatureControlledCabinetMode.id],
-  optionalServerClusters: [TemperatureMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id, TemperatureAlarm.id],
 });
 
 /**
@@ -1915,9 +1917,9 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [TemperatureControl.id, OvenMode.id, OvenCavityOperationalState.id],
-  optionalServerClusters: [TemperatureMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id, TemperatureAlarm.id],
 });
 
 /**

@@ -634,12 +634,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -676,12 +678,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -707,12 +711,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -738,12 +744,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -767,12 +775,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: false,
       cooling: false,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -796,12 +806,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: false,
       cooling: false,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -825,12 +837,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: false,
       cooling: true,
+      events: false,
       heating: false,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -854,12 +868,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: false,
       cooling: true,
+      events: false,
       heating: false,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -889,12 +905,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -958,12 +976,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: true,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -1061,12 +1081,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);
@@ -1223,12 +1245,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: true,
       presets: true,
       setback: false,
+      thermostatSuggestions: false,
     });
 
     await addDevice(aggregator, device);

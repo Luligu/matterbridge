@@ -349,9 +349,9 @@ describe('Matterbridge device cluster mappings', () => {
       'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
-      'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
+      'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
-      'temperatureControlledCabinetHeater: optional mismatch -> mb=[1026] md=[1026,82,73,72]', // Double device type to account for heater/cooler and just one in matter.js
+      'temperatureControlledCabinetHeater: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
     ]);
   });
 });

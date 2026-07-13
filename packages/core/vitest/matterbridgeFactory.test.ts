@@ -101,7 +101,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(BooleanState.id)).toBe(true);
     expect(device.hasAttributeServer(BooleanState, 'stateValue')).toBe(true);
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'booleanState']);
-    expect(featuresFor(device, BooleanState.id)).toEqual({});
+    expect(featuresFor(device, BooleanState.id)).toEqual({ changeEvent: true });
 
     expect(await createClusterServer(device, Identify.id, { attributes: { identifyTime: 0, identifyType: Identify.IdentifyType.None } })).toBe(device);
     expect(device.hasClusterServer(Identify.id)).toBe(true);
@@ -183,7 +183,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(contactSensor, { id: 'FactoryBooleanStateFeatures' });
     expect(await createClusterServer(device, BooleanState.id, { features: ['Lighting'], attributes: { stateValue: false } })).toBe(device);
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'booleanState']);
-    expect(featuresFor(device, BooleanState.id)).toEqual({});
+    expect(featuresFor(device, BooleanState.id)).toEqual({ changeEvent: false });
   });
 
   test('createClusterServer works without options (attributes default to empty)', async () => {
