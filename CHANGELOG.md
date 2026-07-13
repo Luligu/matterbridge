@@ -65,7 +65,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `matterbridge` version to v.3.9.4.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@types/node` to v.26.1.1.
-- [matterbridge]: Bump `typescript` to v.7.0.2 and remove `@typescript/native-preview`.
+- [matterbridge]: Bump `typescript` to v.7.0.2 and remove `@typescript/native-preview`. Refactor scripts to always use tsc instead of tsgo.
 - [matterbridge]: Bump `oxfmt` to v.0.58.0.
 - [matterbridge]: Bump `oxlint` to v.1.73.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
@@ -73,9 +73,11 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `marked` to v.18.0.6.
 - [typescript]: Update tsconfigs `typescript` to v.7.0.2.
 - [bun]: Update `bunfig.toml` to install in isolated mode.
+- [bun]: Update Dockerfile.bun to install the latest matterbridge version.
 - [devcontainer]: Update `devcontainer.json` to use native toolchain.
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.
+- [behaviors]: Add '@matter/node' export.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
