@@ -10,8 +10,8 @@ IDs below are hexadecimal, matching the official Matter specs.
 | ---------------------------- | ------ | ----- | ----- | --------------------------------------------------------- |
 | RainSensor                   | 0x0044 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 | Refrigerator                 | 0x0070 | 2     | 3     | Added optional Activated Carbon Filter Monitoring cluster |
-| TemperatureControlledCabinet | 0x0071 | 5     | 6     | Added Temperature Alarm cluster                           |
-| Thermostat                   | 0x0301 | 5     | 6     | Added Ambient Context Sensing client cluster              |
+| TemperatureControlledCabinet | 0x0071 | 5     | 6     | Added optional Temperature Alarm cluster                  |
+| Thermostat                   | 0x0301 | 5     | 6     | Added optional Ambient Context Sensing client cluster     |
 | WaterFreezeDetector          | 0x0041 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 | WaterLeakDetector            | 0x0043 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 
