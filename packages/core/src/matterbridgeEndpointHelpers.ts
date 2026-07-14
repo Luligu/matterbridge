@@ -744,16 +744,17 @@ export function addClusterClients(endpoint: MatterbridgeEndpoint, clientList: Cl
   }
   // Populate endpoint.type.clientClusters so BindingManager.#selectClientClusters() can validate
   // this endpoint pre-construction. clientClusters is a plain writable {} on MutableEndpoint.
-  const clientClusters = endpoint.type.clientClusters as Record<string, ClusterBehavior.Type>;
+  const clientClusters = endpoint.type.clientClusters;
   for (const clusterId of clientList) {
     const key = lowercaseFirstLetter(getClusterNameById(clusterId));
     const value = getBehaviourTypeFromClusterClientId(clusterId);
-    if (!value) {
-      endpoint.log.warn(`addClusterClients: no client behavior found for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${wr}`);
-    }
-    if (!clientClusters[key] && value) {
-      clientClusters[key] = value;
-      endpoint.log.info(`addClusterClients: added client behavior for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${nf}`);
+    if (!clientClusters[key]) {
+      if (value) {
+        clientClusters[key] = value;
+        endpoint.log.info(`addClusterClients: added client behavior for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${nf}`);
+      } else {
+        endpoint.log.warn(`addClusterClients: no client behavior found for clusterId ${hk}0x${clusterId.toString(16).padStart(4, '0')}${wr}`);
+      }
     }
   }
 }

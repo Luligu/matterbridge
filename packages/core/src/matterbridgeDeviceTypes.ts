@@ -1110,7 +1110,8 @@ export const airQualitySensor = DeviceTypeDefinition({
  * - false Water is very unlikely to freeze in the current ambient conditions
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const waterFreezeDetector = DeviceTypeDefinition({
   name: 'WaterFreezeDetector',
@@ -1130,7 +1131,8 @@ export const waterFreezeDetector = DeviceTypeDefinition({
  * - false No water leak detected
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const waterLeakDetector = DeviceTypeDefinition({
   name: 'WaterLeakDetector',
@@ -1150,7 +1152,8 @@ export const waterLeakDetector = DeviceTypeDefinition({
  * - false No rain detected
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const rainSensor = DeviceTypeDefinition({
   name: 'RainSensor',
@@ -2396,6 +2399,19 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  * A Camera device is a camera that provides interfaces for controlling and transporting captured media,
  * such as Audio, Video or Snapshots.
  *
+ * 16.1.4. Device Type Requirements
+ * - ID     Name             Constraint     Conformance
+ * - 0x0107 Occupancy Sensor                O
+ *
+ * 16.1.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ * - Root       0x0016           Root Node          TLSClientCond             M
+ *
  * 16.1.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2411,14 +2427,11 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  * - 0x0554 WebRTC Transport Requestor                   client       M
  * - 0x0555 Push AV Stream Transport                     server       O
  *
- * Device Type Requirements:
- * - 0x0107 Occupancy Sensor O
- *
- * Element Requirements:
- * - Zone Management Feature TwoDimensionalCartesianZone M
- * - Camera AV Stream Management Feature Video M
- * - Camera AV Stream Management Feature Audio M
- * - Camera AV Stream Management Feature Snapshot M
+ * 16.1.7. Element Requirements:
+ * - Zone Management - Feature TwoDimensionalCartesianZone M
+ * - Camera AV Stream Management - Feature Video M
+ * - Camera AV Stream Management - Feature Audio M
+ * - Camera AV Stream Management - Feature Snapshot M
  */
 export const camera = DeviceTypeDefinition({
   name: 'Camera',
@@ -2492,6 +2505,14 @@ export const videoDoorbell = DeviceTypeDefinition({
  * - ID     Name            Constraint    Conformance
  * - 0x000F Generic Switch  min 1         M
  *
+ * 16.4.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ *
  * 16.4.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2526,6 +2547,13 @@ export const intercom = DeviceTypeDefinition({
  * An Audio Doorbell device is composed in all cases with a generic switch to provide a doorbell
  * with Audio only streaming.
  *
+ * 16.5.3. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ *
  * 16.5.4. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2540,7 +2568,7 @@ export const intercom = DeviceTypeDefinition({
  * - 0x0555 Push AV Stream Transport           server       O
  * - 0x0556 Chime                              client       M
  *
- * Element Requirements:
+ * 16.5.5. Element Requirements:
  * - Camera AV Stream Management Feature Audio M
  * - Camera AV Stream Management Feature Snapshot X
  * - Camera AV Stream Management Feature Video X
@@ -2563,6 +2591,14 @@ export const audioDoorbell = DeviceTypeDefinition({
  * A Snapshot Camera device is a camera which can only support retrieving still images on-demand
  * via the Capture Snapshot command in the Camera AV Stream Management cluster.
  *
+ * 16.6.4. Device Type Requirements:
+ * - 0x0107 Occupancy Sensor O
+ *
+ * 16.6.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ *
  * 16.6.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2573,10 +2609,7 @@ export const audioDoorbell = DeviceTypeDefinition({
  * - 0x0551 Camera AV Stream Management                  server       M
  * - 0x0552 Camera AV Settings User Level Management     server       O
  *
- * Device Type Requirements:
- * - 0x0107 Occupancy Sensor O
- *
- * Element Requirements:
+ * 16.6.7. Element Requirements:
  * - Zone Management Feature TwoDimensionalCartesianZone M
  * - Camera AV Stream Management Feature Snapshot M
  * - Camera AV Stream Management Feature Video X
@@ -2605,7 +2638,7 @@ export const snapshotCamera = DeviceTypeDefinition({
  * - 0x0003 Identify    server       O
  * - 0x0556 Chime       server       M
  *
- * Element Requirements:
+ * 16.7.5. Element Requirements:
  * - There are no cluster element overrides.
  */
 export const chime = DeviceTypeDefinition({

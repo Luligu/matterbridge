@@ -64,6 +64,10 @@ These classes will run as threads in the next releases:
 
 - [matter]: Bump `matter.js` to 0.17.5 and Matter to 1.6.0. See [Matter 1.6.0 changes from 1.5.1](Matter-1.6.0.md) for delta from 1.5.1.
 
+### Development Breaking changes
+
+- [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector now require BooleanState ChangeEvent feature as mandatory.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.9.4.
@@ -82,6 +86,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.
 - [behaviors]: Add '@matter/node' export.
+
+### Fixed
+
+- [client clusters]: Fix addRequiredClusters, addRequiredClusterClients to log warning only if the cluster client is not already present.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
