@@ -64,7 +64,6 @@ export default defineConfig({
         'src/dgram/export.ts', // Root package entrypoint re-export file
         'src/jest-utils/export.ts', // Root package entrypoint re-export file
         'src/jest-utils/matter.ts', // Root package entrypoint re-export file
-        'src/jestutils/export.ts', // Root package entrypoint re-export file
         'src/logger/export.ts', // Root package entrypoint re-export file
         'src/matter/behaviors.ts', // Root package entrypoint re-export file
         'src/matter/clusters.ts', // Root package entrypoint re-export file
@@ -81,7 +80,7 @@ export default defineConfig({
         'packages/core/src/matterbridgeEndpointTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
-        'packages/core/src/jestutils/**/*.{ts,mts,cts}', // Internal deprecated jest test utilities
+
         'packages/core/src/backend.ts', // Not released yet, so ignore for now
         'packages/core/src/backendExpress.ts', // Not released yet, so ignore for now
         'packages/core/src/backendWsServer.ts', // Not released yet, so ignore for now

@@ -171,10 +171,6 @@ Matterbridge exports from:
 
 - UDP/datagram helpers exported by Matterbridge.
 
-**"matterbridge/jestutils"**
-
-- Legacy Jest utility exports. **Deprecated** will be removed in 3.10.0.
-
 **"matterbridge/jest-utils"**
 
 - Jest utility exports.
@@ -690,10 +686,6 @@ The properties of the schema file shall correspond to the properties of the conf
 | `MatterbridgeEndpointCommands` interface        | `CommandHandlers`                                            |
 
 ### Package exports
-
-| Deprecated export        | Replacement               |
-| ------------------------ | ------------------------- |
-| `matterbridge/jestutils` | `matterbridge/jest-utils` |
 
 # Frequently asked questions
 

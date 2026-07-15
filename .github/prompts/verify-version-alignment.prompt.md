@@ -15,8 +15,6 @@ Checks:
 - Verify all `@matterbridge/*` entries in the root [package.json](../../package.json) `dependencies` block are pinned to the root package version.
 - Verify all `--build-arg CACHE_VERSION=x.y.z` values in the root [package.json](../../package.json) `scripts` block match the root package version.
 - Verify [..\.dockerbuild.json](../../.dockerbuild.json) has a `version` field equal to the root package version.
-- Verify [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts) sets `matterbridge.matterbridgeVersion` to the root package version.
-- Verify [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [packages/jest-utils/src/jestMatterTest.ts](../../packages/jest-utils/src/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [packages/vitest-utils/src/vitestMatterTest.ts](../../packages/vitest-utils/src/vitestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion`, `getPlatformMatterbridge().matterbridgeDevVersion` and `getPlatformMatterbridge().frontendVersion` to the root package version.
 - Verify [docs/main_update.json](../../docs/main_update.json) and [docs/dev_update.json](../../docs/dev_update.json) have `latest` equal to the root package version.
@@ -49,8 +47,6 @@ Suggested search targets:
 - [package.json](../../package.json) — version, dependencies, scripts, engines
 - [packages](../../packages)
 - [..\.dockerbuild.json](../../.dockerbuild.json)
-- [packages/core/src/jestutils/jestMatterbridgeTest.ts](../../packages/core/src/jestutils/jestMatterbridgeTest.ts)
-- [packages/core/src/jestutils/jestMatterTest.ts](../../packages/core/src/jestutils/jestMatterTest.ts)
 - [packages/jest-utils/src/jestMatterTest.ts](../../packages/jest-utils/src/jestMatterTest.ts)
 - [packages/vitest-utils/src/vitestMatterTest.ts](../../packages/vitest-utils/src/vitestMatterTest.ts)
 - [docs/main_update.json](../../docs/main_update.json)

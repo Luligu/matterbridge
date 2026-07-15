@@ -67,6 +67,7 @@ These classes will run as threads in the next releases:
 ### Development Breaking changes
 
 - [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
+- [export]: Remove the deprecated `matterbridge/jestutils` export. Use `@matterbridge/jest-utils` or `@matterbridge/vitest-utils` instead.
 
 ### Added
 

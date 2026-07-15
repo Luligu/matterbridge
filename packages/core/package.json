@@ -70,10 +70,6 @@
       "types": "./dist/dgram/export.d.ts",
       "import": "./dist/dgram/export.js"
     },
-    "./jestutils": {
-      "types": "./dist/jestutils/export.d.ts",
-      "import": "./dist/jestutils/export.js"
-    },
     "./matter": {
       "types": "./dist/matter/export.d.ts",
       "import": "./dist/matter/export.js"

@@ -23,8 +23,8 @@ Transformation steps:
 
 2. Imports:
    - Delete `import { jest } from '@jest/globals';` (use the global `vi`).
-   - `./jestutils/jestSetupTest.js` exports (`setupTest`, `loggerLogSpy`, other spies, `setDebug`) → import from `@matterbridge/vitest-utils`.
-   - `./jestutils/jestMatterTest.js` and `./jestutils/jestMatterbridgeTest.js` exports → import from `@matterbridge/vitest-utils/matter` (`addDevice`, `deleteDevice`, `aggregator`, `server`, `createTestEnvironment`, `destroyTestEnvironment`, `createServerNode`, `startServerNode`, `stopServerNode`, `flushServerNode`, `getMatterbridge`, `addMatterbridge`, ...).
+   - Import `setupTest`, `loggerLogSpy`, other spies, and `setDebug` from `@matterbridge/vitest-utils`.
+   - Import `addDevice`, `deleteDevice`, `aggregator`, `server`, `createTestEnvironment`, `destroyTestEnvironment`, `createServerNode`, `startServerNode`, `stopServerNode`, `flushServerNode`, `getMatterbridge`, `addMatterbridge`, etc. from `@matterbridge/vitest-utils/matter`.
    - Source-under-test imports change from `./foo.js` to `../src/foo.js`.
    - Delete `Endpoint`/`ServerNode`/`AggregatorEndpoint` imports if they were only used to type local `server`/`aggregator` variables — those are now imported live bindings from `@matterbridge/vitest-utils/matter`.
    - Keep ESLint import group ordering: node builtins, externals (including `@matterbridge/vitest-utils*`), then relative `../src/...`.

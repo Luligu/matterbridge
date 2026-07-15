@@ -90,10 +90,6 @@
       "import": "./dist/dgram/export.js",
       "types": "./dist/dgram/export.d.ts"
     },
-    "./jestutils": {
-      "import": "./dist/jestutils/export.js",
-      "types": "./dist/jestutils/export.d.ts"
-    },
     "./jest-utils": {
       "import": "./dist/jest-utils/export.js",
       "types": "./dist/jest-utils/export.d.ts"

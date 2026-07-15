@@ -798,11 +798,9 @@ graph TD
   dgram["@matterbridge/dgram"]
   utils["@matterbridge/utils"]
   types["@matterbridge/types"]
-  jestutils["@matterbridge/jest-utils"]
   vitestutils["@matterbridge/vitest-utils"]
 
   matterbridge --> core
-  matterbridge --> jestutils
   matterbridge --> vitestutils
 
   core --> thread
@@ -813,8 +811,6 @@ graph TD
   thread --> utils
   thread --> types
   dgram --> utils
-  jestutils --> utils
-  jestutils --> types
   vitestutils --> utils
   vitestutils --> types
 ```
