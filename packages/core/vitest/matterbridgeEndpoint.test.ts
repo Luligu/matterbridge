@@ -1172,8 +1172,6 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getChildEndpointById('contactChild-1')).toBeDefined();
     expect(device.getChildEndpointByOriginalId('contactChild-1')).toBeDefined();
-    // oxlint-disable-next-line typescript/no-deprecated typescript/no-deprecated
-    expect(device.getChildEndpointByName('contactChild-1')).toBeDefined();
     expect(device.getChildEndpoints().length).toBe(1);
     // await flushAsync();
   });
