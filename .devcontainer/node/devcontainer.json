@@ -1,0 +1,123 @@
+{
+  "name": "Matterbridge (Node 24)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "matterbridge-node",
+  "workspaceFolder": "/workspaces/matterbridge",
+  "remoteUser": "node",
+  "containerUser": "node",
+  "updateRemoteUserUID": true,
+  "containerEnv": {
+    "TZ": "${localEnv:TZ}"
+  },
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
+    "source=${localWorkspaceFolderBasename}-node-bash-history,target=/home/node/.bash_history_volume,type=volume",
+    "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
+    "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume",
+    "source=claude,target=/home/node/.claude,type=volume",
+    "source=codex,target=/home/node/.codex,type=volume",
+    "source=agents,target=/home/node/.agents,type=volume"
+  ],
+  "forwardPorts": [8283],
+  "portsAttributes": {
+    "8283": {
+      "label": "Matterbridge frontend"
+    }
+  },
+  "otherPortsAttributes": {
+    "onAutoForward": "ignore"
+  },
+  "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull node:24-trixie-slim",
+  "postCreateCommand": "bash .devcontainer/node/create.sh",
+  "postStartCommand": "bash .devcontainer/node/start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "typescriptteam.native-preview",
+        "oxc.oxc-vscode",
+        "ms-azuretools.vscode-containers",
+        "anthropic.claude-code",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "github.vscode-pull-request-github",
+        "openai.chatgpt"
+      ],
+      "settings": {
+        "eslint.enable": false,
+        "prettier.enable": false,
+        "oxc.enable": true,
+        "js/ts.experimental.useTsgo": true,
+        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
+        "terminal.integrated.scrollback": 1000,
+        "editor.tabSize": 2,
+        "editor.rulers": [180],
+        "editor.formatOnSave": false,
+        "editor.defaultFormatter": "oxc.oxc-vscode",
+        "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+        "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+        "[json]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+        "[jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+        "[markdown]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+        "editor.formatOnSaveMode": "file",
+        "editor.codeActionsOnSave": {
+          "source.format.oxc": "always",
+          "source.fixAll.oxc": "always"
+        },
+        "diffEditor.ignoreTrimWhitespace": false,
+        "files.eol": "\n",
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true,
+        "files.trimTrailingWhitespace": true,
+        "files.watcherExclude": {
+          "**/build/**": true,
+          "**/.cache/**": true,
+          "**/coverage/**": true
+        },
+        "search.exclude": {
+          "**/node_modules": true,
+          "**/dist": true,
+          "**/build": true,
+          "**/.cache": true,
+          "**/coverage": true
+        },
+        "remote.restoreForwardedPorts": false,
+        "git.autofetch": true,
+        "git.autoRepositoryDetection": false,
+        "chat.useCustomizationsInParentRepositories": true,
+        "chat.tools.terminal.autoApprove": {
+          "npx tsc": true,
+          "npx oxlint": true,
+          "npx oxfmt": true,
+          "npx vitest": true,
+          "npm run build": true,
+          "npm run typecheck": true,
+          "npm run lint": true,
+          "npm run format:check": true,
+          "npm run test": true,
+          "npm run test:coverage": true,
+          "npm run update-htmls": true,
+          "git status": true,
+          "git diff": true,
+          "git diff --check": true,
+          "git diff --stat": true,
+          "git log": true,
+          "git show": true,
+          "git branch -vv": true,
+          "git ls-files": true,
+          "git --no-pager diff --stat": true,
+          "git --no-pager diff --check": true
+        },
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "js/ts.tsserver.watchOptions": {
+          "watchFile": "dynamicPriorityPolling",
+          "watchDirectory": "dynamicPriorityPolling",
+          "fallbackPolling": "dynamicPriorityPolling",
+          "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
+        }
+      }
+    }
+  }
+}
