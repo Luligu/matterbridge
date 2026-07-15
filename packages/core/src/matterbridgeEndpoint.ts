@@ -1398,17 +1398,6 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Adds cluster servers from the provided server list.
-   *
-   * @param {ClusterId[]} serverList - The list of cluster IDs to add.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  addClusterServers(serverList: ClusterId[]): this {
-    addClusterServers(this, serverList);
-    return this;
-  }
-
-  /**
    * Adds a fixed label to the FixedLabel cluster. If the cluster server is not present, it will be added.
    *
    * @param {string} label - The label to add.
@@ -1558,6 +1547,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds both the required cluster servers and the required cluster clients for the device types of the specified endpoint.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of server / client clusters currently implemented in the
+   * endpoint helper mappings for supported device types.
+   * It is not a complete mapping of all clusters used by all supported device types.
+   *
+   * Device-type chapters 4-9 are the primary scope covered by these helper mappings.
+   * Device-type chapters 10-16 are primarily covered through single-class device implementations
+   * (`matterbridge/devices`).
    */
   addRequiredClusters(): MatterbridgeEndpoint {
     addRequiredClusterServers(this);
@@ -1569,6 +1567,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds the required cluster servers (only if they are not present) for the device types of the specified endpoint.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of server clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
    */
   addRequiredClusterServers(): MatterbridgeEndpoint {
     addRequiredClusterServers(this);
@@ -1579,6 +1587,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds the optional cluster servers (only if they are not present) for the device types of the specified endpoint.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of server clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
    */
   addOptionalClusterServers(): MatterbridgeEndpoint {
     addOptionalClusterServers(this);
@@ -1589,6 +1607,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds the required cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of client clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
    */
   addRequiredClusterClients(): MatterbridgeEndpoint {
     addRequiredClusterClients(this);
@@ -1599,9 +1627,40 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Adds the optional cluster clients for the device types of the specified endpoint by requiring MatterbridgeBindingServer with the collected client list.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of client clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
    */
   addOptionalClusterClients(): MatterbridgeEndpoint {
     addOptionalClusterClients(this);
+    return this;
+  }
+
+  /**
+   * Adds cluster servers from the provided server list.
+   *
+   * @param {ClusterId[]} serverList - The list of cluster IDs to add.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of server clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
+   */
+  addClusterServers(serverList: ClusterId[]): this {
+    addClusterServers(this, serverList);
     return this;
   }
 
@@ -1610,6 +1669,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {ClusterId[]} clientList - The list of cluster IDs to add as clients.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * This helper only maps the subset of client clusters that currently have explicit local behavior
+   * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+   * all supported device types.
+   *
+   * Coverage notes:
+   * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+   * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+   *   (`matterbridge/devices`).
    */
   addClusterClients(clientList: ClusterId[]): MatterbridgeEndpoint {
     addClusterClients(this, clientList);

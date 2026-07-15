@@ -961,13 +961,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     device.addOptionalClusterServers();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat', 'groups']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat', 'groups', 'thermostatUserInterfaceConfiguration']);
     expect(device.hasClusterServer(DescriptorServer)).toBe(true);
     expect(device.hasClusterServer(IdentifyServer)).toBe(true);
     expect(device.hasClusterServer(GroupsServer)).toBe(true);
     expect(device.hasClusterServer(ScenesManagement)).toBe(false);
     expect(device.hasClusterServer(ThermostatServer)).toBe(true);
-    // expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
+    expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
     // expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(true);
     // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true); /
 

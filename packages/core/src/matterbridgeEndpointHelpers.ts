@@ -38,12 +38,16 @@ import { createHash } from 'node:crypto';
 import { Lifecycle } from '@matter/general';
 import { type ActionContext, type Behavior, ClusterBehavior, type Endpoint } from '@matter/node';
 // @matter behaviors
+import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
 import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { AmbientContextSensingClient } from '@matter/node/behaviors/ambient-context-sensing';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ClosureControlClient } from '@matter/node/behaviors/closure-control';
+import { ClosureDimensionClient } from '@matter/node/behaviors/closure-dimension';
 import { ColorControlClient } from '@matter/node/behaviors/color-control';
 import { DoorLockClient } from '@matter/node/behaviors/door-lock';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
@@ -54,6 +58,7 @@ import { FixedLabelServer } from '@matter/node/behaviors/fixed-label';
 import { FlowMeasurementClient, FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
 import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
 import { GroupsClient, GroupsServer } from '@matter/node/behaviors/groups';
+import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-monitoring';
 import { IdentifyClient } from '@matter/node/behaviors/identify';
 import { IlluminanceMeasurementClient, IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { LevelControlClient } from '@matter/node/behaviors/level-control';
@@ -77,18 +82,23 @@ import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
 import { SwitchServer } from '@matter/node/behaviors/switch';
 import { TemperatureMeasurementClient, TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { ThermostatClient } from '@matter/node/behaviors/thermostat';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabelServer } from '@matter/node/behaviors/user-label';
 import { WindowCoveringClient } from '@matter/node/behaviors/window-covering';
 // @matter types
 import { type ClusterType, getClusterNameById } from '@matter/types/cluster';
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { BasicInformation } from '@matter/types/clusters/basic-information';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { CarbonDioxideConcentrationMeasurement } from '@matter/types/clusters/carbon-dioxide-concentration-measurement';
 import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/carbon-monoxide-concentration-measurement';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
@@ -101,6 +111,7 @@ import { FixedLabel } from '@matter/types/clusters/fixed-label';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
 import { Groups } from '@matter/types/clusters/groups';
+import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { Identify } from '@matter/types/clusters/identify';
 import { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
 import { LevelControl } from '@matter/types/clusters/level-control';
@@ -127,6 +138,7 @@ import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
+import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
@@ -425,6 +437,16 @@ export function getBehaviourTypesFromClusterClientIds(clusterClientList: Cluster
  *
  * @param {ClusterId} clusterId - The ClusterId to map.
  * @returns {Behavior.Type | undefined} The corresponding Behavior.Type, or undefined if not found.
+ *
+ * @remarks
+ * This helper only maps the subset of server clusters that currently have explicit local behavior
+ * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+ * all supported device types.
+ *
+ * Coverage notes:
+ * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+ * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+ *   (`matterbridge/devices`).
  */
 export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behavior.Type | undefined {
   // Map ClusterId to Server Behavior.Type
@@ -441,6 +463,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === ColorControl.id) return MatterbridgeColorControlServer;
   if (clusterId === WindowCovering.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
   if (clusterId === Thermostat.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
+  if (clusterId === ThermostatUserInterfaceConfiguration.id) return ThermostatUserInterfaceConfigurationServer;
   if (clusterId === FanControl.id) return MatterbridgeFanControlServer;
   if (clusterId === DoorLock.id) return MatterbridgeDoorLockServer;
   if (clusterId === ModeSelect.id) return MatterbridgeModeSelectServer;
@@ -462,6 +485,8 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OccupancySensing.id) return OccupancySensingServer;
   if (clusterId === SoilMeasurement.id) return SoilMeasurementServer;
   if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
+  if (clusterId === HepaFilterMonitoring.id) return HepaFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
+  if (clusterId === ActivatedCarbonFilterMonitoring.id) return ActivatedCarbonFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
   if (clusterId === CarbonMonoxideConcentrationMeasurement.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === CarbonDioxideConcentrationMeasurement.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === NitrogenDioxideConcentrationMeasurement.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -474,6 +499,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === DeviceEnergyManagement.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
   if (clusterId === DeviceEnergyManagementMode.id) return MatterbridgeDeviceEnergyManagementModeServer;
+  // TODO: Add server mappings for ClosureControl, ClosureDimension, and EnergyPreference.
   return undefined;
 }
 
@@ -482,6 +508,16 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
  *
  * @param {ClusterId} clusterId - The ClusterId to map.
  * @returns {ClusterBehavior.Type | undefined} The corresponding ClusterBehavior.Type, or undefined if not found.
+ *
+ * @remarks
+ * This helper only maps the subset of client clusters that currently have explicit local behavior
+ * bindings in MatterbridgeEndpoint helpers. It is not a complete mapping of all clusters used by
+ * all supported device types.
+ *
+ * Coverage notes:
+ * - Device-type chapters 4-9 are the primary scope covered by these helper mappings
+ * - Device-type chapters 10-16 are primarily covered through single-class device implementations
+ *   (`matterbridge/devices`).
  */
 export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): ClusterBehavior.Type | undefined {
   if (clusterId === Identify.id) return IdentifyClient;
@@ -489,7 +525,10 @@ export function getBehaviourTypeFromClusterClientId(clusterId: ClusterId): Clust
   if (clusterId === OnOff.id) return OnOffClient;
   if (clusterId === LevelControl.id) return LevelControlClient;
   if (clusterId === ColorControl.id) return ColorControlClient;
+  if (clusterId === ClosureControl.id) return ClosureControlClient;
+  if (clusterId === ClosureDimension.id) return ClosureDimensionClient;
   if (clusterId === OccupancySensing.id) return OccupancySensingClient;
+  if (clusterId === AmbientContextSensing.id) return AmbientContextSensingClient;
   if (clusterId === ScenesManagement.id) return ScenesManagementClient;
   if (clusterId === DoorLock.id) return DoorLockClient;
   if (clusterId === ElectricalGridConditions.id) return ElectricalGridConditionsClient;
@@ -691,6 +730,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(ColorControl.id)) endpoint.createDefaultColorControlClusterServer();
   if (serverList.includes(WindowCovering.id)) endpoint.createDefaultWindowCoveringClusterServer();
   if (serverList.includes(Thermostat.id)) endpoint.createDefaultThermostatClusterServer();
+  if (serverList.includes(ThermostatUserInterfaceConfiguration.id)) endpoint.createDefaultThermostatUserInterfaceConfigurationClusterServer();
   if (serverList.includes(FanControl.id)) endpoint.createDefaultFanControlClusterServer();
   if (serverList.includes(DoorLock.id)) endpoint.createDefaultDoorLockClusterServer();
   if (serverList.includes(ValveConfigurationAndControl.id)) endpoint.createDefaultValveConfigurationAndControlClusterServer();
@@ -711,6 +751,8 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(OccupancySensing.id)) endpoint.createDefaultOccupancySensingClusterServer();
   if (serverList.includes(SoilMeasurement.id)) endpoint.createDefaultSoilMeasurementClusterServer();
   if (serverList.includes(AirQuality.id)) endpoint.createDefaultAirQualityClusterServer();
+  if (serverList.includes(HepaFilterMonitoring.id)) endpoint.createDefaultHepaFilterMonitoringClusterServer();
+  if (serverList.includes(ActivatedCarbonFilterMonitoring.id)) endpoint.createDefaultActivatedCarbonFilterMonitoringClusterServer();
   if (serverList.includes(CarbonMonoxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
   if (serverList.includes(CarbonDioxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
   if (serverList.includes(NitrogenDioxideConcentrationMeasurement.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();
