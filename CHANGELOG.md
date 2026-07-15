@@ -68,7 +68,6 @@ These classes will run as threads in the next releases:
 
 - [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
 
-
 ### Added
 
 - [endpoint]: Add JSDoc remark refinements to MatterbridgeEndpoint helper methods for clarity.
