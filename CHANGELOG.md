@@ -67,7 +67,12 @@ These classes will run as threads in the next releases:
 ### Development Breaking changes
 
 - [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
-- [export]: Remove the deprecated `matterbridge/jestutils` export. Use `@matterbridge/jest-utils` or `@matterbridge/vitest-utils` instead.
+- [export]: Removed the deprecated `matterbridge/jestutils` export. Use `@matterbridge/vitest-utils` instead.
+- [endpoint]: Remove the deprecated `getChildEndpointByName()` helper.
+- [device types]: Remove the deprecated device types: `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `doorLockDevice`, `coverDevice`, `thermostatDevice`, `fanDevice`, `speakerDevice`, `airConditioner`.
+- [tags]: Remove the deprecated `tag` aliases: `AreaNamespaceTag`, `ClosureTag`, `CompassDirectionTag`, `CompassLocationTag`, `DirectionTag`, `LandmarkNamespaceTag`, `LevelTag`, `LocationTag`, `NumberTag`, `PositionTag`, `RelativePositionTag`.
+- [servers]: Remove deprecated behavior servers: `MatterbridgeEnhancedColorControlServer`, `MatterbridgePresetThermostatServer`, `MatterbridgeLiftWindowCoveringServer`, `MatterbridgeLiftTiltWindowCoveringServer`.
+- [command handler]: Remove deprecated interface `MatterbridgeEndpointCommands`.
 
 ### Added
 
