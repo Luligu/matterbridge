@@ -66,7 +66,7 @@ These classes will run as threads in the next releases:
 
 ### Development Breaking changes
 
-- [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector now require BooleanState ChangeEvent feature as mandatory.
+- [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
 
 ### Changed
 
@@ -74,17 +74,21 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@types/node` to v.26.1.1.
 - [matterbridge]: Bump `typescript` to v.7.0.2 and remove `@typescript/native-preview`. Refactor scripts to always use tsc instead of tsgo.
-- [matterbridge]: Bump `oxfmt` to v.0.58.0.
-- [matterbridge]: Bump `oxlint` to v.1.73.0.
+- [matterbridge]: Bump `oxfmt` to v.0.59.0.
+- [matterbridge]: Bump `oxlint` to v.1.74.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
 - [matterbridge]: Bump `vitest` to v.4.1.10.
 - [matterbridge]: Bump `marked` to v.18.0.6.
+- [core]: Bump `ws` to v.8.21.1.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.30.
 - [typescript]: Update tsconfigs `typescript` to v.7.0.2.
 - [bun]: Update `bunfig.toml` to install in isolated mode.
 - [bun]: Update Dockerfile.bun to install the latest matterbridge version.
 - [devcontainer]: Update `devcontainer.json` to use native toolchain.
 - [frontend]: Bump `frontend` version to v.3.5.2.
 - [frontend]: Update dependencies.
+- [frontend]: Bump `oxfmt` to v.0.59.0.
+- [frontend]: Bump `oxlint` to v.1.74.0.
 - [behaviors]: Add '@matter/node' export.
 
 ### Fixed

@@ -77,7 +77,7 @@
   "dependencies": {
     "@matterbridge/types": "3.9.5",
     "@matterbridge/utils": "3.9.5",
-    "@zip.js/zip.js": "2.8.26",
+    "@zip.js/zip.js": "2.8.30",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {

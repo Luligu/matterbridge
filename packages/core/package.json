@@ -146,7 +146,7 @@
     "multer": "2.2.0",
     "node-ansi-logger": "3.3.0",
     "node-persist-manager": "2.1.0",
-    "ws": "8.21.0"
+    "ws": "8.21.1"
   },
   "devDependencies": {
     "@matterbridge/vitest-utils": "3.9.5",
