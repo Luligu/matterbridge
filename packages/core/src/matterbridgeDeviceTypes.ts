@@ -603,11 +603,6 @@ export const onOffPlugInUnit = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link onOffPlugInUnit} instead.
- */
-export const onOffOutlet = onOffPlugInUnit;
-
-/**
  * 5.2. Dimmable Plug-In Unit Device Type
  *
  * A Dimmable Plug-In Unit is a device that provides power to another device that is plugged into it,
@@ -641,11 +636,6 @@ export const dimmablePlugInUnit = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link dimmablePlugInUnit} instead.
- */
-export const dimmableOutlet = dimmablePlugInUnit;
 
 /**
  * 5.3. Mounted On/Off Control Device Type
@@ -683,11 +673,6 @@ export const mountedOnOffControl = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link mountedOnOffControl} instead.
- */
-export const onOffMountedSwitch = mountedOnOffControl;
 
 /**
  * 5.4. Mounted Dimmable Load Control Device Type
@@ -729,11 +714,6 @@ export const mountedDimmableLoadControl = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link mountedDimmableLoadControl} instead.
- */
-export const dimmableMountedSwitch = mountedDimmableLoadControl;
-
-/**
  * 5.5. Pump Device Type
  *
  * A Pump device is a pump that may have variable speed. It may have optional built-in sensors and a
@@ -763,11 +743,6 @@ export const pump = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id, OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link pump} instead.
- */
-export const pumpDevice = pump;
 
 /**
  * 5.6. Water Valve Device Type
@@ -839,11 +814,6 @@ export const onOffLightSwitch = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link onOffLightSwitch} instead.
- */
-export const onOffSwitch = onOffLightSwitch;
-
-/**
  * 6.2. Dimmer Switch Device Type
  *
  * A Dimmer Switch is a controller device that, when bound to a lighting device such as a Dimmable
@@ -863,11 +833,6 @@ export const dimmerSwitch = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link dimmerSwitch} instead.
- */
-export const dimmableSwitch = dimmerSwitch;
-
-/**
  * 6.3. Color Dimmer Switch Device Type
  *
  * A Color Dimmer Switch is a controller device that, when bound to a lighting device such as an
@@ -884,11 +849,6 @@ export const colorDimmerSwitch = DeviceTypeDefinition({
   requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
-
-/**
- * @deprecated Use {@link colorDimmerSwitch} instead.
- */
-export const colorTemperatureSwitch = colorDimmerSwitch;
 
 /**
  * 6.4. Control Bridge Device Type
@@ -1203,11 +1163,6 @@ export const doorLock = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link doorLock} instead.
- */
-export const doorLockDevice = doorLock;
-
-/**
  * 8.2. Door Lock Controller Device Type
  *
  * A Door Lock Controller is a device capable of controlling a door lock.
@@ -1239,11 +1194,6 @@ export const windowCovering = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, WindowCovering.id],
   optionalServerClusters: [Groups.id],
 });
-
-/**
- * @deprecated Use {@link windowCovering} instead.
- */
-export const coverDevice = windowCovering;
 
 /**
  * 8.4. Window Covering Controller Device Type
@@ -1367,11 +1317,6 @@ export const thermostat = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link thermostat} instead.
- */
-export const thermostatDevice = thermostat;
-
-/**
  * 9.2. Fan Device Type
  *
  * A Fan device is typically standalone or mounted on a ceiling or wall and is used to circulate air in a room.
@@ -1408,11 +1353,6 @@ export const fan = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, Groups.id, FanControl.id],
   optionalServerClusters: [OnOff.id],
 });
-
-/**
- * @deprecated Use {@link fan} instead.
- */
-export const fanDevice = fan;
 
 /**
  * 9.3. Air Purifier Device Type
@@ -1572,11 +1512,6 @@ export const speaker = DeviceTypeDefinition({
   requiredServerClusters: [OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
-
-/**
- * @deprecated Use {@link speaker} instead.
- */
-export const speakerDevice = speaker;
 
 /**
  * 10.5. Content App Device Type
@@ -1846,11 +1781,6 @@ export const roomAirConditioner = DeviceTypeDefinition({
     ActivatedCarbonFilterMonitoring.id,
   ],
 });
-
-/**
- * @deprecated Use {@link roomAirConditioner} instead.
- */
-export const airConditioner = roomAirConditioner;
 
 /**
  * 13.4. Temperature Controlled Cabinet Device Type
