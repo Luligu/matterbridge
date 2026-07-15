@@ -180,22 +180,3 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     // Do nothing here, as the device will handle the movement
   }
 }
-
-/**
- * WindowCovering server (lift) that forwards covering commands to the Matterbridge command handler.
- *
- * @deprecated This server is deprecated in favor of using MatterbridgeWindowCoveringServer with only the Lift and PositionAwareLift features.
- */
-export class MatterbridgeLiftWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift) {}
-
-/**
- * WindowCovering server (lift + tilt) that forwards covering commands to the Matterbridge command handler.
- *
- * @deprecated This server is deprecated in favor of using MatterbridgeWindowCoveringServer with the Lift, PositionAwareLift, Tilt and PositionAwareTilt features.
- */
-export class MatterbridgeLiftTiltWindowCoveringServer extends MatterbridgeWindowCoveringServer.with(
-  WindowCovering.Feature.Lift,
-  WindowCovering.Feature.PositionAwareLift,
-  WindowCovering.Feature.Tilt,
-  WindowCovering.Feature.PositionAwareTilt,
-) {}

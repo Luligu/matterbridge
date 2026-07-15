@@ -102,15 +102,3 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     );
   }
 }
-
-/**
- * Thermostat server with Presets feature enabled and Matterbridge-specific command handling.
- *
- * @deprecated This server is deprecated in favor of using MatterbridgeThermostatServer with the Presets feature.
- */
-export class MatterbridgePresetThermostatServer extends ThermostatServer.with(
-  Thermostat.Feature.Presets,
-  Thermostat.Feature.Cooling,
-  Thermostat.Feature.Heating,
-  Thermostat.Feature.AutoMode,
-) {}
