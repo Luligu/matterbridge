@@ -68,7 +68,8 @@ These classes will run as threads in the next releases:
 
 - [endpoint]: Add `productLabel`, `productUrl` and `configurationVersion` parameters to the Basic Information creation methods. The default product labels are now `Matter Endpoint` and `Matter Bridged Endpoint`, and the default product URL is now `https://matterbridge.io`.
 - [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
-- [export]: Removed the deprecated `matterbridge/jestutils` export. Use `@matterbridge/vitest-utils` instead.
+- [export]: Removed the deprecated `matterbridge/jestutils` export. Use `@matterbridge/jest-utils`
+  or `@matterbridge/vitest-utils` instead.
 - [endpoint]: Remove the deprecated `getChildEndpointByName()` helper.
 - [device types]: Remove the deprecated device types: `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `doorLockDevice`, `coverDevice`, `thermostatDevice`, `fanDevice`, `speakerDevice`, `airConditioner`.
 - [tags]: Remove the deprecated `tag` aliases: `AreaNamespaceTag`, `ClosureTag`, `CompassDirectionTag`, `CompassLocationTag`, `DirectionTag`, `LandmarkNamespaceTag`, `LevelTag`, `LocationTag`, `NumberTag`, `PositionTag`, `RelativePositionTag`.
@@ -82,7 +83,7 @@ These classes will run as threads in the next releases:
 
 ### Changed
 
-- [matterbridge]: Bump `matterbridge` version to v.3.9.4.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.0.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@types/node` to v.26.1.1.
 - [matterbridge]: Bump `typescript` to v.7.0.2 and remove `@typescript/native-preview`. Refactor scripts to always use tsc instead of tsgo.
