@@ -227,15 +227,15 @@ describe('Matterbridge frontend express with http', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
 
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Matter server node started', () => { return (matterbridge as any).reachabilityTimeout; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
     await flushAsync();

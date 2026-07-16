@@ -1660,7 +1660,7 @@ describe('Matterbridge mocked', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     matterbridge.plugins.clear();
-    // prettier-ignore-start
+    // oxfmt-ignore-start
     matterbridge.plugins.set({
       name: 'matterbridge-mock1',
       path: './src/mock/plugin1/package.json',
@@ -1721,7 +1721,7 @@ describe('Matterbridge mocked', () => {
       author: 'To update',
       homepage: 'https://example.com',
     } as any);
-    // prettier-ignore-end
+    // oxfmt-ignore-end
     const plugin1 = matterbridge.plugins.get('matterbridge-mock1') as Plugin;
     plugin1.enabled = true;
     plugin1.error = false;

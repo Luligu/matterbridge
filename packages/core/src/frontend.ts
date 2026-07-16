@@ -1628,7 +1628,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     // Get the clusters from the main endpoint
     endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      // prettier-ignore
+      // oxfmt-ignore
       if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
       clusters.push({
         endpoint: endpoint.number.toString(),
@@ -1661,7 +1661,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
         if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-        // prettier-ignore
+        // oxfmt-ignore
         if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
         clusters.push({
           endpoint: childEndpoint.number.toString(),
@@ -1833,16 +1833,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage(`Removing plugin ${data.params.pluginName}...`, 0);
         this.log.debug(`Removing plugin ${data.params.pluginName}...`);
         // Stop server nodes of devices of the plugin first
-        // prettier-ignore
+        // oxfmt-ignore
         const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
-          // prettier-ignore
+          // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
         }
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been removed.', removeAllDevices: true, force: true } }, this.serverFetchTimeout);
         // Stop plugin server node if exists (in childbridge mode)
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'matterbridge_stop_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
         await this.server.fetch({ type: 'plugins_remove', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
         this.wssSendCloseSnackbarMessage(`Removing plugin ${data.params.pluginName}...`);
@@ -1856,18 +1856,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/enableplugin' });
           return;
         }
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'plugins_enable', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
         this.wssSendSnackbarMessage(`Enabled plugin ${data.params.pluginName}`, 5, 'success');
         await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
         await this.server.fetch({ type: 'plugins_start', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
         await this.server.fetch({ type: 'plugins_configure', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName } }, this.serverFetchTimeout * 10);
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'matterbridge_start_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
-        // prettier-ignore
+        // oxfmt-ignore
         const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
-          // prettier-ignore
+          // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_start_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
         }
         this.wssSendSnackbarMessage(`Started plugin ${localData.params.pluginName}`, 5, 'success');
@@ -1879,17 +1879,17 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/disableplugin' });
           return;
         }
-        // prettier-ignore
+        // oxfmt-ignore
         const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
-          // prettier-ignore
+          // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
         }
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'plugins_shutdown', src: this.server.name, dst: 'plugins', params: { plugin: data.params.pluginName, reason: 'The plugin has been disabled.', removeAllDevices: true, force: true } }, this.serverFetchTimeout * 10);
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'matterbridge_stop_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
-        // prettier-ignore
+        // oxfmt-ignore
         await this.server.fetch({ type: 'plugins_disable', src: this.server.name, dst: 'plugins', params: { nameOrPath: data.params.pluginName } }, this.serverFetchTimeout);
         this.wssSendSnackbarMessage(`Disabled plugin ${data.params.pluginName}`, 5, 'success');
         this.wssSendRefreshRequired('plugins');

@@ -129,11 +129,11 @@ describe('Matterbridge frontend', () => {
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
 
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Initialize done', () => { return (matterbridge as any).initialized === true; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('Frontend Initialize done', () => { return (matterbridge as any).frontend.httpServer!==undefined; });
-    // prettier-ignore
+    // oxfmt-ignore
     await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
 
     await flushAsync();
@@ -167,7 +167,7 @@ describe('Matterbridge frontend', () => {
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_stop', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
-    // prettier-ignore
+    // oxfmt-ignore
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
@@ -236,7 +236,7 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { level: 'info', time: 'time', name: 'jest', message: 'info' },
     } as any);
-    // prettier-ignore
+    // oxfmt-ignore
     {
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: true, packageCommand: 'install', packageName: 'testPlugin' } } as any);
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'all', result: { success: false, packageCommand: 'install', packageName: 'testPlugin' } } as any);

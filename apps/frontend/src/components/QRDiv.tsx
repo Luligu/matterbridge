@@ -165,7 +165,7 @@ function QRDiv({ id }: QRDivProps) {
   };
 
   // if(debug) console.log('QRDiv:', matterbridgeInfo, plugin);
-  // prettier-ignore
+  // oxfmt-ignore
   if (!matter || !online) {
     if(debug) console.log('QRDiv rendering undefined state');
     return null;

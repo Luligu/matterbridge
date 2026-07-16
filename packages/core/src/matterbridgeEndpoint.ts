@@ -446,7 +446,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {boolean} [debug] - Debug flag.
    * @returns {Promise<MatterbridgeEndpoint>} MatterbridgeEndpoint instance.
    */
-  // prettier-ignore
+  // oxfmt-ignore
   // oxlint-disable-next-line typescript/require-await
   static async loadInstance(definition: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition>, options: MatterbridgeEndpointOptions = {}, debug: boolean = false): Promise<MatterbridgeEndpoint> {
     return new MatterbridgeEndpoint(definition, options, debug);
@@ -1792,7 +1792,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       this.log.debug(`- with deviceType: ${zb}${'0x' + definition.code.toString(16).padStart(4, '0')}${db}-${zb}${definition.name}${db}`);
     }
     if (alreadyAdded) return child;
-    // prettier-ignore
+    // oxfmt-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
       /* v8 ignore next cause is only a safety check and .add() doesn't throw synchronously */
@@ -1877,7 +1877,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     }
     addClusterServers(child, serverList);
     if (alreadyAdded) return child;
-    // prettier-ignore
+    // oxfmt-ignore
     if (this.lifecycle.isInstalled) {
       this.log.debug(`- with lifecycle installed`);
       /* v8 ignore next cause is only a safety check and .add() doesn't throw synchronously */

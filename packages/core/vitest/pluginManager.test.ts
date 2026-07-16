@@ -285,7 +285,7 @@ describe('PluginManager', () => {
       testServer.fetch({ type: 'plugins_set_dev_version', src: testServer.name, dst: 'plugins', params: { plugin: {} as ApiPlugin, version: '1.0.0' } }, 5000),
     ).rejects.toThrow();
 
-    // prettier-ignore
+    // oxfmt-ignore
     {
       // await setDebug(true);
       execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});

@@ -564,7 +564,7 @@ export class BackendExpress {
     });
 
     /* / Plugin frontend routes
-    // prettier-ignore
+    // oxfmt-ignore
     const plugins = (await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins' }, this.serverFetchTimeout)).result.plugins;
 
     for (const plugin of plugins.filter((p) => p.enabled && !p.error)) {

@@ -6,7 +6,7 @@
 
 import { hslColorToRgbColor, kelvinToMireds, kelvinToRGB, miredsToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from '../src/colorUtils.js';
 
-/* prettier-ignore */
+/* oxfmt-ignore */
 const colors = [
   { name: 'Pure Red          0', hsl: { h: 0, s: 100, l: 50 }, rgb: { r: 255, g: 0, b: 0 }, xy: { x: 0.7006, y: 0.2993 } },
   { name: 'Bright Orange    30', hsl: { h: 30, s: 100, l: 50 }, rgb: { r: 255, g: 128, b: 0 }, xy: { x: 0.6112, y: 0.375 } },
