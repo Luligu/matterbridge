@@ -3,7 +3,7 @@
  * @description This file contains the types for Matterbridge.
  * @author Luca Liguori
  * @created 2024-07-12
- * @version 1.0.3
+ * @version 1.0.4
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -290,11 +290,13 @@ export interface BaseDevice {
   vendorName: string | undefined;
   productId: number | undefined;
   productName: string | undefined;
+  productLabel: string | undefined;
+  productUrl: string;
+  configurationVersion: number;
   softwareVersion: number | undefined;
   softwareVersionString: string | undefined;
   hardwareVersion: number | undefined;
   hardwareVersionString: string | undefined;
-  productUrl: string;
   tagList: Semtag[] | undefined;
   originalId: string | undefined;
   name: string | undefined;

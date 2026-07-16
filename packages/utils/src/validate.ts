@@ -3,7 +3,7 @@
  * @description This file contains the validation functions.
  * @author Luca Liguori
  * @created 2025-02-16
- * @version 1.0.1
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -50,6 +50,18 @@ export function isValidNumber(value: unknown, min?: number, max?: number): value
   if (min !== undefined && value < min) return false;
   if (max !== undefined && value > max) return false;
   return true;
+}
+
+/**
+ * Checks if a value is a valid integer within the specified range.
+ *
+ * @param {unknown} value - The value to be checked.
+ * @param {number} min - The minimum value allowed (optional).
+ * @param {number} max - The maximum value allowed (optional).
+ * @returns {value is number} Returns true if the value is a valid integer within the specified range, otherwise false.
+ */
+export function isValidInteger(value: unknown, min?: number, max?: number): value is number {
+  return isValidNumber(value, min, max) && Number.isInteger(value);
 }
 
 /**

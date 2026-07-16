@@ -258,6 +258,20 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(serverDevice.serverNode?.lifecycle.isReady).toBeTruthy();
     expect(serverDevice.serverNode?.lifecycle.isOnline).toBeTruthy();
     expect(serverDevice.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+    expect(serverDevice.softwareVersion).toBe(234);
+    expect(serverDevice.softwareVersionString).toBe('2.3.4');
+    expect(serverDevice.hardwareVersion).toBe(567);
+    expect(serverDevice.hardwareVersionString).toBe('5.6.7');
+    expect(serverDevice.productLabel).toBe('Server Sensor');
+    expect(serverDevice.productUrl).toBe('https://matterbridge.io/server');
+    expect(serverDevice.configurationVersion).toBe(3);
+    expect(serverDevice.serverNode?.state.basicInformation.softwareVersion).toBe(234);
+    expect(serverDevice.serverNode?.state.basicInformation.softwareVersionString).toBe('2.3.4');
+    expect(serverDevice.serverNode?.state.basicInformation.hardwareVersion).toBe(567);
+    expect(serverDevice.serverNode?.state.basicInformation.hardwareVersionString).toBe('5.6.7');
+    expect(serverDevice.serverNode?.state.basicInformation.productLabel).toBe('Server Sensor');
+    expect(serverDevice.serverNode?.state.basicInformation.productUrl).toBe('https://matterbridge.io/server');
+    expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(3);
   });
 
   test('Should log error if createDeviceServerNode fails', async () => {

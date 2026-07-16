@@ -3,7 +3,7 @@
  * @description This file contains the types for MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2025-11-10
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -34,6 +34,7 @@ logModuleLoaded('MatterbridgeEndpointTypes');
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 
+/** Internal use only interface */
 export interface SerializedMatterbridgeEndpoint {
   pluginName: string;
   deviceName: string;
@@ -41,6 +42,13 @@ export interface SerializedMatterbridgeEndpoint {
   uniqueId: string;
   productId?: number;
   productName?: string;
+  productUrl: string;
+  productLabel?: string;
+  configurationVersion: number;
+  softwareVersion?: number;
+  softwareVersionString?: string;
+  hardwareVersion?: number;
+  hardwareVersionString?: string;
   vendorId?: number;
   vendorName?: string;
   deviceTypes: DeviceTypeDefinition[];

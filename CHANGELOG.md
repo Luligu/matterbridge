@@ -58,7 +58,7 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [3.10.0] - Dev branch
+## [3.10.0] - 2026-07-17
 
 ### Breaking changes
 
@@ -66,6 +66,7 @@ These classes will run as threads in the next releases:
 
 ### Development Breaking changes
 
+- [endpoint]: Add `productLabel`, `productUrl` and `configurationVersion` parameters to the Basic Information creation methods. The default product labels are now `Matter Endpoint` and `Matter Bridged Endpoint`, and the default product URL is now `https://matterbridge.io`.
 - [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
 - [export]: Removed the deprecated `matterbridge/jestutils` export. Use `@matterbridge/vitest-utils` instead.
 - [endpoint]: Remove the deprecated `getChildEndpointByName()` helper.
@@ -76,6 +77,7 @@ These classes will run as threads in the next releases:
 
 ### Added
 
+- [utils]: Add the `isValidInteger()` validation helper with optional inclusive range checks.
 - [endpoint]: Add JSDoc remark refinements to MatterbridgeEndpoint helper methods for clarity.
 
 ### Changed
@@ -100,9 +102,14 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `oxfmt` to v.0.59.0.
 - [frontend]: Bump `oxlint` to v.1.74.0.
 - [behaviors]: Add '@matter/node' export.
+- [package]: Replace prettier-ignore with oxfmt-ignore.
 
 ### Fixed
 
+- [matter]: Use endpoint software and hardware version metadata for accessory and server device Basic Information.
+- [endpoint]: Validate that Basic Information product URLs start with `https://` and contain at most 256 characters.
+- [device manager]: Preserve `productLabel` and `configurationVersion` in `BaseDevice` projections and worker messages.
+- [endpoint]: Validate software versions as Matter `uint32`, hardware versions as Matter `uint16`, and their version strings as non-empty strings of at most 64 characters.
 - [client clusters]: Fix addRequiredClusters, addRequiredClusterClients to log warning only if the cluster client is not already present.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>

@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgeEndpoint that extends the Endpoint class from the Matter.js library.
  * @author Luca Liguori
  * @created 2024-10-01
- * @version 2.1.1
+ * @version 2.2.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -65,6 +65,7 @@ import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@ma
 // @matter/types
 import { type ClusterType, type ClusterTyping, getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { BasicInformation } from '@matter/types/clusters/basic-information';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -97,7 +98,7 @@ import type { MeasurementAccuracy, Semtag } from '@matter/types/globals';
 // @matterbridge
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
+import { isValidInteger, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 // AnsiLogger module
 import { AnsiLogger, CYAN, db, debugStringify, hk, LogLevel, or, TimestampFormat, YELLOW, zb } from 'node-ansi-logger';
 
@@ -286,30 +287,34 @@ export class MatterbridgeEndpoint extends Endpoint {
   plugin: string | undefined = undefined;
   /** The configuration URL of the device, if available */
   configUrl: string | undefined = undefined;
-  /** The display name of the device (32 chars). */
+  /** The display name of the device (Matter 32 chars). */
   deviceName: string | undefined = undefined;
-  /** The serial number of the device (32 chars). */
+  /** The serial number of the device (Matter 32 chars). */
   serialNumber: string | undefined = undefined;
-  /** The unique identifier of the device (32 chars). */
+  /** The unique identifier of the device (Matter 32 chars). */
   uniqueId: string | undefined = undefined;
   /** The vendor identifier of the device. */
   vendorId: number | undefined = undefined;
-  /** The vendor name of the device (32 chars). */
+  /** The vendor name of the device (Matter 32 chars). */
   vendorName: string | undefined = undefined;
   /** The product identifier of the device. */
   productId: number | undefined = undefined;
-  /** The product name of the device (32 chars). */
+  /** The product name of the device (Matter 32 chars). */
   productName: string | undefined = undefined;
-  /** The software version of the device. */
+  /** The product label of the device (Matter 64 chars). */
+  productLabel: string | undefined = undefined;
+  /** The product URL of the device (Matter 256 chars). */
+  productUrl = 'https://matterbridge.io';
+  /** The software version of the device (Matter uint32, default: 1). */
   softwareVersion: number | undefined = undefined;
-  /** The software version string of the device (64 chars). */
+  /** The software version string of the device (Matter 64 chars, default: '1.0.0'). */
   softwareVersionString: string | undefined = undefined;
-  /** The hardware version of the device. */
+  /** The hardware version of the device (Matter uint16, default: 1). */
   hardwareVersion: number | undefined = undefined;
-  /** The hardware version string of the device (64 chars). */
+  /** The hardware version string of the device (Matter 64 chars, default: '1.0.0'). */
   hardwareVersionString: string | undefined = undefined;
-  /** The product URL of the device (256 chars). */
-  productUrl = 'https://www.npmjs.com/package/matterbridge';
+  /** The configuration version of the device (Matter uint32 min 1, default: 1). */
+  configurationVersion = 1;
   /** The tagList of the descriptor cluster of the MatterbridgeEndpoint */
   tagList: Semtag[] | undefined = undefined;
   /** The original id (with spaces and .) of the MatterbridgeEndpoint constructor options */
@@ -1936,7 +1941,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Serializes the Matterbridge device into a serialized object.
+   * Serializes the Matterbridge device into a serialized object (not used in production).
    *
    * @param {MatterbridgeEndpoint} device - The Matterbridge device to serialize.
    *
@@ -1951,6 +1956,13 @@ export class MatterbridgeEndpoint extends Endpoint {
       uniqueId: device.uniqueId,
       productId: device.productId,
       productName: device.productName,
+      productLabel: device.productLabel,
+      productUrl: device.productUrl,
+      configurationVersion: device.configurationVersion,
+      softwareVersion: device.softwareVersion,
+      softwareVersionString: device.softwareVersionString,
+      hardwareVersion: device.hardwareVersion,
+      hardwareVersionString: device.hardwareVersionString,
       vendorId: device.vendorId,
       vendorName: device.vendorName,
       deviceTypes: Array.from(device.deviceTypes.values()),
@@ -1960,16 +1972,17 @@ export class MatterbridgeEndpoint extends Endpoint {
     };
     Object.keys(device.behaviors.supported).forEach((behaviorName) => {
       if (behaviorName === 'bridgedDeviceBasicInformation') serialized.clusterServersId.push(BridgedDeviceBasicInformation.id);
+      if (behaviorName === 'basicInformation') serialized.clusterServersId.push(BasicInformation.id);
       if (behaviorName === 'powerSource') serialized.clusterServersId.push(PowerSource.id);
-      // serialized.clusterServersId.push(this.behaviors.supported[behaviorName]cluster.id);
     });
     return serialized;
   }
 
   /**
-   * Deserializes the device into a serialized object.
+   * Deserializes the device into a serialized object (not used in production).
    *
    * @param {SerializedMatterbridgeEndpoint} serializedDevice - The serialized Matterbridge device object.
+   *
    * @returns {MatterbridgeEndpoint | undefined} The deserialized Matterbridge device.
    */
   static deserialize(serializedDevice: SerializedMatterbridgeEndpoint): MatterbridgeEndpoint | undefined {
@@ -1982,6 +1995,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     device.vendorName = serializedDevice.vendorName;
     device.productId = serializedDevice.productId;
     device.productName = serializedDevice.productName;
+    device.productLabel = serializedDevice.productLabel;
+    device.productUrl = serializedDevice.productUrl;
+    device.configurationVersion = serializedDevice.configurationVersion;
+    device.softwareVersion = serializedDevice.softwareVersion;
+    device.softwareVersionString = serializedDevice.softwareVersionString;
+    device.hardwareVersion = serializedDevice.hardwareVersion;
+    device.hardwareVersionString = serializedDevice.hardwareVersionString;
     for (const clusterId of serializedDevice.clusterServersId) {
       if (clusterId === BridgedDeviceBasicInformation.id)
         device.createDefaultBridgedDeviceBasicInformationClusterServer(
@@ -1990,9 +2010,31 @@ export class MatterbridgeEndpoint extends Endpoint {
           serializedDevice.vendorId ?? 0xfff1,
           serializedDevice.vendorName ?? 'Matterbridge',
           serializedDevice.productName ?? 'Matterbridge device',
+          serializedDevice.softwareVersion,
+          serializedDevice.softwareVersionString,
+          serializedDevice.hardwareVersion,
+          serializedDevice.hardwareVersionString,
+          serializedDevice.productLabel,
+          serializedDevice.productUrl,
+          serializedDevice.configurationVersion,
+        );
+      else if (clusterId === BasicInformation.id)
+        device.createDefaultBasicInformationClusterServer(
+          serializedDevice.deviceName,
+          serializedDevice.serialNumber,
+          serializedDevice.vendorId ?? 0xfff1,
+          serializedDevice.vendorName ?? 'Matterbridge',
+          serializedDevice.productId ?? 0x8000,
+          serializedDevice.productName ?? 'Matterbridge device',
+          serializedDevice.softwareVersion,
+          serializedDevice.softwareVersionString,
+          serializedDevice.hardwareVersion,
+          serializedDevice.hardwareVersionString,
+          serializedDevice.productLabel,
+          serializedDevice.productUrl,
+          serializedDevice.configurationVersion,
         );
       else if (clusterId === PowerSource.id) device.createDefaultPowerSourceWiredClusterServer();
-      // else addClusterServerFromList(device, [clusterId]);
     }
     return device;
   }
@@ -2105,7 +2147,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Setup the default Basic Information Cluster Server attributes for the server node.
    *
-   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product ID, product name, software version, software version string, hardware version and hardware version string.
+   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product ID, product name, software version, software version string,
+   * hardware version, hardware version string, product URL, configuration version.
    *
    * The actual BasicInformationClusterServer is created by the Matterbridge class for device.mode = 'server' and for the device of an AccessoryPlatform.
    *
@@ -2119,7 +2162,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
    * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
    * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
+   * @param {string} [productLabel] - The product label of the device. Default is 'Matter Endpoint'.
+   * @param {string} [productUrl] - The product URL of the device. Default is 'https://matterbridge.io'.
+   * @param {number} [configurationVersion] - The configuration version of the device. Default is 1.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - The product URL must follow RFC 1738 syntax, use the HTTPS scheme and contain at most 256 ASCII characters.
    */
   createDefaultBasicInformationClusterServer(
     deviceName: string,
@@ -2132,6 +2181,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     softwareVersionString: string = '1.0.0',
     hardwareVersion: number = 1,
     hardwareVersionString: string = '1.0.0',
+    productLabel: string = 'Matter Endpoint',
+    productUrl: string = 'https://matterbridge.io',
+    configurationVersion: number = 1,
   ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
@@ -2139,19 +2191,23 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
     this.productId = productId;
     this.productName = productName;
+    this.productLabel = productLabel;
+    this.productUrl = productUrl;
     this.vendorId = vendorId;
     this.vendorName = vendorName;
     this.softwareVersion = softwareVersion;
     this.softwareVersionString = softwareVersionString;
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
+    this.configurationVersion = configurationVersion;
     return this;
   }
 
   /**
    * Creates a default BridgedDeviceBasicInformationClusterServer for the aggregator endpoints.
    *
-   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product name, software version, software version string, hardware version and hardware version string.
+   * This method sets the device name, serial number, unique ID, vendor ID, vendor name, product name, software version, software version string,
+   * hardware version, hardware version string, product URL and configuration version.
    *
    * @param {string} deviceName - The name of the device.
    * @param {string} serialNumber - The serial number of the device.
@@ -2162,11 +2218,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
    * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
    * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
+   * @param {string} [productLabel] - The product label of the device. Default is 'Matter Bridged Endpoint'.
+   * @param {string} [productUrl] - The product URL of the device. Default is 'https://matterbridge.io'.
+   * @param {number} [configurationVersion] - The configuration version of the device. Default is 1.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * - The productId doesn't exist on the BridgedDeviceBasicInformation cluster.
    * - The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
+   * - The product URL must follow RFC 1738 syntax, use the HTTPS scheme and contain at most 256 ASCII characters.
    */
   createDefaultBridgedDeviceBasicInformationClusterServer(
     deviceName: string,
@@ -2178,6 +2238,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     softwareVersionString: string = '1.0.0',
     hardwareVersion: number = 1,
     hardwareVersionString: string = '1.0.0',
+    productLabel: string = 'Matter Bridged Endpoint',
+    productUrl: string = 'https://matterbridge.io',
+    configurationVersion: number = 1,
   ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
@@ -2185,12 +2248,15 @@ export class MatterbridgeEndpoint extends Endpoint {
     this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
     this.productId = undefined;
     this.productName = productName;
+    this.productLabel = productLabel;
+    this.productUrl = productUrl;
     this.vendorId = vendorId;
     this.vendorName = vendorName;
     this.softwareVersion = softwareVersion;
     this.softwareVersionString = softwareVersionString;
     this.hardwareVersion = hardwareVersion;
     this.hardwareVersionString = hardwareVersionString;
+    this.configurationVersion = configurationVersion;
     this.behaviors.require(
       BridgedDeviceBasicInformationServer.enable({
         events: { leave: true, reachableChanged: true },
@@ -2199,15 +2265,16 @@ export class MatterbridgeEndpoint extends Endpoint {
         vendorId: VendorId(vendorId),
         vendorName: vendorName.slice(0, 32),
         productName: productName.slice(0, 32),
-        productUrl: this.productUrl.slice(0, 256),
-        productLabel: productName.replace(vendorName, '').trim().slice(0, 64),
+        productLabel: productLabel.replace(vendorName, '').trim().slice(0, 64),
+        productUrl: isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io',
         nodeLabel: deviceName.slice(0, 32),
         serialNumber: serialNumber.slice(0, 32),
         uniqueId: this.uniqueId.slice(0, 32),
-        softwareVersion: isValidNumber(softwareVersion, 0, UINT32_MAX) ? softwareVersion : undefined,
-        softwareVersionString: isValidString(softwareVersionString) ? softwareVersionString.slice(0, 64) : undefined,
-        hardwareVersion: isValidNumber(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : undefined,
-        hardwareVersionString: isValidString(hardwareVersionString) ? hardwareVersionString.slice(0, 64) : undefined,
+        softwareVersion: isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1,
+        softwareVersionString: isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0',
+        hardwareVersion: isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1,
+        hardwareVersionString: isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0',
+        configurationVersion: isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1,
         reachable: true,
       },
     );

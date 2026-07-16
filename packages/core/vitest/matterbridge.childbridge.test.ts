@@ -336,6 +336,21 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(plugins.get('matterbridge-mock2')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock3')?.type).toBe('DynamicPlatform');
     expect(plugins.get('matterbridge-mock4')?.type).toBe('AccessoryPlatform');
+    const accessoryPlugin = plugins.get('matterbridge-mock4');
+    expect(accessoryPlugin?.device?.softwareVersion).toBe(123);
+    expect(accessoryPlugin?.device?.softwareVersionString).toBe('1.2.3');
+    expect(accessoryPlugin?.device?.hardwareVersion).toBe(456);
+    expect(accessoryPlugin?.device?.hardwareVersionString).toBe('4.5.6');
+    expect(accessoryPlugin?.device?.productLabel).toBe('Accessory Sensor');
+    expect(accessoryPlugin?.device?.productUrl).toBe('https://matterbridge.io/accessory');
+    expect(accessoryPlugin?.device?.configurationVersion).toBe(2);
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.softwareVersion).toBe(123);
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.softwareVersionString).toBe('1.2.3');
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.hardwareVersion).toBe(456);
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.hardwareVersionString).toBe('4.5.6');
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.productLabel).toBe('Accessory Sensor');
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.productUrl).toBe('https://matterbridge.io/accessory');
+    expect(accessoryPlugin?.serverNode?.state.basicInformation.configurationVersion).toBe(2);
     expect(plugins.apiPluginArray().length).toBe(4);
   }, 60000);
 

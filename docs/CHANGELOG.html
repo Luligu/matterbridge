@@ -178,13 +178,14 @@
 <li>all plugins in bridge mode;</li>
 <li>each plugin in childbridge mode;</li>
 </ul>
-<h2 id="3100-dev-branch">[3.10.0] - Dev branch</h2>
+<h2 id="3100-2026-07-17">[3.10.0] - 2026-07-17</h2>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
 <li>[matter]: Bump <code>matter.js</code> to 0.17.5 and Matter to 1.6.0. See <a href="Matter-1.6.0.html">Matter 1.6.0 changes from 1.5.1</a> for delta from 1.5.1.</li>
 </ul>
 <h3 id="development-breaking-changes">Development Breaking changes</h3>
 <ul>
+<li>[endpoint]: Add <code>productLabel</code>, <code>productUrl</code> and <code>configurationVersion</code> parameters to the Basic Information creation methods. The default product labels are now <code>Matter Endpoint</code> and <code>Matter Bridged Endpoint</code>, and the default product URL is now <code>https://matterbridge.io</code>.</li>
 <li>[matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.</li>
 <li>[export]: Removed the deprecated <code>matterbridge/jestutils</code> export. Use <code>@matterbridge/vitest-utils</code> instead.</li>
 <li>[endpoint]: Remove the deprecated <code>getChildEndpointByName()</code> helper.</li>
@@ -195,6 +196,7 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[utils]: Add the <code>isValidInteger()</code> validation helper with optional inclusive range checks.</li>
 <li>[endpoint]: Add JSDoc remark refinements to MatterbridgeEndpoint helper methods for clarity.</li>
 </ul>
 <h3 id="changed">Changed</h3>
@@ -219,9 +221,14 @@
 <li>[frontend]: Bump <code>oxfmt</code> to v.0.59.0.</li>
 <li>[frontend]: Bump <code>oxlint</code> to v.1.74.0.</li>
 <li>[behaviors]: Add &#39;@matter/node&#39; export.</li>
+<li>[package]: Replace prettier-ignore with oxfmt-ignore.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[matter]: Use endpoint software and hardware version metadata for accessory and server device Basic Information.</li>
+<li>[endpoint]: Validate that Basic Information product URLs start with <code>https://</code> and contain at most 256 characters.</li>
+<li>[device manager]: Preserve <code>productLabel</code> and <code>configurationVersion</code> in <code>BaseDevice</code> projections and worker messages.</li>
+<li>[endpoint]: Validate software versions as Matter <code>uint32</code>, hardware versions as Matter <code>uint16</code>, and their version strings as non-empty strings of at most 64 characters.</li>
 <li>[client clusters]: Fix addRequiredClusters, addRequiredClusterClients to log warning only if the cluster client is not already present.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>

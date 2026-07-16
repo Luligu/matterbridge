@@ -479,6 +479,8 @@ export async function createServerNode(
       nodeLabel: (NAME + 'ServerNode').slice(0, 32), // truncate to 32 chars to satisfy BasicInformation cluster constraints
       hardwareVersion: 1,
       softwareVersion: 1,
+      productUrl: 'https://matterbridge.io',
+      configurationVersion: 1,
       reachable: true,
       serialNumber: 'SN' + random,
       uniqueId: 'UI' + random,
