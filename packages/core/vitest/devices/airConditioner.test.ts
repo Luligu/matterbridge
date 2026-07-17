@@ -84,12 +84,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(featuresFor(device, 'Thermostat')).toEqual({
       autoMode: true,
       cooling: true,
+      events: false,
       heating: true,
       localTemperatureNotExposed: false,
       matterScheduleConfiguration: false,
       occupancy: false,
       presets: false,
       setback: false,
+      thermostatSuggestions: false,
     });
     expect(device.hasClusterServer(ThermostatUserInterfaceConfiguration.id)).toBeTruthy();
     expect(featuresFor(device, 'ThermostatUserInterfaceConfiguration')).toEqual({});
@@ -324,9 +326,9 @@ describe('Matterbridge ' + NAME, () => {
         'thermostat(0x201).absMinHeatSetpointLimit(0x3)=0',
         'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
         'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 5, 6, 17, 18, 21, 22, 23, 24, 25, 27, 28, 30, 41, 65528, 65529, 65531, 65532, 65533 ]',
-        'thermostat(0x201).clusterRevision(0xfffd)=10',
+        'thermostat(0x201).clusterRevision(0xfffd)=11',
         'thermostat(0x201).controlSequenceOfOperation(0x1b)=4',
-        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: true, occupancy: false, setback: false, autoMode: true, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false }',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: true, occupancy: false, setback: false, autoMode: true, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false, events: false, thermostatSuggestions: false }',
         'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
         'thermostat(0x201).localTemperature(0x0)=2300',
         'thermostat(0x201).maxCoolSetpointLimit(0x18)=5000',

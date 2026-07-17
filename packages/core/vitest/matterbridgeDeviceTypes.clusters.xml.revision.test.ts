@@ -16,6 +16,7 @@ import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
@@ -97,6 +98,7 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
@@ -116,7 +118,7 @@ import { setupTest } from '@matterbridge/vitest-utils';
 
 await setupTest(NAME, false);
 
-const XML_CLUSTERS_DIR = path.join('chip', '1.5.1', 'xml', 'clusters');
+const XML_CLUSTERS_DIR = path.join('chip', '1.6.0', 'xml', 'clusters');
 
 let hasXmlDir = true;
 try {
@@ -172,13 +174,13 @@ async function buildXmlIndex(): Promise<Map<string, XmlClusterInfo>> {
 
 // oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
-  describe('Matter 1.5.1 XML vs @matter/types cluster revisions dummy', () => {
+  describe('Matter 1.6.0 XML vs @matter/types cluster revisions dummy', () => {
     test(`Skipped: missing ${XML_CLUSTERS_DIR}`, () => {
       expect(true).toBe(true);
     });
   });
 } else {
-  describe('Matter 1.5.1 XML vs @matter/types cluster revisions', () => {
+  describe('Matter 1.6.0 XML vs @matter/types cluster revisions', () => {
     let xmlIndex: Map<string, XmlClusterInfo>;
     beforeAll(async () => {
       xmlIndex = await buildXmlIndex();
@@ -189,6 +191,7 @@ if (!hasXmlDir) {
       ['ActivatedCarbonFilterMonitoring', ActivatedCarbonFilterMonitoring],
       ['AdministratorCommissioning', AdministratorCommissioning],
       ['AirQuality', AirQuality],
+      ['AmbientContextSensing', AmbientContextSensing],
       ['ApplicationLauncher', ApplicationLauncher],
       ['AudioOutput', AudioOutput],
       ['BooleanState', BooleanState],
@@ -270,6 +273,7 @@ if (!hasXmlDir) {
       ['SoilMeasurement', SoilMeasurement],
       ['Switch', Switch],
       ['TargetNavigator', TargetNavigator],
+      ['TemperatureAlarm', TemperatureAlarm],
       ['TemperatureControl', TemperatureControl],
       ['TemperatureMeasurement', TemperatureMeasurement],
       ['Thermostat', Thermostat],
@@ -286,7 +290,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s matches Matter 1.5.1 XML (id, name, revision)', (display, entry) => {
+    test.each(cases)('Cluster %s matches Matter 1.6.0 XML (id, name, revision)', (display, entry) => {
       const key = normalizeName(display);
       const xmlInfo = xmlIndex.get(key);
       const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);
@@ -295,7 +299,7 @@ if (!hasXmlDir) {
         console.warn(
           `No XML entry found for ${display} (likely a template or derived cluster). types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`,
         );
-        return; // not all clusters have individual 1.5.1 XML files
+        return; // not all clusters have individual 1.6.0 XML files
       }
       // oxlint-disable-next-line no-console
       console.info(`${display}: xml=${JSON.stringify(xmlInfo)} types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`);

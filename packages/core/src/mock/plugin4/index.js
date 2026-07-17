@@ -13,7 +13,21 @@ class MockPlatform extends MatterbridgeAccessoryPlatform {
     await this.ready;
     this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
     const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TemperatureSensorPlugin4' })
-      .createDefaultBasicInformationClusterServer('TemperatureSensor plugin 4', '0x123456789', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge TemperatureSensor')
+      .createDefaultBasicInformationClusterServer(
+        'TemperatureSensor plugin 4',
+        '0x123456789',
+        0xfff1,
+        'Matterbridge',
+        0x8000,
+        'Matterbridge TemperatureSensor',
+        123,
+        '1.2.3',
+        456,
+        '4.5.6',
+        'Accessory Sensor',
+        'https://matterbridge.io/accessory',
+        2,
+      )
       .addRequiredClusterServers();
     await this.registerDevice(device);
     this.setSelectDevice('0x123456789', 'TemperatureSensor plugin 4');

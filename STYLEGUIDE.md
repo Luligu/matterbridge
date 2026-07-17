@@ -81,9 +81,9 @@ The logger is always AnsiLogger.
 
 ## 8. Typecheck & Build
 
-- `tsgo` is the default TypeScript engine for development validation.
-- Run `npm run typecheck` for no-emit type checking (`tsgo --build tsconfig.json --noEmit`).
-- Run `npm run build` for the normal build (`tsgo --build tsconfig.build.json`).
+- `tsc` (native version) is the default TypeScript engine for development validation.
+- Run `npm run typecheck` for no-emit type checking (`tsc --build tsconfig.json --noEmit`).
+- Run `npm run build` for the normal build (`tsc --build tsconfig.build.json`).
 - `npm run buildProduction` still uses `tsc` for the production build path.
 - Keep all TypeScript ESM-compatible and compatible with supported Node.js versions: 20, 22, 24, and 26.
 

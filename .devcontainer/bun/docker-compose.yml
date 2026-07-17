@@ -1,0 +1,19 @@
+services:
+  matterbridge-bun:
+    image: vsc-matterbridge-bun:latest
+    build:
+      context: ../..
+      dockerfile: .devcontainer/bun/Dockerfile
+      args:
+        DEVCONTAINER_VARIANT: bun
+    container_name: matterbridge-bun-dev-container
+    volumes:
+      - ../..:/workspaces/matterbridge:cached
+    networks:
+      - matterbridge
+    command: sleep infinity
+
+networks:
+  matterbridge:
+    external: true
+    name: matterbridge

@@ -3,7 +3,7 @@
  * @description This file contains the DeviceManager class.
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.1.2
+ * @version 1.1.3
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -54,11 +54,13 @@ export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDev
     vendorName: device.vendorName,
     productId: device.productId,
     productName: device.productName,
+    productLabel: device.productLabel,
+    productUrl: device.productUrl,
+    configurationVersion: device.configurationVersion,
     softwareVersion: device.softwareVersion,
     softwareVersionString: device.softwareVersionString,
     hardwareVersion: device.hardwareVersion,
     hardwareVersionString: device.hardwareVersionString,
-    productUrl: device.productUrl,
     tagList: device.tagList,
     originalId: device.originalId,
     name: device.name,

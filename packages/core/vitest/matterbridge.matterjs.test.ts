@@ -125,6 +125,38 @@ describe('Matterbridge matterjs', () => {
     (matterbridge as any).matterStorageService = matterStorageService;
   });
 
+  test('validates Basic Information values before creating a Matter node', async () => {
+    const context = await (matterbridge as any).createServerNodeContext(
+      'InvalidBasicInformation',
+      'Invalid Basic Information',
+      matterbridge.aggregatorDeviceType,
+      matterbridge.aggregatorVendorId,
+      matterbridge.aggregatorVendorName,
+      matterbridge.aggregatorProductId,
+      matterbridge.aggregatorProductName,
+      'INVALID1234567890',
+      'INVALID1234567890',
+      1.5,
+      '',
+      1.5,
+      '',
+      `Matterbridge ${'P'.repeat(70)}`,
+      'http://matterbridge.io/device',
+      1.5,
+    );
+    const serverNode = await (matterbridge as any).createServerNode(context, MATTER_PORT + 1);
+
+    expect(serverNode.state.basicInformation.softwareVersion).toBe(1);
+    expect(serverNode.state.basicInformation.softwareVersionString).toBe('1.0.0');
+    expect(serverNode.state.basicInformation.hardwareVersion).toBe(1);
+    expect(serverNode.state.basicInformation.hardwareVersionString).toBe('1.0.0');
+    expect(serverNode.state.basicInformation.productLabel).toBe('P'.repeat(64));
+    expect(serverNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
+    expect(serverNode.state.basicInformation.configurationVersion).toBe(1);
+
+    await serverNode.close();
+  });
+
   test('serverNode commissioned', () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge commissioned successfully!`);

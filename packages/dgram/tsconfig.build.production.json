@@ -3,11 +3,9 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "composite": true,
-    "declaration": true,
+    "removeComments": true,
     "declarationMap": false,
-    "sourceMap": false,
-    "removeComments": true
+    "sourceMap": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],

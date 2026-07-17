@@ -291,7 +291,7 @@ describe('MatterNode', () => {
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
   });
 
-  test('should generate valid commissioning values when passcode and discriminator are out of range', async () => {
+  test('should validate commissioning and Basic Information values before creating a Matter node', async () => {
     matter.matterStorageContext = await matter.createServerNodeContext(
       'InvalidCommissioning',
       'Invalid commissioning node',
@@ -300,12 +300,28 @@ describe('MatterNode', () => {
       matter.aggregatorVendorName,
       matter.aggregatorProductId,
       matter.aggregatorProductName,
+      'INVALID1234567890',
+      'INVALID1234567890',
+      1.5,
+      '',
+      1.5,
+      '',
+      `Matterbridge ${'P'.repeat(70)}`,
+      'http://matterbridge.io/device',
+      1.5,
     );
 
     const invalidServerNode = await matter.createServerNode(MATTER_PORT + 1, -1, 0x1000);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
+    expect(invalidServerNode.state.basicInformation.softwareVersion).toBe(1);
+    expect(invalidServerNode.state.basicInformation.softwareVersionString).toBe('1.0.0');
+    expect(invalidServerNode.state.basicInformation.hardwareVersion).toBe(1);
+    expect(invalidServerNode.state.basicInformation.hardwareVersionString).toBe('1.0.0');
+    expect(invalidServerNode.state.basicInformation.productLabel).toBe('P'.repeat(64));
+    expect(invalidServerNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
+    expect(invalidServerNode.state.basicInformation.configurationVersion).toBe(1);
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid passcode -1 for server node InvalidCommissioning. Passcode must be between 0 and 99999999. Generating a random passcode...',
     );
@@ -594,9 +610,37 @@ describe('MatterNode', () => {
       private: true,
     };
     const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor' }, true)
-      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .createDefaultBasicInformationClusterServer(
+        'Temperature sensor',
+        'TEMP1234567890',
+        0xfff1,
+        'Matterbridge',
+        0x8000,
+        'Temperature Sensor',
+        123,
+        '1.2.3',
+        456,
+        '4.5.6',
+        'Accessory Sensor',
+        'https://matterbridge.io/accessory',
+        2,
+      )
       .addRequiredClusterServers();
+    expect(sensor.softwareVersion).toBe(123);
+    expect(sensor.softwareVersionString).toBe('1.2.3');
+    expect(sensor.hardwareVersion).toBe(456);
+    expect(sensor.hardwareVersionString).toBe('4.5.6');
+    expect(sensor.productLabel).toBe('Accessory Sensor');
+    expect(sensor.productUrl).toBe('https://matterbridge.io/accessory');
+    expect(sensor.configurationVersion).toBe(2);
     expect(await matter.createAccessoryPlugin(plugin, sensor)).toBeDefined();
+    expect(matter.serverNode?.state.basicInformation.softwareVersion).toBe(123);
+    expect(matter.serverNode?.state.basicInformation.softwareVersionString).toBe('1.2.3');
+    expect(matter.serverNode?.state.basicInformation.hardwareVersion).toBe(456);
+    expect(matter.serverNode?.state.basicInformation.hardwareVersionString).toBe('4.5.6');
+    expect(matter.serverNode?.state.basicInformation.productLabel).toBe('Accessory Sensor');
+    expect(matter.serverNode?.state.basicInformation.productUrl).toBe('https://matterbridge.io/accessory');
+    expect(matter.serverNode?.state.basicInformation.configurationVersion).toBe(2);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created accessory plugin ${plg}${plugin.name}${db} server node`);
   });
 
@@ -679,9 +723,37 @@ describe('MatterNode', () => {
       private: true,
     };
     const sensor = new MatterbridgeEndpoint(temperatureSensor, { id: 'Temperature sensor', mode: 'server' }, true)
-      .createDefaultBasicInformationClusterServer('Temperature sensor', 'TEMP1234567890')
+      .createDefaultBasicInformationClusterServer(
+        'Temperature sensor',
+        'TEMP1234567890',
+        0xfff1,
+        'Matterbridge',
+        0x8000,
+        'Temperature Sensor',
+        234,
+        '2.3.4',
+        567,
+        '5.6.7',
+        'Server Sensor',
+        'https://matterbridge.io/server',
+        3,
+      )
       .addRequiredClusterServers();
+    expect(sensor.softwareVersion).toBe(234);
+    expect(sensor.softwareVersionString).toBe('2.3.4');
+    expect(sensor.hardwareVersion).toBe(567);
+    expect(sensor.hardwareVersionString).toBe('5.6.7');
+    expect(sensor.productLabel).toBe('Server Sensor');
+    expect(sensor.productUrl).toBe('https://matterbridge.io/server');
+    expect(sensor.configurationVersion).toBe(3);
     expect(await matter.createDeviceServerNode(plugin, sensor)).toBeDefined();
+    expect(matter.serverNode?.state.basicInformation.softwareVersion).toBe(234);
+    expect(matter.serverNode?.state.basicInformation.softwareVersionString).toBe('2.3.4');
+    expect(matter.serverNode?.state.basicInformation.hardwareVersion).toBe(567);
+    expect(matter.serverNode?.state.basicInformation.hardwareVersionString).toBe('5.6.7');
+    expect(matter.serverNode?.state.basicInformation.productLabel).toBe('Server Sensor');
+    expect(matter.serverNode?.state.basicInformation.productUrl).toBe('https://matterbridge.io/server');
+    expect(matter.serverNode?.state.basicInformation.configurationVersion).toBe(3);
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created device ${plg}${plugin.name}${db}:${dev}${sensor.deviceName}${db} server node`);
   });
 

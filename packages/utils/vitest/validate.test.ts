@@ -9,6 +9,7 @@
 import {
   isValidArray,
   isValidBoolean,
+  isValidInteger,
   isValidIpv4Address,
   isValidNull,
   isValidNumber,
@@ -58,6 +59,46 @@ describe('Validation Functions', () => {
       expect(isValidNumber(5, 0, 10)).toBe(true);
       expect(isValidNumber(-1, 0)).toBe(false);
       expect(isValidNumber(11, undefined, 10)).toBe(false);
+    });
+  });
+
+  describe('isValidInteger', () => {
+    test('valid integers without range', () => {
+      expect(isValidInteger(0)).toBe(true);
+      expect(isValidInteger(-1)).toBe(true);
+      expect(isValidInteger(42)).toBe(true);
+      expect(isValidInteger(Number.MIN_SAFE_INTEGER)).toBe(true);
+      expect(isValidInteger(Number.MAX_SAFE_INTEGER)).toBe(true);
+    });
+
+    test('invalid non-integer numbers', () => {
+      expect(isValidInteger(3.14)).toBe(false);
+      expect(isValidInteger(-3.14)).toBe(false);
+      expect(isValidInteger(Number.NaN)).toBe(false);
+      expect(isValidInteger(Infinity)).toBe(false);
+      expect(isValidInteger(-Infinity)).toBe(false);
+    });
+
+    test('invalid non-number types', () => {
+      expect(isValidInteger(null)).toBe(false);
+      expect(isValidInteger(undefined)).toBe(false);
+      expect(isValidInteger('42')).toBe(false);
+      expect(isValidInteger(true)).toBe(false);
+      expect(isValidInteger(42n)).toBe(false);
+      expect(isValidInteger({})).toBe(false);
+      expect(isValidInteger([])).toBe(false);
+    });
+
+    test('inclusive range validation', () => {
+      expect(isValidInteger(0, 0, 10)).toBe(true);
+      expect(isValidInteger(10, 0, 10)).toBe(true);
+      expect(isValidInteger(-1, 0, 10)).toBe(false);
+      expect(isValidInteger(11, 0, 10)).toBe(false);
+      expect(isValidInteger(5, 5)).toBe(true);
+      expect(isValidInteger(4, 5)).toBe(false);
+      expect(isValidInteger(5, undefined, 5)).toBe(true);
+      expect(isValidInteger(6, undefined, 5)).toBe(false);
+      expect(isValidInteger(1.5, 0, 10)).toBe(false);
     });
   });
 

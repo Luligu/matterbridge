@@ -30,6 +30,7 @@ import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { ApplicationBasic } from '@matter/types/clusters/application-basic';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
@@ -117,6 +118,7 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
@@ -601,11 +603,6 @@ export const onOffPlugInUnit = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link onOffPlugInUnit} instead.
- */
-export const onOffOutlet = onOffPlugInUnit;
-
-/**
  * 5.2. Dimmable Plug-In Unit Device Type
  *
  * A Dimmable Plug-In Unit is a device that provides power to another device that is plugged into it,
@@ -639,11 +636,6 @@ export const dimmablePlugInUnit = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link dimmablePlugInUnit} instead.
- */
-export const dimmableOutlet = dimmablePlugInUnit;
 
 /**
  * 5.3. Mounted On/Off Control Device Type
@@ -681,11 +673,6 @@ export const mountedOnOffControl = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link mountedOnOffControl} instead.
- */
-export const onOffMountedSwitch = mountedOnOffControl;
 
 /**
  * 5.4. Mounted Dimmable Load Control Device Type
@@ -727,11 +714,6 @@ export const mountedDimmableLoadControl = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link mountedDimmableLoadControl} instead.
- */
-export const dimmableMountedSwitch = mountedDimmableLoadControl;
-
-/**
  * 5.5. Pump Device Type
  *
  * A Pump device is a pump that may have variable speed. It may have optional built-in sensors and a
@@ -761,11 +743,6 @@ export const pump = DeviceTypeDefinition({
   requiredClientClusters: [],
   optionalClientClusters: [TemperatureMeasurement.id, PressureMeasurement.id, FlowMeasurement.id, OccupancySensing.id],
 });
-
-/**
- * @deprecated Use {@link pump} instead.
- */
-export const pumpDevice = pump;
 
 /**
  * 5.6. Water Valve Device Type
@@ -837,11 +814,6 @@ export const onOffLightSwitch = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link onOffLightSwitch} instead.
- */
-export const onOffSwitch = onOffLightSwitch;
-
-/**
  * 6.2. Dimmer Switch Device Type
  *
  * A Dimmer Switch is a controller device that, when bound to a lighting device such as a Dimmable
@@ -861,11 +833,6 @@ export const dimmerSwitch = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link dimmerSwitch} instead.
- */
-export const dimmableSwitch = dimmerSwitch;
-
-/**
  * 6.3. Color Dimmer Switch Device Type
  *
  * A Color Dimmer Switch is a controller device that, when bound to a lighting device such as an
@@ -882,11 +849,6 @@ export const colorDimmerSwitch = DeviceTypeDefinition({
   requiredClientClusters: [Identify.id, OnOff.id, LevelControl.id, ColorControl.id],
   optionalClientClusters: [Groups.id, ScenesManagement.id],
 });
-
-/**
- * @deprecated Use {@link colorDimmerSwitch} instead.
- */
-export const colorTemperatureSwitch = colorDimmerSwitch;
 
 /**
  * 6.4. Control Bridge Device Type
@@ -1108,14 +1070,15 @@ export const airQualitySensor = DeviceTypeDefinition({
  * - false Water is very unlikely to freeze in the current ambient conditions
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const waterFreezeDetector = DeviceTypeDefinition({
   name: 'WaterFreezeDetector',
   code: 0x0041,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1128,14 +1091,15 @@ export const waterFreezeDetector = DeviceTypeDefinition({
  * - false No water leak detected
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const waterLeakDetector = DeviceTypeDefinition({
   name: 'WaterLeakDetector',
   code: 0x0043,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1148,14 +1112,15 @@ export const waterLeakDetector = DeviceTypeDefinition({
  * - false No rain detected
  *
  * Element Requirements:
- * - Boolean State Event StateChange M
+ * - Boolean State - Event StateChange M
+ * - Boolean State - Feature ChangeEvent
  */
 export const rainSensor = DeviceTypeDefinition({
   name: 'RainSensor',
   code: 0x0044,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 1,
+  revision: 2,
   requiredServerClusters: [Identify.id, BooleanState.id],
   optionalServerClusters: [BooleanStateConfiguration.id],
 });
@@ -1198,11 +1163,6 @@ export const doorLock = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link doorLock} instead.
- */
-export const doorLockDevice = doorLock;
-
-/**
  * 8.2. Door Lock Controller Device Type
  *
  * A Door Lock Controller is a device capable of controlling a door lock.
@@ -1234,11 +1194,6 @@ export const windowCovering = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, WindowCovering.id],
   optionalServerClusters: [Groups.id],
 });
-
-/**
- * @deprecated Use {@link windowCovering} instead.
- */
-export const coverDevice = windowCovering;
 
 /**
  * 8.4. Window Covering Controller Device Type
@@ -1334,7 +1289,7 @@ export const closureController = DeviceTypeDefinition({
   requiredServerClusters: [],
   optionalServerClusters: [],
   requiredClientClusters: [ClosureControl.id],
-  optionalClientClusters: [Identify.id, Groups.id, ClosureDimension.id],
+  optionalClientClusters: [Identify.id, ClosureDimension.id],
 });
 
 /** Chapter 9. HVAC Device Types */
@@ -1354,17 +1309,12 @@ export const thermostat = DeviceTypeDefinition({
   code: 0x301,
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [Identify.id, Thermostat.id],
   optionalServerClusters: [Groups.id, ThermostatUserInterfaceConfiguration.id, EnergyPreference.id],
   requiredClientClusters: [],
-  optionalClientClusters: [FanControl.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, OccupancySensing.id],
+  optionalClientClusters: [FanControl.id, TemperatureMeasurement.id, RelativeHumidityMeasurement.id, OccupancySensing.id, AmbientContextSensing.id],
 });
-
-/**
- * @deprecated Use {@link thermostat} instead.
- */
-export const thermostatDevice = thermostat;
 
 /**
  * 9.2. Fan Device Type
@@ -1403,11 +1353,6 @@ export const fan = DeviceTypeDefinition({
   requiredServerClusters: [Identify.id, Groups.id, FanControl.id],
   optionalServerClusters: [OnOff.id],
 });
-
-/**
- * @deprecated Use {@link fan} instead.
- */
-export const fanDevice = fan;
 
 /**
  * 9.3. Air Purifier Device Type
@@ -1567,11 +1512,6 @@ export const speaker = DeviceTypeDefinition({
   requiredServerClusters: [OnOff.id, LevelControl.id],
   optionalServerClusters: [],
 });
-
-/**
- * @deprecated Use {@link speaker} instead.
- */
-export const speakerDevice = speaker;
 
 /**
  * 10.5. Content App Device Type
@@ -1797,9 +1737,9 @@ export const refrigerator = DeviceTypeDefinition({
   code: 0x70, // 112
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 2,
+  revision: 3,
   requiredServerClusters: [],
-  optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id],
+  optionalServerClusters: [Identify.id, RefrigeratorAndTemperatureControlledCabinetMode.id, RefrigeratorAlarm.id, ActivatedCarbonFilterMonitoring.id],
 });
 
 /**
@@ -1843,11 +1783,6 @@ export const roomAirConditioner = DeviceTypeDefinition({
 });
 
 /**
- * @deprecated Use {@link roomAirConditioner} instead.
- */
-export const airConditioner = roomAirConditioner;
-
-/**
  * 13.4. Temperature Controlled Cabinet Device Type
  *
  * A Temperature Controlled Cabinet only exists composed as part of another device type. It represents
@@ -1878,9 +1813,9 @@ export const temperatureControlledCabinetCooler = DeviceTypeDefinition({
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [TemperatureControl.id, RefrigeratorAndTemperatureControlledCabinetMode.id],
-  optionalServerClusters: [TemperatureMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id, TemperatureAlarm.id],
 });
 
 /**
@@ -1915,9 +1850,9 @@ export const temperatureControlledCabinetHeater = DeviceTypeDefinition({
   code: 0x71, // 113
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
-  revision: 5,
+  revision: 6,
   requiredServerClusters: [TemperatureControl.id, OvenMode.id, OvenCavityOperationalState.id],
-  optionalServerClusters: [TemperatureMeasurement.id],
+  optionalServerClusters: [TemperatureMeasurement.id, TemperatureAlarm.id],
 });
 
 /**
@@ -2394,6 +2329,19 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  * A Camera device is a camera that provides interfaces for controlling and transporting captured media,
  * such as Audio, Video or Snapshots.
  *
+ * 16.1.4. Device Type Requirements
+ * - ID     Name             Constraint     Conformance
+ * - 0x0107 Occupancy Sensor                O
+ *
+ * 16.1.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ * - Root       0x0016           Root Node          TLSClientCond             M
+ *
  * 16.1.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2409,14 +2357,11 @@ export const electricalUtilityMeter = DeviceTypeDefinition({
  * - 0x0554 WebRTC Transport Requestor                   client       M
  * - 0x0555 Push AV Stream Transport                     server       O
  *
- * Device Type Requirements:
- * - 0x0107 Occupancy Sensor O
- *
- * Element Requirements:
- * - Zone Management Feature TwoDimensionalCartesianZone M
- * - Camera AV Stream Management Feature Video M
- * - Camera AV Stream Management Feature Audio M
- * - Camera AV Stream Management Feature Snapshot M
+ * 16.1.7. Element Requirements:
+ * - Zone Management - Feature TwoDimensionalCartesianZone M
+ * - Camera AV Stream Management - Feature Video M
+ * - Camera AV Stream Management - Feature Audio M
+ * - Camera AV Stream Management - Feature Snapshot M
  */
 export const camera = DeviceTypeDefinition({
   name: 'Camera',
@@ -2490,6 +2435,14 @@ export const videoDoorbell = DeviceTypeDefinition({
  * - ID     Name            Constraint    Conformance
  * - 0x000F Generic Switch  min 1         M
  *
+ * 16.4.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ *
  * 16.4.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2524,6 +2477,13 @@ export const intercom = DeviceTypeDefinition({
  * An Audio Doorbell device is composed in all cases with a generic switch to provide a doorbell
  * with Audio only streaming.
  *
+ * 16.5.3. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          TLSCertificatesCond       M
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithNTPCCond      M
+ * - Root       0x0016           Root Node          TimeSyncWithClientCond    M
+ *
  * 16.5.4. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2538,7 +2498,7 @@ export const intercom = DeviceTypeDefinition({
  * - 0x0555 Push AV Stream Transport           server       O
  * - 0x0556 Chime                              client       M
  *
- * Element Requirements:
+ * 16.5.5. Element Requirements:
  * - Camera AV Stream Management Feature Audio M
  * - Camera AV Stream Management Feature Snapshot X
  * - Camera AV Stream Management Feature Video X
@@ -2561,6 +2521,14 @@ export const audioDoorbell = DeviceTypeDefinition({
  * A Snapshot Camera device is a camera which can only support retrieving still images on-demand
  * via the Capture Snapshot command in the Camera AV Stream Management cluster.
  *
+ * 16.6.4. Device Type Requirements:
+ * - 0x0107 Occupancy Sensor O
+ *
+ * 16.6.5. Condition Requirements
+ * - Location   Device Type ID   Device Type Name   Condition                 Conformance
+ * - Root       0x0016           Root Node          PowerSourceCond           M
+ * - Root       0x0016           Root Node          TimeSyncWithTZCond        M
+ *
  * 16.6.6. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
  *
@@ -2571,10 +2539,7 @@ export const audioDoorbell = DeviceTypeDefinition({
  * - 0x0551 Camera AV Stream Management                  server       M
  * - 0x0552 Camera AV Settings User Level Management     server       O
  *
- * Device Type Requirements:
- * - 0x0107 Occupancy Sensor O
- *
- * Element Requirements:
+ * 16.6.7. Element Requirements:
  * - Zone Management Feature TwoDimensionalCartesianZone M
  * - Camera AV Stream Management Feature Snapshot M
  * - Camera AV Stream Management Feature Video X
@@ -2603,7 +2568,7 @@ export const snapshotCamera = DeviceTypeDefinition({
  * - 0x0003 Identify    server       O
  * - 0x0556 Chime       server       M
  *
- * Element Requirements:
+ * 16.7.5. Element Requirements:
  * - There are no cluster element overrides.
  */
 export const chime = DeviceTypeDefinition({

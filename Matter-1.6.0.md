@@ -10,8 +10,8 @@ IDs below are hexadecimal, matching the official Matter specs.
 | ---------------------------- | ------ | ----- | ----- | --------------------------------------------------------- |
 | RainSensor                   | 0x0044 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 | Refrigerator                 | 0x0070 | 2     | 3     | Added optional Activated Carbon Filter Monitoring cluster |
-| TemperatureControlledCabinet | 0x0071 | 5     | 6     | Added Temperature Alarm cluster                           |
-| Thermostat                   | 0x0301 | 5     | 6     | Added Ambient Context Sensing client cluster              |
+| TemperatureControlledCabinet | 0x0071 | 5     | 6     | Added optional Temperature Alarm cluster                  |
+| Thermostat                   | 0x0301 | 5     | 6     | Added optional Ambient Context Sensing client cluster     |
 | WaterFreezeDetector          | 0x0041 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 | WaterLeakDetector            | 0x0043 | 1     | 2     | Added BooleanState ChangeEvent feature as mandatory       |
 
@@ -50,11 +50,13 @@ No new device types were added in Matter 1.6.0.
 | TemperatureMeasurement                                | 0x0402 | 5     | 6     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
 | Thermostat                                            | 0x0201 | 10    | 11    | Added support for Thermostat suggestions; added events                                                              |
 | TotalVolatileOrganicCompoundsConcentrationMeasurement | 0x042E | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Uncertainty attributes                                    |
-| WaterContentMeasurementClusters                       | 0x0000 | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
+| WaterContentMeasurementClusters (1)                   | 0x0000 | 4     | 5     | Added F quality to MinMeasuredValue, MaxMeasuredValue and Tolerance attributes                                      |
 
 ### Remarks
 
 Quality F = Fixed: the attribute has fixed persistence and is not expected to change during normal operation.
+
+(1) In matter.js, this family maps to the concrete `RelativeHumidityMeasurement` cluster export rather than a separate `WaterContentMeasurementClusters` module.
 
 ## New Cluster Types
 

@@ -255,7 +255,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
     details = runSupportedModes?.find((m) => m.mode === runMode)?.label || 'Unknown';
   }
 
-  // prettier-ignore
+  // oxfmt-ignore
   return (
     <MbfWindow style={{ margin: '0px', padding: '5px', width: '150px', height: '150px', borderColor: 'var(--div-bg-color)', borderRadius: '5px', justifyContent: 'space-between' }}>
       {/* BridgedDeviceBasicInformation.reachable */}

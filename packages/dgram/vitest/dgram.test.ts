@@ -330,7 +330,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with non existing interface name', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
@@ -351,15 +351,15 @@ describe('Dgram', () => {
     dgram = new Dgram('Dgram', 'udp6');
 
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       lo: [{ address: '::1', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: true, scopeid: 0, mac: '00:00:00:00:00:00', cidr: '::1/128' }],
       empty: undefined,
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       wireguard: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
         ],
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
@@ -378,7 +378,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with link-local address', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
@@ -399,7 +399,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with link-local address no scope id (possible?)', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
             { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null }
@@ -424,7 +424,7 @@ describe('Dgram', () => {
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
 
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
               { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
               { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
@@ -453,7 +453,7 @@ describe('Dgram', () => {
     Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
 
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [{ address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
               { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
               { address: 'fe80::5a71:b2f6:7bc8:d00b', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 2, mac: '00:00:00:00:00:00', cidr: null }
@@ -479,7 +479,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with global unique local address', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [
         { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
         { address: 'fd78:cbf8:4939:746:a58f:3de1:74fc:5db9', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
@@ -498,7 +498,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with unique local address', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [
         { address: 'fd78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
       ],
@@ -516,7 +516,7 @@ describe('Dgram', () => {
   test('Get IPv6 interface address with no suitable address', async () => {
     dgram = new Dgram('Dgram', 'udp6');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      /* prettier-ignore */
+      /* oxfmt-ignore */
       eth0: [
         { address: 'fe78:cbf8:4939:746:18b5:993b:ce2c:a95e', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', internal: false, scopeid: 0, mac: '00:00:00:00:00:00', cidr: null },
       ],

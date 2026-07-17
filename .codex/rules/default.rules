@@ -1,4 +1,4 @@
-# Codex rules v. 1.0.1
+# Codex rules v.1.0.1
 
 # Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "Do not change local refs without explicit manual control.")

@@ -130,6 +130,9 @@ describe('DeviceManager', () => {
       uniqueId: 'DeviceUniqueId1bis',
       id: 'DeviceId1bis',
       number: 10,
+      productLabel: 'Device label',
+      productUrl: 'https://matterbridge.io/device',
+      configurationVersion: 2,
     } as unknown as BaseDevice;
     expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device).toBeDefined();
     expect(devices.size).toBe(4);
@@ -139,6 +142,9 @@ describe('DeviceManager', () => {
       id: 'DeviceId1bis',
       name: 'DeviceType1bis',
       number: 10,
+      productLabel: 'Device label',
+      productUrl: 'https://matterbridge.io/device',
+      configurationVersion: 2,
       serialNumber: 'DeviceSerial1bis',
       uniqueId: 'DeviceUniqueId1bis',
     });
@@ -149,6 +155,9 @@ describe('DeviceManager', () => {
       id: 'DeviceId1bis',
       name: 'DeviceType1bis',
       number: 10,
+      productLabel: 'Device label',
+      productUrl: 'https://matterbridge.io/device',
+      configurationVersion: 2,
       serialNumber: 'DeviceSerial1bis',
       uniqueId: 'DeviceUniqueId1bis',
     });

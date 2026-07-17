@@ -374,7 +374,7 @@ describe('Multicast', () => {
   test('onListening joins multicast using the first IPv6 address', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      // prettier-ignore
+      // oxfmt-ignore
       eth0: [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
     });
     const addMembershipSpy = vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
@@ -394,9 +394,9 @@ describe('Multicast', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
       eth0: [
-        // prettier-ignore
+        // oxfmt-ignore
         { address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 },
-        // prettier-ignore
+        // oxfmt-ignore
         { address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 },
       ],
     });
@@ -416,9 +416,9 @@ describe('Multicast', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
       eth0: [
-        // prettier-ignore
+        // oxfmt-ignore
         { address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 },
-        // prettier-ignore
+        // oxfmt-ignore
         { address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 },
       ],
     });
@@ -438,9 +438,9 @@ describe('Multicast', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
       eth0: [
-        // prettier-ignore
+        // oxfmt-ignore
         { address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 },
-        // prettier-ignore
+        // oxfmt-ignore
         { address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 },
       ],
     });
@@ -460,7 +460,7 @@ describe('Multicast', () => {
   test('onListening logs a failed link-local multicast join', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      // prettier-ignore
+      // oxfmt-ignore
       eth0: [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
     });
     vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {
@@ -481,7 +481,7 @@ describe('Multicast', () => {
   test('onListening logs a failed multicast join when addMembership throws a non-Error value', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      // prettier-ignore
+      // oxfmt-ignore
       eth0: [{ address: 'fe80::41', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:41', internal: false, cidr: 'fe80::41/64', scopeid: 8 }],
     });
     vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {
@@ -501,7 +501,7 @@ describe('Multicast', () => {
   test('onListening skips the join block when the selected membership interface is empty', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
     vi.spyOn(os, 'networkInterfaces').mockReturnValue({
-      // prettier-ignore
+      // oxfmt-ignore
       eth0: [{ address: '', netmask: '255.255.255.0', family: 'IPv4', mac: '00:00:00:00:00:50', internal: false, cidr: null }],
     });
     const addMembershipSpy = vi.spyOn(mcast.socket as any, 'addMembership').mockImplementation(() => {});
@@ -537,25 +537,25 @@ describe('Multicast', () => {
   test.each([
     [
       'plain IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64' }],
       '2001:db8::10',
     ],
     [
       'ULA IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128' }],
       'fd12:3456:789a::20',
     ],
     [
       'ULA /64 IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64' }],
       'fd12:3456:789a::30',
     ],
     [
       'link-local IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64' }],
       'fe80::40',
     ],
@@ -577,25 +577,25 @@ describe('Multicast', () => {
   test.each([
     [
       'plain IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
       '2001:db8::10%4',
     ],
     [
       'ULA IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 }],
       'fd12:3456:789a::20%5',
     ],
     [
       'ULA /64 IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 }],
       'fd12:3456:789a::30%6',
     ],
     [
       'link-local IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
       'fe80::40%7',
     ],
@@ -623,25 +623,25 @@ describe('Multicast', () => {
   test.each([
     [
       'plain IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: '2001:db8::10', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:10', internal: false, cidr: '2001:db8::10/64', scopeid: 4 }],
       '2001:db8::10%eth0',
     ],
     [
       'ULA IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::20', netmask: 'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff', family: 'IPv6', mac: '00:00:00:00:00:20', internal: false, cidr: 'fd12:3456:789a::20/128', scopeid: 5 }],
       'fd12:3456:789a::20%eth0',
     ],
     [
       'ULA /64 IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fd12:3456:789a::30', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:30', internal: false, cidr: 'fd12:3456:789a::30/64', scopeid: 6 }],
       'fd12:3456:789a::30%eth0',
     ],
     [
       'link-local IPv6',
-      // prettier-ignore
+      // oxfmt-ignore
       [{ address: 'fe80::40', netmask: 'ffff:ffff:ffff:ffff::', family: 'IPv6', mac: '00:00:00:00:00:40', internal: false, cidr: 'fe80::40/64', scopeid: 7 }],
       'fe80::40%eth0',
     ],

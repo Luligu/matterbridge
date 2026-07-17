@@ -40,6 +40,7 @@ import {
 } from '@matter/node/behaviors';
 import { EndpointNumber } from '@matter/types';
 import {
+  BasicInformation,
   BooleanState,
   Descriptor,
   FixedLabel,
@@ -421,6 +422,42 @@ describe('Matterbridge ' + NAME, () => {
     expect(deserializedDevice).toBeDefined();
 
     await add(device);
+  });
+
+  test('serialize and deserialize basic information', () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightBasicInformation', number: EndpointNumber(101) });
+    device.createDefaultBasicInformationClusterServer(
+      'OnOffLight',
+      '1234',
+      0xfff1,
+      'Matterbridge',
+      0x8000,
+      'Light',
+      2,
+      '2.0.0',
+      3,
+      '3.0.0',
+      'Matter Endpoint',
+      'https://matterbridge.io/device',
+      4,
+    );
+
+    const serializedDevice = MatterbridgeEndpoint.serialize(device);
+    expect(serializedDevice).toBeDefined();
+    if (!serializedDevice) return;
+
+    // Basic Information is created on the root server node, so represent it explicitly in the serialized endpoint.
+    serializedDevice.clusterServersId.push(BasicInformation.id);
+    const deserializedDevice = MatterbridgeEndpoint.deserialize(serializedDevice);
+
+    expect(deserializedDevice).toBeDefined();
+    expect(deserializedDevice?.softwareVersion).toBe(2);
+    expect(deserializedDevice?.softwareVersionString).toBe('2.0.0');
+    expect(deserializedDevice?.hardwareVersion).toBe(3);
+    expect(deserializedDevice?.hardwareVersionString).toBe('3.0.0');
+    expect(deserializedDevice?.productLabel).toBe('Matter Endpoint');
+    expect(deserializedDevice?.productUrl).toBe('https://matterbridge.io/device');
+    expect(deserializedDevice?.configurationVersion).toBe(4);
   });
 
   test('hasClusterServer', async () => {
@@ -961,13 +998,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     device.addOptionalClusterServers();
-    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat', 'groups']);
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'thermostat', 'groups', 'thermostatUserInterfaceConfiguration']);
     expect(device.hasClusterServer(DescriptorServer)).toBe(true);
     expect(device.hasClusterServer(IdentifyServer)).toBe(true);
     expect(device.hasClusterServer(GroupsServer)).toBe(true);
     expect(device.hasClusterServer(ScenesManagement)).toBe(false);
     expect(device.hasClusterServer(ThermostatServer)).toBe(true);
-    // expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
+    expect(device.hasClusterServer(ThermostatUserInterfaceConfigurationServer)).toBe(true);
     // expect(device.hasClusterServer(EnergyPreferenceServer)).toBe(true);
     // expect(device.hasClusterServer(TimeSynchronizationServer)).toBe(true); /
 
@@ -1172,8 +1209,6 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getChildEndpointById('contactChild-1')).toBeDefined();
     expect(device.getChildEndpointByOriginalId('contactChild-1')).toBeDefined();
-    // oxlint-disable-next-line typescript/no-deprecated typescript/no-deprecated
-    expect(device.getChildEndpointByName('contactChild-1')).toBeDefined();
     expect(device.getChildEndpoints().length).toBe(1);
     // await flushAsync();
   });

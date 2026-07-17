@@ -189,15 +189,3 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
     await super.moveToColorTemperature(request);
   }
 }
-
-/**
- * Enhanced ColorControl server forwarding enhanced hue commands to the Matterbridge command handler.
- *
- * @deprecated This server is deprecated in favor of using MatterbridgeColorControlServer with the EnhancedHue feature.
- */
-export class MatterbridgeEnhancedColorControlServer extends MatterbridgeColorControlServer.with(
-  ColorControl.Feature.HueSaturation,
-  ColorControl.Feature.EnhancedHue,
-  ColorControl.Feature.Xy,
-  ColorControl.Feature.ColorTemperature,
-) {}

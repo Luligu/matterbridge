@@ -171,10 +171,6 @@ Matterbridge exports from:
 
 - UDP/datagram helpers exported by Matterbridge.
 
-**"matterbridge/jestutils"**
-
-- Legacy Jest utility exports. **Deprecated** will be removed in 3.10.0.
-
 **"matterbridge/jest-utils"**
 
 - Jest utility exports.
@@ -636,64 +632,7 @@ The properties of the schema file shall correspond to the properties of the conf
 
 ## Deprecation list
 
-> **Scheduled removal:** all symbols listed below will be removed in **matterbridge 3.10.0**.
-
-### Behavior / Server classes
-
-| Deprecated symbol                          | Replacement                                                                                                |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| `MatterbridgeEnhancedColorControlServer`   | `MatterbridgeColorControlServer` with the `EnhancedHue` feature                                            |
-| `MatterbridgePresetThermostatServer`       | `MatterbridgeThermostatServer` with the `Presets` feature                                                  |
-| `MatterbridgeLiftWindowCoveringServer`     | `MatterbridgeWindowCoveringServer` with `Lift` + `PositionAwareLift` features                              |
-| `MatterbridgeLiftTiltWindowCoveringServer` | `MatterbridgeWindowCoveringServer` with `Lift`, `PositionAwareLift`, `Tilt` + `PositionAwareTilt` features |
-
-### Device type aliases
-
-| Deprecated symbol        | Replacement                  |
-| ------------------------ | ---------------------------- |
-| `onOffOutlet`            | `onOffPlugInUnit`            |
-| `dimmableOutlet`         | `dimmablePlugInUnit`         |
-| `onOffMountedSwitch`     | `mountedOnOffControl`        |
-| `dimmableMountedSwitch`  | `mountedDimmableLoadControl` |
-| `pumpDevice`             | `pump`                       |
-| `onOffSwitch`            | `onOffLightSwitch`           |
-| `dimmableSwitch`         | `dimmerSwitch`               |
-| `colorTemperatureSwitch` | `colorDimmerSwitch`          |
-| `doorLockDevice`         | `doorLock`                   |
-| `coverDevice`            | `windowCovering`             |
-| `thermostatDevice`       | `thermostat`                 |
-| `fanDevice`              | `fan`                        |
-| `speakerDevice`          | `speaker`                    |
-| `airConditioner`         | `roomAirConditioner`         |
-
-### Common namespace tag aliases
-
-| Deprecated symbol      | Replacement                  |
-| ---------------------- | ---------------------------- |
-| `AreaNamespaceTag`     | `CommonAreaNamespaceTag`     |
-| `ClosureTag`           | `CommonClosureTag`           |
-| `CompassDirectionTag`  | `CommonCompassDirectionTag`  |
-| `CompassLocationTag`   | `CommonCompassLocationTag`   |
-| `DirectionTag`         | `CommonDirectionTag`         |
-| `LandmarkNamespaceTag` | `CommonLandmarkNamespaceTag` |
-| `LevelTag`             | `CommonLevelTag`             |
-| `LocationTag`          | `CommonLocationTag`          |
-| `NumberTag`            | `CommonNumberTag`            |
-| `PositionTag`          | `CommonPositionTag`          |
-| `RelativePositionTag`  | `CommonRelativePositionTag`  |
-
-### Methods and interfaces
-
-| Deprecated symbol                               | Replacement                                                  |
-| ----------------------------------------------- | ------------------------------------------------------------ |
-| `MatterbridgeEndpoint.getChildEndpointByName()` | `getChildEndpointById()` or `getChildEndpointByOriginalId()` |
-| `MatterbridgeEndpointCommands` interface        | `CommandHandlers`                                            |
-
-### Package exports
-
-| Deprecated export        | Replacement               |
-| ------------------------ | ------------------------- |
-| `matterbridge/jestutils` | `matterbridge/jest-utils` |
+No deprecated code at the moment.
 
 # Frequently asked questions
 

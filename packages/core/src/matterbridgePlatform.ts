@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.1
+ * @version 1.6.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -663,6 +663,9 @@ export class MatterbridgePlatform {
           device.softwareVersionString,
           device.hardwareVersion,
           device.hardwareVersionString,
+          device.productLabel === 'Matter Endpoint' ? 'Matter Bridged Endpoint' : device.productLabel,
+          device.productUrl,
+          device.configurationVersion,
         );
       }
     }

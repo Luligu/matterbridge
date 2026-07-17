@@ -3,7 +3,7 @@
  * @description This file contains the class MatterNode.
  * @author Luca Liguori
  * @created 2025-10-01
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -64,7 +64,7 @@ import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { isValidNumber, isValidString, parseVersionString } from '@matterbridge/utils/validate';
+import { isValidInteger, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 import { wait, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
@@ -569,6 +569,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {string} productName - The product name.
    * @param {string} [serialNumber] - The serial number of the device (optional).
    * @param {string} [uniqueId] - The unique ID of the device (optional).
+   * @param {number} [softwareVersion] - The software version of the device. Default is 1.
+   * @param {string} [softwareVersionString] - The software version string of the device. Default is '1.0.0'.
+   * @param {number} [hardwareVersion] - The hardware version of the device. Default is 1.
+   * @param {string} [hardwareVersionString] - The hardware version string of the device. Default is '1.0.0'.
+   * @param {string} [productLabel] - The product label (optional, default is 'Matter Endpoint').
+   * @param {string} [productUrl] - The product URL (optional, default is 'https://matterbridge.io').
+   * @param {number} [configurationVersion] - The configuration version (optional, default is 1).
    * @returns {Promise<StorageContext>} The storage context for the commissioning server.
    * @throws {Error} If the storage service is not initialized.
    */
@@ -582,6 +589,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     productName: string,
     serialNumber?: string,
     uniqueId?: string,
+    softwareVersion: number = 1,
+    softwareVersionString: string = '1.0.0',
+    hardwareVersion: number = 1,
+    hardwareVersionString: string = '1.0.0',
+    productLabel: string = 'Matter Endpoint',
+    productUrl: string = 'https://matterbridge.io',
+    configurationVersion: number = 1,
   ): Promise<StorageContext> {
     if (!this.matterStorageService) {
       throw new Error('No storage service initialized');
@@ -599,23 +613,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await storageContext.set('vendorName', vendorName.slice(0, 32));
     await storageContext.set('productId', productId);
     await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('nodeLabel', productName.slice(0, 32));
-    await storageContext.set('productLabel', productName.replace(vendorName, '').trim().slice(0, 32));
+    await storageContext.set('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
+    await storageContext.set('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
+    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
     await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
     await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
-    await storageContext.set(
-      'softwareVersion',
-      isValidNumber(parseVersionString(this.matterbridge.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridge.matterbridgeVersion) : 1,
-    );
-    await storageContext.set('softwareVersionString', isValidString(this.matterbridge.matterbridgeVersion, 5, 64) ? this.matterbridge.matterbridgeVersion : '1.0.0');
-    await storageContext.set(
-      'hardwareVersion',
-      isValidNumber(parseVersionString(this.matterbridge.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.matterbridge.systemInformation.osRelease) : 1,
-    );
-    await storageContext.set(
-      'hardwareVersionString',
-      isValidString(this.matterbridge.systemInformation.osRelease, 5, 64) ? this.matterbridge.systemInformation.osRelease : '1.0.0',
-    );
+    await storageContext.set('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
+    await storageContext.set('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
+    await storageContext.set('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
+    await storageContext.set('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
+    await storageContext.set('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -625,14 +632,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.debug(`- vendorName: ${await storageContext.get('vendorName')}`);
     this.log.debug(`- productId: ${await storageContext.get('productId')}`);
     this.log.debug(`- productName: ${await storageContext.get('productName')}`);
-    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- productLabel: ${await storageContext.get('productLabel')}`);
+    this.log.debug(`- productUrl: ${await storageContext.get('productUrl')}`);
+    this.log.debug(`- nodeLabel: ${await storageContext.get('nodeLabel')}`);
     this.log.debug(`- serialNumber: ${await storageContext.get('serialNumber')}`);
     this.log.debug(`- uniqueId: ${await storageContext.get('uniqueId')}`);
     this.log.debug(`- softwareVersion: ${await storageContext.get('softwareVersion')}`);
     this.log.debug(`- softwareVersionString: ${await storageContext.get('softwareVersionString')}`);
     this.log.debug(`- hardwareVersion: ${await storageContext.get('hardwareVersion')}`);
     this.log.debug(`- hardwareVersionString: ${await storageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- configurationVersion: ${await storageContext.get('configurationVersion')}`);
     return storageContext;
   }
 
@@ -651,6 +660,23 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
     const storeId = await this.matterStorageContext.get<string>('storeId');
     this.log.notice(`Creating server node for ${storeId} on port ${port} with passcode ${passcode} and discriminator ${discriminator}...`);
+    this.log.debug(`- storeId: ${await this.matterStorageContext.get('storeId')}`);
+    this.log.debug(`- deviceName: ${await this.matterStorageContext.get('deviceName')}`);
+    this.log.debug(`- deviceType: ${await this.matterStorageContext.get('deviceType')}(0x${(await this.matterStorageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
+    this.log.debug(`- vendorId: ${await this.matterStorageContext.get('vendorId')}`);
+    this.log.debug(`- vendorName: ${await this.matterStorageContext.get('vendorName')}`);
+    this.log.debug(`- productId: ${await this.matterStorageContext.get('productId')}`);
+    this.log.debug(`- productName: ${await this.matterStorageContext.get('productName')}`);
+    this.log.debug(`- productLabel: ${await this.matterStorageContext.get('productLabel')}`);
+    this.log.debug(`- productUrl: ${await this.matterStorageContext.get('productUrl')}`);
+    this.log.debug(`- nodeLabel: ${await this.matterStorageContext.get('nodeLabel')}`);
+    this.log.debug(`- serialNumber: ${await this.matterStorageContext.get('serialNumber')}`);
+    this.log.debug(`- uniqueId: ${await this.matterStorageContext.get('uniqueId')}`);
+    this.log.debug(`- softwareVersion: ${await this.matterStorageContext.get('softwareVersion')}`);
+    this.log.debug(`- softwareVersionString: ${await this.matterStorageContext.get('softwareVersionString')}`);
+    this.log.debug(`- hardwareVersion: ${await this.matterStorageContext.get('hardwareVersion')}`);
+    this.log.debug(`- hardwareVersionString: ${await this.matterStorageContext.get('hardwareVersionString')}`);
+    this.log.debug(`- configurationVersion: ${await this.matterStorageContext.get('configurationVersion')}`);
 
     // Validate the passcode
     if (passcode < 0 || passcode > 99999999) {
@@ -710,6 +736,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         productId: await this.matterStorageContext.get<number>('productId'),
         productName: await this.matterStorageContext.get<string>('productName'),
         productLabel: await this.matterStorageContext.get<string>('productLabel'),
+        productUrl: await this.matterStorageContext.get<string>('productUrl'),
+
         nodeLabel: await this.matterStorageContext.get<string>('nodeLabel'),
 
         serialNumber: await this.matterStorageContext.get<string>('serialNumber'),
@@ -719,6 +747,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         softwareVersionString: await this.matterStorageContext.get<string>('softwareVersionString'),
         hardwareVersion: await this.matterStorageContext.get<number>('hardwareVersion'),
         hardwareVersionString: await this.matterStorageContext.get<string>('hardwareVersionString'),
+
+        configurationVersion: await this.matterStorageContext.get<number>('configurationVersion'),
 
         reachable: true,
       },
@@ -919,6 +949,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.aggregatorProductName,
       this.aggregatorSerialNumber,
       this.aggregatorUniqueId,
+      parseVersionString(this.matterbridge.matterbridgeVersion),
+      this.matterbridge.matterbridgeVersion,
+      parseVersionString(this.matterbridge.systemInformation.osRelease),
+      this.matterbridge.systemInformation.osRelease,
+      'Matter Bridge',
+      'https://matterbridge.io',
+      1,
     );
     this.serverNode = await this.createServerNode(
       this.port ? this.port++ : undefined,
@@ -959,6 +996,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
+        device.softwareVersion,
+        device.softwareVersionString,
+        device.hardwareVersion,
+        device.hardwareVersionString,
+        device.productLabel,
+        device.productUrl,
+        device.configurationVersion,
       );
       this.serverNode = await this.createServerNode(
         this.port ? this.port++ : undefined,
@@ -992,12 +1038,21 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
       this.matterStorageContext = await this.createServerNodeContext(
         plugin.name,
-        'Matterbridge',
+        plugin.description,
         this.aggregatorDeviceType,
         this.aggregatorVendorId,
         this.aggregatorVendorName,
         this.aggregatorProductId,
+        this.aggregatorProductName,
+        undefined,
+        undefined,
+        parseVersionString(this.matterbridge.matterbridgeVersion),
+        this.matterbridge.matterbridgeVersion,
+        parseVersionString(this.matterbridge.systemInformation.osRelease),
+        this.matterbridge.systemInformation.osRelease,
         plugin.description,
+        plugin.homepage ?? 'https://matterbridge.io',
+        1,
       );
       this.serverNode = await this.createServerNode(
         this.port ? this.port++ : undefined,
@@ -1039,6 +1094,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.vendorName,
         device.productId,
         device.productName,
+        device.serialNumber,
+        device.uniqueId,
+        device.softwareVersion,
+        device.softwareVersionString,
+        device.hardwareVersion,
+        device.hardwareVersionString,
+        device.productLabel,
+        device.productUrl,
+        device.configurationVersion,
       );
       this.serverNode = await this.createServerNode(
         this.port ? this.port++ : undefined,

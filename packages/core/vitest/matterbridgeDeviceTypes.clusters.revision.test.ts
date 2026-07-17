@@ -19,6 +19,7 @@ import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import { AudioOutput } from '@matter/types/clusters/audio-output';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
@@ -100,6 +101,7 @@ import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
@@ -123,22 +125,23 @@ const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.r
 await setupTest(NAME, false);
 
 describe('Matter clusters revision (guard against upstream changes)', () => {
-  // Hard-coded expected revisions (current as of @matter/main 0.15.6 > Matter specs v1.4.1)
+  // Hard-coded expected revisions for matter.js 0.17.5 / Matter 1.6.0.
   const cases: Array<[string, any, number]> = [
     ['AccountLogin', AccountLogin, 2],
     ['Actions', Actions, 1],
     ['ActivatedCarbonFilterMonitoring', ActivatedCarbonFilterMonitoring, 1],
     ['AdministratorCommissioning', AdministratorCommissioning, 1],
     ['AirQuality', AirQuality, 1],
+    ['AmbientContextSensing', AmbientContextSensing, 1],
     ['ApplicationLauncher', ApplicationLauncher, 2],
     ['AudioOutput', AudioOutput, 1],
-    ['BooleanState', BooleanState, 2],
-    ['BooleanStateConfiguration', BooleanStateConfiguration, 1],
-    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 5],
+    ['BooleanState', BooleanState, 3],
+    ['BooleanStateConfiguration', BooleanStateConfiguration, 2],
+    ['BridgedDeviceBasicInformation', BridgedDeviceBasicInformation, 6],
     ['CameraAvSettingsUserLevelManagement', CameraAvSettingsUserLevelManagement, 1],
-    ['CameraAvStreamManagement', CameraAvStreamManagement, 1],
-    ['CarbonDioxideConcentrationMeasurement', CarbonDioxideConcentrationMeasurement, 4],
-    ['CarbonMonoxideConcentrationMeasurement', CarbonMonoxideConcentrationMeasurement, 4],
+    ['CameraAvStreamManagement', CameraAvStreamManagement, 2],
+    ['CarbonDioxideConcentrationMeasurement', CarbonDioxideConcentrationMeasurement, 5],
+    ['CarbonMonoxideConcentrationMeasurement', CarbonMonoxideConcentrationMeasurement, 5],
     ['Channel', Channel, 2],
     ['Chime', Chime, 2],
     ['ClosureControl', ClosureControl, 1],
@@ -163,12 +166,12 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['EnergyEvseMode', EnergyEvseMode, 2],
     ['EnergyPreference', EnergyPreference, 1],
     ['FanControl', FanControl, 6],
-    ['FlowMeasurement', FlowMeasurement, 4],
-    ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 4],
+    ['FlowMeasurement', FlowMeasurement, 5],
+    ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 5],
     ['Groups', Groups, 4],
     ['HepaFilterMonitoring', HepaFilterMonitoring, 1],
     ['Identify', Identify, 6],
-    ['IlluminanceMeasurement', IlluminanceMeasurement, 4],
+    ['IlluminanceMeasurement', IlluminanceMeasurement, 5],
     ['KeypadInput', KeypadInput, 1],
     ['LaundryDryerControls', LaundryDryerControls, 1],
     ['LaundryWasherControls', LaundryWasherControls, 2],
@@ -182,42 +185,43 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['MicrowaveOvenControl', MicrowaveOvenControl, 1],
     ['MicrowaveOvenMode', MicrowaveOvenMode, 2],
     ['ModeSelect', ModeSelect, 2],
-    ['NitrogenDioxideConcentrationMeasurement', NitrogenDioxideConcentrationMeasurement, 4],
-    ['OccupancySensing', OccupancySensing, 6], // 7 is empty/placeholder, so 6 is latest "real" revision
+    ['NitrogenDioxideConcentrationMeasurement', NitrogenDioxideConcentrationMeasurement, 5],
+    ['OccupancySensing', OccupancySensing, 7],
     ['OnOff', OnOff, 6],
     ['OperationalState', OperationalState, 3],
     ['OtaSoftwareUpdateProvider', OtaSoftwareUpdateProvider, 1],
     ['OtaSoftwareUpdateRequestor', OtaSoftwareUpdateRequestor, 1],
     ['OvenCavityOperationalState', OvenCavityOperationalState, 2],
     ['OvenMode', OvenMode, 2],
-    ['OzoneConcentrationMeasurement', OzoneConcentrationMeasurement, 4],
-    ['Pm1ConcentrationMeasurement', Pm1ConcentrationMeasurement, 4],
-    ['Pm10ConcentrationMeasurement', Pm10ConcentrationMeasurement, 4],
-    ['Pm25ConcentrationMeasurement', Pm25ConcentrationMeasurement, 4],
+    ['OzoneConcentrationMeasurement', OzoneConcentrationMeasurement, 5],
+    ['Pm1ConcentrationMeasurement', Pm1ConcentrationMeasurement, 5],
+    ['Pm10ConcentrationMeasurement', Pm10ConcentrationMeasurement, 5],
+    ['Pm25ConcentrationMeasurement', Pm25ConcentrationMeasurement, 5],
     ['PowerSource', PowerSource, 3],
     ['PowerTopology', PowerTopology, 1],
-    ['PressureMeasurement', PressureMeasurement, 4],
+    ['PressureMeasurement', PressureMeasurement, 5],
     ['PumpConfigurationAndControl', PumpConfigurationAndControl, 5],
     ['PushAvStreamTransport', PushAvStreamTransport, 2],
-    ['RadonConcentrationMeasurement', RadonConcentrationMeasurement, 4],
+    ['RadonConcentrationMeasurement', RadonConcentrationMeasurement, 5],
     ['RefrigeratorAlarm', RefrigeratorAlarm, 1],
     ['RefrigeratorAndTemperatureControlledCabinetMode', RefrigeratorAndTemperatureControlledCabinetMode, 3],
-    ['RelativeHumidityMeasurement', RelativeHumidityMeasurement, 4],
+    ['RelativeHumidityMeasurement', RelativeHumidityMeasurement, 5],
     ['RvcCleanMode', RvcCleanMode, 5],
     ['RvcOperationalState', RvcOperationalState, 3],
     ['RvcRunMode', RvcRunMode, 4],
     ['ServiceArea', ServiceArea, 2],
-    ['SmokeCoAlarm', SmokeCoAlarm, 1],
+    ['SmokeCoAlarm', SmokeCoAlarm, 2],
     ['SoilMeasurement', SoilMeasurement, 1],
     ['Switch', Switch, 2],
     ['TargetNavigator', TargetNavigator, 2],
+    ['TemperatureAlarm', TemperatureAlarm, 1],
     ['TemperatureControl', TemperatureControl, 1],
-    ['TemperatureMeasurement', TemperatureMeasurement, 5],
-    ['Thermostat', Thermostat, 10],
+    ['TemperatureMeasurement', TemperatureMeasurement, 6],
+    ['Thermostat', Thermostat, 11],
     ['ThermostatUserInterfaceConfiguration', ThermostatUserInterfaceConfiguration, 2],
     ['TlsCertificateManagement', TlsCertificateManagement, 1],
     ['TlsClientManagement', TlsClientManagement, 1],
-    ['TotalVolatileOrganicCompoundsConcentrationMeasurement', TotalVolatileOrganicCompoundsConcentrationMeasurement, 4],
+    ['TotalVolatileOrganicCompoundsConcentrationMeasurement', TotalVolatileOrganicCompoundsConcentrationMeasurement, 5],
     ['ValveConfigurationAndControl', ValveConfigurationAndControl, 1],
     ['WakeOnLan', WakeOnLan, 1],
     ['WaterHeaterManagement', WaterHeaterManagement, 2],

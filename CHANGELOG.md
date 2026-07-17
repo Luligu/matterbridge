@@ -58,6 +58,63 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.10.0] - 2026-07-17
+
+### Breaking changes
+
+- [matter]: Bump `matter.js` to 0.17.5 and Matter to 1.6.0. See [Matter 1.6.0 changes from 1.5.1](Matter-1.6.0.md) for delta from 1.5.1.
+
+### Development Breaking changes
+
+- [endpoint]: Add `productLabel`, `productUrl` and `configurationVersion` parameters to the Basic Information creation methods. The default product labels are now `Matter Endpoint` and `Matter Bridged Endpoint`, and the default product URL is now `https://matterbridge.io`.
+- [matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.
+- [export]: Removed the deprecated `matterbridge/jestutils` export. Use `@matterbridge/jest-utils`
+  or `@matterbridge/vitest-utils` instead.
+- [endpoint]: Remove the deprecated `getChildEndpointByName()` helper.
+- [device types]: Remove the deprecated device types: `onOffOutlet`, `dimmableOutlet`, `onOffMountedSwitch`, `dimmableMountedSwitch`, `pumpDevice`, `onOffSwitch`, `dimmableSwitch`, `colorTemperatureSwitch`, `doorLockDevice`, `coverDevice`, `thermostatDevice`, `fanDevice`, `speakerDevice`, `airConditioner`.
+- [tags]: Remove the deprecated `tag` aliases: `AreaNamespaceTag`, `ClosureTag`, `CompassDirectionTag`, `CompassLocationTag`, `DirectionTag`, `LandmarkNamespaceTag`, `LevelTag`, `LocationTag`, `NumberTag`, `PositionTag`, `RelativePositionTag`.
+- [servers]: Remove deprecated behavior servers: `MatterbridgeEnhancedColorControlServer`, `MatterbridgePresetThermostatServer`, `MatterbridgeLiftWindowCoveringServer`, `MatterbridgeLiftTiltWindowCoveringServer`.
+- [command handler]: Remove deprecated interface `MatterbridgeEndpointCommands`.
+
+### Added
+
+- [utils]: Add the `isValidInteger()` validation helper with optional inclusive range checks.
+- [endpoint]: Add JSDoc remark refinements to MatterbridgeEndpoint helper methods for clarity.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.0.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@types/node` to v.26.1.1.
+- [matterbridge]: Bump `typescript` to v.7.0.2 and remove `@typescript/native-preview`. Refactor scripts to always use tsc instead of tsgo.
+- [matterbridge]: Bump `oxfmt` to v.0.59.0.
+- [matterbridge]: Bump `oxlint` to v.1.74.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.0.24.0.
+- [matterbridge]: Bump `vitest` to v.4.1.10.
+- [matterbridge]: Bump `marked` to v.18.0.6.
+- [core]: Bump `ws` to v.8.21.1.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.31.
+- [typescript]: Update tsconfigs `typescript` to v.7.0.2.
+- [bun]: Update `bunfig.toml` to install in isolated mode.
+- [bun]: Update Dockerfile.bun to install the latest matterbridge version.
+- [devcontainer]: Update `devcontainer.json` to use native toolchain.
+- [frontend]: Bump `frontend` version to v.3.5.3.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `oxfmt` to v.0.59.0.
+- [frontend]: Bump `oxlint` to v.1.74.0.
+- [behaviors]: Add '@matter/node' export.
+- [package]: Replace prettier-ignore with oxfmt-ignore.
+
+### Fixed
+
+- [matter]: Use endpoint software and hardware version metadata for accessory and server device Basic Information.
+- [endpoint]: Validate that Basic Information product URLs start with `https://` and contain at most 256 characters.
+- [device manager]: Preserve `productLabel` and `configurationVersion` in `BaseDevice` projections and worker messages.
+- [endpoint]: Validate software versions as Matter `uint32`, hardware versions as Matter `uint16`, and their version strings as non-empty strings of at most 64 characters.
+- [client clusters]: Fix addRequiredClusters, addRequiredClusterClients to log warning only if the cluster client is not already present.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.9.4] - 2026-07-10
 
 ### Added

@@ -658,5 +658,41 @@
     "repo": "luligu/matterbridge",
     "pull_count": 5465943,
     "delta": 50811
+  },
+  {
+    "ts": "2026-07-11T23:00:02.161Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5630543,
+    "delta": 164600
+  },
+  {
+    "ts": "2026-07-12T23:00:01.864Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5690627,
+    "delta": 60084
+  },
+  {
+    "ts": "2026-07-13T23:00:02.126Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5742812,
+    "delta": 52185
+  },
+  {
+    "ts": "2026-07-14T23:00:01.689Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5794974,
+    "delta": 52162
+  },
+  {
+    "ts": "2026-07-15T23:00:02.341Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5844880,
+    "delta": 49906
+  },
+  {
+    "ts": "2026-07-16T23:00:06.355Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 5896903,
+    "delta": 52023
   }
 ]
