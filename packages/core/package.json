@@ -131,14 +131,14 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.5",
+    "@matter/main": "0.17.6",
     "@matterbridge/dgram": "3.10.1",
     "@matterbridge/thread": "3.10.1",
     "@matterbridge/types": "3.10.1",
     "@matterbridge/utils": "3.10.1",
     "escape-html": "1.0.3",
     "express": "5.2.1",
-    "express-rate-limit": "8.5.2",
+    "express-rate-limit": "8.6.0",
     "multer": "2.2.0",
     "node-ansi-logger": "3.3.0",
     "node-persist-manager": "2.1.0",
