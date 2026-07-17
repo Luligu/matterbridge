@@ -59,7 +59,7 @@ A very special thank you to my friend [Tamer Salah](https://github.com/tammeryou
 
 ## Discord
 
-Join us in the Matterbridge [Discord group](https://discord.gg/QX58CDe6hd) created by [Tamer](https://github.com/tammeryousef1006).
+Join us in the Matterbridge [Discord group](https://discord.com/invite/QX58CDe6hd) created by [Tamer](https://github.com/tammeryousef1006).
 
 ## Videos
 
