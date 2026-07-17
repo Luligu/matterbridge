@@ -59,6 +59,15 @@ These classes will run as threads in the next releases:
 
 ## [3.10.1] - Dev branch
 
+### Added
+
+- [devcontainer]: Add a double Node/Bun Dev Container setup where VS Code lets you choose one profile or the other.
+- [devcontainer]: The Bun Dev Container profile builds in a fraction of the time compared to the Node profile, confirming how impressive the Bun runtime is.
+- [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
+- [devcontainer]: Add profile-specific persistent `bash-history` volumes to keep shell history across container rebuilds.
+
+### Changed
+
 - [matterbridge]: Bump `matterbridge` version to v.3.10.1.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@matter/main` to v.0.17.6.
