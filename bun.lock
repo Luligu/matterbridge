@@ -5,13 +5,13 @@
     "": {
       "name": "matterbridge",
       "dependencies": {
-        "@matterbridge/core": "3.9.5",
-        "@matterbridge/dgram": "3.9.5",
-        "@matterbridge/jest-utils": "3.9.5",
-        "@matterbridge/thread": "3.9.5",
-        "@matterbridge/types": "3.9.5",
-        "@matterbridge/utils": "3.9.5",
-        "@matterbridge/vitest-utils": "3.9.5",
+        "@matterbridge/core": "3.10.0",
+        "@matterbridge/dgram": "3.10.0",
+        "@matterbridge/jest-utils": "3.10.0",
+        "@matterbridge/thread": "3.10.0",
+        "@matterbridge/types": "3.10.0",
+        "@matterbridge/utils": "3.10.0",
+        "@matterbridge/vitest-utils": "3.10.0",
         "node-ansi-logger": "3.3.0",
         "node-persist-manager": "2.1.0",
       },
@@ -30,7 +30,7 @@
     },
     "packages/core": {
       "name": "@matterbridge/core",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "@matter/main": "0.17.5",
         "@matterbridge/dgram": "3.9.5",
@@ -58,7 +58,7 @@
     },
     "packages/dgram": {
       "name": "@matterbridge/dgram",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "@matterbridge/utils": "3.9.5",
         "node-ansi-logger": "3.3.0",
@@ -70,7 +70,7 @@
     },
     "packages/jest-utils": {
       "name": "@matterbridge/jest-utils",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "@matter/main": "0.17.5",
         "@matterbridge/types": "3.9.5",
@@ -84,23 +84,23 @@
     },
     "packages/thread": {
       "name": "@matterbridge/thread",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
-        "@matterbridge/types": "3.9.5",
-        "@matterbridge/utils": "3.9.5",
-        "@zip.js/zip.js": "2.8.30",
+        "@matterbridge/types": "3.10.0",
+        "@matterbridge/utils": "3.10.0",
+        "@zip.js/zip.js": "2.8.31",
         "node-ansi-logger": "3.3.0",
       },
       "devDependencies": {
-        "@matterbridge/types": "3.9.5",
-        "@matterbridge/vitest-utils": "3.9.5",
+        "@matterbridge/types": "3.10.0",
+        "@matterbridge/vitest-utils": "3.10.0",
         "@types/node": "26.1.1",
         "vitest": "4.1.10",
       },
     },
     "packages/types": {
       "name": "@matterbridge/types",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "@matter/main": "0.17.5",
         "node-ansi-logger": "3.3.0",
@@ -112,7 +112,7 @@
     },
     "packages/utils": {
       "name": "@matterbridge/utils",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "node-ansi-logger": "3.3.0",
       },
@@ -124,11 +124,11 @@
     },
     "packages/vitest-utils": {
       "name": "@matterbridge/vitest-utils",
-      "version": "3.9.5",
+      "version": "3.10.0",
       "dependencies": {
         "@matter/main": "0.17.5",
-        "@matterbridge/types": "3.9.5",
-        "@matterbridge/utils": "3.9.5",
+        "@matterbridge/types": "3.10.0",
+        "@matterbridge/utils": "3.10.0",
         "node-ansi-logger": "3.3.0",
       },
       "devDependencies": {
@@ -440,7 +440,7 @@
 
     "@vitest/utils": ["@vitest/utils@4.1.10", "", { "dependencies": { "@vitest/pretty-format": "4.1.10", "convert-source-map": "^2.0.0", "tinyrainbow": "^3.1.0" } }, "sha512-fy9am/HWxbaGt/Sawrp90vt6Y6jQwf1RX77cz3uwoJwJVMli/e1IEwRPnMNJ7vKfPTwo0diXifkpPvwH9v7nGA=="],
 
-    "@zip.js/zip.js": ["@zip.js/zip.js@2.8.30", "", {}, "sha512-ig0aIElRmwDhe+tCyd/aAN9dluG0owGYjafCn7w4k/e+DHsit93yXLB+hBVgc8g/5jYp54L09LSECqEMNXNqgA=="],
+    "@zip.js/zip.js": ["@zip.js/zip.js@2.8.31", "", {}, "sha512-2NLmow9ax/5IdBbJKxNQp3Ur9mNxmgLfN2Yp/FKNh1ZIGs3OYkiC3AIUfIZouTPSgeW5+F1bzTAZAyD2Y4ZfFA=="],
 
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 
