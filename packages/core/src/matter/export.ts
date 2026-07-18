@@ -29,8 +29,6 @@ export { MdnsService, Val } from '@matter/main/protocol';
 // Fix the export of the Common*NamespaceTag to *NamespaceTag
 /** @deprecated Use CommonAreaNamespaceTag instead. */
 export { CommonAreaNamespaceTag as AreaNamespaceTag } from '@matter/main/node';
-/** @deprecated Use CommonClosureTag instead. */
-export { CommonClosureTag as ClosureTag } from '@matter/main/node';
 /** @deprecated Use CommonCompassDirectionTag instead. */
 export { CommonCompassDirectionTag as CompassDirectionTag } from '@matter/main/node';
 /** @deprecated Use CommonCompassLocationTag instead. */
