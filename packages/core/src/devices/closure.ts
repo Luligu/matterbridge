@@ -28,6 +28,7 @@
 // @matter
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
+import type { Semtag } from '@matter/types/globals';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
@@ -84,6 +85,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
 
 export interface ClosureOptions {
   mainState?: ClosureControl.MainState;
+  tagList?: Semtag[];
 }
 
 /**
@@ -98,7 +100,7 @@ export class Closure extends MatterbridgeEndpoint {
    * @param {ClosureOptions} [options] - Optional initial cluster state values.
    */
   constructor(name: string, serial: string, options: ClosureOptions = {}) {
-    super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
