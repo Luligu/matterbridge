@@ -157,7 +157,7 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable name of the panel endpoint.
    * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
-   * @param {ClosurePanelOptions} [options] - Optional initial configuration values for the ClosureDimension cluster.
+   * @param {Pick<ClosurePanelOptions, 'resolution' | 'stepValue'>} [options] - Optional initial `resolution`/`stepValue` values for the ClosureDimension cluster.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
   addPanel(name: string, tagList: Semtag[], options: Pick<ClosurePanelOptions, 'resolution' | 'stepValue'> = {}): MatterbridgeEndpoint {
