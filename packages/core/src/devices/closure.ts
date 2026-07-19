@@ -33,9 +33,10 @@ import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { closure } from '../matterbridgeDeviceTypes.js';
+import { closure, closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import { MatterbridgeClosureDimensionServer, type ClosurePanelOptions } from './closurePanel.js';
 
 /**
  * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
@@ -145,5 +146,30 @@ export class Closure extends MatterbridgeEndpoint {
    */
   getMainState(): ClosureControl.MainState | undefined {
     return this.getAttribute(ClosureControlServer, 'mainState');
+  }
+
+  /**
+   * Adds a closure panel as a child endpoint of this closure and configures its ClosureDimension cluster.
+   *
+   * @remarks
+   * Use this to compose a closure out of one or more independently controlled panels, for example a venetian
+   * blind with a `ClosurePanelTag.Lift` panel and a `ClosurePanelTag.Tilt` panel.
+   *
+   * @param {string} name - Human-readable name of the panel endpoint.
+   * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
+   * @param {ClosurePanelOptions} [options] - Optional initial configuration values for the ClosureDimension cluster.
+   * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
+   */
+  addPanel(name: string, tagList: Semtag[], options: Pick<ClosurePanelOptions, 'resolution' | 'stepValue'> = {}): MatterbridgeEndpoint {
+    const panel = this.addChildDeviceType(name, closurePanel, { tagList });
+
+    panel.behaviors.require(MatterbridgeClosureDimensionServer, {
+      currentState: null,
+      targetState: null,
+      resolution: options.resolution ?? 1,
+      stepValue: options.stepValue ?? 1,
+    });
+
+    return panel;
   }
 }

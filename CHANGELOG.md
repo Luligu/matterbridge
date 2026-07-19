@@ -66,6 +66,7 @@ These classes will run as threads in the next releases:
 - [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
 - [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor (thanks Ludovic BOUÉ).
 - [closure]: Add `countdownTime`, `mainState`, `currentErrorList`, `overallCurrentState`, `overallTargetState`, and `latchControlModes` support to the `ClosureOptions` used by the `Closure` device constructor.
+- [devices]: Add `addPanel()` to the `Closure` device and `tagList` support to `ClosurePanelOptions` to compose closures with multiple closure panels (e.g. a venetian blind with `ClosurePanelTag.Lift` and `ClosurePanelTag.Tilt` panels).
 
 ### Changed
 
