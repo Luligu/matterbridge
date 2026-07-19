@@ -114,7 +114,6 @@ describe('Matterbridge ' + NAME, () => {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
     });
-
   });
 
   test('device forEachAttribute', () => {
