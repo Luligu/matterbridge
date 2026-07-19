@@ -77,7 +77,7 @@ function Header() {
   };
 
   const handleDiscordLogoClick = () => {
-    window.open(`https://discord.gg/QX58CDe6hd`, '_blank');
+    window.open(`https://discord.com/invite/QX58CDe6hd`, '_blank');
   };
 
   const handleStarClick = () => {

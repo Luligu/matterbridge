@@ -12,7 +12,6 @@
 [![tested with Vitest](https://img.shields.io/badge/tested_with-Vitest-6E9F18.svg?logo=vitest&logoColor=white)](https://vitest.dev)
 [![styled with Oxc](https://img.shields.io/badge/styled_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/formatter.html)
 [![linted with Oxc](https://img.shields.io/badge/linted_with-Oxc-9BE4E0.svg?logo=oxc&logoColor=white)](https://oxc.rs/docs/guide/usage/linter.html)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![TypeScript Native](https://img.shields.io/badge/TypeScript_Native-3178C6?logo=typescript&logoColor=white)](https://github.com/microsoft/typescript-go)
 [![ESM](https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![ESM](https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white)](https://bun.com)
@@ -58,15 +57,33 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
-## [Unreleased]
+## [3.10.1] - Dev branch
 
 ### Added
 
+- [devcontainer]: Add a double Node/Bun Dev Container setup where VS Code lets you choose one profile or the other.
+- [devcontainer]: The Bun Dev Container profile builds in a fraction of the time compared to the Node profile, confirming how impressive the Bun runtime is.
+- [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
+- [devcontainer]: Add profile-specific persistent `bash-history` volumes to keep shell history across container rebuilds.
 - [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.1.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@matter/main` to v.0.17.6.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.0.25.0.
+- [frontend]: Bump `frontend` version to v.3.5.4.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `@rjsf` packages to v.6.7.0.
+- [frontend]: Bump `vite` to v.8.1.5.
+- [frontend]: Bump `oxlint-tsgolint` to v.0.25.0.
 
 ### Fixed
 
 - [tags]: Fix `ClosureTag` export shadowing.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.0] - 2026-07-17
 

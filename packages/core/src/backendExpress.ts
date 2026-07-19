@@ -76,7 +76,7 @@ export class BackendExpress {
   private readonly server: BroadcastServer;
   private fileLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 20, // max 20 requests per windowMs
+    limit: 20, // max 20 requests per windowMs
   });
 
   expressApp: express.Application | undefined;
