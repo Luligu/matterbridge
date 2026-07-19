@@ -114,6 +114,7 @@ describe('Matterbridge ' + NAME, () => {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
     });
+
   });
 
   test('device forEachAttribute', () => {
@@ -162,13 +163,13 @@ describe('Matterbridge ' + NAME, () => {
         'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
         'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
-        'closureControl(0x104).countdownTime(0x0)=null',
+        'closureControl(0x104).countdownTime(0x0)=0',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
         'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
-        'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: false, remoteUnlatching: false }',
+        'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
-        'closureControl(0x104).overallCurrentState(0x3)=null',
+        'closureControl(0x104).overallCurrentState(0x3)={ position: 0, latch: true, speed: 0, secureState: true }',
         'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 1 }',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',

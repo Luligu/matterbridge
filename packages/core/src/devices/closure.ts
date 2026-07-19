@@ -56,11 +56,13 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
+    /* v8 ignore next -- Defensive fallback for direct behavior calls; controller commands receive a normalized target state. */
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
+      /* v8 ignore next -- Defensive fallback; Matter command validation supplies a speed when controllers omit it. */
       speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
     };
 
@@ -84,7 +86,19 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
 }
 
 export interface ClosureOptions {
+  /** Initial ClosureControl countdown time, in seconds. Defaults to 0 for a completed safe state. */
+  countdownTime?: number;
+  /** Initial ClosureControl main state. Defaults to stopped. */
   mainState?: ClosureControl.MainState;
+  /** Initial ClosureControl error list. Defaults to an empty list. */
+  currentErrorList?: ClosureControl.ClosureError[];
+  /** Initial current state. Defaults to secure, latched, and fully closed. */
+  overallCurrentState?: ClosureControl.OverallCurrentState;
+  /** Initial target state. Defaults to latched and fully closed. */
+  overallTargetState?: ClosureControl.OverallTargetState;
+  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  latchControlModes?: ClosureControl.LatchControlModes;
+  /** Optional semantic tags for endpoint disambiguation. */
   tagList?: Semtag[];
 }
 
@@ -106,11 +120,21 @@ export class Closure extends MatterbridgeEndpoint {
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
 
     this.behaviors.require(MatterbridgeClosureControlServer, {
+      countdownTime: options.countdownTime ?? 0,
       mainState: options.mainState ?? ClosureControl.MainState.Stopped,
       currentErrorList: [],
-      overallCurrentState: null,
-      overallTargetState: null,
-      countdownTime: null,
+      overallCurrentState: options.overallCurrentState ?? {
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+        secureState: true,
+      },
+      overallTargetState: options.overallTargetState ?? {
+        position: ClosureControl.TargetPosition.MoveToFullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+      },
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
     });
   }
 
