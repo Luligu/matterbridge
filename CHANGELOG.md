@@ -58,6 +58,16 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [Unreleased]
+
+### Added
+
+- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor.
+
+### Fixed
+
+- [tags]: Fix `ClosureTag` export shadowing.
+
 ## [3.10.0] - 2026-07-17
 
 ### Breaking changes
