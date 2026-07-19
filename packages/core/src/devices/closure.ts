@@ -157,10 +157,14 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable name of the panel endpoint.
    * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
-   * @param {Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue'>} [options] - Optional initial ClosureDimension cluster state values.
+   * @param {Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'>} [options] - Optional initial ClosureDimension cluster state values.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
-  addPanel(name: string, tagList: Semtag[], options: Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue'> = {}): MatterbridgeEndpoint {
+  addPanel(
+    name: string,
+    tagList: Semtag[],
+    options: Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'> = {},
+  ): MatterbridgeEndpoint {
     const panel = this.addChildDeviceType(name, closurePanel, { tagList });
 
     panel.behaviors.require(MatterbridgeClosureDimensionServer, {
@@ -168,6 +172,7 @@ export class Closure extends MatterbridgeEndpoint {
       targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
       resolution: options.resolution ?? 1,
       stepValue: options.stepValue ?? 1,
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
     });
 
     return panel;

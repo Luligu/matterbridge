@@ -80,6 +80,7 @@ describe('Matterbridge ' + NAME, () => {
   test('invoke closure dimension commands', async () => {
     expect(device.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 0, latch: true, speed: ThreeLevelAuto.Auto });
     expect(device.getAttribute(ClosureDimension.id, 'currentState')).toMatchObject({ position: 0, latch: true, speed: ThreeLevelAuto.Auto });
+    expect(device.getAttribute(ClosureDimension.id, 'latchControlModes')).toMatchObject({ remoteLatching: true, remoteUnlatching: true });
 
     await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
     expect(device.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 5000 });
@@ -125,8 +126,10 @@ describe('Matterbridge ' + NAME, () => {
       currentState: { position: null, latch: true, speed: ThreeLevelAuto.Auto },
       targetState: { position: 300, latch: true, speed: ThreeLevelAuto.Auto },
       stepValue: 10,
+      latchControlModes: { remoteLatching: false, remoteUnlatching: true },
     });
     expect(await addDevice(server, device4)).toBeTruthy();
+    expect(device4.getAttribute(ClosureDimension.id, 'latchControlModes')).toMatchObject({ remoteLatching: false, remoteUnlatching: true });
 
     await device4.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Increase,
@@ -203,7 +206,7 @@ describe('Matterbridge ' + NAME, () => {
         'closureDimension(0x105).currentState(0x0)={ position: 100, latch: true, speed: 0 }',
         'closureDimension(0x105).featureMap(0xfffc)={ positioning: true, motionLatching: true, unit: false, limitation: false, speed: true, translation: false, rotation: false, modulation: false }',
         'closureDimension(0x105).generatedCommandList(0xfff8)=[  ]',
-        'closureDimension(0x105).latchControlModes(0xb)={ remoteLatching: false, remoteUnlatching: false }',
+        'closureDimension(0x105).latchControlModes(0xb)={ remoteLatching: true, remoteUnlatching: true }',
         'closureDimension(0x105).resolution(0x2)=1',
         'closureDimension(0x105).stepValue(0x3)=100',
         'closureDimension(0x105).targetState(0x1)={ position: 100, latch: true, speed: 0 }',

@@ -112,6 +112,8 @@ export interface ClosurePanelOptions {
   resolution?: number;
   /** Number of units moved for each Step command. Defaults to 1. */
   stepValue?: number;
+  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  latchControlModes?: ClosureDimension.LatchControlModes;
   /** Semantic tags used to disambiguate sibling closure panels. */
   tagList?: Semtag[];
 }
@@ -137,6 +139,7 @@ export class ClosurePanel extends MatterbridgeEndpoint {
       targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
       resolution: options.resolution ?? 1,
       stepValue: options.stepValue ?? 1,
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
     });
   }
 }

@@ -126,7 +126,11 @@ describe('Matterbridge ' + NAME, () => {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
     });
     venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)]);
-    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], { resolution: 2, stepValue: 100 });
+    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], {
+      resolution: 2,
+      stepValue: 100,
+      latchControlModes: { remoteLatching: false, remoteUnlatching: true },
+    });
 
     expect(venetianBlind.getChildEndpointByOriginalId('Lift')).toBeDefined();
     expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.hasClusterServer(ClosureDimension.id)).toBeTruthy();
@@ -136,6 +140,7 @@ describe('Matterbridge ' + NAME, () => {
       targetState: { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
       resolution: 2,
       stepValue: 100,
+      latchControlModes: { remoteLatching: false, remoteUnlatching: true },
     });
 
     expect(await addDevice(server, venetianBlind)).toBeTruthy();
