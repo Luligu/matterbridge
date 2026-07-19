@@ -120,7 +120,7 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('create a closure device with two panels', () => {
+  test('create and add a closure device with two panels', async () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
     });
@@ -134,9 +134,7 @@ describe('Matterbridge ' + NAME, () => {
       resolution: 2,
       stepValue: 100,
     });
-  });
 
-  test('add a closure device with two panels', async () => {
     expect(await addDevice(server, venetianBlind)).toBeTruthy();
     expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.getAttribute('Descriptor', 'tagList')).toEqual([
       { mfgCode: null, namespaceId: ClosurePanelTag.Lift.namespaceId, tag: ClosurePanelTag.Lift.tag },
