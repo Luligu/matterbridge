@@ -97,7 +97,7 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable device name.
    * @param {string} serial - Device serial number.
-   * @param {ClosureOptions} [options] - Optional initial cluster state values.
+   * @param {ClosureOptions} [options] - Optional endpoint options and initial cluster state values.
    */
   constructor(name: string, serial: string, options: ClosureOptions = {}) {
     super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
