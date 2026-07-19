@@ -8,8 +8,11 @@ const NAME = 'Closure';
 const MATTER_PORT = 8022;
 const MATTER_CREATE_ONLY = true;
 
+import { ClosureCoveringTag, ClosurePanelTag, ClosureTag } from '@matter/node';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { Identify } from '@matter/types/clusters/identify';
+import { ThreeLevelAuto } from '@matter/types/globals';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -26,12 +29,14 @@ import { stringify } from 'node-ansi-logger';
 
 import { Closure } from '../../src/devices/closure.js';
 import { closure } from '../../src/matterbridgeDeviceTypes.js';
+import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
+  let venetianBlind: Closure;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -114,6 +119,32 @@ describe('Matterbridge ' + NAME, () => {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
     });
+  });
+
+  test('create and add a closure device with two panels', async () => {
+    venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
+      tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
+    });
+    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)]);
+    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], { resolution: 2, stepValue: 100 });
+
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')).toBeDefined();
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.hasClusterServer(ClosureDimension.id)).toBeTruthy();
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')).toBeDefined();
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getClusterServerOptions(ClosureDimension.id)).toMatchObject({
+      currentState: { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      targetState: { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      resolution: 2,
+      stepValue: 100,
+    });
+
+    expect(await addDevice(server, venetianBlind)).toBeTruthy();
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.getAttribute('Descriptor', 'tagList')).toEqual([
+      { mfgCode: null, namespaceId: ClosurePanelTag.Lift.namespaceId, tag: ClosurePanelTag.Lift.tag },
+    ]);
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getAttribute('Descriptor', 'tagList')).toEqual([
+      { mfgCode: null, namespaceId: ClosurePanelTag.Tilt.namespaceId, tag: ClosurePanelTag.Tilt.tag },
+    ]);
   });
 
   test('device forEachAttribute', () => {

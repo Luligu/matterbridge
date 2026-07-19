@@ -64,8 +64,9 @@ These classes will run as threads in the next releases:
 - [devcontainer]: Add a double Node/Bun Dev Container setup where VS Code lets you choose one profile or the other.
 - [devcontainer]: The Bun Dev Container profile builds in a fraction of the time compared to the Node profile, confirming how impressive the Bun runtime is.
 - [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
-- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor (thanks Ludovic BOUÉ).
+- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor. Thanks Ludovic BOUÉ.
 - [closure]: Add `countdownTime`, `mainState`, `currentErrorList`, `overallCurrentState`, `overallTargetState`, and `latchControlModes` support to the `ClosureOptions` used by the `Closure` device constructor.
+- [devices]: Add `addPanel()` to the `Closure` device and `tagList` support to `ClosurePanelOptions` to compose closures with multiple closure panels (e.g. a venetian blind with `ClosurePanelTag.Lift` and `ClosurePanelTag.Tilt` panels). Thanks Ludovic BOUÉ.
 
 ### Changed
 
