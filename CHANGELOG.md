@@ -65,7 +65,7 @@ These classes will run as threads in the next releases:
 - [devcontainer]: The Bun Dev Container profile builds in a fraction of the time compared to the Node profile, confirming how impressive the Bun runtime is.
 - [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
 - [devcontainer]: Add profile-specific persistent `bash-history` volumes to keep shell history across container rebuilds.
-- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor.
+- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor (thanks Ludovic BOUÉ).
 
 ### Changed
 
