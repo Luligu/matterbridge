@@ -65,6 +65,7 @@ These classes will run as threads in the next releases:
 - [devcontainer]: The Bun Dev Container profile builds in a fraction of the time compared to the Node profile, confirming how impressive the Bun runtime is.
 - [devcontainer]: Add dedicated `.devcontainer/node` and `.devcontainer/bun` profiles with their own Dockerfile, docker-compose, and create/start scripts.
 - [devcontainer]: Add profile-specific persistent `bash-history` volumes to keep shell history across container rebuilds.
+- [devices]: Add `tagList` support to the `ClosureOptions` used by the `Closure` device constructor.
 
 ### Changed
 
@@ -77,6 +78,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `@rjsf` packages to v.6.7.0.
 - [frontend]: Bump `vite` to v.8.1.5.
 - [frontend]: Bump `oxlint-tsgolint` to v.0.25.0.
+
+### Fixed
+
+- [tags]: Fix `ClosureTag` export shadowing.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
