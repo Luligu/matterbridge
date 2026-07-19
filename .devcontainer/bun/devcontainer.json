@@ -13,7 +13,6 @@
     "source=${localWorkspaceFolderBasename}-bun-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-bun-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-bun-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
-    "source=${localWorkspaceFolderBasename}-bun-bash-history,target=/home/bun/.bash_history_volume,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/bun/.mattercert,type=volume",
