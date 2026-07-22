@@ -79,6 +79,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `@rjsf` packages to v.6.7.0.
 - [frontend]: Bump `vite` to v.8.1.5.
 - [frontend]: Bump `oxlint-tsgolint` to v.0.25.0.
+- [chip-test]: Update chip-test Dockerfile.
 
 ### Fixed
 

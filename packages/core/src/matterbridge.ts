@@ -740,7 +740,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       const lastShutdownAt = await this.nodeContext.get('lastShutdownAt', 0);
       if (lastStartupAt && lastShutdownAt && lastShutdownAt < lastStartupAt) {
         this.log.warn(
-          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${db}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${db}`,
+          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${wr}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${wr}`,
         );
       }
 

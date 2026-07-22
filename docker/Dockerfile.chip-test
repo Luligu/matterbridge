@@ -67,9 +67,8 @@ RUN bash -lc "\
   du -sh out/host/chip-tool out/python_env || true; \
   "
 
-# Allow overriding the cache version
-ARG CACHE_VERSION=3.10.X
-RUN echo "Builder with cache version ${CACHE_VERSION}"
+# Invalidate the cache if a new commit is pushed to the dev branch. This ensures that the latest dev branch is always built.
+ADD https://api.github.com/repos/Luligu/matterbridge/commits/dev /tmp/matterbridge-dev-head.json
 
 # Build Matterbridge and plugins (keep only runtime deps)
 WORKDIR /root/matterbridge
@@ -122,10 +121,6 @@ RUN \
 ENV CHIP_ROOT=/root/connectedhomeip
 ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
-
-# Allow overriding the cache version
-ARG CACHE_VERSION=3.10.X
-RUN echo "Release with cache version ${CACHE_VERSION}"
 
 # Matterbridge + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
 COPY --from=builder /root/matterbridge /root/matterbridge
