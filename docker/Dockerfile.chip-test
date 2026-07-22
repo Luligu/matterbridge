@@ -68,7 +68,7 @@ RUN bash -lc "\
   "
 
 # Allow overriding the cache version
-ARG CACHE_VERSION=3.6.X
+ARG CACHE_VERSION=3.10.X
 RUN echo "Builder with cache version ${CACHE_VERSION}"
 
 # Build Matterbridge and plugins (keep only runtime deps)
@@ -79,24 +79,6 @@ RUN \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
   npm prune --omit=dev --no-fund --no-audit && \
   npm link --no-fund  --no-audit
-
-WORKDIR /root/matterbridge-test
-RUN \
-  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git . && \
-  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit
-
-WORKDIR /root/matterbridge-example-accessory-platform
-RUN \
-  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git . && \
-  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit
-
-WORKDIR /root/matterbridge-example-dynamic-platform
-RUN \
-  git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git . && \
-  npm ci --no-fund --no-audit && npm link matterbridge && npm run build && \
-  npm prune --omit=dev --no-fund --no-audit
 
 FROM ubuntu:24.04 AS release
 
@@ -142,39 +124,25 @@ ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 
 # Allow overriding the cache version
-ARG CACHE_VERSION=3.7.X
+ARG CACHE_VERSION=3.10.X
 RUN echo "Release with cache version ${CACHE_VERSION}"
 
-# Matterbridge module (global install copied from builder)
-COPY --from=builder /usr/lib/node_modules/matterbridge /usr/lib/node_modules/matterbridge
+# Matterbridge + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
+COPY --from=builder /root/matterbridge /root/matterbridge
 
-# Recreate executable links
+# Recreate the npm link (builder's /usr/lib/node_modules/matterbridge is a symlink to /root/matterbridge;
+# COPY --from=builder dereferences symlinks, so copying both paths would duplicate ~190MB of files).
 RUN \
+  ln -sf /root/matterbridge /usr/lib/node_modules/matterbridge && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/matterbridge.js /usr/bin/matterbridge && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_mdns.js /usr/bin/mb_mdns && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_coap.js /usr/bin/mb_coap && \
   ln -sf /usr/lib/node_modules/matterbridge/bin/mb_health.js /usr/bin/mb_health
 
-# Matterbridge + local plugin repos + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
-COPY --from=builder /root/matterbridge /root/matterbridge
-COPY --from=builder /root/matterbridge-test /root/matterbridge-test
-COPY --from=builder /root/matterbridge-example-accessory-platform /root/matterbridge-example-accessory-platform
-COPY --from=builder /root/matterbridge-example-dynamic-platform /root/matterbridge-example-dynamic-platform
-
 # Setup Matterbridge
 WORKDIR /root/matterbridge
-RUN \
-  matterbridge --add /root/matterbridge-test && \
-  matterbridge --add /root/matterbridge-example-accessory-platform && \
-  matterbridge --add /root/matterbridge-example-dynamic-platform && \
-  mkdir -p /root/.mattercert
+RUN mkdir -p /root/.mattercert
 COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
-WORKDIR /root/matterbridge-test
-RUN npm link matterbridge --no-fund --no-audit
-WORKDIR /root/matterbridge-example-accessory-platform
-RUN npm link matterbridge --no-fund --no-audit
-WORKDIR /root/matterbridge-example-dynamic-platform
-RUN npm link matterbridge --no-fund --no-audit
 
 # Persist Matterbridge fabric state (copied from repo)
 RUN mkdir -p /root/.matterbridge/matterstorage/Matterbridge
@@ -228,51 +196,6 @@ COPY --from=builder /root/connectedhomeip/src/app/tests /root/connectedhomeip/sr
 COPY --from=builder /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip /root/connectedhomeip/src/app/zap-templates/zcl/data-model/chip
 COPY --from=builder /root/connectedhomeip/src/python_testing /root/connectedhomeip/src/python_testing
 
-# Work around a bug in TC_DeviceBasicComposition.py duplicate-tag detection:
-# it checks duplicates by comparing only `tag`, ignoring namespaceID/mfgCode.
-# For semantic tags, the uniqueness key is namespaced.
-RUN python3 - <<'PY'
-from pathlib import Path
-import re
-
-path = Path('/root/connectedhomeip/src/python_testing/TC_DeviceBasicComposition.py')
-text = path.read_text(encoding='utf-8')
-
-# If upstream already fixed it (or renamed variables), don't fail the image build.
-if 'no_duplicate_tag_keys' in text and 'tag_key' in text:
-  print(f'{path}: duplicate-tag patch already present; skipping')
-  raise SystemExit(0)
-
-patterns = {
-  'no_duplicate_tag init': (
-    r'(^[ \t]*)no_duplicate_tag\s*=\s*\[\]\s*\n',
-    r'\1no_duplicate_tag_keys = set()\n',
-  ),
-  'duplicate-tag if check': (
-    r'(^[ \t]*)if\s+tag_struct\.tag\s+in\s+no_duplicate_tag\s*:\s*\n',
-    r"\1mfg_code_key = None if isinstance(tag_struct.mfgCode, Nullable) else int(tag_struct.mfgCode)\n"
-    r"\1tag_key = (mfg_code_key, int(tag_struct.namespaceID), int(tag_struct.tag))\n"
-    r"\1if tag_key in no_duplicate_tag_keys:\n",
-  ),
-  'no_duplicate_tag append': (
-    r'(^[ \t]*)no_duplicate_tag\.append\(\s*tag_struct\.tag\s*\)\s*\n',
-    r'\1no_duplicate_tag_keys.add(tag_key)\n',
-  ),
-}
-
-counts = {label: len(list(re.finditer(pattern, text, flags=re.MULTILINE))) for label, (pattern, _) in patterns.items()}
-
-if all(v == 1 for v in counts.values()):
-  for label, (pattern, replacement) in patterns.items():
-    text = re.sub(pattern, replacement, text, count=1, flags=re.MULTILINE)
-  path.write_text(text, encoding='utf-8')
-  print(f'Patched {path} (duplicate-tag detection)')
-elif any(v > 1 for v in counts.values()):
-  raise SystemExit(f'Ambiguous matches while patching {path}: {counts}')
-else:
-  print(f'Skipping duplicate-tag patch for {path}: patterns not found (upstream likely changed). Counts: {counts}')
-PY
-
 # Persist pairing state for yaml and python tests
 COPY docker/chip-test/chip_* /tmp/
 COPY docker/chip-test/admin_storage.json /root/connectedhomeip/
@@ -287,4 +210,4 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
 COPY ./docker/entrypoint.chip-test.sh ./
 RUN chmod +x ./entrypoint.chip-test.sh
 ENTRYPOINT ["./entrypoint.chip-test.sh"]
-CMD ["matterbridge", "--docker"]
+CMD ["matterbridge", "--docker", "--novirtual"]
