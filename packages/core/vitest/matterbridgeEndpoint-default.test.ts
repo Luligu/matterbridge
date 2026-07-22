@@ -1455,6 +1455,167 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultSchedulesThermostatClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSchedulesDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultSchedulesThermostatClusterServer();
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+    expect(device.hasAttributeServer(Thermostat.id, 'localTemperature')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'outdoorTemperature')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'systemMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedHeatingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedCoolingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'unoccupiedHeatingSetpoint')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'unoccupiedCoolingSetpoint')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupancy')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'numberOfSchedules')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'numberOfScheduleTransitions')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'numberOfScheduleTransitionPerDay')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'activeScheduleHandle')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'schedules')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'scheduleTypes')).toBe(true);
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      autoMode: true,
+      cooling: true,
+      events: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: true,
+      occupancy: false,
+      presets: false,
+      setback: false,
+      thermostatSuggestions: false,
+    });
+
+    await addDevice(aggregator, device);
+    await flushAsync();
+    expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfScheduleTransitions')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfScheduleTransitionPerDay')).toBeNull();
+    const retrievedSchedules = device.getAttribute(Thermostat.id, 'schedules');
+    expect(retrievedSchedules).toHaveLength(0);
+    const retrievedScheduleTypes = device.getAttribute(Thermostat.id, 'scheduleTypes');
+    expect(retrievedScheduleTypes).toHaveLength(1);
+    expect(device.getCluster(Thermostat)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 5000,
+      absMinCoolSetpointLimit: 0,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2500,
+      occupiedHeatingSetpoint: 2100,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 5000,
+      minCoolSetpointLimit: 0,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 0,
+      numberOfSchedules: 10,
+      numberOfScheduleTransitions: 10,
+      numberOfScheduleTransitionPerDay: null,
+      activeScheduleHandle: null,
+      schedules: [],
+      scheduleTypes: [
+        {
+          systemMode: Thermostat.SystemMode.Auto,
+          numberOfSchedules: 10,
+          scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+        },
+      ],
+    });
+  });
+
+  test('createDefaultSchedulesThermostatClusterServer', async () => {
+    const scheduleTypes: Thermostat.ScheduleType[] = [
+      {
+        systemMode: Thermostat.SystemMode.Auto,
+        numberOfSchedules: 2,
+        scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+      },
+    ];
+    const schedulesList: Thermostat.Schedule[] = [
+      {
+        scheduleHandle: Uint8Array.from([0]),
+        systemMode: Thermostat.SystemMode.Auto,
+        name: 'Weekdays',
+        transitions: [
+          { dayOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }, transitionTime: 420, coolingSetpoint: 2500, heatingSetpoint: 2100 },
+        ],
+        builtIn: null,
+      },
+      {
+        scheduleHandle: Uint8Array.from([1]),
+        systemMode: Thermostat.SystemMode.Auto,
+        name: 'Weekend',
+        transitions: [{ dayOfWeek: { saturday: true, sunday: true }, transitionTime: 480, coolingSetpoint: 2700, heatingSetpoint: 1900 }],
+        builtIn: null,
+      },
+    ];
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSchedules' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultSchedulesThermostatClusterServer(
+      23,
+      21,
+      25,
+      2,
+      0,
+      48,
+      2,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      Uint8Array.from([0]),
+      schedulesList,
+      scheduleTypes,
+      5,
+      3,
+    );
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+    expect(device.hasAttributeServer(Thermostat.id, 'numberOfSchedules')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'activeScheduleHandle')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'schedules')).toBe(true);
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      autoMode: true,
+      cooling: true,
+      events: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: true,
+      occupancy: false,
+      presets: false,
+      setback: false,
+      thermostatSuggestions: false,
+    });
+
+    await addDevice(aggregator, device);
+    expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfScheduleTransitions')).toBe(5);
+    expect(device.getAttribute(Thermostat.id, 'numberOfScheduleTransitionPerDay')).toBe(3);
+    const retrievedSchedules = device.getAttribute(Thermostat.id, 'schedules');
+    expect(retrievedSchedules).toHaveLength(2);
+    expect(JSON.stringify(Object.values(retrievedSchedules[0].scheduleHandle))).toBe(JSON.stringify([0]));
+    expect(retrievedSchedules[0].name).toBe('Weekdays');
+    expect(retrievedSchedules[0].builtIn).toBe(true);
+    expect(JSON.stringify(Object.values(retrievedSchedules[1].scheduleHandle))).toBe(JSON.stringify([1]));
+    expect(retrievedSchedules[1].name).toBe('Weekend');
+    expect(device.getCluster(Thermostat)).toMatchObject({
+      activeScheduleHandle: Uint8Array.from([0]),
+      numberOfSchedules: 10,
+      numberOfScheduleTransitions: 5,
+      numberOfScheduleTransitionPerDay: 3,
+      scheduleTypes: [
+        {
+          systemMode: Thermostat.SystemMode.Auto,
+          numberOfSchedules: 2,
+          scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+        },
+      ],
+    });
+  });
+
   test('createDefaultFanControlClusterServer', async () => {
     const device = new MatterbridgeEndpoint(fan, { id: 'Fan' });
     expect(device).toBeDefined();

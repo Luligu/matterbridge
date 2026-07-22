@@ -23,7 +23,9 @@
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
+import { Bytes } from '@matter/general';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { StatusResponse } from '@matter/types';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -31,13 +33,14 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
- * Thermostat server (cooling/heating/auto/presets) with Matterbridge-specific command handling.
+ * Thermostat server (cooling/heating/auto/presets/schedules) with Matterbridge-specific command handling.
  */
 export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.Cooling,
   Thermostat.Feature.Heating,
   Thermostat.Feature.AutoMode,
   Thermostat.Feature.Presets,
+  Thermostat.Feature.MatterScheduleConfiguration,
 ) {
   /**
    * Initializes thermostat behavior and adjusts command lists to avoid unsupported atomic commands.
@@ -100,5 +103,34 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     device.log.debug(
       `MatterbridgeThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint}`,
     );
+  }
+
+  /**
+   * Forwards SetActiveScheduleRequest requests to the Matterbridge command handler and updates the active schedule handle.
+   *
+   * @param {Thermostat.SetActiveScheduleRequest} request - Set-active-schedule request payload.
+   *
+   * @remarks
+   * matter.js does not yet provide a default implementation of this command (the MatterScheduleConfiguration feature
+   * is not implemented by `ThermostatServer` in `@matter/node`), so validation and state handling are done here.
+   */
+  override async setActiveScheduleRequest(request: Thermostat.SetActiveScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    const scheduleHandle = `0x${Buffer.from(request.scheduleHandle).toString('hex')}`;
+    device.log.info(`Setting schedule to ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('Thermostat.setActiveScheduleRequest', {
+      command: 'setActiveScheduleRequest',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    const schedule = this.state.schedules.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
+    if (schedule === undefined) {
+      throw new StatusResponse.NotFoundError('Requested ScheduleHandle not found');
+    }
+    this.state.activeScheduleHandle = request.scheduleHandle;
+    device.log.debug(`MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle}`);
   }
 }

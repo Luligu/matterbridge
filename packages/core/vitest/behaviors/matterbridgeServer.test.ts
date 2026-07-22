@@ -97,6 +97,7 @@ describe('Server clusters and behaviors', () => {
   let vent: MatterbridgeEndpoint;
   let thermo: MatterbridgeEndpoint;
   let thermostatPreset: MatterbridgeEndpoint;
+  let thermostatSchedule: MatterbridgeEndpoint;
   let valve: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
   let contact: MatterbridgeEndpoint;
@@ -133,6 +134,55 @@ describe('Server clusters and behaviors', () => {
       Uint8Array.from([0]), // activePresetHandle: Uint8Array | null
       thermostatPresets, // presetsList: Thermostat.Preset[]
       thermostatPresetTypes, // presetTypesList: Thermostat.PresetType[]
+    );
+    endpoint.addRequiredClusterServers();
+    return endpoint;
+  }
+
+  const thermostatScheduleTypes: Thermostat.ScheduleType[] = [
+    {
+      systemMode: Thermostat.SystemMode.Auto,
+      numberOfSchedules: 2,
+      scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+    },
+  ];
+  const thermostatSchedules: Thermostat.Schedule[] = [
+    {
+      scheduleHandle: Uint8Array.from([0]),
+      systemMode: Thermostat.SystemMode.Auto,
+      name: 'Weekdays',
+      transitions: [
+        { dayOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true }, transitionTime: 420, coolingSetpoint: 2500, heatingSetpoint: 2100 },
+      ],
+      builtIn: null,
+    },
+    {
+      scheduleHandle: Uint8Array.from([1]),
+      systemMode: Thermostat.SystemMode.Auto,
+      name: 'Weekend',
+      transitions: [{ dayOfWeek: { saturday: true, sunday: true }, transitionTime: 480, coolingSetpoint: 2700, heatingSetpoint: 1900 }],
+      builtIn: null,
+    },
+  ];
+
+  function createScheduleThermostatEndpoint(id: string): MatterbridgeEndpoint {
+    const endpoint = new MatterbridgeEndpoint(thermostat, { id });
+    endpoint.createDefaultSchedulesThermostatClusterServer(
+      23,
+      21,
+      25,
+      2,
+      0,
+      48,
+      2,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      Uint8Array.from([0]), // activeScheduleHandle: Uint8Array | null
+      thermostatSchedules, // schedules: Thermostat.Schedule[]
+      thermostatScheduleTypes, // scheduleTypes: Thermostat.ScheduleType[]
     );
     endpoint.addRequiredClusterServers();
     return endpoint;
@@ -936,6 +986,36 @@ describe('Server clusters and behaviors', () => {
     expect(presetCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: invalidPresetRequest });
     expect(presetCalls).toHaveLength(4);
     expectPresetThermostatAttributes(null, 1900, 2700);
+  });
+
+  test('ScheduleThermostat server', async () => {
+    thermostatSchedule = createScheduleThermostatEndpoint('thermostatScheduleBehavior');
+    expect(await addDevice(aggregator, thermostatSchedule)).toBeTruthy();
+
+    const formatScheduleHandleForLog = (scheduleHandle: Uint8Array) => `0x${Buffer.from(scheduleHandle).toString('hex')}`;
+    const secondScheduleRequest = { scheduleHandle: Uint8Array.from([1]) };
+    const invalidScheduleRequest = { scheduleHandle: Uint8Array.from([9]) };
+    const scheduleCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
+
+    thermostatSchedule.addCommandHandler('setActiveScheduleRequest', (data) => {
+      scheduleCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
+    });
+
+    expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([0]));
+
+    await thermostatSchedule.invokeBehaviorCommand('Thermostat', 'setActiveScheduleRequest', secondScheduleRequest);
+    expect(scheduleCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSchedule, request: secondScheduleRequest });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Setting schedule to ${formatScheduleHandleForLog(secondScheduleRequest.scheduleHandle)} (endpoint ${thermostatSchedule.id}.${thermostatSchedule.number})`,
+    );
+    expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
+
+    await expect(thermostatSchedule.invokeBehaviorCommand('Thermostat', 'setActiveScheduleRequest', invalidScheduleRequest)).rejects.toThrow('Requested ScheduleHandle not found');
+    expect(scheduleCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSchedule, request: invalidScheduleRequest });
+    expect(scheduleCalls).toHaveLength(2);
+    // The active schedule handle must not change when the requested schedule handle is invalid.
+    expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
   });
 
   test('ValveConfigurationAndControl server', async () => {
