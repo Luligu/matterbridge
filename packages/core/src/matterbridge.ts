@@ -2020,7 +2020,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.runningDays = this.runningDays + Math.floor((this.shutdownAt - this.startupAt) / (1000 * 60 * 60 * 24));
         await this.nodeContext?.set('runningDays', this.runningDays);
         await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
-        this.log.info(`Matterbridge has run  ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
+        this.log.info(`Matterbridge has run ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
         this.log.info(
           `Matterbridge last started at  ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf} and shut down at ${CYAN}${new Date(this.shutdownAt).toLocaleString()}${nf}`,
         );

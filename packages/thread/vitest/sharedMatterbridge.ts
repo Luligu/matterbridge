@@ -88,6 +88,10 @@ export const matterbridge: Writable<SharedMatterbridge> = {
   port: undefined,
   discriminator: undefined,
   passcode: undefined,
+  startupAt: 0,
+  shutdownAt: 0,
+  runningTimes: 0,
+  runningDays: 0,
 };
 
 const log = new AnsiLogger({ logName: 'SharedMatterbridge', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });

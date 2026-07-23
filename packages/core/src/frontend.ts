@@ -1552,6 +1552,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         loaded: plugin.loaded,
         started: plugin.started,
         configured: plugin.configured,
+        local: plugin.local,
         restartRequired: plugin.restartRequired,
         registeredDevices: plugin.registeredDevices,
         configJson: plugin.configJson,

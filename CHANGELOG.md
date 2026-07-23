@@ -84,6 +84,7 @@ These classes will run as threads in the next releases:
 ### Fixed
 
 - [tags]: Fix `ClosureTag` export shadowing.
+- [frontend]: Local plugins are detected, and both update actions and available-version checks are skipped.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
