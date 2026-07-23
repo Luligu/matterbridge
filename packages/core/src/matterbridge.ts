@@ -1076,6 +1076,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
       const isLocal = fs.existsSync(plugin.path) && this.globalModulesDirectory.length > 0 && !plugin.path.startsWith(this.globalModulesDirectory);
+      plugin.local = isLocal;
       const isLinked = fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge'));
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +

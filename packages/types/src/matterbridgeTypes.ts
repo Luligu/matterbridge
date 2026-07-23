@@ -143,6 +143,7 @@ export interface ApiPlugin extends StoragePlugin {
   loaded?: boolean;
   started?: boolean;
   configured?: boolean;
+  local?: boolean;
   /** Signal that the config has changed and a restart is required */
   restartRequired?: boolean;
   registeredDevices?: number;
