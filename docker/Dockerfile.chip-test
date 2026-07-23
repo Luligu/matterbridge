@@ -76,8 +76,7 @@ RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
   cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
-  npm prune --omit=dev --no-fund --no-audit && \
-  npm link --no-fund  --no-audit
+  npm prune --omit=dev --no-fund --no-audit
 
 FROM ubuntu:24.04 AS release
 
@@ -122,20 +121,14 @@ ENV CHIP_ROOT=/root/connectedhomeip
 ENV VIRTUAL_ENV=/root/connectedhomeip/out/python_env
 ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 
-# Matterbridge + config. This allows to code inside the container and have changes reflected immediately without needing to rebuild the image.
-COPY --from=builder /root/matterbridge /root/matterbridge
 
-# Recreate the npm link (builder's /usr/lib/node_modules/matterbridge is a symlink to /root/matterbridge;
-# COPY --from=builder dereferences symlinks, so copying both paths would duplicate ~190MB of files).
-RUN \
-  ln -sf /root/matterbridge /usr/lib/node_modules/matterbridge && \
-  ln -sf /usr/lib/node_modules/matterbridge/bin/matterbridge.js /usr/bin/matterbridge && \
-  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_mdns.js /usr/bin/mb_mdns && \
-  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_coap.js /usr/bin/mb_coap && \
-  ln -sf /usr/lib/node_modules/matterbridge/bin/mb_health.js /usr/bin/mb_health
 
 # Setup Matterbridge
 WORKDIR /root/matterbridge
+COPY --from=builder /root/matterbridge /root/matterbridge
+RUN npm link
+
+# Setup pairing state for Matterbridge CHIP tests
 RUN mkdir -p /root/.mattercert
 COPY docker/chip-test/pairing.json /root/.mattercert/pairing.json
 
