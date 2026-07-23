@@ -1078,6 +1078,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand) || process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         try {
+          this.log.info(`Linking matterbridge to local plugin ${plg}${plugin.name}${nf}...`);
           execSync(isBun() ? 'bun link matterbridge --silent' : 'npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
           this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
         } catch (error) {
