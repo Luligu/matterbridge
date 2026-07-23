@@ -33,7 +33,7 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
- * Thermostat server (cooling/heating/auto/presets/schedules) with Matterbridge-specific command handling.
+ * Thermostat server (cooling/heating/auto/presets/schedules/suggestions) with Matterbridge-specific command handling.
  */
 export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.Cooling,
@@ -41,6 +41,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.AutoMode,
   Thermostat.Feature.Presets,
   Thermostat.Feature.MatterScheduleConfiguration,
+  Thermostat.Feature.ThermostatSuggestions,
 ) {
   /**
    * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
@@ -115,5 +116,79 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     }
     this.state.activeScheduleHandle = Uint8Array.from(request.scheduleHandle);
     device.log.debug(`MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle}`);
+  }
+
+  /**
+   * Forwards AddThermostatSuggestion requests to the Matterbridge command handler and appends the new suggestion.
+   *
+   * @param {Thermostat.AddThermostatSuggestionRequest} request - Add-thermostat-suggestion request payload.
+   * @returns {Promise<Thermostat.AddThermostatSuggestionResponse>} The generated UniqueID of the added suggestion.
+   *
+   * @remarks
+   * matter.js does not yet provide a default implementation of this command (the ThermostatSuggestions feature
+   * is not implemented by `ThermostatServer` in `@matter/node`), so validation and list bookkeeping are done here.
+   */
+  override async addThermostatSuggestion(request: Thermostat.AddThermostatSuggestionRequest): Promise<Thermostat.AddThermostatSuggestionResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    const presetHandle = `0x${Buffer.from(request.presetHandle).toString('hex')}`;
+    device.log.info(`Adding thermostat suggestion for preset ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('Thermostat.addThermostatSuggestion', {
+      command: 'addThermostatSuggestion',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    if (this.state.presets.find((p) => p.presetHandle !== null && Bytes.areEqual(p.presetHandle, request.presetHandle)) === undefined) {
+      throw new StatusResponse.NotFoundError('Requested PresetHandle not found');
+    }
+    if (this.state.thermostatSuggestions.length >= this.state.maxThermostatSuggestions) {
+      throw new StatusResponse.ResourceExhaustedError('Maximum number of thermostat suggestions reached');
+    }
+    const usedUniqueIds = new Set(this.state.thermostatSuggestions.map((s) => s.uniqueId));
+    let uniqueId = 0;
+    while (usedUniqueIds.has(uniqueId)) uniqueId++;
+    const effectiveTime = request.effectiveTime ?? Math.floor(Date.now() / 1000);
+    const suggestion: Thermostat.ThermostatSuggestion = {
+      uniqueId,
+      presetHandle: Uint8Array.from(request.presetHandle),
+      effectiveTime,
+      expirationTime: effectiveTime + request.expirationInMinutes * 60,
+    };
+    this.state.thermostatSuggestions = [...this.state.thermostatSuggestions, suggestion];
+    device.log.debug(`MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${uniqueId}`);
+    return { uniqueId };
+  }
+
+  /**
+   * Forwards RemoveThermostatSuggestion requests to the Matterbridge command handler and removes the suggestion.
+   *
+   * @param {Thermostat.RemoveThermostatSuggestionRequest} request - Remove-thermostat-suggestion request payload.
+   *
+   * @remarks
+   * matter.js does not yet provide a default implementation of this command (the ThermostatSuggestions feature
+   * is not implemented by `ThermostatServer` in `@matter/node`), so validation and list bookkeeping are done here.
+   */
+  override async removeThermostatSuggestion(request: Thermostat.RemoveThermostatSuggestionRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Removing thermostat suggestion ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('Thermostat.removeThermostatSuggestion', {
+      command: 'removeThermostatSuggestion',
+      request,
+      cluster: ThermostatServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    const suggestion = this.state.thermostatSuggestions.find((s) => s.uniqueId === request.uniqueId);
+    if (suggestion === undefined) {
+      throw new StatusResponse.NotFoundError('Requested UniqueID not found');
+    }
+    this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => s.uniqueId !== request.uniqueId);
+    if (this.state.currentThermostatSuggestion?.uniqueId === request.uniqueId) {
+      this.state.currentThermostatSuggestion = null;
+    }
+    device.log.debug(`MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId}`);
   }
 }

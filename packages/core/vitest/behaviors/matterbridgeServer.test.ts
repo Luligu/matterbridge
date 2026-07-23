@@ -116,6 +116,7 @@ describe('Server clusters and behaviors', () => {
   let thermo: MatterbridgeEndpoint;
   let thermostatPreset: MatterbridgeEndpoint;
   let thermostatSchedule: MatterbridgeEndpoint;
+  let thermostatSuggestion: MatterbridgeEndpoint;
   let valve: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
   let contact: MatterbridgeEndpoint;
@@ -201,6 +202,30 @@ describe('Server clusters and behaviors', () => {
       Uint8Array.from([0]), // activeScheduleHandle: Uint8Array | null
       thermostatSchedules, // schedules: Thermostat.Schedule[]
       thermostatScheduleTypes, // scheduleTypes: Thermostat.ScheduleType[]
+    );
+    endpoint.addRequiredClusterServers();
+    return endpoint;
+  }
+
+  function createThermostatSuggestionEndpoint(id: string): MatterbridgeEndpoint {
+    const endpoint = new MatterbridgeEndpoint(thermostat, { id });
+    endpoint.createDefaultThermostatSuggestionsClusterServer(
+      23,
+      21,
+      25,
+      2,
+      0,
+      48,
+      2,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      Uint8Array.from([0]), // activePresetHandle: Uint8Array | null
+      thermostatPresets, // presetsList: Thermostat.Preset[]
+      thermostatPresetTypes, // presetTypesList: Thermostat.PresetType[]
+      [], // thermostatSuggestions: Thermostat.ThermostatSuggestion[]
     );
     endpoint.addRequiredClusterServers();
     return endpoint;
@@ -1161,6 +1186,83 @@ describe('Server clusters and behaviors', () => {
     expect(scheduleCalls).toHaveLength(2);
     // The active schedule handle must not change when the requested schedule handle is invalid.
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
+  });
+
+  test('ThermostatSuggestion server', async () => {
+    thermostatSuggestion = createThermostatSuggestionEndpoint('thermostatSuggestionBehavior');
+    expect(await addDevice(aggregator, thermostatSuggestion)).toBeTruthy();
+
+    const addCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
+    const removeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
+
+    thermostatSuggestion.addCommandHandler('addThermostatSuggestion', (data) => {
+      addCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
+    });
+    thermostatSuggestion.addCommandHandler('removeThermostatSuggestion', (data) => {
+      removeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
+    });
+
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+
+    // A suggestion referencing an existing preset with an explicit effectiveTime is accepted.
+    const explicitRequest = { presetHandle: Uint8Array.from([1]), effectiveTime: 1700000000, expirationInMinutes: 30 };
+    await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', explicitRequest);
+    expect(addCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: explicitRequest });
+    let suggestions = thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions');
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]).toMatchObject({ uniqueId: 0, effectiveTime: 1700000000, expirationTime: 1700001800 });
+    expect(JSON.stringify(Object.values(suggestions[0].presetHandle))).toBe(JSON.stringify([1]));
+
+    // A null effectiveTime means "immediately": the server fills in the current time.
+    const beforeNow = Math.floor(Date.now() / 1000);
+    const immediateRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: null, expirationInMinutes: 60 };
+    await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', immediateRequest);
+    const afterNow = Math.floor(Date.now() / 1000);
+    expect(addCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: immediateRequest });
+    suggestions = thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions');
+    expect(suggestions).toHaveLength(2);
+    expect(suggestions[1].uniqueId).toBe(1);
+    expect(suggestions[1].effectiveTime).toBeGreaterThanOrEqual(beforeNow);
+    expect(suggestions[1].effectiveTime).toBeLessThanOrEqual(afterNow);
+    expect(suggestions[1].expirationTime).toBe(suggestions[1].effectiveTime + 3600);
+
+    // An unknown PresetHandle is rejected, but the command is still forwarded to the command handler first.
+    const invalidPresetRequest = { presetHandle: Uint8Array.from([9]), effectiveTime: 1700000000, expirationInMinutes: 30 };
+    await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', invalidPresetRequest)).rejects.toThrow('Requested PresetHandle not found');
+    expect(addCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidPresetRequest });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
+
+    // Fill the list up to MaxThermostatSuggestions (5), then the next add is rejected as ResourceExhausted.
+    for (let i = 0; i < 3; i++) {
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
+        presetHandle: Uint8Array.from([0]),
+        effectiveTime: 1700000000,
+        expirationInMinutes: 30,
+      });
+    }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
+    const overflowRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: 1700000000, expirationInMinutes: 30 };
+    await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', overflowRequest)).rejects.toThrow(
+      'Maximum number of thermostat suggestions reached',
+    );
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
+
+    // Simulate the thermostat currently following the first suggestion.
+    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', suggestions[0]);
+
+    // Removing the current suggestion clears CurrentThermostatSuggestion.
+    const removeCurrentRequest = { uniqueId: 0 };
+    await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', removeCurrentRequest);
+    expect(removeCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: removeCurrentRequest });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(4);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // An unknown UniqueID is rejected, but the command is still forwarded to the command handler first.
+    const invalidRemoveRequest = { uniqueId: 99 };
+    await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', invalidRemoveRequest)).rejects.toThrow('Requested UniqueID not found');
+    expect(removeCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidRemoveRequest });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(4);
   });
 
   test('ValveConfigurationAndControl server', async () => {

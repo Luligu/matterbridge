@@ -1660,6 +1660,134 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(20);
   });
 
+  test('createDefaultThermostatSuggestionsClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSuggestionsDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultThermostatSuggestionsClusterServer();
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+    expect(device.hasAttributeServer(Thermostat.id, 'localTemperature')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'outdoorTemperature')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'systemMode')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedHeatingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupiedCoolingSetpoint')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'unoccupiedHeatingSetpoint')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'unoccupiedCoolingSetpoint')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'occupancy')).toBe(false);
+    expect(device.hasAttributeServer(Thermostat.id, 'numberOfPresets')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'activePresetHandle')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'presets')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'presetTypes')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'maxThermostatSuggestions')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'thermostatSuggestions')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'currentThermostatSuggestion')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBe(true);
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      autoMode: true,
+      cooling: true,
+      events: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: true,
+      setback: false,
+      thermostatSuggestions: true,
+    });
+
+    await addDevice(aggregator, device);
+    await flushAsync();
+    expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
+    const retrievedThermostatSuggestions = device.getAttribute(Thermostat.id, 'thermostatSuggestions');
+    expect(retrievedThermostatSuggestions).toHaveLength(0);
+    expect(device.getCluster(Thermostat)).toMatchObject({
+      absMinHeatSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 5000,
+      absMinCoolSetpointLimit: 0,
+      absMaxCoolSetpointLimit: 5000,
+      occupiedCoolingSetpoint: 2500,
+      occupiedHeatingSetpoint: 2100,
+      minHeatSetpointLimit: 0,
+      maxHeatSetpointLimit: 5000,
+      minCoolSetpointLimit: 0,
+      maxCoolSetpointLimit: 5000,
+      minSetpointDeadBand: 0,
+      numberOfPresets: 10,
+      activePresetHandle: null,
+      presets: [],
+      maxThermostatSuggestions: 5,
+      thermostatSuggestions: [],
+      currentThermostatSuggestion: null,
+      thermostatSuggestionNotFollowingReason: null,
+    });
+  });
+
+  test('createDefaultThermostatSuggestionsClusterServer', async () => {
+    const presetTypes: Thermostat.PresetType[] = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ];
+    const presetsList: Thermostat.Preset[] = [
+      { presetHandle: Uint8Array.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: null },
+      { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: null },
+    ];
+    const thermostatSuggestions: Thermostat.ThermostatSuggestion[] = [{ uniqueId: 0, presetHandle: Uint8Array.from([0]), effectiveTime: 1700000000, expirationTime: 1700003600 }];
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSuggestions' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultThermostatSuggestionsClusterServer(
+      23,
+      21,
+      25,
+      2,
+      0,
+      48,
+      2,
+      50,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      Uint8Array.from([0]),
+      presetsList,
+      presetTypes,
+      thermostatSuggestions,
+      thermostatSuggestions[0],
+      null,
+    );
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+    expect(device.hasAttributeServer(Thermostat.id, 'maxThermostatSuggestions')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'thermostatSuggestions')).toBe(true);
+    expect(device.hasAttributeServer(Thermostat.id, 'currentThermostatSuggestion')).toBe(true);
+    expect(featuresFor(device, 'Thermostat')).toEqual({
+      autoMode: true,
+      cooling: true,
+      events: false,
+      heating: true,
+      localTemperatureNotExposed: false,
+      matterScheduleConfiguration: false,
+      occupancy: false,
+      presets: true,
+      setback: false,
+      thermostatSuggestions: true,
+    });
+
+    await addDevice(aggregator, device);
+    expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
+    const retrievedThermostatSuggestions = device.getAttribute(Thermostat.id, 'thermostatSuggestions');
+    expect(retrievedThermostatSuggestions).toHaveLength(1);
+    expect(JSON.stringify(Object.values(retrievedThermostatSuggestions[0].presetHandle))).toBe(JSON.stringify([0]));
+    expect(retrievedThermostatSuggestions[0].uniqueId).toBe(0);
+    expect(retrievedThermostatSuggestions[0].effectiveTime).toBe(1700000000);
+    expect(retrievedThermostatSuggestions[0].expirationTime).toBe(1700003600);
+    const retrievedCurrentThermostatSuggestion = device.getAttribute(Thermostat.id, 'currentThermostatSuggestion');
+    expect(retrievedCurrentThermostatSuggestion.uniqueId).toBe(0);
+    expect(JSON.stringify(Object.values(retrievedCurrentThermostatSuggestion.presetHandle))).toBe(JSON.stringify([0]));
+    expect(device.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
+  });
+
   test('createDefaultFanControlClusterServer', async () => {
     const device = new MatterbridgeEndpoint(fan, { id: 'Fan' });
     expect(device).toBeDefined();
