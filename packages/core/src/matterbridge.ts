@@ -272,13 +272,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Whether the Matterbridge instance is a shutdown command */
   private readonly isShutdownCommand = hasAnyParameter('list', 'logstorage', 'loginterfaces', 'systemcheck', 'add', 'remove', 'enable', 'disable', 'reset', 'factoryreset');
   /** Timestamp when the Matterbridge instance started */
-  private startupAt = 0;
+  public startupAt = 0;
   /** Timestamp when the Matterbridge instance shut down */
-  private shutdownAt = 0;
+  public shutdownAt = 0;
   /** Total running time of the Matterbridge instance */
-  private runningTimes = 0;
+  public runningTimes = 0;
   /** Total running days of the Matterbridge instance */
-  private runningDays = 0;
+  public runningDays = 0;
   /** Interval for starting Matterbridge */
   private startMatterInterval: NodeJS.Timeout | undefined;
   /** Interval for starting Matterbridge in milliseconds */
@@ -443,6 +443,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       port: this.port,
       discriminator: this.discriminator,
       passcode: this.passcode,
+      startupAt: this.startupAt,
+      shutdownAt: this.shutdownAt,
+      runningTimes: this.runningTimes,
+      runningDays: this.runningDays,
     };
   }
 
@@ -491,6 +495,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         restartRequired: false,
         fixedRestartRequired: false,
         updateRequired: false,
+        startupAt: this.startupAt,
+        shutdownAt: this.shutdownAt,
+        runningTimes: this.runningTimes,
+        runningDays: this.runningDays,
       },
     };
   }
@@ -751,6 +759,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext.set('runningTimes', this.runningTimes);
       await this.nodeContext.set('runningDays', this.runningDays);
       await this.nodeContext.set('lastStartupAt', this.startupAt);
+      this.log.info(`Matterbridge started at ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf}`);
+      this.log.info(`Matterbridge has run ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
     }
 
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
@@ -2009,8 +2019,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.runningDays = this.runningDays + Math.floor((this.shutdownAt - this.startupAt) / (1000 * 60 * 60 * 24));
         await this.nodeContext?.set('runningDays', this.runningDays);
         await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
-        this.log.info(`Matterbridge has run ${this.runningTimes} times for a total of ${this.runningDays} days.`);
-        this.log.info(`Matterbridge last started at ${new Date(this.startupAt).toLocaleString()} and shut down at ${new Date(this.shutdownAt).toLocaleString()}`);
+        this.log.info(`Matterbridge has run  ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
+        this.log.info(
+          `Matterbridge last started at  ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf} and shut down at ${CYAN}${new Date(this.shutdownAt).toLocaleString()}${nf}`,
+        );
       }
 
       // Stop the frontend

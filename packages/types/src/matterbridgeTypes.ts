@@ -119,6 +119,14 @@ export type SharedMatterbridge = Readonly<{
   port: number | undefined;
   discriminator: number | undefined;
   passcode: number | undefined;
+  /** Timestamp when the Matterbridge instance started up */
+  startupAt: number;
+  /** Timestamp when the Matterbridge instance shut down */
+  shutdownAt: number;
+  /** Total running time of the Matterbridge instance */
+  runningTimes: number;
+  /** Total running days of the Matterbridge instance */
+  runningDays: number;
 }>;
 
 /** Define an interface for the frontend */
@@ -235,6 +243,14 @@ export interface MatterbridgeInformation {
   restartRequired: boolean;
   fixedRestartRequired: boolean;
   updateRequired: boolean;
+  /** Timestamp when the Matterbridge instance started up */
+  startupAt: number;
+  /** Timestamp when the Matterbridge instance shut down */
+  shutdownAt: number;
+  /** Total running time of the Matterbridge instance */
+  runningTimes: number;
+  /** Total running days of the Matterbridge instance */
+  runningDays: number;
 }
 
 /** Define an interface for sanitized exposed fabric information suitable for API responses */

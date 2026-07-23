@@ -1313,6 +1313,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       restartRequired: this.restartRequired,
       fixedRestartRequired: this.fixedRestartRequired,
       updateRequired: this.updateRequired,
+      startupAt: this.matterbridge.startupAt,
+      shutdownAt: this.matterbridge.shutdownAt,
+      runningTimes: this.matterbridge.runningTimes,
+      runningDays: this.matterbridge.runningDays,
     };
 
     return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: info };
