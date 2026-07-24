@@ -1,7 +1,7 @@
 {
-  "latest": "3.10.1",
+  "latest": "3.10.2",
   "latestDate": "2026-07-24",
-  "dev": "3.10.1-dev-123456",
+  "dev": "3.10.2-dev-123456",
   "devDate": "2026-07-24",
   "latestMessage": "",
   "latestMessageSeverity": "info",

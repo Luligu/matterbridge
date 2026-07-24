@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.10.1",
+  "version": "3.10.2",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -367,13 +367,13 @@
     "pack:latest:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.10.1",
-    "@matterbridge/dgram": "3.10.1",
-    "@matterbridge/jest-utils": "3.10.1",
-    "@matterbridge/thread": "3.10.1",
-    "@matterbridge/types": "3.10.1",
-    "@matterbridge/utils": "3.10.1",
-    "@matterbridge/vitest-utils": "3.10.1",
+    "@matterbridge/core": "3.10.2",
+    "@matterbridge/dgram": "3.10.2",
+    "@matterbridge/jest-utils": "3.10.2",
+    "@matterbridge/thread": "3.10.2",
+    "@matterbridge/types": "3.10.2",
+    "@matterbridge/utils": "3.10.2",
+    "@matterbridge/vitest-utils": "3.10.2",
     "node-ansi-logger": "3.3.0",
     "node-persist-manager": "2.1.0"
   },
