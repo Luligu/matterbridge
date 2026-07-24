@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/jest-utils",
-  "version": "3.10.0",
+  "version": "3.10.1",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -71,9 +71,9 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.5",
-    "@matterbridge/types": "3.10.0",
-    "@matterbridge/utils": "3.10.0",
+    "@matter/main": "0.17.6",
+    "@matterbridge/types": "3.10.1",
+    "@matterbridge/utils": "3.10.1",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {

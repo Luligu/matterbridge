@@ -331,7 +331,7 @@ describe('BackendExpress', () => {
 
     // 1) Trigger limiter once (low limit) to verify it's wired
     // Use a delegating middleware so we can swap limits later without restarting.
-    let currentLimiter = rateLimit({ windowMs: 1000, max: 2 });
+    let currentLimiter = rateLimit({ windowMs: 1000, limit: 2 });
     // oxlint-disable-next-line typescript/explicit-function-return-type
     (backendExpress as any).fileLimiter = (req: any, res: any, next: any) => currentLimiter(req, res, next);
 
@@ -354,7 +354,7 @@ describe('BackendExpress', () => {
     expect(r3.status).toBe(429);
 
     // 2) Raise limit so the rest of the suite doesn't trip it
-    currentLimiter = rateLimit({ windowMs: 1000, max: 60 });
+    currentLimiter = rateLimit({ windowMs: 1000, limit: 60 });
   });
 
   test('validateReq returns true when req.ip is missing', () => {

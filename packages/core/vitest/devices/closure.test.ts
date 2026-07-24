@@ -8,8 +8,11 @@ const NAME = 'Closure';
 const MATTER_PORT = 8022;
 const MATTER_CREATE_ONLY = true;
 
+import { ClosureCoveringTag, ClosurePanelTag, ClosureTag } from '@matter/node';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { Identify } from '@matter/types/clusters/identify';
+import { ThreeLevelAuto } from '@matter/types/globals';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -26,12 +29,14 @@ import { stringify } from 'node-ansi-logger';
 
 import { Closure } from '../../src/devices/closure.js';
 import { closure } from '../../src/matterbridgeDeviceTypes.js';
+import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
+  let venetianBlind: Closure;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -116,6 +121,37 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('create and add a closure device with two panels', async () => {
+    venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
+      tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
+    });
+    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)]);
+    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], {
+      resolution: 2,
+      stepValue: 100,
+      latchControlModes: { remoteLatching: false, remoteUnlatching: true },
+    });
+
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')).toBeDefined();
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.hasClusterServer(ClosureDimension.id)).toBeTruthy();
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')).toBeDefined();
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getClusterServerOptions(ClosureDimension.id)).toMatchObject({
+      currentState: { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      targetState: { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      resolution: 2,
+      stepValue: 100,
+      latchControlModes: { remoteLatching: false, remoteUnlatching: true },
+    });
+
+    expect(await addDevice(server, venetianBlind)).toBeTruthy();
+    expect(venetianBlind.getChildEndpointByOriginalId('Lift')?.getAttribute('Descriptor', 'tagList')).toEqual([
+      { mfgCode: null, namespaceId: ClosurePanelTag.Lift.namespaceId, tag: ClosurePanelTag.Lift.tag },
+    ]);
+    expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getAttribute('Descriptor', 'tagList')).toEqual([
+      { mfgCode: null, namespaceId: ClosurePanelTag.Tilt.namespaceId, tag: ClosurePanelTag.Tilt.tag },
+    ]);
+  });
+
   test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;
@@ -162,13 +198,13 @@ describe('Matterbridge ' + NAME, () => {
         'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
         'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
-        'closureControl(0x104).countdownTime(0x0)=null',
+        'closureControl(0x104).countdownTime(0x0)=0',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
         'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
-        'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: false, remoteUnlatching: false }',
+        'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
-        'closureControl(0x104).overallCurrentState(0x3)=null',
+        'closureControl(0x104).overallCurrentState(0x3)={ position: 0, latch: true, speed: 0, secureState: true }',
         'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 1 }',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',

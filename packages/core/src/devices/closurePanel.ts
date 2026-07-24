@@ -28,6 +28,7 @@
 // @matter
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import type { Semtag } from '@matter/types/globals';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
@@ -103,8 +104,18 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
 }
 
 export interface ClosurePanelOptions {
+  /** Initial current state. Defaults to latched and fully closed. */
+  currentState?: ClosureDimension.DimensionState;
+  /** Initial target state. Defaults to latched and fully closed. */
+  targetState?: ClosureDimension.DimensionState;
+  /** Position resolution of the ClosureDimension cluster. Defaults to 1. */
   resolution?: number;
+  /** Number of units moved for each Step command. Defaults to 1. */
   stepValue?: number;
+  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  latchControlModes?: ClosureDimension.LatchControlModes;
+  /** Semantic tags used to disambiguate sibling closure panels. */
+  tagList?: Semtag[];
 }
 
 /**
@@ -116,18 +127,19 @@ export class ClosurePanel extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable device name.
    * @param {string} serial - Device serial number.
-   * @param {ClosurePanelOptions} [options] - Optional initial configuration values.
+   * @param {ClosurePanelOptions} [options] - Optional initial configuration values, including the tagList used to disambiguate sibling panels (e.g. `ClosurePanelTag.Lift` and `ClosurePanelTag.Tilt`).
    */
   constructor(name: string, serial: string, options: ClosurePanelOptions = {}) {
-    super([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
 
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
 
     this.behaviors.require(MatterbridgeClosureDimensionServer, {
-      currentState: null,
-      targetState: null,
+      currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
       resolution: options.resolution ?? 1,
       stepValue: options.stepValue ?? 1,
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
     });
   }
 }

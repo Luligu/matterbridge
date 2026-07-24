@@ -28,13 +28,15 @@
 // @matter
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
+import type { Semtag } from '@matter/types/globals';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { closure } from '../matterbridgeDeviceTypes.js';
+import { closure, closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import { MatterbridgeClosureDimensionServer, type ClosurePanelOptions } from './closurePanel.js';
 
 /**
  * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
@@ -55,11 +57,13 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
+    /* v8 ignore next -- Defensive fallback for direct behavior calls; controller commands receive a normalized target state. */
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
+      /* v8 ignore next -- Defensive fallback; Matter command validation supplies a speed when controllers omit it. */
       speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
     };
 
@@ -83,7 +87,20 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
 }
 
 export interface ClosureOptions {
+  /** Initial ClosureControl countdown time, in seconds. Defaults to 0 for a completed safe state. */
+  countdownTime?: number;
+  /** Initial ClosureControl main state. Defaults to stopped. */
   mainState?: ClosureControl.MainState;
+  /** Initial ClosureControl error list. Defaults to an empty list. */
+  currentErrorList?: ClosureControl.ClosureError[];
+  /** Initial current state. Defaults to secure, latched, and fully closed. */
+  overallCurrentState?: ClosureControl.OverallCurrentState;
+  /** Initial target state. Defaults to latched and fully closed. */
+  overallTargetState?: ClosureControl.OverallTargetState;
+  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  latchControlModes?: ClosureControl.LatchControlModes;
+  /** Optional semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
 }
 
 /**
@@ -95,20 +112,30 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable device name.
    * @param {string} serial - Device serial number.
-   * @param {ClosureOptions} [options] - Optional initial cluster state values.
+   * @param {ClosureOptions} [options] - Optional endpoint options and initial cluster state values.
    */
   constructor(name: string, serial: string, options: ClosureOptions = {}) {
-    super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
 
     this.behaviors.require(MatterbridgeClosureControlServer, {
+      countdownTime: options.countdownTime ?? 0,
       mainState: options.mainState ?? ClosureControl.MainState.Stopped,
       currentErrorList: [],
-      overallCurrentState: null,
-      overallTargetState: null,
-      countdownTime: null,
+      overallCurrentState: options.overallCurrentState ?? {
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+        secureState: true,
+      },
+      overallTargetState: options.overallTargetState ?? {
+        position: ClosureControl.TargetPosition.MoveToFullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+      },
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
     });
   }
 
@@ -119,5 +146,35 @@ export class Closure extends MatterbridgeEndpoint {
    */
   getMainState(): ClosureControl.MainState | undefined {
     return this.getAttribute(ClosureControlServer, 'mainState');
+  }
+
+  /**
+   * Adds a closure panel as a child endpoint of this closure and configures its ClosureDimension cluster.
+   *
+   * @remarks
+   * Use this to compose a closure out of one or more independently controlled panels, for example a venetian
+   * blind with a `ClosurePanelTag.Lift` panel and a `ClosurePanelTag.Tilt` panel.
+   *
+   * @param {string} name - Human-readable name of the panel endpoint.
+   * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
+   * @param {Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'>} [options] - Optional initial ClosureDimension cluster state values.
+   * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
+   */
+  addPanel(
+    name: string,
+    tagList: Semtag[],
+    options: Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'> = {},
+  ): MatterbridgeEndpoint {
+    const panel = this.addChildDeviceType(name, closurePanel, { tagList });
+
+    panel.behaviors.require(MatterbridgeClosureDimensionServer, {
+      currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+      resolution: options.resolution ?? 1,
+      stepValue: options.stepValue ?? 1,
+      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
+    });
+
+    return panel;
   }
 }

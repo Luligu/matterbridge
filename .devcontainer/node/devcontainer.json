@@ -13,7 +13,6 @@
     "source=${localWorkspaceFolderBasename}-node-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-node-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-node-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
-    "source=${localWorkspaceFolderBasename}-node-bash-history,target=/home/node/.bash_history_volume,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume",

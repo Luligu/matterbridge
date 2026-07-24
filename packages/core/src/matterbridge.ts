@@ -272,13 +272,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Whether the Matterbridge instance is a shutdown command */
   private readonly isShutdownCommand = hasAnyParameter('list', 'logstorage', 'loginterfaces', 'systemcheck', 'add', 'remove', 'enable', 'disable', 'reset', 'factoryreset');
   /** Timestamp when the Matterbridge instance started */
-  private startupAt = 0;
+  public startupAt = 0;
   /** Timestamp when the Matterbridge instance shut down */
-  private shutdownAt = 0;
+  public shutdownAt = 0;
   /** Total running time of the Matterbridge instance */
-  private runningTimes = 0;
+  public runningTimes = 0;
   /** Total running days of the Matterbridge instance */
-  private runningDays = 0;
+  public runningDays = 0;
   /** Interval for starting Matterbridge */
   private startMatterInterval: NodeJS.Timeout | undefined;
   /** Interval for starting Matterbridge in milliseconds */
@@ -443,6 +443,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       port: this.port,
       discriminator: this.discriminator,
       passcode: this.passcode,
+      startupAt: this.startupAt,
+      shutdownAt: this.shutdownAt,
+      runningTimes: this.runningTimes,
+      runningDays: this.runningDays,
     };
   }
 
@@ -491,6 +495,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         restartRequired: false,
         fixedRestartRequired: false,
         updateRequired: false,
+        startupAt: this.startupAt,
+        shutdownAt: this.shutdownAt,
+        runningTimes: this.runningTimes,
+        runningDays: this.runningDays,
       },
     };
   }
@@ -740,7 +748,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       const lastShutdownAt = await this.nodeContext.get('lastShutdownAt', 0);
       if (lastStartupAt && lastShutdownAt && lastShutdownAt < lastStartupAt) {
         this.log.warn(
-          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${db}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${db}`,
+          `Matterbridge was not shut down properly. Last started at ${CYAN}${new Date(lastStartupAt).toLocaleString()}${wr}, last shut down at ${CYAN}${new Date(lastShutdownAt).toLocaleString()}${wr}`,
         );
       }
 
@@ -751,6 +759,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext.set('runningTimes', this.runningTimes);
       await this.nodeContext.set('runningDays', this.runningDays);
       await this.nodeContext.set('lastStartupAt', this.startupAt);
+      this.log.info(`Matterbridge started at ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf}`);
+      this.log.info(`Matterbridge has run ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
     }
 
     // Set the first port to use for the commissioning server (will be incremented in childbridge mode and for devices with mode = 'server')
@@ -1066,6 +1076,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Get the plugins from node storage and create the plugins node storage contexts
     for (const plugin of this.plugins) {
       const isLocal = fs.existsSync(plugin.path) && this.globalModulesDirectory.length > 0 && !plugin.path.startsWith(this.globalModulesDirectory);
+      plugin.local = isLocal;
       const isLinked = fs.existsSync(path.join(path.dirname(plugin.path), 'node_modules', 'matterbridge'));
       this.log.debug(
         `Parsing plugin ${plg}${plugin.name}${db} from path ${CYAN}${plugin.path}${db} ` +
@@ -1078,6 +1089,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand) || process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest') {
         const { execSync } = await import('node:child_process');
         try {
+          this.log.info(`Linking matterbridge to local plugin ${plg}${plugin.name}${nf}...`);
           execSync(isBun() ? 'bun link matterbridge --silent' : 'npm link matterbridge --no-fund --no-audit --silent', { cwd: path.dirname(plugin.path) });
           this.log.info(`Matterbridge linked to plugin ${plg}${plugin.name}${nf}.`);
         } catch (error) {
@@ -2008,8 +2020,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.runningDays = this.runningDays + Math.floor((this.shutdownAt - this.startupAt) / (1000 * 60 * 60 * 24));
         await this.nodeContext?.set('runningDays', this.runningDays);
         await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
-        this.log.info(`Matterbridge has run ${this.runningTimes} times for a total of ${this.runningDays} days.`);
-        this.log.info(`Matterbridge last started at ${new Date(this.startupAt).toLocaleString()} and shut down at ${new Date(this.shutdownAt).toLocaleString()}`);
+        this.log.info(`Matterbridge has run ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
+        this.log.info(
+          `Matterbridge last started at  ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf} and shut down at ${CYAN}${new Date(this.shutdownAt).toLocaleString()}${nf}`,
+        );
       }
 
       // Stop the frontend

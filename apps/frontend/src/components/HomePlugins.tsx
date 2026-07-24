@@ -1,6 +1,7 @@
 // @mui/icons-material
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import Favorite from '@mui/icons-material/Favorite';
+import FolderSpecialOutlinedIcon from '@mui/icons-material/FolderSpecialOutlined';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -56,13 +57,26 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       id: 'name',
       required: true,
       render: (value, rowKey, plugin, _column) => (
-        <Tooltip title={`Plugin path ${plugin.path}`}>
+        <Tooltip title={plugin.local === true ? `Local plugin path: ${plugin.path}` : `Plugin path ${plugin.path}`}>
           <button
             type="button"
-            style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
+            style={{
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              margin: 0,
+              padding: 0,
+              font: 'inherit',
+              color: 'inherit',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
             onClick={() => handleHomepagePlugin(plugin)}
           >
             {plugin.name}
+            {plugin.local === true && <FolderSpecialOutlinedIcon style={{ width: '14px', height: '14px', color: 'var(--primary-color)' }} />}
           </button>
         </Tooltip>
       ),
@@ -200,7 +214,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             </Tooltip>
           )}
 
-          {plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
+          {plugin.local !== true && plugin.latestVersion !== undefined && plugin.latestVersion !== plugin.version && matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip
               title={`Update the plugin to the latest version v.${plugin.latestVersion}`}
               slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
@@ -214,7 +228,8 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               </IconButton>
             </Tooltip>
           )}
-          {(plugin.version.includes('-dev-') || plugin.version.includes('-git-')) &&
+          {plugin.local !== true &&
+            (plugin.version.includes('-dev-') || plugin.version.includes('-git-')) &&
             plugin.devVersion !== undefined &&
             plugin.devVersion !== plugin.version &&
             matterbridgeInfo &&

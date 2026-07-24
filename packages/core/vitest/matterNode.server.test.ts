@@ -68,6 +68,10 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  startupAt: 0,
+  shutdownAt: 0,
+  runningTimes: 0,
+  runningDays: 0,
   systemInformation: {
     interfaceName: nic?.interfaceName || '',
     macAddress: nic?.macAddress || '',
