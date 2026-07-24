@@ -57,6 +57,26 @@ These classes will run as threads in the next releases:
 - all plugins in bridge mode;
 - each plugin in childbridge mode;
 
+## [3.10.3] - Dev branch
+
+### Added
+
+- [publish]: Update publish script to allow a re-run.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.3.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Bump `@matter/main` to v.0.17.6.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.0.25.0.
+- [frontend]: Bump `frontend` version to v.3.5.5.
+- [frontend]: Update dependencies.
+- [frontend]: Bump `@rjsf` packages to v.6.7.0.
+- [frontend]: Bump `vite` to v.8.1.5.
+- [frontend]: Bump `oxlint-tsgolint` to v.0.25.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.2] - 2026-07-24
 
 ### Added
@@ -70,7 +90,7 @@ These classes will run as threads in the next releases:
 
 ### Changed
 
-- [matterbridge]: Bump `matterbridge` version to v.3.10.1.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.2.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@matter/main` to v.0.17.6.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.25.0.
@@ -87,6 +107,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Local plugins are detected, and both update actions and available-version checks are skipped.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.10.1] - 2026-07-24
+
+This release failed to be published for a npm error. DO NOT USE IT.
 
 ## [3.10.0] - 2026-07-17
 
