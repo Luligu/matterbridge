@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => {
   const debugBuild = mode === 'debug';
 
   return {
+    envDir: false,
     plugins: react(),
     test: {
       environment: 'jsdom',

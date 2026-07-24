@@ -67,13 +67,19 @@ These classes will run as threads in the next releases:
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.3.
 - [matterbridge]: Update dependencies.
-- [matterbridge]: Bump `@matter/main` to v.0.17.6.
-- [matterbridge]: Bump `oxlint-tsgolint` to v.0.25.0.
+- [matterbridge]: Upgrade package.
+- [matterbridge]: Bump `oxfmt` to v.0.60.0.
+- [matterbridge]: Bump `oxlint` to v.1.75.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2001.
 - [frontend]: Bump `frontend` version to v.3.5.5.
 - [frontend]: Update dependencies.
-- [frontend]: Bump `@rjsf` packages to v.6.7.0.
-- [frontend]: Bump `vite` to v.8.1.5.
-- [frontend]: Bump `oxlint-tsgolint` to v.0.25.0.
+- [frontend]: Bump `react` and `react-dom` to v.19.2.8.
+- [frontend]: Bump `react-router` to v.8.3.0.
+- [frontend]: Bump `@testing-library/jest-dom` to v.7.0.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.0.4.
+- [frontend]: Bump `oxfmt` to v.0.60.0.
+- [frontend]: Bump `oxlint` to v.1.75.0.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2001.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

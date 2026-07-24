@@ -1,4 +1,4 @@
-// vite.config.ts 2.0.5
+// vite.config.ts 2.0.6
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -6,6 +6,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   cacheDir: '.cache/vitest',
+  envDir: false,
   test: {
     include: ['**/vitest/**/*.{spec,test}.{ts,mts,cts}'],
     exclude: [
