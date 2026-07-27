@@ -283,6 +283,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private startMatterInterval: NodeJS.Timeout | undefined;
   /** Interval for starting Matterbridge in milliseconds */
   private readonly startMatterIntervalMs = 1000;
+  /** Timeout for plugin configure phase in milliseconds */
+  private readonly startConfigureTimeoutMs = isValidNumber(Number(process.env['MATTERBRIDGE_START_CONFIGURE_TIMEOUT']), 0)
+    ? Number(process.env['MATTERBRIDGE_START_CONFIGURE_TIMEOUT'])
+    : 30 * 1000;
+  /** Timeout for setting reachability in milliseconds */
+  private readonly startReachabilityTimeoutMs = isValidNumber(Number(process.env['MATTERBRIDGE_START_REACHABILITY_TIMEOUT']), 0)
+    ? Number(process.env['MATTERBRIDGE_START_REACHABILITY_TIMEOUT'])
+    : 60 * 1000;
   /** Interval for checking updates */
   private checkUpdateInterval: NodeJS.Timeout | undefined;
   /** Timeout for checking updates */
@@ -2269,14 +2277,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
                 this.sendPluginStatusUpdate(plugin);
               }
             })();
-          }, 30 * 1000).unref();
+          }, this.startConfigureTimeoutMs).unref();
 
           // Setting reachability to true
           this.reachabilityTimeout = setTimeout(() => {
             this.log.info(`Setting reachability to true for ${plg}Matterbridge${db}`);
             if (this.aggregatorNode)
               fireAndForget(this.setAggregatorReachability(this.aggregatorNode, true), this.log, `Failed to set aggregator node reachability for Matterbridge`);
-          }, 60 * 1000).unref();
+          }, this.startReachabilityTimeoutMs).unref();
 
           this.emit('bridge_started');
           this.log.notice('Matterbridge bridge started successfully');
@@ -2382,7 +2390,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
                 this.sendPluginStatusUpdate(plugin);
               }
             })();
-          }, 30 * 1000).unref();
+          }, this.startConfigureTimeoutMs).unref();
 
           for (const plugin of this.plugins.array()) {
             if (!plugin.enabled || plugin.error) continue;
@@ -2411,7 +2419,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.log.info(`Setting reachability to true for ${plg}${plugin.name}${nf}`);
               if (plugin.type === 'DynamicPlatform' && plugin.aggregatorNode)
                 fireAndForget(this.setAggregatorReachability(plugin.aggregatorNode, true), this.log, `Set aggregator node reachability for plugin ${plugin.name}`);
-            }, 60 * 1000).unref();
+            }, this.startReachabilityTimeoutMs).unref();
           }
 
           // Start the Matter server node of single devices in mode 'server'
