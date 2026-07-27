@@ -68,7 +68,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `matterbridge` version to v.3.10.3.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Upgrade package.
-- [matterbridge]: Bump `@matter/main` to v.0.17.7-alpha.0-20260724-baac832f7.
+- [matterbridge]: Bump `@matter/main` to v.0.17.7.
 - [matterbridge]: Bump `oxfmt` to v.0.60.0.
 - [matterbridge]: Bump `oxlint` to v.1.75.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2001.
