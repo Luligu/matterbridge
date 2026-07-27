@@ -74,6 +74,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2001.
 - [frontend]: Bump `frontend` version to v.3.5.5.
 - [frontend]: Update dependencies.
+- [frontend]: Ignore for now plugins: `matterbridge-camera` and `matterbridge-webcam`.
 - [frontend]: Bump `react` and `react-dom` to v.19.2.8.
 - [frontend]: Bump `react-router` to v.8.3.0.
 - [frontend]: Bump `@testing-library/jest-dom` to v.7.0.0.
