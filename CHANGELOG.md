@@ -83,6 +83,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `oxlint` to v.1.75.0.
 - [frontend]: Bump `oxlint-tsgolint` to v.7.0.2001.
 
+### Fixed
+
+- [frontend]: The Devices page now reloads the contents at restart.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.2] - 2026-07-24

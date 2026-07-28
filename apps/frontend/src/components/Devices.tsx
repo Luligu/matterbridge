@@ -36,6 +36,7 @@ function Devices(): React.JSX.Element {
   const [filterPlugins, setFilterPlugins] = useState('All plugins'); // Default to 'All plugins'
   const [filterDevices, setFilterDevices] = useState(''); // No filter by default
   const [viewMode, setViewMode] = useState('icon'); // Default to icon view
+  const [onlineEpoch, setOnlineEpoch] = useState(0);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -86,6 +87,9 @@ function Devices(): React.JSX.Element {
   // Send API requests when online
   useEffect(() => {
     if (online) {
+      // Recreate child views on reconnect to clear stale local websocket/data state.
+      setPlugins(['All plugins']);
+      setOnlineEpoch((prev) => prev + 1);
       if (debug) console.log('Devices sending /api/plugins request with id ', uniqueId.current);
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
@@ -196,10 +200,10 @@ function Devices(): React.JSX.Element {
       </div>
 
       {/* Table View mode*/}
-      {viewMode === 'table' && <DevicesTable filterPlugins={filterPlugins} filterDevices={filterDevices} />}
+      {viewMode === 'table' && <DevicesTable key={`table-${onlineEpoch}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
 
       {/* Icon View mode*/}
-      {viewMode === 'icon' && <DevicesIcons filterPlugins={filterPlugins} filterDevices={filterDevices} />}
+      {viewMode === 'icon' && <DevicesIcons key={`icon-${onlineEpoch}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
     </MbfPage>
   );
 }
