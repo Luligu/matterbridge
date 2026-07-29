@@ -2,9 +2,6 @@ FROM ubuntu:24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG VERSION
-ARG VCS_REF
-ARG BUILD_DATE
 ARG CHIP_BRANCH=v1.6-branch
 
 # Build deps (toolchain + headers) + Node.js for building Matterbridge
