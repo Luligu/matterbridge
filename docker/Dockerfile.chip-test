@@ -5,6 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ARG VERSION
 ARG VCS_REF
 ARG BUILD_DATE
+ARG CHIP_BRANCH=v1.6-branch
 
 # Build deps (toolchain + headers) + Node.js for building Matterbridge
 RUN \
@@ -26,7 +27,7 @@ RUN \
 # Build connectedhomeip: chip-tool/chip-cert + python venv for YAML/Python tests
 WORKDIR /root/connectedhomeip
 RUN \
-  git clone --depth=1 https://github.com/project-chip/connectedhomeip.git . && \
+  git clone --depth=1 --branch="${CHIP_BRANCH}" https://github.com/project-chip/connectedhomeip.git . && \
   python3 scripts/checkout_submodules.py --shallow --platform linux && \
   bash -lc "\
   set -e; \

@@ -62,6 +62,7 @@ These classes will run as threads in the next releases:
 ### Added
 
 - [publish]: Update publish script to allow a re-run.
+- [matterbridge]: Add a wired AC PowerSource to server nodes.
 
 ### Changed
 
@@ -72,6 +73,7 @@ These classes will run as threads in the next releases:
 - [matterbridge]: Bump `oxfmt` to v.0.60.0.
 - [matterbridge]: Bump `oxlint` to v.1.75.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2001.
+- [chip-test]: Switch Dockerfile from master to v1.6-branch.
 - [frontend]: Bump `frontend` version to v.3.5.5.
 - [frontend]: Update dependencies.
 - [frontend]: Ignore for now plugins: `matterbridge-camera` and `matterbridge-webcam`.
