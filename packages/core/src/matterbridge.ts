@@ -51,8 +51,10 @@ import {
 } from '@matter/general';
 import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, type ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
@@ -2981,7 +2983,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create({
+    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
@@ -3037,6 +3039,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         configurationVersion: await storageContext.get<number>('configurationVersion'),
 
         reachable: true,
+      },
+
+      powerSource: {
+        status: PowerSource.PowerSourceStatus.Active,
+        order: 0,
+        description: 'AC Power',
+        endpointList: [],
+        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
       },
     });
 

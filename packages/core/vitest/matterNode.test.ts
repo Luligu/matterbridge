@@ -20,8 +20,9 @@ import url from 'node:url';
 
 import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SessionsBehavior } from '@matter/node';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import type { ExposedFabricInformation } from '@matter/protocol';
-import { Identify, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
+import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
@@ -326,6 +327,12 @@ describe('MatterNode', () => {
     expect(invalidServerNode.state.basicInformation.productLabel).toBe('P'.repeat(64));
     expect(invalidServerNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
     expect(invalidServerNode.state.basicInformation.configurationVersion).toBe(1);
+    expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
+    const powerSourceState = invalidServerNode.stateOf(PowerSourceServer.with(PowerSource.Feature.Wired));
+    expect(powerSourceState.status).toBe(PowerSource.PowerSourceStatus.Active);
+    expect(powerSourceState.order).toBe(0);
+    expect(powerSourceState.endpointList).toEqual([]);
+    expect(powerSourceState.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid passcode -1 for server node InvalidCommissioning. Passcode must be between 0 and 99999999. Generating a random passcode...',
     );
