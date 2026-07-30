@@ -1,0 +1,16 @@
+# To run python tests on PowerSource (plain Battery, not rechargeable/replaceable) --PICS is required
+# Matches createDefaultPowerSourceBatteryClusterServer() in matterbridgeEndpoint.ts
+PS.S=1
+PS.S.F00=0 # Wired
+PS.S.F01=1 # Battery
+PS.S.F02=0 # Rechargeable
+PS.S.F03=0 # Replaceable
+PS.S.A0000=1 # Status
+PS.S.A0001=1 # Order
+PS.S.A0002=1 # Description
+PS.S.A000b=1 # BatVoltage
+PS.S.A000c=1 # BatPercentRemaining
+PS.S.A000e=1 # BatChargeLevel
+PS.S.A000f=1 # BatReplacementNeeded
+PS.S.A0010=1 # BatReplaceability
+PS.S.A001f=1 # EndpointList

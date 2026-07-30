@@ -1,0 +1,12 @@
+# To run python tests on PowerSource (Wired) --PICS is required
+# Matches createDefaultPowerSourceWiredClusterServer() in matterbridgeEndpoint.ts
+PS.S=1
+PS.S.F00=1 # Wired
+PS.S.F01=0 # Battery
+PS.S.F02=0 # Rechargeable
+PS.S.F03=0 # Replaceable
+PS.S.A0000=1 # Status
+PS.S.A0001=1 # Order
+PS.S.A0002=1 # Description
+PS.S.A0005=1 # WiredCurrentType
+PS.S.A001f=1 # EndpointList
