@@ -56,8 +56,8 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, type ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
-import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, VendorId } from '@matter/types';
+import { PowerSource } from '@matter/types/clusters/power-source';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';

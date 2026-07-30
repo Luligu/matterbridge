@@ -13,4 +13,5 @@ PS.S.A000c=1 # BatPercentRemaining
 PS.S.A000e=1 # BatChargeLevel
 PS.S.A000f=1 # BatReplacementNeeded
 PS.S.A0010=1 # BatReplaceability
+PS.S.A0012=1 # ActiveBatFaults
 PS.S.A001f=1 # EndpointList

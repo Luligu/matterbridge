@@ -84,6 +84,7 @@ These classes will run as threads in the next releases:
 - [frontend]: Bump `oxfmt` to v.0.60.0.
 - [frontend]: Bump `oxlint` to v.1.75.0.
 - [frontend]: Bump `oxlint-tsgolint` to v.7.0.2001.
+- [helpers]: Add ActiveBatFaults[] to PowerSource Battery helpers.
 
 ### Fixed
 
