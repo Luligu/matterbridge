@@ -50,6 +50,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [publish]: Wait for npm registry propagation before triggering Docker builds.
 - [frontend]: Update MbfScreen desktop layout test for jsdom 30 computed style behavior.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
