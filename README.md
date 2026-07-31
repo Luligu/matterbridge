@@ -827,7 +827,7 @@ The graph is acyclic and layered:
 The project is evolving to a multi-threaded architecture with these advantages:
 
 - real concurrency outside the Node.js main loop;
-- memory and performace optimization;
+- memory and performance optimization;
 - isolation between threads;
 - individual plugin isolation in childbridge mode;
 - ability to update the plugin in childbridge mode without restarting matterbridge;

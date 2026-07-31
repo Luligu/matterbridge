@@ -21,7 +21,7 @@ Concise rules the codebase and all agent suggestions should follow.
 
 - Functions: verb or verb phrase (`createDevice`, `updateState`).
 - Booleans: prefix with `is/has/can/should` (internal helpers); state flags in this project may keep existing names (`intervalOnOff`).
-- Private file‑local helpers start with `_` only if intentionally unused yet (silencing ESLint); otherwise export or remove.
+- Private file‑local helpers start with `_` only if intentionally unused yet (silencing the linter); otherwise export or remove.
 - Constants: `UPPER_SNAKE_CASE` only for process env or true constants; otherwise camelCase.
 
 ## 4. JSDoc Template
