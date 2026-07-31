@@ -3,35 +3,87 @@ MCORE.BRIDGE.BatInfo=0
 MCORE.BRIDGE.OtherControl=0
 MCORE.BRIDGE.AllowDeviceRename=0
 
+
 # Test_TC_I_2_1.yaml Test_TC_I_2_2.yaml Test_TC_I_2_3.yaml
-# Identify cluster
-I.S.A0000=0  # IdentifyTime
-I.S.A0001=0  # IdentifyType
+# Identify cluster (createDefaultIdentifyClusterServer — no Effects feature, so TriggerEffect (C40) is not
+# exposed on the wire even though MatterbridgeIdentifyServer implements a handler for it; leave C40.Rsp unset)
+I.S=1
+I.S.A0000=1 # IdentifyTime
+I.S.A0001=1 # IdentifyType
+I.S.C00.Rsp=1 # Identify command (mandatory)
+
+
+# Test_TC_BINFO_2_1.yaml Test_TC_BINFO_2_2.yaml
+# BasicInformation cluster (root node, endpoint 0 — not a bridged device)
+BINFO.S=1
+BINFO.S.A0000=1 # DataModelRevision
+BINFO.S.A0001=1 # VendorName
+BINFO.S.A0002=1 # VendorID
+BINFO.S.A0003=1 # ProductName
+BINFO.S.A0004=1 # ProductID
+BINFO.S.A0005=1 # NodeLabel
+BINFO.S.A0006=1 # Location
+BINFO.S.A0007=1 # HardwareVersion
+BINFO.S.A0008=1 # HardwareVersionString
+BINFO.S.A0009=1 # SoftwareVersion
+BINFO.S.A000a=1 # SoftwareVersionString
+BINFO.S.A000b=0 # ManufacturingDate
+BINFO.S.A000c=0 # PartNumber
+BINFO.S.A000d=1 # ProductURL
+BINFO.S.A000e=1 # ProductLabel
+BINFO.S.A000f=1 # SerialNumber
+BINFO.S.A0010=1 # LocalConfigDisabled
+BINFO.S.A0011=0 # Reachable: only meaningful for BridgedDeviceBasicInformation, implicitly true for a native node
+BINFO.S.A0012=1 # UniqueID
+BINFO.S.A0013=1 # CapabilityMinima
+BINFO.S.A0014=0 # ProductAppearance
+BINFO.S.A0015=1 # SpecificationVersion
+BINFO.S.A0016=1 # MaxPathsPerInvoke
+BINFO.S.A0018=1 # ConfigurationVersion
+
+BINFO.S.E00=1 # StartUp
+BINFO.S.E01=1 # ShutDown
+BINFO.S.E02=1 # Leave
+BINFO.S.E03=1 # ReachableChanged
+
 
 # Test_TC_BR_1.yaml
-# BridgedDeviceBasicInformation cluster
+# BridgedDeviceBasicInformation cluster (derived from Basic Information — Matter Core Spec §9.13.5; several base-cluster
+# attributes are Conformance=X (excluded from this cluster entirely), listed below for completeness rather than omitted)
 BRBINFO.S=1
-BRBINFO.S.A0001=1
-BRBINFO.S.A0002=1
-BRBINFO.S.A0003=1
+BRBINFO.S.A0000=0 # DataModelRevision: X conformance, excluded from this cluster
+BRBINFO.S.A0001=1 # VendorName
+BRBINFO.S.A0002=1 # VendorID
+BRBINFO.S.A0003=1 # ProductName
 BRBINFO.S.A0004=0 # ProductId: it doesn't exist on this cluster!
-BRBINFO.S.A0005=1
-BRBINFO.S.A0006=1
-BRBINFO.S.A0007=1
-BRBINFO.S.A0008=1
-BRBINFO.S.A0009=1
-BRBINFO.S.A000a=1
-BRBINFO.S.A000b=0 # ManufaturingDate
+BRBINFO.S.A0005=1 # NodeLabel
+BRBINFO.S.A0006=0 # Location: X conformance, excluded from this cluster (not implemented)
+BRBINFO.S.A0007=1 # HardwareVersion
+BRBINFO.S.A0008=1 # HardwareVersionString
+BRBINFO.S.A0009=1 # SoftwareVersion
+BRBINFO.S.A000a=1 # SoftwareVersionString
+BRBINFO.S.A000b=0 # ManufacturingDate
 BRBINFO.S.A000c=0 # PartNumber
-BRBINFO.S.A000d=1
-BRBINFO.S.A000e=1
-BRBINFO.S.A000f=1
-BRBINFO.S.A0010=0 # LocalConfigDisabled
-BRBINFO.S.A0011=1
-BRBINFO.S.A0012=1
-BRBINFO.S.A0013=0 # 
+BRBINFO.S.A000d=1 # ProductURL
+BRBINFO.S.A000e=1 # ProductLabel
+BRBINFO.S.A000f=1 # SerialNumber
+BRBINFO.S.A0010=0 # LocalConfigDisabled: X conformance, excluded from this cluster
+BRBINFO.S.A0011=1 # Reachable (Mandatory on this cluster)
+BRBINFO.S.A0012=1 # UniqueID
+BRBINFO.S.A0013=0 # CapabilityMinima: X conformance, excluded from this cluster
 BRBINFO.S.A0014=0 # ProductAppearance
-BRBINFO.S.A0018=0 # ConfigurationVersion
+BRBINFO.S.A0015=0 # SpecificationVersion: X conformance, excluded from this cluster
+BRBINFO.S.A0016=0 # MaxPathsPerInvoke: X conformance, excluded from this cluster
+BRBINFO.S.A0018=1 # ConfigurationVersion (createDefaultBridgedDeviceBasicInformationClusterServer sets this)
+
+BRBINFO.S.E00=0 # StartUp: not enabled (BridgedDeviceBasicInformationServer.enable() only turns on leave/reachableChanged)
+BRBINFO.S.E01=0 # ShutDown: not enabled
+BRBINFO.S.E02=1 # Leave
+BRBINFO.S.E03=1 # ReachableChanged (Mandatory on this cluster)
+
+BRBINFO.S.C80.Rsp=0 # KeepActive command: BIS (Bridged ICD Support) feature not implemented
+BRBINFO.S.E80=0 # ActiveChanged event: BIS feature not implemented
+
 
 # Test_TC_PS_2_1.yaml Test_TC_PS_2_2.yaml
 # PowerSource cluster
@@ -40,12 +92,15 @@ PS.S.A0001=1 # Order
 PS.S.A0002=1 # Description
 PS.S.A001f=1 # EndpointList
 
+
 # Test_TC_BOOL_2_1 Test_TC_BOOL_2_2
 # BooleanState cluster
 BOOL.S.A0000=1
 
+
 # Occupancy Sensing cluster enabled
 OCC.S=1
+
 
 # Test_TC_OO_2_1.yaml
 # OnOff cluster attributes are implemented
@@ -53,6 +108,7 @@ OO.S.A0000=1
 OO.S.A4000=1
 OO.S.A4001=1
 OO.S.A4002=1
+
 
 # Test_TC_OO_2_2.yaml
 # OnOff cluster commands are implemented

@@ -53,9 +53,11 @@ import {
 import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, type ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
 import { DeviceTypeId, VendorId } from '@matter/types';
+import { PowerSource } from '@matter/types/clusters/power-source';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
@@ -693,7 +695,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create({
+    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
@@ -751,6 +753,14 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         configurationVersion: await this.matterStorageContext.get<number>('configurationVersion'),
 
         reachable: true,
+      },
+
+      powerSource: {
+        status: PowerSource.PowerSourceStatus.Active,
+        order: 0,
+        description: 'AC Power',
+        endpointList: [],
+        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
       },
     });
 

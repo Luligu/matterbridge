@@ -109,7 +109,7 @@ const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request')
 const configurePluginSpy = vi.spyOn(PluginManager.prototype, 'configure');
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, false, [], { MATTERBRIDGE_START_CONFIGURE_TIMEOUT: '30000', MATTERBRIDGE_START_REACHABILITY_TIMEOUT: '60000' });
 
 rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 

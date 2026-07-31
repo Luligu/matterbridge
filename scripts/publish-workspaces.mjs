@@ -1,6 +1,6 @@
 /**
  * publish-workspaces.mjs
- * Version: 1.0.2
+ * Version: 1.1.0
  *
  * Publishes all workspace packages to npm.
  *
@@ -39,8 +39,8 @@ function usage() {
     '  2) Runs scripts/sync-workspaces.mjs (sync workspace versions + scoped deps)',
     '  3) Runs npm run buildProduction',
     '  4) Temporarily removes devDependencies, scripts, workspaces, and bundledDependencies from all package.json files',
-    '  5) Publishes each workspace with npm publish (or --dry-run publish)',
-    '  6) Publishes the root package with npm publish (or --dry-run publish)',
+    '  5) Publishes each workspace with npm publish (or --dry-run publish), skipping versions already on the registry',
+    '  6) Publishes the root package with npm publish (or --dry-run publish), skipping it when already on the registry',
     '  7) Restores original package.json files from the in-memory backup',
     '',
     'Options:',
@@ -180,6 +180,51 @@ function runPublish(repoRoot, publishDryRun, args) {
   if (res.error) {
     throw res.error;
   }
+}
+
+function isVersionPublished(repoRoot, name, version) {
+  const viewArgs = ['view', `${name}@${version}`, 'version', '--json'];
+
+  const isWin = process.platform === 'win32';
+  const cmd = isWin ? process.env.ComSpec || 'cmd.exe' : 'npm';
+  const cmdArgs = isWin ? ['/d', '/s', '/c', 'npm', ...viewArgs] : viewArgs;
+
+  const res = spawnSync(cmd, cmdArgs, {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    shell: false,
+  });
+
+  if (res.error) {
+    throw res.error;
+  }
+
+  if (res.status === 0) {
+    // npm exits 0 with empty output when the package exists but the version does not (older npm).
+    return (res.stdout ?? '').trim().length > 0;
+  }
+
+  const output = `${res.stdout ?? ''}\n${res.stderr ?? ''}`;
+  if (output.includes('E404') || output.includes('ERR! 404') || output.includes('code E404')) {
+    return false;
+  }
+
+  // Any other failure (network, auth, registry outage) must be fatal: silently assuming
+  // "not published" here could make a rerun skip nothing, but assuming "published" could skip a package.
+  throw new Error(`Registry check failed (exit ${res.status}) for ${name}@${version}: npm ${viewArgs.join(' ')}\n${output.trim()}`);
+}
+
+async function publishIfNeeded(repoRoot, dir, dryRun, publishTag) {
+  const packageJsonPath = path.join(dir, 'package.json');
+  const pkg = readJson(await fs.readFile(packageJsonPath, 'utf8'), packageJsonPath);
+
+  if (isVersionPublished(repoRoot, pkg.name, pkg.version)) {
+    console.log(green(`skipped: ${pkg.name}@${pkg.version} is already published`));
+    return false;
+  }
+
+  runPublish(dir, dryRun, ['publish', '--tag', publishTag]);
+  return true;
 }
 
 function stripPublishOnlyFields(pkg) {
@@ -352,11 +397,11 @@ try {
 
   for (const dir of workspaceDirs) {
     console.log(`publishing workspace: ${formatRelPath(repoRoot, dir)}`);
-    runPublish(dir, dryRun, ['publish', '--tag', publishTag]);
+    await publishIfNeeded(repoRoot, dir, dryRun, publishTag);
   }
 
   console.log('publishing root package: package.json');
-  runPublish(repoRoot, dryRun, ['publish', '--tag', publishTag]);
+  await publishIfNeeded(repoRoot, repoRoot, dryRun, publishTag);
 } finally {
   try {
     await restoreAllPackageJson();

@@ -7,6 +7,12 @@ agent: 'agent'
 
 Verify version alignment in this repository using [package.json](../../package.json) as the source of truth.
 
+Execution rules:
+
+- Do not run repository scripts or automation scripts for this verification.
+- Perform the check manually by reading and comparing file contents directly.
+- After applying any fix, re-read the affected files from disk and report the final on-disk values.
+
 Checks:
 
 - Read the root version from [package.json](../../package.json).
@@ -41,6 +47,7 @@ Output requirements:
 - If the workflow release tags are not coherent, report both tag values and ask whether they should be aligned before making changes.
 - If the user provided an expected release tag and the workflow tags do not match it, report the expected `year.month.number` values and ask whether they should be updated.
 - Do not modify files unless I explicitly ask you to fix them.
+- If fixes were applied, include a post-fix verification section that confirms the updated values read from disk.
 
 Suggested search targets:
 

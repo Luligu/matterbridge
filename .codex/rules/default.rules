@@ -1,4 +1,4 @@
-# Codex rules v.1.0.1
+# Codex rules v.1.0.2
 
 # Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "Do not change local refs without explicit manual control.")
@@ -26,6 +26,7 @@ prefix_rule(pattern = ["bun", "add"], decision = "prompt", justification = "Ask 
 prefix_rule(pattern = ["bun", "remove"], decision = "prompt", justification = "Ask before uninstalling dependencies.")
 
 # Validation scripts
+prefix_rule(pattern = ["npm", "run"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "typecheck"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "build"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test"], decision = "allow")

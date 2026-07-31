@@ -1,13 +1,14 @@
 /**
  * deep-clean.mjs
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Dependency-free replacement for:
- *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp package-lock.json npm-shrinkwrap.json \
+ *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp bun.lock package-lock.json npm-shrinkwrap.json \
  *     .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*
  *
  * Fully removes the *.tsbuildinfo files, build/test output directories and lock files,
- * then empties the contents of .cache and node_modules while keeping those directories.
+ * At the root, it empties the contents of .cache and node_modules while keeping those
+ * directories. In workspaces, it removes the entire .cache and node_modules directories.
  *
  * With `--workspaces`, it first cleans the root directory and then cleans every
  * workspace listed in the root package.json `workspaces` array. Simple workspace
@@ -41,7 +42,7 @@ const rm = (dir, target) => {
   }
 };
 
-const clean = (dir) => {
+const clean = (dir, workspace) => {
   // Fully removed entries. The `.cache/*`, `node_modules/*` style globs keep the parent
   // directory and only delete its contents, so those are handled separately below.
   let targets;
@@ -50,9 +51,15 @@ const clean = (dir) => {
   } catch {
     return; // Directory does not exist, nothing to clean.
   }
-  targets.push('dist', 'build', 'coverage', 'jest', 'temp', 'package-lock.json', 'npm-shrinkwrap.json');
+  targets.push('dist', 'build', 'coverage', 'jest', 'temp', 'bun.lock', 'package-lock.json', 'npm-shrinkwrap.json');
   for (const target of targets) {
     rm(dir, target);
+  }
+
+  if (workspace) {
+    rm(dir, '.cache');
+    rm(dir, 'node_modules');
+    return;
   }
 
   // Empty the contents (including dotfiles) of these directories but keep the directory itself.
@@ -99,10 +106,10 @@ const getWorkspaceDirs = () => {
   return dirs;
 };
 
-clean(root);
+clean(root, false);
 
 if (process.argv.includes('--workspaces')) {
   for (const workspaceDir of getWorkspaceDirs()) {
-    clean(workspaceDir);
+    clean(workspaceDir, true);
   }
 }

@@ -234,12 +234,82 @@ system-information view instead of the container account (for example, <code>roo
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
 <li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;</li>
 </ul>
-<pre><code class="language-typescript">  // Change: FileStorageDriver.js
-  async #writeAndMoveFile(filepath, valueOrStream) {
-    const tmpName = `${filepath}.tmp`;
-    await writeFile(tmpName, valueOrStream, { encoding: &quot;utf8&quot;, flush: true });
-    await rename(tmpName, filepath);
+<pre><code class="language-typescript">// Change: FileStorageDriver.js
+async #writeAndMoveFile(filepath, valueOrStream) {
+  const tmpName = `${filepath}.tmp`;
+  await writeFile(tmpName, valueOrStream, { encoding: &quot;utf8&quot;, flush: true });
+  await rename(tmpName, filepath);
+}
+</code></pre>
+<pre><code class="language-typescript">// Change: FileStorageDriver.js
+import { isBunjs } from &#39;../../util/runtimeChecks.js&#39;;
+if (isBunjs()) {
+  if (typeof valueOrStream === &#39;string&#39;) {
+    await writeFile(tmpName, valueOrStream, { encoding: &#39;utf8&#39;, flush: true });
+  } else {
+    const value = new Uint8Array(await new Response(valueOrStream).arrayBuffer());
+    await writeFile(tmpName, value, { flush: true });
   }
+  await rename(tmpName, filepath);
+  return;
+}
+</code></pre>
+<pre><code class="language-typescript">/**
+ * @license
+ * Copyright 2022-2026 Matter.js Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import * as assert from &#39;node:assert&#39;;
+import { mkdtemp, readFile, rm } from &#39;node:fs/promises&#39;;
+import { tmpdir } from &#39;node:os&#39;;
+import { join } from &#39;node:path&#39;;
+
+import { FileStorageDriver } from &#39;../../src/storage/fs/FileStorageDriver.js&#39;;
+
+describe(&#39;FileStorageDriver Bun runtime&#39;, () =&gt; {
+  let rootDir: string;
+
+  beforeEach(async () =&gt; {
+    rootDir = await mkdtemp(join(tmpdir(), &#39;matterjs-file-storage-bun-test-&#39;));
+  });
+
+  afterEach(async () =&gt; {
+    await rm(rootDir, { recursive: true, force: true });
+  });
+
+  it(&#39;uses the Bun write path for string and stream values&#39;, async () =&gt; {
+    const previousBun = process.versions.bun;
+    Object.defineProperty(process.versions, &#39;bun&#39;, { value: &#39;1&#39;, configurable: true });
+    try {
+      const storage = new FileStorageDriver(rootDir);
+      await storage.initialize();
+      await storage.set([&#39;context&#39;], &#39;text&#39;, &#39;value&#39;);
+      assert.equal(await storage.get([&#39;context&#39;], &#39;text&#39;), &#39;value&#39;);
+
+      await storage.writeBlobFromStream(
+        [&#39;context&#39;],
+        &#39;blob&#39;,
+        new ReadableStream&lt;Uint8Array&gt;({
+          start(controller) {
+            controller.enqueue(new Uint8Array([1, 2, 3]));
+            controller.close();
+          },
+        }),
+      );
+      await storage.close();
+
+      const file = await readFile(join(rootDir, &#39;context.blob&#39;));
+      assert.deepEqual(new Uint8Array(file), new Uint8Array([1, 2, 3]));
+    } finally {
+      if (previousBun === undefined) {
+        delete process.versions.bun;
+      } else {
+        Object.defineProperty(process.versions, &#39;bun&#39;, { value: previousBun, configurable: true });
+      }
+    }
+  });
+});
 </code></pre>
 <h2 id="todo">TODO</h2>
 <ul>

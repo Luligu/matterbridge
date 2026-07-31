@@ -19,7 +19,9 @@ import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { SessionsBehavior } from '@matter/node';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import type { ExposedFabricInformation } from '@matter/protocol';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
@@ -419,6 +421,11 @@ describe('Matterbridge', () => {
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
+    expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
+    expect(invalidServerNode.state.powerSource.status).toBe(PowerSource.PowerSourceStatus.Active);
+    expect(invalidServerNode.state.powerSource.order).toBe(0);
+    expect(invalidServerNode.state.powerSource.endpointList).toEqual([]);
+    expect(invalidServerNode.state.powerSource.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
     expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid discriminator 4096 for server node Matterbridge. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',

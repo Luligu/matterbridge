@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "_comment": "Claude settings v. 1.0.4",
+  "_comment": "Claude settings v. 1.0.6",
   "permissions": {
     "deny": [
       "Read(.env)",
@@ -18,6 +18,7 @@
       "Bash(git branch -D:*)",
       "Bash(git branch -d:*)",
       "Bash(git tag -d:*)",
+      "Bash(git stash:*)",
       "Bash(git reflog expire:*)",
       "Bash(git reflog delete:*)"
     ],
@@ -33,6 +34,8 @@
       "Bash(bun remove:*)"
     ],
     "allow": [
+      "Read",
+      "Bash(npm run)",
       "Bash(npm run typecheck:*)",
       "Bash(npm run build:*)",
       "Bash(npm run test:*)",
@@ -47,8 +50,14 @@
       "Bash(oxlint:*)",
       "Bash(npx tsc:*)",
       "Bash(tsc:*)",
+      "Bash(grep:*)",
       "Bash(cd:*)",
-      "Bash(tail:*)"
+      "Bash(tail:*)",
+      "Bash(find:*)",
+      "Bash(echo:*)",
+      "Bash(head:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)"
     ]
   }
 }

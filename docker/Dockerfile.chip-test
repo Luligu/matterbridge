@@ -2,9 +2,7 @@ FROM ubuntu:24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG VERSION
-ARG VCS_REF
-ARG BUILD_DATE
+ARG CHIP_BRANCH=v1.6-branch
 
 # Build deps (toolchain + headers) + Node.js for building Matterbridge
 RUN \
@@ -26,7 +24,7 @@ RUN \
 # Build connectedhomeip: chip-tool/chip-cert + python venv for YAML/Python tests
 WORKDIR /root/connectedhomeip
 RUN \
-  git clone --depth=1 https://github.com/project-chip/connectedhomeip.git . && \
+  git clone --depth=1 --branch="${CHIP_BRANCH}" https://github.com/project-chip/connectedhomeip.git . && \
   python3 scripts/checkout_submodules.py --shallow --platform linux && \
   bash -lc "\
   set -e; \
@@ -81,6 +79,11 @@ RUN \
 FROM ubuntu:24.04 AS release
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV MATTERBRIDGE_CHIP_TEST=1
+ENV MATTERBRIDGE_START_CONFIGURE_TIMEOUT=5000
+ENV MATTERBRIDGE_START_REACHABILITY_TIMEOUT=10000
+ENV MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT=1
+ENV MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1
 
 ARG VERSION
 ARG VCS_REF

@@ -29,33 +29,40 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## Project evolution
+## [3.10.3] - 2026-07-31
 
-The project is evolving to a multi-threaded architecture with these advantages:
+### Added
 
-- real concurrency outside the Node.js main loop;
-- memory and performace optimization;
-- isolation between threads;
-- individual plugin isolation in childbridge mode;
-- ability to update the plugin in childbridge mode without restarting matterbridge;
+- [publish]: Update publish script to allow a re-run.
+- [matterbridge]: Add a wired AC PowerSource to server nodes.
 
-✅ The CLI is the threads manager.
+### Changed
 
-These threads already run as workers:
+- [matterbridge]: Bump `matterbridge` version to v.3.10.3.
+- [matterbridge]: Update dependencies.
+- [matterbridge]: Upgrade package.
+- [matterbridge]: Bump `@matter/main` to v.0.17.7.
+- [matterbridge]: Bump `oxfmt` to v.0.60.0.
+- [matterbridge]: Bump `oxlint` to v.1.75.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2001.
+- [chip-test]: Switch Dockerfile from master to v1.6-branch.
+- [frontend]: Bump `frontend` version to v.3.5.5.
+- [frontend]: Update dependencies.
+- [frontend]: Ignore for now plugins: `matterbridge-camera` and `matterbridge-webcam`.
+- [frontend]: Bump `react` and `react-dom` to v.19.2.8.
+- [frontend]: Bump `react-router` to v.8.3.0.
+- [frontend]: Bump `@testing-library/jest-dom` to v.7.0.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.0.4.
+- [frontend]: Bump `oxfmt` to v.0.60.0.
+- [frontend]: Bump `oxlint` to v.1.75.0.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2001.
+- [helpers]: Add ActiveBatFaults[] to PowerSource Battery helpers.
 
-- ✅ check updates;
-- ✅ check docker updates;
-- ✅ system check;
-- ✅ spawn commands;
-- ✅ archive commands;
-- ✅ check the global node_modules directory;
+### Fixed
 
-These classes will run as threads in the next releases:
+- [frontend]: The Devices page now reloads the contents at restart.
 
-- matterbridge;
-- frontend;
-- all plugins in bridge mode;
-- each plugin in childbridge mode;
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.2] - 2026-07-24
 
@@ -70,7 +77,7 @@ These classes will run as threads in the next releases:
 
 ### Changed
 
-- [matterbridge]: Bump `matterbridge` version to v.3.10.1.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.2.
 - [matterbridge]: Update dependencies.
 - [matterbridge]: Bump `@matter/main` to v.0.17.6.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.0.25.0.
@@ -87,6 +94,10 @@ These classes will run as threads in the next releases:
 - [frontend]: Local plugins are detected, and both update actions and available-version checks are skipped.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.10.1] - 2026-07-24
+
+This release failed to be published for a npm error. DO NOT USE IT.
 
 ## [3.10.0] - 2026-07-17
 

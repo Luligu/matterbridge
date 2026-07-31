@@ -822,6 +822,34 @@ The graph is acyclic and layered:
 - **Core:** `@matterbridge/core` (→ `dgram`, `thread`, `utils`, `types`).
 - **Top level:** `matterbridge` declares all scoped packages as direct dependencies; `core` pulls in the rest transitively.
 
+## Project evolution
+
+The project is evolving to a multi-threaded architecture with these advantages:
+
+- real concurrency outside the Node.js main loop;
+- memory and performance optimization;
+- isolation between threads;
+- individual plugin isolation in childbridge mode;
+- ability to update the plugin in childbridge mode without restarting matterbridge;
+
+✅ The CLI is the threads manager.
+
+These threads already run as workers:
+
+- ✅ check updates;
+- ✅ check docker updates;
+- ✅ system check;
+- ✅ spawn commands;
+- ✅ archive commands;
+- ✅ check the global node_modules directory;
+
+These classes will run as threads in the next releases:
+
+- matterbridge;
+- frontend;
+- all plugins in bridge mode;
+- each plugin in childbridge mode;
+
 # Licensing
 
 Matterbridge is licensed under the [Apache License 2.0](./LICENSE).

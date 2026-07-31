@@ -1280,6 +1280,7 @@ export function getDefaultPowerSourceBatteryClusterServer(
     batChargeLevel,
     batReplacementNeeded: false,
     batReplaceability,
+    activeBatFaults: [],
   });
 }
 
@@ -1321,7 +1322,7 @@ export function getDefaultPowerSourceReplaceableBatteryClusterServer(
     batChargeLevel,
     batReplacementNeeded: false,
     batReplaceability,
-    activeBatFaults: undefined,
+    activeBatFaults: [],
     // Replaceable feature attributes
     batReplacementDescription,
     batQuantity,

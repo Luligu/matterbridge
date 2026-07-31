@@ -111,12 +111,86 @@ package-manager command and global-modules paths to Bun where needed.
 - [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});"
 
 ```typescript
-  // Change: FileStorageDriver.js
-  async #writeAndMoveFile(filepath, valueOrStream) {
-    const tmpName = `${filepath}.tmp`;
-    await writeFile(tmpName, valueOrStream, { encoding: "utf8", flush: true });
-    await rename(tmpName, filepath);
+// Change: FileStorageDriver.js
+async #writeAndMoveFile(filepath, valueOrStream) {
+  const tmpName = `${filepath}.tmp`;
+  await writeFile(tmpName, valueOrStream, { encoding: "utf8", flush: true });
+  await rename(tmpName, filepath);
+}
+```
+
+```typescript
+// Change: FileStorageDriver.js
+import { isBunjs } from '../../util/runtimeChecks.js';
+if (isBunjs()) {
+  if (typeof valueOrStream === 'string') {
+    await writeFile(tmpName, valueOrStream, { encoding: 'utf8', flush: true });
+  } else {
+    const value = new Uint8Array(await new Response(valueOrStream).arrayBuffer());
+    await writeFile(tmpName, value, { flush: true });
   }
+  await rename(tmpName, filepath);
+  return;
+}
+```
+
+```typescript
+/**
+ * @license
+ * Copyright 2022-2026 Matter.js Authors
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import * as assert from 'node:assert';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { FileStorageDriver } from '../../src/storage/fs/FileStorageDriver.js';
+
+describe('FileStorageDriver Bun runtime', () => {
+  let rootDir: string;
+
+  beforeEach(async () => {
+    rootDir = await mkdtemp(join(tmpdir(), 'matterjs-file-storage-bun-test-'));
+  });
+
+  afterEach(async () => {
+    await rm(rootDir, { recursive: true, force: true });
+  });
+
+  it('uses the Bun write path for string and stream values', async () => {
+    const previousBun = process.versions.bun;
+    Object.defineProperty(process.versions, 'bun', { value: '1', configurable: true });
+    try {
+      const storage = new FileStorageDriver(rootDir);
+      await storage.initialize();
+      await storage.set(['context'], 'text', 'value');
+      assert.equal(await storage.get(['context'], 'text'), 'value');
+
+      await storage.writeBlobFromStream(
+        ['context'],
+        'blob',
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new Uint8Array([1, 2, 3]));
+            controller.close();
+          },
+        }),
+      );
+      await storage.close();
+
+      const file = await readFile(join(rootDir, 'context.blob'));
+      assert.deepEqual(new Uint8Array(file), new Uint8Array([1, 2, 3]));
+    } finally {
+      if (previousBun === undefined) {
+        delete process.versions.bun;
+      } else {
+        Object.defineProperty(process.versions, 'bun', { value: previousBun, configurable: true });
+      }
+    }
+  });
+});
 ```
 
 ## TODO

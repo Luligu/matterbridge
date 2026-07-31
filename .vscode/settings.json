@@ -1,13 +1,11 @@
-// VS Code settings native v.1.0.8
+// VS Code settings native v.1.0.9
 {
   "eslint.enable": false,
   "prettier.enable": false,
   "oxc.enable": true,
   "js/ts.experimental.useTsgo": true,
   "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-  "jestrunner.enableESM": true,
-  "jestrunner.codeLens": ["run", "watch", "coverage", "debug"],
-  "terminal.integrated.scrollback": 10000,
+  "terminal.integrated.scrollback": 5000,
   "editor.tabSize": 2,
   "editor.rulers": [180],
   "editor.formatOnSave": false,
@@ -48,6 +46,7 @@
     "npx oxlint": true,
     "npx oxfmt": true,
     "npx vitest": true,
+    "npm run": true,
     "npm run build": true,
     "npm run typecheck": true,
     "npm run lint": true,
