@@ -50,6 +50,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [AirConditioner]: Use valid default AutoMode thermostat limits for the 1°C deadband.
 - [publish]: Wait for npm registry propagation before triggering Docker builds.
 - [frontend]: Update MbfScreen desktop layout test for jsdom 30 computed style behavior.
 

@@ -45,9 +45,9 @@ export interface AirConditionerOptions {
   minSetpointDeadBand?: number;
   /** Minimum heat setpoint limit (°C). Default 0. */
   minHeatSetpointLimit?: number;
-  /** Maximum heat setpoint limit (°C). Default 50. */
+  /** Maximum heat setpoint limit (°C). Default 49. */
   maxHeatSetpointLimit?: number;
-  /** Minimum cool setpoint limit (°C). Default 0. */
+  /** Minimum cool setpoint limit (°C). Default 1. */
   minCoolSetpointLimit?: number;
   /** Maximum cool setpoint limit (°C). Default 50. */
   maxCoolSetpointLimit?: number;
@@ -88,8 +88,8 @@ export class AirConditioner extends MatterbridgeEndpoint {
    *  - occupiedCoolingSetpoint: 25
    *  - minSetpointDeadBand: 1
    *  - minHeatSetpointLimit: 0
-   *  - maxHeatSetpointLimit: 50
-   *  - minCoolSetpointLimit: 0
+   *  - maxHeatSetpointLimit: 49
+   *  - minCoolSetpointLimit: 1
    *  - maxCoolSetpointLimit: 50
    *  - temperatureDisplayMode: Celsius
    *  - keypadLockout: NoLockout
@@ -110,8 +110,8 @@ export class AirConditioner extends MatterbridgeEndpoint {
       occupiedCoolingSetpoint = 25,
       minSetpointDeadBand = 1,
       minHeatSetpointLimit = 0,
-      maxHeatSetpointLimit = 50,
-      minCoolSetpointLimit = 0,
+      maxHeatSetpointLimit = 49,
+      minCoolSetpointLimit = 1,
       maxCoolSetpointLimit = 50,
       temperatureDisplayMode = ThermostatUserInterfaceConfiguration.TemperatureDisplayMode.Celsius,
       keypadLockout = ThermostatUserInterfaceConfiguration.KeypadLockout.NoLockout,
