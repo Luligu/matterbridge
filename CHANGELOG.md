@@ -29,35 +29,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## Project evolution
-
-The project is evolving to a multi-threaded architecture with these advantages:
-
-- real concurrency outside the Node.js main loop;
-- memory and performace optimization;
-- isolation between threads;
-- individual plugin isolation in childbridge mode;
-- ability to update the plugin in childbridge mode without restarting matterbridge;
-
-✅ The CLI is the threads manager.
-
-These threads already run as workers:
-
-- ✅ check updates;
-- ✅ check docker updates;
-- ✅ system check;
-- ✅ spawn commands;
-- ✅ archive commands;
-- ✅ check the global node_modules directory;
-
-These classes will run as threads in the next releases:
-
-- matterbridge;
-- frontend;
-- all plugins in bridge mode;
-- each plugin in childbridge mode;
-
-## [3.10.3] - Dev branch
+## [3.10.3] - 2026-07-31
 
 ### Added
 

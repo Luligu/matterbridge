@@ -662,6 +662,32 @@ While Amazon has expanded support to include core categories like lighting, plug
 <li><strong>Core:</strong> <code>@matterbridge/core</code> (→ <code>dgram</code>, <code>thread</code>, <code>utils</code>, <code>types</code>).</li>
 <li><strong>Top level:</strong> <code>matterbridge</code> declares all scoped packages as direct dependencies; <code>core</code> pulls in the rest transitively.</li>
 </ul>
+<h2 id="project-evolution">Project evolution</h2>
+<p>The project is evolving to a multi-threaded architecture with these advantages:</p>
+<ul>
+<li>real concurrency outside the Node.js main loop;</li>
+<li>memory and performace optimization;</li>
+<li>isolation between threads;</li>
+<li>individual plugin isolation in childbridge mode;</li>
+<li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
+</ul>
+<p>✅ The CLI is the threads manager.</p>
+<p>These threads already run as workers:</p>
+<ul>
+<li>✅ check updates;</li>
+<li>✅ check docker updates;</li>
+<li>✅ system check;</li>
+<li>✅ spawn commands;</li>
+<li>✅ archive commands;</li>
+<li>✅ check the global node_modules directory;</li>
+</ul>
+<p>These classes will run as threads in the next releases:</p>
+<ul>
+<li>matterbridge;</li>
+<li>frontend;</li>
+<li>all plugins in bridge mode;</li>
+<li>each plugin in childbridge mode;</li>
+</ul>
 <h1 id="licensing">Licensing</h1>
 <p>Matterbridge is licensed under the <a href="./LICENSE">Apache License 2.0</a>.</p>
   <script>

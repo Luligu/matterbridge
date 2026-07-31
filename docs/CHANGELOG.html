@@ -151,33 +151,7 @@
 <p>All notable changes to this project will be documented in this file.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
-<h2 id="project-evolution">Project evolution</h2>
-<p>The project is evolving to a multi-threaded architecture with these advantages:</p>
-<ul>
-<li>real concurrency outside the Node.js main loop;</li>
-<li>memory and performace optimization;</li>
-<li>isolation between threads;</li>
-<li>individual plugin isolation in childbridge mode;</li>
-<li>ability to update the plugin in childbridge mode without restarting matterbridge;</li>
-</ul>
-<p>✅ The CLI is the threads manager.</p>
-<p>These threads already run as workers:</p>
-<ul>
-<li>✅ check updates;</li>
-<li>✅ check docker updates;</li>
-<li>✅ system check;</li>
-<li>✅ spawn commands;</li>
-<li>✅ archive commands;</li>
-<li>✅ check the global node_modules directory;</li>
-</ul>
-<p>These classes will run as threads in the next releases:</p>
-<ul>
-<li>matterbridge;</li>
-<li>frontend;</li>
-<li>all plugins in bridge mode;</li>
-<li>each plugin in childbridge mode;</li>
-</ul>
-<h2 id="3103-dev-branch">[3.10.3] - Dev branch</h2>
+<h2 id="3103-2026-07-31">[3.10.3] - 2026-07-31</h2>
 <h3 id="added">Added</h3>
 <ul>
 <li>[publish]: Update publish script to allow a re-run.</li>
