@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/dgram",
-  "version": "3.10.3",
+  "version": "3.10.4",
   "description": "Matterbridge dgram library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -67,7 +67,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matterbridge/utils": "3.10.3",
+    "@matterbridge/utils": "3.10.4",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
