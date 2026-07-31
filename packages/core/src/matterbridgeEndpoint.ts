@@ -3080,6 +3080,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
    * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
    *
+   * @remarks For AutoMode, a positive minSetpointDeadBand requires heat and cool setpoint limits to preserve the deadband: maxHeatSetpointLimit <= maxCoolSetpointLimit - minSetpointDeadBand and minHeatSetpointLimit <= minCoolSetpointLimit - minSetpointDeadBand.
+   *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
    * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
@@ -3215,6 +3217,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
    * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
+   *
+   * @remarks For AutoMode, a positive minSetpointDeadBand requires heat and cool setpoint limits to preserve the deadband: maxHeatSetpointLimit <= maxCoolSetpointLimit - minSetpointDeadBand and minHeatSetpointLimit <= minCoolSetpointLimit - minSetpointDeadBand.
    *
    * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
    * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.

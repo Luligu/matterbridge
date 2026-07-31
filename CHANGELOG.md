@@ -65,6 +65,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.3.
 - [matterbridge]: Upgrade package.
 - [matterbridge]: Bump `@matter/main` to v.0.17.7.
