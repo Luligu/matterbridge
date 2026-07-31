@@ -29,6 +29,31 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.4] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.4.
+- [matterbridge]: Bump `@types/node` to v.26.1.2.
+- [matterbridge]: Bump `marked` to v.18.0.7.
+- [matterbridge]: Bump `oxfmt` to v.0.61.0.
+- [matterbridge]: Bump `oxlint` to v.1.76.0.
+- [core]: Bump `express-rate-limit` to v.8.6.1.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.34.
+- [frontend]: Bump `frontend` version to v.3.5.6.
+- [frontend]: Bump `@rjsf` packages to v.6.7.1.
+- [frontend]: Bump `jsdom` to v.30.0.1.
+- [frontend]: Bump `vite` to v.8.2.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.0.5.
+- [frontend]: Bump `oxfmt` to v.0.61.0.
+- [frontend]: Bump `oxlint` to v.1.76.0.
+
+### Fixed
+
+- [frontend]: Update MbfScreen desktop layout test for jsdom 30 computed style behavior.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.3] - 2026-07-31
 
 ### Added
@@ -39,7 +64,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.3.
-- [matterbridge]: Update dependencies.
 - [matterbridge]: Upgrade package.
 - [matterbridge]: Bump `@matter/main` to v.0.17.7.
 - [matterbridge]: Bump `oxfmt` to v.0.60.0.

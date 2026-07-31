@@ -198,8 +198,8 @@ describe('MbfScreen', () => {
   it('applies desktop layout when mobile=false', () => {
     const { container } = renderWithContext(false);
     const style = container.firstChild as HTMLElement;
-    expect(style).toHaveStyle('width: calc(100vw - 40px)');
-    expect(style).toHaveStyle('height: calc(100vh - 40px)');
+    expect(style.style.width).toBe('calc(100vw - 40px)');
+    expect(style.style.height).toBe('calc(100vh - 40px)');
     expect(style).toHaveStyle('padding: 20px');
   });
 
