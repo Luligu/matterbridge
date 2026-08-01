@@ -1011,6 +1011,10 @@ describe('Server clusters and behaviors', () => {
     );
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
 
+    // The stored activeScheduleHandle must be a defensive copy, not a reference to the request payload.
+    secondScheduleRequest.scheduleHandle[0] = 0xff;
+    expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
+
     await expect(thermostatSchedule.invokeBehaviorCommand('Thermostat', 'setActiveScheduleRequest', invalidScheduleRequest)).rejects.toThrow('Requested ScheduleHandle not found');
     expect(scheduleCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSchedule, request: invalidScheduleRequest });
     expect(scheduleCalls).toHaveLength(2);

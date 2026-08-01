@@ -1616,6 +1616,24 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('createDefaultSchedulesThermostatClusterServer numberOfSchedules reflects scheduleTypes capacity', async () => {
+    const scheduleTypes: Thermostat.ScheduleType[] = [
+      {
+        systemMode: Thermostat.SystemMode.Auto,
+        numberOfSchedules: 20,
+        scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+      },
+    ];
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSchedulesCapacity' });
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, null, [], scheduleTypes);
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+
+    await addDevice(aggregator, device);
+    // numberOfSchedules must not report less than the capacity advertised in scheduleTypes.
+    expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(20);
+  });
+
   test('createDefaultFanControlClusterServer', async () => {
     const device = new MatterbridgeEndpoint(fan, { id: 'Fan' });
     expect(device).toBeDefined();

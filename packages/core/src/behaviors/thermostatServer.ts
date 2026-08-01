@@ -130,7 +130,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     if (schedule === undefined) {
       throw new StatusResponse.NotFoundError('Requested ScheduleHandle not found');
     }
-    this.state.activeScheduleHandle = request.scheduleHandle;
+    this.state.activeScheduleHandle = Uint8Array.from(request.scheduleHandle);
     device.log.debug(`MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle}`);
   }
 }

@@ -3401,7 +3401,11 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.MatterScheduleConfiguration
-        numberOfSchedules: Math.max(Array.isArray(schedules) ? schedules.length : 0, 10), // This attribute SHALL indicate the maximum number of entries supported by the Schedules attribute.
+        numberOfSchedules: Math.max(
+          Array.isArray(schedules) ? schedules.length : 0,
+          Array.isArray(scheduleTypes) ? Math.max(0, ...scheduleTypes.map((st) => st.numberOfSchedules ?? 0)) : 0,
+          10,
+        ), // This attribute SHALL indicate the maximum number of entries supported by the Schedules attribute, and must be consistent with the per-type capacities advertised in scheduleTypes.
         numberOfScheduleTransitions,
         numberOfScheduleTransitionPerDay,
         activeScheduleHandle: activeScheduleHandle ? Uint8Array.from(activeScheduleHandle) : null,
