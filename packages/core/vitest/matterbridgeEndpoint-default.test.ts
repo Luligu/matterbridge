@@ -1788,6 +1788,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
   });
 
+  test('createDefaultThermostatSuggestionsClusterServer numberOfPresets reflects presetTypes capacity', async () => {
+    const presetTypes: Thermostat.PresetType[] = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 20, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ];
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSuggestionsCapacity' });
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, null, [], presetTypes);
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+
+    await addDevice(aggregator, device);
+    // numberOfPresets must not report less than the capacity advertised in presetTypes.
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(20);
+  });
+
   test('createDefaultFanControlClusterServer', async () => {
     const device = new MatterbridgeEndpoint(fan, { id: 'Fan' });
     expect(device).toBeDefined();
