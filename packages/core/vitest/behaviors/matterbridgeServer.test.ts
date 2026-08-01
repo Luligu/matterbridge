@@ -1215,16 +1215,17 @@ describe('Server clusters and behaviors', () => {
     expect(JSON.stringify(Object.values(suggestions[0].presetHandle))).toBe(JSON.stringify([1]));
 
     // A null effectiveTime means "immediately": the server fills in the current time.
-    const beforeNow = Math.floor(Date.now() / 1000);
+    const now = new Date('2026-01-15T10:00:00Z');
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
     const immediateRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: null, expirationInMinutes: 60 };
     await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', immediateRequest);
-    const afterNow = Math.floor(Date.now() / 1000);
+    vi.useRealTimers();
     expect(addCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: immediateRequest });
     suggestions = thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions');
     expect(suggestions).toHaveLength(2);
     expect(suggestions[1].uniqueId).toBe(1);
-    expect(suggestions[1].effectiveTime).toBeGreaterThanOrEqual(beforeNow);
-    expect(suggestions[1].effectiveTime).toBeLessThanOrEqual(afterNow);
+    expect(suggestions[1].effectiveTime).toBe(Math.floor(now.getTime() / 1000));
     expect(suggestions[1].expirationTime).toBe(suggestions[1].effectiveTime + 3600);
 
     // An unknown PresetHandle is rejected, but the command is still forwarded to the command handler first.

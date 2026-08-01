@@ -3252,7 +3252,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature?: number | null,
     activePresetHandle: Uint8Array | null = null,
     presets: Thermostat.Preset[] = [],
-    presetTypes: Thermostat.PresetType[] = [
+    presetTypes: Thermostat.PresetType[] | null = [
       { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
       { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
     ],
@@ -3483,7 +3483,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature?: number | null,
     activePresetHandle: Uint8Array | null = null,
     presets: Thermostat.Preset[] = [],
-    presetTypes: Thermostat.PresetType[] = [
+    presetTypes: Thermostat.PresetType[] | null = [
       { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
       { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
     ],

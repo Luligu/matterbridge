@@ -32,6 +32,11 @@ import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
+/** Command id of the AtomicRequest command (Matter core spec § Atomic Write), not implemented by Matterbridge. */
+const ATOMIC_REQUEST_COMMAND_ID = 0xfe;
+/** Command id of the AtomicResponse command (Matter core spec § Atomic Write), not implemented by Matterbridge. */
+const ATOMIC_RESPONSE_COMMAND_ID = 0xfd;
+
 /**
  * Thermostat server (cooling/heating/auto/presets/schedules/suggestions) with Matterbridge-specific command handling.
  */
@@ -43,6 +48,26 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.MatterScheduleConfiguration,
   Thermostat.Feature.ThermostatSuggestions,
 ) {
+  /**
+   * Initializes thermostat behavior and removes the unsupported AtomicRequest/AtomicResponse commands from the
+   * command lists computed for the enabled features, instead of hard-coding the whole list.
+   */
+  override async initialize(): Promise<void> {
+    await super.initialize();
+
+    this.endpoint.construction.onSuccess(async () => {
+      const device = this.endpoint.stateOf(MatterbridgeServer);
+      device.log.debug(`Removing atomic commands (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      // cause acceptedCommandList and generatedCommandList are not typed in the cluster state
+      const { acceptedCommandList, generatedCommandList } = this.state as unknown as { acceptedCommandList: number[]; generatedCommandList: number[] };
+      // @ts-expect-error cause acceptedCommandList and generatedCommandList are not typed in the cluster state
+      await this.endpoint.setStateOf(ThermostatServer, {
+        acceptedCommandList: acceptedCommandList.filter((id) => id !== ATOMIC_REQUEST_COMMAND_ID),
+        generatedCommandList: generatedCommandList.filter((id) => id !== ATOMIC_RESPONSE_COMMAND_ID),
+      });
+    });
+  }
+
   /**
    * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
    *
@@ -188,6 +213,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => s.uniqueId !== request.uniqueId);
     if (this.state.currentThermostatSuggestion?.uniqueId === request.uniqueId) {
       this.state.currentThermostatSuggestion = null;
+      this.state.thermostatSuggestionNotFollowingReason = null;
     }
     device.log.debug(`MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId}`);
   }
