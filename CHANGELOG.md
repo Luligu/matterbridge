@@ -38,6 +38,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.4.
+- [matterbridge]: Bump `@matter/main` to v.0.17.8.
 - [matterbridge]: Bump `@types/node` to v.26.1.2.
 - [matterbridge]: Bump `marked` to v.18.0.7.
 - [matterbridge]: Bump `oxfmt` to v.0.61.0.

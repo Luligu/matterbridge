@@ -1119,11 +1119,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // Parse JSON request bodies for all plugin API routes so onFetch receives the body for POST/PUT/PATCH (no-op for GET/DELETE without a body)
         this.expressApp.use(`/plugins/${plugin.name}/api`, express.json());
 
-        // GET    /api/:path? — read collection or single resource, query for filters
-        // POST   /api/:path? — create, data in body
-        // PUT    /api/:path? — full replace of resource
-        // PATCH  /api/:path? — partial update of resource
-        // DELETE /api/:path? — delete resource
+        // GET    /api/:path — read collection or single resource, query for filters
+        // POST   /api/:path — create, data in body
+        // PUT    /api/:path — full replace of resource
+        // PATCH  /api/:path — partial update of resource
+        // DELETE /api/:path — delete resource
         this.expressApp.get(`/plugins/${plugin.name}/api/:path`, apiHandler);
         this.expressApp.post(`/plugins/${plugin.name}/api/:path`, apiHandler);
         this.expressApp.put(`/plugins/${plugin.name}/api/:path`, apiHandler);
