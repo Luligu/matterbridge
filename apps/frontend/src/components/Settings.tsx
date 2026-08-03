@@ -599,6 +599,8 @@ function MatterbridgeInfo({ matterbridgeInfo }: { matterbridgeInfo: Matterbridge
 // Define the SystemInfo component
 function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
   if (!systemInfo) return null;
+  const runtimeVersion = systemInfo.bunVersion ?? systemInfo.nodeVersion;
+  const runtimeVersionLabel = systemInfo.bunVersion ? 'Bun Version' : 'Node Version';
   return (
     <MbfWindow style={{ flex: `1 1 ${widthPx}px` }}>
       <MbfWindowHeader>
@@ -609,7 +611,7 @@ function SystemInfo({ systemInfo }: { systemInfo: SystemInformation | null }) {
         <ReadOnlyTextField value={systemInfo.macAddress} label="MAC Address" />
         <ReadOnlyTextField value={systemInfo.ipv4Address} label="IPv4 Address" />
         <ReadOnlyTextField value={systemInfo.ipv6Address} label="IPv6 Address" />
-        <ReadOnlyTextField value={systemInfo.nodeVersion} label="Node Version" />
+        <ReadOnlyTextField value={runtimeVersion} label={runtimeVersionLabel} />
         <ReadOnlyTextField value={systemInfo.hostname} label="Hostname" />
         <ReadOnlyTextField value={systemInfo.user} label="User" />
       </MbfWindowContent>
