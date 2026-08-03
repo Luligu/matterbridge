@@ -151,6 +151,13 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   if (!localSystemInfo || closed) return null;
 
+  // If bunVersion is present, use it as nodeVersion and remove bunVersion from the display
+  if (localSystemInfo.bunVersion) {
+    localSystemInfo.nodeVersion = localSystemInfo.bunVersion;
+    localSystemInfo.bunVersion = undefined;
+    keyNameMap.set('nodeVersion', 'Bun version');
+  }
+
   if (debug) console.log('SystemInfoTable rendering...');
 
   return (
