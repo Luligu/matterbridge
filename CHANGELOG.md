@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.4] - Dev branch
 
+### Development changes
+
+- [instructions]: Add CHIP test and plugin frontend instruction files and update [Development Guide](./README-DEV.md).
+
 ### Added
 
 - [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
