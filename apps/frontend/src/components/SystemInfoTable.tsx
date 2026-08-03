@@ -41,6 +41,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   // Local states
   const [localSystemInfo, setLocalSystemInfo] = useState(systemInfo);
+  const [closed, setClosed] = useState(false);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -146,8 +147,6 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       if (debug) console.log('SystemInfoTable removed WebSocket listener');
     };
   }, [addListener, removeListener]);
-
-  const [closed, setClosed] = useState(false);
 
   if (!localSystemInfo || closed) return null;
 
