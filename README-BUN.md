@@ -9,33 +9,29 @@
 
 ---
 
-# Bun local development in container
+# Run mattebridge with bun
 
-```bash
-docker pull oven/bun:latest && docker run -dit --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
-docker exec -it bun-development bash
+## Install matterbridge globally with bun
+
+```shell
+bun add matterbridge --global --omit=dev
 ```
 
-## inside the container clone, build and run matterbridge
+## Run matterbridge with bun
 
-```bash
-apt-get update && apt-get install -y git
-git clone --depth 1 --single-branch --no-tags --branch dev https://github.com/Luligu/matterbridge.git && cd matterbridge
-bun install
-bun run build
-cd apps/frontend
-bun install
-bun run build
-cd ../..
-bun link
-matterbridge --docker --logger debug --debug
+```shell
+bunx --bun matterbridge
 ```
 
-# Bun docker hub image (experimental — for test and development only)
+# Run matterbridge with the bun docker hub image (experimental)
 
 The image (tag **bun** 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `oven/bun:slim`. Plugins are not included in the image: they will be reinstalled on first run.
 
-# Bun local image (experimental — for test and development only)
+```shell
+docker pull luligu/matterbridge:bun && docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:bun
+```
+
+# Bun local image (development)
 
 The **bun** image runs Matterbridge directly from the **local source files** with [Bun](https://bun.com) runtime.
 
@@ -99,6 +95,8 @@ package-manager command and global-modules paths to Bun where needed.
 - [x] **The threads doesn't flag no running after exit.**
 - [x] **Bun node:worker_threads module is unstable** The runtime randomly crashes on worker exit. See [Worker thread crash (SIGTRAP) on ARM64](#worker-thread-crash-sigtrap-on-arm64) for the full analysis and captured log.
 - [x] **Bun needs process.exit() or worker.terminate().** If not called the memory is not released.
+- [x] **Validate Bun/Node compatibility** of the full runtime over a longer run
+      (commissioning, mDNS, plugin behaviors) — only short smoke starts verified.
 
 ## Known issue
 
@@ -108,7 +106,7 @@ package-manager command and global-modules paths to Bun where needed.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
-- [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});"
+- [ ] **Matter.js atomic writes fail under Bun on windows.** Repro with bun --eval "import { mkdir, open, rename, rm, readFile } from 'node:fs/promises'; const dir='C:/Users/lligu/.matterbridge/bun-rename-repro'; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+'/final'; await Bun.write(final,'old'); for (let i=0;i<1000;i++){ const tmp=final+'.tmp'; const handle=await open(tmp,'w'); const writer=handle.createWriteStream({encoding:'utf8',flush:true}); await new Promise((resolve,reject)=>{writer.on('finish',resolve);writer.on('error',reject);writer.write('new '+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,'utf8')); await rm(dir,{recursive:true,force:true});". The issue I openend on Bun repo has been merged and closed. Next release should have it fixed.
 
 ```typescript
 // Change: FileStorageDriver.js
@@ -192,8 +190,3 @@ describe('FileStorageDriver Bun runtime', () => {
   });
 });
 ```
-
-## TODO
-
-- [ ] **Validate Bun/Node compatibility** of the full runtime over a longer run
-      (commissioning, mDNS, plugin behaviors) — only short smoke starts verified.

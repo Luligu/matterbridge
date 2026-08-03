@@ -60,6 +60,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Update MatterbridgeInfoTable and SystemInfoTable.
 - [frontend]: Update Setting System info table to show bun version when running with the bun runtime.
 - [docs]: Update statistics in index.html for community plugins and downloads.
+- [docs]: Update Bun guide.
 
 ### Fixed
 
