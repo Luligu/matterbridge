@@ -38,6 +38,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [frontend]: Add icons for the chapter 16 Camera device types (Camera, FloodlightCamera, VideoDoorbell, Intercom, AudioDoorbell, SnapshotCamera, Chime, CameraController and Doorbell).
 - [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
 - [onOff]: Implement forward for offWithEffect, onWithRecallGlobalScene and onWithTimedOff commands.
 - [levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.
