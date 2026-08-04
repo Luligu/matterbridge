@@ -23,6 +23,39 @@
 
 import { ColorControl } from '@matter/types/clusters/color-control';
 import type { LevelControl } from '@matter/types/clusters/level-control';
+import type { OnOff } from '@matter/types/clusters/on-off';
+
+/**
+ * Build a Matter OnOff `OffWithEffectRequest` payload.
+ *
+ * @param {OnOff.EffectIdentifier} effectIdentifier Effect to use when turning the device off.
+ * @param {number} effectVariant Variant of the effect.
+ * @returns {OnOff.OffWithEffectRequest} The request payload.
+ */
+export function getOffWithEffectRequest(effectIdentifier: OnOff.EffectIdentifier, effectVariant: number): OnOff.OffWithEffectRequest {
+  const request: OnOff.OffWithEffectRequest = {
+    effectIdentifier,
+    effectVariant,
+  };
+  return request;
+}
+
+/**
+ * Build a Matter OnOff `OnWithTimedOffRequest` payload.
+ *
+ * @param {boolean} acceptOnlyWhenOn Whether the command should be accepted only when the device is on.
+ * @param {number} onTime Length of time (in 1/10ths second) that the device is to remain on.
+ * @param {number} offWaitTime Length of time (in 1/10ths second) that the device is guarded from being turned back on.
+ * @returns {OnOff.OnWithTimedOffRequest} The request payload.
+ */
+export function getOnWithTimedOffRequest(acceptOnlyWhenOn: boolean, onTime: number, offWaitTime: number): OnOff.OnWithTimedOffRequest {
+  const request: OnOff.OnWithTimedOffRequest = {
+    onOffControl: { acceptOnlyWhenOn },
+    onTime,
+    offWaitTime,
+  };
+  return request;
+}
 
 /**
  * Build a Matter LevelControl `MoveToLevelRequest` payload.

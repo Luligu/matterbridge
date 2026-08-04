@@ -34,10 +34,12 @@ If you like this project and find it useful, please consider giving it a star on
 ### Development changes
 
 - [instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update [Development Guide](./README-DEV.md).
+- [onOff]: `MatterbridgeOnOffServer` now bakes in the Lighting feature, so always use `MatterbridgeOnOffServer.with()` instead of the bare class for endpoints created without the Lighting feature.
 
 ### Added
 
 - [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
+- [onOff]: Implement forward for offWithEffect, onWithRecallGlobalScene and onWithTimedOff commands.
 - [levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.
 
 ### Changed

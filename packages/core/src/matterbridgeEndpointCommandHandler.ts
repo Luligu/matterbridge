@@ -179,6 +179,20 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'OnOff.onWithRecallGlobalScene': {
+    command: 'onWithRecallGlobalScene';
+    request: {}; // TlvNoArguments
+    cluster: 'onOff';
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'OnOff.onWithTimedOff': {
+    command: 'onWithTimedOff';
+    request: OnOff.OnWithTimedOffRequest;
+    cluster: 'onOff';
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
 
   // Level Control
   'moveToLevel': CommandHandlerData<'LevelControl.moveToLevel'>;

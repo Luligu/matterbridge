@@ -24,18 +24,20 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { OnOffServer } from '@matter/node/behaviors/on-off';
-import type { OnOff } from '@matter/types/clusters/on-off';
+import { OnOff } from '@matter/types/clusters/on-off';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * OnOff server that forwards On/Off commands to the Matterbridge command handler.
+ *
+ * Extends `OnOffServer.with(OnOff.Feature.Lighting)` so the Lighting-feature commands (offWithEffect,
+ * onWithRecallGlobalScene, onWithTimedOff) are visible for overriding.
  */
-export class MatterbridgeOnOffServer extends OnOffServer {
+export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Lighting) {
   /**
-   * Handles the On command.
+   * Forwards On requests to the Matterbridge command handler.
    */
   override async on(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -44,7 +46,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'on',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -53,7 +55,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
   }
 
   /**
-   * Handles the Off command.
+   * Forwards Off requests to the Matterbridge command handler.
    */
   override async off(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -62,7 +64,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'off',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
@@ -71,7 +73,7 @@ export class MatterbridgeOnOffServer extends OnOffServer {
   }
 
   /**
-   * Handles the Toggle command.
+   * Forwards Toggle requests to the Matterbridge command handler.
    */
   override async toggle(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -80,11 +82,73 @@ export class MatterbridgeOnOffServer extends OnOffServer {
       command: 'toggle',
       request: {},
       cluster: OnOffServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof OnOff)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: toggle called`);
     await super.toggle();
+  }
+
+  /**
+   * Forwards OffWithEffect requests to the Matterbridge command handler.
+   *
+   * @param {OnOff.OffWithEffectRequest} request - Off-with-effect request payload.
+   */
+  override async offWithEffect(request: OnOff.OffWithEffectRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Switching device off with effect ${request.effectIdentifier} and variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('OnOff.offWithEffect', {
+      command: 'offWithEffect',
+      request,
+      cluster: OnOffServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeOnOffServer: offWithEffect called`);
+    await super.offWithEffect(request);
+  }
+
+  /**
+   * Forwards OnWithRecallGlobalScene requests to the Matterbridge command handler.
+   */
+  override async onWithRecallGlobalScene(): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Switching device on with recall global scene (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('OnOff.onWithRecallGlobalScene', {
+      command: 'onWithRecallGlobalScene',
+      request: {},
+      cluster: OnOffServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeOnOffServer: onWithRecallGlobalScene called`);
+    await super.onWithRecallGlobalScene();
+  }
+
+  /**
+   * Forwards OnWithTimedOff requests to the Matterbridge command handler.
+   *
+   * @param {OnOff.OnWithTimedOffRequest} request - On-with-timed-off request payload.
+   */
+  override async onWithTimedOff(request: OnOff.OnWithTimedOffRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Switching device on with timed off control ${JSON.stringify(request.onOffControl)}, offWaitTime ${request.offWaitTime} and onTime ${request.onTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('OnOff.onWithTimedOff', {
+      command: 'onWithTimedOff',
+      request,
+      cluster: OnOffServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeOnOffServer: onWithTimedOff called`);
+    await super.onWithTimedOff(request);
   }
 }

@@ -15,6 +15,7 @@ const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -51,6 +52,8 @@ import {
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
+  getOffWithEffectRequest,
+  getOnWithTimedOffRequest,
   getStepRequest,
   getStopRequest,
   startServerNode,
@@ -405,6 +408,29 @@ describe('Server clusters and behaviors', () => {
     });
 
     await expectCommand(light, OnOff, 'toggle', undefined, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(false);
+    });
+
+    // GlobalSceneControl defaults to true; reset it so offWithEffect() doesn't try to store the global scene.
+    await light.setStateOf(OnOffBaseServer, { globalSceneControl: false });
+
+    const offWithEffectRequest = getOffWithEffectRequest(OnOff.EffectIdentifier.DelayedAllOff, 0);
+    await expectCommand(light, OnOff, 'OnOff.offWithEffect', offWithEffectRequest, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(true);
+    });
+
+    // GlobalSceneControl set to true makes onWithRecallGlobalScene() return early without touching the fabric-scoped scene APIs.
+    await light.setStateOf(OnOffBaseServer, { globalSceneControl: true });
+
+    await expectCommand(light, OnOff, 'OnOff.onWithRecallGlobalScene', undefined, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(false);
+    });
+
+    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 10, 5);
+    await expectCommand(light, OnOff, 'OnOff.onWithTimedOff', onWithTimedOffRequest, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
     });
