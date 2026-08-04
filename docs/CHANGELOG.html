@@ -155,11 +155,14 @@
 <h3 id="development-changes">Development changes</h3>
 <ul>
 <li>[instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update <a href="./README-DEV.html">Development Guide</a>.</li>
+<li>[onOff]: <code>MatterbridgeOnOffServer</code> now bakes in the Lighting feature, so always use <code>MatterbridgeOnOffServer.with()</code> instead of the bare class for endpoints created without the Lighting feature.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.</li>
+<li>[onOff]: Implement forward for offWithEffect, onWithRecallGlobalScene and onWithTimedOff commands.</li>
 <li>[levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.</li>
+<li>[colorControl]: Implement forward for moveHue, stepHue, enhancedMoveHue, enhancedStepHue, moveSaturation, stepSaturation, moveColor, stepColor, moveColorTemperature and stepColorTemperature commands.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

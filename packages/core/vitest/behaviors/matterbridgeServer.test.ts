@@ -43,18 +43,29 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  getEnhancedMoveHueRequest,
   getEnhancedMoveToHueAndSaturationRequest,
   getEnhancedMoveToHueRequest,
+  getEnhancedStepHueRequest,
+  getMoveColorRequest,
+  getMoveColorTemperatureRequest,
+  getMoveHueRequest,
+  getMoveRequest,
+  getMoveSaturationRequest,
   getMoveToColorRequest,
   getMoveToColorTemperatureRequest,
   getMoveToHueAndSaturationRequest,
-  getMoveRequest,
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
   getOffWithEffectRequest,
   getOnWithTimedOffRequest,
+  getStepColorRequest,
+  getStepColorTemperatureRequest,
+  getStepHueRequest,
   getStepRequest,
+  getStepSaturationRequest,
+  getStopMoveStepRequest,
   getStopRequest,
   startServerNode,
   stopServerNode,
@@ -509,6 +520,61 @@ describe('Server clusters and behaviors', () => {
 
     const moveToColorTemperatureRequest = getMoveToColorTemperatureRequest(250, 0, false);
     await expectCommand(light, ColorControl, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveHueRequest = getMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveHue', moveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepHueRequest = getStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepHue', stepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveSaturationRequest = getMoveSaturationRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveSaturation', moveSaturationRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepSaturationRequest = getStepSaturationRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepSaturation', stepSaturationRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveColorRequest = getMoveColorRequest(100, 100, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveColor', moveColorRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepColorRequest = getStepColorRequest(100, 100, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepColor', stepColorRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveColorTemperatureRequest = getMoveColorTemperatureRequest(ColorControl.MoveMode.Up, 5, 153, 500, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveColorTemperature', moveColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepColorTemperatureRequest = getStepColorTemperatureRequest(ColorControl.StepMode.Up, 10, 3, 153, 500, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepColorTemperature', stepColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stopMoveStepRequest = getStopMoveStepRequest(false);
+    await expectCommand(light, ColorControl, 'ColorControl.stopMoveStep', stopMoveStepRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
   });

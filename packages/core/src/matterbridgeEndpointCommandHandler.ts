@@ -375,6 +375,27 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'ColorControl.moveColorTemperature': {
+    command: 'moveColorTemperature';
+    request: ColorControl.MoveColorTemperatureRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ColorControl.stepColorTemperature': {
+    command: 'stepColorTemperature';
+    request: ColorControl.StepColorTemperatureRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ColorControl.stopMoveStep': {
+    command: 'stopMoveStep';
+    request: ColorControl.StopMoveStepRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
 
   // Window Covering
   'upOrOpen': CommandHandlerData<'WindowCovering.upOrOpen'>;

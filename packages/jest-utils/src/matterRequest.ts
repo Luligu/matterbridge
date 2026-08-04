@@ -149,6 +149,44 @@ export function getMoveToColorTemperatureRequest(colorTemperatureMireds: number,
 }
 
 /**
+ * Build a Matter ColorControl `MoveHueRequest` payload.
+ *
+ * @param {ColorControl.MoveMode} moveMode Direction of movement.
+ * @param {number} rate Rate of movement in steps per second.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveHueRequest} The request payload.
+ */
+export function getMoveHueRequest(moveMode: ColorControl.MoveMode, rate: number, executeIfOff: boolean): ColorControl.MoveHueRequest {
+  const request: ColorControl.MoveHueRequest = {
+    moveMode,
+    rate,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `StepHueRequest` payload.
+ *
+ * @param {ColorControl.StepMode} stepMode Direction of the step change.
+ * @param {number} stepSize Change to the device's hue.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.StepHueRequest} The request payload.
+ */
+export function getStepHueRequest(stepMode: ColorControl.StepMode, stepSize: number, transitionTime: number, executeIfOff: boolean): ColorControl.StepHueRequest {
+  const request: ColorControl.StepHueRequest = {
+    stepMode,
+    stepSize,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
  * Build a Matter ColorControl `MoveToHueRequest` payload.
  *
  * Uses `ColorControl.Direction.Shortest` by default.
@@ -191,6 +229,44 @@ export function getEnhancedMoveToHueRequest(enhancedHue: number, transitionTime:
 }
 
 /**
+ * Build a Matter ColorControl `EnhancedMoveHueRequest` payload.
+ *
+ * @param {ColorControl.MoveMode} moveMode Direction of movement.
+ * @param {number} rate Rate of movement in steps per second.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedMoveHueRequest} The request payload.
+ */
+export function getEnhancedMoveHueRequest(moveMode: ColorControl.MoveMode, rate: number, executeIfOff: boolean): ColorControl.EnhancedMoveHueRequest {
+  const request: ColorControl.EnhancedMoveHueRequest = {
+    moveMode,
+    rate,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `EnhancedStepHueRequest` payload.
+ *
+ * @param {ColorControl.StepMode} stepMode Direction of the step change.
+ * @param {number} stepSize Change to the device's enhanced hue.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.EnhancedStepHueRequest} The request payload.
+ */
+export function getEnhancedStepHueRequest(stepMode: ColorControl.StepMode, stepSize: number, transitionTime: number, executeIfOff: boolean): ColorControl.EnhancedStepHueRequest {
+  const request: ColorControl.EnhancedStepHueRequest = {
+    stepMode,
+    stepSize,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
  * Build a Matter ColorControl `MoveToSaturationRequest` payload.
  *
  * @param {number} saturation Target saturation (Matter `uint8`; commonly 0–254).
@@ -201,6 +277,44 @@ export function getEnhancedMoveToHueRequest(enhancedHue: number, transitionTime:
 export function getMoveToSaturationRequest(saturation: number, transitionTime: number, executeIfOff: boolean): ColorControl.MoveToSaturationRequest {
   const request: ColorControl.MoveToSaturationRequest = {
     saturation,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveSaturationRequest` payload.
+ *
+ * @param {ColorControl.MoveMode} moveMode Direction of movement.
+ * @param {number} rate Rate of movement in steps per second.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveSaturationRequest} The request payload.
+ */
+export function getMoveSaturationRequest(moveMode: ColorControl.MoveMode, rate: number, executeIfOff: boolean): ColorControl.MoveSaturationRequest {
+  const request: ColorControl.MoveSaturationRequest = {
+    moveMode,
+    rate,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `StepSaturationRequest` payload.
+ *
+ * @param {ColorControl.StepMode} stepMode Direction of the step change.
+ * @param {number} stepSize Change to the device's saturation.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.StepSaturationRequest} The request payload.
+ */
+export function getStepSaturationRequest(stepMode: ColorControl.StepMode, stepSize: number, transitionTime: number, executeIfOff: boolean): ColorControl.StepSaturationRequest {
+  const request: ColorControl.StepSaturationRequest = {
+    stepMode,
+    stepSize,
     transitionTime,
     optionsMask: { executeIfOff },
     optionsOverride: { executeIfOff },
@@ -267,6 +381,117 @@ export function getMoveToColorRequest(colorX: number, colorY: number, transition
     colorX,
     colorY,
     transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveColorRequest` payload.
+ *
+ * @param {number} rateX Rate of movement in steps per second for the device's CurrentX attribute.
+ * @param {number} rateY Rate of movement in steps per second for the device's CurrentY attribute.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveColorRequest} The request payload.
+ */
+export function getMoveColorRequest(rateX: number, rateY: number, executeIfOff: boolean): ColorControl.MoveColorRequest {
+  const request: ColorControl.MoveColorRequest = {
+    rateX,
+    rateY,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `StepColorRequest` payload.
+ *
+ * @param {number} stepX Change to the device's CurrentX attribute.
+ * @param {number} stepY Change to the device's CurrentY attribute.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.StepColorRequest} The request payload.
+ */
+export function getStepColorRequest(stepX: number, stepY: number, transitionTime: number, executeIfOff: boolean): ColorControl.StepColorRequest {
+  const request: ColorControl.StepColorRequest = {
+    stepX,
+    stepY,
+    transitionTime,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `MoveColorTemperatureRequest` payload.
+ *
+ * @param {ColorControl.MoveMode} moveMode Direction of movement.
+ * @param {number} rate Rate of movement in steps per second.
+ * @param {number} colorTemperatureMinimumMireds Lower bound on the ColorTemperatureMireds attribute for the move operation.
+ * @param {number} colorTemperatureMaximumMireds Upper bound on the ColorTemperatureMireds attribute for the move operation.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.MoveColorTemperatureRequest} The request payload.
+ */
+export function getMoveColorTemperatureRequest(
+  moveMode: ColorControl.MoveMode,
+  rate: number,
+  colorTemperatureMinimumMireds: number,
+  colorTemperatureMaximumMireds: number,
+  executeIfOff: boolean,
+): ColorControl.MoveColorTemperatureRequest {
+  const request: ColorControl.MoveColorTemperatureRequest = {
+    moveMode,
+    rate,
+    colorTemperatureMinimumMireds,
+    colorTemperatureMaximumMireds,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `StepColorTemperatureRequest` payload.
+ *
+ * @param {ColorControl.StepMode} stepMode Direction of the step change.
+ * @param {number} stepSize Change to the device's color temperature.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {number} colorTemperatureMinimumMireds Lower bound on the ColorTemperatureMireds attribute for the step operation.
+ * @param {number} colorTemperatureMaximumMireds Upper bound on the ColorTemperatureMireds attribute for the step operation.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.StepColorTemperatureRequest} The request payload.
+ */
+export function getStepColorTemperatureRequest(
+  stepMode: ColorControl.StepMode,
+  stepSize: number,
+  transitionTime: number,
+  colorTemperatureMinimumMireds: number,
+  colorTemperatureMaximumMireds: number,
+  executeIfOff: boolean,
+): ColorControl.StepColorTemperatureRequest {
+  const request: ColorControl.StepColorTemperatureRequest = {
+    stepMode,
+    stepSize,
+    transitionTime,
+    colorTemperatureMinimumMireds,
+    colorTemperatureMaximumMireds,
+    optionsMask: { executeIfOff },
+    optionsOverride: { executeIfOff },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter ColorControl `StopMoveStepRequest` payload.
+ *
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {ColorControl.StopMoveStepRequest} The request payload.
+ */
+export function getStopMoveStepRequest(executeIfOff: boolean): ColorControl.StopMoveStepRequest {
+  const request: ColorControl.StopMoveStepRequest = {
     optionsMask: { executeIfOff },
     optionsOverride: { executeIfOff },
   };

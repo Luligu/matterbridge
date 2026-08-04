@@ -60,6 +60,46 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
   }
 
   /**
+   * Forwards MoveHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveHueRequest} request - Move-hue request payload.
+   */
+  override async moveHue(request: ColorControl.MoveHueRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.moveHue', {
+      command: 'moveHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: moveHue called`);
+    await super.moveHue(request);
+  }
+
+  /**
+   * Forwards StepHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.StepHueRequest} request - Step-hue request payload.
+   */
+  override async stepHue(request: ColorControl.StepHueRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.stepHue', {
+      command: 'stepHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: stepHue called`);
+    await super.stepHue(request);
+  }
+
+  /**
    * Forwards EnhancedMoveToHue requests to the Matterbridge command handler.
    *
    * @param {ColorControl.EnhancedMoveToHueRequest} request - Enhanced-move-to-hue request payload.
@@ -82,6 +122,46 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
   }
 
   /**
+   * Forwards EnhancedMoveHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.EnhancedMoveHueRequest} request - Enhanced-move-hue request payload.
+   */
+  override async enhancedMoveHue(request: ColorControl.EnhancedMoveHueRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving enhanced hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.enhancedMoveHue', {
+      command: 'enhancedMoveHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveHue called`);
+    await super.enhancedMoveHue(request);
+  }
+
+  /**
+   * Forwards EnhancedStepHue requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.EnhancedStepHueRequest} request - Enhanced-step-hue request payload.
+   */
+  override async enhancedStepHue(request: ColorControl.EnhancedStepHueRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping enhanced hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.enhancedStepHue', {
+      command: 'enhancedStepHue',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: enhancedStepHue called`);
+    await super.enhancedStepHue(request);
+  }
+
+  /**
    * Forwards MoveToSaturation requests to the Matterbridge command handler.
    *
    * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
@@ -99,6 +179,46 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
     await super.moveToSaturation(request);
+  }
+
+  /**
+   * Forwards MoveSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveSaturationRequest} request - Move-saturation request payload.
+   */
+  override async moveSaturation(request: ColorControl.MoveSaturationRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving saturation with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.moveSaturation', {
+      command: 'moveSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: moveSaturation called`);
+    await super.moveSaturation(request);
+  }
+
+  /**
+   * Forwards StepSaturation requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.StepSaturationRequest} request - Step-saturation request payload.
+   */
+  override async stepSaturation(request: ColorControl.StepSaturationRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping saturation with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.stepSaturation', {
+      command: 'stepSaturation',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: stepSaturation called`);
+    await super.stepSaturation(request);
   }
 
   /**
@@ -168,6 +288,46 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
   }
 
   /**
+   * Forwards MoveColor requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveColorRequest} request - Move-color request payload.
+   */
+  override async moveColor(request: ColorControl.MoveColorRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving color with rateX ${request.rateX} and rateY ${request.rateY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.moveColor', {
+      command: 'moveColor',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: moveColor called`);
+    await super.moveColor(request);
+  }
+
+  /**
+   * Forwards StepColor requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.StepColorRequest} request - Step-color request payload.
+   */
+  override async stepColor(request: ColorControl.StepColorRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping color with stepX ${request.stepX} and stepY ${request.stepY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.stepColor', {
+      command: 'stepColor',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: stepColor called`);
+    await super.stepColor(request);
+  }
+
+  /**
    * Forwards MoveToColorTemperature requests to the Matterbridge command handler.
    *
    * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
@@ -187,5 +347,65 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
     });
     device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
     await super.moveToColorTemperature(request);
+  }
+
+  /**
+   * Forwards MoveColorTemperature requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.MoveColorTemperatureRequest} request - Move-color-temperature request payload.
+   */
+  override async moveColorTemperature(request: ColorControl.MoveColorTemperatureRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving color temperature with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.moveColorTemperature', {
+      command: 'moveColorTemperature',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: moveColorTemperature called`);
+    await super.moveColorTemperature(request);
+  }
+
+  /**
+   * Forwards StepColorTemperature requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.StepColorTemperatureRequest} request - Step-color-temperature request payload.
+   */
+  override async stepColorTemperature(request: ColorControl.StepColorTemperatureRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping color temperature with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.stepColorTemperature', {
+      command: 'stepColorTemperature',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: stepColorTemperature called`);
+    await super.stepColorTemperature(request);
+  }
+
+  /**
+   * Forwards StopMoveStep requests to the Matterbridge command handler.
+   *
+   * @param {ColorControl.StopMoveStepRequest} request - Stop-move-step request payload.
+   */
+  override async stopMoveStep(request: ColorControl.StopMoveStepRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stopping color move/step (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('ColorControl.stopMoveStep', {
+      command: 'stopMoveStep',
+      request,
+      cluster: ColorControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ColorControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeColorControlServer: stopMoveStep called`);
+    await super.stopMoveStep(request);
   }
 }

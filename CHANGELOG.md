@@ -41,6 +41,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
 - [onOff]: Implement forward for offWithEffect, onWithRecallGlobalScene and onWithTimedOff commands.
 - [levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.
+- [colorControl]: Implement forward for moveHue, stepHue, enhancedMoveHue, enhancedStepHue, moveSaturation, stepSaturation, moveColor, stepColor, moveColorTemperature and stepColorTemperature commands.
 
 ### Changed
 
