@@ -33,7 +33,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development changes
 
-- [instructions]: Add CHIP test and plugin frontend instruction files and update [Development Guide](./README-DEV.md).
+- [instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update [Development Guide](./README-DEV.md).
 
 ### Added
 
@@ -61,6 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Update Setting System info table to show bun version when running with the bun runtime.
 - [docs]: Update statistics in index.html for community plugins and downloads.
 - [docs]: Update Bun guide.
+- [levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.
 
 ### Fixed
 

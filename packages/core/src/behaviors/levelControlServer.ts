@@ -73,4 +73,124 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
     await super.moveToLevelWithOnOff(request);
   }
+
+  /**
+   * Forwards Move requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.MoveRequest} request - Move request payload.
+   */
+  override async move(request: LevelControl.MoveRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving level with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.move', {
+      command: 'move',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: move called`);
+    await super.move(request);
+  }
+
+  /**
+   * Forwards MoveWithOnOff requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.MoveRequest} request - Move request payload.
+   */
+  override async moveWithOnOff(request: LevelControl.MoveRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Moving level with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.moveWithOnOff', {
+      command: 'moveWithOnOff',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: moveWithOnOff called`);
+    await super.moveWithOnOff(request);
+  }
+
+  /**
+   * Forwards Step requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.StepRequest} request - Step request payload.
+   */
+  override async step(request: LevelControl.StepRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping level with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.step', {
+      command: 'step',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: step called`);
+    await super.step(request);
+  }
+
+  /**
+   * Forwards StepWithOnOff requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.StepRequest} request - Step request payload.
+   */
+  override async stepWithOnOff(request: LevelControl.StepRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stepping level with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.stepWithOnOff', {
+      command: 'stepWithOnOff',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: stepWithOnOff called`);
+    await super.stepWithOnOff(request);
+  }
+
+  /**
+   * Forwards Stop requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.StopRequest} request - Stop request payload.
+   */
+  override async stop(request: LevelControl.StopRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stopping level change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.stop', {
+      command: 'stop',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: stop called`);
+    await super.stop(request);
+  }
+
+  /**
+   * Forwards StopWithOnOff requests to the Matterbridge command handler.
+   *
+   * @param {LevelControl.StopRequest} request - Stop request payload.
+   */
+  override async stopWithOnOff(request: LevelControl.StopRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Stopping level change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('LevelControl.stopWithOnOff', {
+      command: 'stopWithOnOff',
+      request,
+      cluster: LevelControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeLevelControlServer: stopWithOnOff called`);
+    await super.stopWithOnOff(request);
+  }
 }

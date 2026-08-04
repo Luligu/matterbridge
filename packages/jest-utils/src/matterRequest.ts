@@ -46,6 +46,58 @@ export function getMoveToLevelRequest(level: number, transitionTime: number, exe
 }
 
 /**
+ * Build a Matter LevelControl `MoveRequest` payload.
+ *
+ * @param {LevelControl.MoveMode} moveMode Direction of movement.
+ * @param {number | null} rate Rate of movement in units per second.
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {LevelControl.MoveRequest} The request payload.
+ */
+export function getMoveRequest(moveMode: LevelControl.MoveMode, rate: number | null, executeIfOff: boolean): LevelControl.MoveRequest {
+  const request: LevelControl.MoveRequest = {
+    moveMode,
+    rate,
+    optionsMask: { executeIfOff, coupleColorTempToLevel: false },
+    optionsOverride: { executeIfOff, coupleColorTempToLevel: false },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter LevelControl `StepRequest` payload.
+ *
+ * @param {LevelControl.StepMode} stepMode Direction of the step change.
+ * @param {number} stepSize Change to CurrentLevel.
+ * @param {number} transitionTime Transition time (Matter `uint16`; commonly in 1/10s units).
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {LevelControl.StepRequest} The request payload.
+ */
+export function getStepRequest(stepMode: LevelControl.StepMode, stepSize: number, transitionTime: number | null, executeIfOff: boolean): LevelControl.StepRequest {
+  const request: LevelControl.StepRequest = {
+    stepMode,
+    stepSize,
+    transitionTime,
+    optionsMask: { executeIfOff, coupleColorTempToLevel: false },
+    optionsOverride: { executeIfOff, coupleColorTempToLevel: false },
+  };
+  return request;
+}
+
+/**
+ * Build a Matter LevelControl `StopRequest` payload.
+ *
+ * @param {boolean} executeIfOff Whether the command should be executed even when the device is off.
+ * @returns {LevelControl.StopRequest} The request payload.
+ */
+export function getStopRequest(executeIfOff: boolean): LevelControl.StopRequest {
+  const request: LevelControl.StopRequest = {
+    optionsMask: { executeIfOff, coupleColorTempToLevel: false },
+    optionsOverride: { executeIfOff, coupleColorTempToLevel: false },
+  };
+  return request;
+}
+
+/**
  * Build a Matter ColorControl `MoveToColorTemperatureRequest` payload.
  *
  * @param {number} colorTemperatureMireds Target color temperature in mireds (micro reciprocal degrees).

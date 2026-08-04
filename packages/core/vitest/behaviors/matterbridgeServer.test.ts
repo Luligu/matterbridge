@@ -47,9 +47,12 @@ import {
   getMoveToColorRequest,
   getMoveToColorTemperatureRequest,
   getMoveToHueAndSaturationRequest,
+  getMoveRequest,
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
+  getStepRequest,
+  getStopRequest,
   startServerNode,
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
@@ -418,6 +421,42 @@ describe('Server clusters and behaviors', () => {
     await expectCommand(light, LevelControl, 'moveToLevelWithOnOff', moveToLevelWithOnOffRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(100);
+    });
+
+    const moveRequest = getMoveRequest(LevelControl.MoveMode.Up, 5, false);
+    await expectCommand(light, LevelControl, 'LevelControl.move', moveRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(150);
+    });
+
+    const moveWithOnOffRequest = getMoveRequest(LevelControl.MoveMode.Down, 5, false);
+    await expectCommand(light, LevelControl, 'LevelControl.moveWithOnOff', moveWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(254);
+    });
+
+    const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, LevelControl, 'LevelControl.step', stepRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
+    });
+
+    const stepWithOnOffRequest = getStepRequest(LevelControl.StepMode.Down, 10, 3, false);
+    await expectCommand(light, LevelControl, 'LevelControl.stepWithOnOff', stepWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(11);
+    });
+
+    const stopRequest = getStopRequest(false);
+    await expectCommand(light, LevelControl, 'LevelControl.stop', stopRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
+    });
+
+    const stopWithOnOffRequest = getStopRequest(false);
+    await expectCommand(light, LevelControl, 'LevelControl.stopWithOnOff', stopWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
     });
   });
 
