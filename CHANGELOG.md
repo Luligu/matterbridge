@@ -29,7 +29,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.10.4] - Dev branch
+## [3.10.4] - 2026-08-07
 
 ### Development changes
 
@@ -51,19 +51,22 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.4.
 - [matterbridge]: Bump `@matter/main` to v.0.17.8.
+- [matterbridge]: Bump `@matter/main` to v.0.17.9.
 - [matterbridge]: Bump `@types/node` to v.26.1.2.
-- [matterbridge]: Bump `marked` to v.18.0.7.
-- [matterbridge]: Bump `oxfmt` to v.0.61.0.
-- [matterbridge]: Bump `oxlint` to v.1.76.0.
-- [core]: Bump `express-rate-limit` to v.8.6.1.
+- [matterbridge]: Bump `marked` to v.18.0.9.
+- [matterbridge]: Bump `oxfmt` to v.0.62.0.
+- [matterbridge]: Bump `oxlint` to v.1.77.0.
+- [core]: Bump `express-rate-limit` to v.8.6.2.
+- [core]: Bump `ws` to v.8.21.2.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.34.
 - [frontend]: Bump `frontend` version to v.3.5.6.
 - [frontend]: Bump `@rjsf` packages to v.6.7.1.
+- [frontend]: Bump `globals` to v.17.9.0.
 - [frontend]: Bump `jsdom` to v.30.0.1.
-- [frontend]: Bump `vite` to v.8.2.0.
+- [frontend]: Bump `vite` to v.8.2.1.
 - [frontend]: Bump `@vitejs/plugin-react` to v.6.0.5.
-- [frontend]: Bump `oxfmt` to v.0.61.0.
-- [frontend]: Bump `oxlint` to v.1.76.0.
+- [frontend]: Bump `oxfmt` to v.0.62.0.
+- [frontend]: Bump `oxlint` to v.1.77.0.
 - [frontend]: Remove from SystemInfoTable node version and show bun version when running with the bun runtime.
 - [frontend]: Update MatterbridgeInfoTable and SystemInfoTable.
 - [frontend]: Update Setting System info table to show bun version when running with the bun runtime.

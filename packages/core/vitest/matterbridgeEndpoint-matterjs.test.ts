@@ -1447,7 +1447,7 @@ describe('Matterbridge ' + NAME, () => {
       Object.values(behaviors)
         .map((b) => b?.cluster?.id)
         .filter((id): id is number => id !== undefined)
-        .sort((a: number, b: number) => a - b);
+        .toSorted((a: number, b: number) => a - b);
 
     // deviceType and deviceRevision must match
     expect(device.type.deviceType).toBe(OnOffLightSwitchDevice.deviceType);
