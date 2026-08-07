@@ -595,11 +595,11 @@
                         <p>Official Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>55+</h3>
+                        <h3>60+</h3>
                         <p>Community Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>900K+</h3>
+                        <h3>1M+</h3>
                         <p>Plugins downloads</p>
                     </div>
                     <div class="stat-item">
@@ -615,7 +615,7 @@
                 <h2>Quick Install</h2>
                 <p>Get Matterbridge running in minutes with these simple commands.</p>
 
-                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Node.js Install</h3>
+                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Node.js Install <small>(requires Node.js)</small></h3>
                 <div class="code-block" id="copy-npm" style="position:relative;">
                   npm install -g matterbridge --omit=dev
                   <button class="copy-btn" onclick="copyToClipboard('copy-npm')" aria-label="Copy">
@@ -644,7 +644,27 @@
                     For more installation options, including running as a system service, see the <a href="https://matterbridge.io/README.html#advanced-configurations" target="_blank">Advanced Configurations</a> section.
                 </p>
 
-                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Install</h3>
+                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Bun Install <small>(requires Bun)</small></h3>
+                <div class="code-block" id="copy-bun" style="position:relative;">
+                    bun add -g matterbridge --omit=dev
+                    <button class="copy-btn" onclick="copyToClipboard('copy-bun')" aria-label="Copy">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="7" y="3" width="9" height="13" rx="2" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="9" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                </div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    After installation start it manually with:
+                </p>
+                <div class="code-block" id="copy-bun-start" style="position:relative;">
+                    bunx --bun matterbridge
+                    <button class="copy-btn" onclick="copyToClipboard('copy-bun-start')" aria-label="Copy">
+                        <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="7" y="3" width="9" height="13" rx="2" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="9" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                    </button>
+                </div>
+                <p style="text-align:center; font-size:0.9rem; color: var(--text-secondary); max-width:700px; margin:0.5rem auto 0;">
+                    For more installation options see the <a href="https://matterbridge.io/README-BUN.html" target="_blank">Bun guide</a>.
+                </p>
+
+                <h3 style="text-align: center; margin: 2rem 0 1rem; color: var(--primary-color);">Docker Install <small>(requires Docker)</small></h3>
                 <div class="code-block" id="copy-docker" style="position:relative;">
                   docker pull luligu/matterbridge:latest && docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:latest
                   <button class="copy-btn" onclick="copyToClipboard('copy-docker')" aria-label="Copy">

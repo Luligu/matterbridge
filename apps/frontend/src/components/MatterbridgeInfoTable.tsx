@@ -29,6 +29,8 @@ const keyNameMap = new Map<string, string>([
   ['matterFileLogger', 'Matter file logger'],
   ['restartRequired', 'Restart required'],
   ['updateRequired', 'Update required'],
+  ['runningTimes', 'Running times'],
+  ['runningDays', 'Running days'],
 ]);
 
 const excludeKeys = new Set([
@@ -48,6 +50,8 @@ const excludeKeys = new Set([
   'matterPort',
   'matterDiscriminator',
   'matterPasscode',
+  'startupAt',
+  'shutdownAt',
 ]);
 
 function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation }) {
@@ -55,11 +59,12 @@ function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: Matterb
   const { mobile } = useContext(UiContext);
   if (debug) console.log('MatterbridgeInfoTable:', matterbridgeInfo);
 
+  // Local states
   const [closed, setClosed] = useState(false);
 
-  if (!matterbridgeInfo || closed) return null;
-
   if (debug) console.log('MatterbridgeInfoTable rendering...');
+
+  if (!matterbridgeInfo || closed) return null;
 
   return (
     <MbfWindow style={enableMobile && mobile ? { flex: '1 1 300px' } : { flex: '0 1 auto', width: '302px', minWidth: '302px' }}>

@@ -121,7 +121,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeMediaPlaybackServer initialized: currentState is ${this.state.currentState}`);
     // oxlint-disable-next-line typescript/unbound-method
-    this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
+    this.reactTo(this.agent.get(MatterbridgeOnOffServer.with()).events.onOff$Changed, this.handleOnOffChange);
   }
 
   protected handleOnOffChange(_onOff: boolean): void {
@@ -143,7 +143,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -162,7 +162,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -181,7 +181,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
+    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
     return { status: MediaPlayback.Status.Success };
   }
 

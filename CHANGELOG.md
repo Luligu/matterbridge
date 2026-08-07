@@ -29,6 +29,58 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.4] - 2026-08-07
+
+### Development changes
+
+- [instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update [Development Guide](./README-DEV.md).
+
+### Development breaking changes
+
+- [onOff]: `MatterbridgeOnOffServer` now bakes in the Lighting feature, so always use `MatterbridgeOnOffServer.with()` instead of the bare class for endpoints created without the Lighting feature.
+
+### Added
+
+- [frontend]: Add icons for the chapter 16 Camera device types (Camera, FloodlightCamera, VideoDoorbell, Intercom, AudioDoorbell, SnapshotCamera, Chime, CameraController and Doorbell). See `matterbridge-example-camera` for a fully working and Matter compliant example of chapter 16 device types.
+- [matterbridgeEndpoint]: Document AutoMode thermostat deadband limit requirements.
+- [onOff]: Implement forward for offWithEffect, onWithRecallGlobalScene and onWithTimedOff commands.
+- [levelControl]: Implement forward for move, moveWithOnOff, step, stepWithOnOff, stop and stopWithOnOff commands.
+- [colorControl]: Implement forward for moveHue, stepHue, enhancedMoveHue, enhancedStepHue, moveSaturation, stepSaturation, moveColor, stepColor, moveColorTemperature and stepColorTemperature commands.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.4.
+- [matterbridge]: Bump `@matter/main` to v.0.17.8.
+- [matterbridge]: Bump `@matter/main` to v.0.17.9.
+- [matterbridge]: Bump `@types/node` to v.26.1.2.
+- [matterbridge]: Bump `marked` to v.18.0.9.
+- [matterbridge]: Bump `oxfmt` to v.0.62.0.
+- [matterbridge]: Bump `oxlint` to v.1.77.0.
+- [core]: Bump `express-rate-limit` to v.8.6.2.
+- [core]: Bump `ws` to v.8.21.2.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.34.
+- [frontend]: Bump `frontend` version to v.3.5.6.
+- [frontend]: Bump `@rjsf` packages to v.6.7.1.
+- [frontend]: Bump `globals` to v.17.9.0.
+- [frontend]: Bump `jsdom` to v.30.0.1.
+- [frontend]: Bump `vite` to v.8.2.1.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.0.5.
+- [frontend]: Bump `oxfmt` to v.0.62.0.
+- [frontend]: Bump `oxlint` to v.1.77.0.
+- [frontend]: Remove from SystemInfoTable node version and show bun version when running with the bun runtime.
+- [frontend]: Update MatterbridgeInfoTable and SystemInfoTable.
+- [frontend]: Update Setting System info table to show bun version when running with the bun runtime.
+- [docs]: Update statistics in index.html for community plugins and downloads.
+- [docs]: Update Bun guide.
+
+### Fixed
+
+- [AirConditioner]: Use valid default AutoMode thermostat limits for the 1°C deadband.
+- [publish]: Wait 1 minute for npm registry propagation before triggering Docker builds.
+- [frontend]: Update MbfScreen desktop layout test for jsdom v.30.x computed style behavior.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.3] - 2026-07-31
 
 ### Added
@@ -39,7 +91,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.3.
-- [matterbridge]: Update dependencies.
 - [matterbridge]: Upgrade package.
 - [matterbridge]: Bump `@matter/main` to v.0.17.7.
 - [matterbridge]: Bump `oxfmt` to v.0.60.0.

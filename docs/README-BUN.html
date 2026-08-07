@@ -135,25 +135,18 @@
 <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&logoColor=white" alt="ESM"></a>
 <a href="https://bun.com"><img src="https://img.shields.io/badge/ESM-Bun-000000?logo=bun&logoColor=white" alt="ESM"></a></p>
 <hr>
-<h1 id="bun-local-development-in-container">Bun local development in container</h1>
-<pre><code class="language-bash">docker pull oven/bun:latest &amp;&amp; docker run -dit --network matterbridge -p 8283:8283 --name bun-development oven/bun:latest bash
-docker exec -it bun-development bash
+<h1 id="run-matterbridge-with-bun">Run matterbridge with bun</h1>
+<h2 id="install-matterbridge-globally-with-bun">Install matterbridge globally with bun</h2>
+<pre><code class="language-shell">bun add matterbridge --global --omit=dev
 </code></pre>
-<h2 id="inside-the-container-clone-build-and-run-matterbridge">inside the container clone, build and run matterbridge</h2>
-<pre><code class="language-bash">apt-get update &amp;&amp; apt-get install -y git
-git clone --depth 1 --single-branch --no-tags --branch dev https://github.com/Luligu/matterbridge.git &amp;&amp; cd matterbridge
-bun install
-bun run build
-cd apps/frontend
-bun install
-bun run build
-cd ../..
-bun link
-matterbridge --docker --logger debug --debug
+<h2 id="run-matterbridge-with-bun-1">Run matterbridge with bun</h2>
+<pre><code class="language-shell">bunx --bun matterbridge
 </code></pre>
-<h1 id="bun-docker-hub-image-experimental-for-test-and-development-only">Bun docker hub image (experimental — for test and development only)</h1>
+<h1 id="run-matterbridge-with-the-bun-docker-hub-image-experimental">Run matterbridge with the bun docker hub image (experimental)</h1>
 <p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
-<h1 id="bun-local-image-experimental-for-test-and-development-only">Bun local image (experimental — for test and development only)</h1>
+<pre><code class="language-shell">docker pull luligu/matterbridge:bun &amp;&amp; docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:bun
+</code></pre>
+<h1 id="bun-local-image-development">Bun local image (development)</h1>
 <p>The <strong>bun</strong> image runs Matterbridge directly from the <strong>local source files</strong> with <a href="https://bun.com">Bun</a> runtime.</p>
 <ul>
 <li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun).</li>
@@ -223,6 +216,8 @@ provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterb
 <li><input checked="" disabled="" type="checkbox"> <strong>The threads doesn&#39;t flag no running after exit.</strong></li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crashes on worker exit. See <a href="#worker-thread-crash-sigtrap-on-arm64">Worker thread crash (SIGTRAP) on ARM64</a> for the full analysis and captured log.</li>
 <li><input checked="" disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
+<li><input checked="" disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
+(commissioning, mDNS, plugin behaviors) — only short smoke starts verified.</li>
 </ul>
 <h2 id="known-issue">Known issue</h2>
 <ul>
@@ -232,7 +227,7 @@ from <code>os.userInfo()</code>, even though they correctly return the UID, GID,
 directory. Consequently, Matterbridge sends <code>User: unknown</code> to the frontend
 system-information view instead of the container account (for example, <code>root</code>).
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
-<li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;</li>
+<li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;. The issue I openend on Bun repo has been merged and closed. Next release should have it fixed.</li>
 </ul>
 <pre><code class="language-typescript">// Change: FileStorageDriver.js
 async #writeAndMoveFile(filepath, valueOrStream) {
@@ -311,11 +306,6 @@ describe(&#39;FileStorageDriver Bun runtime&#39;, () =&gt; {
   });
 });
 </code></pre>
-<h2 id="todo">TODO</h2>
-<ul>
-<li><input disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
-(commissioning, mDNS, plugin behaviors) — only short smoke starts verified.</li>
-</ul>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

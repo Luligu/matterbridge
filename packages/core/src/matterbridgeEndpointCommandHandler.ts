@@ -179,6 +179,20 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'OnOff.onWithRecallGlobalScene': {
+    command: 'onWithRecallGlobalScene';
+    request: {}; // TlvNoArguments
+    cluster: 'onOff';
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'OnOff.onWithTimedOff': {
+    command: 'onWithTimedOff';
+    request: OnOff.OnWithTimedOffRequest;
+    cluster: 'onOff';
+    attributes: ClusterAttributeValues<(typeof OnOff)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
 
   // Level Control
   'moveToLevel': CommandHandlerData<'LevelControl.moveToLevel'>;
@@ -193,6 +207,48 @@ export type CommandHandlerDataMap = {
   'LevelControl.moveToLevelWithOnOff': {
     command: 'moveToLevelWithOnOff';
     request: LevelControl.MoveToLevelRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.move': {
+    command: 'move';
+    request: LevelControl.MoveRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.moveWithOnOff': {
+    command: 'moveWithOnOff';
+    request: LevelControl.MoveRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.step': {
+    command: 'step';
+    request: LevelControl.StepRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.stepWithOnOff': {
+    command: 'stepWithOnOff';
+    request: LevelControl.StepRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.stop': {
+    command: 'stop';
+    request: LevelControl.StopRequest;
+    cluster: 'levelControl';
+    attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'LevelControl.stopWithOnOff': {
+    command: 'stopWithOnOff';
+    request: LevelControl.StopRequest;
     cluster: 'levelControl';
     attributes: ClusterAttributeValues<(typeof LevelControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
@@ -315,6 +371,27 @@ export type CommandHandlerDataMap = {
   'ColorControl.moveToColorTemperature': {
     command: 'moveToColorTemperature';
     request: ColorControl.MoveToColorTemperatureRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ColorControl.moveColorTemperature': {
+    command: 'moveColorTemperature';
+    request: ColorControl.MoveColorTemperatureRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ColorControl.stepColorTemperature': {
+    command: 'stepColorTemperature';
+    request: ColorControl.StepColorTemperatureRequest;
+    cluster: 'colorControl';
+    attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ColorControl.stopMoveStep': {
+    command: 'stopMoveStep';
+    request: ColorControl.StopMoveStepRequest;
     cluster: 'colorControl';
     attributes: ClusterAttributeValues<(typeof ColorControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;

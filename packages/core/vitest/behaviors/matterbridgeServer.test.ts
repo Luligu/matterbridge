@@ -15,6 +15,7 @@ const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ColorControl } from '@matter/types/clusters/color-control';
@@ -42,14 +43,30 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  getEnhancedMoveHueRequest,
   getEnhancedMoveToHueAndSaturationRequest,
   getEnhancedMoveToHueRequest,
+  getEnhancedStepHueRequest,
+  getMoveColorRequest,
+  getMoveColorTemperatureRequest,
+  getMoveHueRequest,
+  getMoveRequest,
+  getMoveSaturationRequest,
   getMoveToColorRequest,
   getMoveToColorTemperatureRequest,
   getMoveToHueAndSaturationRequest,
   getMoveToHueRequest,
   getMoveToLevelRequest,
   getMoveToSaturationRequest,
+  getOffWithEffectRequest,
+  getOnWithTimedOffRequest,
+  getStepColorRequest,
+  getStepColorTemperatureRequest,
+  getStepHueRequest,
+  getStepRequest,
+  getStepSaturationRequest,
+  getStopMoveStepRequest,
+  getStopRequest,
   startServerNode,
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
@@ -405,6 +422,29 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
     });
+
+    // GlobalSceneControl defaults to true; reset it so offWithEffect() doesn't try to store the global scene.
+    await light.setStateOf(OnOffBaseServer, { globalSceneControl: false });
+
+    const offWithEffectRequest = getOffWithEffectRequest(OnOff.EffectIdentifier.DelayedAllOff, 0);
+    await expectCommand(light, OnOff, 'OnOff.offWithEffect', offWithEffectRequest, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(true);
+    });
+
+    // GlobalSceneControl set to true makes onWithRecallGlobalScene() return early without touching the fabric-scoped scene APIs.
+    await light.setStateOf(OnOffBaseServer, { globalSceneControl: true });
+
+    await expectCommand(light, OnOff, 'OnOff.onWithRecallGlobalScene', undefined, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(false);
+    });
+
+    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 10, 5);
+    await expectCommand(light, OnOff, 'OnOff.onWithTimedOff', onWithTimedOffRequest, (data) => {
+      expect(data.cluster).toBe('onOff');
+      expect(data.attributes.onOff).toBe(false);
+    });
   });
 
   test('LevelControl server', async () => {
@@ -418,6 +458,42 @@ describe('Server clusters and behaviors', () => {
     await expectCommand(light, LevelControl, 'moveToLevelWithOnOff', moveToLevelWithOnOffRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(100);
+    });
+
+    const moveRequest = getMoveRequest(LevelControl.MoveMode.Up, 5, false);
+    await expectCommand(light, LevelControl, 'LevelControl.move', moveRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(150);
+    });
+
+    const moveWithOnOffRequest = getMoveRequest(LevelControl.MoveMode.Down, 5, false);
+    await expectCommand(light, LevelControl, 'LevelControl.moveWithOnOff', moveWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(254);
+    });
+
+    const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, LevelControl, 'LevelControl.step', stepRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
+    });
+
+    const stepWithOnOffRequest = getStepRequest(LevelControl.StepMode.Down, 10, 3, false);
+    await expectCommand(light, LevelControl, 'LevelControl.stepWithOnOff', stepWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(11);
+    });
+
+    const stopRequest = getStopRequest(false);
+    await expectCommand(light, LevelControl, 'LevelControl.stop', stopRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
+    });
+
+    const stopWithOnOffRequest = getStopRequest(false);
+    await expectCommand(light, LevelControl, 'LevelControl.stopWithOnOff', stopWithOnOffRequest, (data) => {
+      expect(data.cluster).toBe('levelControl');
+      expect(data.attributes.currentLevel).toBe(1);
     });
   });
 
@@ -444,6 +520,61 @@ describe('Server clusters and behaviors', () => {
 
     const moveToColorTemperatureRequest = getMoveToColorTemperatureRequest(250, 0, false);
     await expectCommand(light, ColorControl, 'moveToColorTemperature', moveToColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveHueRequest = getMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveHue', moveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepHueRequest = getStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepHue', stepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveSaturationRequest = getMoveSaturationRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveSaturation', moveSaturationRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepSaturationRequest = getStepSaturationRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepSaturation', stepSaturationRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveColorRequest = getMoveColorRequest(100, 100, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveColor', moveColorRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepColorRequest = getStepColorRequest(100, 100, 3, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepColor', stepColorRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const moveColorTemperatureRequest = getMoveColorTemperatureRequest(ColorControl.MoveMode.Up, 5, 153, 500, false);
+    await expectCommand(light, ColorControl, 'ColorControl.moveColorTemperature', moveColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stepColorTemperatureRequest = getStepColorTemperatureRequest(ColorControl.StepMode.Up, 10, 3, 153, 500, false);
+    await expectCommand(light, ColorControl, 'ColorControl.stepColorTemperature', stepColorTemperatureRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const stopMoveStepRequest = getStopMoveStepRequest(false);
+    await expectCommand(light, ColorControl, 'ColorControl.stopMoveStep', stopMoveStepRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
   });

@@ -28,6 +28,7 @@ import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
 
 // Matterbridge
@@ -135,7 +136,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
     device.log.info(`MatterbridgeDishwasherModeServer initialized: currentMode is ${this.state.currentMode}`);
     this.state.currentMode = 2;
     // oxlint-disable-next-line typescript/unbound-method
-    this.reactTo(this.agent.get(MatterbridgeOnOffServer).events.onOff$Changed, this.handleOnOffChange);
+    this.reactTo(this.agent.get(MatterbridgeOnOffServer.with(OnOff.Feature.DeadFrontBehavior)).events.onOff$Changed, this.handleOnOffChange);
   }
 
   // Dead Front OnOff Cluster

@@ -115,15 +115,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(custom.id).toBe('BedroomAC-AC654321');
     expect(custom.getClusterServerOptions(Thermostat.id)).toEqual({
       absMaxCoolSetpointLimit: 5000,
-      absMaxHeatSetpointLimit: 5000,
-      absMinCoolSetpointLimit: 0,
+      absMaxHeatSetpointLimit: 4900,
+      absMinCoolSetpointLimit: 100,
       absMinHeatSetpointLimit: 0,
       controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
       externalMeasuredIndoorTemperature: 3000,
       localTemperature: 3000,
       maxCoolSetpointLimit: 5000,
-      maxHeatSetpointLimit: 5000,
-      minCoolSetpointLimit: 0,
+      maxHeatSetpointLimit: 4900,
+      minCoolSetpointLimit: 100,
       minHeatSetpointLimit: 0,
       minSetpointDeadBand: 10,
       occupiedCoolingSetpoint: 2500,
@@ -208,8 +208,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.id, 'occupiedCoolingSetpoint')).toBe(2500);
     expect(device.getAttribute(Thermostat.id, 'minSetpointDeadBand')).toBe(10);
     expect(device.getAttribute(Thermostat.id, 'minHeatSetpointLimit')).toBe(0);
-    expect(device.getAttribute(Thermostat.id, 'maxHeatSetpointLimit')).toBe(5000);
-    expect(device.getAttribute(Thermostat.id, 'minCoolSetpointLimit')).toBe(0);
+    expect(device.getAttribute(Thermostat.id, 'maxHeatSetpointLimit')).toBe(4900);
+    expect(device.getAttribute(Thermostat.id, 'minCoolSetpointLimit')).toBe(100);
     expect(device.getAttribute(Thermostat.id, 'maxCoolSetpointLimit')).toBe(5000);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(1);
     expect(device.getAttribute(Thermostat.id, 'thermostatRunningMode')).toBe(0);
@@ -321,8 +321,8 @@ describe('Matterbridge ' + NAME, () => {
         'powerSource(0x2f).status(0x0)=1',
         'powerSource(0x2f).wiredCurrentType(0x5)=0',
         'thermostat(0x201).absMaxCoolSetpointLimit(0x6)=5000',
-        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=5000',
-        'thermostat(0x201).absMinCoolSetpointLimit(0x5)=0',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=4900',
+        'thermostat(0x201).absMinCoolSetpointLimit(0x5)=100',
         'thermostat(0x201).absMinHeatSetpointLimit(0x3)=0',
         'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
         'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 5, 6, 17, 18, 21, 22, 23, 24, 25, 27, 28, 30, 41, 65528, 65529, 65531, 65532, 65533 ]',
@@ -332,8 +332,8 @@ describe('Matterbridge ' + NAME, () => {
         'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
         'thermostat(0x201).localTemperature(0x0)=2300',
         'thermostat(0x201).maxCoolSetpointLimit(0x18)=5000',
-        'thermostat(0x201).maxHeatSetpointLimit(0x16)=5000',
-        'thermostat(0x201).minCoolSetpointLimit(0x17)=0',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=4900',
+        'thermostat(0x201).minCoolSetpointLimit(0x17)=100',
         'thermostat(0x201).minHeatSetpointLimit(0x15)=0',
         'thermostat(0x201).minSetpointDeadBand(0x19)=10',
         'thermostat(0x201).occupiedCoolingSetpoint(0x11)=2500',

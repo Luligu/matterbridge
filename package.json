@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.10.3",
+  "version": "3.10.4",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -368,24 +368,24 @@
     "pack:latest:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.10.3",
-    "@matterbridge/dgram": "3.10.3",
-    "@matterbridge/jest-utils": "3.10.3",
-    "@matterbridge/thread": "3.10.3",
-    "@matterbridge/types": "3.10.3",
-    "@matterbridge/utils": "3.10.3",
-    "@matterbridge/vitest-utils": "3.10.3",
+    "@matterbridge/core": "3.10.4",
+    "@matterbridge/dgram": "3.10.4",
+    "@matterbridge/jest-utils": "3.10.4",
+    "@matterbridge/thread": "3.10.4",
+    "@matterbridge/types": "3.10.4",
+    "@matterbridge/utils": "3.10.4",
+    "@matterbridge/vitest-utils": "3.10.4",
     "node-ansi-logger": "3.3.0",
     "node-persist-manager": "2.1.0"
   },
   "devDependencies": {
     "@types/bun": "1.3.14",
-    "@types/node": "26.1.1",
+    "@types/node": "26.1.2",
     "@vitest/coverage-v8": "4.1.10",
     "cross-spawn": "7.0.6",
-    "marked": "18.0.6",
-    "oxfmt": "0.60.0",
-    "oxlint": "1.75.0",
+    "marked": "18.0.9",
+    "oxfmt": "0.62.0",
+    "oxlint": "1.77.0",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",
     "vitest": "4.1.10"

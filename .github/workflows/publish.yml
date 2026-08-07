@@ -94,6 +94,9 @@ jobs:
         run: |
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest
 
+      - name: Wait for npm registry propagation
+        run: sleep 60
+
       - name: Trigger Matterbridge Docker Build Latest
         uses: actions/github-script@v9
         with:
@@ -310,6 +313,10 @@ jobs:
         run: |
           npm version "${{ steps.meta.outputs.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev
+
+      - name: Wait for npm registry propagation
+        if: steps.check_new.outputs.should_publish == 'true'
+        run: sleep 60
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'
