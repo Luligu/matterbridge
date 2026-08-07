@@ -52,8 +52,6 @@ const excludeKeys = new Set([
   'matterPasscode',
   'startupAt',
   'shutdownAt',
-  'xxxrunningTimes',
-  'xxxrunningDays',
 ]);
 
 function MatterbridgeInfoTable({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeInformation }) {

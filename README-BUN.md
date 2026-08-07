@@ -9,7 +9,7 @@
 
 ---
 
-# Run mattebridge with bun
+# Run matterbridge with bun
 
 ## Install matterbridge globally with bun
 
