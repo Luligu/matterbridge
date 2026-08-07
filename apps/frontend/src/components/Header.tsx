@@ -450,7 +450,7 @@ function Header() {
         {settings.systemInformation.bunVersion ? (
           <Tooltip title="Bun version">
             <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
-              bun v.{settings.systemInformation.bunVersion}
+              bun
             </span>
           </Tooltip>
         ) : null}
