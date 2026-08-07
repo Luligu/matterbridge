@@ -49,6 +49,7 @@ import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behav
 import { ClosureControlClient } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionClient } from '@matter/node/behaviors/closure-dimension';
 import { ColorControlClient } from '@matter/node/behaviors/color-control';
+import { CommodityMeteringServer } from '@matter/node/behaviors/commodity-metering';
 import { DoorLockClient } from '@matter/node/behaviors/door-lock';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
 import { ElectricalGridConditionsClient } from '@matter/node/behaviors/electrical-grid-conditions';
@@ -62,6 +63,7 @@ import { HepaFilterMonitoringServer } from '@matter/node/behaviors/hepa-filter-m
 import { IdentifyClient } from '@matter/node/behaviors/identify';
 import { IlluminanceMeasurementClient, IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { LevelControlClient } from '@matter/node/behaviors/level-control';
+import { MeterIdentificationServer } from '@matter/node/behaviors/meter-identification';
 import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
 import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OnOffClient } from '@matter/node/behaviors/on-off';
@@ -100,6 +102,9 @@ import { CarbonMonoxideConcentrationMeasurement } from '@matter/types/clusters/c
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ColorControl } from '@matter/types/clusters/color-control';
+import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
+import { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { DoorLock } from '@matter/types/clusters/door-lock';
@@ -115,6 +120,7 @@ import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitor
 import { Identify } from '@matter/types/clusters/identify';
 import { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
 import { LevelControl } from '@matter/types/clusters/level-control';
+import { MeterIdentification } from '@matter/types/clusters/meter-identification';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
 import { NitrogenDioxideConcentrationMeasurement } from '@matter/types/clusters/nitrogen-dioxide-concentration-measurement';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
@@ -144,7 +150,7 @@ import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
-import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
+import { type Currency, type MeasurementAccuracy, MeasurementType, type Semtag, TariffUnit } from '@matter/types/globals';
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -156,6 +162,8 @@ import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YE
 import { MatterbridgeBindingServer } from './behaviors/bindingServer.js';
 import { MatterbridgeBooleanStateConfigurationServer } from './behaviors/booleanStateConfigurationServer.js';
 import { MatterbridgeColorControlServer } from './behaviors/colorControlServer.js';
+import { MatterbridgeCommodityPriceServer } from './behaviors/commodityPriceServer.js';
+import { MatterbridgeCommodityTariffServer } from './behaviors/commodityTariffServer.js';
 import { MatterbridgeDeviceEnergyManagementModeServer } from './behaviors/deviceEnergyManagementModeServer.js';
 import { MatterbridgeDeviceEnergyManagementServer } from './behaviors/deviceEnergyManagementServer.js';
 import { MatterbridgeDoorLockServer } from './behaviors/doorLockServer.js';
@@ -499,6 +507,10 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === TotalVolatileOrganicCompoundsConcentrationMeasurement.id) return TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === DeviceEnergyManagement.id) return MatterbridgeDeviceEnergyManagementServer.with('PowerForecastReporting');
   if (clusterId === DeviceEnergyManagementMode.id) return MatterbridgeDeviceEnergyManagementModeServer;
+  if (clusterId === MeterIdentification.id) return MeterIdentificationServer;
+  if (clusterId === CommodityMetering.id) return CommodityMeteringServer;
+  if (clusterId === CommodityPrice.id) return MatterbridgeCommodityPriceServer;
+  if (clusterId === CommodityTariff.id) return MatterbridgeCommodityTariffServer;
   // TODO: Add server mappings for ClosureControl, ClosureDimension, and EnergyPreference.
   return undefined;
 }
@@ -743,6 +755,10 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(PowerTopology.id)) endpoint.createDefaultPowerTopologyClusterServer();
   if (serverList.includes(ElectricalPowerMeasurement.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
   if (serverList.includes(ElectricalEnergyMeasurement.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
+  if (serverList.includes(MeterIdentification.id)) endpoint.createDefaultMeterIdentificationClusterServer();
+  if (serverList.includes(CommodityMetering.id)) endpoint.createDefaultCommodityMeteringClusterServer();
+  if (serverList.includes(CommodityPrice.id)) endpoint.createDefaultCommodityPriceClusterServer();
+  if (serverList.includes(CommodityTariff.id)) endpoint.createDefaultCommodityTariffClusterServer();
   if (serverList.includes(TemperatureMeasurement.id)) endpoint.createDefaultTemperatureMeasurementClusterServer();
   if (serverList.includes(RelativeHumidityMeasurement.id)) endpoint.createDefaultRelativeHumidityMeasurementClusterServer();
   if (serverList.includes(PressureMeasurement.id)) endpoint.createDefaultPressureMeasurementClusterServer();
@@ -1506,6 +1522,120 @@ export function getApparentElectricalPowerMeasurementClusterServer(
     apparentCurrent: apparentCurrent,
     apparentPower: apparentPower,
     frequency: frequency,
+  });
+}
+
+/**
+ * Get the default Meter Identification Cluster Server options.
+ *
+ * @param {MeterIdentification.MeterType} [meterType] - The meter type, decided by the manufacturer. Defaults to `null` (unavailable).
+ * @param {string} [pointOfDelivery] - The unique identification of the connection point for the premises. Defaults to `null` (unavailable).
+ * @param {string} [meterSerialNumber] - The serial number of the meter. Defaults to `null` (unavailable).
+ * @param {string} [protocolVersion] - The underlying protocol version to express local market features. Defaults to `null` (unavailable).
+ * @returns {Behavior.Options<MeterIdentificationServer>} - The default options for the Meter Identification Cluster Server.
+ */
+export function getDefaultMeterIdentificationClusterServer(
+  meterType: MeterIdentification.MeterType | null = null,
+  pointOfDelivery: string | null = null,
+  meterSerialNumber: string | null = null,
+  protocolVersion: string | null = null,
+) {
+  return optionsFor(MeterIdentificationServer, {
+    meterType,
+    pointOfDelivery,
+    meterSerialNumber,
+    protocolVersion,
+  });
+}
+
+/**
+ * Get the default Commodity Metering Cluster Server options.
+ *
+ * @param {CommodityMetering.MeteredQuantity[]} [meteredQuantity] - The most recent summed value(s) of a commodity delivered to and consumed in the premises. Defaults to `null` (unavailable).
+ * @param {number} [meteredQuantityTimestamp] - The timestamp in UTC for when MeteredQuantity was last updated. Defaults to `null` (unavailable).
+ * @param {TariffUnit} [tariffUnit] - The unit for the Quantity field on all entries in MeteredQuantity. Defaults to `null` (unavailable).
+ * @param {number} [maximumMeteredQuantities] - The maximum number of entries in MeteredQuantity. Defaults to `null` (unavailable).
+ * @returns {Behavior.Options<CommodityMeteringServer>} - The default options for the Commodity Metering Cluster Server.
+ */
+export function getDefaultCommodityMeteringClusterServer(
+  meteredQuantity: CommodityMetering.MeteredQuantity[] | null = null,
+  meteredQuantityTimestamp: number | null = null,
+  tariffUnit: TariffUnit | null = null,
+  maximumMeteredQuantities: number | null = null,
+) {
+  return optionsFor(CommodityMeteringServer, {
+    meteredQuantity,
+    meteredQuantityTimestamp,
+    tariffUnit,
+    maximumMeteredQuantities,
+  });
+}
+
+/**
+ * Get the default Commodity Price Cluster Server options.
+ *
+ * @param {TariffUnit} [tariffUnit] - The unit of measure for all pricing reported by this cluster. Defaults to `TariffUnit.KWh`.
+ * @param {Currency} [currency] - The currency for all pricing reported by this cluster. Defaults to `null` (unknown).
+ * @param {CommodityPrice.CommodityPriceStruct} [currentPrice] - The current price. Defaults to `null` (unknown).
+ * @returns {Behavior.Options<CommodityPriceServer>} - The default options for the Commodity Price Cluster Server.
+ *
+ * @remarks
+ * Uses `MatterbridgeCommodityPriceServer`, which implements the mandatory `GetDetailedPrice` command as a plain
+ * lookup of the CurrentPrice attribute (matter.js's default implementation throws "unimplemented").
+ */
+export function getDefaultCommodityPriceClusterServer(
+  tariffUnit: TariffUnit = TariffUnit.KWh,
+  currency: Currency | null = null,
+  currentPrice: CommodityPrice.CommodityPriceStruct | null = null,
+) {
+  return optionsFor(MatterbridgeCommodityPriceServer, {
+    tariffUnit,
+    currency,
+    currentPrice,
+  });
+}
+
+/**
+ * Get the default Commodity Tariff Cluster Server options.
+ *
+ * @param {string} [tariffLabel] - The tariff label, e.g. "Standard". Defaults to `null` (unavailable). Ignored (TariffInfo stays `null`) if neither this, providerName, nor currency are provided.
+ * @param {string} [providerName] - The tariff provider's name. Defaults to `null` (unavailable).
+ * @param {TariffUnit} [tariffUnit] - The unit of measure for all tariff data reported by this cluster. Defaults to `null` (unavailable).
+ * @param {Currency} [currency] - The currency for all tariff pricing reported by this cluster. Defaults to `null` (unavailable).
+ * @returns {Behavior.Options<CommodityTariffServer>} - The default options for the Commodity Tariff Cluster Server.
+ *
+ * @remarks
+ * Only publishes TariffInfo/TariffUnit — every other attribute (DayEntries, DayPatterns, CalendarPeriods,
+ * TariffComponents, TariffPeriods and the current/next resolution attributes) is left `null`, which is a
+ * structurally valid "not yet available" state for all of them. Use `setAttribute()`/`setCluster()` afterward to
+ * publish the full day/tariff schedule. Uses `MatterbridgeCommodityTariffServer`, which implements the mandatory
+ * `GetTariffComponent`/`GetDayEntry` commands as plain lookups by id (matter.js's default implementation throws
+ * "unimplemented" for both).
+ */
+export function getDefaultCommodityTariffClusterServer(
+  tariffLabel: string | null = null,
+  providerName: string | null = null,
+  tariffUnit: TariffUnit | null = null,
+  currency: Currency | null = null,
+) {
+  return optionsFor(MatterbridgeCommodityTariffServer, {
+    tariffInfo: tariffLabel !== null || providerName !== null || currency !== null ? { tariffLabel, providerName, currency, blockMode: CommodityTariff.BlockMode.NoBlock } : null,
+    tariffUnit,
+    startDate: null,
+    dayEntries: null,
+    dayPatterns: null,
+    calendarPeriods: null,
+    individualDays: null,
+    tariffComponents: null,
+    tariffPeriods: null,
+    currentDay: null,
+    nextDay: null,
+    currentDayEntry: null,
+    currentDayEntryDate: null,
+    nextDayEntry: null,
+    nextDayEntryDate: null,
+    currentTariffComponents: null,
+    nextTariffComponents: null,
   });
 }
 

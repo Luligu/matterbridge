@@ -42,6 +42,9 @@ import {
   BooleanStateConfiguration,
   BridgedDeviceBasicInformation,
   ColorControl,
+  CommodityMetering,
+  CommodityPrice,
+  CommodityTariff,
   DeviceEnergyManagement,
   DeviceEnergyManagementMode,
   DoorLock,
@@ -56,6 +59,7 @@ import {
   Identify,
   IlluminanceMeasurement,
   LevelControl,
+  MeterIdentification,
   ModeSelect,
   OccupancySensing,
   OnOff,
@@ -78,6 +82,7 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
+import { TariffUnit } from '@matter/types/globals';
 import { flushAsync, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -96,12 +101,16 @@ import {
   airQualitySensor,
   contactSensor,
   doorLock,
+  electricalEnergyTariff,
+  electricalMeter,
   electricalSensor,
+  electricalUtilityMeter,
   fan,
   flowSensor,
   genericSwitch,
   humiditySensor,
   lightSensor,
+  meterReferencePoint,
   modeSelect,
   occupancySensor,
   onOffLight,
@@ -189,6 +198,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(BridgedDeviceBasicInformation.id)?.id).toBe('bridgedDeviceBasicInformation');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagement.id)?.id).toBe('deviceEnergyManagement');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.id)?.id).toBe('deviceEnergyManagementMode');
+    expect(getBehaviourTypeFromClusterServerId(MeterIdentification.id)?.id).toBe('meterIdentification');
+    expect(getBehaviourTypeFromClusterServerId(CommodityMetering.id)?.id).toBe('commodityMetering');
+    expect(getBehaviourTypeFromClusterServerId(CommodityPrice.id)?.id).toBe('commodityPrice');
+    expect(getBehaviourTypeFromClusterServerId(CommodityTariff.id)?.id).toBe('commodityTariff');
   });
 
   test('getBehaviourTypesFromClusterClientIds', () => {
@@ -2464,6 +2477,159 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(null);
     expect(device.getAttribute(ElectricalPowerMeasurement.id, 'voltage')).toBe(null);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultMeterIdentificationClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint([electricalUtilityMeter, meterReferencePoint], { id: 'MeterIdentificationDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultMeterIdentificationClusterServer();
+    expect(device.hasAttributeServer(MeterIdentification.id, 'meterType')).toBe(true);
+    expect(device.hasAttributeServer(MeterIdentification.id, 'pointOfDelivery')).toBe(true);
+    expect(device.hasAttributeServer(MeterIdentification.id, 'meterSerialNumber')).toBe(true);
+    expect(device.hasAttributeServer(MeterIdentification.id, 'protocolVersion')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(MeterIdentification.id, 'meterType')).toBe(null);
+    expect(device.getAttribute(MeterIdentification.id, 'pointOfDelivery')).toBe(null);
+    expect(device.getAttribute(MeterIdentification.id, 'meterSerialNumber')).toBe(null);
+    expect(device.getAttribute(MeterIdentification.id, 'protocolVersion')).toBe(null);
+  });
+
+  test('createDefaultMeterIdentificationClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalUtilityMeter, meterReferencePoint], { id: 'MeterIdentification' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultMeterIdentificationClusterServer(MeterIdentification.MeterType.Utility, 'POD-0000001', 'SN-0000001', '1.0');
+
+    await add(device);
+
+    expect(device.getCluster(MeterIdentification)).toMatchObject({
+      meterType: MeterIdentification.MeterType.Utility,
+      pointOfDelivery: 'POD-0000001',
+      meterSerialNumber: 'SN-0000001',
+      protocolVersion: '1.0',
+    });
+  });
+
+  test('createDefaultCommodityMeteringClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint([electricalMeter], { id: 'CommodityMeteringDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultElectricalPowerMeasurementClusterServer();
+    device.createDefaultElectricalEnergyMeasurementClusterServer();
+    device.createDefaultCommodityMeteringClusterServer();
+    expect(device.hasAttributeServer(CommodityMetering.id, 'meteredQuantity')).toBe(true);
+    expect(device.hasAttributeServer(CommodityMetering.id, 'meteredQuantityTimestamp')).toBe(true);
+    expect(device.hasAttributeServer(CommodityMetering.id, 'tariffUnit')).toBe(true);
+    expect(device.hasAttributeServer(CommodityMetering.id, 'maximumMeteredQuantities')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(CommodityMetering.id, 'meteredQuantity')).toBe(null);
+    expect(device.getAttribute(CommodityMetering.id, 'tariffUnit')).toBe(null);
+  });
+
+  test('createDefaultCommodityMeteringClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalMeter], { id: 'CommodityMetering' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultElectricalPowerMeasurementClusterServer();
+    device.createDefaultElectricalEnergyMeasurementClusterServer();
+    device.createDefaultCommodityMeteringClusterServer([{ tariffComponentIDs: [1], quantity: 12.5 }], 1_700_000_000, TariffUnit.KWh, 1);
+
+    await add(device);
+
+    expect(device.getCluster(CommodityMetering)).toMatchObject({
+      meteredQuantity: [{ tariffComponentIDs: [1], quantity: 12.5 }],
+      meteredQuantityTimestamp: 1_700_000_000,
+      tariffUnit: TariffUnit.KWh,
+      maximumMeteredQuantities: 1,
+    });
+  });
+
+  test('createDefaultCommodityPriceClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityPriceDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultCommodityPriceClusterServer();
+    expect(device.hasAttributeServer(CommodityPrice.id, 'tariffUnit')).toBe(true);
+    expect(device.hasAttributeServer(CommodityPrice.id, 'currency')).toBe(true);
+    expect(device.hasAttributeServer(CommodityPrice.id, 'currentPrice')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(CommodityPrice.id, 'tariffUnit')).toBe(TariffUnit.KWh);
+    expect(device.getAttribute(CommodityPrice.id, 'currency')).toBe(null);
+    expect(device.getAttribute(CommodityPrice.id, 'currentPrice')).toBe(null);
+  });
+
+  test('createDefaultCommodityPriceClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityPrice' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultCommodityPriceClusterServer(TariffUnit.KWh, { currency: 978, decimalPoints: 4 }, { periodStart: 1_700_000_000, periodEnd: null, price: 2000 });
+
+    await add(device);
+
+    expect(device.getCluster(CommodityPrice)).toMatchObject({
+      tariffUnit: TariffUnit.KWh,
+      currency: { currency: 978, decimalPoints: 4 },
+      currentPrice: { periodStart: 1_700_000_000, periodEnd: null, price: 2000 },
+    });
+  });
+
+  test('createDefaultCommodityTariffClusterServer defaults', async () => {
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityTariffDefault' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultCommodityTariffClusterServer();
+    expect(device.hasAttributeServer(CommodityTariff.id, 'tariffInfo')).toBe(true);
+    expect(device.hasAttributeServer(CommodityTariff.id, 'tariffComponents')).toBe(true);
+    expect(device.hasAttributeServer(CommodityTariff.id, 'dayEntries')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(CommodityTariff.id, 'tariffInfo')).toBe(null);
+    expect(device.getAttribute(CommodityTariff.id, 'tariffUnit')).toBe(null);
+    expect(device.getAttribute(CommodityTariff.id, 'tariffComponents')).toBe(null);
+  });
+
+  test('createDefaultCommodityTariffClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityTariff' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultCommodityTariffClusterServer('Standard', 'Matterbridge Example', TariffUnit.KWh, { currency: 978, decimalPoints: 4 });
+
+    await add(device);
+
+    expect(device.getCluster(CommodityTariff)).toMatchObject({
+      tariffInfo: { tariffLabel: 'Standard', providerName: 'Matterbridge Example', currency: { currency: 978, decimalPoints: 4 }, blockMode: CommodityTariff.BlockMode.NoBlock },
+      tariffUnit: TariffUnit.KWh,
+      dayEntries: null,
+      tariffComponents: null,
+    });
+  });
+
+  test('MeterIdentification, CommodityMetering, CommodityTariff and CommodityPrice on the Basic Utility Meter topology (EP1/EP2/EP3)', async () => {
+    const meter = new MatterbridgeEndpoint([electricalUtilityMeter, meterReferencePoint], { id: 'BasicUtilityMeter' })
+      .createDefaultIdentifyClusterServer()
+      .createDefaultBridgedDeviceBasicInformationClusterServer('Electrical Meter', 'EM-0000001', 0xfff1, 'Matterbridge', 'Electrical Meter');
+    meter.addRequiredClusterServers();
+    expect(meter.hasAttributeServer(MeterIdentification.id, 'meterType')).toBe(true);
+
+    const current = meter
+      .addChildDeviceType('electricalMeterCurrent', [electricalMeter, electricalEnergyTariff, electricalSensor])
+      .createDefaultPowerTopologyClusterServer()
+      .createDefaultElectricalPowerMeasurementClusterServer()
+      .createDefaultElectricalEnergyMeasurementClusterServer();
+    current.addRequiredClusterServers();
+    expect(current.hasAttributeServer(CommodityMetering.id, 'meteredQuantity')).toBe(false); // optional, not created by addRequiredClusterServers
+
+    await add(meter);
+
+    expect(meter.getChildEndpointById('electricalMeterCurrent')).toBeDefined();
   });
 
   test('createDefaultTemperatureMeasurementClusterServer', async () => {

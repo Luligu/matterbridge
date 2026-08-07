@@ -27,6 +27,8 @@ export * from './activatedCarbonFilterMonitoringServer.js';
 export * from './bindingServer.js';
 export * from './booleanStateConfigurationServer.js';
 export * from './colorControlServer.js';
+export * from './commodityPriceServer.js';
+export * from './commodityTariffServer.js';
 export * from './deviceEnergyManagementModeServer.js';
 export * from './deviceEnergyManagementServer.js';
 export * from './doorLockServer.js';
