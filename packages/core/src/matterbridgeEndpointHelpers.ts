@@ -1577,7 +1577,7 @@ export function getDefaultCommodityMeteringClusterServer(
  * @param {TariffUnit} [tariffUnit] - The unit of measure for all pricing reported by this cluster. Defaults to `TariffUnit.KWh`.
  * @param {Currency} [currency] - The currency for all pricing reported by this cluster. Defaults to `null` (unknown).
  * @param {CommodityPrice.CommodityPriceStruct} [currentPrice] - The current price. Defaults to `null` (unknown).
- * @returns {Behavior.Options<CommodityPriceServer>} - The default options for the Commodity Price Cluster Server.
+ * @returns {Behavior.Options<MatterbridgeCommodityPriceServer>} - The default options for the Commodity Price Cluster Server.
  *
  * @remarks
  * Uses `MatterbridgeCommodityPriceServer`, which implements the mandatory `GetDetailedPrice` command as a plain
@@ -1602,7 +1602,7 @@ export function getDefaultCommodityPriceClusterServer(
  * @param {string} [providerName] - The tariff provider's name. Defaults to `null` (unavailable).
  * @param {TariffUnit} [tariffUnit] - The unit of measure for all tariff data reported by this cluster. Defaults to `null` (unavailable).
  * @param {Currency} [currency] - The currency for all tariff pricing reported by this cluster. Defaults to `null` (unavailable).
- * @returns {Behavior.Options<CommodityTariffServer>} - The default options for the Commodity Tariff Cluster Server.
+ * @returns {Behavior.Options<MatterbridgeCommodityTariffServer>} - The default options for the Commodity Tariff Cluster Server.
  *
  * @remarks
  * Only publishes TariffInfo/TariffUnit — every other attribute (DayEntries, DayPatterns, CalendarPeriods,

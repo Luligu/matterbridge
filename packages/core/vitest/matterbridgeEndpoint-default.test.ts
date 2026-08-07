@@ -82,7 +82,7 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
-import { TariffUnit } from '@matter/types/globals';
+import { TariffPriceType, TariffUnit } from '@matter/types/globals';
 import { flushAsync, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -96,6 +96,8 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { MatterbridgeCommodityPriceServer } from '../src/behaviors/commodityPriceServer.js';
+import { MatterbridgeCommodityTariffServer } from '../src/behaviors/commodityTariffServer.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -134,6 +136,7 @@ import {
   getBehaviourTypeFromClusterClientId,
   getBehaviourTypeFromClusterServerId,
   getBehaviourTypesFromClusterClientIds,
+  getDefaultCommodityTariffClusterServer,
   lowercaseFirstLetter,
   updateAttribute,
 } from '../src/matterbridgeEndpointHelpers.js';
@@ -2610,6 +2613,54 @@ describe('Matterbridge ' + NAME, () => {
       dayEntries: null,
       tariffComponents: null,
     });
+  });
+
+  test('MatterbridgeCommodityTariffServer getTariffComponent and getDayEntry', async () => {
+    const dayEntries = [{ dayEntryId: 1, startTime: 0 }];
+    const tariffComponents = [{ tariffComponentId: 1, price: { priceType: TariffPriceType.Standard, price: 2000 }, threshold: null, label: 'Standard' }];
+    const tariffPeriods = [{ label: 'Standard', dayEntryIDs: [1], tariffComponentIDs: [1] }];
+
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityTariffCommands' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    // Seed dayEntries/tariffComponents/tariffPeriods from construction time: matter.js's own
+    // conformance validation for these array-of-struct attributes rejects a later setAttribute()/
+    // setCluster() update carrying an object literal, since matter.js fills in defaults for the
+    // omitted optional fields of every entry (e.g. TariffComponent.peakPeriod) and re-validates them
+    // against the enabled features — construction-time state doesn't hit the same path.
+    device.behaviors.require(MatterbridgeCommodityTariffServer.with(CommodityTariff.Feature.Pricing), {
+      ...getDefaultCommodityTariffClusterServer('Standard', 'Matterbridge Example', TariffUnit.KWh),
+      dayEntries,
+      tariffComponents,
+      tariffPeriods,
+    });
+
+    await add(device);
+
+    const found = await device.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }));
+    expect(found).toEqual({ label: 'Standard', dayEntryIDs: [1], tariffComponent: tariffComponents[0] });
+
+    await expect(device.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 99 }))).rejects.toThrow(
+      /No TariffComponent with id 99/,
+    );
+
+    const dayEntry = await device.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }));
+    expect(dayEntry).toEqual({ dayEntry: dayEntries[0] });
+
+    await expect(device.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 99 }))).rejects.toThrow(/No DayEntry with id 99/);
+  });
+
+  test('MatterbridgeCommodityPriceServer getDetailedPriceRequest', async () => {
+    const currentPrice = { periodStart: 1_700_000_000, periodEnd: null, price: 2000 };
+    const device = new MatterbridgeEndpoint([electricalEnergyTariff], { id: 'CommodityPriceCommands' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultCommodityPriceClusterServer(TariffUnit.KWh, { currency: 978, decimalPoints: 4 }, currentPrice);
+
+    await add(device);
+
+    const response = await device.act(async (agent) => agent.get(MatterbridgeCommodityPriceServer).getDetailedPriceRequest());
+    expect(response).toEqual({ currentPrice });
   });
 
   test('MeterIdentification, CommodityMetering, CommodityTariff and CommodityPrice on the Basic Utility Meter topology (EP1/EP2/EP3)', async () => {
