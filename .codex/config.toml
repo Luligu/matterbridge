@@ -5,7 +5,7 @@ approvals_reviewer = "user"
 
 web_search = "live"
 
-default_permissions = "matterbridge_safe"
+default_permissions = ":workspace"
 
 [shell_environment_policy]
 inherit = "core"
