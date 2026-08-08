@@ -85,8 +85,12 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
     expect(device.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 5000 });
 
-    // Exercise latch/speed optional fields.
-    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: 2 });
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: ThreeLevelAuto.Medium });
+    expect(device.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ speed: ThreeLevelAuto.Medium });
+
+    // An omitted position retains its previous target, while an omitted speed falls back to Auto.
+    await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true });
+    expect(device.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 5000, latch: true, speed: ThreeLevelAuto.Auto });
 
     await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Increase,

@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
+- [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.
 
 ### Changed
 

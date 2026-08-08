@@ -61,9 +61,8 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
+      speed: request?.speed ?? ThreeLevelAuto.Auto,
     };
-
     this.state.targetState = nextTarget;
   };
 
