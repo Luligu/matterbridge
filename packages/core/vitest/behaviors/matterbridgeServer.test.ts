@@ -1042,7 +1042,7 @@ describe('Server clusters and behaviors', () => {
         systemMode: Thermostat.SystemMode.Auto,
         occupiedHeatingSetpoint,
         occupiedCoolingSetpoint,
-        numberOfPresets: 10,
+        numberOfPresets: 2,
       });
       expect(presetThermostatCluster?.activePresetHandle === null ? null : JSON.stringify(Object.values(presetThermostatCluster?.activePresetHandle ?? {}))).toBe(
         activePresetHandle === null ? null : JSON.stringify(Array.from(activePresetHandle)),

@@ -41,6 +41,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [frontend]: Bump `frontend` version to v.3.5.7.
 - [frontend]: Remove bun version from Header.
+- [thermostat]: Align `numberOfPresets` with the configured preset capacity and the Matter specification minimum. Thanks Ludovic BOUÉ.
 
 ### Fixed
 

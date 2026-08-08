@@ -958,7 +958,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 6, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
-    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     const retrievedPresets = device.getAttribute(Thermostat.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
     const retrievedPresetTypes = device.getAttribute(Thermostat.id, 'presetTypes');
@@ -975,7 +975,7 @@ describe('Matterbridge ' + NAME, () => {
       minCoolSetpointLimit: 0,
       maxCoolSetpointLimit: 5000,
       minSetpointDeadBand: 0,
-      numberOfPresets: 10,
+      numberOfPresets: 2,
       activePresetHandle: null,
       presets: [],
       presetTypes: [
@@ -1028,7 +1028,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await addDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
-    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     const retrievedPresets = device.getAttribute(Thermostat.id, 'presets');
     expect(retrievedPresets).toHaveLength(2);
     expect(JSON.stringify(Object.values(retrievedPresets[0].presetHandle))).toBe(JSON.stringify([0]));
@@ -1071,7 +1071,7 @@ describe('Matterbridge ' + NAME, () => {
           presetTypeFeatures: { automatic: false, supportsNames: true },
         },
       ],
-      numberOfPresets: 10,
+      numberOfPresets: 2,
       activePresetHandle: Uint8Array.from([0]),
       presets: [
         {
@@ -1093,6 +1093,20 @@ describe('Matterbridge ' + NAME, () => {
       ],
     });
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultPresetsThermostatClusterServer numberOfPresets reflects presetTypes capacity', async () => {
+    const presetTypes: Thermostat.PresetType[] = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 20, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ];
+    const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoPresetsCapacity' });
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, undefined, [], presetTypes);
+    device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
+
+    await addDevice(aggregator, device);
+    // numberOfPresets must not report less than the capacity advertised in presetTypes.
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(20);
   });
 
   test('createDefaultPresetsThermostatClusterServer with occupancy', async () => {
@@ -1133,7 +1147,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await addDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
-    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     expect(device.getCluster(Thermostat)).toMatchObject({
       absMinHeatSetpointLimit: 0,
       absMaxHeatSetpointLimit: 4800,
@@ -1150,7 +1164,7 @@ describe('Matterbridge ' + NAME, () => {
       minCoolSetpointLimit: 200,
       maxCoolSetpointLimit: 5000,
       minSetpointDeadBand: 20,
-      numberOfPresets: 10,
+      numberOfPresets: 2,
       activePresetHandle: Uint8Array.from([0]),
       presets: [
         {
@@ -1298,7 +1312,7 @@ describe('Matterbridge ' + NAME, () => {
     await addDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'outdoorTemperature')).toBe(2050);
-    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
+    expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(6);
     expect(device.getAttribute(Thermostat.id, 'activePresetHandle')).toBeNull();
     expect(device.getAttribute(Thermostat.id, 'presets')).toHaveLength(6);
     expect(device.getAttribute(Thermostat.id, 'presetTypes')).toHaveLength(6);
@@ -1319,7 +1333,7 @@ describe('Matterbridge ' + NAME, () => {
       minCoolSetpointLimit: 1500,
       maxCoolSetpointLimit: 5000,
       minSetpointDeadBand: 10,
-      numberOfPresets: 10,
+      numberOfPresets: 6,
       activePresetHandle: null,
       presets: [
         {
