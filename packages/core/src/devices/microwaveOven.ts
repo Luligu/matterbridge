@@ -49,8 +49,10 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
    * @param {string} serial - The serial number of the microwave oven.
    * @param {number} currentMode - The current mode of the microwave oven. Default is 1 = Auto.
    * @param {MicrowaveOvenMode.ModeOption[]} supportedModes - The supported modes of the microwave oven. Default is an array of all modes.
-   * @param {number} selectedWattIndex - The selected wattage index. Default is 5 (600W).
-   * @param {number[]} supportedWatts - The supported wattages. Default is an array of all standard microwave wattages.
+   * @param {number} powerSetting - The power level associated with the operation of the device. Default is 100.
+   * @param {number} minPower - The minimum value to which the PowerSetting attribute can be set. Default is 10.
+   * @param {number} maxPower - The maximum value to which the PowerSetting attribute can be set. Default is 100.
+   * @param {number} powerStep - The increment of power that can be set on the server. Default is 10.
    * @param {number} cookTime - The initial cook time in seconds. Default is 60 seconds.
    * @param {number} maxCookTime - The maximum cook time in seconds. Default is 3600 seconds (1 hour).
    *
@@ -72,8 +74,10 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
       { label: 'Normal', mode: 6, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Normal }] },
       { label: 'Defrost', mode: 7, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Defrost }] },
     ],
-    selectedWattIndex: number = 5,
-    supportedWatts: number[] = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+    powerSetting: number = 100,
+    minPower: number = 10,
+    maxPower: number = 100,
+    powerStep: number = 10,
     cookTime: number = 60, // 1 minute
     maxCookTime: number = 3600, // 1 hour
   ) {
@@ -83,7 +87,7 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDefaultOperationalStateClusterServer(OperationalState.OperationalStateEnum.Stopped);
     this.createDefaultMicrowaveOvenModeClusterServer(currentMode, supportedModes);
-    this.createDefaultMicrowaveOvenControlClusterServer(selectedWattIndex, supportedWatts, cookTime, maxCookTime);
+    this.createDefaultMicrowaveOvenControlClusterServer(powerSetting, minPower, maxPower, powerStep, cookTime, maxCookTime);
   }
 
   /**
@@ -114,8 +118,10 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
   /**
    * Creates a default MicrowaveOvenControl Cluster Server.
    *
-   * @param {number} selectedWattIndex - The selected watt index.
-   * @param {number[]} supportedWatts - The supported watt values.
+   * @param {number} powerSetting - The power level associated with the operation of the device.
+   * @param {number} minPower - The minimum value to which the PowerSetting attribute can be set.
+   * @param {number} maxPower - The maximum value to which the PowerSetting attribute can be set.
+   * @param {number} powerStep - The increment of power that can be set on the server.
    * @param {number} cookTime - The initial cook time.
    * @param {number} maxCookTime - The maximum cook time.
    *
@@ -123,13 +129,15 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
    *
    * @remarks
    * - 8.13. Microwave Oven Control Cluster
-   * - the supported watt values are fixed and cannot be changed at runtime.
+   * - minPower, maxPower and powerStep are fixed attributes and cannot be changed at runtime.
    * - the maxCookTime is a fixed attribute and cannot be changed at runtime.
    */
-  createDefaultMicrowaveOvenControlClusterServer(selectedWattIndex: number, supportedWatts: number[], cookTime: number, maxCookTime: number): this {
-    this.behaviors.require(MatterbridgeMicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerInWatts), {
-      supportedWatts, // Fixed attribute
-      selectedWattIndex,
+  createDefaultMicrowaveOvenControlClusterServer(powerSetting: number, minPower: number, maxPower: number, powerStep: number, cookTime: number, maxCookTime: number): this {
+    this.behaviors.require(MatterbridgeMicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerAsNumber, MicrowaveOvenControl.Feature.PowerNumberLimits), {
+      powerSetting,
+      minPower, // Fixed attribute
+      maxPower, // Fixed attribute
+      powerStep, // Fixed attribute
       cookTime,
       maxCookTime, // Fixed attribute
     });
@@ -140,7 +148,10 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
 /**
  * Matterbridge Microwave Oven Control Server
  */
-export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerInWatts) {
+export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControlServer.with(
+  MicrowaveOvenControl.Feature.PowerAsNumber,
+  MicrowaveOvenControl.Feature.PowerNumberLimits,
+) {
   /**
    * Initializes the server.
    */
@@ -187,13 +198,13 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       this.state.cookTime = 30;
     }
 
-    // 8.13.6.2.4. WattSettingIndex Field. Default the highest Watt setting for the selected CookMode.
-    if (request.wattSettingIndex !== undefined && request.wattSettingIndex >= 0 && request.wattSettingIndex < this.state.supportedWatts.length) {
-      device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to ${request.wattSettingIndex}`);
-      this.state.selectedWattIndex = request.wattSettingIndex;
+    // 8.13.6.2.3. PowerSetting Field. Default to MaxPower if not present.
+    if (request.powerSetting !== undefined && request.powerSetting >= this.state.minPower && request.powerSetting <= this.state.maxPower) {
+      device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to ${request.powerSetting}`);
+      this.state.powerSetting = request.powerSetting;
     } else {
-      device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`);
-      this.state.selectedWattIndex = this.state.supportedWatts.length - 1;
+      device.log.info(`MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
+      this.state.powerSetting = this.state.maxPower;
     }
 
     // 8.13.6.2.5. StartAfterSetting Field. Default to false.

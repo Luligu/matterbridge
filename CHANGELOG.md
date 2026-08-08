@@ -44,6 +44,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [irrigationSystem]: Remove the non-functional `singleZone` option; single-zone systems must now use `addZone` like any other zone.
+- [microwaveOven]: Use the `PowerAsNumber` and `PowerNumberLimits` features instead of `PowerInWatts` for the `MicrowaveOvenControl` cluster, and handle the `PowerSetting` field in `SetCookingParameters` accordingly.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
