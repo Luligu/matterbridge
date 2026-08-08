@@ -45,6 +45,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [irrigationSystem]: Remove the non-functional `singleZone` option; single-zone systems must now use `addZone` like any other zone.
 - [microwaveOven]: Use the `PowerAsNumber` and `PowerNumberLimits` features instead of `PowerInWatts` for the `MicrowaveOvenControl` cluster, and handle the `PowerSetting` field in `SetCookingParameters` accordingly.
+- [closureDimension]: `ClosurePanel` and `Closure.addPanel()` now require a `dimensionType` (`'lift'`, `'tilt'` or `'modulation'`) and enable the matching Translation/Rotation/Modulation feature, as required by the `[PS].b` conformance rule when Positioning is supported.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

@@ -36,7 +36,7 @@ import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { closure, closurePanel } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
-import { MatterbridgeClosureDimensionServer, type ClosurePanelOptions } from './closurePanel.js';
+import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from './closurePanel.js';
 
 /**
  * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
@@ -161,23 +161,14 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable name of the panel endpoint.
    * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
-   * @param {Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'>} [options] - Optional initial ClosureDimension cluster state values.
+   * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `'lift'` (Translation), `'tilt'` (Rotation) or `'modulation'`.
+   * @param {Omit<ClosurePanelOptions, 'tagList'>} [options] - Optional initial ClosureDimension cluster state values.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
-  addPanel(
-    name: string,
-    tagList: Semtag[],
-    options: Pick<ClosurePanelOptions, 'currentState' | 'targetState' | 'resolution' | 'stepValue' | 'latchControlModes'> = {},
-  ): MatterbridgeEndpoint {
+  addPanel(name: string, tagList: Semtag[], dimensionType: ClosureDimensionType, options: Omit<ClosurePanelOptions, 'tagList'> = {}): MatterbridgeEndpoint {
     const panel = this.addChildDeviceType(name, closurePanel, { tagList });
 
-    panel.behaviors.require(MatterbridgeClosureDimensionServer, {
-      currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-      targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-      resolution: options.resolution ?? 1,
-      stepValue: options.stepValue ?? 1,
-      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
-    });
+    createClosureDimensionClusterServer(panel, dimensionType, options);
 
     return panel;
   }

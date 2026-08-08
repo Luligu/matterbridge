@@ -38,7 +38,20 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
+ * Which mutually exclusive ClosureDimension motion feature (Translation, Rotation or Modulation) a panel supports.
+ *
+ * @remarks
+ * The Matter ClosureDimension cluster requires exactly one of these features when Positioning is supported
+ * (Application Cluster Specification § 5.5.5, conformance group `[PS].b` on Translation/Rotation/Modulation).
+ * A lift panel (e.g. a blind sliding up/down) uses `'lift'`, a tilt panel (e.g. slats rotating) uses `'tilt'`,
+ * and any other panel that modulates a flow level without translating or rotating (e.g. an opacity or
+ * ventilation panel) uses `'modulation'`.
+ */
+export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
+
+/**
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Supports
+ * Positioning, MotionLatching and Speed.
  */
 export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
   ClosureDimension.Feature.Positioning,
@@ -113,6 +126,14 @@ export interface ClosurePanelOptions {
   stepValue?: number;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
+  /** Direction of the translation. Only used when `dimensionType` is `'lift'`. Defaults to Downward. */
+  translationDirection?: ClosureDimension.TranslationDirection;
+  /** Axis of the rotation. Only used when `dimensionType` is `'tilt'`. Defaults to CenteredHorizontal. */
+  rotationAxis?: ClosureDimension.RotationAxis;
+  /** Overflow of the rotation. Only used when `dimensionType` is `'tilt'`. Defaults to NoOverflow. */
+  overflow?: ClosureDimension.Overflow;
+  /** Type of modulation. Only used when `dimensionType` is `'modulation'`. Defaults to SlatsOrientation. */
+  modulationType?: ClosureDimension.ModulationType;
   /** Semantic tags used to disambiguate sibling closure panels. */
   tagList?: Semtag[];
 }
@@ -126,19 +147,77 @@ export class ClosurePanel extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable device name.
    * @param {string} serial - Device serial number.
+   * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `'lift'` (Translation), `'tilt'` (Rotation) or `'modulation'`.
    * @param {ClosurePanelOptions} [options] - Optional initial configuration values, including the tagList used to disambiguate sibling panels (e.g. `ClosurePanelTag.Lift` and `ClosurePanelTag.Tilt`).
    */
-  constructor(name: string, serial: string, options: ClosurePanelOptions = {}) {
+  constructor(name: string, serial: string, dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}) {
     super([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
 
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
 
-    this.behaviors.require(MatterbridgeClosureDimensionServer, {
-      currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-      targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-      resolution: options.resolution ?? 1,
-      stepValue: options.stepValue ?? 1,
-      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
-    });
+    createClosureDimensionClusterServer(this, dimensionType, options);
   }
+}
+
+/**
+ * Creates the ClosureDimension Cluster Server matching `dimensionType`, with its motion-specific attributes.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The Matterbridge endpoint instance.
+ * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports.
+ * @param {ClosurePanelOptions} options - Initial ClosureDimension cluster state values.
+ *
+ * @returns {MatterbridgeEndpoint} The current MatterbridgeEndpoint instance for chaining.
+ */
+export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoint, dimensionType: ClosureDimensionType, options: ClosurePanelOptions): MatterbridgeEndpoint {
+  const commonOptions = {
+    currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+    targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+    resolution: options.resolution ?? 1,
+    stepValue: options.stepValue ?? 1,
+    latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
+  };
+
+  if (dimensionType === 'lift') {
+    endpoint.behaviors.require(
+      MatterbridgeClosureDimensionServer.with(
+        ClosureDimension.Feature.Positioning,
+        ClosureDimension.Feature.MotionLatching,
+        ClosureDimension.Feature.Speed,
+        ClosureDimension.Feature.Translation,
+      ),
+      {
+        ...commonOptions,
+        translationDirection: options.translationDirection ?? ClosureDimension.TranslationDirection.Downward,
+      },
+    );
+  } else if (dimensionType === 'tilt') {
+    endpoint.behaviors.require(
+      MatterbridgeClosureDimensionServer.with(
+        ClosureDimension.Feature.Positioning,
+        ClosureDimension.Feature.MotionLatching,
+        ClosureDimension.Feature.Speed,
+        ClosureDimension.Feature.Rotation,
+      ),
+      {
+        ...commonOptions,
+        rotationAxis: options.rotationAxis ?? ClosureDimension.RotationAxis.CenteredHorizontal,
+        overflow: options.overflow ?? ClosureDimension.Overflow.NoOverflow,
+      },
+    );
+  } else {
+    endpoint.behaviors.require(
+      MatterbridgeClosureDimensionServer.with(
+        ClosureDimension.Feature.Positioning,
+        ClosureDimension.Feature.MotionLatching,
+        ClosureDimension.Feature.Speed,
+        ClosureDimension.Feature.Modulation,
+      ),
+      {
+        ...commonOptions,
+        modulationType: options.modulationType ?? ClosureDimension.ModulationType.SlatsOrientation,
+      },
+    );
+  }
+
+  return endpoint;
 }

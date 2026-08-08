@@ -153,8 +153,8 @@ describe('Matterbridge ' + NAME, () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
     });
-    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)]);
-    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], {
+    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)], 'lift');
+    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', {
       resolution: 2,
       stepValue: 100,
       latchControlModes: { remoteLatching: false, remoteUnlatching: true },

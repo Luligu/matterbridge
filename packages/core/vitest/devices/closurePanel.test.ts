@@ -66,7 +66,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a closure panel device', () => {
-    device = new ClosurePanel('Closure Panel Test Device', 'CP123456', { stepValue: 100 });
+    device = new ClosurePanel('Closure Panel Test Device', 'CP123456', 'lift', { stepValue: 100 });
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosurePanelTestDevice-CP123456');
 
@@ -109,7 +109,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke step clamp branches', async () => {
-    device2 = new ClosurePanel('Closure Panel Test Device 2', 'CP654321', { resolution: 2, stepValue: 6000 });
+    device2 = new ClosurePanel('Closure Panel Test Device 2', 'CP654321', 'lift', { resolution: 2, stepValue: 6000 });
     expect(await addDevice(server, device2)).toBeTruthy();
 
     await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
@@ -126,7 +126,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke closure dimension fallback branches', async () => {
-    device4 = new ClosurePanel('Closure Panel Test Device 4', 'CP456789', {
+    device4 = new ClosurePanel('Closure Panel Test Device 4', 'CP456789', 'lift', {
       currentState: { position: null, latch: true, speed: ThreeLevelAuto.Auto },
       targetState: { position: 300, latch: true, speed: ThreeLevelAuto.Auto },
       stepValue: 10,
@@ -157,8 +157,14 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('cover constructor option defaults', async () => {
-    device3 = new ClosurePanel('Closure Panel Test Device 3', 'CP345678');
+    device3 = new ClosurePanel('Closure Panel Test Device 3', 'CP345678', 'lift');
     expect(await addDevice(server, device3)).toBeTruthy();
+  });
+
+  test('create a closure panel device with modulation dimension type', async () => {
+    const device5 = new ClosurePanel('Closure Panel Test Device 5', 'CP567890', 'modulation');
+    expect(await addDevice(server, device5)).toBeTruthy();
+    expect(device5.getAttribute(ClosureDimension.id, 'modulationType')).toBe(ClosureDimension.ModulationType.SlatsOrientation);
   });
 
   test('device forEachAttribute', () => {
@@ -205,15 +211,16 @@ describe('Matterbridge ' + NAME, () => {
     ).toEqual(
       [
         'closureDimension(0x105).acceptedCommandList(0xfff9)=[ 0, 1 ]',
-        'closureDimension(0x105).attributeList(0xfffb)=[ 0, 1, 2, 3, 11, 65528, 65529, 65531, 65532, 65533 ]',
+        'closureDimension(0x105).attributeList(0xfffb)=[ 0, 1, 2, 3, 7, 11, 65528, 65529, 65531, 65532, 65533 ]',
         'closureDimension(0x105).clusterRevision(0xfffd)=1',
         'closureDimension(0x105).currentState(0x0)={ position: 100, latch: true, speed: 0 }',
-        'closureDimension(0x105).featureMap(0xfffc)={ positioning: true, motionLatching: true, unit: false, limitation: false, speed: true, translation: false, rotation: false, modulation: false }',
+        'closureDimension(0x105).featureMap(0xfffc)={ positioning: true, motionLatching: true, unit: false, limitation: false, speed: true, translation: true, rotation: false, modulation: false }',
         'closureDimension(0x105).generatedCommandList(0xfff8)=[  ]',
         'closureDimension(0x105).latchControlModes(0xb)={ remoteLatching: true, remoteUnlatching: true }',
         'closureDimension(0x105).resolution(0x2)=1',
         'closureDimension(0x105).stepValue(0x3)=100',
         'closureDimension(0x105).targetState(0x1)={ position: 100, latch: true, speed: 0 }',
+        'closureDimension(0x105).translationDirection(0x7)=0',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
