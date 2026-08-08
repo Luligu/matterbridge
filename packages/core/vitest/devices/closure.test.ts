@@ -88,14 +88,33 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke closure control commands', async () => {
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', null);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
 
     expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+      secureState: true,
+    });
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {});
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({ speed: ThreeLevelAuto.Auto });
+
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
 
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
@@ -103,21 +122,30 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: true,
+    });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: true,
       speed: 1,
     });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
     expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: true,
       speed: 1,
     });
 
-    // Omit position to cover optional-field branches.
+    // An omitted position retains its previous target, while an omitted speed falls back to Auto.
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       latch: false,
     });
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
+      speed: ThreeLevelAuto.Auto,
     });
   });
 
@@ -205,7 +233,7 @@ describe('Matterbridge ' + NAME, () => {
         'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
         'closureControl(0x104).overallCurrentState(0x3)={ position: 0, latch: true, speed: 0, secureState: true }',
-        'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 1 }',
+        'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 0 }',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',

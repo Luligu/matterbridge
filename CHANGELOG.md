@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.5] - Dev branch
 
+### Added
+
+- [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
+
 ### Changed
 
 - [frontend]: Bump `frontend` version to v.3.5.7.

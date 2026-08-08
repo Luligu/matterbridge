@@ -57,18 +57,22 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
-    /* v8 ignore next -- Defensive fallback for direct behavior calls; controller commands receive a normalized target state. */
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
       ...previousTarget,
       ...(request?.position !== undefined ? { position: request.position } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      /* v8 ignore next -- Defensive fallback; Matter command validation supplies a speed when controllers omit it. */
-      speed: request?.speed ?? previousTarget.speed ?? ThreeLevelAuto.Auto,
+      speed: request?.speed ?? ThreeLevelAuto.Auto,
     };
-
     this.state.overallTargetState = nextTarget;
-    this.state.mainState = ClosureControl.MainState.Moving;
+
+    const currentState = this.state.overallCurrentState;
+    const isAtTarget =
+      currentState !== null &&
+      (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
+      (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
+      nextTarget.speed === currentState.speed;
+    this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
   };
 
   override stop = async (): Promise<void> => {
