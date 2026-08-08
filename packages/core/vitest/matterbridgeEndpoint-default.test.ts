@@ -682,6 +682,8 @@ describe('Matterbridge ' + NAME, () => {
 
     await addDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0]);
+    expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([]);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -954,6 +956,8 @@ describe('Matterbridge ' + NAME, () => {
     await addDevice(aggregator, device);
     await flushAsync();
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 6, 254]);
+    expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(10);
     const retrievedPresets = device.getAttribute(Thermostat.id, 'presets');
     expect(retrievedPresets).toHaveLength(0);
