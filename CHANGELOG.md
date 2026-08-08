@@ -41,6 +41,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `frontend` version to v.3.5.7.
 - [frontend]: Remove bun version from Header.
 
+### Fixed
+
+- [irrigationSystem]: Remove the non-functional `singleZone` option; single-zone systems must now use `addZone` like any other zone.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.4] - 2026-08-07

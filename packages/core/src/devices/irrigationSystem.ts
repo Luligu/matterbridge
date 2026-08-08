@@ -21,17 +21,15 @@
  * limitations under the License.
  */
 
-import type { AtLeastOne } from '@matter/general';
 import { CommonLocationTag } from '@matter/main/node';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import type { Semtag } from '@matter/types/globals';
 
-import { type DeviceTypeDefinition, irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
+import { irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
 export interface IrrigationSystemOptions {
-  singleZone?: boolean;
   batteryPowered?: boolean;
   operationalState?: OperationalState.OperationalStateEnum;
   /** Flow measurement in 10 x m3/h. This is an optional attribute that may be included if the irrigation system has a flow measurement capability. */
@@ -40,6 +38,9 @@ export interface IrrigationSystemOptions {
 
 /**
  * Matterbridge endpoint representing an irrigation system device.
+ * Add at least one irrigation zone using the `addZone` method to represent the individual zones of the irrigation system.
+ * Each zone is represented as a child device of type Water Valve, with the appropriate tags.
+ * The `addZone` method allows you to specify a semantic tag for each zone, which can be used to describe the zone's number.
  */
 export class IrrigationSystem extends MatterbridgeEndpoint {
   /**
@@ -50,8 +51,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @param {IrrigationSystemOptions} [options] - Optional initial operational state and attributes.
    */
   constructor(name: string, serial: string, options: IrrigationSystemOptions = {}) {
-    const deviceTypes: DeviceTypeDefinition | AtLeastOne<DeviceTypeDefinition> = options.singleZone ? [irrigationSystem, waterValve, powerSource] : [irrigationSystem, powerSource];
-    super(deviceTypes, { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([irrigationSystem, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Irrigation System');
@@ -64,9 +64,6 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     // Optional clusters included by default for this device class.
     this.createDefaultOperationalStateClusterServer(options.operationalState ?? OperationalState.OperationalStateEnum.Stopped);
     if (options.flowMeasuredValue !== undefined) this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue);
-    if (options.singleZone) {
-      this.createDefaultValveConfigurationAndControlClusterServer();
-    }
     this.addRequiredClusterServers();
   }
 
@@ -77,7 +74,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
   /**
    * Adds a new irrigation zone child endpoint.
    *
-   * @param {Semtag} tag - Semantic tag describing the zone.
+   * @param {Semtag} tag - Semantic tag describing the zone (e.g. CommonNumberTag.One).
    * @returns {this} The current endpoint instance for chaining.
    */
   addZone(tag: Semtag): this {
