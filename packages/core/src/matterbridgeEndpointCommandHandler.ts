@@ -543,6 +543,7 @@ export type CommandHandlerDataMap = {
   // Thermostat
   'setpointRaiseLower': CommandHandlerData<'Thermostat.setpointRaiseLower'>;
   'setActivePresetRequest': CommandHandlerData<'Thermostat.setActivePresetRequest'>;
+  'setActiveScheduleRequest': CommandHandlerData<'Thermostat.setActiveScheduleRequest'>;
   'Thermostat.setpointRaiseLower': {
     command: 'setpointRaiseLower';
     request: Thermostat.SetpointRaiseLowerRequest;
@@ -553,6 +554,13 @@ export type CommandHandlerDataMap = {
   'Thermostat.setActivePresetRequest': {
     command: 'setActivePresetRequest';
     request: Thermostat.SetActivePresetRequest;
+    cluster: 'thermostat';
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'Thermostat.setActiveScheduleRequest': {
+    command: 'setActiveScheduleRequest';
+    request: Thermostat.SetActiveScheduleRequest;
     cluster: 'thermostat';
     attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
     endpoint: MatterbridgeEndpoint;

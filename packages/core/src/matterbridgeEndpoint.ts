@@ -3315,6 +3315,124 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default thermostat cluster server with features **Heating**, **Cooling**, **AutoMode** and **MatterScheduleConfiguration**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
+   * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {Uint8Array | null} [activeScheduleHandle] - The active schedule handle. Defaults to null.
+   * @param {Thermostat.Schedule[]} [schedules] - The list of thermostat schedules. Defaults to empty array.
+   * @param {Thermostat.ScheduleType[]} [scheduleTypes] - The list of thermostat schedule types. Defaults to a predefined set supporting the Auto system mode.
+   * @param {number} [numberOfScheduleTransitions] - The maximum number of transitions per schedule entry. Defaults to 10.
+   * @param {number | null} [numberOfScheduleTransitionPerDay] - The maximum number of transitions per day of the week for each schedule entry. Defaults to null (no limit).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * matter.js does not yet provide validation logic for the MatterScheduleConfiguration feature (the `schedules` attribute
+   * write validation described in the Matter specification is not enforced by `@matter/node`). Matterbridge only exposes the
+   * attributes and forwards `setActiveScheduleRequest` to the Matterbridge command handler.
+   */
+  createDefaultSchedulesThermostatClusterServer(
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    occupiedCoolingSetpoint: number = 25,
+    minSetpointDeadBand: number = 0,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    minCoolSetpointLimit: number = 0,
+    maxCoolSetpointLimit: number = 50,
+    unoccupiedHeatingSetpoint?: number,
+    unoccupiedCoolingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
+    activeScheduleHandle: Uint8Array | null = null,
+    schedules: Thermostat.Schedule[] = [],
+    scheduleTypes: Thermostat.ScheduleType[] = [
+      {
+        systemMode: Thermostat.SystemMode.Auto,
+        numberOfSchedules: 10,
+        scheduleTypeFeatures: { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+      },
+    ],
+    numberOfScheduleTransitions: number = 10,
+    numberOfScheduleTransitionPerDay: number | null = null,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeThermostatServer.with(
+        Thermostat.Feature.Heating,
+        Thermostat.Feature.Cooling,
+        Thermostat.Feature.AutoMode,
+        ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []),
+        Thermostat.Feature.MatterScheduleConfiguration,
+      ),
+      {
+        localTemperature: localTemperature * 100,
+        externalMeasuredIndoorTemperature: localTemperature * 100,
+        ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
+        systemMode: Thermostat.SystemMode.Auto,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        // Thermostat.Feature.Heating
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        // Thermostat.Feature.AutoMode
+        minSetpointDeadBand: minSetpointDeadBand * 10,
+        thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        // Thermostat.Feature.Occupancy
+        ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+        ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+        ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
+        // Thermostat.Feature.MatterScheduleConfiguration
+        numberOfSchedules: Math.max(
+          Array.isArray(schedules) ? schedules.length : 0,
+          Array.isArray(scheduleTypes) ? Math.max(0, ...scheduleTypes.map((st) => st.numberOfSchedules ?? 0)) : 0,
+          1,
+        ), // This attribute SHALL indicate the maximum number of entries supported by the Schedules attribute, and must be consistent with the per-type capacities advertised in scheduleTypes.
+        numberOfScheduleTransitions,
+        numberOfScheduleTransitionPerDay,
+        activeScheduleHandle: activeScheduleHandle ? Uint8Array.from(activeScheduleHandle) : null,
+        // Ensure scheduleHandle and presetHandle are proper Uint8Array by creating new instances
+        schedules: (schedules ?? []).map((s) => ({
+          scheduleHandle: s.scheduleHandle ? Uint8Array.from(s.scheduleHandle) : null,
+          systemMode: s.systemMode,
+          name: s.name,
+          presetHandle: s.presetHandle ? Uint8Array.from(s.presetHandle) : undefined,
+          transitions: s.transitions ?? [],
+          builtIn: s.builtIn ?? true,
+        })),
+        scheduleTypes: (scheduleTypes ?? []).map((st) => ({
+          // oxlint-disable-next-line typescript/no-misused-spread
+          ...st,
+          numberOfSchedules: st.numberOfSchedules ?? 0,
+          scheduleTypeFeatures: st.scheduleTypeFeatures ?? { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+        })),
+      },
+    );
+    return this;
+  }
+
+  /**
    * Creates a default cooling thermostat cluster server with feature **Cooling**.
    *
    * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
