@@ -36,6 +36,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
 - [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.
 - [thermostat]: Add `Thermostat.Feature.MatterScheduleConfiguration` support with schedule attributes and `SetActiveScheduleRequest` handling. Thanks Ludovic BOUÉ.
+- [thermostat]: Add `Thermostat.Feature.ThermostatSuggestions` support with suggestion attributes and `AddThermostatSuggestion`/`RemoveThermostatSuggestion` handling. Thanks Ludovic BOUÉ.
 
 ### Changed
 

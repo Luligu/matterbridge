@@ -3252,7 +3252,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     outdoorTemperature?: number | null,
     activePresetHandle: Uint8Array | null = null,
     presets: Thermostat.Preset[] = [],
-    presetTypes: Thermostat.PresetType[] = [
+    presetTypes: Thermostat.PresetType[] | null = [
       { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
       { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
     ],
@@ -3431,6 +3431,141 @@ export class MatterbridgeEndpoint extends Endpoint {
           numberOfSchedules: st.numberOfSchedules ?? 0,
           scheduleTypeFeatures: st.scheduleTypeFeatures ?? { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
         })),
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default thermostat cluster server with features **Heating**, **Cooling**, **AutoMode**, **Presets** and **ThermostatSuggestions**.
+   *
+   * - When the occupied parameter is provided (either false or true), the **Occupancy** feature is also added (defaults to undefined).
+   * - When the outdoorTemperature parameter is provided (either null or a number), the outdoorTemperature attribute is also added (defaults to undefined).
+   * - The **ThermostatSuggestions** feature requires the **Presets** feature (a suggestion references a preset handle), so both are always added together.
+   *
+   * @param {number} [localTemperature] - The local temperature value in degrees Celsius. Defaults to 23°.
+   * @param {number} [occupiedHeatingSetpoint] - The occupied heating setpoint value in degrees Celsius. Defaults to 21°.
+   * @param {number} [occupiedCoolingSetpoint] - The occupied cooling setpoint value in degrees Celsius. Defaults to 25°.
+   * @param {number} [minSetpointDeadBand] - The minimum setpoint dead band value. Defaults to 0°.
+   * @param {number} [minHeatSetpointLimit] - The minimum heat setpoint limit value. Defaults to 0°.
+   * @param {number} [maxHeatSetpointLimit] - The maximum heat setpoint limit value. Defaults to 50°.
+   * @param {number} [minCoolSetpointLimit] - The minimum cool setpoint limit value. Defaults to 0°.
+   * @param {number} [maxCoolSetpointLimit] - The maximum cool setpoint limit value. Defaults to 50°.
+   * @param {number | undefined} [unoccupiedHeatingSetpoint] - The unoccupied heating setpoint value in degrees Celsius. Defaults to 19° (it will be ignored if occupied is not provided).
+   * @param {number | undefined} [unoccupiedCoolingSetpoint] - The unoccupied cooling setpoint value in degrees Celsius. Defaults to 27° (it will be ignored if occupied is not provided).
+   * @param {boolean | undefined} [occupied] - The occupancy status. Defaults to undefined (it will be ignored).
+   * @param {number | null | undefined} [outdoorTemperature] - The outdoor temperature value in degrees Celsius. Defaults to undefined (it will be ignored).
+   * @param {Uint8Array | null} [activePresetHandle] - The active preset handle. Defaults to null.
+   * @param {Thermostat.Preset[]} [presets] - The list of thermostat presets. Defaults to empty array.
+   * @param {Thermostat.PresetType[] | null | undefined} [presetTypes] - The list of thermostat preset types. Defaults to a predefined set.
+   * @param {Thermostat.ThermostatSuggestion[]} [thermostatSuggestions] - The list of thermostat suggestions. Defaults to empty array.
+   * @param {Thermostat.ThermostatSuggestion | null} [currentThermostatSuggestion] - The currently active thermostat suggestion. Defaults to null.
+   * @param {Thermostat.ThermostatSuggestionNotFollowingReason | null} [thermostatSuggestionNotFollowingReason] - The reason the current thermostat suggestion is not being followed. Defaults to null.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * matter.js does not yet provide a default implementation of the AddThermostatSuggestion and RemoveThermostatSuggestion
+   * commands for the ThermostatSuggestions feature (it is not implemented by `ThermostatServer` in `@matter/node`), so
+   * Matterbridge validates the requests and maintains the `thermostatSuggestions` list itself.
+   */
+  createDefaultThermostatSuggestionsClusterServer(
+    localTemperature: number = 23,
+    occupiedHeatingSetpoint: number = 21,
+    occupiedCoolingSetpoint: number = 25,
+    minSetpointDeadBand: number = 0,
+    minHeatSetpointLimit: number = 0,
+    maxHeatSetpointLimit: number = 50,
+    minCoolSetpointLimit: number = 0,
+    maxCoolSetpointLimit: number = 50,
+    unoccupiedHeatingSetpoint?: number,
+    unoccupiedCoolingSetpoint?: number,
+    occupied?: boolean,
+    outdoorTemperature?: number | null,
+    activePresetHandle: Uint8Array | null = null,
+    presets: Thermostat.Preset[] = [],
+    presetTypes: Thermostat.PresetType[] | null = [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ],
+    thermostatSuggestions: Thermostat.ThermostatSuggestion[] = [],
+    currentThermostatSuggestion: Thermostat.ThermostatSuggestion | null = null,
+    thermostatSuggestionNotFollowingReason: Thermostat.ThermostatSuggestionNotFollowingReason | null = null,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeThermostatServer.with(
+        Thermostat.Feature.Heating,
+        Thermostat.Feature.Cooling,
+        Thermostat.Feature.AutoMode,
+        ...(occupied !== undefined ? [Thermostat.Feature.Occupancy] : []),
+        Thermostat.Feature.Presets,
+        Thermostat.Feature.ThermostatSuggestions,
+      ),
+      {
+        localTemperature: localTemperature * 100,
+        externalMeasuredIndoorTemperature: localTemperature * 100,
+        ...(outdoorTemperature !== undefined ? { outdoorTemperature: outdoorTemperature !== null ? outdoorTemperature * 100 : outdoorTemperature } : {}), // Optional nullable attribute
+        systemMode: Thermostat.SystemMode.Auto,
+        controlSequenceOfOperation: Thermostat.ControlSequenceOfOperation.CoolingAndHeating,
+        // Thermostat.Feature.Heating
+        occupiedHeatingSetpoint: occupiedHeatingSetpoint * 100,
+        minHeatSetpointLimit: minHeatSetpointLimit * 100,
+        maxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        absMinHeatSetpointLimit: minHeatSetpointLimit * 100,
+        absMaxHeatSetpointLimit: maxHeatSetpointLimit * 100,
+        // Thermostat.Feature.Cooling
+        occupiedCoolingSetpoint: occupiedCoolingSetpoint * 100,
+        minCoolSetpointLimit: minCoolSetpointLimit * 100,
+        maxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        absMinCoolSetpointLimit: minCoolSetpointLimit * 100,
+        absMaxCoolSetpointLimit: maxCoolSetpointLimit * 100,
+        // Thermostat.Feature.AutoMode
+        minSetpointDeadBand: minSetpointDeadBand * 10,
+        thermostatRunningMode: Thermostat.ThermostatRunningMode.Off,
+        // Thermostat.Feature.Occupancy
+        ...(occupied !== undefined ? { unoccupiedHeatingSetpoint: unoccupiedHeatingSetpoint !== undefined ? unoccupiedHeatingSetpoint * 100 : 1900 } : {}),
+        ...(occupied !== undefined ? { unoccupiedCoolingSetpoint: unoccupiedCoolingSetpoint !== undefined ? unoccupiedCoolingSetpoint * 100 : 2700 } : {}),
+        ...(occupied !== undefined ? { occupancy: { occupied } } : {}),
+        ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
+        // Thermostat.Feature.Presets
+        numberOfPresets: Math.max(
+          Array.isArray(presets) ? presets.length : 0,
+          Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets ?? 0)) : 0,
+          1,
+        ), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute, and must be consistent with the per-type capacities advertised in presetTypes.
+        activePresetHandle: activePresetHandle ? Uint8Array.from(activePresetHandle) : null,
+        // Ensure presetHandle is a proper Uint8Array by creating a new instance
+        presets: (presets ?? []).map((p) => ({
+          presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
+          presetScenario: p.presetScenario,
+          name: p.name,
+          coolingSetpoint: p.coolingSetpoint,
+          heatingSetpoint: p.heatingSetpoint,
+          builtIn: p.builtIn ?? true,
+        })),
+        presetTypes: (presetTypes ?? []).map((pt) => ({
+          // oxlint-disable-next-line typescript/no-misused-spread
+          ...pt,
+          numberOfPresets: pt.numberOfPresets ?? 0,
+          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
+        })),
+        // Thermostat.Feature.ThermostatSuggestions
+        maxThermostatSuggestions: Math.max(Array.isArray(thermostatSuggestions) ? thermostatSuggestions.length : 0, 5), // This attribute SHALL indicate the maximum number of entries supported by the ThermostatSuggestions attribute.
+        // Ensure presetHandle is a proper Uint8Array by creating a new instance
+        thermostatSuggestions: (thermostatSuggestions ?? []).map((s) => ({
+          uniqueId: s.uniqueId,
+          presetHandle: Uint8Array.from(s.presetHandle), // Ensure presetHandle is a proper Uint8Array by creating a new instance
+          effectiveTime: s.effectiveTime,
+          expirationTime: s.expirationTime,
+        })),
+        currentThermostatSuggestion: currentThermostatSuggestion
+          ? {
+              uniqueId: currentThermostatSuggestion.uniqueId,
+              presetHandle: Uint8Array.from(currentThermostatSuggestion.presetHandle), // Ensure presetHandle is a proper Uint8Array by creating a new instance
+              effectiveTime: currentThermostatSuggestion.effectiveTime,
+              expirationTime: currentThermostatSuggestion.expirationTime,
+            }
+          : null,
+        thermostatSuggestionNotFollowingReason: thermostatSuggestionNotFollowingReason ?? null,
       },
     );
     return this;
