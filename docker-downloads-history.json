@@ -838,5 +838,17 @@
     "repo": "luligu/matterbridge",
     "pull_count": 7302098,
     "delta": 54649
+  },
+  {
+    "ts": "2026-08-11T23:00:01.323Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 7356494,
+    "delta": 54396
+  },
+  {
+    "ts": "2026-08-12T23:00:02.447Z",
+    "repo": "luligu/matterbridge",
+    "pull_count": 7410700,
+    "delta": 54206
   }
 ]

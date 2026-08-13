@@ -3106,6 +3106,14 @@ const parseClusterXml = (xmlContent, contextLabel) => {
 /** Fetch all namespaces */
 
 const namespacesFiles = [
+  'Namespace-Closure-Cabinet.xml',
+  'Namespace-Closure-Covering.xml',
+  'Namespace-Closure-Window.xml',
+  'Namespace-Closure.xml',
+  'Namespace-ClosurePanel.xml',
+  'Namespace-CommodityTariff-Chronology.xml',
+  'Namespace-CommodityTariff-Commodity.xml',
+  'Namespace-CommodityTariff-Flow.xml',
   'Namespace-Common-Area.xml',
   'Namespace-Common-Closure.xml',
   'Namespace-Common-CompassDirection.xml',
@@ -3118,6 +3126,9 @@ const namespacesFiles = [
   'Namespace-Common-Position.xml',
   'Namespace-Common-RelativePosition.xml',
   'Namespace-ElectricalMeasurement.xml',
+  'Namespace-IdentifiedHumanActivity.xml',
+  'Namespace-IdentifiedObject.xml',
+  'Namespace-IdentifiedSound.xml',
   'Namespace-Laundry.xml',
   'Namespace-PowerSource.xml',
   'Namespace-Refrigerator.xml',
