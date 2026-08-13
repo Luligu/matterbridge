@@ -108,6 +108,30 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true });
     expect(device.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 5000, latch: true, speed: ThreeLevelAuto.Auto });
 
+    // Direction, NumberOfSteps and Speed are constrained fields (Matter spec §5.5.8.2.1-3): an out-of-range value
+    // SHALL return CONSTRAINT_ERROR, checked ahead of the latch/mainState InvalidInState checks below.
+    await expect(
+      device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: 2 as ClosureDimension.StepDirection,
+        numberOfSteps: 1,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: ClosureDimension.StepDirection.Increase,
+        numberOfSteps: 0,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: ClosureDimension.StepDirection.Increase,
+        numberOfSteps: 1,
+        speed: 4 as ThreeLevelAuto,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
     // Step is only allowed while CurrentState is unlatched (Matter spec §5.5.8.2.4) and only updates TargetState,
     // computed from CurrentState.Position (Matter spec §5.5.8.2.4).
     await expect(

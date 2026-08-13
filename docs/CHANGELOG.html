@@ -153,6 +153,10 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="3105-dev-branch">[3.10.5] - Dev branch</h2>
+<h3 id="development-news">Development news</h3>
+<ul>
+<li>[closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass).</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[closureControl]: Refactor <code>MoveTo</code> target-state fallbacks and set the main state to <code>Stopped</code> when the closure is already at the requested target, or <code>Moving</code> otherwise.</li>
@@ -161,6 +165,7 @@
 <li>[closureControl]: Add <code>Closure.triggerOperationalError()</code>, <code>Closure.triggerMovementCompleted()</code> and <code>Closure.triggerSecureStateChanged()</code> helpers to emit the <code>OperationalError</code>, <code>MovementCompleted</code> and <code>SecureStateChanged</code> ClosureControl events.</li>
 <li>[closureControl]: Add <code>identifyTime</code>, <code>identifyType</code>, and <code>powerSourceType</code> constructor options to <code>Closure</code>.</li>
 <li>[closureDimension]: Use the Matter <code>Auto</code> fallback when <code>SetTarget</code> omits speed.</li>
+<li>[closureDimension]: Add the conformance to specs for <code>Step</code>: reject the command with <code>CONSTRAINT_ERROR</code> when <code>Direction</code>, <code>NumberOfSteps</code>, or <code>Speed</code> are out of range.</li>
 <li>[thermostat]: Add <code>Thermostat.Feature.MatterScheduleConfiguration</code> support with schedule attributes and <code>SetActiveScheduleRequest</code> handling. Thanks Ludovic BOUÉ.</li>
 <li>[thermostat]: Add <code>Thermostat.Feature.ThermostatSuggestions</code> support with suggestion attributes and <code>AddThermostatSuggestion</code>/<code>RemoveThermostatSuggestion</code> handling. Thanks Ludovic BOUÉ.</li>
 </ul>

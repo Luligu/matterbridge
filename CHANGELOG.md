@@ -45,6 +45,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [closureControl]: Add `Closure.triggerOperationalError()`, `Closure.triggerMovementCompleted()` and `Closure.triggerSecureStateChanged()` helpers to emit the `OperationalError`, `MovementCompleted` and `SecureStateChanged` ClosureControl events.
 - [closureControl]: Add `identifyTime`, `identifyType`, and `powerSourceType` constructor options to `Closure`.
 - [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.
+- [closureDimension]: Add the conformance to specs for `Step`: reject the command with `CONSTRAINT_ERROR` when `Direction`, `NumberOfSteps`, or `Speed` are out of range.
 - [thermostat]: Add `Thermostat.Feature.MatterScheduleConfiguration` support with schedule attributes and `SetActiveScheduleRequest` handling. Thanks Ludovic BOUÉ.
 - [thermostat]: Add `Thermostat.Feature.ThermostatSuggestions` support with suggestion attributes and `AddThermostatSuggestion`/`RemoveThermostatSuggestion` handling. Thanks Ludovic BOUÉ.
 

@@ -167,6 +167,24 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
+    // 5.5.8.2.1. Direction Field
+    // StepDirectionEnum only defines Decrease and Increase: a Direction field outside that range SHALL return CONSTRAINT_ERROR.
+    if (request.direction < ClosureDimension.StepDirection.Decrease || request.direction > ClosureDimension.StepDirection.Increase) {
+      throw new StatusResponse.ConstraintErrorError('ClosureDimension.step direction must be a valid StepDirectionEnum value');
+    }
+
+    // 5.5.8.2.2. NumberOfSteps Field
+    // NumberOfSteps is constrained to be at least 1: a NumberOfSteps of 0 SHALL return CONSTRAINT_ERROR.
+    if (request.numberOfSteps < 1) {
+      throw new StatusResponse.ConstraintErrorError('ClosureDimension.step numberOfSteps must be at least 1');
+    }
+
+    // 5.5.8.2.3. Speed Field
+    // ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
+    if (request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
+      throw new StatusResponse.ConstraintErrorError('ClosureDimension.step speed must be a valid ThreeLevelAutoEnum value');
+    }
+
     // 5.5.8.2.4. Effect on Receipt
     // If this command is received while the Latch field of the CurrentState attribute is True (Latched), a status
     // code of INVALID_IN_STATE SHALL be returned.
