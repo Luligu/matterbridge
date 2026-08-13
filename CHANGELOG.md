@@ -36,6 +36,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
+- [closureControl]: Add the conformance to specs for `MoveTo`: reject the command with `INVALID_COMMAND` when none of `Position`, `Latch`, or `Speed` are present.
 - [closureControl]: Add `Closure.setState()`, `Closure.setFullyClosed()`, `Closure.setFullOpened()` and `Closure.setPartiallyOpened()` helpers.
 - [closureControl]: Add `identifyTime`, `identifyType`, and `powerSourceType` constructor options to `Closure`.
 - [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.

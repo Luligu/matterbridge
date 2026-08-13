@@ -156,6 +156,7 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[closureControl]: Refactor <code>MoveTo</code> target-state fallbacks and set the main state to <code>Stopped</code> when the closure is already at the requested target, or <code>Moving</code> otherwise.</li>
+<li>[closureControl]: Add the conformance to specs for <code>MoveTo</code>: reject the command with <code>INVALID_COMMAND</code> when none of <code>Position</code>, <code>Latch</code>, or <code>Speed</code> are present.</li>
 <li>[closureControl]: Add <code>Closure.setState()</code>, <code>Closure.setFullyClosed()</code>, <code>Closure.setFullOpened()</code> and <code>Closure.setPartiallyOpened()</code> helpers.</li>
 <li>[closureControl]: Add <code>identifyTime</code>, <code>identifyType</code>, and <code>powerSourceType</code> constructor options to <code>Closure</code>.</li>
 <li>[closureDimension]: Use the Matter <code>Auto</code> fallback when <code>SetTarget</code> omits speed.</li>

@@ -62,11 +62,18 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
+    // 5.4.8.2. MoveTo Command
+    // The Position, Latch, and Speed fields are all O.a+ (choice group 'a', at least one required): a MoveTo with
+    // none of them present violates that choice conformance, so a status code of INVALID_COMMAND SHALL be returned.
+    if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
+      throw new StatusResponse.InvalidCommandError('ClosureControl.moveTo requires at least one of position, latch, or speed to be present');
+    }
     // 5.4.8.2.4. Effect on Receipt
     // If this command is received in any state other than Moving, WaitingForMotion, or Stopped, a status code of INVALID_IN_STATE SHALL be returned.
     if (![ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Stopped].includes(this.state.mainState)) {
       throw new StatusResponse.InvalidInStateError('ClosureControl.moveTo is only allowed while Moving, WaitingForMotion, or Stopped');
     }
+    // 5.4.8.2.4. Effect on Receipt
     // If this command requests a position change while the Latch field of the OverallCurrentState attribute is True (Latched),
     // and the Latch field of this command is not set to False (Unlatched), a status code of INVALID_IN_STATE SHALL be returned.
     let currentState = this.state.overallCurrentState;

@@ -213,9 +213,10 @@ describe('Matterbridge ' + NAME, () => {
       secureState: true,
     });
     await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
-    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {});
-    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({ speed: ThreeLevelAuto.Auto });
+    // MoveTo requires at least one of position, latch, or speed (Matter spec §5.4.8.2, O.a+ choice conformance).
+    await expect(device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toBeNull();
 
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
@@ -266,6 +267,31 @@ describe('Matterbridge ' + NAME, () => {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
       speed: ThreeLevelAuto.Auto,
+    });
+
+    // When the requested position, latch, and speed already match OverallCurrentState, MainState resolves directly to Stopped.
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: false,
+      speed: 2,
+      secureState: true,
+    });
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 2,
+    });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 2,
+    });
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+      secureState: true,
     });
 
     await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
