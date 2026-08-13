@@ -320,6 +320,30 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('trigger closure control events', async () => {
+    await device.setFullyClosed();
+
+    await device.triggerMovementCompleted();
+
+    await device.triggerSecureStateChanged(false);
+
+    await device.triggerOperationalError([ClosureControl.ClosureError.MaintenanceRequired]);
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([ClosureControl.ClosureError.MaintenanceRequired]);
+
+    await device.triggerOperationalError();
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([]);
+
+    // Restore the state left by the previous test so later attribute-snapshot assertions are unaffected.
+    await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Moving);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+  });
+
   test('create and add a closure device with two panels', async () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],

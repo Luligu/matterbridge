@@ -158,6 +158,7 @@
 <li>[closureControl]: Refactor <code>MoveTo</code> target-state fallbacks and set the main state to <code>Stopped</code> when the closure is already at the requested target, or <code>Moving</code> otherwise.</li>
 <li>[closureControl]: Add the conformance to specs for <code>MoveTo</code>: reject the command with <code>INVALID_COMMAND</code> when none of <code>Position</code>, <code>Latch</code>, or <code>Speed</code> are present.</li>
 <li>[closureControl]: Add <code>Closure.setState()</code>, <code>Closure.setFullyClosed()</code>, <code>Closure.setFullOpened()</code> and <code>Closure.setPartiallyOpened()</code> helpers.</li>
+<li>[closureControl]: Add <code>Closure.triggerOperationalError()</code>, <code>Closure.triggerMovementCompleted()</code> and <code>Closure.triggerSecureStateChanged()</code> helpers to emit the <code>OperationalError</code>, <code>MovementCompleted</code> and <code>SecureStateChanged</code> ClosureControl events.</li>
 <li>[closureControl]: Add <code>identifyTime</code>, <code>identifyType</code>, and <code>powerSourceType</code> constructor options to <code>Closure</code>.</li>
 <li>[closureDimension]: Use the Matter <code>Auto</code> fallback when <code>SetTarget</code> omits speed.</li>
 <li>[thermostat]: Add <code>Thermostat.Feature.MatterScheduleConfiguration</code> support with schedule attributes and <code>SetActiveScheduleRequest</code> handling. Thanks Ludovic BOUÉ.</li>

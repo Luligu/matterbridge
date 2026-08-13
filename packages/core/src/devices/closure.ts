@@ -323,6 +323,50 @@ export class Closure extends MatterbridgeEndpoint {
   }
 
   /**
+   * Sets the `mainState`/`currentErrorList` attributes to Error and emits a ClosureControl OperationalError event.
+   *
+   * @remarks
+   * Per Matter spec §5.4.9.1, a closure that generates this event SHALL also set the `MainState` attribute to
+   * Error, indicating an error condition.
+   *
+   * @param {ClosureControl.ClosureError[]} [errorState] - The list of active closure errors to report. Defaults to an empty list.
+   * @returns {Promise<void>} Resolves when the attributes have been updated and the event has been emitted.
+   */
+  async triggerOperationalError(errorState: ClosureControl.ClosureError[] = []): Promise<void> {
+    await this.setAttribute(ClosureControl, 'mainState', ClosureControl.MainState.Error);
+    await this.setAttribute(ClosureControl, 'currentErrorList', errorState);
+    await this.triggerEvent(ClosureControl, 'operationalError', { errorState });
+  }
+
+  /**
+   * Emits a ClosureControl MovementCompleted event.
+   *
+   * @remarks
+   * Per Matter spec §5.4.9.2, this event SHALL be generated when the overall operation ends, either successfully or
+   * otherwise, for example upon completion of a movement operation.
+   *
+   * @returns {Promise<void>} Resolves when the event has been emitted.
+   */
+  async triggerMovementCompleted(): Promise<void> {
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    await this.triggerEvent(ClosureControl, 'movementCompleted', undefined);
+  }
+
+  /**
+   * Emits a ClosureControl SecureStateChanged event.
+   *
+   * @remarks
+   * Per Matter spec §5.4.9.4, this event SHALL be generated when the SecureState field in the
+   * `overallCurrentState` attribute changes.
+   *
+   * @param {boolean} secureValue - True when the closure is in a secure state (unauthorized access not possible), false when it is insecure.
+   * @returns {Promise<void>} Resolves when the event has been emitted.
+   */
+  async triggerSecureStateChanged(secureValue: boolean): Promise<void> {
+    await this.triggerEvent(ClosureControl, 'secureStateChanged', { secureValue });
+  }
+
+  /**
    * Adds a closure panel as a child endpoint of this closure and configures its ClosureDimension cluster.
    *
    * @remarks
