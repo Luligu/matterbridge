@@ -33,6 +33,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.5] - Dev branch
 
+### Development news
+
+- [closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass).
+
 ### Added
 
 - [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.

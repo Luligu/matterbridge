@@ -312,6 +312,11 @@ describe('Matterbridge ' + NAME, () => {
       speed: ThreeLevelAuto.Auto,
     });
 
+    // Stop always succeeds, but only transitions MainState to Stopped when it was Moving, WaitingForMotion, or
+    // Calibrating (Matter spec §5.4.8.1); an unrelated state like Error is left untouched.
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+
     await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Moving);
     await device.setAttribute(ClosureControl.id, 'overallTargetState', {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
@@ -373,6 +378,81 @@ describe('Matterbridge ' + NAME, () => {
     expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getAttribute('Descriptor', 'tagList')).toEqual([
       { mfgCode: null, namespaceId: ClosurePanelTag.Tilt.namespaceId, tag: ClosurePanelTag.Tilt.tag },
     ]);
+  });
+
+  test('invoke closure dimension setTarget validation', async () => {
+    const liftPanel = venetianBlind.getChildEndpointByOriginalId('Lift');
+    const tiltPanel = venetianBlind.getChildEndpointByOriginalId('Tilt');
+    expect(liftPanel).toBeDefined();
+    expect(tiltPanel).toBeDefined();
+    if (!liftPanel || !tiltPanel) return;
+
+    // SetTarget requires at least one of position, latch, or speed (Matter spec §5.5.8.1, O.a+ choice conformance).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+
+    // percent100ths is constrained to 0-10000 (Matter spec §5.5.8.1.1).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 10001 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // ThreeLevelAutoEnum only defines Auto, Low, Medium and High (Matter spec §5.5.8.1.3).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: 5 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // The Lift panel defaults to a latched CurrentState, so a position change without an explicit latch: false
+    // SHALL be rejected (Matter spec §5.5.8.1.4).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 3000 })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 3000, latch: false });
+    expect(liftPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 3000, latch: false });
+
+    // The Tilt panel's LatchControlModes only allows remote unlatching, so a latch: true request requires manual
+    // intervention and SHALL be rejected (Matter spec §5.5.8.1.2).
+    await expect(tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: false });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ latch: false });
+
+    // While the associated ClosureControl MainState is Error, SetTarget SHALL be rejected (Matter spec §5.5.8.1.4).
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: ThreeLevelAuto.Low })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+
+    // If all field values in the command match CurrentState, the command SHALL have no effect (Matter spec §5.5.8.1.4).
+    await tiltPanel.setAttribute(ClosureDimension.id, 'currentState', { position: 1000, latch: false, speed: ThreeLevelAuto.Low });
+    await tiltPanel.setAttribute(ClosureDimension.id, 'targetState', { position: 500, latch: false, speed: ThreeLevelAuto.Auto });
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 1000, latch: false, speed: ThreeLevelAuto.Low });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 500, latch: false, speed: ThreeLevelAuto.Auto });
+  });
+
+  test('invoke closure dimension step validation', async () => {
+    const tiltPanel = venetianBlind.getChildEndpointByOriginalId('Tilt');
+    expect(tiltPanel).toBeDefined();
+    if (!tiltPanel) return;
+
+    // CurrentState is unlatched here (left over from the previous test), so Step is allowed while MainState is Stopped.
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'currentState')).toMatchObject({ latch: false });
+
+    // While the associated ClosureControl MainState is Error, Step SHALL be rejected (Matter spec §5.5.8.2.4).
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await expect(
+      tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: ClosureDimension.StepDirection.Increase,
+        numberOfSteps: 1,
+      }),
+    ).rejects.toMatchObject({ code: Status.InvalidInState });
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+      direction: ClosureDimension.StepDirection.Increase,
+      numberOfSteps: 1,
+    });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 1100 });
   });
 
   test('device forEachAttribute', () => {

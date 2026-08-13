@@ -53,7 +53,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MoveTo (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Always forward the MoveTo command to the Matterbridge command handler without validation, even if the device is already at the target state, to allow for external control of the closure.
+    // Always forward the command to the Matterbridge command handler without validation to allow for external control of the closure.
     await device.commandHandler.executeHandler('ClosureControl.moveTo', {
       command: 'moveTo',
       request,
@@ -114,6 +114,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
   override stop = async (): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Always forward the command to the Matterbridge command handler without validation to allow for external control of the closure.
     await device.commandHandler.executeHandler('ClosureControl.stop', {
       command: 'stop',
       request: {},
@@ -122,7 +123,12 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
-    this.state.mainState = ClosureControl.MainState.Stopped;
+    // 5.4.8.1. Stop Command
+    // If MainState has one of Moving, WaitingForMotion, or Calibrating, any motions SHALL be stopped and MainState
+    // SHALL be set to Stopped. A status code of SUCCESS SHALL always be returned, regardless of MainState.
+    if ([ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Calibrating].includes(this.state.mainState)) {
+      this.state.mainState = ClosureControl.MainState.Stopped;
+    }
   };
 }
 
