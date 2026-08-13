@@ -24,17 +24,27 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { stringify } from 'node-ansi-logger';
 
-import { ClosurePanel } from '../../src/devices/closurePanel.js';
+import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from '../../src/devices/closurePanel.js';
 import { closurePanel } from '../../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
-  let device: ClosurePanel;
-  let device2: ClosurePanel;
-  let device3: ClosurePanel;
-  let device4: ClosurePanel;
+  let device: MatterbridgeEndpoint;
+  let device2: MatterbridgeEndpoint;
+  let device3: MatterbridgeEndpoint;
+  let device4: MatterbridgeEndpoint;
+
+  const createClosurePanelTestEndpoint = (name: string, serial: string, dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}): MatterbridgeEndpoint => {
+    const endpoint = new MatterbridgeEndpoint([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+
+    endpoint.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
+    createClosureDimensionClusterServer(endpoint, dimensionType, options);
+
+    return endpoint;
+  };
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -66,7 +76,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a closure panel device', () => {
-    device = new ClosurePanel('Closure Panel Test Device', 'CP123456', 'lift', { stepValue: 100 });
+    device = createClosurePanelTestEndpoint('Closure Panel Test Device', 'CP123456', 'lift', { stepValue: 100 });
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosurePanelTestDevice-CP123456');
 
@@ -109,7 +119,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke step clamp branches', async () => {
-    device2 = new ClosurePanel('Closure Panel Test Device 2', 'CP654321', 'lift', { resolution: 2, stepValue: 6000 });
+    device2 = createClosurePanelTestEndpoint('Closure Panel Test Device 2', 'CP654321', 'lift', { resolution: 2, stepValue: 6000 });
     expect(await addDevice(server, device2)).toBeTruthy();
 
     await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
@@ -126,7 +136,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('invoke closure dimension fallback branches', async () => {
-    device4 = new ClosurePanel('Closure Panel Test Device 4', 'CP456789', 'lift', {
+    device4 = createClosurePanelTestEndpoint('Closure Panel Test Device 4', 'CP456789', 'lift', {
       currentState: { position: null, latch: true, speed: ThreeLevelAuto.Auto },
       targetState: { position: 300, latch: true, speed: ThreeLevelAuto.Auto },
       stepValue: 10,
@@ -157,12 +167,12 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('cover constructor option defaults', async () => {
-    device3 = new ClosurePanel('Closure Panel Test Device 3', 'CP345678', 'lift');
+    device3 = createClosurePanelTestEndpoint('Closure Panel Test Device 3', 'CP345678', 'lift');
     expect(await addDevice(server, device3)).toBeTruthy();
   });
 
   test('create a closure panel device with modulation dimension type', async () => {
-    const device5 = new ClosurePanel('Closure Panel Test Device 5', 'CP567890', 'modulation');
+    const device5 = createClosurePanelTestEndpoint('Closure Panel Test Device 5', 'CP567890', 'modulation');
     expect(await addDevice(server, device5)).toBeTruthy();
     expect(device5.getAttribute(ClosureDimension.id, 'modulationType')).toBe(ClosureDimension.ModulationType.SlatsOrientation);
   });

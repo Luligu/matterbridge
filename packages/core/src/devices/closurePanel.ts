@@ -28,13 +28,11 @@
 // @matter
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
-import type { Semtag } from '@matter/types/globals';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { closurePanel } from '../matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /**
@@ -134,29 +132,6 @@ export interface ClosurePanelOptions {
   overflow?: ClosureDimension.Overflow;
   /** Type of modulation. Only used when `dimensionType` is `'modulation'`. Defaults to SlatsOrientation. */
   modulationType?: ClosureDimension.ModulationType;
-  /** Semantic tags used to disambiguate sibling closure panels. */
-  tagList?: Semtag[];
-}
-
-/**
- * Matterbridge endpoint representing a closure panel device.
- */
-export class ClosurePanel extends MatterbridgeEndpoint {
-  /**
-   * Creates a ClosurePanel endpoint and configures the ClosureDimension cluster.
-   *
-   * @param {string} name - Human-readable device name.
-   * @param {string} serial - Device serial number.
-   * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `'lift'` (Translation), `'tilt'` (Rotation) or `'modulation'`.
-   * @param {ClosurePanelOptions} [options] - Optional initial configuration values, including the tagList used to disambiguate sibling panels (e.g. `ClosurePanelTag.Lift` and `ClosurePanelTag.Tilt`).
-   */
-  constructor(name: string, serial: string, dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}) {
-    super([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
-
-    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
-
-    createClosureDimensionClusterServer(this, dimensionType, options);
-  }
 }
 
 /**

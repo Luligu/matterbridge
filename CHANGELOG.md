@@ -36,6 +36,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
+- [closureControl]: Add `Closure.setState()`, `Closure.setFullyClosed()`, `Closure.setFullOpened()` and `Closure.setPartiallyOpened()` helpers.
+- [closureControl]: Add `identifyTime`, `identifyType`, and `powerSourceType` constructor options to `Closure`.
 - [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.
 - [thermostat]: Add `Thermostat.Feature.MatterScheduleConfiguration` support with schedule attributes and `SetActiveScheduleRequest` handling. Thanks Ludovic BOUÉ.
 - [thermostat]: Add `Thermostat.Feature.ThermostatSuggestions` support with suggestion attributes and `AddThermostatSuggestion`/`RemoveThermostatSuggestion` handling. Thanks Ludovic BOUÉ.
@@ -4022,4 +4024,3 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ### Removed
 
 - [event]: Removed all event code.
-

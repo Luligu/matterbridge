@@ -26,16 +26,20 @@
 /* oxlint-disable typescript/no-misused-spread */
 
 // @matter
+import { ClosureTag } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
+import { StatusResponse } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { Identify } from '@matter/types/clusters/identify';
 import type { Semtag } from '@matter/types/globals';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { closure, closurePanel } from '../matterbridgeDeviceTypes.js';
+import { closure, closurePanel, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from './closurePanel.js';
 
 /**
@@ -49,6 +53,7 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MoveTo (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Always forward the MoveTo command to the Matterbridge command handler without validation, even if the device is already at the target state, to allow for external control of the closure.
     await device.commandHandler.executeHandler('ClosureControl.moveTo', {
       command: 'moveTo',
       request,
@@ -57,16 +62,40 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
 
+    // 5.4.8.2.4. Effect on Receipt
+    // If this command is received in any state other than Moving, WaitingForMotion, or Stopped, a status code of INVALID_IN_STATE SHALL be returned.
+    if (![ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Stopped].includes(this.state.mainState)) {
+      throw new StatusResponse.InvalidInStateError('ClosureControl.moveTo is only allowed while Moving, WaitingForMotion, or Stopped');
+    }
+    // If this command requests a position change while the Latch field of the OverallCurrentState attribute is True (Latched),
+    // and the Latch field of this command is not set to False (Unlatched), a status code of INVALID_IN_STATE SHALL be returned.
+    let currentState = this.state.overallCurrentState;
+    if (currentState?.latch === true && request.position !== undefined && request.latch !== false) {
+      throw new StatusResponse.InvalidInStateError('ClosureControl.moveTo position changes require latch false while the closure is latched');
+    }
+
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
       ...previousTarget,
+      // 5.4.8.2.1. Position Field
       ...(request?.position !== undefined ? { position: request.position } : null),
+      // 5.4.8.2.2. Latch Field
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
+      // 5.4.8.2.3. Speed Field
       speed: request?.speed ?? ThreeLevelAuto.Auto,
     };
     this.state.overallTargetState = nextTarget;
 
-    const currentState = this.state.overallCurrentState;
+    // If the closure supports the Speed(SP) feature, it SHALL set the Speed field of the OverallCurrentState attribute to the new speed.
+    if (currentState !== null) {
+      currentState = { ...currentState, speed: nextTarget.speed };
+      this.state.overallCurrentState = currentState;
+    }
+
+    // If all field values in the command match the corresponding field values in OverallCurrentState Attribute,
+    // the MainState Attribute SHALL be set to Stopped, and no further action SHALL be taken.
+    // If the closure is not able to move e.g. due to power limitation, the MainState attribute SHALL be
+    // set to WaitingForMotion, else the MainState Attribute SHALL be set to Moving.
     const isAtTarget =
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
@@ -91,6 +120,14 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
 }
 
 export interface ClosureOptions {
+  /** Identify time in seconds. Default: 0 */
+  identifyTime?: number;
+  /** Identify type. Default: Identify.IdentifyType.None */
+  identifyType?: Identify.IdentifyType;
+
+  /** Power source type. Default: Wired (with None, the Power Source cluster will not be created) */
+  powerSourceType?: 'Rechargeable' | 'Replaceable' | 'Battery' | 'Wired' | 'None';
+
   /** Initial ClosureControl countdown time, in seconds. Defaults to 0 for a completed safe state. */
   countdownTime?: number;
   /** Initial ClosureControl main state. Defaults to stopped. */
@@ -103,7 +140,14 @@ export interface ClosureOptions {
   overallTargetState?: ClosureControl.OverallTargetState;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
-  /** Optional semantic tags for endpoint disambiguation. */
+  /**
+   * Semantic tags for endpoint disambiguation. Defaults to the Closure Covering tag.
+   *
+   * A Closure SHALL use exactly one semantic tag from the Closure namespace (0x44) in the TagList attribute
+   * of the Descriptor cluster to describe the primary function of the device (e.g. "Covering", "Window", "Barrier", "Cabinet", "Gate", "GarageDoor", "Door").
+   * Semantic tags from the Closure Covering (0x46), Closure Window (0x47) and Closure Cabinet (0x48) namespaces,
+   * in addition to the Common namespaces, MAY be used to convey additional configuration information.
+   */
   tagList?: Semtag[];
 }
 
@@ -116,30 +160,62 @@ export class Closure extends MatterbridgeEndpoint {
    *
    * @param {string} name - Human-readable device name.
    * @param {string} serial - Device serial number.
-   * @param {ClosureOptions} [options] - Optional endpoint options and initial cluster state values.
+   * @param {ClosureOptions} options - Endpoint options and initial cluster state values. Defaults to a fully closed, latched, and secure state with no errors.
    */
   constructor(name: string, serial: string, options: ClosureOptions = {}) {
-    super([closure], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: options.tagList });
-
-    this.createDefaultIdentifyClusterServer();
-    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
-
-    this.behaviors.require(MatterbridgeClosureControlServer, {
-      countdownTime: options.countdownTime ?? 0,
-      mainState: options.mainState ?? ClosureControl.MainState.Stopped,
-      currentErrorList: [],
-      overallCurrentState: options.overallCurrentState ?? {
+    const {
+      identifyTime = 0,
+      identifyType = Identify.IdentifyType.None,
+      powerSourceType = 'Wired',
+      countdownTime = 0,
+      mainState = ClosureControl.MainState.Stopped,
+      currentErrorList = [],
+      overallCurrentState = {
         position: ClosureControl.CurrentPosition.FullyClosed,
         latch: true,
         speed: ThreeLevelAuto.Auto,
         secureState: true,
       },
-      overallTargetState: options.overallTargetState ?? {
+      overallTargetState = {
         position: ClosureControl.TargetPosition.MoveToFullyClosed,
         latch: true,
         speed: ThreeLevelAuto.Auto,
       },
-      latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
+      latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      tagList = [getSemtag(ClosureTag.Covering)],
+    } = options;
+    super(powerSourceType === 'None' ? [closure] : [closure, powerSource], {
+      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      tagList,
+    });
+
+    this.createDefaultIdentifyClusterServer(identifyTime, identifyType);
+    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure');
+    switch (powerSourceType) {
+      case 'Rechargeable':
+        this.createDefaultPowerSourceRechargeableBatteryClusterServer();
+        break;
+      case 'Replaceable':
+        this.createDefaultPowerSourceReplaceableBatteryClusterServer();
+        break;
+      case 'Battery':
+        this.createDefaultPowerSourceBatteryClusterServer();
+        break;
+      case 'Wired':
+        this.createDefaultPowerSourceWiredClusterServer();
+        break;
+      case 'None':
+        break;
+      // No default
+    }
+
+    this.behaviors.require(MatterbridgeClosureControlServer, {
+      countdownTime,
+      mainState,
+      currentErrorList,
+      overallCurrentState,
+      overallTargetState,
+      latchControlModes,
     });
   }
 
@@ -153,19 +229,114 @@ export class Closure extends MatterbridgeEndpoint {
   }
 
   /**
+   * Sets the ClosureControl state attributes with the supplied current and target states.
+   *
+   * @param {ClosureControl.OverallCurrentState} currentState - Current closure state to expose.
+   * @param {ClosureControl.OverallTargetState} targetState - Target closure state to expose.
+   * @param {ClosureControl.MainState} [mainState] - Main state to expose. Defaults to Stopped.
+   * @param {number} [countdownTime] - Countdown time in seconds. Defaults to 0.
+   * @param {ClosureControl.ClosureError[]} [currentErrorList] - Current error list to expose. Defaults to an empty list.
+   * @returns {Promise<void>} Resolves when all required ClosureControl state attributes have been updated.
+   */
+  async setState(
+    currentState: ClosureControl.OverallCurrentState,
+    targetState: ClosureControl.OverallTargetState,
+    mainState: ClosureControl.MainState = ClosureControl.MainState.Stopped,
+    countdownTime = 0,
+    currentErrorList: ClosureControl.ClosureError[] = [],
+  ): Promise<void> {
+    await this.setAttribute(ClosureControl, 'countdownTime', countdownTime);
+    await this.setAttribute(ClosureControl, 'mainState', mainState);
+    await this.setAttribute(ClosureControl, 'currentErrorList', currentErrorList);
+    await this.setAttribute(ClosureControl, 'overallCurrentState', currentState);
+    await this.setAttribute(ClosureControl, 'overallTargetState', targetState);
+  }
+
+  /**
+   * Sets the ClosureControl attributes to a fully closed, latched, and secure state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setFullyClosed(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+        secureState: true,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToFullyClosed,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to a fully opened, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setFullOpened(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to a partially opened, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setPartiallyOpened(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.PartiallyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: null,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
    * Adds a closure panel as a child endpoint of this closure and configures its ClosureDimension cluster.
    *
    * @remarks
    * Use this to compose a closure out of one or more independently controlled panels, for example a venetian
    * blind with a `ClosurePanelTag.Lift` panel and a `ClosurePanelTag.Tilt` panel.
    *
+   * A Closure Panel SHALL use exactly one semantic tag from the ClosurePanel namespace (0x45) in
+   * the TagList attribute of the Descriptor cluster to describe the spatial aspect of the dimension, e.g.,
+   * "Lift", "Tilt", etc.
+   *
+   * The TagList in the Descriptor cluster of an endpoint with this device type SHALL meet the following constraints:
+   * • There SHALL be exactly one tag from the ClosurePanel namespace (namespace 0x45).
+   * • There SHALL NOT be any tag from the Closure namespace (namespace 0x44).
+   *
    * @param {string} name - Human-readable name of the panel endpoint.
-   * @param {Semtag[]} tagList - The tagList used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`).
-   * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `'lift'` (Translation), `'tilt'` (Rotation) or `'modulation'`.
-   * @param {Omit<ClosurePanelOptions, 'tagList'>} [options] - Optional initial ClosureDimension cluster state values.
+   * @param {Semtag[]} tagList - The Closure Panel tagList (0x45) used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`, `ClosurePanelTag.Sliding`, `ClosurePanelTag.Rotate`).
+   * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `lift` (ClosureDimension.Feature.Translation), `tilt` (ClosureDimension.Feature.Rotation) or `modulation` (ClosureDimension.Feature.Modulation).
+   * @param {ClosurePanelOptions} [options] - Optional initial ClosureDimension cluster state values.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
-  addPanel(name: string, tagList: Semtag[], dimensionType: ClosureDimensionType, options: Omit<ClosurePanelOptions, 'tagList'> = {}): MatterbridgeEndpoint {
+  addPanel(name: string, tagList: Semtag[], dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}): MatterbridgeEndpoint {
     const panel = this.addChildDeviceType(name, closurePanel, { tagList });
 
     createClosureDimensionClusterServer(panel, dimensionType, options);

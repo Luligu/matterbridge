@@ -149,12 +149,15 @@
 <a href="https://www.npmjs.com/package/node-persist-manager"><img src="https://img.shields.io/badge/powered%20by-node--persist--manager-blue" alt="powered by"></a></p>
 <hr>
 <p>All notable changes to this project will be documented in this file.</p>
+<p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="3105-dev-branch">[3.10.5] - Dev branch</h2>
 <h3 id="added">Added</h3>
 <ul>
 <li>[closureControl]: Refactor <code>MoveTo</code> target-state fallbacks and set the main state to <code>Stopped</code> when the closure is already at the requested target, or <code>Moving</code> otherwise.</li>
+<li>[closureControl]: Add <code>Closure.setState()</code>, <code>Closure.setFullyClosed()</code>, <code>Closure.setFullOpened()</code> and <code>Closure.setPartiallyOpened()</code> helpers.</li>
+<li>[closureControl]: Add <code>identifyTime</code>, <code>identifyType</code>, and <code>powerSourceType</code> constructor options to <code>Closure</code>.</li>
 <li>[closureDimension]: Use the Matter <code>Auto</code> fallback when <code>SetTarget</code> omits speed.</li>
 <li>[thermostat]: Add <code>Thermostat.Feature.MatterScheduleConfiguration</code> support with schedule attributes and <code>SetActiveScheduleRequest</code> handling. Thanks Ludovic BOUÉ.</li>
 <li>[thermostat]: Add <code>Thermostat.Feature.ThermostatSuggestions</code> support with suggestion attributes and <code>AddThermostatSuggestion</code>/<code>RemoveThermostatSuggestion</code> handling. Thanks Ludovic BOUÉ.</li>
@@ -3735,36 +3738,6 @@ A special thank to Tamer Salah (<a href="https://github.com/tammeryousef1006">ht
 <ul>
 <li>[event]: Removed all event code.</li>
 </ul>
-<!-- Commented out section
-## [1.1.2] - 2024-03-08
-
-### Added
-
-- [Feature 1]: Description of the feature.
-- [Feature 2]: Description of the feature.
-
-### Changed
-
-- [Feature 3]: Description of the change.
-- [Feature 4]: Description of the change.
-
-### Deprecated
-
-- [Feature 5]: Description of the deprecation.
-
-### Removed
-
-- [Feature 6]: Description of the removal.
-
-### Fixed
-
-- [Bug 1]: Description of the bug fix.
-- [Bug 2]: Description of the bug fix.
-
-### Security
-
-- [Security 1]: Description of the security improvement.
--->
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
