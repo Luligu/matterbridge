@@ -172,7 +172,7 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgeVersion: '3.10.5',
     matterbridgeLatestVersion: '3.10.5',
     matterbridgeDevVersion: '3.10.5',
-    frontendVersion: '3.10.5',
+    frontendVersion: '3.5.7',
     bridgeMode: 'none',
     restartMode: 'none',
     virtualMode: 'mounted_switch',
