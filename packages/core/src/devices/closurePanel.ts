@@ -243,9 +243,9 @@ export interface ClosurePanelOptions {
   currentState?: ClosureDimension.DimensionState;
   /** Initial target state. Defaults to latched and fully closed. */
   targetState?: ClosureDimension.DimensionState;
-  /** Position resolution of the ClosureDimension cluster. Defaults to 1. */
+  /** Position resolution of the ClosureDimension cluster. Constrained by the specs to a minimum of 1 (0.01%). Defaults to 1. */
   resolution?: number;
-  /** Number of units moved for each Step command. Defaults to 1. */
+  /** Number of units moved for each Step command. Constrained by the specs to a minimum of 1 (0.01%). Defaults to 1. */
   stepValue?: number;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
@@ -272,8 +272,9 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
   const commonOptions = {
     currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
     targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-    resolution: options.resolution ?? 1,
-    stepValue: options.stepValue ?? 1,
+    // Resolution and StepValue are percent100ths with a specs constraint of "min 0.01%" (i.e. a minimum value of 1).
+    resolution: Math.max(1, options.resolution ?? 1),
+    stepValue: Math.max(1, options.stepValue ?? 1),
     latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
   };
 

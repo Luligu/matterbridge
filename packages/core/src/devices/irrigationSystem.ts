@@ -70,9 +70,6 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
   /*
    * Helper method to add a new irrigation zone to the system.
    * Each zone is represented as a child device of type Water Valve, with the appropriate tags.
-   */
-  /**
-   * Adds a new irrigation zone child endpoint.
    *
    * @param {Semtag} tag - Semantic tag describing the zone (e.g. CommonNumberTag.One).
    * @returns {this} The current endpoint instance for chaining.

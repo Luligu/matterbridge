@@ -181,6 +181,7 @@
 <li>[microwaveOven]: Use the <code>PowerAsNumber</code> and <code>PowerNumberLimits</code> features instead of <code>PowerInWatts</code> for the <code>MicrowaveOvenControl</code> cluster, and handle the <code>PowerSetting</code> field in <code>SetCookingParameters</code> accordingly.</li>
 <li>[closureDimension]: <code>ClosurePanel</code> and <code>Closure.addPanel()</code> now require a <code>dimensionType</code> (<code>&#39;lift&#39;</code>, <code>&#39;tilt&#39;</code> or <code>&#39;modulation&#39;</code>) and enable the matching Translation/Rotation/Modulation feature, as required by the <code>[PS].b</code> conformance rule when Positioning is supported.</li>
 <li>[thermostat]: Remove the workaround that stripped the <code>AtomicRequest</code>/<code>AtomicResponse</code> commands from <code>acceptedCommandList</code>/<code>generatedCommandList</code> on <code>MatterbridgeThermostatServer</code>; matter.js now handles the atomic-write commands correctly.</li>
+<li>[data-model]: Fix missed namspaces.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3104-2026-08-07">[3.10.4] - 2026-08-07</h2>

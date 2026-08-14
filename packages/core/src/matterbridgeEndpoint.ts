@@ -3297,7 +3297,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets ?? 0)) : 0,
           1,
         ), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute, and must be consistent with the per-type capacities advertised in presetTypes.
-        activePresetHandle: activePresetHandle ? Uint8Array.from([activePresetHandle]) : null,
+        activePresetHandle: activePresetHandle ? Uint8Array.from(activePresetHandle) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
         presets: (presets ?? []).map((p) => ({
           presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
