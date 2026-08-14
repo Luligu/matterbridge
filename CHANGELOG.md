@@ -31,6 +31,25 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.6] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.6.
+- [matterbridge]: Bump `@types/node` to v.26.2.0.
+- [matterbridge]: Bump `oxfmt` to v.0.63.0.
+- [matterbridge]: Bump `oxlint` to v.1.78.0.
+- [core]: Bump `ws` to v.8.21.3.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
+- [frontend]: Bump `frontend` version to v.3.5.8.
+- [frontend]: Bump `@testing-library/jest-dom` to v.7.0.1.
+- [frontend]: Bump `@types/node` to v.26.2.0.
+- [frontend]: Bump `globals` to v.17.11.0.
+- [frontend]: Bump `oxfmt` to v.0.63.0.
+- [frontend]: Bump `oxlint` to v.1.78.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.5] - 2026-08-14
 
 ### Development news
