@@ -101,15 +101,19 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a single zone battery irrigation system device', () => {
-    singleZoneBatteryDevice = new IrrigationSystem('Irrigation System Single Zone', 'IRBAT001', { singleZone: true, batteryPowered: true, flowMeasuredValue: 45 });
+    singleZoneBatteryDevice = new IrrigationSystem('Irrigation System Single Zone', 'IRBAT001', { batteryPowered: true, flowMeasuredValue: 45 }).addZone(
+      getSemtag(CommonNumberTag.One),
+    );
     expect(singleZoneBatteryDevice).toBeDefined();
     expect(singleZoneBatteryDevice.id).toBe('IrrigationSystemSingleZone-IRBAT001');
+    expect(singleZoneBatteryDevice.getChildEndpointByOriginalId('Zone 1')).toBeDefined();
 
     expect(singleZoneBatteryDevice.hasClusterServer(Identify.id)).toBeTruthy();
     expect(singleZoneBatteryDevice.hasClusterServer(OperationalState.id)).toBeTruthy();
     expect(singleZoneBatteryDevice.hasClusterServer(FlowMeasurement.id)).toBeTruthy();
     expect(singleZoneBatteryDevice.hasClusterServer(PowerSource.id)).toBeTruthy();
-    expect(singleZoneBatteryDevice.hasClusterServer(ValveConfigurationAndControl.id)).toBeTruthy();
+    expect(singleZoneBatteryDevice.hasClusterServer(ValveConfigurationAndControl.id)).toBeFalsy();
+    expect(singleZoneBatteryDevice.getChildEndpointByOriginalId('Zone 1')?.hasClusterServer(ValveConfigurationAndControl.id)).toBeTruthy();
 
     expect(singleZoneBatteryDevice.getClusterServerOptions(FlowMeasurement.id)).toMatchObject({ measuredValue: 45 });
     expect(singleZoneBatteryDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({
@@ -270,11 +274,11 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 64, revision: 1 }, { deviceType: 66, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 64, revision: 1 }, { deviceType: 17, revision: 1 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
-        'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 96, 129, 1028 ]',
+        'descriptor(0x1d).partsList(0x3)=[ 8 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 96, 1028 ]',
         'flowMeasurement(0x404).acceptedCommandList(0xfff9)=[  ]',
         'flowMeasurement(0x404).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'flowMeasurement(0x404).clusterRevision(0xfffd)=5',
@@ -312,26 +316,11 @@ describe('Matterbridge ' + NAME, () => {
         'powerSource(0x2f).batVoltage(0xb)=null',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
         "powerSource(0x2f).description(0x2)='Primary battery'",
-        'powerSource(0x2f).endpointList(0x1f)=[ 7 ]',
+        'powerSource(0x2f).endpointList(0x1f)=[ 7, 8 ]',
         'powerSource(0x2f).featureMap(0xfffc)={ wired: false, battery: true, rechargeable: false, replaceable: false }',
         'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
         'powerSource(0x2f).order(0x1)=0',
         'powerSource(0x2f).status(0x0)=1',
-        'valveConfigurationAndControl(0x81).acceptedCommandList(0xfff9)=[ 0, 1 ]',
-        'valveConfigurationAndControl(0x81).attributeList(0xfffb)=[ 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 65528, 65529, 65531, 65532, 65533 ]',
-        'valveConfigurationAndControl(0x81).clusterRevision(0xfffd)=1',
-        'valveConfigurationAndControl(0x81).currentLevel(0x6)=0',
-        'valveConfigurationAndControl(0x81).currentState(0x4)=0',
-        'valveConfigurationAndControl(0x81).defaultOpenDuration(0x1)=null',
-        'valveConfigurationAndControl(0x81).defaultOpenLevel(0x8)=100',
-        'valveConfigurationAndControl(0x81).featureMap(0xfffc)={ timeSync: false, level: true }',
-        'valveConfigurationAndControl(0x81).generatedCommandList(0xfff8)=[  ]',
-        'valveConfigurationAndControl(0x81).levelStep(0xa)=1',
-        'valveConfigurationAndControl(0x81).openDuration(0x0)=null',
-        'valveConfigurationAndControl(0x81).remainingDuration(0x3)=null',
-        'valveConfigurationAndControl(0x81).targetLevel(0x7)=0',
-        'valveConfigurationAndControl(0x81).targetState(0x5)=0',
-        'valveConfigurationAndControl(0x81).valveFault(0x9)={ generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false }',
       ].toSorted(),
     );
   });

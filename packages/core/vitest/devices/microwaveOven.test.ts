@@ -148,14 +148,16 @@ describe('Matterbridge ' + NAME, () => {
         'identify(0x3).identifyTime(0x0)=0',
         'identify(0x3).identifyType(0x1)=0',
         'microwaveOvenControl(0x5f).acceptedCommandList(0xfff9)=[ 0, 1 ]',
-        'microwaveOvenControl(0x5f).attributeList(0xfffb)=[ 0, 1, 6, 7, 65528, 65529, 65531, 65532, 65533 ]',
+        'microwaveOvenControl(0x5f).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'microwaveOvenControl(0x5f).clusterRevision(0xfffd)=1',
         'microwaveOvenControl(0x5f).cookTime(0x0)=60',
-        'microwaveOvenControl(0x5f).featureMap(0xfffc)={ powerAsNumber: false, powerInWatts: true, powerNumberLimits: false }',
+        'microwaveOvenControl(0x5f).featureMap(0xfffc)={ powerAsNumber: true, powerInWatts: false, powerNumberLimits: true }',
         'microwaveOvenControl(0x5f).generatedCommandList(0xfff8)=[  ]',
         'microwaveOvenControl(0x5f).maxCookTime(0x1)=3600',
-        'microwaveOvenControl(0x5f).selectedWattIndex(0x7)=5',
-        'microwaveOvenControl(0x5f).supportedWatts(0x6)=[ 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000 ]',
+        'microwaveOvenControl(0x5f).maxPower(0x4)=100',
+        'microwaveOvenControl(0x5f).minPower(0x3)=10',
+        'microwaveOvenControl(0x5f).powerSetting(0x2)=100',
+        'microwaveOvenControl(0x5f).powerStep(0x5)=10',
         'microwaveOvenMode(0x5e).acceptedCommandList(0xfff9)=[  ]',
         'microwaveOvenMode(0x5e).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'microwaveOvenMode(0x5e).clusterRevision(0xfffd)=2',
@@ -210,61 +212,49 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
-    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
 
     // Test setCookingParameters - valid cookMode only
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 2`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
-    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
 
-    // Test setCookingParameters - no cookMode provided but valid cookTime and wattSettingIndex
+    // Test setCookingParameters - no cookMode provided but valid cookTime and powerSetting
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 120, wattSettingIndex: 3 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 120, powerSetting: 30 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 120`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 3`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 30`);
 
     // Test setCookingParameters - invalid cookTime (<0) -> default to 30sec
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: -5, wattSettingIndex: 0 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: -5, powerSetting: 10 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 7`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 10`);
 
     // Test setCookingParameters - cookTime > maxCookTime -> default to 30sec
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
-    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
 
-    // Test setCookingParameters - invalid wattSettingIndex (out of range) -> default to highest supported index
+    // Test setCookingParameters - invalid powerSetting (out of range) -> default to maxPower
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, wattSettingIndex: 100 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, powerSetting: 150 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 3`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 45`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no wattSettingIndex so set to the highest Watt setting for the selected CookMode`,
-    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
 
     // Test setCookingParameters - all valid values
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 4, cookTime: 90, wattSettingIndex: 2 });
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 4, cookTime: 90, powerSetting: 50 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 4`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 90`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting selectedWattIndex to 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 50`);
 
     // Test setCookingParameters - startAfterSetting false (no change expected)
     vi.clearAllMocks();

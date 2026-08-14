@@ -25,9 +25,45 @@
 
 All notable changes to this project will be documented in this file.
 
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+
+## [3.10.5] - 2026-08-14
+
+### Development news
+
+- [closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass). So far fully supported by SmartThings and partially by Matter Server dashboard.
+
+### Added
+
+- [closureControl]: Refactor `MoveTo` target-state fallbacks and set the main state to `Stopped` when the closure is already at the requested target, or `Moving` otherwise.
+- [closureControl]: Add the conformance to specs for `MoveTo`: reject the command with `INVALID_COMMAND` when none of `Position`, `Latch`, or `Speed` are present.
+- [closureControl]: Add `Closure.setState()`, `Closure.setFullyClosed()`, `Closure.setFullOpened()` and `Closure.setPartiallyOpened()` helpers.
+- [closureControl]: Add `Closure.triggerOperationalError()`, `Closure.triggerMovementCompleted()` and `Closure.triggerSecureStateChanged()` helpers to emit the `OperationalError`, `MovementCompleted` and `SecureStateChanged` ClosureControl events.
+- [closureControl]: Add `identifyTime`, `identifyType`, and `powerSourceType` constructor options to `Closure`.
+- [closureDimension]: Use the Matter `Auto` fallback when `SetTarget` omits speed.
+- [closureDimension]: Add the conformance to specs for `Step`: reject the command with `CONSTRAINT_ERROR` when `Direction`, `NumberOfSteps`, or `Speed` are out of range.
+- [thermostat]: Add `Thermostat.Feature.MatterScheduleConfiguration` support with schedule attributes and `SetActiveScheduleRequest` handling. Thanks Ludovic BOUÉ.
+- [thermostat]: Add `Thermostat.Feature.ThermostatSuggestions` support with suggestion attributes and `AddThermostatSuggestion`/`RemoveThermostatSuggestion` handling. Thanks Ludovic BOUÉ.
+
+### Changed
+
+- [frontend]: Bump `frontend` version to v.3.5.7.
+- [frontend]: Remove bun version from Header.
+- [thermostat]: Align `numberOfPresets` with the configured preset capacity and the Matter specification minimum. Thanks Ludovic BOUÉ.
+
+### Fixed
+
+- [irrigationSystem]: Remove the non-functional `singleZone` option; single-zone systems must now use `addZone` like any other zone.
+- [microwaveOven]: Use the `PowerAsNumber` and `PowerNumberLimits` features instead of `PowerInWatts` for the `MicrowaveOvenControl` cluster, and handle the `PowerSetting` field in `SetCookingParameters` accordingly.
+- [closureDimension]: `ClosurePanel` and `Closure.addPanel()` now require a `dimensionType` (`'lift'`, `'tilt'` or `'modulation'`) and enable the matching Translation/Rotation/Modulation feature, as required by the `[PS].b` conformance rule when Positioning is supported.
+- [thermostat]: Remove the workaround that stripped the `AtomicRequest`/`AtomicResponse` commands from `acceptedCommandList`/`generatedCommandList` on `MatterbridgeThermostatServer`; matter.js now handles the atomic-write commands correctly.
+- [data-model]: Fix missed namspaces.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.4] - 2026-08-07
 
@@ -3996,34 +4032,3 @@ A special thank to Tamer Salah (https://github.com/tammeryousef1006) for his hel
 ### Removed
 
 - [event]: Removed all event code.
-
-<!-- Commented out section
-## [1.1.2] - 2024-03-08
-
-### Added
-
-- [Feature 1]: Description of the feature.
-- [Feature 2]: Description of the feature.
-
-### Changed
-
-- [Feature 3]: Description of the change.
-- [Feature 4]: Description of the change.
-
-### Deprecated
-
-- [Feature 5]: Description of the deprecation.
-
-### Removed
-
-- [Feature 6]: Description of the removal.
-
-### Fixed
-
-- [Bug 1]: Description of the bug fix.
-- [Bug 2]: Description of the bug fix.
-
-### Security
-
-- [Security 1]: Description of the security improvement.
--->

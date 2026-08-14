@@ -543,6 +543,9 @@ export type CommandHandlerDataMap = {
   // Thermostat
   'setpointRaiseLower': CommandHandlerData<'Thermostat.setpointRaiseLower'>;
   'setActivePresetRequest': CommandHandlerData<'Thermostat.setActivePresetRequest'>;
+  'setActiveScheduleRequest': CommandHandlerData<'Thermostat.setActiveScheduleRequest'>;
+  'addThermostatSuggestion': CommandHandlerData<'Thermostat.addThermostatSuggestion'>;
+  'removeThermostatSuggestion': CommandHandlerData<'Thermostat.removeThermostatSuggestion'>;
   'Thermostat.setpointRaiseLower': {
     command: 'setpointRaiseLower';
     request: Thermostat.SetpointRaiseLowerRequest;
@@ -553,6 +556,27 @@ export type CommandHandlerDataMap = {
   'Thermostat.setActivePresetRequest': {
     command: 'setActivePresetRequest';
     request: Thermostat.SetActivePresetRequest;
+    cluster: 'thermostat';
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'Thermostat.setActiveScheduleRequest': {
+    command: 'setActiveScheduleRequest';
+    request: Thermostat.SetActiveScheduleRequest;
+    cluster: 'thermostat';
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'Thermostat.addThermostatSuggestion': {
+    command: 'addThermostatSuggestion';
+    request: Thermostat.AddThermostatSuggestionRequest;
+    cluster: 'thermostat';
+    attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'Thermostat.removeThermostatSuggestion': {
+    command: 'removeThermostatSuggestion';
+    request: Thermostat.RemoveThermostatSuggestionRequest;
     cluster: 'thermostat';
     attributes: ClusterAttributeValues<(typeof Thermostat)['attributes']>;
     endpoint: MatterbridgeEndpoint;

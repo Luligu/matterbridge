@@ -9,9 +9,11 @@ const MATTER_PORT = 8022;
 const MATTER_CREATE_ONLY = true;
 
 import { ClosureCoveringTag, ClosurePanelTag, ClosureTag } from '@matter/node';
+import { Status } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { ThreeLevelAuto } from '@matter/types/globals';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -72,7 +74,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.id).toBe('ClosureTestDevice-CL123456');
 
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
     expect(device.hasClusterServer(ClosureControl.id)).toBeTruthy();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'closureControl']);
 
     expect(device.getClusterServerOptions(ClosureControl.id)).toMatchObject({
       mainState: ClosureControl.MainState.Stopped,
@@ -87,37 +91,261 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
   });
 
+  test('set closure state helpers', async () => {
+    await device.setFullOpened();
+    expect(device.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+    expect(device.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([]);
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.FullyOpened,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+      secureState: false,
+    });
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await device.setPartiallyOpened();
+    expect(device.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+    expect(device.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([]);
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.PartiallyOpened,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+      secureState: false,
+    });
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: null,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await device.setFullyClosed();
+    expect(device.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+    expect(device.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([]);
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+      secureState: true,
+    });
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await device.setState(
+      {
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+      ClosureControl.MainState.WaitingForMotion,
+      10,
+      [ClosureControl.ClosureError.MaintenanceRequired],
+    );
+    expect(device.getAttribute(ClosureControl.id, 'countdownTime')).toBe(10);
+    expect(device.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.WaitingForMotion);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([ClosureControl.ClosureError.MaintenanceRequired]);
+
+    await device.setFullyClosed();
+  });
+
+  test('create closure devices with power source options', () => {
+    const batteryClosure = new Closure('Closure Battery Test Device', 'CLBATTERY', { powerSourceType: 'Battery' });
+    expect(batteryClosure.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(batteryClosure.getClusterServerOptions(PowerSource.id)).toMatchObject({
+      batChargeLevel: PowerSource.BatChargeLevel.Ok,
+      batReplaceability: PowerSource.BatReplaceability.Unspecified,
+      description: 'Primary battery',
+    });
+
+    const rechargeableClosure = new Closure('Closure Rechargeable Test Device', 'CLRECHARGEABLE', { powerSourceType: 'Rechargeable' });
+    expect(rechargeableClosure.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(rechargeableClosure.getClusterServerOptions(PowerSource.id)).toMatchObject({
+      batChargeLevel: PowerSource.BatChargeLevel.Ok,
+      batReplaceability: PowerSource.BatReplaceability.Unspecified,
+      description: 'Primary battery',
+    });
+
+    const replaceableClosure = new Closure('Closure Replaceable Test Device', 'CLREPLACEABLE', { powerSourceType: 'Replaceable' });
+    expect(replaceableClosure.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(replaceableClosure.getClusterServerOptions(PowerSource.id)).toMatchObject({
+      batChargeLevel: PowerSource.BatChargeLevel.Ok,
+      batReplaceability: PowerSource.BatReplaceability.UserReplaceable,
+      description: 'Primary battery',
+    });
+
+    const closureWithoutPowerSource = new Closure('Closure No Power Source Test Device', 'CLNONE', { powerSourceType: 'None' });
+    expect(closureWithoutPowerSource.hasClusterServer(PowerSource.id)).toBeFalsy();
+    expect(closureWithoutPowerSource.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'closureControl']);
+  });
+
   test('invoke closure control commands', async () => {
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', null);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
     });
 
     expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
       position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      speed: ThreeLevelAuto.Auto,
     });
+
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+      secureState: true,
+    });
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
+    // MoveTo requires at least one of position, latch, or speed (Matter spec §5.4.8.2, O.a+ choice conformance).
+    await expect(device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toBeNull();
+
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      latch: false,
+    });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
 
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
 
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
-      latch: true,
-      speed: 1,
+      latch: false,
     });
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      }),
+    ).rejects.toMatchObject({ code: Status.InvalidInState });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
-      latch: true,
-      speed: 1,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
     });
 
-    // Omit position to cover optional-field branches.
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 1,
+    });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 1,
+    });
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({ speed: 1 });
+
+    // An omitted position retains its previous target, while an omitted speed falls back to Auto.
     await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
       latch: false,
     });
-    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
       position: ClosureControl.TargetPosition.MoveToFullyClosed,
       latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    // When the requested position, latch, and speed already match OverallCurrentState, MainState resolves directly to Stopped.
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: false,
+      speed: 2,
+      secureState: true,
+    });
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 2,
+    });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: 2,
+    });
+    await device.setAttribute(ClosureControl.id, 'overallCurrentState', {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+      secureState: true,
+    });
+
+    await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+    });
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      }),
+    ).rejects.toMatchObject({ code: Status.InvalidInState });
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: true,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    // Stop always succeeds, but only transitions MainState to Stopped when it was Moving, WaitingForMotion, or
+    // Calibrating (Matter spec §5.4.8.1); an unrelated state like Error is left untouched.
+    await device.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+
+    await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Moving);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+  });
+
+  test('trigger closure control events', async () => {
+    await device.setFullyClosed();
+
+    await device.triggerMovementCompleted();
+
+    await device.triggerSecureStateChanged(false);
+
+    await device.triggerOperationalError([ClosureControl.ClosureError.MaintenanceRequired]);
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([ClosureControl.ClosureError.MaintenanceRequired]);
+
+    await device.triggerOperationalError();
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Error);
+    expect(device.getAttribute(ClosureControl.id, 'currentErrorList')).toEqual([]);
+
+    // Restore the state left by the previous test so later attribute-snapshot assertions are unaffected.
+    await device.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Moving);
+    await device.setAttribute(ClosureControl.id, 'overallTargetState', {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
     });
   });
 
@@ -125,8 +353,8 @@ describe('Matterbridge ' + NAME, () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
     });
-    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)]);
-    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], {
+    venetianBlind.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)], 'lift');
+    venetianBlind.addPanel('Tilt', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', {
       resolution: 2,
       stepValue: 100,
       latchControlModes: { remoteLatching: false, remoteUnlatching: true },
@@ -150,6 +378,81 @@ describe('Matterbridge ' + NAME, () => {
     expect(venetianBlind.getChildEndpointByOriginalId('Tilt')?.getAttribute('Descriptor', 'tagList')).toEqual([
       { mfgCode: null, namespaceId: ClosurePanelTag.Tilt.namespaceId, tag: ClosurePanelTag.Tilt.tag },
     ]);
+  });
+
+  test('invoke closure dimension setTarget validation', async () => {
+    const liftPanel = venetianBlind.getChildEndpointByOriginalId('Lift');
+    const tiltPanel = venetianBlind.getChildEndpointByOriginalId('Tilt');
+    expect(liftPanel).toBeDefined();
+    expect(tiltPanel).toBeDefined();
+    if (!liftPanel || !tiltPanel) return;
+
+    // SetTarget requires at least one of position, latch, or speed (Matter spec §5.5.8.1, O.a+ choice conformance).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+
+    // percent100ths is constrained to 0-10000 (Matter spec §5.5.8.1.1).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 10001 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // ThreeLevelAutoEnum only defines Auto, Low, Medium and High (Matter spec §5.5.8.1.3).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: 5 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // The Lift panel defaults to a latched CurrentState, so a position change without an explicit latch: false
+    // SHALL be rejected (Matter spec §5.5.8.1.4).
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 3000 })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 3000, latch: false });
+    expect(liftPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 3000, latch: false });
+
+    // The Tilt panel's LatchControlModes only allows remote unlatching, so a latch: true request requires manual
+    // intervention and SHALL be rejected (Matter spec §5.5.8.1.2).
+    await expect(tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: false });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ latch: false });
+
+    // While the associated ClosureControl MainState is Error, SetTarget SHALL be rejected (Matter spec §5.5.8.1.4).
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await expect(liftPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: ThreeLevelAuto.Low })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+
+    // If all field values in the command match CurrentState, the command SHALL have no effect (Matter spec §5.5.8.1.4).
+    await tiltPanel.setAttribute(ClosureDimension.id, 'currentState', { position: 1000, latch: false, speed: ThreeLevelAuto.Low });
+    await tiltPanel.setAttribute(ClosureDimension.id, 'targetState', { position: 500, latch: false, speed: ThreeLevelAuto.Auto });
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 1000, latch: false, speed: ThreeLevelAuto.Low });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 500, latch: false, speed: ThreeLevelAuto.Auto });
+  });
+
+  test('invoke closure dimension step validation', async () => {
+    const tiltPanel = venetianBlind.getChildEndpointByOriginalId('Tilt');
+    expect(tiltPanel).toBeDefined();
+    if (!tiltPanel) return;
+
+    // CurrentState is unlatched here (left over from the previous test), so Step is allowed while MainState is Stopped.
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'currentState')).toMatchObject({ latch: false });
+
+    // While the associated ClosureControl MainState is Error, Step SHALL be rejected (Matter spec §5.5.8.2.4).
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await expect(
+      tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: ClosureDimension.StepDirection.Increase,
+        numberOfSteps: 1,
+      }),
+    ).rejects.toMatchObject({ code: Status.InvalidInState });
+    await venetianBlind.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+
+    await tiltPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+      direction: ClosureDimension.StepDirection.Increase,
+      numberOfSteps: 1,
+    });
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 1100 });
   });
 
   test('device forEachAttribute', () => {
@@ -205,16 +508,17 @@ describe('Matterbridge ' + NAME, () => {
         'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
         'closureControl(0x104).overallCurrentState(0x3)={ position: 0, latch: true, speed: 0, secureState: true }',
-        'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 1 }',
+        'closureControl(0x104).overallTargetState(0x4)={ position: 0, latch: false, speed: 0 }',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
-        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 560, revision: 1 } ]',
-        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 560, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 260 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 260 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 68, tag: 0, label: undefined } ]',
         'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
         'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'identify(0x3).clusterRevision(0xfffd)=6',
@@ -222,6 +526,16 @@ describe('Matterbridge ' + NAME, () => {
         'identify(0x3).generatedCommandList(0xfff8)=[  ]',
         'identify(0x3).identifyTime(0x0)=0',
         'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
       ].toSorted(),
     );
   });

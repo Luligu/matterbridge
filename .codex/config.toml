@@ -1,11 +1,11 @@
-# Codex config v.1.0.2
+# Codex config v.1.0.3
 
 approval_policy = "on-request"
 approvals_reviewer = "user"
 
 web_search = "live"
 
-default_permissions = "matterbridge_safe"
+default_permissions = ":workspace"
 
 [shell_environment_policy]
 inherit = "core"
