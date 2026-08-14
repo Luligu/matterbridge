@@ -212,6 +212,7 @@ COPY --from=builder /matterbridge-mqtt/ ./matterbridge-mqtt/
 COPY --from=builder /matterbridge-test/ ./matterbridge-test/
 COPY --from=builder /matterbridge-example-accessory-platform/ ./matterbridge-example-accessory-platform/
 COPY --from=builder /matterbridge-example-dynamic-platform/ ./matterbridge-example-dynamic-platform/
+COPY --from=builder /matterbridge-example-camera/ ./matterbridge-example-camera/
 COPY --from=builder /matterbridge-eve-door/ ./matterbridge-eve-door/
 COPY --from=builder /matterbridge-eve-motion/ ./matterbridge-eve-motion/
 COPY --from=builder /matterbridge-eve-energy/ ./matterbridge-eve-energy/

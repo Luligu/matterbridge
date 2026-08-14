@@ -180,6 +180,7 @@ COPY --from=builder \
   /matterbridge-test/*.tgz \
   /matterbridge-example-accessory-platform/*.tgz \
   /matterbridge-example-dynamic-platform/*.tgz \
+  /matterbridge-example-camera/*.tgz \
   /matterbridge-eve-door/*.tgz \
   /matterbridge-eve-motion/*.tgz \
   /matterbridge-eve-energy/*.tgz \
