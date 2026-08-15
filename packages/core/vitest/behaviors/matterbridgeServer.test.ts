@@ -1373,6 +1373,23 @@ describe('Server clusters and behaviors', () => {
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
     });
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // Regression test: CurrentThermostatSuggestion must be nulled whenever its own PresetHandle was removed, even
+    // when the ThermostatSuggestions list itself is unaffected (already empty here, so its length doesn't change).
+    // Matter 1.6 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
+    // of point 2 (which only covers ThermostatSuggestions entries).
+    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
+      uniqueId: 5,
+      presetHandle: Uint8Array.from([1]),
+      effectiveTime: 1700000000,
+      expirationTime: 1700001800,
+    });
+    const presetsWithoutPreset1 = presetsWithoutPreset0.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([1])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset1, presetsWithoutPreset0, undefined as never);
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
   });
 
   test('ValveConfigurationAndControl server', async () => {
