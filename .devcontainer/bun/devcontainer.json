@@ -45,77 +45,7 @@
         "openai.chatgpt"
       ],
       "settings": {
-        "eslint.enable": false,
-        "prettier.enable": false,
-        "oxc.enable": true,
-        "js/ts.experimental.useTsgo": true,
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-        "terminal.integrated.scrollback": 1000,
-        "editor.tabSize": 2,
-        "editor.rulers": [180],
-        "editor.formatOnSave": false,
-        "editor.defaultFormatter": "oxc.oxc-vscode",
-        "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[json]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[markdown]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "editor.formatOnSaveMode": "file",
-        "editor.codeActionsOnSave": {
-          "source.format.oxc": "always",
-          "source.fixAll.oxc": "always"
-        },
-        "diffEditor.ignoreTrimWhitespace": false,
-        "files.eol": "\n",
-        "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true,
-        "files.trimTrailingWhitespace": true,
-        "files.watcherExclude": {
-          "**/build/**": true,
-          "**/.cache/**": true,
-          "**/coverage/**": true
-        },
-        "search.exclude": {
-          "**/node_modules": true,
-          "**/dist": true,
-          "**/build": true,
-          "**/.cache": true,
-          "**/coverage": true
-        },
-        "remote.restoreForwardedPorts": false,
-        "git.autofetch": true,
-        "git.autoRepositoryDetection": false,
-        "chat.useCustomizationsInParentRepositories": true,
-        "chat.tools.terminal.autoApprove": {
-          "npx tsc": true,
-          "npx oxlint": true,
-          "npx oxfmt": true,
-          "npx vitest": true,
-          "npm run build": true,
-          "npm run typecheck": true,
-          "npm run lint": true,
-          "npm run format:check": true,
-          "npm run test": true,
-          "npm run test:coverage": true,
-          "npm run update-htmls": true,
-          "git status": true,
-          "git diff": true,
-          "git diff --check": true,
-          "git diff --stat": true,
-          "git log": true,
-          "git show": true,
-          "git branch -vv": true,
-          "git ls-files": true,
-          "git --no-pager diff --stat": true,
-          "git --no-pager diff --check": true
-        },
-        "terminal.integrated.defaultProfile.linux": "bash",
-        "js/ts.tsserver.watchOptions": {
-          "watchFile": "dynamicPriorityPolling",
-          "watchDirectory": "dynamicPriorityPolling",
-          "fallbackPolling": "dynamicPriorityPolling",
-          "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
-        }
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
     }
   }
