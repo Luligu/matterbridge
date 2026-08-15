@@ -14,6 +14,7 @@ const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
+import { Bytes } from '@matter/general';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { Status } from '@matter/types';
@@ -1282,6 +1283,33 @@ describe('Server clusters and behaviors', () => {
     await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', invalidRemoveRequest)).rejects.toThrow('Requested UniqueID not found');
     expect(removeCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidRemoveRequest });
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
+
+    // The 3 remaining suggestions (uniqueId 2, 3, 4) all reference preset 0. Removing preset 0 via a Presets atomic
+    // write deletes the referencing entries and, since CurrentThermostatSuggestion references that preset, nulls it
+    // (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires `presets$AtomicChanged`
+    // through a committed atomic write (AtomicWriteHandler), which local-actor/command-context test writes bypass
+    // entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite() does it.
+    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
+      uniqueId: 2,
+      presetHandle: Uint8Array.from([0]),
+      effectiveTime: 1700000000,
+      expirationTime: 1700001800,
+    });
+    const thermostatSuggestionBehavior = MatterbridgeThermostatServer.with(
+      Thermostat.Feature.Heating,
+      Thermostat.Feature.Cooling,
+      Thermostat.Feature.AutoMode,
+      Thermostat.Feature.Presets,
+      Thermostat.Feature.ThermostatSuggestions,
+    );
+    const presetsWithoutPreset0 = thermostatPresets.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([0])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset0, thermostatPresets, undefined as never);
+    // The reactor runs in its own dedicated, independently-committed transaction (matching production), so its
+    // effect is not necessarily visible synchronously after emit() returns.
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
   });
 
   test('ValveConfigurationAndControl server', async () => {
