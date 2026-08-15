@@ -48,7 +48,13 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
    */
   override async initialize(): Promise<void> {
     await super.initialize();
-    this.reactTo(this.events.presets$AtomicChanged, (newPresets, oldPresets) => this.removeThermostatSuggestionsForRemovedPresets(newPresets, oldPresets));
+    // Pass an unbound method reference, matching matter.js's own reactor registrations (e.g. ThermostatServer's
+    // `this.reactTo(this.events.presets$AtomicChanged, this.#handlePresetsChanged)`): the Reactors system rebinds
+    // `this` to a fresh, correctly-scoped behavior instance for each reaction via `reactor.bind(behavior)`. Wrapping
+    // this in an arrow function would defeat that rebinding (arrow functions ignore `.bind()`), leaving `this.state`
+    // pointing at the stale instance from `initialize()` and failing at runtime with "its context has exited".
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.presets$AtomicChanged, this.removeThermostatSuggestionsForRemovedPresets);
   }
 
   /**
@@ -77,15 +83,21 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     }
     if (removedPresetHandles.size === 0) return;
 
-    const removedSuggestions = this.state.thermostatSuggestions.filter((s) => removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
-    if (removedSuggestions.length === 0) return;
+    // Read thermostatSuggestions and currentThermostatSuggestion into plain local values up front, and do the
+    // filtering off those local copies: re-reading `this.state` after mutating it within the same reactor call can
+    // fail at runtime ("its container was removed"), since matter.js's own Presets validation reactor, registered on
+    // the same synchronous event, already mutates state before this one runs.
+    const currentSuggestions = [...this.state.thermostatSuggestions];
+    const remainingSuggestions = currentSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
+    if (remainingSuggestions.length === currentSuggestions.length) return;
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
-      `Removing ${removedSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      `Removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
-    if (removedSuggestions.some((s) => s.uniqueId === this.state.currentThermostatSuggestion?.uniqueId)) {
+    const currentSuggestion = this.state.currentThermostatSuggestion;
+    this.state.thermostatSuggestions = remainingSuggestions;
+    if (currentSuggestion !== null && removedPresetHandles.has(Bytes.toHex(currentSuggestion.presetHandle))) {
       this.state.currentThermostatSuggestion = null;
       this.state.thermostatSuggestionNotFollowingReason = null;
     }
