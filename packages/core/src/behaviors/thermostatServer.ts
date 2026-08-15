@@ -119,7 +119,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   }
 
   /**
-   * Removes expired entries (ExpirationTime in the past) from ThermostatSuggestions, mirroring
+   * Removes expired entries (ExpirationTime at or before now) from ThermostatSuggestions, mirroring
    * `RemoveExpiredSuggestions()` in connectedhomeip's `src/app/clusters/thermostat-server/ThermostatClusterSuggestions.cpp`.
    */
   private removeExpiredThermostatSuggestions(): void {
@@ -130,9 +130,10 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   /**
    * Re-evaluates CurrentThermostatSuggestion, mirroring `ReEvaluateCurrentSuggestion()` in connectedhomeip's
    * `examples/thermostat/thermostat-common/src/thermostat-delegate-impl.cpp`: the suggestion with the earliest
-   * EffectiveTime among those already active (EffectiveTime <= now) becomes current. When a new suggestion becomes
-   * current, ActivePresetHandle is synced to it and ThermostatSuggestionNotFollowingReason is cleared; when no
-   * suggestion is active, CurrentThermostatSuggestion is cleared but ActivePresetHandle is left untouched.
+   * EffectiveTime among those already active (EffectiveTime <= now) becomes current. ThermostatSuggestionNotFollowingReason
+   * is cleared whenever CurrentThermostatSuggestion changes, including when it becomes null, so it never keeps
+   * describing a suggestion that is no longer current. When a new suggestion becomes current, ActivePresetHandle is
+   * synced to it; when no suggestion is active, ActivePresetHandle is left untouched.
    */
   private reEvaluateCurrentThermostatSuggestion(): void {
     const now = Math.floor(Date.now() / 1000);
@@ -142,9 +143,9 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     }
     if (this.state.currentThermostatSuggestion?.uniqueId === current?.uniqueId) return;
     this.state.currentThermostatSuggestion = current;
+    this.state.thermostatSuggestionNotFollowingReason = null;
     if (current !== null) {
       this.state.activePresetHandle = Uint8Array.from(current.presetHandle);
-      this.state.thermostatSuggestionNotFollowingReason = null;
     }
   }
 

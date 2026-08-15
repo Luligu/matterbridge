@@ -48,6 +48,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.63.0.
 - [frontend]: Bump `oxlint` to v.1.78.0.
 
+### Fixed
+
+- [thermostat]: Apply thermostat suggestions: `AddThermostatSuggestion`/`RemoveThermostatSuggestion` now re-evaluate `CurrentThermostatSuggestion`, syncing `ActivePresetHandle` and clearing `ThermostatSuggestionNotFollowingReason`, and prune expired entries from `ThermostatSuggestions`. Thanks Ludovic BOUÉ.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.5] - 2026-08-14
