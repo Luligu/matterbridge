@@ -1307,6 +1307,40 @@ describe('Server clusters and behaviors', () => {
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([0]));
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
+
+      // A suggestion that becomes current, then expires, is pruned and re-evaluated as part of the next add/remove
+      // call. If that call is itself rejected by a later validation (here EffectiveTime > 24h in the future), the
+      // prune/re-evaluate performed earlier in the same command must not leak out: matter.js runs each command in
+      // its own transaction and discards every mutation when the handler throws (LocalActorContext.act rejects the
+      // transaction on error), so CurrentThermostatSuggestion/ThermostatSuggestions/ActivePresetHandle/
+      // ThermostatSuggestionNotFollowingReason stay exactly as they were before the rejected command.
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
+        presetHandle: Uint8Array.from([1]),
+        effectiveTime: null,
+        expirationInMinutes: 1,
+      });
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
+
+      await thermostatSuggestion.setAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason', { ongoingHold: true });
+      vi.setSystemTime(new Date(Date.now() + 61_000)); // past the uniqueId 0 suggestion's 1-minute ExpirationTime
+      const currentSeconds = Math.floor(Date.now() / 1000);
+      const rejectedRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: currentSeconds + 25 * 60 * 60, expirationInMinutes: 30 };
+      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', rejectedRequest)).rejects.toThrow(
+        'EffectiveTime cannot be more than 24 hours in the future',
+      );
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toMatchObject({ ongoingHold: true });
+
+      // The next successful command finally prunes the now-expired suggestion and re-evaluates: CurrentThermostatSuggestion
+      // becomes null and ThermostatSuggestionNotFollowingReason is cleared; ActivePresetHandle is left untouched.
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', { uniqueId: 2 });
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
     } finally {
       vi.useRealTimers();
     }

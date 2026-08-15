@@ -176,7 +176,10 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       throw new StatusResponse.NotFoundError('Requested PresetHandle not found');
     }
     // Remove expired suggestions before checking capacity, so a list full of stale entries does not block a valid add.
+    // Re-evaluate immediately after pruning so CurrentThermostatSuggestion/ActivePresetHandle stay consistent even if a
+    // later validation (capacity, EffectiveTime) rejects this command.
     this.removeExpiredThermostatSuggestions();
+    this.reEvaluateCurrentThermostatSuggestion();
     if (this.state.thermostatSuggestions.length >= this.state.maxThermostatSuggestions) {
       throw new StatusResponse.ResourceExhaustedError('Maximum number of thermostat suggestions reached');
     }
