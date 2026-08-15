@@ -89,15 +89,22 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     // the same synchronous event, already mutates state before this one runs.
     const currentSuggestions = [...this.state.thermostatSuggestions];
     const remainingSuggestions = currentSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
-    if (remainingSuggestions.length === currentSuggestions.length) return;
+    const currentSuggestion = this.state.currentThermostatSuggestion;
+    // Point 1 of the spec's "Effect on Receipt" nulls CurrentThermostatSuggestion whenever its own PresetHandle was
+    // removed, independently of whether any ThermostatSuggestions entry was removed (e.g. the list is already empty,
+    // or none of its entries reference the removed preset).
+    const clearCurrentSuggestion = currentSuggestion !== null && removedPresetHandles.has(Bytes.toHex(currentSuggestion.presetHandle));
+    if (remainingSuggestions.length === currentSuggestions.length && !clearCurrentSuggestion) return;
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
-    const currentSuggestion = this.state.currentThermostatSuggestion;
-    this.state.thermostatSuggestions = remainingSuggestions;
-    if (currentSuggestion !== null && removedPresetHandles.has(Bytes.toHex(currentSuggestion.presetHandle))) {
+    if (remainingSuggestions.length !== currentSuggestions.length) {
+      device.log.info(
+        `Removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
+      this.state.thermostatSuggestions = remainingSuggestions;
+    }
+    if (clearCurrentSuggestion) {
+      device.log.info(`Clearing current thermostat suggestion referencing a removed preset (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       this.state.currentThermostatSuggestion = null;
       this.state.thermostatSuggestionNotFollowingReason = null;
     }
