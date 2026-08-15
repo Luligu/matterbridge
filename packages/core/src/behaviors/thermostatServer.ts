@@ -44,6 +44,54 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.ThermostatSuggestions,
 ) {
   /**
+   * Initializes the behavior and reacts to Presets attribute changes to keep ThermostatSuggestions consistent.
+   */
+  override async initialize(): Promise<void> {
+    await super.initialize();
+    this.reactTo(this.events.presets$AtomicChanged, (newPresets, oldPresets) => this.removeThermostatSuggestionsForRemovedPresets(newPresets, oldPresets));
+  }
+
+  /**
+   * Removes ThermostatSuggestions entries referencing a Preset that was just removed by a Presets atomic write, and
+   * nulls CurrentThermostatSuggestion (clearing ThermostatSuggestionNotFollowingReason) when it referenced one of the
+   * removed presets.
+   *
+   * @param {Thermostat.Preset[]} newPresets - The committed Presets list after the atomic write.
+   * @param {Thermostat.Preset[]} oldPresets - The Presets list before the atomic write.
+   *
+   * @remarks
+   * matter.js does not yet provide a default implementation of the ThermostatSuggestions feature, so this cascade,
+   * required by the Presets attribute's "Effect on Receipt" (Matter 1.6 Application Cluster Spec § 4.3.11.50), is
+   * done here.
+   */
+  private removeThermostatSuggestionsForRemovedPresets(newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]): void {
+    const remainingPresetHandles = new Set<string>();
+    for (const preset of newPresets) {
+      if (preset.presetHandle !== null) remainingPresetHandles.add(Bytes.toHex(preset.presetHandle));
+    }
+    const removedPresetHandles = new Set<string>();
+    for (const preset of oldPresets) {
+      if (preset.presetHandle !== null && !remainingPresetHandles.has(Bytes.toHex(preset.presetHandle))) {
+        removedPresetHandles.add(Bytes.toHex(preset.presetHandle));
+      }
+    }
+    if (removedPresetHandles.size === 0) return;
+
+    const removedSuggestions = this.state.thermostatSuggestions.filter((s) => removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
+    if (removedSuggestions.length === 0) return;
+
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Removing ${removedSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
+    if (removedSuggestions.some((s) => s.uniqueId === this.state.currentThermostatSuggestion?.uniqueId)) {
+      this.state.currentThermostatSuggestion = null;
+      this.state.thermostatSuggestionNotFollowingReason = null;
+    }
+  }
+
+  /**
    * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
    *
    * @param {Thermostat.SetpointRaiseLowerRequest} request - Setpoint-raise/lower request payload.
