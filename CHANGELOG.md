@@ -33,6 +33,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.6] - Dev branch
 
+### Added
+
+- [electricalUtilityMeter]: Add `ElectricalUtilityMeter` device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the `MeterIdentification` cluster.
+- [electricalUtilityMeter]: Add `addElectricalMeter()` to add an Electrical Meter (+ Electrical Sensor) child endpoint with `ElectricalPowerMeasurement`, `ElectricalEnergyMeasurement` and `CommodityMetering`.
+- [electricalUtilityMeter]: Add `addElectricalEnergyTariff()` to add an Electrical Energy Tariff child endpoint with `CommodityPrice`, `CommodityTariff` and `ElectricalGridConditions`.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.6.

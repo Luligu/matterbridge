@@ -2213,6 +2213,9 @@ export const heatPump = DeviceTypeDefinition({
  * 14.6. Meter Reference Point Device Type
  *
  * A Meter Reference Point device provides details about tariffs and metering.
+ * The Electrical Utility Meter device type (0x0511) mandatorily includes this device type's Identify
+ * cluster requirement plus its own additional MeterIdentification cluster, and is marked as a superset
+ * of this device type.
  *
  * 14.6.5. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
@@ -2242,6 +2245,8 @@ export const meterReferencePoint = DeviceTypeDefinition({
  * 14.7. Electrical Energy Tariff Device Type
  *
  * An Electrical Energy Tariff is a device that defines a tariff for the consumption or production of electrical energy.
+ * The Electrical Meter device type (0x0514) has no additional mandatory clusters of its own for this device type
+ * (all of this device type's clusters are optional), and is marked as a superset of this device type.
  *
  * 14.7.4. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.
@@ -2272,7 +2277,8 @@ export const electricalEnergyTariff = DeviceTypeDefinition({
  * 14.8. Electrical Meter Device Type
  *
  * An Electrical Meter device meters the electrical energy being imported and/or exported for billing purposes.
- * It is a superset of the Electrical Energy Tariff device type.
+ * It is a superset of the Electrical Energy Tariff device type (0x0513); an endpoint using this device type MAY
+ * also add Electrical Energy Tariff to its DeviceTypeList, but is not required to.
  *
  * 14.8.3. Device Type Requirements
  * An Electrical Meter SHALL be composed of at least one endpoint with device types as defined by the
@@ -2301,7 +2307,10 @@ export const electricalMeter = DeviceTypeDefinition({
  * 14.9. Electrical Utility Meter Device Type
  *
  * An Electrical Utility Meter device provides utility account information, as well as optional details about tariffs and metering.
- * It is a superset of the Meter Reference Point device type.
+ * It is a superset of the Meter Reference Point device type (0x0512), which mandatorily carries over that device
+ * type's Identify cluster requirement and its device composition rule (§ 14.6.6: at least one child endpoint with
+ * Electrical Energy Tariff and at least one with Electrical Meter). An endpoint using this device type MAY also add
+ * Meter Reference Point to its DeviceTypeList, but is not required to (Core Specification § 9.2.12).
  *
  * 14.9.5. Cluster Requirements
  * Each endpoint supporting this device type SHALL support these clusters based on the conformance defined below.

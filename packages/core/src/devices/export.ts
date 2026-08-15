@@ -50,6 +50,7 @@ export * from './refrigerator.js';
 
 // Chapter 14. Energy Device Types - Single class device types
 export * from './batteryStorage.js';
+export * from './electricalUtilityMeter.js';
 export * from './evse.js';
 export * from './heatPump.js';
 export * from './solarPower.js';
