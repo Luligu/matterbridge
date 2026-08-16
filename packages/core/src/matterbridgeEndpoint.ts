@@ -2297,6 +2297,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energyImported - The total consumption value in mW/h.
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported, energyExported })`.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(
@@ -2315,6 +2319,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} energyImported - The total consumption value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported })`.
    */
   createImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null): this {
     this.behaviors.require(
@@ -2329,6 +2337,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported })`.
    */
   createExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null): this {
     this.behaviors.require(
