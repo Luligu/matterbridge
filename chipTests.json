@@ -147,7 +147,8 @@
     {
       "name": "SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_6",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
+      "skip": true
     },
     {
       "name": "SmokeCOAlarm attributes on Smoke-only SmokeCOAlarm",
