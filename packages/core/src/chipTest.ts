@@ -24,11 +24,77 @@
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable typescript/no-non-null-assertion */
 
+/**
+ * CHIP TestEventTrigger notes.
+ *
+ * The Matter command is GeneralDiagnostics.TestEventTrigger on endpoint 0. The command carries only:
+ * - EnableKey: a 16-byte key accepted by the DUT.
+ * - EventTrigger: a test-defined integer.
+ *
+ * The command does not carry an endpoint, cluster, attribute, or target value. Each CHIP test defines the
+ * meaning of its EventTrigger values in the test source/YAML, so each supported trigger must be mapped
+ * explicitly here. Keep these handlers gated to MATTERBRIDGE_CHIP_TEST through Matterbridge.createServerNode().
+ *
+ * To add a new trigger-backed CHIP test:
+ * 1. Read the CHIP test source and copy its exact EventTrigger constants.
+ * 2. Check the key the test really sends. Python tests often use 000102...0f, while YAML tests may define
+ *    their own default key in the YAML config. Add only the required CHIP-test key to isChipTestEnableKey().
+ * 3. Add a small handler in handleChipTestEventTrigger() that updates the target endpoint with setCluster()
+ *    or setAttribute(), then emits any event the test reads with triggerEvent().
+ * 4. Keep unsupported EventTrigger values delegated to GeneralDiagnosticsServer so they return InvalidCommand.
+ * 5. If a failed/interrupted run can persist dirty state, add a resetClusterGlobs entry and set resetBefore
+ *    on that chipTests.json entry.
+ */
+
+/**
+ * CHIP app-pipe notes.
+ *
+ * The app-pipe is a separate test backchannel from TestEventTrigger. Some Python CHIP tests call
+ * write_to_app_pipe()/--app-pipe and write one JSON command per line into a named pipe. The command payload
+ * can include fields such as Name, EndpointId, NewState, Occupancy, SensorFault, or SoilMoistureValue.
+ *
+ * Matterbridge creates /tmp/matterbridge-chip-test-app-pipe only when MATTERBRIDGE_CHIP_TEST is set, and
+ * createChipTestAppPipe() is called from the CHIP-test bootstrap. The pipe is Linux-only test glue; do not
+ * use it for production behavior and do not make normal runtime shutdown depend on it.
+ *
+ * To add a new app-pipe-backed CHIP test:
+ * 1. Read the CHIP Python test and copy the exact JSON command name and fields passed to write_to_app_pipe().
+ * 2. Extend ChipTestAppPipeCommand only with the fields that test actually writes.
+ * 3. Add one small case in handleChipTestAppPipeCommand(), resolving the endpoint with getChipTestEndpoint().
+ * 4. Update state through Matterbridge helpers such as setCluster() or setAttribute() where possible.
+ * 5. Keep invalid or unknown commands logged and ignored so one malformed line cannot break the pipe loop.
+ */
+
+/**
+ * CHIP container sync notes.
+ *
+ * After changing local TypeScript, frontend, or PICS files, rebuild locally and copy the built artifacts
+ * into the running chip-test container before rerunning CHIP tests. Copy directory contents with `/.` so
+ * docker replaces the target contents instead of nesting another `dist` or `build` folder.
+ *
+ * Usual sync commands:
+ * - docker cp dist/. chip-test:/root/matterbridge/dist/
+ * - docker cp packages/core/dist/. chip-test:/root/matterbridge/packages/core/dist/
+ * - docker cp packages/types/dist/. chip-test:/root/matterbridge/packages/types/dist/
+ * - docker cp apps/frontend/build/. chip-test:/root/matterbridge/apps/frontend/build/
+ * - docker cp docker/chip-test/*.pics chip-test:/root/
+ *
+ * Restart the existing container without recreating it after copying runtime code:
+ * - docker restart chip-test
+ *
+ * Then run focused CHIP checks through the repository script, for example:
+ * - node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"
+ */
+
 import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
+import { Status, StatusResponseError } from '@matter/types';
+import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { EndpointNumber } from '@matter/types/datatype';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
@@ -47,10 +113,51 @@ type ChipTestAppPipeCommand = {
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
+const chipTestValidEventTrigger = 0xfffffffffff10000n;
+const smokeCoAlarmWarningSmokeAlarmTrigger = 0x005c000000000090n;
+const smokeCoAlarmCriticalSmokeAlarmTrigger = 0x005c00000000009cn;
+const smokeCoAlarmSmokeAlarmClearTrigger = 0x005c0000000000a0n;
+const smokeCoAlarmWarningCoAlarmTrigger = 0xffffffff00000091n;
+const smokeCoAlarmCriticalCoAlarmTrigger = 0xffffffff0000009dn;
+const smokeCoAlarmCoAlarmClearTrigger = 0xffffffff000000a1n;
+
+export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
+const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
+let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
+
+export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServer {
+  override initialize(): void {
+    this.state.testEventTriggersEnabled = true;
+    this.state.deviceTestEnableKey = chipTestEnableKey;
+    super.initialize();
+  }
+
+  override async testEventTrigger({ eventTrigger, enableKey }: GeneralDiagnostics.TestEventTriggerRequest): Promise<void> {
+    const keyData = Uint8Array.from(enableKey);
+    if (keyData.every((byte) => byte === 0)) {
+      throw new StatusResponseError('Invalid test enable key, all zeros', Status.ConstraintError);
+    }
+    if (!isChipTestEnableKey(keyData)) {
+      throw new StatusResponseError('Invalid test enable key', Status.ConstraintError);
+    }
+    if (BigInt(eventTrigger) === chipTestValidEventTrigger) return;
+    if (await handleChipTestEventTrigger(BigInt(eventTrigger))) return;
+    super.triggerTestEvent(eventTrigger);
+  }
+}
+
+function isChipTestEnableKey(keyData: Uint8Array): boolean {
+  return equalsBytes(keyData, chipTestEnableKey) || equalsBytes(keyData, smokeCoAlarmChipTestEnableKey);
+}
+
+function equalsBytes(first: Uint8Array, second: Uint8Array): boolean {
+  return first.length === second.length && first.every((byte, index) => byte === second[index]);
+}
 
 export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
   if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
+  chipTestMatterbridge = matterbridge;
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;
   if (!serverNode || !aggregator) {
@@ -291,6 +398,73 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
   closeChipTestAppPipe = closePipeWithInterval;
   shutdownListener = closePipeWithInterval;
   cliEmitter.once('shutdown', shutdownListener);
+}
+
+async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (
+    eventTrigger !== smokeCoAlarmWarningSmokeAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmCriticalSmokeAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmSmokeAlarmClearTrigger &&
+    eventTrigger !== smokeCoAlarmWarningCoAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmCriticalCoAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmCoAlarmClearTrigger
+  ) {
+    return false;
+  }
+  return await handleSmokeCoAlarmTestEventTrigger(eventTrigger);
+}
+
+async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (!chipTestMatterbridge) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, 709);
+  if (!endpoint) return false;
+
+  switch (eventTrigger) {
+    case smokeCoAlarmWarningSmokeAlarmTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        smokeState: SmokeCoAlarm.AlarmState.Warning,
+        expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmCriticalSmokeAlarmTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        smokeState: SmokeCoAlarm.AlarmState.Critical,
+        expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmSmokeAlarmClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        smokeState: SmokeCoAlarm.AlarmState.Normal,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmWarningCoAlarmTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        coState: SmokeCoAlarm.AlarmState.Warning,
+        expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmCriticalCoAlarmTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        coState: SmokeCoAlarm.AlarmState.Critical,
+        expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmCoAlarmClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        coState: SmokeCoAlarm.AlarmState.Normal,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
+      return true;
+    default:
+      return false;
+  }
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {

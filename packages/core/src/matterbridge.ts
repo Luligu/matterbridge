@@ -2983,10 +2983,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTest.js');
+      rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
+    }
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
+    const serverNode = await ServerNode.create(rootEndpoint, {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 

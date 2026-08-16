@@ -25,6 +25,7 @@
 
 import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Status, StatusResponseError } from '@matter/types';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
@@ -48,6 +49,17 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
+    /**
+     * Matter 1.6 Application Cluster Specification, 2.11.9.1.1 SelfTestRequest:
+     * only one SelfTestRequest may be processed at a time. When ExpressedState is any of
+     * SmokeAlarm, COAlarm, Testing, InterconnectSmoke, or InterconnectCO, the device SHALL NOT
+     * execute the self-test and SHALL return BUSY.
+     *
+     * Matterbridge rule: forward the command to the plugin before enforcing local behavior.
+     */
+    if (this.state.expressedState !== SmokeCoAlarm.ExpressedState.Normal || this.state.testInProgress) {
+      throw new StatusResponseError('SmokeCOAlarm self-test is busy', Status.Busy);
+    }
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called`);
   }
 }

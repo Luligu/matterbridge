@@ -1,5 +1,5 @@
 {
-  "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension"],
+  "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*"],
   "yamlTests": [
     {
       "name": "PowerSource attributes",
@@ -127,16 +127,14 @@
     {
       "name": "SmokeCOAlarm smoke primary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_2",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive SmokeState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
+      "resetBefore": true
     },
     {
       "name": "SmokeCOAlarm CO primary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_3",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive COState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
+      "resetBefore": true
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on SmokeCOAlarm",
@@ -315,6 +313,11 @@
       "name": "BasicInformation reboot count via app-pipe",
       "test": "TC_BINFO_3_2.py",
       "args": ["--endpoint 0", "--PICS /root/matterbridge.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "Generic TestEventTrigger command",
+      "test": "TC_TestEventTrigger.py",
+      "args": ["--endpoint 0"]
     },
     {
       "name": "PowerSource battery reporting frequency on RootNode",

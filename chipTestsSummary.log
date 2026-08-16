@@ -1,16 +1,6 @@
-Chip tests run started at 2026-08-16T17:49:37.858Z
+Chip tests run started at 2026-08-16T20:39:43.027Z
 
-✅ ElectricalPowerMeasurement attributes on ElectricalSensor (TC_EPM_2_1.py)
-⏭️ ElectricalPowerMeasurement primary functionality on ElectricalSensor (TC_EPM_2_2.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake 1kW load readings; Matterbridge does not implement those CSA reference-app test hooks.
-✅ ElectricalEnergyMeasurement attributes on ElectricalSensor (TC_EEM_2_1.py)
-⏭️ ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensor (TC_EEM_2_2.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake imported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks.
-⏭️ ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensor (TC_EEM_2_3.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake exported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks.
-⏭️ ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensor (TC_EEM_2_4.py)
-   ↳ Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature.
-⏭️ ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensor (TC_EEM_2_5.py)
-   ↳ Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature.
+✅ SmokeCOAlarm smoke primary functionality on SmokeCOAlarm (Test_TC_SMOKECO_2_2)
+✅ SmokeCOAlarm CO primary functionality on SmokeCOAlarm (Test_TC_SMOKECO_2_3)
 
-Summary: 2/2 tests passed (5 skipped).
+Summary: 2/2 tests passed.
