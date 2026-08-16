@@ -32,11 +32,13 @@ import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { OnOffLightSwitchDevice } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { VendorId } from '@matter/types/datatype';
+import { EndpointNumber, VendorId } from '@matter/types/datatype';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 
 // matterbridge
 import type { Matterbridge } from './matterbridge.js';
+import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 logModuleLoaded('MatterbridgeHelpers');
 
@@ -134,25 +136,8 @@ export async function addVirtualDevice(
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
-  /*
-  // v8 ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
-  if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
-    const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
-    lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
-      'Matterbridge User Pin Lock',
-      'sn_system_lock',
-      0xfff1,
-      'Matterbridge',
-      'Matterbridge Virtual Device',
-      20000,
-      '2.0.0',
-    );
-    lockUserPin.createUserPinDoorLockClusterServer();
-    lockUserPin.addRequiredClusterServers();
-    await aggregatorEndpoint.add(lockUserPin);
-  }
-  */
-  if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
+  await createChipTestDevices(matterbridge, aggregatorEndpoint);
+  if (!process.env.MATTERBRIDGE_CHIP_TEST && matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
     await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
       if (matterbridge.restartMode === 'none') await matterbridge.restartProcess();
@@ -163,3 +148,97 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
     });
   }
 }
+
+// v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins
+// Run with: MATTERBRIDGE_CHIP_TEST=1 MATTERBRIDGE_RUN_CHIP_TEST=1 matterbridge
+async function createChipTestDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
+  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !aggregatorEndpoint) return;
+  let ep: MatterbridgeEndpoint | undefined;
+  matterbridge.plugins.set({
+    name: 'matterbridge-chip',
+    path: '',
+    type: 'DynamicPlatform',
+    version: '1.0.0',
+    description: 'Chip test plugin',
+    author: 'Matterbridge',
+    enabled: false,
+    private: false,
+    registeredDevices: 0,
+  });
+
+  const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
+    device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber);
+    device.addRequiredClusters();
+    device.plugin = 'matterbridge-chip';
+    await matterbridge.addBridgedEndpoint('matterbridge-chip', device);
+  };
+
+  // oxlint-disable typescript/no-non-null-assertion
+  const bridgedNode = getSupportedDeviceType('BridgedNode')!;
+  const powerSource = getSupportedDeviceType('PowerSource')!;
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ContactSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_01) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultBooleanStateClusterServer();
+  ep.createDefaultBooleanStateConfigurationClusterServer();
+  await registerDevice(ep, 'Contact Sensor', 'SENSOR-07-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('LightSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_02) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Light Sensor', 'SENSOR-07-02');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OccupancySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_03) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Occupancy Sensor', 'SENSOR-07-03');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('TemperatureSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_04) });
+  ep.createDefaultPowerSourceReplaceableBatteryClusterServer();
+  await registerDevice(ep, 'Temperature Sensor', 'SENSOR-07-04');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('PressureSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_05) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Pressure Sensor', 'SENSOR-07-05');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('FlowSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_06) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Flow Sensor', 'SENSOR-07-06');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('HumiditySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_07) });
+  ep.createDefaultPowerSourceRechargeableBatteryClusterServer();
+  await registerDevice(ep, 'Humidity Sensor', 'SENSOR-07-07');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_08) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'On/Off Sensor', 'SENSOR-07-08');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('SmokeCOAlarm')!, bridgedNode, powerSource], { number: EndpointNumber(7_09) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Smoke/CO Alarm', 'SENSOR-07-09');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('AirQualitySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_10) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Air Quality Sensor', 'SENSOR-07-10');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterFreezeDetector')!, bridgedNode, powerSource], { number: EndpointNumber(7_11) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultBooleanStateClusterServer(false);
+  ep.createDefaultBooleanStateConfigurationClusterServer();
+  await registerDevice(ep, 'Water Freeze Detector', 'SENSOR-07-11');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterLeakDetector')!, bridgedNode, powerSource], { number: EndpointNumber(7_12) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultBooleanStateClusterServer(false);
+  ep.createDefaultBooleanStateConfigurationClusterServer();
+  await registerDevice(ep, 'Water Leak Detector', 'SENSOR-07-12');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('RainSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_13) });
+  ep.createDefaultPowerSourceRechargeableBatteryClusterServer();
+  ep.createDefaultBooleanStateClusterServer(false);
+  ep.createDefaultBooleanStateConfigurationClusterServer();
+  await registerDevice(ep, 'Rain Sensor', 'SENSOR-07-13');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('SoilSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_14) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Soil Sensor', 'SENSOR-07-14');
+}
+// v8 ignore end
