@@ -1348,16 +1348,25 @@ describe('Server clusters and behaviors', () => {
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
 
-    // Seed 3 ThermostatSuggestions entries (uniqueId 2, 3, 4), all referencing preset 0, plus a CurrentThermostatSuggestion
-    // referencing the same preset, to set up the Presets removal cascade below (the scenario above already drains the list
-    // to empty, so it is reseeded directly here rather than through the add/remove commands). Removing preset 0 via a
-    // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that preset,
-    // nulls it (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires `presets$AtomicChanged`
-    // through a committed atomic write (AtomicWriteHandler), which local-actor/command-context test writes bypass
-    // entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite() does it.
-    const preset0Suggestion = (uniqueId: number) => ({ uniqueId, presetHandle: Uint8Array.from([0]), effectiveTime: 1700000000, expirationTime: 1700001800 });
-    await thermostatSuggestion.setAttribute(Thermostat.id, 'thermostatSuggestions', [preset0Suggestion(2), preset0Suggestion(3), preset0Suggestion(4)]);
-    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', preset0Suggestion(2));
+    // Seed 3 ThermostatSuggestions entries, all referencing preset 0, to set up the Presets removal cascade below (the
+    // scenario above already drains the list to empty, so it is reseeded here through real add commands, matching the
+    // earlier scenarios, rather than the try/finally-scoped flow above). The first, being immediately effective,
+    // becomes CurrentThermostatSuggestion as part of the add command's own re-evaluation. Removing preset 0 via a
+    // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that
+    // preset, nulls it (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
+    // `presets$AtomicChanged` through a committed atomic write (AtomicWriteHandler), which local-actor/command-context
+    // test writes bypass entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite()
+    // does it.
+    for (let i = 0; i < 3; i++) {
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
+        presetHandle: Uint8Array.from([0]),
+        effectiveTime: null,
+        expirationInMinutes: 30,
+      });
+    }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ presetHandle: Uint8Array.from([0]) });
+
     const thermostatSuggestionBehavior = MatterbridgeThermostatServer.with(
       Thermostat.Feature.Heating,
       Thermostat.Feature.Cooling,
