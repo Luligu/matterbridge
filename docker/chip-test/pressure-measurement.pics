@@ -1,0 +1,15 @@
+# To run tests on PressureMeasurement --PICS is required
+# Matches createDefaultPressureMeasurementClusterServer(1013, 0, 2000) on CHIP PressureSensor endpoint 705
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+PRS.S=1
+PRS.S.A0000=1 # MeasuredValue
+PRS.S.A0001=1 # MinMeasuredValue
+PRS.S.A0002=1 # MaxMeasuredValue
+PRS.S.A0003=1 # Tolerance
+PRS.S.A0010=0 # ScaledValue
+PRS.S.A0011=0 # MinScaledValue
+PRS.S.A0012=0 # MaxScaledValue
+PRS.S.A0013=0 # ScaledTolerance
+PRS.S.A0014=0 # Scale
+PRS.M.PressureChange=0

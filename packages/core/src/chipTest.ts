@@ -28,10 +28,12 @@ import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
 import type { Endpoint } from '@matter/node';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
@@ -41,7 +43,9 @@ type ChipTestAppPipeCommand = {
   Name?: string;
   EndpointId?: number;
   NewState?: boolean;
+  Occupancy?: number;
   SensorFault?: number;
+  SoilMoistureValue?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -80,6 +84,7 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('LightSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_02) });
   ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultIlluminanceMeasurementClusterServer(1000, 1, 65534);
   await registerDevice(ep, 'Light Sensor', 'SENSOR-07-02');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('OccupancySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_03) });
@@ -88,18 +93,22 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('TemperatureSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_04) });
   ep.createDefaultPowerSourceReplaceableBatteryClusterServer();
+  ep.createDefaultTemperatureMeasurementClusterServer(2000, -27315, 32767);
   await registerDevice(ep, 'Temperature Sensor', 'SENSOR-07-04');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('PressureSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_05) });
   ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultPressureMeasurementClusterServer(1013, 0, 2000);
   await registerDevice(ep, 'Pressure Sensor', 'SENSOR-07-05');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('FlowSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_06) });
   ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createDefaultFlowMeasurementClusterServer(100, 0, 1000);
   await registerDevice(ep, 'Flow Sensor', 'SENSOR-07-06');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('HumiditySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_07) });
   ep.createDefaultPowerSourceRechargeableBatteryClusterServer();
+  ep.createDefaultRelativeHumidityMeasurementClusterServer(5000, 0, 10000);
   await registerDevice(ep, 'Humidity Sensor', 'SENSOR-07-07');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_08) });
@@ -110,8 +119,20 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
   ep.createDefaultPowerSourceBatteryClusterServer();
   await registerDevice(ep, 'Smoke/CO Alarm', 'SENSOR-07-09');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('SmokeCOAlarm')!, bridgedNode, powerSource], { number: EndpointNumber(7_09_1) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createSmokeOnlySmokeCOAlarmClusterServer();
+  await registerDevice(ep, 'Smoke Alarm', 'SENSOR-07-09-1');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('SmokeCOAlarm')!, bridgedNode, powerSource], { number: EndpointNumber(7_09_2) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createCoOnlySmokeCOAlarmClusterServer();
+  await registerDevice(ep, 'CO Alarm', 'SENSOR-07-09-2');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('AirQualitySensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_10) });
   ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultTvocMeasurementClusterServer(50, undefined, undefined, undefined, 0, 1000);
+  ep.addOptionalClusterServers();
   await registerDevice(ep, 'Air Quality Sensor', 'SENSOR-07-10');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterFreezeDetector')!, bridgedNode, powerSource], { number: EndpointNumber(7_11) });
@@ -245,7 +266,8 @@ export function createChipTestAppPipe(matterbridge: Matterbridge, aggregatorEndp
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>, command: ChipTestAppPipeCommand): Promise<void> {
-  const endpointId = command.EndpointId ?? (command.Name === 'SimulateConfigurationVersionChange' ? 701 : undefined);
+  const endpointId =
+    command.Name === 'SetOccupancy' && command.EndpointId === 1 ? 703 : (command.EndpointId ?? (command.Name === 'SimulateConfigurationVersionChange' ? 701 : undefined));
   if (endpointId === undefined) {
     matterbridge.log.warn(`Ignoring CHIP test app pipe command without EndpointId: ${JSON.stringify(command)}`);
     return;
@@ -266,9 +288,22 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, aggregat
       matterbridge.log.info(`CHIP test app pipe set BooleanStateConfiguration.SensorFault to ${command.SensorFault ?? 0} on endpoint ${endpointId}`);
       return;
     case 'SimulateConfigurationVersionChange':
+      if (matterbridge.serverNode) {
+        const configurationVersion = (matterbridge.serverNode.stateOf(BasicInformationServer).configurationVersion ?? 1) + 1;
+        await matterbridge.serverNode.setStateOf(BasicInformationServer, { configurationVersion });
+        matterbridge.log.info(`CHIP test app pipe set BasicInformation.ConfigurationVersion to ${configurationVersion} on endpoint 0`);
+      }
       endpoint.configurationVersion = (endpoint.stateOf(BridgedDeviceBasicInformationServer).configurationVersion ?? 1) + 1;
       await endpoint.setStateOf(BridgedDeviceBasicInformationServer, { configurationVersion: endpoint.configurationVersion });
       matterbridge.log.info(`CHIP test app pipe set BridgedDeviceBasicInformation.ConfigurationVersion to ${endpoint.configurationVersion} on endpoint ${endpointId}`);
+      return;
+    case 'SetOccupancy':
+      await endpoint.setStateOf(MatterbridgeOccupancySensingServer, { occupancy: { occupied: Boolean(command.Occupancy) } });
+      matterbridge.log.info(`CHIP test app pipe set OccupancySensing.Occupancy to ${command.Occupancy ?? 0} on endpoint ${endpointId}`);
+      return;
+    case 'SetSimulatedSoilMoisture':
+      await endpoint.setStateOf(endpoint.behaviors.supported.soilMeasurement, { soilMoistureMeasuredValue: command.SoilMoistureValue ?? null });
+      matterbridge.log.info(`CHIP test app pipe set SoilMeasurement.SoilMoistureMeasuredValue to ${command.SoilMoistureValue ?? null} on endpoint ${endpointId}`);
       return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
@@ -293,7 +328,9 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('Name' in value) || typeof value.Name === 'string') &&
     (!('EndpointId' in value) || typeof value.EndpointId === 'number') &&
     (!('NewState' in value) || typeof value.NewState === 'boolean') &&
-    (!('SensorFault' in value) || typeof value.SensorFault === 'number')
+    (!('Occupancy' in value) || typeof value.Occupancy === 'number') &&
+    (!('SensorFault' in value) || typeof value.SensorFault === 'number') &&
+    (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number')
   );
 }
 // v8 ignore end

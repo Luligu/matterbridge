@@ -1,0 +1,10 @@
+# To run tests on FlowMeasurement --PICS is required
+# Matches createDefaultFlowMeasurementClusterServer(100, 0, 1000) on CHIP FlowSensor endpoint 706
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+FLW.S=1
+FLW.S.A0000=1 # MeasuredValue
+FLW.S.A0001=1 # MinMeasuredValue
+FLW.S.A0002=1 # MaxMeasuredValue
+FLW.S.A0003=1 # Tolerance
+FLW.M.FlowChange=0

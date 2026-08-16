@@ -24,7 +24,6 @@ import {
   DescriptorBehavior,
   FormaldehydeConcentrationMeasurementServer,
   NitrogenDioxideConcentrationMeasurementServer,
-  OccupancySensingServer,
   OzoneConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
   Pm10ConcentrationMeasurementServer,
@@ -118,6 +117,7 @@ import {
   waterValve,
   windowCovering,
 } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   capitalizeFirstLetter,
@@ -2550,12 +2550,22 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultOccupancySensingClusterServer(true);
-    expect(device.hasClusterServer(OccupancySensingServer)).toBe(true);
-    expect(device.hasAttributeServer(OccupancySensingServer, 'occupancy')).toBe(true);
+    expect(device.hasClusterServer(MatterbridgeOccupancySensingServer)).toBe(true);
+    expect(device.hasAttributeServer(MatterbridgeOccupancySensingServer, 'occupancy')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(OccupancySensing.id, 'occupancy')).toEqual({ occupied: true });
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(30);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(30);
+
+    await device.setAttribute(OccupancySensing.id, 'holdTime', 1);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(1);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(1);
+
+    await device.setAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay', 300);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(300);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(300);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

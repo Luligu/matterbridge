@@ -63,7 +63,7 @@ import { IdentifyClient } from '@matter/node/behaviors/identify';
 import { IlluminanceMeasurementClient, IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { LevelControlClient } from '@matter/node/behaviors/level-control';
 import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OccupancySensingClient } from '@matter/node/behaviors/occupancy-sensing';
 import { OnOffClient } from '@matter/node/behaviors/on-off';
 import { OtaSoftwareUpdateProviderClient } from '@matter/node/behaviors/ota-software-update-provider';
 import { OtaSoftwareUpdateRequestorClient } from '@matter/node/behaviors/ota-software-update-requestor';
@@ -163,6 +163,7 @@ import { MatterbridgeFanControlServer } from './behaviors/fanControlServer.js';
 import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
 import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
 import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
@@ -482,7 +483,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === PressureMeasurement.id) return PressureMeasurementServer;
   if (clusterId === FlowMeasurement.id) return FlowMeasurementServer;
   if (clusterId === IlluminanceMeasurement.id) return IlluminanceMeasurementServer;
-  if (clusterId === OccupancySensing.id) return OccupancySensingServer;
+  if (clusterId === OccupancySensing.id) return MatterbridgeOccupancySensingServer;
   if (clusterId === SoilMeasurement.id) return SoilMeasurementServer;
   if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
   if (clusterId === HepaFilterMonitoring.id) return HepaFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
@@ -1736,7 +1737,7 @@ export function getDefaultFlowMeasurementClusterServer(measuredValue: number | n
  * This replaces the 9 legacy attributes PIROccupiedToUnoccupiedDelay through PhysicalContactUnoccupiedToOccupiedThreshold.
  */
 export function getDefaultOccupancySensingClusterServer(occupied = false, holdTime = 30, holdTimeMin = 1, holdTimeMax = 300) {
-  return optionsFor(OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared), {
+  return optionsFor(MatterbridgeOccupancySensingServer, {
     occupancy: { occupied },
     occupancySensorType: OccupancySensing.OccupancySensorType.Pir,
     occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
@@ -1766,7 +1767,7 @@ export function getDefaultSoilMeasurementClusterServer(soilMoistureMeasuredValue
       measured: true,
       minMeasuredValue: 0,
       maxMeasuredValue: 100,
-      accuracyRanges: [{ rangeMin: 0, rangeMax: 100, fixedMax: 1 }], // Default accuracy range of 1 unit
+      accuracyRanges: [{ rangeMin: 0, rangeMax: 100, percentMax: 1 }], // Default accuracy range of 1%
     },
   });
 }

@@ -37,6 +37,7 @@ export * from './levelControlServer.js';
 export * from './matterbridgeServer.js';
 export * from './modeSelectServer.js';
 export * from './onOffServer.js';
+export * from './occupancySensingServer.js';
 export * from './operationalStateServer.js';
 export * from './powerSourceServer.js';
 export * from './serviceAreaServer.js';
