@@ -14,6 +14,7 @@ const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
+import { Bytes } from '@matter/general';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { Status } from '@matter/types';
@@ -1344,6 +1345,60 @@ describe('Server clusters and behaviors', () => {
     } finally {
       vi.useRealTimers();
     }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // Seed 3 ThermostatSuggestions entries, all referencing preset 0, to set up the Presets removal cascade below (the
+    // scenario above already drains the list to empty, so it is reseeded here through real add commands, matching the
+    // earlier scenarios, rather than the try/finally-scoped flow above). The first, being immediately effective,
+    // becomes CurrentThermostatSuggestion as part of the add command's own re-evaluation. Removing preset 0 via a
+    // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that
+    // preset, nulls it (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
+    // `presets$AtomicChanged` through a committed atomic write (AtomicWriteHandler), which local-actor/command-context
+    // test writes bypass entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite()
+    // does it.
+    for (let i = 0; i < 3; i++) {
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
+        presetHandle: Uint8Array.from([0]),
+        effectiveTime: null,
+        expirationInMinutes: 30,
+      });
+    }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ presetHandle: Uint8Array.from([0]) });
+
+    const thermostatSuggestionBehavior = MatterbridgeThermostatServer.with(
+      Thermostat.Feature.Heating,
+      Thermostat.Feature.Cooling,
+      Thermostat.Feature.AutoMode,
+      Thermostat.Feature.Presets,
+      Thermostat.Feature.ThermostatSuggestions,
+    );
+    const presetsWithoutPreset0 = thermostatPresets.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([0])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset0, thermostatPresets, undefined as never);
+    // The reactor runs in its own dedicated, independently-committed transaction (matching production), so its
+    // effect is not necessarily visible synchronously after emit() returns.
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // Regression test: CurrentThermostatSuggestion must be nulled whenever its own PresetHandle was removed, even
+    // when the ThermostatSuggestions list itself is unaffected (already empty here, so its length doesn't change).
+    // Matter 1.6 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
+    // of point 2 (which only covers ThermostatSuggestions entries).
+    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
+      uniqueId: 5,
+      presetHandle: Uint8Array.from([1]),
+      effectiveTime: 1700000000,
+      expirationTime: 1700001800,
+    });
+    const presetsWithoutPreset1 = presetsWithoutPreset0.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([1])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset1, presetsWithoutPreset0, undefined as never);
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
   });
 
   test('ValveConfigurationAndControl server', async () => {
