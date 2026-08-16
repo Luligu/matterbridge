@@ -1,0 +1,7 @@
+# To run tests on BooleanState --PICS is required
+# Matches createDefaultBooleanStateClusterServer() in matterbridgeEndpoint.ts
+PICS_SDK_CI_ONLY=1
+BOOL.S=1
+BOOL.S.F00=1 # ChangeEvent
+BOOL.S.A0000=1 # StateValue
+BOOL.S.E00=1 # StateChange

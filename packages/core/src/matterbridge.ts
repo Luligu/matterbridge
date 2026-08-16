@@ -2066,17 +2066,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug(`Closing node storage context for ${plg}Matterbridge${db}...`);
         await this.nodeContext.close();
         this.nodeContext = undefined;
+        this.log.debug(`Closed node storage context for ${plg}Matterbridge${db}`);
         // Clear nodeContext for each plugin (they just need 1000ms to write the data to disk)
         for (const plugin of this.plugins) {
           if (plugin.nodeContext) {
             this.log.debug(`Closing node storage context for plugin ${plg}${plugin.name}${db}...`);
             await plugin.nodeContext.close();
             plugin.nodeContext = undefined;
+            this.log.debug(`Closed node storage context for plugin ${plg}${plugin.name}${db}`);
           }
         }
         this.log.debug('Closing node storage manager...');
         await this.nodeStorage.close();
         this.nodeStorage = undefined;
+        this.log.debug('Closed node storage manager');
       } else {
         this.log.error('Error close the matterbridge node storage and context: nodeStorage or nodeContext not found!');
       }

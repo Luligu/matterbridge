@@ -488,6 +488,7 @@ describe('Matterbridge frontend', () => {
       ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 5000],
       ['pressureMeasurement', 0x403, 'measuredValue', 0, 1000],
       ['flowMeasurement', 0x404, 'measuredValue', 0, 100],
+      ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, 50],
     ]);
     expect(text).toContain('OnOff: true');
     expect(text).toContain('Position: 1');
@@ -509,6 +510,22 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('Air quality: 1');
     expect(text).toContain('Pm2.5: 5');
     expect(text).toContain('Humidity: 50%');
+    expect(text).toContain('Soil moisture: 50%');
+
+    const nullMeasurements = runTuples([
+      ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
+      ['temperatureMeasurement', 0x402, 'measuredValue', 0, null],
+      ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, null],
+      ['pressureMeasurement', 0x403, 'measuredValue', 0, null],
+      ['flowMeasurement', 0x404, 'measuredValue', 0, null],
+      ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, null],
+    ]);
+    expect(nullMeasurements).toContain('Illuminance: unknown');
+    expect(nullMeasurements).toContain('Temperature: unknown');
+    expect(nullMeasurements).toContain('Humidity: unknown');
+    expect(nullMeasurements).toContain('Pressure: unknown');
+    expect(nullMeasurements).toContain('Flow: unknown');
+    expect(nullMeasurements).toContain('Soil moisture: unknown');
 
     // isValid* false sides (out-of-range / wrong-type values are not appended)
     const skipped = runTuples([

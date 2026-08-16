@@ -24,7 +24,6 @@ import {
   DescriptorBehavior,
   FormaldehydeConcentrationMeasurementServer,
   NitrogenDioxideConcentrationMeasurementServer,
-  OccupancySensingServer,
   OzoneConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
   Pm10ConcentrationMeasurementServer,
@@ -91,6 +90,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -2206,9 +2206,18 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
+    const stateChangeEvents: unknown[] = [];
+    const stateChange = device.eventsOf('booleanState').stateChange;
+    expect(stateChange).toBeDefined();
+    stateChange?.on((event) => {
+      stateChangeEvents.push(event);
+    });
+
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(false);
     await device.setAttribute(BooleanState.id, 'stateValue', true);
     expect(called).toBe(true);
+    expect(stateChangeEvents).toHaveLength(1);
+    expect(stateChangeEvents[0]).toEqual({ stateValue: true });
 
     vi.clearAllMocks();
     await device.setAttribute(BooleanStateConfiguration.id, 'stateValue', true, device.log);
@@ -2389,8 +2398,8 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.id, 'description')).toBe('Primary battery');
     expect(device.getAttribute(PowerSource.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
-    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(null);
-    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(null);
+    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(1500);
+    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(200);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
 
     await flushAsync();
@@ -2541,12 +2550,22 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultOccupancySensingClusterServer(true);
-    expect(device.hasClusterServer(OccupancySensingServer)).toBe(true);
-    expect(device.hasAttributeServer(OccupancySensingServer, 'occupancy')).toBe(true);
+    expect(device.hasClusterServer(MatterbridgeOccupancySensingServer)).toBe(true);
+    expect(device.hasAttributeServer(MatterbridgeOccupancySensingServer, 'occupancy')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(OccupancySensing.id, 'occupancy')).toEqual({ occupied: true });
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(30);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(30);
+
+    await device.setAttribute(OccupancySensing.id, 'holdTime', 1);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(1);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(1);
+
+    await device.setAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay', 300);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(300);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(300);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

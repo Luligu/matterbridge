@@ -33,11 +33,25 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.6] - Dev branch
 
+### Development news
+
+- [chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering `BasicInformation`, `PowerSource`, `AccessControl`, `GeneralDiagnostics`, `GroupKeyManagement`, `OperationalCredentials` and `GeneralCommissioning`.
+- [chip]: Aggregator endpoint 1 CHIP composition/conformance is green ✅ for the automated harness tests covering the `Aggregator` device type and `Descriptor` endpoint composition.
+- [chip]: Matter 1.6.0 Chapter 7 sensor device types pass all CHIP automated conformance harness tests ✅. The test fixture now exercises the default helper stack used by the sensor endpoints: `createDefaultBridgedDeviceBasicInformationClusterServer()`, `createDefaultIdentifyClusterServer()`, `createDefaultPowerSourceBatteryClusterServer()`, `createDefaultPowerSourceReplaceableBatteryClusterServer()`, `createDefaultPowerSourceRechargeableBatteryClusterServer()`, `createDefaultPowerSourceWiredClusterServer()`, `createDefaultBooleanStateClusterServer()`, `createDefaultBooleanStateConfigurationClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()`, `createDefaultOccupancySensingClusterServer()`, `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultFlowMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultSmokeCOAlarmClusterServer()`, `createSmokeOnlySmokeCOAlarmClusterServer()`, `createCoOnlySmokeCOAlarmClusterServer()`, `createDefaultAirQualityClusterServer()`, `createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()`, `createDefaultCarbonDioxideConcentrationMeasurementClusterServer()`, `createDefaultNitrogenDioxideConcentrationMeasurementClusterServer()`, `createDefaultOzoneConcentrationMeasurementClusterServer()`, `createDefaultFormaldehydeConcentrationMeasurementClusterServer()`, `createDefaultPm1ConcentrationMeasurementClusterServer()`, `createDefaultPm25ConcentrationMeasurementClusterServer()`, `createDefaultPm10ConcentrationMeasurementClusterServer()`, `createDefaultRadonConcentrationMeasurementClusterServer()`, `createDefaultTvocMeasurementClusterServer()` and `createDefaultSoilMeasurementClusterServer()`.
+
 ### Added
 
 - [electricalUtilityMeter]: Add `ElectricalUtilityMeter` device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the `MeterIdentification` cluster.
 - [electricalUtilityMeter]: Add `addElectricalMeter()` to add an Electrical Meter (+ Electrical Sensor) child endpoint with `ElectricalPowerMeasurement`, `ElectricalEnergyMeasurement` and `CommodityMetering`.
 - [electricalUtilityMeter]: Add `addElectricalEnergyTariff()` to add an Electrical Energy Tariff child endpoint with `CommodityPrice`, `CommodityTariff` and `ElectricalGridConditions`.
+- [booleanStateConfiguration]: Add `SuppressAlarm` command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().
+- [booleanStateConfiguration]: Add automatic `AlarmsStateChanged` and `SensorFault` event emission.
+- [occupancySensing]: Add `MatterbridgeOccupancySensingServer` to mirror Matter 1.6 `HoldTime` with the legacy `PIROccupiedToUnoccupiedDelay` attribute when both are exposed for backward compatibility.
+- [concentrationMeasurement]: Add optional `minMeasuredValue` and `maxMeasuredValue` parameters to `createDefaultTvocMeasurementClusterServer()`.
+- [frontend]: Add Soil Sensor and On/Off Sensor device icons.
+- [chip]: Add `Chip Test` stack.
+- [chip]: Add `Chip Test` pipe.
+- [chip]: Add `TotalVolatileOrganicCompoundsConcentrationMeasurement` test coverage on the Air Quality Sensor endpoint.
 
 ### Changed
 
@@ -46,6 +60,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxfmt` to v.0.63.0.
 - [matterbridge]: Bump `oxlint` to v.1.78.0.
 - [core]: Bump `ws` to v.8.21.3.
+- [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
 - [frontend]: Bump `frontend` version to v.3.5.8.
 - [frontend]: Bump `@testing-library/jest-dom` to v.7.0.1.
@@ -53,6 +68,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `globals` to v.17.11.0.
 - [frontend]: Bump `oxfmt` to v.0.63.0.
 - [frontend]: Bump `oxlint` to v.1.78.0.
+
+### Fixed
+
+- [thermostat]: Apply thermostat suggestions: `AddThermostatSuggestion`/`RemoveThermostatSuggestion` now re-evaluate `CurrentThermostatSuggestion`, syncing `ActivePresetHandle` and clearing `ThermostatSuggestionNotFollowingReason`, and prune expired entries from `ThermostatSuggestions`. Thanks Ludovic BOUÉ.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

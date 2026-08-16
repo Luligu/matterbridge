@@ -1,0 +1,10 @@
+# To run tests on IlluminanceMeasurement --PICS is required
+# Matches createDefaultIlluminanceMeasurementClusterServer(1000, 1, 65534) on CHIP LightSensor endpoint 702
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+ILL.S=1
+ILL.S.A0000=1 # MeasuredValue
+ILL.S.A0001=1 # MinMeasuredValue
+ILL.S.A0002=1 # MaxMeasuredValue
+ILL.S.A0003=1 # Tolerance
+ILL.S.A0004=0 # LightSensorType

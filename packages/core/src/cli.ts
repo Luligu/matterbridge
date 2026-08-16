@@ -160,6 +160,8 @@ async function shutdown(): Promise<void> {
 
   cliEmitter.emit('shutdown');
 
+  log.debug('Received shutdown event, exit with code 0');
+
   process.exit(0);
 }
 

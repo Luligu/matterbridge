@@ -1,0 +1,17 @@
+# To run tests on OccupancySensing --PICS is required
+# Matches createDefaultOccupancySensingClusterServer(false, 30, 1, 300) on CHIP OccupancySensor endpoint 703
+PICS_SDK_CI_ONLY=1
+OCC.S=1
+OCC.S.A0000=1 # Occupancy
+OCC.S.A0001=1 # OccupancySensorType
+OCC.S.A0002=1 # OccupancySensorTypeBitmap
+OCC.S.A0010=1 # PIROccupiedToUnoccupiedDelay
+OCC.S.A0011=1 # PIRUnoccupiedToOccupiedDelay
+OCC.S.A0012=1 # PIRUnoccupiedToOccupiedThreshold
+OCC.S.A0020=0 # UltrasonicOccupiedToUnoccupiedDelay
+OCC.S.A0021=0 # UltrasonicUnoccupiedToOccupiedDelay
+OCC.S.A0022=0 # UltrasonicUnoccupiedToOccupiedThreshold
+OCC.S.A0030=0 # PhysicalContactOccupiedToUnoccupiedDelay
+OCC.S.A0031=0 # PhysicalContactUnoccupiedToOccupiedDelay
+OCC.S.A0032=0 # PhysicalContactUnoccupiedToOccupiedThreshold
+OCC.S.E00=0 # OccupancyChanged

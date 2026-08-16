@@ -134,25 +134,14 @@ export async function addVirtualDevice(
  * @returns {Promise<void>} A promise that resolves when the virtual devices are added.
  */
 export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
-  /*
-  // v8 ignore next - No test for now cause is just a way to easily add new devices for testing purposes without using dynamic plugin
-  if (hasParameter('experimental') && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
-    const lockUserPin = new MatterbridgeEndpoint(doorLock, { id: 'door_lock_user_pin' });
-    lockUserPin.createDefaultBridgedDeviceBasicInformationClusterServer(
-      'Matterbridge User Pin Lock',
-      'sn_system_lock',
-      0xfff1,
-      'Matterbridge',
-      'Matterbridge Virtual Device',
-      20000,
-      '2.0.0',
-    );
-    lockUserPin.createUserPinDoorLockClusterServer();
-    lockUserPin.addRequiredClusterServers();
-    await aggregatorEndpoint.add(lockUserPin);
+  // Run manually with: MATTERBRIDGE_CHIP_TEST=1 MATTERBRIDGE_RUN_CHIP_TEST=1 matterbridge
+  // v8 ignore next - No test cause is just a way to easily add new devices for testing purposes without using plugins
+  if (process.env.MATTERBRIDGE_CHIP_TEST) {
+    const { createChipTestAppPipe, createChipTestDevices } = await import('./chipTest.js');
+    if (process.env.MATTERBRIDGE_RUN_CHIP_TEST) await createChipTestDevices(matterbridge, aggregatorEndpoint);
+    createChipTestAppPipe(matterbridge, aggregatorEndpoint);
   }
-  */
-  if (matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
+  if (!process.env.MATTERBRIDGE_CHIP_TEST && matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);
     await addVirtualDevice(aggregatorEndpoint, 'Restart Matterbridge', matterbridge.virtualMode, async () => {
       if (matterbridge.restartMode === 'none') await matterbridge.restartProcess();
