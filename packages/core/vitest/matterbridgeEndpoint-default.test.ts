@@ -90,6 +90,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -117,7 +118,6 @@ import {
   waterValve,
   windowCovering,
 } from '../src/matterbridgeDeviceTypes.js';
-import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   capitalizeFirstLetter,

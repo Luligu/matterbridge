@@ -38,7 +38,9 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
 
   override initialize(): MaybePromise {
     const result = super.initialize();
+    // v8 ignore else
     if (this.events.holdTime$Changing) this.reactTo(this.events.holdTime$Changing, this.#syncPirOccupiedToUnoccupiedDelay);
+    // v8 ignore else
     if (this.events.pirOccupiedToUnoccupiedDelay$Changing) this.reactTo(this.events.pirOccupiedToUnoccupiedDelay$Changing, this.#syncHoldTime);
     return result;
   }
