@@ -127,35 +127,27 @@
     {
       "name": "SmokeCOAlarm smoke primary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_2",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
-      "resetBefore": true
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm CO primary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_3",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
-      "resetBefore": true
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_4",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive battery, hardware fault, end-of-service, and self-test event flows; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm optional secondary functionality on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_5",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires optional SmokeCOAlarm interconnect/contamination/sensitivity/mute behavior plus GeneralDiagnostics TestEventTrigger/sample-app hooks; these optional paths are not enabled on endpoint 709."
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_6",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to force multiple simultaneous SmokeCOAlarm states; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm attributes on Smoke-only SmokeCOAlarm",
@@ -165,16 +157,12 @@
     {
       "name": "SmokeCOAlarm smoke primary functionality on Smoke-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_2",
-      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive SmokeState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on Smoke-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_4",
-      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive battery, hardware fault, end-of-service, and self-test event flows; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics"]
     },
     {
       "name": "SmokeCOAlarm attributes on CO-only SmokeCOAlarm",
@@ -184,14 +172,14 @@
     {
       "name": "SmokeCOAlarm CO primary functionality on CO-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_3",
-      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
       "skip": true,
       "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive COState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on CO-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_4",
-      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics", "--hex-arg TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
       "skip": true,
       "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive battery, hardware fault, end-of-service, and self-test event flows; Matterbridge does not implement those CSA reference-app test hooks."
     },

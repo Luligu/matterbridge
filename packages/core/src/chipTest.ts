@@ -37,8 +37,10 @@
  *
  * To add a new trigger-backed CHIP test:
  * 1. Read the CHIP test source and copy its exact EventTrigger constants.
- * 2. Check the key the test really sends. Python tests often use 000102...0f, while YAML tests may define
- *    their own default key in the YAML config. Add only the required CHIP-test key to isChipTestEnableKey().
+ * 2. Check the key the test really sends. Python tests often use 000102...0f. YAML tests may define their
+ *    own default key in the YAML config, such as SmokeCOAlarm's 001122...eeff key, so do not add a
+ *    chipTests.json --hex-arg unless the YAML default is wrong for that specific test. Add only the required
+ *    CHIP-test key to isChipTestEnableKey().
  * 3. Add a small handler in handleChipTestEventTrigger() that updates the target endpoint with setCluster()
  *    or setAttribute(), then emits any event the test reads with triggerEvent().
  * 4. Keep unsupported EventTrigger values delegated to GeneralDiagnosticsServer so they return InvalidCommand.
@@ -120,6 +122,20 @@ const smokeCoAlarmSmokeAlarmClearTrigger = 0x005c0000000000a0n;
 const smokeCoAlarmWarningCoAlarmTrigger = 0xffffffff00000091n;
 const smokeCoAlarmCriticalCoAlarmTrigger = 0xffffffff0000009dn;
 const smokeCoAlarmCoAlarmClearTrigger = 0xffffffff000000a1n;
+const smokeCoAlarmYamlWarningCoAlarmTrigger = 0x005c000000000091n;
+const smokeCoAlarmYamlCriticalCoAlarmTrigger = 0x005c00000000009dn;
+const smokeCoAlarmYamlCoAlarmClearTrigger = 0x005c0000000000a1n;
+const smokeCoAlarmWarningBatteryAlertTrigger = 0xffffffff00000095n;
+const smokeCoAlarmCriticalBatteryAlertTrigger = 0xffffffff0000009en;
+const smokeCoAlarmBatteryAlertClearTrigger = 0xffffffff000000a5n;
+const smokeCoAlarmYamlWarningBatteryAlertTrigger = 0x005c000000000095n;
+const smokeCoAlarmYamlBatteryAlertClearTrigger = 0x005c0000000000a5n;
+const smokeCoAlarmHardwareFaultAlertTrigger = 0xffffffff00000093n;
+const smokeCoAlarmHardwareFaultAlertClearTrigger = 0xffffffff000000a3n;
+const smokeCoAlarmEndOfServiceAlertTrigger = 0xffffffff0000009an;
+const smokeCoAlarmEndOfServiceAlertClearTrigger = 0xffffffff000000aan;
+const smokeCoAlarmDeviceMutedTrigger = 0x005c00000000009bn;
+const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
@@ -407,7 +423,21 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
     eventTrigger !== smokeCoAlarmSmokeAlarmClearTrigger &&
     eventTrigger !== smokeCoAlarmWarningCoAlarmTrigger &&
     eventTrigger !== smokeCoAlarmCriticalCoAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmCoAlarmClearTrigger
+    eventTrigger !== smokeCoAlarmCoAlarmClearTrigger &&
+    eventTrigger !== smokeCoAlarmYamlWarningCoAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmYamlCriticalCoAlarmTrigger &&
+    eventTrigger !== smokeCoAlarmYamlCoAlarmClearTrigger &&
+    eventTrigger !== smokeCoAlarmWarningBatteryAlertTrigger &&
+    eventTrigger !== smokeCoAlarmCriticalBatteryAlertTrigger &&
+    eventTrigger !== smokeCoAlarmBatteryAlertClearTrigger &&
+    eventTrigger !== smokeCoAlarmYamlWarningBatteryAlertTrigger &&
+    eventTrigger !== smokeCoAlarmYamlBatteryAlertClearTrigger &&
+    eventTrigger !== smokeCoAlarmHardwareFaultAlertTrigger &&
+    eventTrigger !== smokeCoAlarmHardwareFaultAlertClearTrigger &&
+    eventTrigger !== smokeCoAlarmEndOfServiceAlertTrigger &&
+    eventTrigger !== smokeCoAlarmEndOfServiceAlertClearTrigger &&
+    eventTrigger !== smokeCoAlarmDeviceMutedTrigger &&
+    eventTrigger !== smokeCoAlarmDeviceMutedClearTrigger
   ) {
     return false;
   }
@@ -437,11 +467,12 @@ async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise
     case smokeCoAlarmSmokeAlarmClearTrigger:
       await endpoint.setCluster(SmokeCoAlarm, {
         smokeState: SmokeCoAlarm.AlarmState.Normal,
-        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        expressedState: getSmokeCoAlarmExpressedState(endpoint, { smokeState: SmokeCoAlarm.AlarmState.Normal }),
       }, chipTestMatterbridge.log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmWarningCoAlarmTrigger:
+    case smokeCoAlarmYamlWarningCoAlarmTrigger:
       await endpoint.setCluster(SmokeCoAlarm, {
         coState: SmokeCoAlarm.AlarmState.Warning,
         expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
@@ -449,6 +480,7 @@ async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCriticalCoAlarmTrigger:
+    case smokeCoAlarmYamlCriticalCoAlarmTrigger:
       await endpoint.setCluster(SmokeCoAlarm, {
         coState: SmokeCoAlarm.AlarmState.Critical,
         expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
@@ -456,15 +488,94 @@ async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCoAlarmClearTrigger:
+    case smokeCoAlarmYamlCoAlarmClearTrigger:
       await endpoint.setCluster(SmokeCoAlarm, {
         coState: SmokeCoAlarm.AlarmState.Normal,
+        expressedState: getSmokeCoAlarmExpressedState(endpoint, { coState: SmokeCoAlarm.AlarmState.Normal }),
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmWarningBatteryAlertTrigger:
+    case smokeCoAlarmYamlWarningBatteryAlertTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        batteryAlert: SmokeCoAlarm.AlarmState.Warning,
+        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Warning }),
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmCriticalBatteryAlertTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        batteryAlert: SmokeCoAlarm.AlarmState.Critical,
+        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }),
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmBatteryAlertClearTrigger:
+    case smokeCoAlarmYamlBatteryAlertClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        batteryAlert: SmokeCoAlarm.AlarmState.Normal,
+        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Normal }),
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmHardwareFaultAlertTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        hardwareFaultAlert: true,
+        expressedState: SmokeCoAlarm.ExpressedState.HardwareFault,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'hardwareFault', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmHardwareFaultAlertClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        hardwareFaultAlert: false,
         expressedState: SmokeCoAlarm.ExpressedState.Normal,
       }, chipTestMatterbridge.log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
+    case smokeCoAlarmEndOfServiceAlertTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired,
+        expressedState: SmokeCoAlarm.ExpressedState.EndOfService,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'endOfService', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmEndOfServiceAlertClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, {
+        endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
+        expressedState: SmokeCoAlarm.ExpressedState.Normal,
+      }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
+      return true;
+    case smokeCoAlarmDeviceMutedTrigger:
+      if (
+        endpoint.getAttribute(SmokeCoAlarm.id, 'smokeState') === SmokeCoAlarm.AlarmState.Warning ||
+        endpoint.getAttribute(SmokeCoAlarm.id, 'coState') === SmokeCoAlarm.AlarmState.Warning
+      ) {
+        await endpoint.setCluster(SmokeCoAlarm, { deviceMuted: SmokeCoAlarm.MuteState.Muted }, chipTestMatterbridge.log);
+        await endpoint.triggerEvent(SmokeCoAlarm, 'alarmMuted', undefined, chipTestMatterbridge.log);
+      }
+      return true;
+    case smokeCoAlarmDeviceMutedClearTrigger:
+      await endpoint.setCluster(SmokeCoAlarm, { deviceMuted: SmokeCoAlarm.MuteState.NotMuted }, chipTestMatterbridge.log);
+      await endpoint.triggerEvent(SmokeCoAlarm, 'muteEnded', undefined, chipTestMatterbridge.log);
+      return true;
     default:
       return false;
   }
+}
+
+function getSmokeCoAlarmExpressedState(
+  endpoint: MatterbridgeEndpoint,
+  state: { smokeState?: SmokeCoAlarm.AlarmState; coState?: SmokeCoAlarm.AlarmState; batteryAlert?: SmokeCoAlarm.AlarmState } = {},
+): SmokeCoAlarm.ExpressedState {
+  const smokeState = state.smokeState ?? endpoint.getAttribute(SmokeCoAlarm.id, 'smokeState');
+  const coState = state.coState ?? endpoint.getAttribute(SmokeCoAlarm.id, 'coState');
+  const batteryAlert = state.batteryAlert ?? endpoint.getAttribute(SmokeCoAlarm.id, 'batteryAlert');
+
+  if (smokeState !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.SmokeAlarm;
+  if (batteryAlert !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.BatteryAlert;
+  if (coState !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.CoAlarm;
+  return SmokeCoAlarm.ExpressedState.Normal;
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {

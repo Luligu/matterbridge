@@ -1,6 +1,5 @@
-Chip tests run started at 2026-08-16T20:39:43.027Z
+Chip tests run started at 2026-08-16T21:20:27.624Z
 
-✅ SmokeCOAlarm smoke primary functionality on SmokeCOAlarm (Test_TC_SMOKECO_2_2)
-✅ SmokeCOAlarm CO primary functionality on SmokeCOAlarm (Test_TC_SMOKECO_2_3)
+❌ SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm (Test_TC_SMOKECO_2_6)
 
-Summary: 2/2 tests passed.
+Summary: 0/1 tests passed.
