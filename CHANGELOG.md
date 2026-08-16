@@ -41,7 +41,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [booleanStateConfiguration]: Add `SuppressAlarm` command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().
 - [booleanStateConfiguration]: Add automatic `AlarmsStateChanged` and `SensorFault` event emission.
 - [frontend]: Add Soil Sensor and On/Off Sensor device icons.
-- [chip]: Add `Chip Test` pipeline.
+- [chip]: Add `Chip Test` stack.
+- [chip]: Add `Chip Test` pipe.
 
 ### Changed
 

@@ -88,10 +88,10 @@ describe('Matterbridge ' + NAME, () => {
     const defaultDevice = new SoilSensor('Soil Sensor Default Device', 'SS000000', { batteryPowered: true });
     expect(defaultDevice.getClusterServerOptions(PowerSource.id)).toMatchObject({
       batChargeLevel: 0,
-      batPercentRemaining: null,
+      batPercentRemaining: 200,
       batReplaceability: 0,
       batReplacementNeeded: false,
-      batVoltage: null,
+      batVoltage: 1500,
       description: 'Primary battery',
       endpointList: [],
       order: 0,

@@ -25,12 +25,14 @@
 /* oxlint-disable typescript/no-non-null-assertion */
 
 import { spawnSync } from 'node:child_process';
-import { createReadStream, existsSync, unlinkSync } from 'node:fs';
+import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
 import type { Endpoint } from '@matter/node';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { cliEmitter } from './cliEmitter.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -43,11 +45,11 @@ type ChipTestAppPipeCommand = {
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
+let closeChipTestAppPipe: (() => void) | undefined;
 
 export async function createChipTestDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
   if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !aggregatorEndpoint) return;
   let ep: MatterbridgeEndpoint | undefined;
-  const chipTestEndpoints = new Map<number, MatterbridgeEndpoint>();
   matterbridge.plugins.set({
     name: 'matterbridge-chip',
     path: '',
@@ -65,7 +67,6 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
     device.addRequiredClusters();
     device.plugin = 'matterbridge-chip';
     await matterbridge.addBridgedEndpoint('matterbridge-chip', device);
-    if (device.number !== undefined) chipTestEndpoints.set(Number(device.number), device);
   };
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;
@@ -134,11 +135,11 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('SoilSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_14) });
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Soil Sensor', 'SENSOR-07-14');
-
-  createChipTestAppPipe(matterbridge, chipTestEndpoints);
 }
 
-function createChipTestAppPipe(matterbridge: Matterbridge, chipTestEndpoints: Map<number, MatterbridgeEndpoint>): void {
+export function createChipTestAppPipe(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): void {
+  closeChipTestAppPipe?.();
+
   try {
     if (existsSync(chipTestAppPipePath)) unlinkSync(chipTestAppPipePath);
     const mkfifo = spawnSync('mkfifo', [chipTestAppPipePath], { encoding: 'utf8' });
@@ -154,6 +155,31 @@ function createChipTestAppPipe(matterbridge: Matterbridge, chipTestEndpoints: Ma
   matterbridge.log.notice(`CHIP test app pipe listening on ${chipTestAppPipePath}`);
   let buffer = '';
   let commandQueue = Promise.resolve<null>(null);
+  let isClosing = false;
+  let pipeFd: number | undefined;
+  let shutdownListener: (() => void) | undefined;
+
+  const closePipe = (): void => {
+    isClosing = true;
+    if (shutdownListener) {
+      cliEmitter.off('shutdown', shutdownListener);
+      shutdownListener = undefined;
+    }
+    if (pipeFd !== undefined) {
+      try {
+        closeSync(pipeFd);
+      } catch (error) {
+        matterbridge.log.debug(`Failed to close CHIP test app pipe ${chipTestAppPipePath}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      pipeFd = undefined;
+    }
+    try {
+      if (existsSync(chipTestAppPipePath)) unlinkSync(chipTestAppPipePath);
+    } catch (error) {
+      matterbridge.log.debug(`Failed to remove CHIP test app pipe ${chipTestAppPipePath}: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    closeChipTestAppPipe = undefined;
+  };
 
   const enqueueCommand = (line: string): void => {
     const commandLine = line.trim();
@@ -165,7 +191,7 @@ function createChipTestAppPipe(matterbridge: Matterbridge, chipTestEndpoints: Ma
           matterbridge.log.warn(`Ignoring invalid CHIP test app pipe command: ${commandLine}`);
           return null;
         }
-        await handleChipTestAppPipeCommand(matterbridge, chipTestEndpoints, command);
+        await handleChipTestAppPipeCommand(matterbridge, aggregatorEndpoint, command);
         return null;
       })
       .catch((error: unknown): null => {
@@ -174,54 +200,90 @@ function createChipTestAppPipe(matterbridge: Matterbridge, chipTestEndpoints: Ma
       });
   };
 
-  const readPipe = (): void => {
-    const stream = createReadStream(chipTestAppPipePath, { encoding: 'utf8' });
-    stream.on('data', (chunk) => {
-      buffer += chunk;
-      let newlineIndex = buffer.indexOf('\n');
-      while (newlineIndex !== -1) {
-        enqueueCommand(buffer.slice(0, newlineIndex));
-        buffer = buffer.slice(newlineIndex + 1);
-        newlineIndex = buffer.indexOf('\n');
-      }
-    });
-    stream.on('end', () => {
-      enqueueCommand(buffer);
-      buffer = '';
-      readPipe();
-    });
-    stream.on('error', (error) => {
-      matterbridge.log.error(`CHIP test app pipe ${chipTestAppPipePath} error: ${error.message}`);
-      setTimeout(readPipe, 1000);
-    });
+  const handleChunk = (chunk: string): void => {
+    buffer += chunk;
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex !== -1) {
+      enqueueCommand(buffer.slice(0, newlineIndex));
+      buffer = buffer.slice(newlineIndex + 1);
+      newlineIndex = buffer.indexOf('\n');
+    }
   };
 
-  readPipe();
+  try {
+    // oxlint-disable-next-line no-bitwise
+    pipeFd = openSync(chipTestAppPipePath, constants.O_RDWR | constants.O_NONBLOCK);
+  } catch (error) {
+    matterbridge.log.error(`Failed to open CHIP test app pipe ${chipTestAppPipePath}: ${error instanceof Error ? error.message : String(error)}`);
+    closePipe();
+    return;
+  }
+
+  const readBuffer = Buffer.alloc(4096);
+  const pollInterval = setInterval(() => {
+    if (isClosing || pipeFd === undefined) return;
+    try {
+      let bytesRead = readSync(pipeFd, readBuffer, 0, readBuffer.length, null);
+      while (bytesRead > 0) {
+        handleChunk(readBuffer.toString('utf8', 0, bytesRead));
+        bytesRead = readSync(pipeFd, readBuffer, 0, readBuffer.length, null);
+      }
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && ['EAGAIN', 'EWOULDBLOCK'].includes(String(error.code))) return;
+      matterbridge.log.error(`CHIP test app pipe ${chipTestAppPipePath} read error: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }, 50);
+  pollInterval.unref();
+
+  const closePipeWithInterval = (): void => {
+    clearInterval(pollInterval);
+    closePipe();
+  };
+  closeChipTestAppPipe = closePipeWithInterval;
+  shutdownListener = closePipeWithInterval;
+  cliEmitter.once('shutdown', shutdownListener);
 }
 
-async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, chipTestEndpoints: Map<number, MatterbridgeEndpoint>, command: ChipTestAppPipeCommand): Promise<void> {
-  if (command.EndpointId === undefined) {
+async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>, command: ChipTestAppPipeCommand): Promise<void> {
+  const endpointId = command.EndpointId ?? (command.Name === 'SimulateConfigurationVersionChange' ? 701 : undefined);
+  if (endpointId === undefined) {
     matterbridge.log.warn(`Ignoring CHIP test app pipe command without EndpointId: ${JSON.stringify(command)}`);
     return;
   }
-  const endpoint = chipTestEndpoints.get(command.EndpointId);
+  const endpoint = getChipTestEndpoint(aggregatorEndpoint, endpointId);
   if (!endpoint) {
-    matterbridge.log.warn(`Ignoring CHIP test app pipe command for unknown endpoint ${command.EndpointId}: ${JSON.stringify(command)}`);
+    matterbridge.log.warn(`Ignoring CHIP test app pipe command for unknown endpoint ${endpointId}: ${JSON.stringify(command)}`);
     return;
   }
 
   switch (command.Name) {
     case 'SetBooleanState':
       await endpoint.setStateOf(endpoint.behaviors.supported.booleanState, { stateValue: Boolean(command.NewState) });
-      matterbridge.log.info(`CHIP test app pipe set BooleanState.StateValue to ${Boolean(command.NewState)} on endpoint ${command.EndpointId}`);
+      matterbridge.log.info(`CHIP test app pipe set BooleanState.StateValue to ${Boolean(command.NewState)} on endpoint ${endpointId}`);
       return;
     case 'SetBooleanStateSensorFault':
       await endpoint.setStateOf(endpoint.behaviors.supported.booleanStateConfiguration, { sensorFault: { generalFault: Boolean(command.SensorFault) } });
-      matterbridge.log.info(`CHIP test app pipe set BooleanStateConfiguration.SensorFault to ${command.SensorFault ?? 0} on endpoint ${command.EndpointId}`);
+      matterbridge.log.info(`CHIP test app pipe set BooleanStateConfiguration.SensorFault to ${command.SensorFault ?? 0} on endpoint ${endpointId}`);
+      return;
+    case 'SimulateConfigurationVersionChange':
+      endpoint.configurationVersion = (endpoint.stateOf(BridgedDeviceBasicInformationServer).configurationVersion ?? 1) + 1;
+      await endpoint.setStateOf(BridgedDeviceBasicInformationServer, { configurationVersion: endpoint.configurationVersion });
+      matterbridge.log.info(`CHIP test app pipe set BridgedDeviceBasicInformation.ConfigurationVersion to ${endpoint.configurationVersion} on endpoint ${endpointId}`);
       return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
   }
+}
+
+function getChipTestEndpoint(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, endpointId: number): MatterbridgeEndpoint | undefined {
+  const endpoints = [aggregatorEndpoint as Endpoint, ...aggregatorEndpoint.parts];
+  for (const endpoint of endpoints) {
+    if (Number(endpoint.number) === endpointId && endpoint instanceof MatterbridgeEndpoint) return endpoint;
+    for (const childEndpoint of endpoint.parts) {
+      if (Number(childEndpoint.number) === endpointId && childEndpoint instanceof MatterbridgeEndpoint) return childEndpoint;
+    }
+  }
+  return undefined;
 }
 
 function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeCommand {

@@ -1,0 +1,9 @@
+# To run tests on Identify --PICS is required
+# Matches the default Identify cluster server on Matterbridge endpoints
+PICS_SDK_CI_ONLY=1
+PICS_USER_PROMPT=0
+I.S=1
+I.S.A0000=1 # IdentifyTime
+I.S.A0001=1 # IdentifyType
+I.S.C00.Rsp=1 # Identify
+I.S.C40.Rsp=1 # TriggerEffect

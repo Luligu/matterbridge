@@ -27,6 +27,28 @@
       "args": ["--endpoint 701", "--PICS /root/boolean-state.pics"]
     },
     {
+      "name": "Identify attributes on ContactSensor",
+      "test": "Test_TC_I_2_1",
+      "args": ["--endpoint 701", "--PICS /root/identify.pics"]
+    },
+    {
+      "name": "Identify primary functionality on ContactSensor",
+      "test": "Test_TC_I_2_2",
+      "args": ["--endpoint 701", "--PICS /root/identify.pics"]
+    },
+    {
+      "name": "Identify trigger effect on ContactSensor",
+      "test": "Test_TC_I_2_3",
+      "args": ["--endpoint 701", "--PICS /root/identify.pics"]
+    },
+    {
+      "name": "BridgedDeviceBasicInformation events on ContactSensor",
+      "test": "Test_TC_BRBINFO_2_2",
+      "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"],
+      "skip": true,
+      "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
+    },
+    {
       "name": "Descriptor cluster attributes",
       "test": "Test_TC_DESC_2_1",
       "args": ["--endpoint 0"],
@@ -206,6 +228,35 @@
       "name": "BooleanStateConfiguration sensor fault on ContactSensor",
       "test": "TC_BOOLCFG_6_1.py",
       "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "Identify reporting on ContactSensor",
+      "test": "TC_I_2_4.py",
+      "args": ["--endpoint 701", "--PICS /root/identify.pics"]
+    },
+    {
+      "name": "BridgedDeviceBasicInformation attributes on ContactSensor",
+      "test": "TC_BRBINFO_2_1.py",
+      "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"]
+    },
+    {
+      "name": "BridgedDeviceBasicInformation ProductAppearance on ContactSensor",
+      "test": "TC_BRBINFO_3_1.py",
+      "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"],
+      "skip": true,
+      "comment": "Gated by @run_if_endpoint_matches(has_attribute(ProductAppearance)); Matterbridge does not implement ProductAppearance on BridgedDeviceBasicInformation (BRBINFO.S.A0014=0 in matterbridge.pics), so it always skips."
+    },
+    {
+      "name": "BridgedDeviceBasicInformation configuration version on ContactSensor",
+      "test": "TC_BRBINFO_3_2.py",
+      "args": ["--endpoint 701", "--PICS /root/matterbridge.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "BridgedDeviceBasicInformation KeepActive on ContactSensor",
+      "test": "TC_BRBINFO_4_1.py",
+      "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"],
+      "skip": true,
+      "comment": "Requires the Bridged ICD Support feature, KeepActive command, ActiveChanged event, and an external TH_ICD_SERVER/Fabric Sync app; Matterbridge does not implement BIS (BRBINFO.S.C80.Rsp=0 and BRBINFO.S.E80=0 in matterbridge.pics)."
     },
     {
       "name": "AccessControl event reporting with server as DUT",

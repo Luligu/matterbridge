@@ -2398,8 +2398,8 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.id, 'description')).toBe('Primary battery');
     expect(device.getAttribute(PowerSource.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
-    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(null);
-    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(null);
+    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(1500);
+    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(200);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
 
     await flushAsync();

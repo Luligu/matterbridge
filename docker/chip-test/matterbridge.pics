@@ -1,3 +1,5 @@
+PICS_SDK_CI_ONLY=1
+
 MCORE.BRIDGE=1
 MCORE.BRIDGE.BatInfo=0
 MCORE.BRIDGE.OtherControl=0
@@ -66,6 +68,8 @@ BRBINFO.S.A0014=0 # ProductAppearance
 BRBINFO.S.A0015=0 # SpecificationVersion: X conformance, excluded from this cluster
 BRBINFO.S.A0016=0 # MaxPathsPerInvoke: X conformance, excluded from this cluster
 BRBINFO.S.A0018=1 # ConfigurationVersion (createDefaultBridgedDeviceBasicInformationClusterServer sets this)
+BRBINFO.S.A.A0018=1 # ConfigurationVersion write/subscribe helper token used by TC_BRBINFO_3_2.py
+BRBINFO.S.M.DeviceConfigurationChange=1 # SDK CI app-pipe hook used to simulate a bridged-device configuration change
 
 BRBINFO.S.E00=0 # StartUp: not enabled (BridgedDeviceBasicInformationServer.enable() only turns on leave/reachableChanged)
 BRBINFO.S.E01=0 # ShutDown: not enabled
