@@ -195,8 +195,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and add a closure device with the Pedestrian feature', async () => {
+    // Duplicate Pedestrian entries and a duplicate of the default Positioning feature exercise de-duplication of
+    // both the caller-provided list and its overlap with the default Positioning/MotionLatching/Speed features.
     gate = new Closure('Sliding Gate Test Device', 'CL789012', {
-      features: [ClosureControl.Feature.Pedestrian],
+      features: [ClosureControl.Feature.Pedestrian, ClosureControl.Feature.Pedestrian, ClosureControl.Feature.Positioning],
     });
     expect(await addDevice(server, gate)).toBeTruthy();
 

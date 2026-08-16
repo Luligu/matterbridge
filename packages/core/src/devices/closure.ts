@@ -230,7 +230,7 @@ export class Closure extends MatterbridgeEndpoint {
     }
 
     // Enable Positioning + MotionLatching + Speed plus any additional caller-requested features (e.g. Pedestrian), de-duplicated.
-    const extraFeatures = features.filter(
+    const extraFeatures = [...new Set(features)].filter(
       (feature) => feature !== ClosureControl.Feature.Positioning && feature !== ClosureControl.Feature.MotionLatching && feature !== ClosureControl.Feature.Speed,
     );
     const closureControlServer =
