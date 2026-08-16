@@ -60,6 +60,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.63.0.
 - [frontend]: Bump `oxlint` to v.1.78.0.
 
+### Fixed
+
+- [frontend]: Apply the trailing-slash normalization of a device configUrl to the path only, so query strings are no longer corrupted (#579).
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.5] - 2026-08-14

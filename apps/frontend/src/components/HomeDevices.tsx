@@ -471,7 +471,10 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     if (!device.configUrl) return;
     if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
       const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
-      const pluginFrontendPathWithTrailingSlash = pluginFrontendPath.endsWith('/') ? pluginFrontendPath : `${pluginFrontendPath}/`;
+      // Add the trailing slash to the path only, leaving any query string and hash untouched.
+      const pluginFrontendUrl = new URL(pluginFrontendPath, window.location.origin);
+      if (!pluginFrontendUrl.pathname.endsWith('/')) pluginFrontendUrl.pathname += '/';
+      const pluginFrontendPathWithTrailingSlash = `${pluginFrontendUrl.pathname}${pluginFrontendUrl.search}${pluginFrontendUrl.hash}`;
       console.log(
         'handleConfigUrl opening plugin frontend for device:',
         device.name,
