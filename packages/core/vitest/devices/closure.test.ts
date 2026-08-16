@@ -194,11 +194,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(closureWithoutPowerSource.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'closureControl']);
   });
 
-  test('create and add a closure device with the Pedestrian feature', async () => {
-    // Duplicate Pedestrian entries and a duplicate of the default Positioning feature exercise de-duplication of
-    // both the caller-provided list and its overlap with the default Positioning/MotionLatching/Speed features.
+  test('create and add a closure device with the Ventilation and Pedestrian features', async () => {
     gate = new Closure('Sliding Gate Test Device', 'CL789012', {
-      features: [ClosureControl.Feature.Pedestrian, ClosureControl.Feature.Pedestrian, ClosureControl.Feature.Positioning],
+      ventilation: true,
+      pedestrian: true,
     });
     expect(await addDevice(server, gate)).toBeTruthy();
 
@@ -206,6 +205,7 @@ describe('Matterbridge ' + NAME, () => {
       positioning: true,
       motionLatching: true,
       speed: true,
+      ventilation: true,
       pedestrian: true,
     });
 

@@ -153,12 +153,10 @@ export interface ClosureOptions {
   overallTargetState?: ClosureControl.OverallTargetState;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
-  /**
-   * Additional ClosureControl features to enable beyond the default `Positioning`, `MotionLatching`, and `Speed`
-   * features, for example `ClosureControl.Feature.Pedestrian` for a gate that supports a pedestrian position.
-   * Duplicates of the default features are ignored.
-   */
-  features?: ClosureControl.Feature[];
+  /** Enable the ClosureControl Ventilation feature. Defaults to false. */
+  ventilation?: boolean;
+  /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
+  pedestrian?: boolean;
   /**
    * Semantic tags for endpoint disambiguation. Defaults to the Closure Covering tag.
    *
@@ -201,7 +199,8 @@ export class Closure extends MatterbridgeEndpoint {
         speed: ThreeLevelAuto.Auto,
       },
       latchControlModes = { remoteLatching: true, remoteUnlatching: true },
-      features = [],
+      ventilation = false,
+      pedestrian = false,
       tagList = [getSemtag(ClosureTag.Covering)],
     } = options;
     super(powerSourceType === 'None' ? [closure] : [closure, powerSource], {
@@ -229,28 +228,40 @@ export class Closure extends MatterbridgeEndpoint {
       // No default
     }
 
-    // Enable Positioning + MotionLatching + Speed plus any additional caller-requested features (e.g. Pedestrian), de-duplicated.
-    const extraFeatures = [...new Set(features)].filter(
-      (feature) => feature !== ClosureControl.Feature.Positioning && feature !== ClosureControl.Feature.MotionLatching && feature !== ClosureControl.Feature.Speed,
-    );
-    const closureControlServer =
-      extraFeatures.length > 0
-        ? (MatterbridgeClosureControlServer.with(
-            ClosureControl.Feature.Positioning,
-            ClosureControl.Feature.MotionLatching,
-            ClosureControl.Feature.Speed,
-            ...extraFeatures,
-          ) as unknown as typeof MatterbridgeClosureControlServer)
-        : MatterbridgeClosureControlServer;
-
-    this.behaviors.require(closureControlServer, {
+    const closureControlOptions = {
       countdownTime,
       mainState,
       currentErrorList,
       overallCurrentState,
       overallTargetState,
       latchControlModes,
-    });
+    };
+    this.behaviors.require(
+      ventilation && pedestrian
+        ? MatterbridgeClosureControlServer.with(
+            ClosureControl.Feature.Positioning,
+            ClosureControl.Feature.MotionLatching,
+            ClosureControl.Feature.Speed,
+            ClosureControl.Feature.Ventilation,
+            ClosureControl.Feature.Pedestrian,
+          )
+        : ventilation
+          ? MatterbridgeClosureControlServer.with(
+              ClosureControl.Feature.Positioning,
+              ClosureControl.Feature.MotionLatching,
+              ClosureControl.Feature.Speed,
+              ClosureControl.Feature.Ventilation,
+            )
+          : pedestrian
+            ? MatterbridgeClosureControlServer.with(
+                ClosureControl.Feature.Positioning,
+                ClosureControl.Feature.MotionLatching,
+                ClosureControl.Feature.Speed,
+                ClosureControl.Feature.Pedestrian,
+              )
+            : MatterbridgeClosureControlServer,
+      closureControlOptions,
+    );
   }
 
   /**
