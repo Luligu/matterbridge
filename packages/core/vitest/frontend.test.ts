@@ -495,6 +495,10 @@ describe('Matterbridge frontend', () => {
       ['electricalPowerMeasurement', 0x90, 'frequency', 0, 50_000],
       ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 100_000_000 }],
       ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyExported', 0, { energy: 10_000_000 }],
+      ['deviceEnergyManagement', 0x98, 'esaCanGenerate', 0, false],
+      ['deviceEnergyManagement', 0x98, 'esaState', 0, 1],
+      ['deviceEnergyManagementMode', 0x9f, 'supportedModes', 0, [{ label: 'No Energy Management', mode: 1 }]],
+      ['deviceEnergyManagementMode', 0x9f, 'currentMode', 0, 1],
     ]);
     expect(text).toContain('OnOff: true');
     expect(text).toContain('Position: 1');
@@ -523,6 +527,9 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('Frequency: 50Hz');
     expect(text).toContain('Imported: 100kWh');
     expect(text).toContain('Exported: 10kWh');
+    expect(text).toContain('ESA can generate: false');
+    expect(text).toContain('ESA state: Online');
+    expect(text).toContain('Mode: No Energy Management');
 
     const nullMeasurements = runTuples([
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],

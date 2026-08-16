@@ -97,6 +97,11 @@ export async function createChipTestDevices(matterbridge: Matterbridge): Promise
   ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000);
   await registerDevice(ep, 'Electrical Sensor Exported', 'UTILITY-02-06-2');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DeviceEnergyManagement')!, bridgedNode, powerSource], { number: EndpointNumber(2_07) });
+  ep.createDefaultDeviceEnergyManagementClusterServer();
+  ep.createDefaultDeviceEnergyManagementModeClusterServer();
+  await registerDevice(ep, 'Device Energy Management', 'UTILITY-02-07');
+
   // Chapter 7 - Sensor Devices
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ContactSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_01) });
