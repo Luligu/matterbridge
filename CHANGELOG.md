@@ -51,7 +51,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add Soil Sensor and On/Off Sensor device icons.
 - [chip]: Add `Chip Test` stack.
 - [chip]: Add `Chip Test` pipe.
-- [chip]: Add `TotalVolatileOrganicCompoundsConcentrationMeasurement` test coverage on the Air Quality Sensor endpoint.
 
 ### Changed
 
