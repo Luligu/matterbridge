@@ -154,6 +154,12 @@ export interface ClosureOptions {
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
   /**
+   * Additional ClosureControl features to enable beyond the default `Positioning`, `MotionLatching`, and `Speed`
+   * features, for example `ClosureControl.Feature.Pedestrian` for a gate that supports a pedestrian position.
+   * Duplicates of the default features are ignored.
+   */
+  features?: ClosureControl.Feature[];
+  /**
    * Semantic tags for endpoint disambiguation. Defaults to the Closure Covering tag.
    *
    * A Closure SHALL use exactly one semantic tag from the Closure namespace (0x44) in the TagList attribute
@@ -195,6 +201,7 @@ export class Closure extends MatterbridgeEndpoint {
         speed: ThreeLevelAuto.Auto,
       },
       latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      features = [],
       tagList = [getSemtag(ClosureTag.Covering)],
     } = options;
     super(powerSourceType === 'None' ? [closure] : [closure, powerSource], {
@@ -222,7 +229,21 @@ export class Closure extends MatterbridgeEndpoint {
       // No default
     }
 
-    this.behaviors.require(MatterbridgeClosureControlServer, {
+    // Enable Positioning + MotionLatching + Speed plus any additional caller-requested features (e.g. Pedestrian), de-duplicated.
+    const extraFeatures = features.filter(
+      (feature) => feature !== ClosureControl.Feature.Positioning && feature !== ClosureControl.Feature.MotionLatching && feature !== ClosureControl.Feature.Speed,
+    );
+    const closureControlServer =
+      extraFeatures.length > 0
+        ? (MatterbridgeClosureControlServer.with(
+            ClosureControl.Feature.Positioning,
+            ClosureControl.Feature.MotionLatching,
+            ClosureControl.Feature.Speed,
+            ...extraFeatures,
+          ) as unknown as typeof MatterbridgeClosureControlServer)
+        : MatterbridgeClosureControlServer;
+
+    this.behaviors.require(closureControlServer, {
       countdownTime,
       mainState,
       currentErrorList,

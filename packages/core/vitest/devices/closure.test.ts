@@ -39,6 +39,7 @@ await setupTest(NAME, false);
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
   let venetianBlind: Closure;
+  let gate: Closure;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -191,6 +192,30 @@ describe('Matterbridge ' + NAME, () => {
     const closureWithoutPowerSource = new Closure('Closure No Power Source Test Device', 'CLNONE', { powerSourceType: 'None' });
     expect(closureWithoutPowerSource.hasClusterServer(PowerSource.id)).toBeFalsy();
     expect(closureWithoutPowerSource.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'closureControl']);
+  });
+
+  test('create and add a closure device with the Pedestrian feature', async () => {
+    gate = new Closure('Sliding Gate Test Device', 'CL789012', {
+      features: [ClosureControl.Feature.Pedestrian],
+    });
+    expect(await addDevice(server, gate)).toBeTruthy();
+
+    expect(gate.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      pedestrian: true,
+    });
+
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
   });
 
   test('invoke closure control commands', async () => {
