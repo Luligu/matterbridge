@@ -1360,19 +1360,65 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('BooleanStateConfiguration server', async () => {
+    const suppressAlarmRequest = { alarmsToSuppress: { audible: true, visual: true } };
     const enableDisableAlarmRequest = { alarmsToEnableDisable: { audible: true, visual: true } };
 
     expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
     expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSuppressed')).toEqual({ visual: false, audible: false });
     expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
+
+    await expect(contact.invokeBehaviorCommand(BooleanStateConfiguration, 'suppressAlarm', suppressAlarmRequest)).rejects.toMatchObject({ code: Status.InvalidInState });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSuppressed')).toEqual({ visual: false, audible: false });
+
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsSupported', { audible: true, visual: false });
+    await expect(contact.invokeBehaviorCommand(BooleanStateConfiguration, 'suppressAlarm', suppressAlarmRequest)).rejects.toMatchObject({ code: Status.ConstraintError });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSuppressed')).toEqual({ visual: false, audible: false });
+
+    await expect(contact.invokeBehaviorCommand(BooleanStateConfiguration, 'enableDisableAlarm', enableDisableAlarmRequest)).rejects.toMatchObject({ code: Status.ConstraintError });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
+
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsSupported', { audible: true, visual: true });
+    await expectCommand(contact, BooleanStateConfiguration, 'suppressAlarm', suppressAlarmRequest, (data) => {
+      expect(data.cluster).toBe('booleanStateConfiguration');
+    });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSuppressed')).toEqual({ visual: true, audible: true });
 
     await expectCommand(contact, BooleanStateConfiguration, 'enableDisableAlarm', enableDisableAlarmRequest, (data) => {
       expect(data.cluster).toBe('booleanStateConfiguration');
     });
 
-    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsActive')).toEqual({ visual: false, audible: false });
+    expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsActive')).toEqual({ visual: true, audible: true });
     expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled')).toEqual({ visual: true, audible: true });
     expect(contact.getAttribute(BooleanStateConfiguration.id, 'alarmsSupported')).toEqual({ visual: true, audible: true });
+
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: false, visual: false });
+    const alarmsStateChangedEvents: unknown[] = [];
+    const alarmsStateChanged = contact.eventsOf('booleanStateConfiguration').alarmsStateChanged;
+    expect(alarmsStateChanged).toBeDefined();
+    alarmsStateChanged?.on((event) => {
+      alarmsStateChangedEvents.push(event);
+    });
+
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: false });
+    expect(alarmsStateChangedEvents).toHaveLength(1);
+    expect(alarmsStateChangedEvents[0]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { visual: false, audible: false } });
+
+    await contact.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: true, visual: true });
+    expect(alarmsStateChangedEvents).toHaveLength(2);
+    expect(alarmsStateChangedEvents[1]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { audible: true, visual: true } });
+
+    const sensorFaultEvents: unknown[] = [];
+    const sensorFault = contact.eventsOf('booleanStateConfiguration').sensorFault;
+    expect(sensorFault).toBeDefined();
+    sensorFault?.on((event) => {
+      sensorFaultEvents.push(event);
+    });
+
+    await contact.setAttribute('booleanStateConfiguration', 'sensorFault', { generalFault: true });
+    expect(sensorFaultEvents).toHaveLength(1);
+    expect(sensorFaultEvents[0]).toEqual({ sensorFault: { generalFault: true } });
   });
 
   test('ModeSelect server', async () => {

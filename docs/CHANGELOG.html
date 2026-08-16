@@ -158,6 +158,8 @@
 <li>[electricalUtilityMeter]: Add <code>ElectricalUtilityMeter</code> device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the <code>MeterIdentification</code> cluster.</li>
 <li>[electricalUtilityMeter]: Add <code>addElectricalMeter()</code> to add an Electrical Meter (+ Electrical Sensor) child endpoint with <code>ElectricalPowerMeasurement</code>, <code>ElectricalEnergyMeasurement</code> and <code>CommodityMetering</code>.</li>
 <li>[electricalUtilityMeter]: Add <code>addElectricalEnergyTariff()</code> to add an Electrical Energy Tariff child endpoint with <code>CommodityPrice</code>, <code>CommodityTariff</code> and <code>ElectricalGridConditions</code>.</li>
+<li>[booleanStateConfiguration]: Add <code>SuppressAlarm</code> command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().</li>
+<li>[booleanStateConfiguration]: Add automatic <code>AlarmsStateChanged</code> and <code>SensorFault</code> event emission.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

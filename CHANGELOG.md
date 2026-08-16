@@ -38,6 +38,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [electricalUtilityMeter]: Add `ElectricalUtilityMeter` device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the `MeterIdentification` cluster.
 - [electricalUtilityMeter]: Add `addElectricalMeter()` to add an Electrical Meter (+ Electrical Sensor) child endpoint with `ElectricalPowerMeasurement`, `ElectricalEnergyMeasurement` and `CommodityMetering`.
 - [electricalUtilityMeter]: Add `addElectricalEnergyTariff()` to add an Electrical Energy Tariff child endpoint with `CommodityPrice`, `CommodityTariff` and `ElectricalGridConditions`.
+- [booleanStateConfiguration]: Add `SuppressAlarm` command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().
+- [booleanStateConfiguration]: Add automatic `AlarmsStateChanged` and `SensorFault` event emission.
+- [frontend]: Add Soil Sensor and On/Off Sensor device icons.
+- [chip]: Add `Chip Test` pipeline.
 
 ### Changed
 
@@ -46,6 +50,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxfmt` to v.0.63.0.
 - [matterbridge]: Bump `oxlint` to v.1.78.0.
 - [core]: Bump `ws` to v.8.21.3.
+- [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
 - [frontend]: Bump `frontend` version to v.3.5.8.
 - [frontend]: Bump `@testing-library/jest-dom` to v.7.0.1.

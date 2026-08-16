@@ -1251,9 +1251,9 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
 /**
  * Get the default power source battery cluster server options.
  *
- * @param {null | number} batPercentRemaining - The remaining battery percentage (default: null). The attribute is in the range 0-200.
+ * @param {null | number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
  * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
- * @param {null | number} batVoltage - The battery voltage (default: null).
+ * @param {null | number} batVoltage - The battery voltage (default: 1500).
  * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
  * @returns {Behavior.Options<PowerSourceClusterServer>} The options for the power source replaceable battery cluster server.
  *
@@ -1263,9 +1263,9 @@ export function getDefaultPowerSourceWiredClusterServer(wiredCurrentType: PowerS
  * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
  */
 export function getDefaultPowerSourceBatteryClusterServer(
-  batPercentRemaining: null | number = null,
+  batPercentRemaining: null | number = 100,
   batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-  batVoltage: null | number = null,
+  batVoltage: null | number = 1500,
   batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
 ) {
   return optionsFor(MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery), {
@@ -1751,7 +1751,7 @@ export function getDefaultOccupancySensingClusterServer(occupied = false, holdTi
 /**
  * Get the default SoilMeasurement cluster server options.
  *
- * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percentage x 100. Default is null.
+ * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percent. Default is null.
  * @param {MeasurementAccuracy} soilMoistureMeasurementLimits - The measurement limits for the soil moisture measurement. Default is a range of 0% to 100% with an accuracy of 1%.
  * @returns {Behavior.Options<MatterbridgeSoilMeasurementServer>} - The default options for the SoilMeasurement cluster server.
  *

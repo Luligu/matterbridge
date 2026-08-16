@@ -2206,9 +2206,18 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
+    const stateChangeEvents: unknown[] = [];
+    const stateChange = device.eventsOf('booleanState').stateChange;
+    expect(stateChange).toBeDefined();
+    stateChange?.on((event) => {
+      stateChangeEvents.push(event);
+    });
+
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(false);
     await device.setAttribute(BooleanState.id, 'stateValue', true);
     expect(called).toBe(true);
+    expect(stateChangeEvents).toHaveLength(1);
+    expect(stateChangeEvents[0]).toEqual({ stateValue: true });
 
     vi.clearAllMocks();
     await device.setAttribute(BooleanStateConfiguration.id, 'stateValue', true, device.log);

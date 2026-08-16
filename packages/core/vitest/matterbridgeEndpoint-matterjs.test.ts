@@ -1218,11 +1218,47 @@ describe('Matterbridge ' + NAME, () => {
   test('invoke MatterbridgeBooleanStateConfigurationServer commands', async () => {
     expect(leak.behaviors.has(BooleanStateConfigurationServer)).toBeTruthy();
     expect(leak.behaviors.has(MatterbridgeBooleanStateConfigurationServer)).toBeTruthy();
+    expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('suppressAlarm')).toBeTruthy();
     expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('enableDisableAlarm')).toBeTruthy();
-    expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([1]);
+    expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([0, 1]);
     expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).generatedCommandList).toEqual([]);
-    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+
+    const alarmsStateChangedEvents: unknown[] = [];
+    const alarmsStateChanged = leak.eventsOf('booleanStateConfiguration').alarmsStateChanged;
+    expect(alarmsStateChanged).toBeDefined();
+    alarmsStateChanged?.on((event) => {
+      alarmsStateChangedEvents.push(event);
+    });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: false });
+    expect(alarmsStateChangedEvents).toHaveLength(1);
+    expect(alarmsStateChangedEvents[0]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { visual: false, audible: false } });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: true, visual: true });
+    expect(alarmsStateChangedEvents).toHaveLength(2);
+    expect(alarmsStateChangedEvents[1]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { audible: true, visual: true } });
+
+    const sensorFaultEvents: unknown[] = [];
+    const sensorFault = leak.eventsOf('booleanStateConfiguration').sensorFault;
+    expect(sensorFault).toBeDefined();
+    sensorFault?.on((event) => {
+      sensorFaultEvents.push(event);
+    });
+
+    await leak.setAttribute('booleanStateConfiguration', 'sensorFault', { generalFault: true });
+    expect(sensorFaultEvents).toHaveLength(1);
+    expect(sensorFaultEvents[0]).toEqual({ sensorFault: { generalFault: true } });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
+    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'suppressAlarm', { alarmsToSuppress: { audible: true, visual: true } });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+    vi.clearAllMocks();
+    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: false } });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsActive')).toEqual({ audible: true, visual: false });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsEnabled')).toEqual({ audible: true, visual: false });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })} (endpoint ${leak.id}.${leak.number})`);
   });
 
   test('invoke MatterbridgeOperationalStateServer commands', async () => {
