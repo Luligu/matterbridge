@@ -327,6 +327,51 @@
       "args": ["--endpoint 701", "--PICS /root/power-source.battery.pics"]
     },
     {
+      "name": "ElectricalPowerMeasurement attributes on ElectricalSensor",
+      "test": "TC_EPM_2_1.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-power-measurement.pics"]
+    },
+    {
+      "name": "ElectricalPowerMeasurement primary functionality on ElectricalSensor",
+      "test": "TC_EPM_2_2.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-power-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake 1kW load readings; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement attributes on ElectricalSensor",
+      "test": "TC_EEM_2_1.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_2.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake imported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_3.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake exported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_4.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_5.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature."
+    },
+    {
       "name": "DeviceEnergyManagement attributes on DeviceEnergyManagement",
       "test": "TC_DEM_2_1.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics"]

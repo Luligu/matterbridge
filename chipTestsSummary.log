@@ -1,25 +1,16 @@
-Chip tests run started at 2026-08-16T17:45:26.072Z
+Chip tests run started at 2026-08-16T17:49:37.858Z
 
-✅ DeviceEnergyManagementMode change mode on DeviceEnergyManagement (Test_TC_DEMM_2_1)
-✅ DeviceEnergyManagement attributes on DeviceEnergyManagement (TC_DEM_2_1.py)
-⏭️ DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement (TC_DEM_2_2.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate PowerAdjustmentCapability, drive ESAState transitions, and emit PowerAdjustStart/PowerAdjustEnd events; Matterbridge does not implement those CSA reference-app test hooks.
-⏭️ DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement (TC_DEM_2_3.py)
-   ↳ Requires the StartTimeAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement Pausable functionality on DeviceEnergyManagement (TC_DEM_2_4.py)
-   ↳ Requires the Pausable feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement forecast adjustment with power forecast on DeviceEnergyManagement (TC_DEM_2_5.py)
-   ↳ Requires the ForecastAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement forecast adjustment with state forecast on DeviceEnergyManagement (TC_DEM_2_6.py)
-   ↳ Requires StateForecastReporting, ForecastAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features.
-⏭️ DeviceEnergyManagement constraint forecast with power forecast on DeviceEnergyManagement (TC_DEM_2_7.py)
-   ↳ Requires ConstraintBasedAdjustment and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement constraint forecast with state forecast on DeviceEnergyManagement (TC_DEM_2_8.py)
-   ↳ Requires StateForecastReporting, ConstraintBasedAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features.
-⏭️ DeviceEnergyManagement forecast reporting functionality on DeviceEnergyManagement (TC_DEM_2_9.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate and clear Forecast; Matterbridge does not implement those CSA reference-app test hooks.
-⏭️ DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement (TC_DEM_2_10.py)
-   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive Forecast and PowerAdjustmentCapability report changes; Matterbridge does not implement those CSA reference-app test hooks.
-✅ DeviceEnergyManagementMode attributes on DeviceEnergyManagement (TC_DEMM_1_2.py)
+✅ ElectricalPowerMeasurement attributes on ElectricalSensor (TC_EPM_2_1.py)
+⏭️ ElectricalPowerMeasurement primary functionality on ElectricalSensor (TC_EPM_2_2.py)
+   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake 1kW load readings; Matterbridge does not implement those CSA reference-app test hooks.
+✅ ElectricalEnergyMeasurement attributes on ElectricalSensor (TC_EEM_2_1.py)
+⏭️ ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensor (TC_EEM_2_2.py)
+   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake imported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks.
+⏭️ ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensor (TC_EEM_2_3.py)
+   ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake exported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks.
+⏭️ ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensor (TC_EEM_2_4.py)
+   ↳ Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature.
+⏭️ ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensor (TC_EEM_2_5.py)
+   ↳ Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature.
 
-Summary: 3/3 tests passed (9 skipped).
+Summary: 2/2 tests passed (5 skipped).
