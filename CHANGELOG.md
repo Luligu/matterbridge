@@ -73,6 +73,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [frontend]: Apply the trailing-slash normalization of a device configUrl to the path only, so query strings are no longer corrupted (#579).
 - [thermostat]: Apply thermostat suggestions: `AddThermostatSuggestion`/`RemoveThermostatSuggestion` now re-evaluate `CurrentThermostatSuggestion`, syncing `ActivePresetHandle` and clearing `ThermostatSuggestionNotFollowingReason`, and prune expired entries from `ThermostatSuggestions`. Thanks Ludovic BOUÉ.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
