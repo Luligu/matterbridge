@@ -27,6 +27,11 @@
       "args": ["--endpoint 701", "--PICS /root/boolean-state.pics"]
     },
     {
+      "name": "DeviceEnergyManagementMode change mode on DeviceEnergyManagement",
+      "test": "Test_TC_DEMM_2_1",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management-mode.pics"]
+    },
+    {
       "name": "Identify attributes on ContactSensor",
       "test": "Test_TC_I_2_1",
       "args": ["--endpoint 701", "--PICS /root/identify.pics"]
@@ -320,6 +325,79 @@
       "name": "PowerSource battery reporting frequency on ContactSensor",
       "test": "TC_PS_2_3.py",
       "args": ["--endpoint 701", "--PICS /root/power-source.battery.pics"]
+    },
+    {
+      "name": "DeviceEnergyManagement attributes on DeviceEnergyManagement",
+      "test": "TC_DEM_2_1.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics"]
+    },
+    {
+      "name": "DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_2.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate PowerAdjustmentCapability, drive ESAState transitions, and emit PowerAdjustStart/PowerAdjustEnd events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_3.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the StartTimeAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement Pausable functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_4.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the Pausable feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast adjustment with power forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_5.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the ForecastAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast adjustment with state forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_6.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires StateForecastReporting, ForecastAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+    },
+    {
+      "name": "DeviceEnergyManagement constraint forecast with power forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_7.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires ConstraintBasedAdjustment and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement constraint forecast with state forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_8.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires StateForecastReporting, ConstraintBasedAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast reporting functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_9.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate and clear Forecast; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_10.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive Forecast and PowerAdjustmentCapability report changes; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagementMode attributes on DeviceEnergyManagement",
+      "test": "TC_DEMM_1_2.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management-mode.pics"]
     },
     {
       "name": "BooleanState primary functionality on ContactSensor",
