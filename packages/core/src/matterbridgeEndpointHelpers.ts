@@ -1401,6 +1401,46 @@ export function getDefaultElectricalEnergyMeasurementClusterServer(energyImporte
 }
 
 /**
+ * Get the Electrical Energy Measurement Cluster Server options with features ImportedEnergy and CumulativeEnergy.
+ *
+ * @param {number} energyImported - The total consumption value in mW/h.
+ * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ */
+export function getImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null) {
+  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
+    accuracy: {
+      measurementType: MeasurementType.ElectricalEnergy,
+      measured: true,
+      minMeasuredValue: Number.MIN_SAFE_INTEGER,
+      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+    },
+    cumulativeEnergyReset: null,
+    cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+  });
+}
+
+/**
+ * Get the Electrical Energy Measurement Cluster Server options with features ExportedEnergy and CumulativeEnergy.
+ *
+ * @param {number} energyExported - The total production value in mW/h.
+ * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ */
+export function getExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null) {
+  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
+    accuracy: {
+      measurementType: MeasurementType.ElectricalEnergy,
+      measured: true,
+      minMeasuredValue: Number.MIN_SAFE_INTEGER,
+      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+    },
+    cumulativeEnergyReset: null,
+    cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
+  });
+}
+
+/**
  * Get the default Electrical Power Measurement Cluster Server options with features AlternatingCurrent.
  *
  * @param {number} voltage - The voltage value in millivolts.

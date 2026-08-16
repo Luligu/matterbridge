@@ -168,6 +168,8 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getExportedElectricalEnergyMeasurementClusterServer,
+  getImportedElectricalEnergyMeasurementClusterServer,
   invokeBehaviorCommand,
   lowercaseFirstLetter,
   setAttribute,
@@ -2304,6 +2306,34 @@ export class MatterbridgeEndpoint extends Endpoint {
         ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
       ),
       getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ImportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyImported - The total consumption value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getImportedElectricalEnergyMeasurementClusterServer(energyImported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ExportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyExported - The total production value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   */
+  createExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getExportedElectricalEnergyMeasurementClusterServer(energyExported),
     );
     return this;
   }

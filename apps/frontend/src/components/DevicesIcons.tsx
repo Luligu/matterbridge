@@ -27,6 +27,7 @@ import {
   mdiStove,
   mdiThermostatBox,
   mdiRobotVacuum,
+  mdiMeterElectricOutline,
 } from '@mdi/js';
 import { Icon } from '@mdi/react';
 // @mui/icons-material
@@ -50,7 +51,6 @@ import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import MicrowaveIcon from '@mui/icons-material/Microwave';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive'; // Chime, Doorbell, AudioDoorbell
 import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
-import PowerIcon from '@mui/icons-material/Power';
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import SensorsOffIcon from '@mui/icons-material/SensorsOff';
 import ThermostatIcon from '@mui/icons-material/Thermostat'; // Temperature
@@ -176,6 +176,20 @@ interface DeviceProps {
 function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): React.JSX.Element {
   const airQualityLookup = ['Unknown', 'Good', 'Fair', 'Moderate', 'Poor', 'VeryPoor', 'Ext.Poor'];
   let details = '';
+  const getEnergy = (cluster: Cluster | undefined): number | null => {
+    if (!cluster) return null;
+    const value = cluster.attributeLocalValue;
+    if (!value || typeof value !== 'object' || !('energy' in value)) return null;
+    const energy = value.energy;
+    if (typeof energy !== 'number' && typeof energy !== 'bigint') return null;
+    return Math.round(Number(energy) / 1_000_000);
+  };
+  const energyImportedCluster = clusters.find((cluster) => cluster.clusterName === 'ElectricalEnergyMeasurement' && cluster.attributeName === 'cumulativeEnergyImported');
+  const energyExportedCluster = clusters.find((cluster) => cluster.clusterName === 'ElectricalEnergyMeasurement' && cluster.attributeName === 'cumulativeEnergyExported');
+  const energyImported = getEnergy(energyImportedCluster);
+  const energyExported = getEnergy(energyExportedCluster);
+  const energyCluster = energyImportedCluster ?? energyExportedCluster;
+  const energyValue = energyImported ?? (energyExported !== null ? `+ ${energyExported}` : null);
 
   if (debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
 
@@ -237,7 +251,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
   deviceType === 0x0510 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower')
-      .map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1000} W`));
+      .map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1_000_000} kW`));
 
   // ModeSelect
   if (deviceType === 0x0027) {
@@ -500,10 +514,9 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiLightSwitch} size='40px' color='var(--primary-color)' />} cluster={cluster} value='---' />
       ))}
       {/* ElectricalEnergyMeasurement */}
-      {deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalEnergyMeasurement' && cluster.attributeName === 'cumulativeEnergyImported').map(cluster => (
-        // oxlint-disable-next-line typescript/no-explicit-any
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<PowerIcon/>} cluster={cluster} value={Math.round((cluster as any).attributeLocalValue?.energy / 1000000)} unit='kwh' />
-      ))}
+      {deviceType===0x0510 && energyCluster && (
+        <Render key={`${energyCluster.clusterId}-${energyCluster.attributeId}`} icon={<Icon path={mdiMeterElectricOutline} size='40px' color='var(--primary-color)' />} cluster={energyCluster} value={energyValue} unit='kWh' />
+      )}
       <Box sx={detailsBoxSx}>
         <Typography sx={detailsSx}>{details}</Typography>
       </Box>

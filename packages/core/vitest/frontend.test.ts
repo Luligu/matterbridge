@@ -489,6 +489,12 @@ describe('Matterbridge frontend', () => {
       ['pressureMeasurement', 0x403, 'measuredValue', 0, 1000],
       ['flowMeasurement', 0x404, 'measuredValue', 0, 100],
       ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, 50],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 220_000],
+      ['electricalPowerMeasurement', 0x90, 'activeCurrent', 0, 1_000],
+      ['electricalPowerMeasurement', 0x90, 'activePower', 0, 220_000],
+      ['electricalPowerMeasurement', 0x90, 'frequency', 0, 50_000],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 100_000_000 }],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyExported', 0, { energy: 10_000_000 }],
     ]);
     expect(text).toContain('OnOff: true');
     expect(text).toContain('Position: 1');
@@ -511,6 +517,12 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('Pm2.5: 5');
     expect(text).toContain('Humidity: 50%');
     expect(text).toContain('Soil moisture: 50%');
+    expect(text).toContain('Voltage: 220V');
+    expect(text).toContain('Current: 1A');
+    expect(text).toContain('Power: 0.22kW');
+    expect(text).toContain('Frequency: 50Hz');
+    expect(text).toContain('Imported: 100kWh');
+    expect(text).toContain('Exported: 10kWh');
 
     const nullMeasurements = runTuples([
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
@@ -519,6 +531,8 @@ describe('Matterbridge frontend', () => {
       ['pressureMeasurement', 0x403, 'measuredValue', 0, null],
       ['flowMeasurement', 0x404, 'measuredValue', 0, null],
       ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, null],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, null],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, null],
     ]);
     expect(nullMeasurements).toContain('Illuminance: unknown');
     expect(nullMeasurements).toContain('Temperature: unknown');
@@ -526,6 +540,8 @@ describe('Matterbridge frontend', () => {
     expect(nullMeasurements).toContain('Pressure: unknown');
     expect(nullMeasurements).toContain('Flow: unknown');
     expect(nullMeasurements).toContain('Soil moisture: unknown');
+    expect(nullMeasurements).toContain('Voltage: unknown');
+    expect(nullMeasurements).toContain('Imported: unknown');
 
     // isValid* false sides (out-of-range / wrong-type values are not appended)
     const skipped = runTuples([
@@ -538,6 +554,8 @@ describe('Matterbridge frontend', () => {
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 'x'],
       ['temperatureMeasurement', 0x402, 'measuredValue', 0, 'x'],
       ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 'x'],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 'x'],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 'x' }],
     ]);
     expect(skipped).toBe('');
   });

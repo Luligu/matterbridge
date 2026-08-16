@@ -27,10 +27,8 @@
 import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
-import type { Endpoint } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { EndpointNumber } from '@matter/types/datatype';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
@@ -51,8 +49,14 @@ type ChipTestAppPipeCommand = {
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
 let closeChipTestAppPipe: (() => void) | undefined;
 
-export async function createChipTestDevices(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): Promise<void> {
-  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !aggregatorEndpoint) return;
+export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
+  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
+  const serverNode = matterbridge.serverNode;
+  const aggregator = matterbridge.aggregatorNode;
+  if (!serverNode || !aggregator) {
+    matterbridge.log.error('CHIP test devices can only be created when the server node and aggregator node are available');
+    return;
+  }
   let ep: MatterbridgeEndpoint | undefined;
   matterbridge.plugins.set({
     name: 'matterbridge-chip',
@@ -75,6 +79,25 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;
   const powerSource = getSupportedDeviceType('PowerSource')!;
+
+  // Chapter 2 - Utility Device Types
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { number: EndpointNumber(2_06) });
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
+  await registerDevice(ep, 'Electrical Sensor', 'UTILITY-02-06');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { number: EndpointNumber(2_06_1) });
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createImportedElectricalEnergyMeasurementClusterServer(200_000_000);
+  await registerDevice(ep, 'Electrical Sensor Imported', 'UTILITY-02-06-1');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { number: EndpointNumber(2_06_2) });
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000);
+  await registerDevice(ep, 'Electrical Sensor Exported', 'UTILITY-02-06-2');
+
+  // Chapter 7 - Sensor Devices
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ContactSensor')!, bridgedNode, powerSource], { number: EndpointNumber(7_01) });
   ep.createDefaultPowerSourceBatteryClusterServer();
@@ -158,7 +181,7 @@ export async function createChipTestDevices(matterbridge: Matterbridge, aggregat
   await registerDevice(ep, 'Soil Sensor', 'SENSOR-07-14');
 }
 
-export function createChipTestAppPipe(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>): void {
+export function createChipTestAppPipe(matterbridge: Matterbridge): void {
   closeChipTestAppPipe?.();
 
   try {
@@ -212,7 +235,7 @@ export function createChipTestAppPipe(matterbridge: Matterbridge, aggregatorEndp
           matterbridge.log.warn(`Ignoring invalid CHIP test app pipe command: ${commandLine}`);
           return null;
         }
-        await handleChipTestAppPipeCommand(matterbridge, aggregatorEndpoint, command);
+        await handleChipTestAppPipeCommand(matterbridge, command);
         return null;
       })
       .catch((error: unknown): null => {
@@ -265,14 +288,14 @@ export function createChipTestAppPipe(matterbridge: Matterbridge, aggregatorEndp
   cliEmitter.once('shutdown', shutdownListener);
 }
 
-async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, aggregatorEndpoint: Endpoint<AggregatorEndpoint>, command: ChipTestAppPipeCommand): Promise<void> {
+async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
   const endpointId =
     command.Name === 'SetOccupancy' && command.EndpointId === 1 ? 703 : (command.EndpointId ?? (command.Name === 'SimulateConfigurationVersionChange' ? 701 : undefined));
   if (endpointId === undefined) {
     matterbridge.log.warn(`Ignoring CHIP test app pipe command without EndpointId: ${JSON.stringify(command)}`);
     return;
   }
-  const endpoint = getChipTestEndpoint(aggregatorEndpoint, endpointId);
+  const endpoint = getChipTestEndpoint(matterbridge, endpointId);
   if (!endpoint) {
     matterbridge.log.warn(`Ignoring CHIP test app pipe command for unknown endpoint ${endpointId}: ${JSON.stringify(command)}`);
     return;
@@ -310,8 +333,10 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, aggregat
   }
 }
 
-function getChipTestEndpoint(aggregatorEndpoint: Endpoint<AggregatorEndpoint>, endpointId: number): MatterbridgeEndpoint | undefined {
-  const endpoints = [aggregatorEndpoint as Endpoint, ...aggregatorEndpoint.parts];
+function getChipTestEndpoint(matterbridge: Matterbridge, endpointId: number): MatterbridgeEndpoint | undefined {
+  const aggregatorEndpoint = matterbridge.aggregatorNode;
+  if (!aggregatorEndpoint) return undefined;
+  const endpoints = [aggregatorEndpoint, ...aggregatorEndpoint.parts];
   for (const endpoint of endpoints) {
     if (Number(endpoint.number) === endpointId && endpoint instanceof MatterbridgeEndpoint) return endpoint;
     for (const childEndpoint of endpoint.parts) {

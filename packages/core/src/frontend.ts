@@ -1446,6 +1446,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
+    const getMeasurementText = (value: unknown, scale: number, unit: string): string => {
+      if (value === null) return 'unknown';
+      if (isValidNumber(value) || typeof value === 'bigint') return `${Number(value) / scale}${unit}`;
+      return '';
+    };
+    const getEnergyText = (value: unknown): string => {
+      if (value === null) return 'unknown';
+      if (isValidObject(value) && 'energy' in value && (isValidNumber(value.energy) || typeof value.energy === 'bigint')) return `${Number(value.energy) / 1_000_000}kWh`;
+      return '';
+    };
+    const appendMeasurement = (label: string, value: string): void => {
+      if (value) attributes += `${label}: ${value} `;
+    };
 
     // TODO: Remove
     /* v8 ignore next */
@@ -1529,6 +1542,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (attributeValue === null) attributes += `Soil moisture: unknown `;
         else if (isValidNumber(attributeValue)) attributes += `Soil moisture: ${attributeValue}% `;
       }
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'voltage') appendMeasurement('Voltage', getMeasurementText(attributeValue, 1_000, 'V'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activeCurrent') appendMeasurement('Current', getMeasurementText(attributeValue, 1_000, 'A'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activePower') appendMeasurement('Power', getMeasurementText(attributeValue, 1_000_000, 'kW'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'frequency') appendMeasurement('Frequency', getMeasurementText(attributeValue, 1_000, 'Hz'));
+      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyImported') appendMeasurement('Imported', getEnergyText(attributeValue));
+      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyExported') appendMeasurement('Exported', getEnergyText(attributeValue));
       if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
       if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });

@@ -44,6 +44,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [electricalUtilityMeter]: Add `ElectricalUtilityMeter` device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the `MeterIdentification` cluster.
 - [electricalUtilityMeter]: Add `addElectricalMeter()` to add an Electrical Meter (+ Electrical Sensor) child endpoint with `ElectricalPowerMeasurement`, `ElectricalEnergyMeasurement` and `CommodityMetering`.
 - [electricalUtilityMeter]: Add `addElectricalEnergyTariff()` to add an Electrical Energy Tariff child endpoint with `CommodityPrice`, `CommodityTariff` and `ElectricalGridConditions`.
+- [electricalSensor]: Add electrical measurement helpers: `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()`.
 - [booleanStateConfiguration]: Add `SuppressAlarm` command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().
 - [booleanStateConfiguration]: Add automatic `AlarmsStateChanged` and `SensorFault` event emission.
 - [occupancySensing]: Add `MatterbridgeOccupancySensingServer` to mirror Matter 1.6 `HoldTime` with the legacy `PIROccupiedToUnoccupiedDelay` attribute when both are exposed for backward compatibility.
@@ -62,6 +63,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
 - [frontend]: Bump `frontend` version to v.3.5.8.
+- [frontend]: Refactor the Devices Icon and Table views to render electrical measurements consistently, including imported/exported energy, `kW` power and `kWh` energy units.
 - [frontend]: Bump `@testing-library/jest-dom` to v.7.0.1.
 - [frontend]: Bump `@types/node` to v.26.2.0.
 - [frontend]: Bump `globals` to v.17.11.0.
