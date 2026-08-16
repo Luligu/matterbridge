@@ -49,6 +49,7 @@ import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
@@ -1504,18 +1505,30 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
-      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue))
-        attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
+      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') {
+        if (attributeValue === null) attributes += `Illuminance: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
+      }
       if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
       if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
       if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm1: ${attributeValue} `;
       if (clusterName === 'pm25ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm2.5: ${attributeValue} `;
       if (clusterName === 'pm10ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm10: ${attributeValue} `;
       if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `CH₂O: ${attributeValue} `;
-      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
-      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue' && isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
-      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue} `;
-      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue} `;
+      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') {
+        if (attributeValue === null) attributes += `Temperature: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+      }
+      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') {
+        if (attributeValue === null) attributes += `Humidity: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
+      }
+      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue === null ? 'unknown' : attributeValue} `;
+      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue === null ? 'unknown' : attributeValue} `;
+      if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') {
+        if (attributeValue === null) attributes += `Soil moisture: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Soil moisture: ${attributeValue}% `;
+      }
       if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
       if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });

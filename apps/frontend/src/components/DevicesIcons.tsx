@@ -471,6 +471,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {deviceType===0x0307 && clusters.filter(cluster => cluster.clusterName === 'RelativeHumidityMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiWaterPercent} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue as number/100} unit='%' />
       ))}
+      {/* SoilSensor */}
+      {deviceType===0x0045 && clusters.filter(cluster => cluster.clusterName === 'SoilMeasurement' && cluster.attributeName === 'soilMoistureMeasuredValue').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiWaterPercent} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue as number} unit='%' />
+      ))}
       {/* FlowMeasurement */}
       {deviceType===0x0306 && clusters.filter(cluster => cluster.clusterName === 'FlowMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<GasMeterIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number} unit='l/h' />
@@ -490,6 +494,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* LightSensor */}
       {deviceType===0x0106 && clusters.filter(cluster => cluster.clusterName === 'IlluminanceMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LightModeIcon/>} cluster={cluster} value={Math.round(Math.pow(10, cluster.attributeLocalValue as number / 10000))} unit='lx' />
+      ))}
+      {/* OnOffSensor */}
+      {deviceType===0x0850 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiLightSwitch} size='40px' color='var(--primary-color)' />} cluster={cluster} value='---' />
       ))}
       {/* ElectricalEnergyMeasurement */}
       {deviceType===0x0510 && clusters.filter(cluster => cluster.clusterName === 'ElectricalEnergyMeasurement' && cluster.attributeName === 'cumulativeEnergyImported').map(cluster => (
