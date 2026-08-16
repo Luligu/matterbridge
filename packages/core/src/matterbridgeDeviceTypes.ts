@@ -413,6 +413,12 @@ export const bridgedNode = DeviceTypeDefinition({
  * Electrical measurements made by either the Electrical Power Measurement cluster,
  * the Electrical Energy Measurement cluster, or both SHALL apply to the endpoints
  * indicated by the Power Topology cluster.
+ *
+ * @remarks
+ * ElectricalPowerMeasurement and ElectricalEnergyMeasurement are not individually mandatory:
+ * the device type requires at least one of them. Because of that, addRequiredClusters() cannot
+ * infer which one to add; implementations must explicitly add the desired cluster server with
+ * the electrical measurement helpers.
  */
 export const electricalSensor = DeviceTypeDefinition({
   name: 'ElectricalSensor',

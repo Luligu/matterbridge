@@ -1,0 +1,6 @@
+# To run tests on SoilMeasurement --PICS is required
+# Matches createDefaultSoilMeasurementClusterServer() on CHIP SoilSensor endpoint 714
+PICS_SDK_CI_ONLY=1
+SOIL.S=1
+SOIL.S.A0000=1 # SoilMoistureMeasuredValue
+SOIL.S.A0001=1 # SoilMoistureMeasurementLimits

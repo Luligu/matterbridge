@@ -1,5 +1,5 @@
 {
-  "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension"],
+  "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*"],
   "yamlTests": [
     {
       "name": "PowerSource attributes",
@@ -27,6 +27,11 @@
       "args": ["--endpoint 701", "--PICS /root/boolean-state.pics"]
     },
     {
+      "name": "DeviceEnergyManagementMode change mode on DeviceEnergyManagement",
+      "test": "Test_TC_DEMM_2_1",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management-mode.pics"]
+    },
+    {
       "name": "Identify attributes on ContactSensor",
       "test": "Test_TC_I_2_1",
       "args": ["--endpoint 701", "--PICS /root/identify.pics"]
@@ -47,6 +52,147 @@
       "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"],
       "skip": true,
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
+    },
+    {
+      "name": "IlluminanceMeasurement attributes on LightSensor",
+      "test": "Test_TC_ILL_2_1",
+      "args": ["--endpoint 702", "--PICS /root/illuminance-measurement.pics"]
+    },
+    {
+      "name": "IlluminanceMeasurement primary functionality on LightSensor",
+      "test": "Test_TC_ILL_2_2",
+      "args": ["--endpoint 702", "--PICS /root/illuminance-measurement.pics"]
+    },
+    {
+      "name": "TemperatureMeasurement primary functionality on TemperatureSensor",
+      "test": "Test_TC_TMP_2_2",
+      "args": ["--endpoint 704", "--PICS /root/temperature-measurement.pics"]
+    },
+    {
+      "name": "PressureMeasurement attributes on PressureSensor",
+      "test": "Test_TC_PRS_2_1",
+      "args": ["--endpoint 705", "--PICS /root/pressure-measurement.pics"]
+    },
+    {
+      "name": "PressureMeasurement primary functionality on PressureSensor",
+      "test": "Test_TC_PRS_2_2",
+      "args": ["--endpoint 705", "--PICS /root/pressure-measurement.pics"]
+    },
+    {
+      "name": "FlowMeasurement attributes on FlowSensor",
+      "test": "Test_TC_FLW_2_1",
+      "args": ["--endpoint 706", "--PICS /root/flow-measurement.pics"]
+    },
+    {
+      "name": "FlowMeasurement primary functionality on FlowSensor",
+      "test": "Test_TC_FLW_2_2",
+      "args": ["--endpoint 706", "--PICS /root/flow-measurement.pics"]
+    },
+    {
+      "name": "RelativeHumidityMeasurement attributes on HumiditySensor",
+      "test": "Test_TC_RH_2_1",
+      "args": ["--endpoint 707", "--PICS /root/relative-humidity-measurement.pics"]
+    },
+    {
+      "name": "RelativeHumidityMeasurement primary functionality on HumiditySensor",
+      "test": "Test_TC_RH_2_2",
+      "args": ["--endpoint 707", "--PICS /root/relative-humidity-measurement.pics"]
+    },
+    {
+      "name": "Binding node binding manual verification on OnOffSensor",
+      "test": "Test_TC_BIND_2_1",
+      "args": ["--endpoint 708"],
+      "skip": true,
+      "comment": "Every step in this YAML is disabled:true. It is a DUT-Controller Binding client manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708."
+    },
+    {
+      "name": "Binding group binding manual verification on OnOffSensor",
+      "test": "Test_TC_BIND_2_2",
+      "args": ["--endpoint 708"],
+      "skip": true,
+      "comment": "Every step in this YAML is disabled:true. It is a DUT-Controller Binding client and GroupKeyManagement manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708."
+    },
+    {
+      "name": "Binding group settings manual verification on OnOffSensor",
+      "test": "Test_TC_BIND_2_3",
+      "args": ["--endpoint 708"],
+      "skip": true,
+      "comment": "Every step in this YAML is disabled:true. It is a DUT-Controller Binding client manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708."
+    },
+    {
+      "name": "SmokeCOAlarm attributes on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_1",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm smoke primary functionality on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_2",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm CO primary functionality on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_3",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm mandatory secondary functionality on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_4",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm optional secondary functionality on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_5",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_6",
+      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
+      "skip": true
+    },
+    {
+      "name": "SmokeCOAlarm attributes on Smoke-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_1",
+      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm smoke primary functionality on Smoke-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_2",
+      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm mandatory secondary functionality on Smoke-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_4",
+      "args": ["--endpoint 7091", "--PICS /root/smoke-co-alarm-smoke-only.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm attributes on CO-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_1",
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"]
+    },
+    {
+      "name": "SmokeCOAlarm CO primary functionality on CO-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_3",
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive COState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "SmokeCOAlarm mandatory secondary functionality on CO-only SmokeCOAlarm",
+      "test": "Test_TC_SMOKECO_2_4",
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive battery, hardware fault, end-of-service, and self-test event flows; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "AirQuality attributes on AirQualitySensor",
+      "test": "Test_TC_AIRQUAL_2_1",
+      "args": ["--endpoint 710", "--PICS /root/air-quality.pics"]
+    },
+    {
+      "name": "TotalVolatileOrganicCompoundsConcentrationMeasurement attributes on AirQualitySensor",
+      "test": "Test_TC_TVOCCONC_2_1",
+      "args": ["--endpoint 710", "--PICS /root/tvoc-concentration-measurement.pics"]
     },
     {
       "name": "Descriptor cluster attributes",
@@ -155,12 +301,15 @@
     {
       "name": "BasicInformation reboot count via app-pipe",
       "test": "TC_BINFO_3_2.py",
-      "args": ["--endpoint 0", "--PICS /root/matterbridge.pics"],
-      "skip": true,
-      "comment": "Requires write_to_app_pipe/--app-pipe, a debug named-pipe protocol only the CSA reference apps implement. Matterbridge cannot support this."
+      "args": ["--endpoint 0", "--PICS /root/matterbridge.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
-      "name": "PowerSource battery reporting frequency",
+      "name": "Generic TestEventTrigger command",
+      "test": "TC_TestEventTrigger.py",
+      "args": ["--endpoint 0"]
+    },
+    {
+      "name": "PowerSource battery reporting frequency on RootNode",
       "test": "TC_PS_2_3.py",
       "args": ["--endpoint 0", "--PICS /root/power-source.wired.pics"]
     },
@@ -168,6 +317,124 @@
       "name": "PowerSource battery reporting frequency on ContactSensor",
       "test": "TC_PS_2_3.py",
       "args": ["--endpoint 701", "--PICS /root/power-source.battery.pics"]
+    },
+    {
+      "name": "ElectricalPowerMeasurement attributes on ElectricalSensor",
+      "test": "TC_EPM_2_1.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-power-measurement.pics"]
+    },
+    {
+      "name": "ElectricalPowerMeasurement primary functionality on ElectricalSensor",
+      "test": "TC_EPM_2_2.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-power-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake 1kW load readings; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement attributes on ElectricalSensor",
+      "test": "TC_EEM_2_1.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_2.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake imported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_3.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive fake exported cumulative energy readings and events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_4.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature."
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensor",
+      "test": "TC_EEM_2_5.py",
+      "args": ["--endpoint 206", "--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the PeriodicEnergy feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 206 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement attributes on DeviceEnergyManagement",
+      "test": "TC_DEM_2_1.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics"]
+    },
+    {
+      "name": "DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_2.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate PowerAdjustmentCapability, drive ESAState transitions, and emit PowerAdjustStart/PowerAdjustEnd events; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_3.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the StartTimeAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement Pausable functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_4.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the Pausable feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast adjustment with power forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_5.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the ForecastAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast adjustment with state forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_6.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires StateForecastReporting, ForecastAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+    },
+    {
+      "name": "DeviceEnergyManagement constraint forecast with power forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_7.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires ConstraintBasedAdjustment and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+    },
+    {
+      "name": "DeviceEnergyManagement constraint forecast with state forecast on DeviceEnergyManagement",
+      "test": "TC_DEM_2_8.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires StateForecastReporting, ConstraintBasedAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+    },
+    {
+      "name": "DeviceEnergyManagement forecast reporting functionality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_9.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate and clear Forecast; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement",
+      "test": "TC_DEM_2_10.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive Forecast and PowerAdjustmentCapability report changes; Matterbridge does not implement those CSA reference-app test hooks."
+    },
+    {
+      "name": "DeviceEnergyManagementMode attributes on DeviceEnergyManagement",
+      "test": "TC_DEMM_1_2.py",
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management-mode.pics"]
     },
     {
       "name": "BooleanState primary functionality on ContactSensor",
@@ -257,6 +524,46 @@
       "args": ["--endpoint 701", "--PICS /root/matterbridge.pics"],
       "skip": true,
       "comment": "Requires the Bridged ICD Support feature, KeepActive command, ActiveChanged event, and an external TH_ICD_SERVER/Fabric Sync app; Matterbridge does not implement BIS (BRBINFO.S.C80.Rsp=0 and BRBINFO.S.E80=0 in matterbridge.pics)."
+    },
+    {
+      "name": "OccupancySensing attributes on OccupancySensor",
+      "test": "TC_OCC_2_1.py",
+      "args": ["--endpoint 703", "--PICS /root/occupancy-sensing.pics"]
+    },
+    {
+      "name": "OccupancySensing type interdependency on OccupancySensor",
+      "test": "TC_OCC_2_2.py",
+      "args": ["--endpoint 703", "--PICS /root/occupancy-sensing.pics"]
+    },
+    {
+      "name": "OccupancySensing hold time compatibility on OccupancySensor",
+      "test": "TC_OCC_2_3.py",
+      "args": ["--endpoint 703", "--PICS /root/occupancy-sensing.pics"]
+    },
+    {
+      "name": "OccupancySensing primary functionality on OccupancySensor",
+      "test": "TC_OCC_3_1.py",
+      "args": ["--endpoint 703", "--PICS /root/occupancy-sensing.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--bool-arg simulate_occupancy:true"]
+    },
+    {
+      "name": "OccupancySensing subscription reports on OccupancySensor",
+      "test": "TC_OCC_3_2.py",
+      "args": ["--endpoint 703", "--PICS /root/occupancy-sensing.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--bool-arg simulate_occupancy:true"]
+    },
+    {
+      "name": "TemperatureMeasurement attributes on TemperatureSensor",
+      "test": "TC_TMP_2_1.py",
+      "args": ["--endpoint 704", "--PICS /root/temperature-measurement.pics"]
+    },
+    {
+      "name": "SoilMeasurement attributes on SoilSensor",
+      "test": "TC_SOIL_2_1.py",
+      "args": ["--endpoint 714", "--PICS /root/soil-measurement.pics"]
+    },
+    {
+      "name": "SoilMeasurement primary functionality on SoilSensor",
+      "test": "TC_SOIL_2_2.py",
+      "args": ["--endpoint 714", "--PICS /root/soil-measurement.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "AccessControl event reporting with server as DUT",

@@ -1,0 +1,11 @@
+# To run tests on AirQuality --PICS is required
+# Matches createDefaultAirQualityClusterServer() on CHIP AirQualitySensor endpoint 710
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+AIRQUAL.S=1
+AIRQUAL.S.F00=1 # Fair
+AIRQUAL.S.F01=1 # Moderate
+AIRQUAL.S.F02=1 # VeryPoor
+AIRQUAL.S.F03=1 # ExtremelyPoor
+AIRQUAL.S.A0000=1 # AirQuality
+AIRQUAL.M.AirQualityChange=0

@@ -138,8 +138,8 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
   // v8 ignore next - No test cause is just a way to easily add new devices for testing purposes without using plugins
   if (process.env.MATTERBRIDGE_CHIP_TEST) {
     const { createChipTestAppPipe, createChipTestDevices } = await import('./chipTest.js');
-    if (process.env.MATTERBRIDGE_RUN_CHIP_TEST) await createChipTestDevices(matterbridge, aggregatorEndpoint);
-    createChipTestAppPipe(matterbridge, aggregatorEndpoint);
+    if (process.env.MATTERBRIDGE_RUN_CHIP_TEST) await createChipTestDevices(matterbridge);
+    createChipTestAppPipe(matterbridge);
   }
   if (!process.env.MATTERBRIDGE_CHIP_TEST && matterbridge.virtualMode !== 'disabled' && matterbridge.bridgeMode === 'bridge' && aggregatorEndpoint) {
     matterbridge.log.notice(`Creating virtual devices for Matterbridge server node...`);

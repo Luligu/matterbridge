@@ -217,7 +217,7 @@ describe('Matterbridge ' + NAME, () => {
         'soilMeasurement(0x430).featureMap(0xfffc)={  }',
         'soilMeasurement(0x430).generatedCommandList(0xfff8)=[  ]',
         'soilMeasurement(0x430).soilMoistureMeasuredValue(0x1)=null',
-        'soilMeasurement(0x430).soilMoistureMeasurementLimits(0x0)={ measurementType: 17, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [ { rangeMin: 0, rangeMax: 100, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'soilMeasurement(0x430).soilMoistureMeasurementLimits(0x0)={ measurementType: 17, measured: true, minMeasuredValue: 0, maxMeasuredValue: 100, accuracyRanges: [ { rangeMin: 0, rangeMax: 100, percentMax: 1, percentMin: undefined, percentTypical: undefined, fixedMax: undefined, fixedMin: undefined, fixedTypical: undefined } ] }',
       ].toSorted(),
     );
   });

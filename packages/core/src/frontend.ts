@@ -48,6 +48,7 @@ import { Diagnostic, Lifecycle, LogDestination, LogFormat as MatterLogFormat, Lo
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { CommissioningOptions } from '@matter/types/commissioning';
@@ -1446,6 +1447,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     let attributes = '';
     let supportedModes: { label: string; mode: number }[] = [];
+    const getMeasurementText = (value: unknown, scale: number, unit: string): string => {
+      if (value === null) return 'unknown';
+      if (isValidNumber(value) || typeof value === 'bigint') return `${Number(value) / scale}${unit}`;
+      return '';
+    };
+    const getEnergyText = (value: unknown): string => {
+      if (value === null) return 'unknown';
+      if (isValidObject(value) && 'energy' in value && (isValidNumber(value.energy) || typeof value.energy === 'bigint')) return `${Number(value.energy) / 1_000_000}kWh`;
+      return '';
+    };
+    const appendMeasurement = (label: string, value: string): void => {
+      if (value) attributes += `${label}: ${value} `;
+    };
 
     // TODO: Remove
     /* v8 ignore next */
@@ -1461,7 +1475,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
 
-      const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode']);
+      const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode', 'deviceEnergyManagementMode']);
       if (modeClusters.has(clusterName) && attributeName === 'supportedModes') {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         supportedModes = attributeValue as { label: string; mode: number }[];
@@ -1529,6 +1543,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (attributeValue === null) attributes += `Soil moisture: unknown `;
         else if (isValidNumber(attributeValue)) attributes += `Soil moisture: ${attributeValue}% `;
       }
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'voltage') appendMeasurement('Voltage', getMeasurementText(attributeValue, 1_000, 'V'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activeCurrent') appendMeasurement('Current', getMeasurementText(attributeValue, 1_000, 'A'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activePower') appendMeasurement('Power', getMeasurementText(attributeValue, 1_000_000, 'kW'));
+      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'frequency') appendMeasurement('Frequency', getMeasurementText(attributeValue, 1_000, 'Hz'));
+      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyImported') appendMeasurement('Imported', getEnergyText(attributeValue));
+      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyExported') appendMeasurement('Exported', getEnergyText(attributeValue));
+      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaCanGenerate') attributes += `ESA can generate: ${attributeValue} `;
+      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState') attributes += `ESA state: ${DeviceEnergyManagement.EsaState[attributeValue as DeviceEnergyManagement.EsaState]} `;
       if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
       if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });
