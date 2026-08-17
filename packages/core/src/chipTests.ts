@@ -1,5 +1,5 @@
 /**
- * @file packages/core/src/chipTest.ts
+ * @file packages/core/src/chipTests.ts
  * @description This file contains the CHIP test helpers of Matterbridge.
  * @author Luca Liguori
  * @created 2026-08-16
@@ -25,67 +25,9 @@
 /* oxlint-disable typescript/no-non-null-assertion */
 
 /**
- * CHIP TestEventTrigger notes.
- *
- * The Matter command is GeneralDiagnostics.TestEventTrigger on endpoint 0. The command carries only:
- * - EnableKey: a 16-byte key accepted by the DUT.
- * - EventTrigger: a test-defined integer.
- *
- * The command does not carry an endpoint, cluster, attribute, or target value. Each CHIP test defines the
- * meaning of its EventTrigger values in the test source/YAML, so each supported trigger must be mapped
- * explicitly here. Keep these handlers gated to MATTERBRIDGE_CHIP_TEST through Matterbridge.createServerNode().
- *
- * To add a new trigger-backed CHIP test:
- * 1. Read the CHIP test source and copy its exact EventTrigger constants.
- * 2. Check the key the test really sends. Python tests often use 000102...0f. YAML tests may define their
- *    own default key in the YAML config, such as SmokeCOAlarm's 001122...eeff key, so do not add a
- *    chipTests.json --hex-arg unless the YAML default is wrong for that specific test. Add only the required
- *    CHIP-test key to isChipTestEnableKey().
- * 3. Add a small handler in handleChipTestEventTrigger() that updates the target endpoint with setCluster()
- *    or setAttribute(), then emits any event the test reads with triggerEvent().
- * 4. Keep unsupported EventTrigger values delegated to GeneralDiagnosticsServer so they return InvalidCommand.
- * 5. If a failed/interrupted run can persist dirty state, add a resetClusterGlobs entry and set resetBefore
- *    on that chipTests.json entry.
- */
-
-/**
- * CHIP app-pipe notes.
- *
- * The app-pipe is a separate test backchannel from TestEventTrigger. Some Python CHIP tests call
- * write_to_app_pipe()/--app-pipe and write one JSON command per line into a named pipe. The command payload
- * can include fields such as Name, EndpointId, NewState, Occupancy, SensorFault, or SoilMoistureValue.
- *
- * Matterbridge creates /tmp/matterbridge-chip-test-app-pipe only when MATTERBRIDGE_CHIP_TEST is set, and
- * createChipTestAppPipe() is called from the CHIP-test bootstrap. The pipe is Linux-only test glue; do not
- * use it for production behavior and do not make normal runtime shutdown depend on it.
- *
- * To add a new app-pipe-backed CHIP test:
- * 1. Read the CHIP Python test and copy the exact JSON command name and fields passed to write_to_app_pipe().
- * 2. Extend ChipTestAppPipeCommand only with the fields that test actually writes.
- * 3. Add one small case in handleChipTestAppPipeCommand(), resolving the endpoint with getChipTestEndpoint().
- * 4. Update state through Matterbridge helpers such as setCluster() or setAttribute() where possible.
- * 5. Keep invalid or unknown commands logged and ignored so one malformed line cannot break the pipe loop.
- */
-
-/**
- * CHIP container sync notes.
- *
- * After changing local TypeScript, frontend, or PICS files, rebuild locally and copy the built artifacts
- * into the running chip-test container before rerunning CHIP tests. Copy directory contents with `/.` so
- * docker replaces the target contents instead of nesting another `dist` or `build` folder.
- *
- * Usual sync commands:
- * - docker cp dist/. chip-test:/root/matterbridge/dist/
- * - docker cp packages/core/dist/. chip-test:/root/matterbridge/packages/core/dist/
- * - docker cp packages/types/dist/. chip-test:/root/matterbridge/packages/types/dist/
- * - docker cp apps/frontend/build/. chip-test:/root/matterbridge/apps/frontend/build/
- * - docker cp docker/chip-test/*.pics chip-test:/root/
- *
- * Restart the existing container without recreating it after copying runtime code:
- * - docker restart chip-test
- *
- * Then run focused CHIP checks through the repository script, for example:
- * - node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"
+ * CHIP test devices and backchannel notes (TestEventTrigger, app-pipe, container sync) have moved to
+ * .claude/rules/chip-tests/chip-tests.instructions.md §2 and §4 — read that file before adding a new
+ * trigger-backed or app-pipe-backed CHIP test, or before syncing a local change into the chip-test container.
  */
 
 import { spawnSync } from 'node:child_process';

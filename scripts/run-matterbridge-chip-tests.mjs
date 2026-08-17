@@ -24,12 +24,12 @@
  *                          with the matterbridge instance, so each invocation just spawns a short-lived
  *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
  *                          separate commissioning step needed. Defaults to an empty array.
- *   "phytonTests"          (optional) The list of Python (src/python_testing/*.py) tests to run — see
+ *   "pythonTests"          (optional) The list of Python (src/python_testing/*.py) tests to run — see
  *                          below. Defaults to an empty array.
- * Each yamlTests/phytonTests entry has:
+ * Each yamlTests/pythonTests entry has:
  *   "name"                 Human-readable label, matched (case-insensitively, substring) by --test.
  *   "test"                 Required. The test identifier: a YAML test name with no extension (yamlTests,
- *                          e.g. "Test_TC_PS_2_1") or a filename under src/python_testing/ (phytonTests,
+ *                          e.g. "Test_TC_PS_2_1") or a filename under src/python_testing/ (pythonTests,
  *                          e.g. "TC_PS_2_1.py").
  *   "args"                 (optional) Array of strings, each split on whitespace and appended as CLI args
  *                          after the test name, e.g. ["--endpoint 0", "--PICS /root/matterbridge.pics"].
@@ -59,7 +59,7 @@
  * is for tests that leave dirty residue (e.g. an unclosed session, a mutated attribute) that would otherwise
  * leak into whichever test runs next — put it on the test that causes the residue, not the one affected by
  * it, so the fix travels with the test that needs it even if the surrounding list is reordered.
- * Each yamlTests/phytonTests entry may also set a "comment" string, printed under a failing/skipped result
+ * Each yamlTests/pythonTests entry may also set a "comment" string, printed under a failing/skipped result
  * in the summary log, and a "skip": true flag to leave the test listed (documenting that it exists and why
  * it doesn't run) without ever invoking it — for tests that can never pass against this image (e.g. ones
  * requiring the CSA reference app's --app-pipe debug hook, which Matterbridge doesn't implement).
@@ -403,12 +403,12 @@ function loadChipTestsFile() {
   if (!Array.isArray(yamlTests)) {
     fail(`Expected "yamlTests" to be an array in ${testsFile}`);
   }
-  const phytonTests = parsed.phytonTests ?? [];
-  if (!Array.isArray(phytonTests)) {
-    fail(`Expected "phytonTests" to be an array in ${testsFile}`);
+  const pythonTests = parsed.pythonTests ?? [];
+  if (!Array.isArray(pythonTests)) {
+    fail(`Expected "pythonTests" to be an array in ${testsFile}`);
   }
 
-  allTests = [...yamlTests.map((test) => ({ ...test, kind: 'yaml' })), ...phytonTests.map((test) => ({ ...test, kind: 'python' }))];
+  allTests = [...yamlTests.map((test) => ({ ...test, kind: 'yaml' })), ...pythonTests.map((test) => ({ ...test, kind: 'python' }))];
   for (const test of allTests) {
     if (!test.test) {
       fail(`Missing "test" name for entry ${JSON.stringify(test)} in ${testsFile}`);

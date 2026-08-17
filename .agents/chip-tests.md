@@ -68,7 +68,7 @@ only author a `chipTests.json` for the new repo.
 
 ```shell
 node scripts/run-chip-tests.mjs --start   # create the container, npm install/link/build, copy the plugin in, matterbridge --add, write config, restart
-node scripts/run-chip-tests.mjs           # run every test in chipTests.json's "yamlTests" and "phytonTests" arrays against the running container
+node scripts/run-chip-tests.mjs           # run every test in chipTests.json's "yamlTests" and "pythonTests" arrays against the running container
 node scripts/run-chip-tests.mjs --test X  # run only tests whose "name" or "test" (filename) includes X, case-insensitive substring match
 node scripts/run-chip-tests.mjs --stop    # docker stop the container, then npm install/link/build locally to restore the local dev environment
 ```
@@ -110,8 +110,8 @@ do not trust local lint/format/typecheck output.
     // declares (e.g. "endpoint") become CLI flags, so "args": ["--endpoint 6"] overrides the file's own
     // default. Pass "--PICS /root/matterbridge.pics" in args when a hand-verified section exists for the
     // cluster under test (see §1) — the tool's own default is the generic ci-pics-values file.
-    // "input"/"resetBefore"/"resetAfter"/"skip"/"comment" (documented on the phytonTests entry below) apply here identically —
-    // run-chip-tests.mjs's runTests() reads them off every entry in yamlTests/phytonTests the same way,
+    // "input"/"resetBefore"/"resetAfter"/"skip"/"comment" (documented on the pythonTests entry below) apply here identically —
+    // run-chip-tests.mjs's runTests() reads them off every entry in yamlTests/pythonTests the same way,
     // regardless of kind.
     {
       "name": "Human-readable label, matched by --test",
@@ -124,7 +124,7 @@ do not trust local lint/format/typecheck output.
       "comment": "optional free text, printed under a failing/skipped result in the summary log",
     },
   ],
-  "phytonTests": [
+  "pythonTests": [
     // optional, defaults to [].
     {
       "name": "Human-readable label, matched by --test",

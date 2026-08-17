@@ -147,8 +147,15 @@
     {
       "name": "SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_6",
-      "args": ["--endpoint 709", "--PICS /root/smoke-co-alarm.pics"],
-      "skip": true
+      "args": [
+        "--endpoint 709",
+        "--PICS /root/smoke-co-alarm.pics",
+        "--HIEST_PRI_ALARM_2 ExpressedStateEnum.BatteryAlert",
+        "--HIEST_PRI_ALARM_3 ExpressedStateEnum.BatteryAlert",
+        "--HIEST_PRI_ALARM_4 ExpressedStateEnum.BatteryAlert"
+      ],
+      "resetBefore": true,
+      "comment": "The YAML's default HIEST_PRI_ALARM_2/3/4 (InterconnectSmoke=7) assume InterconnectSmokeAlarm/InterconnectCOAlarm attribute support (SMOKECO.S.A0008/A0009), which Matterbridge does not implement. Per spec 2.11.6.1, ExpressedState priority ordering is manufacturer-defined, so these are overridden to match Matterbridge's own priority order (smokeState > batteryAlert > coState, see getSmokeCoAlarmExpressedState in chipTest.ts)."
     },
     {
       "name": "SmokeCOAlarm attributes on Smoke-only SmokeCOAlarm",
@@ -267,7 +274,7 @@
       "args": ["--endpoint 0"]
     }
   ],
-  "phytonTests": [
+  "pythonTests": [
     {
       "name": "Generic device basic composition",
       "test": "TC_DeviceBasicComposition.py"
