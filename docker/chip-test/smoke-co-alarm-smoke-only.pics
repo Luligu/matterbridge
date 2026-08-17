@@ -2,6 +2,8 @@
 # Matches createSmokeOnlySmokeCOAlarmClusterServer() on CHIP SmokeCOAlarm endpoint 7091
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
+DGGEN.S.A0008=1 # TestEventTriggersEnabled
+DGGEN.S.C00.Rsp=1 # TestEventTrigger
 SMOKECO.S=1
 SMOKECO.S.F00=1 # SmokeAlarm
 SMOKECO.S.F01=0 # CoAlarm

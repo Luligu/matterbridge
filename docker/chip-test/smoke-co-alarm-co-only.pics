@@ -2,6 +2,8 @@
 # Matches createCoOnlySmokeCOAlarmClusterServer() on CHIP SmokeCOAlarm endpoint 7092
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
+DGGEN.S.A0008=1 # TestEventTriggersEnabled
+DGGEN.S.C00.Rsp=1 # TestEventTrigger
 SMOKECO.S=1
 SMOKECO.S.F00=0 # SmokeAlarm
 SMOKECO.S.F01=1 # CoAlarm

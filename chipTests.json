@@ -180,16 +180,12 @@
     {
       "name": "SmokeCOAlarm CO primary functionality on CO-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_3",
-      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive COState changes and events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on CO-only SmokeCOAlarm",
       "test": "Test_TC_SMOKECO_2_4",
-      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive battery, hardware fault, end-of-service, and self-test event flows; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 7092", "--PICS /root/smoke-co-alarm-co-only.pics"]
     },
     {
       "name": "AirQuality attributes on AirQualitySensor",
