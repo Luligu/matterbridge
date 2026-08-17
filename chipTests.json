@@ -379,45 +379,45 @@
       "test": "TC_DEM_2_3.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires the StartTimeAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+      "comment": "Requires the StartTimeAdjustment feature; endpoint 207 does not enable this optional feature."
     },
     {
       "name": "DeviceEnergyManagement Pausable functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_4.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires the Pausable feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+      "comment": "Requires the Pausable feature; endpoint 207 does not enable this optional feature."
     },
     {
-      "name": "DeviceEnergyManagement forecast adjustment with power forecast on DeviceEnergyManagement",
+      "name": "DeviceEnergyManagement ForecastAdjustment with power forecast on DeviceEnergyManagement",
       "test": "TC_DEM_2_5.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires the ForecastAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+      "comment": "Requires the ForecastAdjustment feature; endpoint 207 does not enable this optional feature."
     },
     {
-      "name": "DeviceEnergyManagement forecast adjustment with state forecast on DeviceEnergyManagement",
+      "name": "DeviceEnergyManagement ForecastAdjustment with state forecast on DeviceEnergyManagement",
       "test": "TC_DEM_2_6.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires StateForecastReporting, ForecastAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+      "comment": "Requires StateForecastReporting and ForecastAdjustment features; endpoint 207 does not enable these optional features."
     },
     {
-      "name": "DeviceEnergyManagement constraint forecast with power forecast on DeviceEnergyManagement",
+      "name": "DeviceEnergyManagement ConstraintBasedAdjustment with power forecast on DeviceEnergyManagement",
       "test": "TC_DEM_2_7.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires ConstraintBasedAdjustment and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature."
+      "comment": "Requires the ConstraintBasedAdjustment feature; endpoint 207 does not enable this optional feature."
     },
     {
-      "name": "DeviceEnergyManagement constraint forecast with state forecast on DeviceEnergyManagement",
+      "name": "DeviceEnergyManagement ConstraintBasedAdjustment with state forecast on DeviceEnergyManagement",
       "test": "TC_DEM_2_8.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
-      "comment": "Requires StateForecastReporting, ConstraintBasedAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features."
+      "comment": "Requires StateForecastReporting and ConstraintBasedAdjustment features; endpoint 207 does not enable these optional features."
     },
     {
-      "name": "DeviceEnergyManagement forecast reporting functionality on DeviceEnergyManagement",
+      "name": "DeviceEnergyManagement PowerForecastRReporting functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_9.py",
       "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
       "skip": true,
