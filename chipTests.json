@@ -154,7 +154,6 @@
         "--HIEST_PRI_ALARM_3 ExpressedStateEnum.BatteryAlert",
         "--HIEST_PRI_ALARM_4 ExpressedStateEnum.BatteryAlert"
       ],
-      "resetBefore": true,
       "comment": "The YAML's default HIEST_PRI_ALARM_2/3/4 (InterconnectSmoke=7) assume InterconnectSmokeAlarm/InterconnectCOAlarm attribute support (SMOKECO.S.A0008/A0009), which Matterbridge does not implement. Per spec 2.11.6.1, ExpressedState priority ordering is manufacturer-defined, so these are overridden to match Matterbridge's own priority order (smokeState > batteryAlert > coState, see getSmokeCoAlarmExpressedState in chipTest.ts)."
     },
     {
