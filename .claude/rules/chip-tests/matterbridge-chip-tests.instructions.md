@@ -110,12 +110,15 @@ explicitly in `handleChipTestEventTrigger()`/`handleSmokeCoAlarmTestEventTrigger
 gated to `MATTERBRIDGE_CHIP_TEST` through `Matterbridge.createServerNode()`.
 
 Several clusters have more than one candidate endpoint (e.g. the three SmokeCOAlarm variants, or the four
-BooleanStateConfiguration endpoints) — since the trigger itself carries no endpoint, `resolveChipTestEndpoints()`
-targets `chipTestActiveEndpointId` when it's set to one of that trigger's candidates, falling back to every
-candidate endpoint otherwise. `chipTestActiveEndpointId` is not decoded from the trigger value itself (an
-earlier attempt at that broke real tests — see the app-pipe pin note below for why), it's set out-of-band by
-`run-matterbridge-chip-tests.mjs` from `chipTests.json`'s `"endpoint"` field for the currently running test,
-via the app-pipe (see below).
+BooleanStateConfiguration endpoints) — since the trigger itself carries no endpoint,
+`handleSmokeCoAlarmTestEventTrigger()`/`handleBooleanStateConfigurationTestEventTrigger()`/
+`handleElectricalEnergyTestEventTrigger()` resolve the target directly from `chipTestActiveEndpointId` (every
+`chipTests.json` entry for these triggers always pins the specific endpoint it targets, so there's no need to
+guess or broadcast). `chipTestActiveEndpointId` is not decoded from the trigger value itself (an earlier
+attempt at that broke real SmokeCOAlarm tests, since some of this file's own trigger constants — e.g.
+`smokeCoAlarmWarningCoAlarmTrigger = 0xffffffff00000091n` — already have non-zero bits in the range that looked
+like an endpoint encoding, but aren't one); it's set out-of-band by `run-matterbridge-chip-tests.mjs` from
+`chipTests.json`'s `"endpoint"` field for the currently running test, via the app-pipe (see below).
 
 To add a new trigger-backed CHIP test:
 
@@ -150,15 +153,23 @@ repo as long as the specific command the test sends is handled in `handleChipTes
 command into this same pipe before every test (`setActiveTestEndpoint()`), sourced from that test's
 `chipTests.json` `"endpoint"` field (omitting `EndpointId` clears it when a test has none). This isn't a real
 CHIP test command — `handleChipTestAppPipeCommand()` intercepts it first and stores it in the module-level
-`chipTestActiveEndpointId`, which both `resolveChipTestEndpoints()` (TestEventTrigger dispatch, above) and this
-function's own `EndpointId` fallback read. Only use it as a _fallback_ for a command's own `EndpointId`, never
-as an override: some commands' real target endpoint is a fixed implementation detail unrelated to the endpoint
-the test's own `--endpoint` CLI arg names (e.g. `SimulateConfigurationVersionChange` always needs bridged
-endpoint 701 to piggyback its `BridgedDeviceBasicInformation` bump, even for `TC_BINFO_3_2`, whose `"endpoint"`
-is 0 for reading root `BasicInformation` — confirmed by breaking that test against the container when the pin
-was given priority over the command-specific `701`/`703` overrides for `SimulateConfigurationVersionChange`/
-`SetOccupancy`). Keep those two overrides hardcoded ahead of the pin; only commands with no fixed target of
-their own should fall back to it.
+`chipTestActiveEndpointId`, which both the `TestEventTrigger` handlers (above) and this function's own
+`EndpointId` fallback read for commands that omit it, or (`SetOccupancy`) whose `EndpointId` isn't trustworthy
+in the first place (`TC_OCC_3_2.py` hardcodes the literal `1` rather than sending its real endpoint).
+
+`SimulateConfigurationVersionChange` needs its own dedicated branch ahead of the generic `endpointId`
+resolution rather than fitting the same pattern: the command never sends an `EndpointId` at all, and it bumps
+two different things — root's `BasicInformation.ConfigurationVersion` (unconditionally, via
+`matterbridge.serverNode` directly — root is a `ServerNode`, not a `MatterbridgeEndpoint`; they're siblings
+under the same `Endpoint` base class, not one a subtype of the other, so root can never flow through
+`getChipTestEndpoint()`) and, only if `chipTestActiveEndpointId` resolves to an actual bridged endpoint, that
+endpoint's `BridgedDeviceBasicInformation.ConfigurationVersion` too. `TC_BINFO_3_2` pins `0` (root, since it
+only reads root `BasicInformation`) and gets just the root bump; `TC_BRBINFO_3_2` pins `701` and gets both.
+This was reached after two failed simpler attempts, verified against the container each time: hardcoding `701`
+unconditionally works but reintroduces a hardcoded endpoint number for no real reason once the pin is
+available, and blindly preferring the pin over the hardcoded target breaks `TC_BINFO_3_2` (pin `0` doesn't
+resolve via `getChipTestEndpoint()`, so the whole command — including the _unrelated_ root bump — was dropped
+before ever reaching the switch statement).
 
 To add a new app-pipe-backed CHIP test:
 
