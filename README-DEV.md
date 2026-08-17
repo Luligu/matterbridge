@@ -109,35 +109,35 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 ## Copilot instructions
 
-| File                                                                   | Notes                                                                              |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `.github/copilot-instructions.md`                                      | Main project instructions — always loaded                                          |
-| `.github/instructions/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                       |
-| `.github/instructions/matterbridge/matterbridge.instructions.md`       | Matterbridge endpoint guide — dedicated Copilot instruction file                   |
-| `.github/instructions/plugin-frontend/plugin-frontend.instructions.md` | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.github/instructions/testing/unit-tests.instructions.md`              | Testing standards — scoped to `**/*.test.ts`                                       |
+| File                                                                      | Notes                                                                              |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `.github/copilot-instructions.md`                                         | Main project instructions — always loaded                                          |
+| `.github/instructions/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
+| `.github/instructions/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — dedicated Copilot instruction file                   |
+| `.github/instructions/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
+| `.github/instructions/testing/unit-tests.instructions.md`                 | Testing standards — scoped to `**/*.test.ts`                                       |
 
 ## Claude instructions
 
-| File                                                            | Notes                                                                              |
-| --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `CLAUDE.md`                                                     | Main project instructions — always loaded                                          |
-| `.claude/rules/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                       |
-| `.claude/rules/matterbridge/matterbridge.instructions.md`       | Matterbridge endpoint guide — loaded for all contexts                              |
-| `.claude/rules/plugin-frontend/plugin-frontend.instructions.md` | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.claude/rules/testing/unit-tests.instructions.md`              | Testing standards — scoped to `**/*.test.ts`                                       |
+| File                                                               | Notes                                                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `CLAUDE.md`                                                        | Main project instructions — always loaded                                          |
+| `.claude/rules/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
+| `.claude/rules/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — loaded for all contexts                              |
+| `.claude/rules/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
+| `.claude/rules/testing/unit-tests.instructions.md`                 | Testing standards — scoped to `**/*.test.ts`                                       |
 
 ## Codex/Agents instructions
 
-| File                         | Notes                                             |
-| ---------------------------- | ------------------------------------------------- |
-| `AGENTS.md`                  | Main project instructions                         |
-| `.agents/matterbridge-chip-tests.md` | CHIP conformance test harness             |
-| `.agents/matterbridge.md`    | Matterbridge endpoint guide                       |
-| `.agents/plugin-frontend.md` | Plugin frontend SPA and custom REST API guide     |
-| `.agents/testing.md`         | Testing and validation expectations               |
-| `.codex/config.toml`         | Codex project permissions, approvals, and profile |
-| `.codex/rules/default.rules` | Codex command allow, prompt, and deny rules       |
+| File                                 | Notes                                             |
+| ------------------------------------ | ------------------------------------------------- |
+| `AGENTS.md`                          | Main project instructions                         |
+| `.agents/matterbridge-chip-tests.md` | CHIP conformance test harness                     |
+| `.agents/matterbridge.md`            | Matterbridge endpoint guide                       |
+| `.agents/plugin-frontend.md`         | Plugin frontend SPA and custom REST API guide     |
+| `.agents/testing.md`                 | Testing and validation expectations               |
+| `.codex/config.toml`                 | Codex project permissions, approvals, and profile |
+| `.codex/rules/default.rules`         | Codex command allow, prompt, and deny rules       |
 
 ## Guidelines on imports/exports
 

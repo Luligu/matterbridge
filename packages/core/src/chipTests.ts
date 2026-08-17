@@ -142,7 +142,7 @@ function equalsBytes(first: Uint8Array, second: Uint8Array): boolean {
 }
 
 export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
-  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_RUN_CHIP_TEST || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
+  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_CHIP_TEST_DEVICES || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
   chipTestMatterbridge = matterbridge;
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;

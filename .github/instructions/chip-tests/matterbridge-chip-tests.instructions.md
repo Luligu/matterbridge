@@ -40,7 +40,7 @@ get local code changes to this repo into a running container instead.
   traffic to `fe80::.../UDP:5540`, see the pairing check above), so a plain IPv4-only network breaks it — if
   the network already exists without `--ipv6` (e.g. created by hand or by another tool), `--start` reuses it
   as-is rather than recreating it, so that pre-existing network still needs fixing manually.
-- `--start` passes `-e MATTERBRIDGE_RUN_CHIP_TEST=1` on top of the image's own baked-in
+- `--start` passes `-e MATTERBRIDGE_CHIP_TEST_DEVICES=1` on top of the image's own baked-in
   `MATTERBRIDGE_CHIP_TEST=1` — see §2 for what each one gates. Other env vars baked into the image
   (`Config.Env` in the Dockerfile) include `MATTERBRIDGE_START_CONFIGURE_TIMEOUT`/
   `MATTERBRIDGE_START_REACHABILITY_TIMEOUT` (shorter Matterbridge-core startup timeouts tuned for a fast,
@@ -67,10 +67,11 @@ Unlike a plugin repo (which has one real device tree to test), this repo has no 
 entirely behind env vars so none of this ships or runs outside a CHIP-test container:
 
 - `MATTERBRIDGE_CHIP_TEST=1` (baked into the image, also settable manually: see the two env vars together in
-  `helpers.ts`'s `addVirtualDevices()`) gates `MatterbridgeGeneralDiagnosticsServer` (added to the root
-  endpoint in `matterbridge.ts`) and `createChipTestAppPipe()` (called from `addVirtualDevices()` in
-  `helpers.ts`) — i.e. the `GeneralDiagnostics.TestEventTrigger` handling and the app-pipe listener.
-- `MATTERBRIDGE_RUN_CHIP_TEST=1` additionally gates `createChipTestDevices()` — the ~20 bridged sensor/alarm
+  `matterbridge.ts`'s `startBridge()`) gates `MatterbridgeGeneralDiagnosticsServer` (added to the root
+  endpoint in `matterbridge.ts`) and `createChipTestAppPipe()` (called from `startBridge()`, right after the
+  `addVirtualDevices()` call) — i.e. the `GeneralDiagnostics.TestEventTrigger` handling and the app-pipe
+  listener.
+- `MATTERBRIDGE_CHIP_TEST_DEVICES=1` additionally gates `createChipTestDevices()` — the ~20 bridged sensor/alarm
   endpoints (one per device-type chapter: contact/light/occupancy/temperature/pressure/flow/humidity/on-off
   sensors, three SmokeCOAlarm variants, air quality, water freeze/leak, rain, soil) registered under a fake,
   disabled `matterbridge-chip` `DynamicPlatform` plugin entry. Without this flag the aggregator stays empty

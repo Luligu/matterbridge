@@ -2204,6 +2204,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Add the virtual devices to the aggregator node in bridge mode (TODO: in childbridge mode the virtual devices are not added)
     await addVirtualDevices(this, this.aggregatorNode);
 
+    // Run manually with: MATTERBRIDGE_CHIP_TEST=1 MATTERBRIDGE_CHIP_TEST_DEVICES=1 matterbridge
+    // v8 ignore next - No test cause is just chip test entry point
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      const { createChipTestAppPipe, createChipTestDevices } = await import('./chipTests.js');
+      if (process.env.MATTERBRIDGE_CHIP_TEST_DEVICES) await createChipTestDevices(this);
+      createChipTestAppPipe(this);
+    }
+
     // Load and start all plugins without awaiting them to start
     await this.startPlugins(false, true);
 
@@ -2984,7 +2992,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
-    // v8 ignore if - cause the chip test server is only used for testing and not in production
+    // v8 ignore if - No test cause is just chip test entry point. This enable the TestEventTrigger on GeneralDiagnostics.
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
       const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
       rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);

@@ -212,13 +212,12 @@ function start() {
     '8585:8283',
     '-v',
     `${join(root, 'temp')}:/tmp/matter_testing/logs`,
-    // Opts in to createChipTestsDevices() (packages/core/src/helpers.ts), which — together with the image's
-    // own baked-in MATTERBRIDGE_CHIP_TEST=1 — adds 4 bridged sensor devices (TemperatureSensor,
-    // HumiditySensor, PressureSensor, FlowSensor, one per PowerSource variant) under the aggregator endpoint.
+    // Opts in to createChipTestsDevices(), which — together with the image's
+    // own baked-in MATTERBRIDGE_CHIP_TEST=1 — adds all device types under the aggregator endpoint.
     // Without this, the aggregator stays empty (Descriptor-only), as chipTests.md's Endpoint 1 section
     // previously documented.
     '-e',
-    'MATTERBRIDGE_RUN_CHIP_TEST=1',
+    'MATTERBRIDGE_CHIP_TEST_DEVICES=1',
     image,
   ]);
 
