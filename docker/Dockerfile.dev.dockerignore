@@ -16,6 +16,7 @@ chip
 # Local tooling / editor / agent dirs
 .agents
 .claude
+.codex
 .devcontainer
 .env
 .github
