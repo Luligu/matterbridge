@@ -31,6 +31,7 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
 import { Status, StatusResponseError } from '@matter/types';
+import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
@@ -93,6 +94,9 @@ const deviceEnergyManagementUserOptOutGridTrigger = 0x0098000000000003n;
 const deviceEnergyManagementUserOptOutClearAllTrigger = 0x0098000000000004n;
 const deviceEnergyManagementForecastTrigger = 0x009800000000000fn;
 const deviceEnergyManagementForecastClearTrigger = 0x0098000000000010n;
+// TC_BOOLCFG_4_2/4_3/4_4/5_1/5_2's sensorTrigger/sensorUntrigger constants (src/python_testing/TC_BOOLCFG_4_2.py etc.).
+const booleanStateConfigurationSensorTrigger = 0x0080000000000000n;
+const booleanStateConfigurationSensorUntriggerTrigger = 0x0080000000000001n;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
@@ -250,6 +254,9 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
 }
 
 async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (eventTrigger === booleanStateConfigurationSensorTrigger || eventTrigger === booleanStateConfigurationSensorUntriggerTrigger) {
+    return await handleBooleanStateConfigurationTestEventTrigger(eventTrigger);
+  }
   if (
     eventTrigger !== smokeCoAlarmWarningSmokeAlarmTrigger &&
     eventTrigger !== smokeCoAlarmCriticalSmokeAlarmTrigger &&
@@ -422,6 +429,44 @@ function getSmokeCoAlarmExpressedState(
   if (batteryAlert !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.BatteryAlert;
   if (coState !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.CoAlarm;
   return SmokeCoAlarm.ExpressedState.Normal;
+}
+
+// The four BooleanStateConfiguration endpoints registered by createChipTestDevices(): ContactSensor (701),
+// WaterFreezeDetector (711), WaterLeakDetector (712), RainSensor (713). Like the SmokeCOAlarm triggers,
+// SensorTrigger/SensorUntrigger carry no endpoint, so they're applied to every one of these endpoints.
+const chipTestBooleanStateConfigurationEndpointIds = [701, 711, 712, 713];
+
+function getChipTestBooleanStateConfigurationEndpoints(matterbridge: Matterbridge): MatterbridgeEndpoint[] {
+  return chipTestBooleanStateConfigurationEndpointIds
+    .map((endpointId) => getChipTestEndpoint(matterbridge, endpointId))
+    .filter((endpoint): endpoint is MatterbridgeEndpoint => endpoint !== undefined);
+}
+
+async function handleBooleanStateConfigurationTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (!chipTestMatterbridge) return false;
+  const endpoints = getChipTestBooleanStateConfigurationEndpoints(chipTestMatterbridge);
+  if (endpoints.length === 0) return false;
+
+  for (const endpoint of endpoints) {
+    await applyBooleanStateConfigurationTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
+  }
+  return true;
+}
+
+async function applyBooleanStateConfigurationTestEventTrigger(endpoint: MatterbridgeEndpoint, eventTrigger: bigint, log: AnsiLogger): Promise<void> {
+  switch (eventTrigger) {
+    case booleanStateConfigurationSensorTrigger: {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      const alarmsEnabled = endpoint.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled') as BooleanStateConfiguration.AlarmMode | undefined;
+      await endpoint.setCluster(BooleanStateConfiguration, { alarmsActive: { visual: Boolean(alarmsEnabled?.visual), audible: Boolean(alarmsEnabled?.audible) } }, log);
+      return;
+    }
+    case booleanStateConfigurationSensorUntriggerTrigger:
+      await endpoint.setCluster(BooleanStateConfiguration, { alarmsActive: { visual: false, audible: false }, alarmsSuppressed: { visual: false, audible: false } }, log);
+      return;
+    default:
+      return;
+  }
 }
 
 // The three ElectricalSensor endpoints registered by createChipTestDevices() that carry an

@@ -464,37 +464,27 @@
     {
       "name": "BooleanStateConfiguration alarms active on ContactSensor",
       "test": "TC_BOOLCFG_4_2.py",
-      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger hooks to drive BooleanStateConfiguration SensorTrigger/SensorUntrigger test events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "BooleanStateConfiguration alarms enabled inactive alarms on ContactSensor",
       "test": "TC_BOOLCFG_4_3.py",
-      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger hooks to drive BooleanStateConfiguration SensorTrigger/SensorUntrigger test events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "BooleanStateConfiguration alarms enabled active alarms on ContactSensor",
       "test": "TC_BOOLCFG_4_4.py",
-      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger hooks to drive BooleanStateConfiguration SensorTrigger/SensorUntrigger test events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "BooleanStateConfiguration suppress inactive alarms on ContactSensor",
       "test": "TC_BOOLCFG_5_1.py",
-      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger hooks to drive BooleanStateConfiguration SensorUntrigger test events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "BooleanStateConfiguration suppress active alarms on ContactSensor",
       "test": "TC_BOOLCFG_5_2.py",
-      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger hooks to drive BooleanStateConfiguration SensorTrigger/SensorUntrigger test events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 701", "--PICS /root/boolean-state-configuration.pics", "--hex-arg PIXIT.BOOLCFG.TEST_EVENT_TRIGGER_KEY:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "BooleanStateConfiguration sensor fault on ContactSensor",
