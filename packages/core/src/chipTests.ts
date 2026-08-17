@@ -33,10 +33,13 @@
 import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
+import { Seconds, Time, type Timer } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
 import { Status, StatusResponseError } from '@matter/types';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { EndpointNumber } from '@matter/types/datatype';
@@ -79,11 +82,19 @@ const smokeCoAlarmEndOfServiceAlertTrigger = 0xffffffff0000009an;
 const smokeCoAlarmEndOfServiceAlertClearTrigger = 0xffffffff000000aan;
 const smokeCoAlarmDeviceMutedTrigger = 0x005c00000000009bn;
 const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
+// TC_EPM_2_2/TC_EEM_2_2/TC_EEM_2_3's send_test_event_trigger_start_fake_1kw_load_2s()/
+// send_test_event_trigger_start_fake_3kw_generator_5s()/send_test_event_trigger_stop_fake_readings()
+// (src/python_testing/TC_EnergyReporting_Utils.py). TC_EEM_2_4/TC_EEM_2_5's PeriodicEnergy (imported/exported)
+// accumulation is not implemented — endpoint 206 doesn't enable that optional feature.
+const electricalPowerMeasurementStartFakeLoadTrigger = 0x0091000000000001n;
+const electricalEnergyMeasurementStartFakeGeneratorTrigger = 0x0091000000000002n;
+const electricalPowerMeasurementStopFakeReadingsTrigger = 0x0091000000000000n;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
 let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
+let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
 
 export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServer {
   override initialize(): void {
@@ -382,7 +393,7 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
     eventTrigger !== smokeCoAlarmDeviceMutedTrigger &&
     eventTrigger !== smokeCoAlarmDeviceMutedClearTrigger
   ) {
-    return false;
+    return await handleElectricalEnergyTestEventTrigger(eventTrigger);
   }
   return await handleSmokeCoAlarmTestEventTrigger(eventTrigger);
 }
@@ -532,6 +543,98 @@ function getSmokeCoAlarmExpressedState(
   if (batteryAlert !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.BatteryAlert;
   if (coState !== SmokeCoAlarm.AlarmState.Normal) return SmokeCoAlarm.ExpressedState.CoAlarm;
   return SmokeCoAlarm.ExpressedState.Normal;
+}
+
+// The three ElectricalSensor endpoints registered by createChipTestDevices() that carry an
+// ElectricalPowerMeasurement/ElectricalEnergyMeasurement cluster server (basic, imported, exported variants).
+// Like the SmokeCOAlarm triggers, the fake-load/fake-generator trigger carries no endpoint, so it's applied
+// to every endpoint that has the relevant cluster/attribute.
+const chipTestElectricalSensorEndpointIds = [206, 2061, 2062];
+
+// Idle values createDefaultElectricalPowerMeasurementClusterServer() constructs each endpoint with (see
+// createChipTestDevices()), restored once the fake load stops. Cumulative energy is deliberately left alone
+// on stop — a real meter's running total doesn't reset just because the load/generator turns off.
+const electricalPowerMeasurementIdleReading = { voltage: 220_000, activeCurrent: 1_000, activePower: 220_000_000, frequency: 50_000 };
+
+// Simulated energy accumulation per periodic tick (mWh added per second), derived from P(mW) * dt(1h/3600) at
+// the fixed rate the trigger name promises — not required to be exact, since TC_EEM_2_2/2_3 only assert the
+// cumulative reading strictly increases between two reads, not any particular magnitude.
+const electricalEnergyMeasurementImportedEnergyPerTick = 278; // ~1kW fake load
+const electricalEnergyMeasurementExportedEnergyPerTick = 833; // ~3kW fake generator
+
+async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (
+    eventTrigger !== electricalPowerMeasurementStartFakeLoadTrigger &&
+    eventTrigger !== electricalEnergyMeasurementStartFakeGeneratorTrigger &&
+    eventTrigger !== electricalPowerMeasurementStopFakeReadingsTrigger
+  ) {
+    return false;
+  }
+  if (!chipTestMatterbridge) return false;
+  const matterbridge = chipTestMatterbridge;
+  const endpoints = chipTestElectricalSensorEndpointIds
+    .map((endpointId) => getChipTestEndpoint(matterbridge, endpointId))
+    .filter((endpoint): endpoint is MatterbridgeEndpoint => endpoint !== undefined);
+  if (endpoints.length === 0) return false;
+  const log = matterbridge.log;
+
+  electricalPowerMeasurementFakeLoadTimer?.stop();
+  electricalPowerMeasurementFakeLoadTimer = undefined;
+
+  if (eventTrigger === electricalPowerMeasurementStopFakeReadingsTrigger) {
+    for (const endpoint of endpoints) {
+      if (endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) await endpoint.setCluster(ElectricalPowerMeasurement, electricalPowerMeasurementIdleReading, log);
+    }
+    return true;
+  }
+
+  const isFakeLoad = eventTrigger === electricalPowerMeasurementStartFakeLoadTrigger;
+
+  // TC_EPM_2_2 reads ActivePower/ActiveCurrent/Voltage twice, 3 seconds apart, and asserts both readings fall
+  // within a fixed range around 1kW/4.348A/230V *and* differ from each other, so each tick must land on a
+  // fresh value inside that range rather than a fixed constant. TC_EEM_2_2/2_3 read CumulativeEnergyImported/
+  // Exported twice and assert the second read is strictly greater, so each tick accumulates onto the current
+  // live value rather than resetting it.
+  const applyFakeLoadTick = async (): Promise<void> => {
+    for (const endpoint of endpoints) {
+      if (isFakeLoad && endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) {
+        await endpoint.setCluster(
+          ElectricalPowerMeasurement,
+          {
+            activePower: 980_000 + Math.floor(Math.random() * 40_001), // 980'000-1'020'000 mW
+            activeCurrent: 3_848 + Math.floor(Math.random() * 1_001), // 3'848-4'848 mA
+            voltage: 229_000 + Math.floor(Math.random() * 2_001), // 229'000-231'000 mV
+          },
+          log,
+        );
+      }
+      if (isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported') as { energy: number } | null;
+        await endpoint.setCluster(
+          ElectricalEnergyMeasurement,
+          { cumulativeEnergyImported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementImportedEnergyPerTick } },
+          log,
+        );
+      }
+      if (!isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')) {
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported') as { energy: number } | null;
+        await endpoint.setCluster(
+          ElectricalEnergyMeasurement,
+          { cumulativeEnergyExported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementExportedEnergyPerTick } },
+          log,
+        );
+      }
+    }
+  };
+
+  await applyFakeLoadTick();
+  electricalPowerMeasurementFakeLoadTimer = Time.getPeriodicTimer('Electrical fake load', Seconds(1), () => {
+    applyFakeLoadTick().catch((error: unknown) => log.error(`Electrical fake load tick failed: ${error instanceof Error ? error.message : String(error)}`));
+  }).start();
+  cliEmitter.once('shutdown', () => electricalPowerMeasurementFakeLoadTimer?.stop());
+  return true;
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
