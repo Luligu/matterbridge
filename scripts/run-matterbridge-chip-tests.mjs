@@ -18,19 +18,18 @@
  *                          persisted to disk — the container restart that "resetBefore"/"resetAfter" also
  *                          performs already clears any cluster state kept purely in memory, with no glob
  *                          needed for that.
- *   "yamlTests"            (optional) The list of YAML certification tests (run through chip-tool's
- *                          websocket test runner, scripts/tests/chipyaml/chiptool.py) to run — see below.
- *                          chip-tool's own persistent storage inside the image already holds a fabric paired
- *                          with the matterbridge instance, so each invocation just spawns a short-lived
- *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
- *                          separate commissioning step needed. Defaults to an empty array.
- *   "pythonTests"          (optional) The list of Python (src/python_testing/*.py) tests to run — see
- *                          below. Defaults to an empty array.
- * Each yamlTests/pythonTests entry has:
+ *   "tests"                (optional) The unified list of CHIP tests to run, YAML certification tests and
+ *                          Python tests mixed together — see below. Defaults to an empty array.
+ * Each tests entry has:
  *   "name"                 Human-readable label, matched (case-insensitively, substring) by --test.
- *   "test"                 Required. The test identifier: a YAML test name with no extension (yamlTests,
- *                          e.g. "Test_TC_PS_2_1") or a filename under src/python_testing/ (pythonTests,
- *                          e.g. "TC_PS_2_1.py").
+ *   "test"                 Required. The test identifier. A filename ending in ".py" is run as a Python test
+ *                          (src/python_testing/<test>, e.g. "TC_PS_2_1.py"); anything else is run as a YAML
+ *                          certification test with no extension (e.g. "Test_TC_PS_2_1"), through chip-tool's
+ *                          websocket test runner, scripts/tests/chipyaml/chiptool.py. chip-tool's own
+ *                          persistent storage inside the image already holds a fabric paired with the
+ *                          matterbridge instance, so each YAML invocation just spawns a short-lived
+ *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
+ *                          separate commissioning step needed.
  *   "args"                 (optional) Array of strings, each split on whitespace and appended as CLI args
  *                          after the test name, e.g. ["--endpoint 0", "--PICS /root/matterbridge.pics"].
  *   "input"                (optional) String piped to the test's stdin, for tests that prompt for
@@ -59,7 +58,7 @@
  * is for tests that leave dirty residue (e.g. an unclosed session, a mutated attribute) that would otherwise
  * leak into whichever test runs next — put it on the test that causes the residue, not the one affected by
  * it, so the fix travels with the test that needs it even if the surrounding list is reordered.
- * Each yamlTests/pythonTests entry may also set a "comment" string, printed under a failing/skipped result
+ * Each tests entry may also set a "comment" string, printed under a failing/skipped result
  * in the summary log, and a "skip": true flag to leave the test listed (documenting that it exists and why
  * it doesn't run) without ever invoking it — for tests that can never pass against this image (e.g. ones
  * requiring the CSA reference app's --app-pipe debug hook, which Matterbridge doesn't implement).
@@ -399,21 +398,20 @@ function loadChipTestsFile() {
     fail(`Expected "resetClusterGlobs" to be an array in ${testsFile}`);
   }
 
-  const yamlTests = parsed.yamlTests ?? [];
-  if (!Array.isArray(yamlTests)) {
-    fail(`Expected "yamlTests" to be an array in ${testsFile}`);
-  }
-  const pythonTests = parsed.pythonTests ?? [];
-  if (!Array.isArray(pythonTests)) {
-    fail(`Expected "pythonTests" to be an array in ${testsFile}`);
+  const tests = parsed.tests ?? [];
+  if (!Array.isArray(tests)) {
+    fail(`Expected "tests" to be an array in ${testsFile}`);
   }
 
-  allTests = [...yamlTests.map((test) => ({ ...test, kind: 'yaml' })), ...pythonTests.map((test) => ({ ...test, kind: 'python' }))];
-  for (const test of allTests) {
+  for (const test of tests) {
     if (!test.test) {
       fail(`Missing "test" name for entry ${JSON.stringify(test)} in ${testsFile}`);
     }
   }
+
+  // A "test" filename ending in ".py" is a Python test (src/python_testing/<test>); anything else is a YAML
+  // certification test name run through chip-tool's websocket test runner.
+  allTests = tests.map((test) => ({ ...test, kind: test.test.endsWith('.py') ? 'python' : 'yaml' }));
 }
 
 function buildArgs(test) {

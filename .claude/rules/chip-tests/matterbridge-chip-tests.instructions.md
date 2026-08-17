@@ -152,7 +152,7 @@ state, never device identity.
 
 ```shell
 node scripts/run-matterbridge-chip-tests.mjs --start   # docker rm -f any old container, pull the image, create the docker network if missing, run the container, wait for Matterbridge's root server node to come online
-node scripts/run-matterbridge-chip-tests.mjs           # run every test in chipTests.json's "yamlTests" and "pythonTests" arrays against the running container
+node scripts/run-matterbridge-chip-tests.mjs           # run every test in chipTests.json's "tests" array against the running container
 node scripts/run-matterbridge-chip-tests.mjs --test X  # run only tests whose "name" or "test" (filename) includes X, case-insensitive substring match
 node scripts/run-matterbridge-chip-tests.mjs --stop    # docker stop the container (left in place, not removed — the next --start does the docker rm -f)
 ```
@@ -192,24 +192,27 @@ e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
        Required (non-empty) if any test uses either flag — the script fails loudly rather than silently
        skipping the reset if this is empty. */
   ],
-  "yamlTests": [
-    // optional, defaults to []. "test" is a YAML certification test name (no extension, e.g.
-    // "Test_TC_I_2_1") from src/app/tests/suites/certification/, run via:
+  "tests": [
+    // optional, defaults to []. A single unified list mixing YAML certification tests and Python tests —
+    // the runner tells them apart from "test" alone: a filename ending in ".py" is a Python test
+    // (src/python_testing/<test>.py inside the container), anything else is a YAML certification test name
+    // (no extension, e.g. "Test_TC_I_2_1") from src/app/tests/suites/certification/, run via:
     //   python3 scripts/tests/chipyaml/chiptool.py tests <test.test> <args...>
-    // This spawns a short-lived "chip-tool interactive server" for the duration of the one test, reusing
-    // chip-tool's own persisted fabric pairing baked into the image — see §6. Config values the YAML file
-    // declares (e.g. "endpoint", or a PIXIT config default like "HIEST_PRI_ALARM_2") become CLI flags, so
-    // "args": ["--endpoint 6"] overrides the file's own default; enum-typed config values need the
+    // This spawns a short-lived "chip-tool interactive server" for the duration of the one YAML test,
+    // reusing chip-tool's own persisted fabric pairing baked into the image — see §6. Config values the YAML
+    // file declares (e.g. "endpoint", or a PIXIT config default like "HIEST_PRI_ALARM_2") become CLI flags,
+    // so "args": ["--endpoint 6"] overrides the file's own default; enum-typed config values need the
     // fully-qualified enum name as a CLI value (e.g. "--HIEST_PRI_ALARM_2 ExpressedStateEnum.BatteryAlert"),
     // not the raw integer. Pass "--PICS /root/<cluster>.pics" in args when a hand-verified section exists for
     // the cluster under test (see §1) — the tool's own default is the generic ci-pics-values file.
-    // "input"/"resetBefore"/"resetAfter"/"skip"/"comment"/pairing flags (documented on the pythonTests entry
-    // below) apply here identically — runTests() reads them off every entry in yamlTests/pythonTests the
-    // same way, regardless of kind.
+    // Keep every device/cluster's tests grouped together and ordered by ascending test number (e.g. _2_1
+    // before _2_2 before _2_3), interleaving YAML and Python entries in that same numeric sequence, rather
+    // than splitting them by kind — that's what makes the full conformance-test coverage for one endpoint
+    // readable at a glance.
     {
       "name": "Human-readable label, matched by --test",
-      "test": "Test_TC_SOMETHING_1_2",
-      "args": ["--endpoint 6"],
+      "test": "Test_TC_SOMETHING_1_2", // or "TC_SOMETHING_1_2.py" for a Python test
+      "args": ["--endpoint 6", "--PICS /root/matterbridge.pics"], // optional, each entry split on whitespace
       "input": "y\ny\n", // optional, piped to stdin for tests that prompt for interactive confirmation
       "resetBefore": true, // optional: clear resetClusterGlobs + restart the container before this test
       "resetAfter": true, // optional: clear resetClusterGlobs + restart the container after this test (before the next one) — put this on the test that leaves dirty residue, not the one affected by it
@@ -220,15 +223,6 @@ e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
       "revokeWindowBefore": true, // optional: revoke any commissioning window left open by a previous test, without touching either fabric's pairing
       "skip": true, // optional: list the test (name, comment) but never invoke it — see §8
       "comment": "optional free text, printed under a failing/skipped result in the summary log",
-    },
-  ],
-  "pythonTests": [
-    // optional, defaults to [].
-    {
-      "name": "Human-readable label, matched by --test",
-      "test": "TC_SOMETHING_1_2.py", // filename under src/python_testing/ inside the container
-      "args": ["--endpoint 6", "--PICS /root/matterbridge.pics"], // optional, split on whitespace per entry
-      // same optional fields as the yamlTests entry above
     },
   ],
 }
@@ -282,8 +276,9 @@ without having to pass `--paa-trust-store-path`/node id by hand on every invocat
 Not every `TC_<CLUSTER>_<n>_<m>` certification test ID has a corresponding `.py` file in
 `src/python_testing/`. Some certification tests are YAML-only — e.g. for Identify, `TC_I_2_1`/`2_2`/`2_3`
 are YAML-only (`Test_TC_I_2_1.yaml` etc. under `src/app/tests/suites/certification/`), while only
-`TC_I_2_4.py` exists as a Python test. These are not unrunnable — run them as `yamlTests` entries (§5), not
-as a documented gap. Before assuming a test is "missing" from `chipTests.json`, check both:
+`TC_I_2_4.py` exists as a Python test. These are not unrunnable — run them as `tests` entries with a YAML
+(no `.py`) `test` id (§5), not as a documented gap. Before assuming a test is "missing" from `chipTests.json`,
+check both:
 
 ```shell
 docker exec chip-test bash -c "cd /root/connectedhomeip && timeout 30 python3 scripts/tests/chipyaml/chiptool.py list" | grep -iE 'Test_TC_<CLUSTER>_'
