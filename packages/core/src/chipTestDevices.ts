@@ -24,11 +24,14 @@
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable typescript/no-non-null-assertion */
 
+import { CommonNumberTag } from '@matter/node';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { IrrigationSystem } from './devices/irrigationSystem.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { getSemtag } from './matterbridgeEndpointHelpers.js';
 
 export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
   if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_CHIP_TEST_DEVICES || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
@@ -82,6 +85,111 @@ export async function createChipTestDevices(matterbridge: Matterbridge): Promise
   ep.createDefaultDeviceEnergyManagementClusterServer();
   ep.createDefaultDeviceEnergyManagementModeClusterServer();
   await registerDevice(ep, 'Device Energy Management', 'UTILITY-02-07');
+
+  // Chapter 4 - Lighting Device Types
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffLight')!, bridgedNode, powerSource], { id: 'OnOffLight', number: EndpointNumber(4_01) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'On/Off Light', 'LIGHTING-04-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DimmableLight')!, bridgedNode, powerSource], { id: 'DimmableLight', number: EndpointNumber(4_02) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Dimmable Light', 'LIGHTING-04-02');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ColorTemperatureLight')!, bridgedNode, powerSource], { id: 'ColorTemperatureLight', number: EndpointNumber(4_03) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createCtColorControlClusterServer();
+  await registerDevice(ep, 'Color Temperature Light', 'LIGHTING-04-03');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ExtendedColorLight')!, bridgedNode, powerSource], { id: 'ExtendedColorLightXYCT', number: EndpointNumber(4_04) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createXyColorControlClusterServer();
+  await registerDevice(ep, 'Extended Color Light XY CT', 'LIGHTING-04-04');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ExtendedColorLight')!, bridgedNode, powerSource], { id: 'ExtendedColorLightHSXYCT', number: EndpointNumber(4_04_1) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createDefaultColorControlClusterServer();
+  await registerDevice(ep, 'Extended Color Light HS XY CT', 'LIGHTING-04-04-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ExtendedColorLight')!, bridgedNode, powerSource], {
+    id: 'ExtendedColorLightEnhancedEHSXYCT',
+    number: EndpointNumber(4_04_2),
+  });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createEnhancedColorControlClusterServer();
+  await registerDevice(ep, 'Extended Color Light EHS XY CT', 'LIGHTING-04-04-02');
+
+  // Chapter 5 - Smart Plugs/Outlets and other Actuators
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffPlugInUnit')!, bridgedNode, powerSource], { id: 'OnOffPlugInUnit', number: EndpointNumber(5_01) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'On/Off Plug-in Unit', 'ACTUATOR-05-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DimmablePlugInUnit')!, bridgedNode, powerSource], { id: 'DimmablePlugInUnit', number: EndpointNumber(5_02) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Dimmable Plug-in Unit', 'ACTUATOR-05-02');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedOnOffControl')!, bridgedNode, powerSource], { id: 'MountedOnOffControl', number: EndpointNumber(5_03) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Mounted On/Off Control', 'ACTUATOR-05-03');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedDimmableLoadControl')!, bridgedNode, powerSource], {
+    id: 'MountedDimmableLoadControl',
+    number: EndpointNumber(5_04),
+  });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Mounted Dimmable Load Control', 'ACTUATOR-05-04');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Pump')!, bridgedNode, powerSource], { id: 'Pump', number: EndpointNumber(5_05) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  // Pump has no Element Requirement for OnOff Feature Lighting (unlike the plug-in/lighting device types above),
+  // so the addRequiredClusters() default (Lighting feature) would be non-conformant here — override with the
+  // plain, featureless OnOff cluster server instead.
+  ep.createOnOffClusterServer();
+  await registerDevice(ep, 'Pump', 'ACTUATOR-05-05');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Water Valve', 'ACTUATOR-05-06');
+
+  // IrrigationSystem has a single device class.
+  ep = new IrrigationSystem('Irrigation System with 2 zones', 'ACTUATOR-05-07', { id: 'IrrigationSystem', number: EndpointNumber(5_07) });
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.One), 'IrrigationSystemZone1', EndpointNumber(5_07_1));
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.Two), 'IrrigationSystemZone2', EndpointNumber(5_07_2));
+  await registerDevice(ep, 'Irrigation System with 2 zones', 'ACTUATOR-05-07');
+
+  // Chapter 6 - Switches and Controls Device Types
+  //
+  // All six device types below require only Identify as a server cluster (added by addRequiredClusters()) plus
+  // a set of required *client* clusters (OnOff/LevelControl/ColorControl/etc., also added by addRequiredClusters()
+  // via addRequiredClusterClients(), which is fully generic — it just registers the cluster IDs on
+  // MatterbridgeBindingServer, no feature-specific configuration needed).
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffLightSwitch')!, bridgedNode, powerSource], { id: 'OnOffLightSwitch', number: EndpointNumber(6_01) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'On/Off Light Switch', 'SWITCH-06-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DimmerSwitch')!, bridgedNode, powerSource], { id: 'DimmerSwitch', number: EndpointNumber(6_02) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Dimmer Switch', 'SWITCH-06-02');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ColorDimmerSwitch')!, bridgedNode, powerSource], { id: 'ColorDimmerSwitch', number: EndpointNumber(6_03) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Color Dimmer Switch', 'SWITCH-06-03');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ControlBridge')!, bridgedNode, powerSource], { id: 'ControlBridge', number: EndpointNumber(6_04) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Control Bridge', 'SWITCH-06-04');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('PumpController')!, bridgedNode, powerSource], { id: 'PumpController', number: EndpointNumber(6_05) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await registerDevice(ep, 'Pump Controller', 'SWITCH-06-05');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06');
 
   // Chapter 7 - Sensor Devices
 
