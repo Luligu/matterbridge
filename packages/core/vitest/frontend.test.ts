@@ -453,6 +453,18 @@ describe('Matterbridge frontend', () => {
 
     // Simple branches (no getAttribute dependency)
     const text = runTuples([
+      ['descriptor', 0x1d, 'clientList', 0, [4, 6, 8, 768]],
+      ['binding', 0x1e, 'binding', 0, []],
+      [
+        'binding',
+        0x1e,
+        'binding',
+        0,
+        [
+          { fabricIndex: 1, node: 2n, cluster: 6 },
+          { fabricIndex: 1, node: 3n },
+        ],
+      ],
       ['onOff', 0x06, 'onOff', 0, true],
       ['switch', 0x3b, 'currentPosition', 0, 1],
       ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 5000],
@@ -500,6 +512,9 @@ describe('Matterbridge frontend', () => {
       ['deviceEnergyManagementMode', 0x9f, 'supportedModes', 0, [{ label: 'No Energy Management', mode: 1 }]],
       ['deviceEnergyManagementMode', 0x9f, 'currentMode', 0, 1],
     ]);
+    expect(text).toContain('Client cluster(s): [Groups, OnOff, LevelControl, ColorControl]');
+    expect(text).toContain('Bound cluster(s): none');
+    expect(text).toContain('Bound cluster(s): [node: 2, cluster: OnOff, fabricIndex: 1] [node: 3, fabricIndex: 1]');
     expect(text).toContain('OnOff: true');
     expect(text).toContain('Position: 1');
     expect(text).toContain('Cover position: 50%');
@@ -520,6 +535,8 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('Air quality: 1');
     expect(text).toContain('Pm2.5: 5');
     expect(text).toContain('Humidity: 50%');
+    expect(text).toContain('Pressure: 1000 hPa');
+    expect(text).toContain('Flow: 10 m³/h');
     expect(text).toContain('Soil moisture: 50%');
     expect(text).toContain('Voltage: 220V');
     expect(text).toContain('Current: 1A');
@@ -552,6 +569,7 @@ describe('Matterbridge frontend', () => {
 
     // isValid* false sides (out-of-range / wrong-type values are not appended)
     const skipped = runTuples([
+      ['descriptor', 0x1d, 'clientList', 0, []],
       ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 20000],
       ['thermostat', 0x201, 'localTemperature', 0, 'x'],
       ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 'x'],
@@ -561,6 +579,8 @@ describe('Matterbridge frontend', () => {
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 'x'],
       ['temperatureMeasurement', 0x402, 'measuredValue', 0, 'x'],
       ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 'x'],
+      ['pressureMeasurement', 0x403, 'measuredValue', 0, 'x'],
+      ['flowMeasurement', 0x404, 'measuredValue', 0, 'x'],
       ['electricalPowerMeasurement', 0x90, 'voltage', 0, 'x'],
       ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 'x' }],
     ]);

@@ -192,9 +192,11 @@
 <li>[frontend]: Bump <code>globals</code> to v.17.11.0.</li>
 <li>[frontend]: Bump <code>oxfmt</code> to v.0.63.0.</li>
 <li>[frontend]: Bump <code>oxlint</code> to v.1.78.0.</li>
+<li>[irrigationSystem]: Bump <code>IrrigationSystem</code> to v.1.1.0.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[frontend]: Fix <code>FlowMeasurement</code> unit in the Devices Icon and Table views: the raw <code>measuredValue</code> (<code>10 x m³/h</code>) was shown unconverted and labelled <code>l/h</code>; now divided by 10 and labelled <code>m³/h</code>.</li>
 <li>[frontend]: Apply the trailing-slash normalization of a device configUrl to the path only, so query strings are no longer corrupted (#579). Thanks Sebastian RAFF.</li>
 <li>[thermostat]: Apply thermostat suggestions: <code>AddThermostatSuggestion</code>/<code>RemoveThermostatSuggestion</code> now re-evaluate <code>CurrentThermostatSuggestion</code>, syncing <code>ActivePresetHandle</code> and clearing <code>ThermostatSuggestionNotFollowingReason</code>, and prune expired entries from <code>ThermostatSuggestions</code>. Thanks Ludovic BOUÉ.</li>
 <li>[thermostat]: Cascade Preset removal to ThermostatSuggestions. Thanks Ludovic BOUÉ.</li>

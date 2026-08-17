@@ -491,7 +491,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       ))}
       {/* FlowMeasurement */}
       {deviceType===0x0306 && clusters.filter(cluster => cluster.clusterName === 'FlowMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<GasMeterIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number} unit='l/h' />
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<GasMeterIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number/10} unit='m³/h' />
       ))}
       {/* PressureMeasurement */}
       {deviceType===0x0305 && clusters.filter(cluster => cluster.clusterName === 'PressureMeasurement' && cluster.attributeName === 'measuredValue').map(cluster => (

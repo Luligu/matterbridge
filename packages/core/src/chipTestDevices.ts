@@ -272,6 +272,7 @@ export async function createChipTestDevices(matterbridge: Matterbridge): Promise
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('SoilSensor')!, bridgedNode, powerSource], { id: 'SoilSensor', number: EndpointNumber(7_14) });
   ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createDefaultSoilMeasurementClusterServer(50);
   await registerDevice(ep, 'Soil Sensor', 'SENSOR-07-14');
 }
 // v8 ignore end

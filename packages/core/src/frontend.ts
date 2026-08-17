@@ -47,12 +47,14 @@ import path from 'node:path';
 import { Diagnostic, Lifecycle, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
+import { getClusterNameById } from '@matter/types/cluster';
+import type { Binding } from '@matter/types/clusters/binding';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { CommissioningOptions } from '@matter/types/commissioning';
-import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { type ClusterId, type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -1466,6 +1468,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+      if (clusterName === 'descriptor' && attributeName === 'clientList' && isValidArray(attributeValue, 1))
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        attributes += `Client cluster(s): [${(attributeValue as ClusterId[]).map((id) => getClusterNameById(id)).join(', ')}] `;
+      if (clusterName === 'binding' && attributeName === 'binding' && isValidArray(attributeValue)) {
+        if (attributeValue.length === 0) attributes += `Bound cluster(s): none `;
+        else {
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          const targets = attributeValue as Binding.Target[];
+          const formatted = targets.map((target) => {
+            const parts: string[] = [];
+            if (target.node !== undefined) parts.push(`node: ${target.node}`);
+            if (target.group !== undefined) parts.push(`group: ${target.group}`);
+            if (target.endpoint !== undefined) parts.push(`endpoint: ${target.endpoint}`);
+            if (target.cluster !== undefined) parts.push(`cluster: ${getClusterNameById(target.cluster)}`);
+            if (target.fabricIndex !== undefined) parts.push(`fabricIndex: ${target.fabricIndex}`);
+            return `[${parts.join(', ')}]`;
+          });
+          attributes += `Bound cluster(s): ${formatted.join(' ')} `;
+        }
+      }
       if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
       if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
       if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000))
@@ -1521,7 +1543,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
       if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') {
         if (attributeValue === null) attributes += `Illuminance: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} `;
+        else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx`;
       }
       if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
       if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
@@ -1531,14 +1553,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `CH₂O: ${attributeValue} `;
       if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') {
         if (attributeValue === null) attributes += `Temperature: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
+        else if (isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100} °C `;
       }
       if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') {
         if (attributeValue === null) attributes += `Humidity: unknown `;
         else if (isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
       }
-      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') attributes += `Pressure: ${attributeValue === null ? 'unknown' : attributeValue} `;
-      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') attributes += `Flow: ${attributeValue === null ? 'unknown' : attributeValue} `;
+      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') {
+        if (attributeValue === null) attributes += `Pressure: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Pressure: ${attributeValue} hPa `;
+      }
+      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') {
+        if (attributeValue === null) attributes += `Flow: unknown `;
+        else if (isValidNumber(attributeValue)) attributes += `Flow: ${attributeValue / 10} m³/h `;
+      }
       if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') {
         if (attributeValue === null) attributes += `Soil moisture: unknown `;
         else if (isValidNumber(attributeValue)) attributes += `Soil moisture: ${attributeValue}% `;
