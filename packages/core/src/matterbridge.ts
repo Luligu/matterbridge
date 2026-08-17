@@ -2207,8 +2207,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Run manually with: MATTERBRIDGE_CHIP_TEST=1 MATTERBRIDGE_CHIP_TEST_DEVICES=1 matterbridge
     // v8 ignore next - No test cause is just chip test entry point
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      const { createChipTestAppPipe, createChipTestDevices } = await import('./chipTests.js');
-      if (process.env.MATTERBRIDGE_CHIP_TEST_DEVICES) await createChipTestDevices(this);
+      const { createChipTestAppPipe } = await import('./chipTests.js');
+      if (process.env.MATTERBRIDGE_CHIP_TEST_DEVICES) {
+        const { createChipTestDevices } = await import('./chipTestDevices.js');
+        await createChipTestDevices(this);
+      }
       createChipTestAppPipe(this);
     }
 

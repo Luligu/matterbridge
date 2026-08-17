@@ -60,22 +60,29 @@ get local code changes to this repo into a running container instead.
   copy it into the running container per §4, or fall back to the generic PICS file for that test in the
   meantime.
 
-## 2. CHIP test devices and backchannels (`packages/core/src/chipTests.ts`)
+## 2. CHIP test devices and backchannels (`packages/core/src/chipTests.ts`, `packages/core/src/chipTestDevices.ts`)
 
-Unlike a plugin repo (which has one real device tree to test), this repo has no plugin under test, so
-`packages/core/src/chipTests.ts` synthesizes a fixed device tree and both CHIP test backchannels, gated
-entirely behind env vars so none of this ships or runs outside a CHIP-test container:
+Unlike a plugin repo (which has one real device tree to test), this repo has no plugin under test, so this
+pair of files synthesizes a fixed device tree and both CHIP test backchannels, gated entirely behind env
+vars so none of this ships or runs outside a CHIP-test container. `chipTestDevices.ts` holds only
+`createChipTestDevices()` (the device tree) and has no dependency on `chipTests.ts`. Everything else — the
+`TestEventTrigger`/app-pipe backchannels and the `chipTestMatterbridge` module state the TestEventTrigger
+handlers read devices through — stays in `chipTests.ts`, captured by `createChipTestAppPipe()` (not
+`createChipTestDevices()`) since app-pipe creation is the one call that always runs whenever
+`MATTERBRIDGE_CHIP_TEST` is set, regardless of whether `MATTERBRIDGE_CHIP_TEST_DEVICES` also creates a
+device tree:
 
 - `MATTERBRIDGE_CHIP_TEST=1` (baked into the image, also settable manually: see the two env vars together in
   `matterbridge.ts`'s `startBridge()`) gates `MatterbridgeGeneralDiagnosticsServer` (added to the root
   endpoint in `matterbridge.ts`) and `createChipTestAppPipe()` (called from `startBridge()`, right after the
   `addVirtualDevices()` call) — i.e. the `GeneralDiagnostics.TestEventTrigger` handling and the app-pipe
   listener.
-- `MATTERBRIDGE_CHIP_TEST_DEVICES=1` additionally gates `createChipTestDevices()` — the ~20 bridged sensor/alarm
-  endpoints (one per device-type chapter: contact/light/occupancy/temperature/pressure/flow/humidity/on-off
-  sensors, three SmokeCOAlarm variants, air quality, water freeze/leak, rain, soil) registered under a fake,
-  disabled `matterbridge-chip` `DynamicPlatform` plugin entry. Without this flag the aggregator stays empty
-  (Descriptor-only). `--start` always passes both.
+- `MATTERBRIDGE_CHIP_TEST_DEVICES=1` additionally gates `createChipTestDevices()` (`chipTestDevices.ts`,
+  imported and called from `startBridge()` right alongside `createChipTestAppPipe()`) — the ~20 bridged
+  sensor/alarm endpoints (one per device-type chapter: contact/light/occupancy/temperature/pressure/flow/
+  humidity/on-off sensors, three SmokeCOAlarm variants, air quality, water freeze/leak, rain, soil)
+  registered under a fake, disabled `matterbridge-chip` `DynamicPlatform` plugin entry. Without this flag
+  the aggregator stays empty (Descriptor-only). `--start` always passes both.
 - Both are Linux-only test glue: keep new handlers gated behind these env vars, don't make normal runtime
   behavior or shutdown depend on them, and don't assume a specific TestEventTrigger/app-pipe case is
   implemented without checking `chipTests.ts` — it currently only implements the SmokeCOAlarm TestEventTrigger
@@ -232,8 +239,8 @@ the endpoint map is stable across runs and documented once in `chipTests.md`, ra
 target as a plugin repo would. Endpoint 0 is always the root node (`BasicInformation`, not
 `BridgedDeviceBasicInformation` — use `matterbridge.pics`'s `BINFO.*` section there, not `BRBINFO.*`).
 Endpoint 1 is the aggregator. Everything above that follows `createChipTestDevices()`'s registration order in
-`chipTests.ts` (currently: utility devices in the 2xx range, then sensor/alarm devices in the 7xx range, e.g.
-`709`/`7091`/`7092` for the three SmokeCOAlarm variants).
+`chipTestDevices.ts` (currently: utility devices in the 2xx range, then sensor/alarm devices in the 7xx range,
+e.g. `709`/`7091`/`7092` for the three SmokeCOAlarm variants).
 
 Re-verify (and update `chipTests.md`) after adding, removing, or reordering `createChipTestDevices()`'s
 registrations, using the same throwaway-Python-script approach as a plugin repo would (copy into
@@ -353,17 +360,22 @@ gets translated to a Windows path before reaching `docker`).
 
 ## 10. Verifying any change to this harness
 
-After editing `chipTests.json`, `chipTests.md`, `run-matterbridge-chip-tests.mjs`, `chipTests.ts`, or any
-`docker/chip-test/*.pics` file, always re-verify end-to-end rather than trusting the edit alone:
+After editing `chipTests.json`, `chipTests.md`, `run-matterbridge-chip-tests.mjs`, `chipTests.ts`,
+`chipTestDevices.ts`, or any `docker/chip-test/*.pics` file, always re-verify end-to-end rather than trusting
+the edit alone:
 
-1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`.pics` edit against an
-   already-running container, the cheaper docker-cp-and-restart sync in §4).
+1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`chipTestDevices.ts`/
+   `.pics` edit against an already-running container, the cheaper docker-cp-and-restart sync in §4) — a
+   `chipTestDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
+   whenever it changes which env vars gate device creation, since `docker restart` doesn't refresh env vars
+   baked in at `docker run` time.
 2. `node scripts/run-matterbridge-chip-tests.mjs --test <NAME>` for the affected test(s).
 3. `node scripts/run-matterbridge-chip-tests.mjs --stop`.
 4. Run this repo's own formatter/linter/typecheck on the touched files.
 
-Keep `chipTests.md`'s prose (endpoint map, manual-run notes) in sync with `chipTests.json`/`chipTests.ts`
-whenever tests or devices are added, removed, or re-gated on a different PICS file/endpoint.
+Keep `chipTests.md`'s prose (endpoint map, manual-run notes) in sync with
+`chipTests.json`/`chipTests.ts`/`chipTestDevices.ts` whenever tests or devices are added, removed, or
+re-gated on a different PICS file/endpoint.
 
 ## 11. CI
 
