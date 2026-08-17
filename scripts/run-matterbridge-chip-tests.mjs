@@ -471,10 +471,22 @@ function filterTests(tests, nameFilter) {
   return filtered;
 }
 
+// The compact ✅/❌/⏭️ line(s) for one test result, shared between the live per-test append to summaryLogFile
+// and the final recap block written to both log files.
+function formatResultLines(result) {
+  const icon = result.skipped ? '⏭️' : result.passed ? '✅' : '❌';
+  const line = `${icon} ${result.label}`;
+  return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
+}
+
 function runTests(nameFilter) {
   const tests = filterTests(allTests, nameFilter);
   const startedAt = `Chip tests run started at ${new Date().toISOString()}\n\n`;
   writeFileSync(logFile, startedAt);
+  // Written incrementally (header now, one result appended as each test finishes, final status appended last)
+  // rather than only at the end, so a run that's killed or times out partway through still leaves a readable,
+  // up-to-date summary instead of an empty or stale file.
+  writeFileSync(summaryLogFile, startedAt);
 
   const results = [];
   for (const test of tests) {
@@ -483,7 +495,9 @@ function runTests(nameFilter) {
     if (test.skip) {
       console.log(`SKIP: ${label}`);
       appendFileSync(logFile, `=== ${label} ===\nSkipped ("skip": true set in ${testsFile})\n\n`);
-      results.push({ label, passed: false, skipped: true, comment: test.comment });
+      const testResult = { label, passed: false, skipped: true, comment: test.comment };
+      results.push(testResult);
+      appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
       continue;
     }
 
@@ -532,7 +546,9 @@ function runTests(nameFilter) {
     appendFileSync(logFile, `Result: ${passed ? 'PASS' : 'FAIL'} (exit ${result.status})\n\n`);
     console.log(passed ? `PASS: ${label}` : `FAIL: ${label} (exit ${result.status})`);
 
-    results.push({ label, passed, comment: test.comment });
+    const testResult = { label, passed, comment: test.comment };
+    results.push(testResult);
+    appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
 
     if (test.resetAfter) {
       appendFileSync(logFile, `--- reset stateful cluster storage after ${label} ---\n`);
@@ -552,15 +568,11 @@ function runTests(nameFilter) {
   const executedResults = results.filter((result) => !result.skipped);
   const skippedCount = results.length - executedResults.length;
   const passedCount = executedResults.filter((result) => result.passed).length;
-  const resultLines = results.flatMap((result) => {
-    const icon = result.skipped ? '⏭️' : result.passed ? '✅' : '❌';
-    const line = `${icon} ${result.label}`;
-    return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
-  });
+  const resultLines = results.flatMap(formatResultLines);
   const summary = `Summary: ${passedCount}/${executedResults.length} tests passed${skippedCount ? ` (${skippedCount} skipped)` : ''}.`;
 
   appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n`);
-  writeFileSync(summaryLogFile, `${startedAt}${resultLines.join('\n')}\n\n${summary}\n`);
+  appendFileSync(summaryLogFile, `\n${summary}\n`);
   console.log(resultLines.join('\n'));
   console.log(summary);
 
