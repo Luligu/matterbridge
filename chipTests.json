@@ -370,9 +370,8 @@
     {
       "name": "DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_2.py",
-      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate PowerAdjustmentCapability, drive ESAState transitions, and emit PowerAdjustStart/PowerAdjustEnd events; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
+      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
     },
     {
       "name": "DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement",
@@ -419,16 +418,14 @@
     {
       "name": "DeviceEnergyManagement PowerForecastRReporting functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_9.py",
-      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate and clear Forecast; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
+      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
     },
     {
       "name": "DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement",
       "test": "TC_DEM_2_10.py",
-      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
-      "skip": true,
-      "comment": "Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive Forecast and PowerAdjustmentCapability report changes; Matterbridge does not implement those CSA reference-app test hooks."
+      "args": ["--endpoint 207", "--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
+      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
     },
     {
       "name": "DeviceEnergyManagementMode attributes on DeviceEnergyManagement",

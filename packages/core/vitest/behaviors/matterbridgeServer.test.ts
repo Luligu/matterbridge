@@ -1668,7 +1668,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('DeviceEnergyManagement server', async () => {
-    const powerAdjustRequest = { power: 500, duration: 60, cause: 'Test' };
+    const powerAdjustRequest = { power: 500, duration: 60, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization };
     const cancelCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: unknown }> = [];
 
     energyManagement.addCommandHandler('cancelPowerAdjustRequest', (data) => {
@@ -1680,6 +1680,13 @@ describe('Server clusters and behaviors', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-3000);
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(2000);
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+
+    // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+    // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
+    await energyManagement.setAttribute(DeviceEnergyManagement.id, 'powerAdjustmentCapability', {
+      powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 10, maxDuration: 120 }],
+      cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+    });
 
     await expectCommand(energyManagement, DeviceEnergyManagement, 'powerAdjustRequest', powerAdjustRequest, (data) => {
       expect(data.cluster).toBe('deviceEnergyManagement');

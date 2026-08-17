@@ -1420,10 +1420,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(dem.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('cancelPowerAdjustRequest')).toBeTruthy();
     expect((dem as any).state['deviceEnergyManagement'].acceptedCommandList).toEqual([0, 1]);
     expect((dem as any).state['deviceEnergyManagement'].generatedCommandList).toEqual([]);
+    // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+    // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
+    await dem.setAttribute('deviceEnergyManagement', 'powerAdjustmentCapability', {
+      powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 0, maxDuration: 60 }],
+      cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+    });
     vi.clearAllMocks();
-    await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.powerAdjustRequest', { power: 0, duration: 0, cause: 'Test' }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 0 cause Test (endpoint ${dem.id}.${dem.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 0 cause Test`);
+    await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.powerAdjustRequest', {
+      power: 0,
+      duration: 60,
+      cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization,
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 60 cause 0 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 60 cause 0`);
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.cancelPowerAdjustRequest', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancelling power adjustment (endpoint ${dem.id}.${dem.number})`);

@@ -38,6 +38,7 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
 import { Status, StatusResponseError } from '@matter/types';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
@@ -89,6 +90,18 @@ const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 const electricalPowerMeasurementStartFakeLoadTrigger = 0x0091000000000001n;
 const electricalEnergyMeasurementStartFakeGeneratorTrigger = 0x0091000000000002n;
 const electricalPowerMeasurementStopFakeReadingsTrigger = 0x0091000000000000n;
+// TC_DEM_2_2/TC_DEM_2_9/TC_DEM_2_10's send_test_event_trigger_power_adjustment()/_power_adjustment_clear()/
+// _user_opt_out_local()/_user_opt_out_grid()/_user_opt_out_clear_all()/_forecast()/_forecast_clear()
+// (src/python_testing/TC_DEMTestBase.py). Endpoint 207 only enables the PowerAdjustment and PowerForecastReporting
+// features, so the StartTimeAdjustment/Pausable/ForecastAdjustment/ConstraintBasedAdjustment triggers (which none
+// of TC_DEM_2_2/2_9/2_10 exercise on this feature set) are not implemented.
+const deviceEnergyManagementPowerAdjustmentTrigger = 0x0098000000000000n;
+const deviceEnergyManagementPowerAdjustmentClearTrigger = 0x0098000000000001n;
+const deviceEnergyManagementUserOptOutLocalTrigger = 0x0098000000000002n;
+const deviceEnergyManagementUserOptOutGridTrigger = 0x0098000000000003n;
+const deviceEnergyManagementUserOptOutClearAllTrigger = 0x0098000000000004n;
+const deviceEnergyManagementForecastTrigger = 0x009800000000000fn;
+const deviceEnergyManagementForecastClearTrigger = 0x0098000000000010n;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
@@ -402,7 +415,7 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
     eventTrigger !== smokeCoAlarmDeviceMutedTrigger &&
     eventTrigger !== smokeCoAlarmDeviceMutedClearTrigger
   ) {
-    return await handleElectricalEnergyTestEventTrigger(eventTrigger);
+    return (await handleElectricalEnergyTestEventTrigger(eventTrigger)) || (await handleDeviceEnergyManagementTestEventTrigger(eventTrigger));
   }
   return await handleSmokeCoAlarmTestEventTrigger(eventTrigger);
 }
@@ -644,6 +657,124 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
   }).start();
   cliEmitter.once('shutdown', () => electricalPowerMeasurementFakeLoadTimer?.stop());
   return true;
+}
+
+// Single DeviceEnergyManagement chip-test endpoint, registered by createChipTestDevices() with the PowerAdjustment
+// and PowerForecastReporting features (see createDefaultDeviceEnergyManagementClusterServer() call for endpoint
+// 207). Command validation, ESAState transitions, and PowerAdjustStart/PowerAdjustEnd events are implemented
+// spec-compliantly by MatterbridgeDeviceEnergyManagementServer itself (behaviors/deviceEnergyManagementServer.ts),
+// including reacting to OptOutState changes that must cancel an active session (Matter 1.6 Application Cluster
+// Spec § 9.2.8.8) — these handlers only need to set the attributes each trigger populates or clears.
+const chipTestDeviceEnergyManagementEndpointId = 207;
+
+async function handleDeviceEnergyManagementTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (
+    eventTrigger !== deviceEnergyManagementPowerAdjustmentTrigger &&
+    eventTrigger !== deviceEnergyManagementPowerAdjustmentClearTrigger &&
+    eventTrigger !== deviceEnergyManagementUserOptOutLocalTrigger &&
+    eventTrigger !== deviceEnergyManagementUserOptOutGridTrigger &&
+    eventTrigger !== deviceEnergyManagementUserOptOutClearAllTrigger &&
+    eventTrigger !== deviceEnergyManagementForecastTrigger &&
+    eventTrigger !== deviceEnergyManagementForecastClearTrigger
+  ) {
+    return false;
+  }
+  if (!chipTestMatterbridge) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestDeviceEnergyManagementEndpointId);
+  if (!endpoint || !endpoint.hasClusterServer(DeviceEnergyManagement.id)) return false;
+  const log = chipTestMatterbridge.log;
+
+  switch (eventTrigger) {
+    case deviceEnergyManagementPowerAdjustmentTrigger:
+      // TC_DEM_2_2 step 5b: PowerAdjustmentCapability shall include Cause=NoAdjustment with at least one
+      // PowerAdjustStruct entry.
+      await endpoint.setCluster(
+        DeviceEnergyManagement,
+        {
+          esaState: DeviceEnergyManagement.EsaState.Online,
+          powerAdjustmentCapability: {
+            powerAdjustCapability: [{ minPower: 500_000, maxPower: 2_000_000, minDuration: 10, maxDuration: 60 }],
+            cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+          },
+        },
+        log,
+      );
+      return true;
+    case deviceEnergyManagementPowerAdjustmentClearTrigger:
+      await endpoint.setCluster(DeviceEnergyManagement, { esaState: DeviceEnergyManagement.EsaState.Online, powerAdjustmentCapability: null }, log);
+      return true;
+    case deviceEnergyManagementUserOptOutLocalTrigger:
+      await applyDeviceEnergyManagementOptOutTrigger(endpoint, DeviceEnergyManagement.OptOutState.LocalOptOut, log);
+      return true;
+    case deviceEnergyManagementUserOptOutGridTrigger:
+      await applyDeviceEnergyManagementOptOutTrigger(endpoint, DeviceEnergyManagement.OptOutState.GridOptOut, log);
+      return true;
+    case deviceEnergyManagementUserOptOutClearAllTrigger:
+      await endpoint.setCluster(DeviceEnergyManagement, { optOutState: DeviceEnergyManagement.OptOutState.NoOptOut }, log);
+      return true;
+    case deviceEnergyManagementForecastTrigger:
+      await endpoint.setCluster(DeviceEnergyManagement, { forecast: buildChipTestDeviceEnergyManagementForecast() }, log);
+      return true;
+    case deviceEnergyManagementForecastClearTrigger:
+      await endpoint.setCluster(DeviceEnergyManagement, { forecast: null }, log);
+      return true;
+    default:
+      return false;
+  }
+}
+
+async function applyDeviceEnergyManagementOptOutTrigger(endpoint: MatterbridgeEndpoint, bit: DeviceEnergyManagement.OptOutState, log: AnsiLogger): Promise<void> {
+  const optOutStateAttribute = endpoint.getAttribute(DeviceEnergyManagement.id, 'optOutState');
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const currentOptOutState = (optOutStateAttribute as DeviceEnergyManagement.OptOutState | null) ?? DeviceEnergyManagement.OptOutState.NoOptOut;
+  // oxlint-disable-next-line no-bitwise
+  await endpoint.setCluster(DeviceEnergyManagement, { optOutState: currentOptOutState | bit }, log);
+}
+
+function buildChipTestDeviceEnergyManagementForecast(): {
+  forecastId: number;
+  activeSlotNumber: number;
+  startTime: number;
+  endTime: number;
+  isPausable: boolean;
+  slots: {
+    minDuration: number;
+    maxDuration: number;
+    defaultDuration: number;
+    elapsedSlotTime: number;
+    remainingSlotTime: number;
+    nominalPower: number;
+    minPower: number;
+    maxPower: number;
+    nominalEnergy: number;
+  }[];
+  forecastUpdateReason: DeviceEnergyManagement.ForecastUpdateReason;
+} {
+  // matter.js's epoch-s type is Unix epoch seconds at the API level (it validates a floor of 946_684_800, i.e. the
+  // Matter epoch of 2000-01-01T00:00:00Z, expressed in Unix time) — wire-level Matter-epoch conversion is handled
+  // internally, not by the caller.
+  const nowUnixEpochSeconds = Math.floor(Time.nowMs / 1000);
+  return {
+    forecastId: 1,
+    activeSlotNumber: 0,
+    startTime: nowUnixEpochSeconds,
+    endTime: nowUnixEpochSeconds + 3600,
+    isPausable: false,
+    slots: [
+      {
+        minDuration: 60,
+        maxDuration: 3600,
+        defaultDuration: 3600,
+        elapsedSlotTime: 0,
+        remainingSlotTime: 3600,
+        nominalPower: 1_000_000,
+        minPower: 500_000,
+        maxPower: 2_000_000,
+        nominalEnergy: 1_000_000,
+      },
+    ],
+    forecastUpdateReason: DeviceEnergyManagement.ForecastUpdateReason.InternalOptimization,
+  };
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
