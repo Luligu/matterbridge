@@ -24,12 +24,6 @@
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable typescript/no-non-null-assertion */
 
-/**
- * CHIP test devices and backchannel notes (TestEventTrigger, app-pipe, container sync) have moved to
- * .claude/rules/chip-tests/chip-tests.instructions.md §2 and §4 — read that file before adding a new
- * trigger-backed or app-pipe-backed CHIP test, or before syncing a local change into the chip-test container.
- */
-
 import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
 
