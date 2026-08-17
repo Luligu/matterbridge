@@ -1,7 +1,7 @@
-Chip tests run started at 2026-08-17T08:37:22.359Z
+Chip tests run started at 2026-08-17T08:53:00.877Z
 
-✅ PowerSource attributes (Test_TC_PS_2_1)
-✅ PowerSource event reporting with server as DUT (Test_TC_PS_2_2)
+✅ PowerSource attributes on RootNode (Test_TC_PS_2_1)
+✅ PowerSource event reporting with server as DUT on RootNode (Test_TC_PS_2_2)
 ✅ PowerSource battery attributes on ContactSensor (Test_TC_PS_2_1)
 ✅ PowerSource battery event reporting with server as DUT on ContactSensor (Test_TC_PS_2_2)
 ✅ BooleanState attributes on ContactSensor (Test_TC_BOOL_2_1)
@@ -47,7 +47,7 @@ Chip tests run started at 2026-08-17T08:37:22.359Z
    ↳ Uses SDK-CI-only pseudo-clusters (SystemCommands.FactoryReset, CommissionerCommands.PairWithCode) this harness's yaml runner can't handle — the spawned chip-tool interactive server crashes before opening its websocket port ('WebSocket startup has not been detected'), independent of PICS or retries.
 ⏭️ GeneralDiagnostics events with server as DUT (Test_TC_DGGEN_2_2)
    ↳ Every step in this YAML is disabled:true (manual verification procedure, no automated assertions).
-❌ GeneralDiagnostics PayloadTestRequest command (Test_TC_DGGEN_2_3)
+✅ GeneralDiagnostics PayloadTestRequest command (Test_TC_DGGEN_2_3)
 ✅ GeneralDiagnostics TestEventTrigger (Test_TC_DGGEN_3_1)
 ✅ GroupKeyManagement attributes (Test_TC_GRPKEY_2_1)
 ✅ GroupKeyManagement KeySet commands (Test_TC_GRPKEY_2_2)
@@ -82,18 +82,18 @@ Chip tests run started at 2026-08-17T08:37:22.359Z
 ⏭️ DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement (TC_DEM_2_2.py)
    ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate PowerAdjustmentCapability, drive ESAState transitions, and emit PowerAdjustStart/PowerAdjustEnd events; Matterbridge does not implement those CSA reference-app test hooks.
 ⏭️ DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement (TC_DEM_2_3.py)
-   ↳ Requires the StartTimeAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
+   ↳ Requires the StartTimeAdjustment feature; endpoint 207 does not enable this optional feature.
 ⏭️ DeviceEnergyManagement Pausable functionality on DeviceEnergyManagement (TC_DEM_2_4.py)
-   ↳ Requires the Pausable feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement forecast adjustment with power forecast on DeviceEnergyManagement (TC_DEM_2_5.py)
-   ↳ Requires the ForecastAdjustment feature and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement forecast adjustment with state forecast on DeviceEnergyManagement (TC_DEM_2_6.py)
-   ↳ Requires StateForecastReporting, ForecastAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features.
-⏭️ DeviceEnergyManagement constraint forecast with power forecast on DeviceEnergyManagement (TC_DEM_2_7.py)
-   ↳ Requires ConstraintBasedAdjustment and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable this optional feature.
-⏭️ DeviceEnergyManagement constraint forecast with state forecast on DeviceEnergyManagement (TC_DEM_2_8.py)
-   ↳ Requires StateForecastReporting, ConstraintBasedAdjustment, and GeneralDiagnostics TestEventTrigger/sample-app hooks; endpoint 207 does not enable these optional features.
-⏭️ DeviceEnergyManagement forecast reporting functionality on DeviceEnergyManagement (TC_DEM_2_9.py)
+   ↳ Requires the Pausable feature; endpoint 207 does not enable this optional feature.
+⏭️ DeviceEnergyManagement ForecastAdjustment with power forecast on DeviceEnergyManagement (TC_DEM_2_5.py)
+   ↳ Requires the ForecastAdjustment feature; endpoint 207 does not enable this optional feature.
+⏭️ DeviceEnergyManagement ForecastAdjustment with state forecast on DeviceEnergyManagement (TC_DEM_2_6.py)
+   ↳ Requires StateForecastReporting and ForecastAdjustment features; endpoint 207 does not enable these optional features.
+⏭️ DeviceEnergyManagement ConstraintBasedAdjustment with power forecast on DeviceEnergyManagement (TC_DEM_2_7.py)
+   ↳ Requires the ConstraintBasedAdjustment feature; endpoint 207 does not enable this optional feature.
+⏭️ DeviceEnergyManagement ConstraintBasedAdjustment with state forecast on DeviceEnergyManagement (TC_DEM_2_8.py)
+   ↳ Requires StateForecastReporting and ConstraintBasedAdjustment features; endpoint 207 does not enable these optional features.
+⏭️ DeviceEnergyManagement PowerForecastRReporting functionality on DeviceEnergyManagement (TC_DEM_2_9.py)
    ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to populate and clear Forecast; Matterbridge does not implement those CSA reference-app test hooks.
 ⏭️ DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement (TC_DEM_2_10.py)
    ↳ Requires GeneralDiagnostics TestEventTrigger/sample-app hooks to drive Forecast and PowerAdjustmentCapability report changes; Matterbridge does not implement those CSA reference-app test hooks.
@@ -162,4 +162,4 @@ Chip tests run started at 2026-08-17T08:37:22.359Z
 ✅ GeneralCommissioning required TCAcknowledgements can't be unset (TC_CGEN_2_10.py)
 ✅ GeneralCommissioning TCAcknowledgements update after commissioning (TC_CGEN_2_11.py)
 
-Summary: 92/93 tests passed (34 skipped).
+Summary: 93/93 tests passed (34 skipped).

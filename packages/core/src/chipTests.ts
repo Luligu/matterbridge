@@ -115,6 +115,15 @@ export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServ
     if (await handleChipTestEventTrigger(BigInt(eventTrigger))) return;
     super.triggerTestEvent(eventTrigger);
   }
+
+  override payloadTestRequest(request: GeneralDiagnostics.PayloadTestRequest): ReturnType<GeneralDiagnosticsServer['payloadTestRequest']> {
+    // TC_DGGEN_2_3 sends PIXIT.DGGEN.ENABLEKEY (the smokeCoAlarmChipTestEnableKey), not chipTestEnableKey. The base
+    // implementation only accepts state.deviceTestEnableKey as-is, so switch it to whichever recognized key was
+    // presented before delegating, matching testEventTrigger's isChipTestEnableKey() acceptance of either key.
+    const keyData = Uint8Array.from(request.enableKey);
+    if (isChipTestEnableKey(keyData)) this.state.deviceTestEnableKey = keyData;
+    return super.payloadTestRequest(request);
+  }
 }
 
 function isChipTestEnableKey(keyData: Uint8Array): boolean {

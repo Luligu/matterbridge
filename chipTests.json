@@ -2,12 +2,12 @@
   "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*"],
   "yamlTests": [
     {
-      "name": "PowerSource attributes",
+      "name": "PowerSource attributes on RootNode",
       "test": "Test_TC_PS_2_1",
       "args": ["--endpoint 0", "--PICS /root/power-source.wired.pics"]
     },
     {
-      "name": "PowerSource event reporting with server as DUT",
+      "name": "PowerSource event reporting with server as DUT on RootNode",
       "test": "Test_TC_PS_2_2",
       "args": ["--endpoint 0", "--PICS /root/power-source.wired.pics"]
     },
