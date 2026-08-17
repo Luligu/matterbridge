@@ -106,6 +106,16 @@ const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0
 let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
+// The endpoint chipTests.json's "endpoint" field names for whichever test is currently running, set via the
+// app-pipe "SetTestEndpoint" command (run-matterbridge-chip-tests.mjs writes it before every test, cleared —
+// EndpointId omitted — before a test with no "endpoint" set). GeneralDiagnostics.TestEventTrigger carries no
+// endpoint field on the wire, so this out-of-band pin is what lets handleSmokeCoAlarmTestEventTrigger()/
+// handleBooleanStateConfigurationTestEventTrigger()/handleElectricalEnergyTestEventTrigger() target the one
+// endpoint under test directly, without guessing or broadcasting to every endpoint that implements the
+// affected cluster. It also feeds handleChipTestAppPipeCommand()'s own EndpointId fallback, so it's not
+// limited to TestEventTrigger — any app-pipe command that omits EndpointId falls back to whichever endpoint
+// is pinned.
+let chipTestActiveEndpointId: number | undefined;
 
 export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServer {
   override initialize(): void {
@@ -284,27 +294,16 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
   return await handleSmokeCoAlarmTestEventTrigger(eventTrigger);
 }
 
-// The three SmokeCOAlarm endpoints registered by createChipTestDevices(): the combined smoke+CO alarm (709),
-// the smoke-only variant (7091), and the CO-only variant (7092). GeneralDiagnostics.TestEventTrigger carries
-// no endpoint, so a trigger is applied to every one of these endpoints that actually implements the affected
-// attribute — smokeState/smokeAlarm only exist on 709/7091, coState/coAlarm only on 709/7092, while
-// batteryAlert/hardwareFaultAlert/endOfServiceAlert/deviceMuted are mandatory on all three variants.
-const chipTestSmokeCoAlarmEndpointIds = [709, 7091, 7092];
-
-function getChipTestSmokeCoAlarmEndpoints(matterbridge: Matterbridge): MatterbridgeEndpoint[] {
-  return chipTestSmokeCoAlarmEndpointIds
-    .map((endpointId) => getChipTestEndpoint(matterbridge, endpointId))
-    .filter((endpoint): endpoint is MatterbridgeEndpoint => endpoint !== undefined);
-}
-
+// GeneralDiagnostics.TestEventTrigger carries no endpoint field on the wire, but every TC_SMOKECO_* chipTests.json
+// entry sets "endpoint" to the one of the three SmokeCOAlarm variants it actually targets — the combined
+// smoke+CO alarm (709), the smoke-only variant (7091), or the CO-only variant (7092); see
+// chipTestActiveEndpointId — so this never needs to guess or broadcast.
 async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
-  if (!chipTestMatterbridge) return false;
-  const endpoints = getChipTestSmokeCoAlarmEndpoints(chipTestMatterbridge);
-  if (endpoints.length === 0) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint) return false;
 
-  for (const endpoint of endpoints) {
-    await applySmokeCoAlarmTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
-  }
+  await applySmokeCoAlarmTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
   return true;
 }
 
@@ -418,8 +417,8 @@ function getSmokeCoAlarmExpressedState(
   endpoint: MatterbridgeEndpoint,
   state: { smokeState?: SmokeCoAlarm.AlarmState; coState?: SmokeCoAlarm.AlarmState; batteryAlert?: SmokeCoAlarm.AlarmState } = {},
 ): SmokeCoAlarm.ExpressedState {
-  // smokeState/coState don't exist on the CO-only/smoke-only endpoint variants (see chipTestSmokeCoAlarmEndpointIds);
-  // treat a missing attribute as Normal rather than reading it (which would log an error and return undefined).
+  // smokeState/coState don't exist on the CO-only/smoke-only endpoint variants (7092/7091); treat a missing
+  // attribute as Normal rather than reading it (which would log an error and return undefined).
   const smokeState =
     state.smokeState ?? (endpoint.hasAttributeServer(SmokeCoAlarm.id, 'smokeState') ? endpoint.getAttribute(SmokeCoAlarm.id, 'smokeState') : SmokeCoAlarm.AlarmState.Normal);
   const coState = state.coState ?? (endpoint.hasAttributeServer(SmokeCoAlarm.id, 'coState') ? endpoint.getAttribute(SmokeCoAlarm.id, 'coState') : SmokeCoAlarm.AlarmState.Normal);
@@ -431,25 +430,16 @@ function getSmokeCoAlarmExpressedState(
   return SmokeCoAlarm.ExpressedState.Normal;
 }
 
-// The four BooleanStateConfiguration endpoints registered by createChipTestDevices(): ContactSensor (701),
-// WaterFreezeDetector (711), WaterLeakDetector (712), RainSensor (713). Like the SmokeCOAlarm triggers,
-// SensorTrigger/SensorUntrigger carry no endpoint, so they're applied to every one of these endpoints.
-const chipTestBooleanStateConfigurationEndpointIds = [701, 711, 712, 713];
-
-function getChipTestBooleanStateConfigurationEndpoints(matterbridge: Matterbridge): MatterbridgeEndpoint[] {
-  return chipTestBooleanStateConfigurationEndpointIds
-    .map((endpointId) => getChipTestEndpoint(matterbridge, endpointId))
-    .filter((endpoint): endpoint is MatterbridgeEndpoint => endpoint !== undefined);
-}
-
+// SensorTrigger/SensorUntrigger carry no endpoint field on the wire, but every TC_BOOLCFG_* chipTests.json
+// entry sets "endpoint" to the one of the four BooleanStateConfiguration endpoints it actually targets
+// (ContactSensor 701, WaterFreezeDetector 711, WaterLeakDetector 712, RainSensor 713) — see
+// chipTestActiveEndpointId — so, unlike SmokeCOAlarm's triggers, this never needs to guess or broadcast.
 async function handleBooleanStateConfigurationTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
-  if (!chipTestMatterbridge) return false;
-  const endpoints = getChipTestBooleanStateConfigurationEndpoints(chipTestMatterbridge);
-  if (endpoints.length === 0) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint) return false;
 
-  for (const endpoint of endpoints) {
-    await applyBooleanStateConfigurationTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
-  }
+  await applyBooleanStateConfigurationTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
   return true;
 }
 
@@ -469,11 +459,10 @@ async function applyBooleanStateConfigurationTestEventTrigger(endpoint: Matterbr
   }
 }
 
-// The three ElectricalSensor endpoints registered by createChipTestDevices() that carry an
-// ElectricalPowerMeasurement/ElectricalEnergyMeasurement cluster server (basic, imported, exported variants).
-// Like the SmokeCOAlarm triggers, the fake-load/fake-generator trigger carries no endpoint, so it's applied
-// to every endpoint that has the relevant cluster/attribute.
-const chipTestElectricalSensorEndpointIds = [206, 2061, 2062];
+// The fake-load/fake-generator trigger carries no endpoint field on the wire, but every TC_EPM_*/TC_EEM_*/
+// TC_DEM_* chipTests.json entry that uses it sets "endpoint": 206 (ElectricalSensor) — see
+// chipTestActiveEndpointId — so this never needs to guess or broadcast across createChipTestDevices()'s other
+// ElectricalPowerMeasurement/ElectricalEnergyMeasurement endpoints (the imported/exported variants).
 
 // Idle values createDefaultElectricalPowerMeasurementClusterServer() constructs each endpoint with (see
 // createChipTestDevices()), restored once the fake load stops. Cumulative energy is deliberately left alone
@@ -494,21 +483,17 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
   ) {
     return false;
   }
-  if (!chipTestMatterbridge) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
   const matterbridge = chipTestMatterbridge;
-  const endpoints = chipTestElectricalSensorEndpointIds
-    .map((endpointId) => getChipTestEndpoint(matterbridge, endpointId))
-    .filter((endpoint): endpoint is MatterbridgeEndpoint => endpoint !== undefined);
-  if (endpoints.length === 0) return false;
+  const endpoint = getChipTestEndpoint(matterbridge, chipTestActiveEndpointId);
+  if (!endpoint) return false;
   const log = matterbridge.log;
 
   electricalPowerMeasurementFakeLoadTimer?.stop();
   electricalPowerMeasurementFakeLoadTimer = undefined;
 
   if (eventTrigger === electricalPowerMeasurementStopFakeReadingsTrigger) {
-    for (const endpoint of endpoints) {
-      if (endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) await endpoint.setCluster(ElectricalPowerMeasurement, electricalPowerMeasurementIdleReading, log);
-    }
+    if (endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) await endpoint.setCluster(ElectricalPowerMeasurement, electricalPowerMeasurementIdleReading, log);
     return true;
   }
 
@@ -520,36 +505,34 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
   // Exported twice and assert the second read is strictly greater, so each tick accumulates onto the current
   // live value rather than resetting it.
   const applyFakeLoadTick = async (): Promise<void> => {
-    for (const endpoint of endpoints) {
-      if (isFakeLoad && endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) {
-        await endpoint.setCluster(
-          ElectricalPowerMeasurement,
-          {
-            activePower: 980_000 + Math.floor(Math.random() * 40_001), // 980'000-1'020'000 mW
-            activeCurrent: 3_848 + Math.floor(Math.random() * 1_001), // 3'848-4'848 mA
-            voltage: 229_000 + Math.floor(Math.random() * 2_001), // 229'000-231'000 mV
-          },
-          log,
-        );
-      }
-      if (isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported') as { energy: number } | null;
-        await endpoint.setCluster(
-          ElectricalEnergyMeasurement,
-          { cumulativeEnergyImported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementImportedEnergyPerTick } },
-          log,
-        );
-      }
-      if (!isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported') as { energy: number } | null;
-        await endpoint.setCluster(
-          ElectricalEnergyMeasurement,
-          { cumulativeEnergyExported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementExportedEnergyPerTick } },
-          log,
-        );
-      }
+    if (isFakeLoad && endpoint.hasClusterServer(ElectricalPowerMeasurement.id)) {
+      await endpoint.setCluster(
+        ElectricalPowerMeasurement,
+        {
+          activePower: 980_000 + Math.floor(Math.random() * 40_001), // 980'000-1'020'000 mW
+          activeCurrent: 3_848 + Math.floor(Math.random() * 1_001), // 3'848-4'848 mA
+          voltage: 229_000 + Math.floor(Math.random() * 2_001), // 229'000-231'000 mV
+        },
+        log,
+      );
+    }
+    if (isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported') as { energy: number } | null;
+      await endpoint.setCluster(
+        ElectricalEnergyMeasurement,
+        { cumulativeEnergyImported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementImportedEnergyPerTick } },
+        log,
+      );
+    }
+    if (!isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')) {
+      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+      const current = endpoint.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported') as { energy: number } | null;
+      await endpoint.setCluster(
+        ElectricalEnergyMeasurement,
+        { cumulativeEnergyExported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementExportedEnergyPerTick } },
+        log,
+      );
     }
   };
 
@@ -561,14 +544,14 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
   return true;
 }
 
-// Single DeviceEnergyManagement chip-test endpoint, registered by createChipTestDevices() with the PowerAdjustment
-// and PowerForecastReporting features (see createDefaultDeviceEnergyManagementClusterServer() call for endpoint
-// 207). Command validation, ESAState transitions, and PowerAdjustStart/PowerAdjustEnd events are implemented
-// spec-compliantly by MatterbridgeDeviceEnergyManagementServer itself (behaviors/deviceEnergyManagementServer.ts),
-// including reacting to OptOutState changes that must cancel an active session (Matter 1.6 Application Cluster
-// Spec § 9.2.8.8) — these handlers only need to set the attributes each trigger populates or clears.
-const chipTestDeviceEnergyManagementEndpointId = 207;
-
+// createChipTestDevices() registers only one DeviceEnergyManagement chip-test endpoint (207, with the
+// PowerAdjustment and PowerForecastReporting features — see createDefaultDeviceEnergyManagementClusterServer()),
+// and every TC_DEM_*/TC_DEMM_* chipTests.json entry pins "endpoint": 207, so chipTestActiveEndpointId is used
+// directly rather than broadcasting or guessing. Command validation, ESAState transitions, and
+// PowerAdjustStart/PowerAdjustEnd events are implemented spec-compliantly by
+// MatterbridgeDeviceEnergyManagementServer itself (behaviors/deviceEnergyManagementServer.ts), including
+// reacting to OptOutState changes that must cancel an active session (Matter 1.6 Application Cluster Spec
+// § 9.2.8.8) — these handlers only need to set the attributes each trigger populates or clears.
 async function handleDeviceEnergyManagementTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
   if (
     eventTrigger !== deviceEnergyManagementPowerAdjustmentTrigger &&
@@ -581,8 +564,8 @@ async function handleDeviceEnergyManagementTestEventTrigger(eventTrigger: bigint
   ) {
     return false;
   }
-  if (!chipTestMatterbridge) return false;
-  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestDeviceEnergyManagementEndpointId);
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
   if (!endpoint || !endpoint.hasClusterServer(DeviceEnergyManagement.id)) return false;
   const log = chipTestMatterbridge.log;
 
@@ -680,8 +663,42 @@ function buildChipTestDeviceEnergyManagementForecast(): {
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
-  const endpointId =
-    command.Name === 'SetOccupancy' && command.EndpointId === 1 ? 703 : (command.EndpointId ?? (command.Name === 'SimulateConfigurationVersionChange' ? 701 : undefined));
+  // Not a device command: run-matterbridge-chip-tests.mjs writes this before every test to pin
+  // chipTestActiveEndpointId to chipTests.json's "endpoint" for that test (EndpointId omitted clears the pin),
+  // so GeneralDiagnostics.TestEventTrigger handlers (which have no endpoint field to work with) and the
+  // EndpointId fallback below can target the right endpoint instead of guessing or broadcasting.
+  if (command.Name === 'SetTestEndpoint') {
+    chipTestActiveEndpointId = command.EndpointId;
+    matterbridge.log.info(`CHIP test harness pinned the active test endpoint to ${command.EndpointId ?? 'none'}`);
+    return;
+  }
+
+  // SimulateConfigurationVersionChange bumps root's BasicInformation.ConfigurationVersion unconditionally, via
+  // matterbridge.serverNode directly — root is a ServerNode, not a MatterbridgeEndpoint (siblings under the
+  // same Endpoint base, not a subtype), so it can never flow through getChipTestEndpoint()/the endpointId
+  // resolution below. It also bumps whichever bridged endpoint is pinned, if any resolves — TC_BRBINFO_3_2
+  // pins 701 and gets that bump; TC_BINFO_3_2 pins 0 (root, for reading BasicInformation) and just skips it,
+  // since there's no BridgedDeviceBasicInformation cluster on root to bump in the first place.
+  if (command.Name === 'SimulateConfigurationVersionChange') {
+    if (matterbridge.serverNode) {
+      const configurationVersion = (matterbridge.serverNode.stateOf(BasicInformationServer).configurationVersion ?? 1) + 1;
+      await matterbridge.serverNode.setStateOf(BasicInformationServer, { configurationVersion });
+      matterbridge.log.info(`CHIP test app pipe set BasicInformation.ConfigurationVersion to ${configurationVersion} on endpoint 0`);
+    }
+    const bridgedEndpoint = chipTestActiveEndpointId === undefined ? undefined : getChipTestEndpoint(matterbridge, chipTestActiveEndpointId);
+    if (bridgedEndpoint) {
+      bridgedEndpoint.configurationVersion = (bridgedEndpoint.stateOf(BridgedDeviceBasicInformationServer).configurationVersion ?? 1) + 1;
+      await bridgedEndpoint.setStateOf(BridgedDeviceBasicInformationServer, { configurationVersion: bridgedEndpoint.configurationVersion });
+      matterbridge.log.info(
+        `CHIP test app pipe set BridgedDeviceBasicInformation.ConfigurationVersion to ${bridgedEndpoint.configurationVersion} on endpoint ${chipTestActiveEndpointId}`,
+      );
+    }
+    return;
+  }
+
+  // SetOccupancy's EndpointId isn't trustworthy (TC_OCC_3_2.py hardcodes the literal 1 rather than sending its
+  // real endpoint), so it always defers to the pin instead.
+  const endpointId = command.Name === 'SetOccupancy' ? chipTestActiveEndpointId : (command.EndpointId ?? chipTestActiveEndpointId);
   if (endpointId === undefined) {
     matterbridge.log.warn(`Ignoring CHIP test app pipe command without EndpointId: ${JSON.stringify(command)}`);
     return;
@@ -700,16 +717,6 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
     case 'SetBooleanStateSensorFault':
       await endpoint.setStateOf(endpoint.behaviors.supported.booleanStateConfiguration, { sensorFault: { generalFault: Boolean(command.SensorFault) } });
       matterbridge.log.info(`CHIP test app pipe set BooleanStateConfiguration.SensorFault to ${command.SensorFault ?? 0} on endpoint ${endpointId}`);
-      return;
-    case 'SimulateConfigurationVersionChange':
-      if (matterbridge.serverNode) {
-        const configurationVersion = (matterbridge.serverNode.stateOf(BasicInformationServer).configurationVersion ?? 1) + 1;
-        await matterbridge.serverNode.setStateOf(BasicInformationServer, { configurationVersion });
-        matterbridge.log.info(`CHIP test app pipe set BasicInformation.ConfigurationVersion to ${configurationVersion} on endpoint 0`);
-      }
-      endpoint.configurationVersion = (endpoint.stateOf(BridgedDeviceBasicInformationServer).configurationVersion ?? 1) + 1;
-      await endpoint.setStateOf(BridgedDeviceBasicInformationServer, { configurationVersion: endpoint.configurationVersion });
-      matterbridge.log.info(`CHIP test app pipe set BridgedDeviceBasicInformation.ConfigurationVersion to ${endpoint.configurationVersion} on endpoint ${endpointId}`);
       return;
     case 'SetOccupancy':
       await endpoint.setStateOf(MatterbridgeOccupancySensingServer, { occupancy: { occupied: Boolean(command.Occupancy) } });

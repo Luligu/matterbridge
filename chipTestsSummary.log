@@ -1,13 +1,9 @@
-Chip tests run started at 2026-08-17T16:08:07.863Z
+Chip tests run started at 2026-08-17T20:51:56.900Z
 
-✅ BooleanStateConfiguration attributes on ContactSensor (TC_BOOLCFG_2_1.py)
-✅ BooleanStateConfiguration sensitivity level on ContactSensor (TC_BOOLCFG_3_1.py)
-✅ BooleanStateConfiguration alarms supported on ContactSensor (TC_BOOLCFG_4_1.py)
-✅ BooleanStateConfiguration alarms active on ContactSensor (TC_BOOLCFG_4_2.py)
-✅ BooleanStateConfiguration alarms enabled inactive alarms on ContactSensor (TC_BOOLCFG_4_3.py)
-✅ BooleanStateConfiguration alarms enabled active alarms on ContactSensor (TC_BOOLCFG_4_4.py)
-✅ BooleanStateConfiguration suppress inactive alarms on ContactSensor (TC_BOOLCFG_5_1.py)
-✅ BooleanStateConfiguration suppress active alarms on ContactSensor (TC_BOOLCFG_5_2.py)
-✅ BooleanStateConfiguration sensor fault on ContactSensor (TC_BOOLCFG_6_1.py)
+✅ OccupancySensing attributes on OccupancySensor (TC_OCC_2_1.py)
+✅ OccupancySensing type interdependency on OccupancySensor (TC_OCC_2_2.py)
+✅ OccupancySensing hold time compatibility on OccupancySensor (TC_OCC_2_3.py)
+✅ OccupancySensing primary functionality on OccupancySensor (TC_OCC_3_1.py)
+✅ OccupancySensing subscription reports on OccupancySensor (TC_OCC_3_2.py)
 
-Summary: 9/9 tests passed.
+Summary: 5/5 tests passed.

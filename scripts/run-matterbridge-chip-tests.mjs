@@ -30,8 +30,16 @@
  *                          matterbridge instance, so each YAML invocation just spawns a short-lived
  *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
  *                          separate commissioning step needed.
+ *   "endpoint"             (optional) Endpoint number, passed as "--endpoint <n>" ahead of "args" as the
+ *                          first CLI arg after the test name. Also pinned into the running Matterbridge
+ *                          instance before the test runs (see setActiveTestEndpoint()), via a "SetTestEndpoint"
+ *                          command written into the CHIP test app-pipe — chipTests.ts reads that pin so
+ *                          GeneralDiagnostics.TestEventTrigger handlers, which get no endpoint field on the
+ *                          wire, can target the one endpoint the test names instead of broadcasting to every
+ *                          endpoint that implements the affected cluster. Written before every test (as "none"
+ *                          when unset), so a pin never leaks from one test into the next.
  *   "args"                 (optional) Array of strings, each split on whitespace and appended as CLI args
- *                          after the test name, e.g. ["--endpoint 0", "--PICS /root/matterbridge.pics"].
+ *                          after the test name (and after "--endpoint", if set), e.g. ["--PICS /root/matterbridge.pics"].
  *   "input"                (optional) String piped to the test's stdin, for tests that prompt for
  *                          interactive confirmation (for example "y\ny\n").
  *   "skip"                 (optional) true to keep the entry listed (documenting that it exists and why it
@@ -102,6 +110,9 @@ const summaryLogFile = resolve(root, 'chipTestsSummary.log');
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
 // test create a file here, so these globs only ever remove test-mutated state, never device identity.
 const matterstorageRoot = '/root/.matterbridge/matterstorage/Matterbridge';
+// The CHIP test app-pipe (createChipTestAppPipe() in chipTests.ts), used here to pin chipTests.ts's
+// chipTestActiveEndpointId to a test's "endpoint" before it runs — see setActiveTestEndpoint() below.
+const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
 // Printed once Matterbridge's root server node has finished coming online after a (re)start; polled from
 // `docker logs` so the next test doesn't race a not-yet-ready device.
 const readyLogMarker = 'Server node for Matterbridge is online';
@@ -270,6 +281,16 @@ function resetContainerState() {
   waitForContainerReady(restartedAt);
 }
 
+// Pins chipTests.ts's chipTestActiveEndpointId to `endpointId` (or clears it when undefined) by writing a
+// "SetTestEndpoint" command into the CHIP test app-pipe, so GeneralDiagnostics.TestEventTrigger handlers with
+// no endpoint field of their own can target the one endpoint the running test actually names in its "endpoint"
+// field, instead of broadcasting to every candidate endpoint. Called before every test (see runTests()), even
+// one with no "endpoint" set, so a pin from a previous test never leaks into one that doesn't expect it.
+function setActiveTestEndpoint(endpointId) {
+  const command = endpointId === undefined ? { Name: 'SetTestEndpoint' } : { Name: 'SetTestEndpoint', EndpointId: endpointId };
+  run('docker', ['exec', containerName, 'sh', '-c', `printf '%s\\n' '${JSON.stringify(command)}' > ${chipTestAppPipePath}`]);
+}
+
 // The Python test framework's default_controller keeps its own fabric in admin_storage.json, separate from
 // chip-tool CLI's storage, so there's no raw `chip-tool pairing unpair` equivalent for it — this throwaway
 // script (copied in, run, deleted, per the "map a plugin's endpoints" pattern in
@@ -415,6 +436,9 @@ function loadChipTestsFile() {
 
 function buildArgs(test) {
   const scriptArgs = [];
+  if (test.endpoint !== undefined) {
+    scriptArgs.push('--endpoint', String(test.endpoint));
+  }
   for (const entry of test.args ?? []) {
     scriptArgs.push(...entry.split(/\s+/).filter(Boolean));
   }
@@ -484,6 +508,9 @@ function runTests(nameFilter) {
       revokeCommissioningWindow();
     }
 
+    appendFileSync(logFile, `--- pin active test endpoint to ${test.endpoint ?? 'none'} before ${label} ---\n`);
+    setActiveTestEndpoint(test.endpoint);
+
     console.log(`Running: ${label}`);
     appendFileSync(logFile, `=== ${label} ===\n${commandLine}\n`);
 
@@ -492,6 +519,11 @@ function runTests(nameFilter) {
       encoding: 'utf8',
       windowsHide: true,
       input: test.input ?? '',
+      // Some tests (e.g. TC_DeviceBasicComposition.py, which logs the entire read-out device composition
+      // tree) produce well over Node's default 1MB maxBuffer, which otherwise kills the child and returns
+      // status: null with error.code 'ENOBUFS' instead of a real exit code — indistinguishable from a crash
+      // in the summary log without inspecting result.error.
+      maxBuffer: Infinity,
     });
 
     appendFileSync(logFile, `${result.stdout ?? ''}${result.stderr ?? ''}\n`);

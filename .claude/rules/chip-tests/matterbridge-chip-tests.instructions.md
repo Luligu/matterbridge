@@ -109,6 +109,14 @@ meaning of its `EventTrigger` values in its own test source/YAML, so each suppor
 explicitly in `handleChipTestEventTrigger()`/`handleSmokeCoAlarmTestEventTrigger()`. Keep these handlers
 gated to `MATTERBRIDGE_CHIP_TEST` through `Matterbridge.createServerNode()`.
 
+Several clusters have more than one candidate endpoint (e.g. the three SmokeCOAlarm variants, or the four
+BooleanStateConfiguration endpoints) — since the trigger itself carries no endpoint, `resolveChipTestEndpoints()`
+targets `chipTestActiveEndpointId` when it's set to one of that trigger's candidates, falling back to every
+candidate endpoint otherwise. `chipTestActiveEndpointId` is not decoded from the trigger value itself (an
+earlier attempt at that broke real tests — see the app-pipe pin note below for why), it's set out-of-band by
+`run-matterbridge-chip-tests.mjs` from `chipTests.json`'s `"endpoint"` field for the currently running test,
+via the app-pipe (see below).
+
 To add a new trigger-backed CHIP test:
 
 1. Read the CHIP test source and copy its exact `EventTrigger` constants.
@@ -137,6 +145,20 @@ Note: §8 in the generic CHIP-test guidance for plugin repos says app-pipe tests
 because "no real device can support this debug hook" — that exclusion does **not** apply here. Matterbridge
 implements the app-pipe itself for exactly this purpose, so app-pipe-gated tests are runnable against this
 repo as long as the specific command the test sends is handled in `handleChipTestAppPipeCommand()`.
+
+`run-matterbridge-chip-tests.mjs` also writes its own synthetic `{"Name":"SetTestEndpoint","EndpointId":<n>}`
+command into this same pipe before every test (`setActiveTestEndpoint()`), sourced from that test's
+`chipTests.json` `"endpoint"` field (omitting `EndpointId` clears it when a test has none). This isn't a real
+CHIP test command — `handleChipTestAppPipeCommand()` intercepts it first and stores it in the module-level
+`chipTestActiveEndpointId`, which both `resolveChipTestEndpoints()` (TestEventTrigger dispatch, above) and this
+function's own `EndpointId` fallback read. Only use it as a _fallback_ for a command's own `EndpointId`, never
+as an override: some commands' real target endpoint is a fixed implementation detail unrelated to the endpoint
+the test's own `--endpoint` CLI arg names (e.g. `SimulateConfigurationVersionChange` always needs bridged
+endpoint 701 to piggyback its `BridgedDeviceBasicInformation` bump, even for `TC_BINFO_3_2`, whose `"endpoint"`
+is 0 for reading root `BasicInformation` — confirmed by breaking that test against the container when the pin
+was given priority over the command-specific `701`/`703` overrides for `SimulateConfigurationVersionChange`/
+`SetOccupancy`). Keep those two overrides hardcoded ahead of the pin; only commands with no fixed target of
+their own should fall back to it.
 
 To add a new app-pipe-backed CHIP test:
 
@@ -210,10 +232,11 @@ e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
     // This spawns a short-lived "chip-tool interactive server" for the duration of the one YAML test,
     // reusing chip-tool's own persisted fabric pairing baked into the image — see §6. Config values the YAML
     // file declares (e.g. "endpoint", or a PIXIT config default like "HIEST_PRI_ALARM_2") become CLI flags,
-    // so "args": ["--endpoint 6"] overrides the file's own default; enum-typed config values need the
-    // fully-qualified enum name as a CLI value (e.g. "--HIEST_PRI_ALARM_2 ExpressedStateEnum.BatteryAlert"),
-    // not the raw integer. Pass "--PICS /root/<cluster>.pics" in args when a hand-verified section exists for
-    // the cluster under test (see §1) — the tool's own default is the generic ci-pics-values file.
+    // so "endpoint": 6 overrides the file's own default (rendered as "--endpoint 6", passed as the first
+    // CLI arg, ahead of "args"); enum-typed config values need the fully-qualified enum name as a CLI value
+    // (e.g. "--HIEST_PRI_ALARM_2 ExpressedStateEnum.BatteryAlert"), not the raw integer. Pass
+    // "--PICS /root/<cluster>.pics" in args when a hand-verified section exists for the cluster under test
+    // (see §1) — the tool's own default is the generic ci-pics-values file.
     // Keep every device/cluster's tests grouped together and ordered by ascending test number (e.g. _2_1
     // before _2_2 before _2_3), interleaving YAML and Python entries in that same numeric sequence, rather
     // than splitting them by kind — that's what makes the full conformance-test coverage for one endpoint
@@ -221,7 +244,8 @@ e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
     {
       "name": "Human-readable label, matched by --test",
       "test": "Test_TC_SOMETHING_1_2", // or "TC_SOMETHING_1_2.py" for a Python test
-      "args": ["--endpoint 6", "--PICS /root/matterbridge.pics"], // optional, each entry split on whitespace
+      "endpoint": 6, // optional, rendered as "--endpoint 6" ahead of "args"
+      "args": ["--PICS /root/matterbridge.pics"], // optional, each entry split on whitespace
       "input": "y\ny\n", // optional, piped to stdin for tests that prompt for interactive confirmation
       "resetBefore": true, // optional: clear resetClusterGlobs + restart the container before this test
       "resetAfter": true, // optional: clear resetClusterGlobs + restart the container after this test (before the next one) — put this on the test that leaves dirty residue, not the one affected by it
