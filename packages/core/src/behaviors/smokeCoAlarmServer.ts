@@ -26,8 +26,8 @@
 
 import { Seconds, Time, type Timer } from '@matter/general';
 import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
-import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Status, StatusResponseError } from '@matter/types';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
@@ -116,6 +116,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
   }
 }
 
+/* v8 ignore start */
 export namespace MatterbridgeSmokeCoAlarmServer {
   /**
    * Internal state for MatterbridgeSmokeCoAlarmServer.
@@ -127,3 +128,4 @@ export namespace MatterbridgeSmokeCoAlarmServer {
     selfTestTimer?: Timer;
   }
 }
+/* v8 ignore stop */

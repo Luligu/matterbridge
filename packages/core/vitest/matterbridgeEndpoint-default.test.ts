@@ -2475,6 +2475,34 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createImportedElectricalEnergyMeasurementClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ImportedElectricalSensor' });
+    expect(device).toBeDefined();
+    device.createImportedElectricalEnergyMeasurementClusterServer(1000);
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual({ energy: 1000 });
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createExportedElectricalEnergyMeasurementClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ExportedElectricalSensor' });
+    expect(device).toBeDefined();
+    device.createExportedElectricalEnergyMeasurementClusterServer(2000);
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toEqual({ energy: 2000 });
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
   test('createDefaultTemperatureMeasurementClusterServer', async () => {
     const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TemperatureSensor' });
     expect(device).toBeDefined();

@@ -2984,6 +2984,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    // v8 ignore if - cause the chip test server is only used for testing and not in production
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
       const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTest.js');
       rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);

@@ -76,6 +76,7 @@ import { type AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
 import { MatterbridgeServer } from '../../src/behaviors/matterbridgeServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';
 import { RoboticVacuumCleaner } from '../../src/devices/roboticVacuumCleaner.js';
 import {
@@ -1401,6 +1402,54 @@ describe('Server clusters and behaviors', () => {
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
   });
 
+  test('removeThermostatSuggestionsForRemovedPresets branch coverage', () => {
+    // Exercises MatterbridgeThermostatServer['removeThermostatSuggestionsForRemovedPresets'] directly against a stub
+    // state/endpoint, mirroring the private-method call pattern used for setpointRaiseLower above. This sidesteps
+    // matter.js's Presets struct validation on presets$AtomicChanged (which rejects a committed entry with a null
+    // PresetHandle), letting each branch be exercised with data that would not otherwise reach the reactor.
+    const info = vi.fn();
+    const debug = vi.fn();
+    const endpoint = {
+      maybeId: 'thermostatSuggestionBranches',
+      maybeNumber: 1,
+      stateOf: () => ({ log: { info, debug } }),
+    };
+    const callReactor = (state: Record<string, unknown>, newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]) => {
+      const server = { state, endpoint } as unknown as MatterbridgeThermostatServer;
+      (MatterbridgeThermostatServer.prototype as unknown as { removeThermostatSuggestionsForRemovedPresets: (n: Thermostat.Preset[], o: Thermostat.Preset[]) => void }).removeThermostatSuggestionsForRemovedPresets.call(server, newPresets, oldPresets);
+    };
+    const pendingPreset: Thermostat.Preset = { presetHandle: null, presetScenario: Thermostat.PresetScenario.Sleep, name: 'Pending', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
+    const preset2: Thermostat.Preset = { presetHandle: Uint8Array.from([2]), presetScenario: Thermostat.PresetScenario.Wake, name: 'Preset2', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
+    const preset3: Thermostat.Preset = { presetHandle: Uint8Array.from([3]), presetScenario: Thermostat.PresetScenario.Vacation, name: 'Preset3', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
+    const suggestionForPreset2: Thermostat.ThermostatSuggestion = { uniqueId: 10, presetHandle: Uint8Array.from([2]), effectiveTime: 1700000000, expirationTime: 1700003600 };
+    const suggestionForPreset3: Thermostat.ThermostatSuggestion = { uniqueId: 11, presetHandle: Uint8Array.from([3]), effectiveTime: 1700000000, expirationTime: 1700003600 };
+
+    // Line 76 false branch + line 84 true branch: a Preset with a null PresetHandle (skipped, not deduped through
+    // Bytes.toHex(null)) among presets that are only added, never removed, so the reactor returns early untouched.
+    const state1 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
+    callReactor(state1, [pendingPreset, preset2, preset3], [pendingPreset, preset2]);
+    expect(state1.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state1.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(info).not.toHaveBeenCalled();
+
+    // Line 97 true branch: a Preset is removed, but neither ThermostatSuggestions nor CurrentThermostatSuggestion
+    // reference it, so the reactor returns early once it determines neither changed.
+    const state2 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
+    callReactor(state2, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
+    expect(state2.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state2.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(info).not.toHaveBeenCalled();
+
+    // Line 106 false branch: the removed Preset is referenced by a ThermostatSuggestions entry (pruned) but not by
+    // CurrentThermostatSuggestion, which is left untouched.
+    const state3 = { thermostatSuggestions: [suggestionForPreset2, suggestionForPreset3], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: { ongoingHold: true } };
+    callReactor(state3, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
+    expect(state3.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state3.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(state3.thermostatSuggestionNotFollowingReason).toEqual({ ongoingHold: true });
+    expect(info).toHaveBeenCalledTimes(1);
+  });
+
   test('ValveConfigurationAndControl server', async () => {
     const expectValveAttributes = (expected: {
       currentState: number;
@@ -1468,9 +1517,30 @@ describe('Server clusters and behaviors', () => {
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
 
-    await expectCommand(smoke, SmokeCoAlarm, 'selfTestRequest', undefined, (data) => {
-      expect(data.cluster).toBe('smokeCoAlarm');
-    });
+    // Matter 1.6 Application Cluster Specification, 2.11.9.1.1 SelfTestRequest: a request is rejected with BUSY
+    // when ExpressedState is not Normal (here forced via testInProgress, since the plugin command handler still
+    // runs first regardless).
+    await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', true);
+    await expect(smoke.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest', {})).rejects.toMatchObject({ code: Status.Busy });
+    await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', false);
+
+    // Reduce the self-test duration so the timer-driven completion (#completeSelfTest) fires promptly and does not
+    // leak a pending timer into later tests.
+    const originalSelfTestDurationSeconds = MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds;
+    MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds = 0;
+    try {
+      await expectCommand(smoke, SmokeCoAlarm, 'selfTestRequest', undefined, (data) => {
+        expect(data.cluster).toBe('smokeCoAlarm');
+      });
+      // With selfTestDurationSeconds reduced to 0, the completion timer may already have fired by the time control
+      // returns here, so only the post-completion state (not the transient Testing state) is asserted deterministically.
+      await vi.waitFor(() => {
+        expect(smoke.getAttribute(SmokeCoAlarm.id, 'testInProgress')).toBe(false);
+      });
+      expect(smoke.getAttribute(SmokeCoAlarm.id, 'expressedState')).toBe(SmokeCoAlarm.ExpressedState.Normal);
+    } finally {
+      MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds = originalSelfTestDurationSeconds;
+    }
 
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);

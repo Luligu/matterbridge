@@ -451,99 +451,151 @@ async function handleSmokeCoAlarmTestEventTrigger(eventTrigger: bigint): Promise
 
   switch (eventTrigger) {
     case smokeCoAlarmWarningSmokeAlarmTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        smokeState: SmokeCoAlarm.AlarmState.Warning,
-        expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          smokeState: SmokeCoAlarm.AlarmState.Warning,
+          expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCriticalSmokeAlarmTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        smokeState: SmokeCoAlarm.AlarmState.Critical,
-        expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          smokeState: SmokeCoAlarm.AlarmState.Critical,
+          expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmSmokeAlarmClearTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        smokeState: SmokeCoAlarm.AlarmState.Normal,
-        expressedState: getSmokeCoAlarmExpressedState(endpoint, { smokeState: SmokeCoAlarm.AlarmState.Normal }),
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          smokeState: SmokeCoAlarm.AlarmState.Normal,
+          expressedState: getSmokeCoAlarmExpressedState(endpoint, { smokeState: SmokeCoAlarm.AlarmState.Normal }),
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmWarningCoAlarmTrigger:
     case smokeCoAlarmYamlWarningCoAlarmTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        coState: SmokeCoAlarm.AlarmState.Warning,
-        expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          coState: SmokeCoAlarm.AlarmState.Warning,
+          expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCriticalCoAlarmTrigger:
     case smokeCoAlarmYamlCriticalCoAlarmTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        coState: SmokeCoAlarm.AlarmState.Critical,
-        expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          coState: SmokeCoAlarm.AlarmState.Critical,
+          expressedState: SmokeCoAlarm.ExpressedState.CoAlarm,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCoAlarmClearTrigger:
     case smokeCoAlarmYamlCoAlarmClearTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        coState: SmokeCoAlarm.AlarmState.Normal,
-        expressedState: getSmokeCoAlarmExpressedState(endpoint, { coState: SmokeCoAlarm.AlarmState.Normal }),
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          coState: SmokeCoAlarm.AlarmState.Normal,
+          expressedState: getSmokeCoAlarmExpressedState(endpoint, { coState: SmokeCoAlarm.AlarmState.Normal }),
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmWarningBatteryAlertTrigger:
     case smokeCoAlarmYamlWarningBatteryAlertTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        batteryAlert: SmokeCoAlarm.AlarmState.Warning,
-        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Warning }),
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          batteryAlert: SmokeCoAlarm.AlarmState.Warning,
+          expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Warning }),
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmCriticalBatteryAlertTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        batteryAlert: SmokeCoAlarm.AlarmState.Critical,
-        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }),
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          batteryAlert: SmokeCoAlarm.AlarmState.Critical,
+          expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }),
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmBatteryAlertClearTrigger:
     case smokeCoAlarmYamlBatteryAlertClearTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        batteryAlert: SmokeCoAlarm.AlarmState.Normal,
-        expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Normal }),
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          batteryAlert: SmokeCoAlarm.AlarmState.Normal,
+          expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Normal }),
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmHardwareFaultAlertTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        hardwareFaultAlert: true,
-        expressedState: SmokeCoAlarm.ExpressedState.HardwareFault,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          hardwareFaultAlert: true,
+          expressedState: SmokeCoAlarm.ExpressedState.HardwareFault,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'hardwareFault', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmHardwareFaultAlertClearTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        hardwareFaultAlert: false,
-        expressedState: SmokeCoAlarm.ExpressedState.Normal,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          hardwareFaultAlert: false,
+          expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmEndOfServiceAlertTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired,
-        expressedState: SmokeCoAlarm.ExpressedState.EndOfService,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired,
+          expressedState: SmokeCoAlarm.ExpressedState.EndOfService,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'endOfService', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmEndOfServiceAlertClearTrigger:
-      await endpoint.setCluster(SmokeCoAlarm, {
-        endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
-        expressedState: SmokeCoAlarm.ExpressedState.Normal,
-      }, chipTestMatterbridge.log);
+      await endpoint.setCluster(
+        SmokeCoAlarm,
+        {
+          endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal,
+          expressedState: SmokeCoAlarm.ExpressedState.Normal,
+        },
+        chipTestMatterbridge.log,
+      );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, chipTestMatterbridge.log);
       return true;
     case smokeCoAlarmDeviceMutedTrigger:

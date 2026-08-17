@@ -1550,7 +1550,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyImported') appendMeasurement('Imported', getEnergyText(attributeValue));
       if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyExported') appendMeasurement('Exported', getEnergyText(attributeValue));
       if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaCanGenerate') attributes += `ESA can generate: ${attributeValue} `;
-      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState') attributes += `ESA state: ${DeviceEnergyManagement.EsaState[attributeValue as DeviceEnergyManagement.EsaState]} `;
+      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState')
+        attributes += `ESA state: ${DeviceEnergyManagement.EsaState[attributeValue as DeviceEnergyManagement.EsaState]} `;
       if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
       if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
     });
