@@ -1416,11 +1416,34 @@ describe('Server clusters and behaviors', () => {
     };
     const callReactor = (state: Record<string, unknown>, newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]) => {
       const server = { state, endpoint } as unknown as MatterbridgeThermostatServer;
-      (MatterbridgeThermostatServer.prototype as unknown as { removeThermostatSuggestionsForRemovedPresets: (n: Thermostat.Preset[], o: Thermostat.Preset[]) => void }).removeThermostatSuggestionsForRemovedPresets.call(server, newPresets, oldPresets);
+      (
+        MatterbridgeThermostatServer.prototype as unknown as { removeThermostatSuggestionsForRemovedPresets: (n: Thermostat.Preset[], o: Thermostat.Preset[]) => void }
+      ).removeThermostatSuggestionsForRemovedPresets.call(server, newPresets, oldPresets);
     };
-    const pendingPreset: Thermostat.Preset = { presetHandle: null, presetScenario: Thermostat.PresetScenario.Sleep, name: 'Pending', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
-    const preset2: Thermostat.Preset = { presetHandle: Uint8Array.from([2]), presetScenario: Thermostat.PresetScenario.Wake, name: 'Preset2', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
-    const preset3: Thermostat.Preset = { presetHandle: Uint8Array.from([3]), presetScenario: Thermostat.PresetScenario.Vacation, name: 'Preset3', coolingSetpoint: 2600, heatingSetpoint: 2000, builtIn: null };
+    const pendingPreset: Thermostat.Preset = {
+      presetHandle: null,
+      presetScenario: Thermostat.PresetScenario.Sleep,
+      name: 'Pending',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
+    const preset2: Thermostat.Preset = {
+      presetHandle: Uint8Array.from([2]),
+      presetScenario: Thermostat.PresetScenario.Wake,
+      name: 'Preset2',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
+    const preset3: Thermostat.Preset = {
+      presetHandle: Uint8Array.from([3]),
+      presetScenario: Thermostat.PresetScenario.Vacation,
+      name: 'Preset3',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
     const suggestionForPreset2: Thermostat.ThermostatSuggestion = { uniqueId: 10, presetHandle: Uint8Array.from([2]), effectiveTime: 1700000000, expirationTime: 1700003600 };
     const suggestionForPreset3: Thermostat.ThermostatSuggestion = { uniqueId: 11, presetHandle: Uint8Array.from([3]), effectiveTime: 1700000000, expirationTime: 1700003600 };
 
@@ -1442,7 +1465,11 @@ describe('Server clusters and behaviors', () => {
 
     // Line 106 false branch: the removed Preset is referenced by a ThermostatSuggestions entry (pruned) but not by
     // CurrentThermostatSuggestion, which is left untouched.
-    const state3 = { thermostatSuggestions: [suggestionForPreset2, suggestionForPreset3], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: { ongoingHold: true } };
+    const state3 = {
+      thermostatSuggestions: [suggestionForPreset2, suggestionForPreset3],
+      currentThermostatSuggestion: suggestionForPreset2,
+      thermostatSuggestionNotFollowingReason: { ongoingHold: true },
+    };
     callReactor(state3, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
     expect(state3.thermostatSuggestions).toEqual([suggestionForPreset2]);
     expect(state3.currentThermostatSuggestion).toBe(suggestionForPreset2);
@@ -1521,7 +1548,7 @@ describe('Server clusters and behaviors', () => {
     // when ExpressedState is not Normal (here forced via testInProgress, since the plugin command handler still
     // runs first regardless).
     await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', true);
-    await expect(smoke.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest', {})).rejects.toMatchObject({ code: Status.Busy });
+    await expect(smoke.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest')).rejects.toMatchObject({ code: Status.Busy });
     await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', false);
 
     // Reduce the self-test duration so the timer-driven completion (#completeSelfTest) fires promptly and does not

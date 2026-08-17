@@ -6,6 +6,8 @@ paths:
   - 'chipTests.log'
   - 'chipTestsSummary.log'
   - 'scripts/run-chip-tests.mjs'
+  - 'scripts/run-matterbridge-chip-tests.mjs'
+  - 'packages/core/src/chipTest.ts'
   - '.github/workflows/chip-tests.yml'
 ---
 
