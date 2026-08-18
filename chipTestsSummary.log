@@ -1,8 +1,5 @@
-Chip tests run started at 2026-08-18T15:40:46.951Z
+Chip tests run started at 2026-08-18T17:06:55.305Z
 
-✅ Generic device basic composition (TC_DeviceBasicComposition.py)
-✅ Generic device conformance (TC_DeviceConformance.py)
-✅ Generic device default warnings (TC_DefaultWarnings.py)
-✅ Generic TestEventTrigger command (TC_TestEventTrigger.py)
+✅ ActivatedCarbonFilterMonitoring attributes on AirPurifier (Test_TC_ACFREMON_2_1)
 
-Summary: 4/4 tests passed.
+Summary: 1/1 tests passed.

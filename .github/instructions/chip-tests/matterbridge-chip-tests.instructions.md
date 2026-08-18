@@ -1,5 +1,5 @@
 ---
-name: 'CHIP Conformance Test Harness v.2.0.0'
+name: 'CHIP Conformance Test Harness v.2.1.0'
 description: 'How the CHIP conformance test harness works for the Matterbridge repo itself'
 applyTo: 'chipTests.json, chipTests.md, chipTests.log, chipTestsSummary.log, scripts/run-matterbridge-chip-tests.mjs, packages/core/src/chipTests.ts, packages/core/src/chipTestDevices.ts, packages/core/src/helpers.ts, docker/Dockerfile.chip-test, docker/entrypoint.chip-test.sh, docker/chip-test/**, .github/workflows/docker-buildx-chip-test.yml, .github/workflows/chip-tests.yml'
 ---
@@ -59,6 +59,9 @@ get local code changes to this repo into a running container instead.
   one under `docker/chip-test/` (cross-referencing the Matter spec and the real cluster-server source) and
   copy it into the running container per §4, or fall back to the generic PICS file for that test in the
   meantime.
+- `chipTests.json`'s top-level `"patches"` array (§5) names files under `docker/chip-test/patches/`, each
+  copied over the same-named file under `src/python_testing/` inside the container by `start()`, right after
+  it comes up — see §12 for when and how to add one.
 
 ## 2. CHIP test devices and backchannels (`packages/core/src/chipTests.ts`, `packages/core/src/chipTestDevices.ts`)
 
@@ -222,6 +225,11 @@ e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
     /* filename globs (§3), cleared by any test entry that sets "resetBefore": true or "resetAfter": true.
        Required (non-empty) if any test uses either flag — the script fails loudly rather than silently
        skipping the reset if this is empty. */
+  ],
+  "patches": [
+    // optional, defaults to []. Plain filenames under docker/chip-test/patches/ (e.g.
+    // "TC_DeviceBasicComposition.py"), each docker cp'd over the same-named file under src/python_testing/
+    // inside the container by start(), right after it comes up — see §12.
   ],
   "tests": [
     // optional, defaults to []. A single unified list mixing YAML certification tests and Python tests —
@@ -426,3 +434,40 @@ regression introduced on `dev` is only caught by `chip-tests.yml` once someone h
 to catch regressions in ongoing `dev` commits (rather than just smoke-testing whatever was last published),
 it still needs a build-and-sync step added — the same `npm run build` + `docker cp` + `docker restart`
 sequence §4 describes for a local run, adapted to run in CI before the test-suite step.
+
+## 12. Patching a stale/buggy upstream test file
+
+A CHIP test failure is not always a Matterbridge defect — the `connectedhomeip` checkout baked into the image
+is a snapshot, and its own Python test files can be stale relative to the Matter spec version Matterbridge
+targets (1.6.0). Before assuming a failure means Matterbridge is wrong, read the failing test's actual
+assertion/traceback (`chipTests.log`) and check whether it's testing against outdated, hand-maintained data
+(an enum whitelist, a namespace-ID list, a hardcoded device-type table) rather than a genuine protocol
+violation.
+
+Worked example: `test_TC_DESC_2_1` in `TC_DeviceBasicComposition.py` failed against our `Closure` device
+(device type `0x0230`) with "Non manufacturer specific tag is not a tag from namespace defined in spec". The
+test validates each `Descriptor.TagList` entry's `namespaceID` against a hand-coded whitelist that stops at
+`0x43` (Switches) — it was never updated for the five Closure namespaces (`0x44`-`0x48`) Matter 1.6 added,
+even though `Closure`'s own `TagList` entry (`namespaceID=0x44` i.e. `ClosureTag.Covering`) is fully
+spec-compliant. Confirmed upstream: `gh search prs --repo project-chip/connectedhomeip "closure namespace"`
+surfaces PR #73481, which adds exactly those five constants to that same whitelist and is open/unmerged as of
+this writing — i.e. a known, already-diagnosed upstream gap, not something to keep re-investigating as a
+Matterbridge bug.
+
+To carry a fix like this locally until it lands upstream and a new image is published:
+
+1. Copy the file straight out of the running container (not from GitHub) so the patch applies against the
+   exact baked-in version, not whatever `master` has drifted to since the image was built:
+   `docker cp chip-test:/root/connectedhomeip/src/python_testing/<file>.py docker/chip-test/patches/<file>.py`.
+2. Apply the fix to that copy — prefer reusing an upstream PR's actual diff (`gh pr diff <number> --repo
+   project-chip/connectedhomeip`) when one already exists, rather than re-deriving the fix from scratch.
+3. Add the plain filename to `chipTests.json`'s `"patches"` array (§5).
+4. Re-verify per §10: `--start` (prints "Applying patch <file>..."), confirm the fix landed
+   (`docker exec chip-test grep -n <marker> src/python_testing/<file>.py`), re-run the affected test with
+   `--test`, then `--stop`.
+5. Document the failure and the patch in `chipTests.md` (which test, why it was failing, the upstream
+   issue/PR reference) so it isn't mistaken for a live Matterbridge regression later.
+
+A patch here is a stopgap, not a permanent fork: once the upstream fix merges and a new
+`luligu/matterbridge:chip-test` image is published with it baked in, remove the now-redundant entry from
+`"patches"` and delete the file under `docker/chip-test/patches/`.

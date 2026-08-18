@@ -1556,8 +1556,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
 
       if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${getEnumDescription(FanControl.FanMode, attributeValue as FanControl.FanMode)} `;
-      if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue}% `;
       if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'rockSetting' && isValidObject(attributeValue)) attributes += `Rock: ${stringify(attributeValue)} `;
+      if (clusterName === 'fanControl' && attributeName === 'windSetting' && isValidObject(attributeValue)) attributes += `Wind: ${stringify(attributeValue)} `;
+      if (clusterName === 'fanControl' && attributeName === 'airflowDirection')
+        attributes += `Direction: ${getEnumDescription(FanControl.AirflowDirection, attributeValue as FanControl.AirflowDirection)} `;
 
       if (clusterName === 'hepaFilterMonitoring' && attributeName === 'condition') attributes += `Hepa filter: ${attributeValue}% `;
       if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;

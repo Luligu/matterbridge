@@ -18,6 +18,9 @@
  *                          persisted to disk — the container restart that "resetBefore"/"resetAfter" also
  *                          performs already clears any cluster state kept purely in memory, with no glob
  *                          needed for that.
+ *   "patches"             (optional) Filenames under docker/chip-test/patches/, each copied into the
+ *                          container (overwriting the same-named file under src/python_testing/) right
+ *                          after it (re)starts — see below. Defaults to an empty array.
  *   "tests"                (optional) The unified list of CHIP tests to run, YAML certification tests and
  *                          Python tests mixed together — see below. Defaults to an empty array.
  * Each tests entry has:
@@ -90,6 +93,14 @@
  * A window left open blocks ArmFailSafe ("kBusyWithOtherAdmin") for any later test that needs one, so
  * revokeWindowBefore sends RevokeCommissioning (from alpha, which works regardless of which fabric opened
  * the window) to close it without touching either fabric's pairing.
+ *
+ * The top-level "patches" array names files under docker/chip-test/patches/ that fix a known bug or gap in a
+ * test file baked into the image (e.g. a stale hand-coded namespace whitelist that predates a spec version
+ * the image otherwise supports correctly) without waiting for that fix to land upstream and a new image to
+ * be published. Each entry is a plain filename (e.g. "TC_DeviceBasicComposition.py"), copied over the
+ * same-named file under src/python_testing/ in the container. Applied once by start(), right after the
+ * container comes up — not reapplied by resetContainerState()'s restart, since that only restarts the
+ * matterbridge process and never touches the container's filesystem.
  */
 
 /* eslint-disable no-console */
@@ -107,6 +118,10 @@ const image = 'luligu/matterbridge:chip-test';
 const testsFile = resolve(root, 'chipTests.json');
 const logFile = resolve(root, 'chipTests.log');
 const summaryLogFile = resolve(root, 'chipTestsSummary.log');
+// Local source of files named by chipTests.json's "patches" array, copied over the same-named file under
+// remotePythonTestingDir in the container by applyPatches() — see the "patches" doc comment above.
+const patchesDir = resolve(root, 'docker/chip-test/patches');
+const remotePythonTestingDir = '/root/connectedhomeip/src/python_testing';
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
 // test create a file here, so these globs only ever remove test-mutated state, never device identity.
 const matterstorageRoot = '/root/.matterbridge/matterstorage/Matterbridge';
@@ -128,6 +143,7 @@ const commissioningWindowTimeoutSeconds = '300';
 const commissioningWindowPakeIterations = '10000';
 
 let resetClusterGlobs;
+let patches;
 let allTests;
 
 class ExitError extends Error {
@@ -233,7 +249,18 @@ function start() {
   ]);
 
   waitForContainerReady(startedAt);
+  applyPatches();
   console.log('Chip-test container ready.');
+}
+
+// Copies each file named in chipTests.json's "patches" array from docker/chip-test/patches/ over the
+// same-named file under remotePythonTestingDir in the container — see the "patches" doc comment above.
+function applyPatches() {
+  for (const patch of patches) {
+    console.log(`Applying patch ${patch}...`);
+    const localPath = join(patchesDir, patch);
+    runOrFail('docker', ['cp', localPath, `${containerName}:${remotePythonTestingDir}/${patch}`]);
+  }
 }
 
 function stop() {
@@ -416,6 +443,11 @@ function loadChipTestsFile() {
   resetClusterGlobs = parsed.resetClusterGlobs ?? [];
   if (!Array.isArray(resetClusterGlobs)) {
     fail(`Expected "resetClusterGlobs" to be an array in ${testsFile}`);
+  }
+
+  patches = parsed.patches ?? [];
+  if (!Array.isArray(patches)) {
+    fail(`Expected "patches" to be an array in ${testsFile}`);
   }
 
   const tests = parsed.tests ?? [];

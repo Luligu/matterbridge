@@ -1,0 +1,15 @@
+# To run tests on ActivatedCarbonFilterMonitoring --PICS is required
+# Matches createDefaultActivatedCarbonFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+ACFREMON.S=1
+ACFREMON.S.F00=1 # Condition
+ACFREMON.S.F01=1 # Warning
+ACFREMON.S.F02=1 # ReplacementProductList
+ACFREMON.S.A0000=1 # Condition
+ACFREMON.S.A0001=1 # DegradationDirection
+ACFREMON.S.A0002=1 # ChangeIndication
+ACFREMON.S.A0003=1 # InPlaceIndicator
+ACFREMON.S.A0004=1 # LastChangedTime
+ACFREMON.S.A0005=1 # ReplacementProductList
+ACFREMON.S.C00.Rsp=1 # ResetCondition

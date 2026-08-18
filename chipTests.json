@@ -1,5 +1,6 @@
 {
   "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*"],
+  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py"],
   "tests": [
     {
       "name": "Generic device basic composition",
@@ -849,8 +850,7 @@
       "name": "FanControl optional speed functionality on Fan Complete",
       "test": "TC_FAN_3_2.py",
       "endpoint": 9024,
-      "args": ["--PICS /root/fan-control-complete.pics"],
-      "comment": "Timing-fragile test, not a Matterbridge bug (see chipTests.md Known Issues): step 6's rapid, no-delay SpeedSetting writes let matter.js's subscription engine legitimately coalesce intermediate FanMode values into fewer reports than the exact count of 3 the test asserts. Reproduced identically by writing PercentSetting (not SpeedSetting) at the same pace with no Matterbridge involvement beyond the attribute write itself; TC_FAN_3_1.py only avoids this because its own assertion (FanMode report count equals PercentSetting report count) tolerates coalescing instead of requiring an exact count."
+      "args": ["--PICS /root/fan-control-complete.pics"]
     },
     {
       "name": "FanControl optional rock functionality on Fan Complete",
@@ -882,6 +882,18 @@
       "endpoint": 9024,
       "args": ["--PICS /root/fan-control-complete.pics"],
       "comment": "Self-skips: gated by @run_if_endpoint_matches(has_cluster(FanControl) and has_cluster(OnOff)); the Fan device type's On/Off cluster is optionalConform and endpoint 9024 does not add it (createCompleteFanControlClusterServer() only creates the FanControl cluster server)."
+    },
+    {
+      "name": "HepaFilterMonitoring attributes on AirPurifier",
+      "test": "Test_TC_HEPAFREMON_2_1",
+      "endpoint": 903,
+      "args": ["--PICS /root/hepa-filter-monitoring.pics"]
+    },
+    {
+      "name": "ActivatedCarbonFilterMonitoring attributes on AirPurifier",
+      "test": "Test_TC_ACFREMON_2_1",
+      "endpoint": 903,
+      "args": ["--PICS /root/activated-carbon-filter-monitoring.pics"]
     }
   ]
 }
