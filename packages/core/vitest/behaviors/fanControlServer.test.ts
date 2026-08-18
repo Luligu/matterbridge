@@ -244,5 +244,144 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
 
       expect(multiSpeed.getAttribute(FanControl, 'speedSetting')).toBe(11);
     });
+
+    test('Writing PercentSetting computes SpeedSetting without floating-point error (§ 4.4.6.3.1)', async () => {
+      // Regression case found while testing: 10 * (70 * 0.01) is 7.000000000000001 in IEEE 754 double precision
+      // (0.01 has no exact binary representation), so Math.ceil() of the naive formula wrongly returns 8 instead
+      // of 7 — speedSettingForPercent() avoids this by dividing by 100 after multiplying two integers instead.
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'PercentSettingFloatingPointTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      await multiSpeed.setAttribute(FanControl, 'percentSetting', 70);
+
+      expect(multiSpeed.getAttribute(FanControl, 'speedSetting')).toBe(7);
+    });
+
+    test('Writing PercentSetting does not get overwritten by the reciprocal SpeedSetting mapping (idempotency check)', async () => {
+      // Regression case found while testing: PercentSetting 1 forward-maps (via ceil) to SpeedSetting 1 with
+      // SpeedMax 10, but SpeedSetting 1 alone reverse-maps to PercentSetting 10 — without
+      // #handleSpeedSettingChanging's idempotency check (skipping when the current PercentSetting already
+      // forward-maps to the incoming SpeedSetting value), the cascaded SpeedSetting assignment would silently
+      // overwrite the PercentSetting value the client actually wrote.
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'PercentSettingRoundTripTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      await multiSpeed.setAttribute(FanControl, 'percentSetting', 1);
+
+      expect(multiSpeed.getAttribute(FanControl, 'percentSetting')).toBe(1);
+      expect(multiSpeed.getAttribute(FanControl, 'speedSetting')).toBe(1);
+    });
+
+    test('Writing SpeedSetting in ascending order round-trips back to the exact written value (§ 4.4.6.6.1)', async () => {
+      // Regression case matching TC_FAN_3_2.py's own scenario: iteratively writing SpeedSetting from 1 to
+      // SpeedMax must read back exactly what was written, exercising both the floating-point fix and the
+      // idempotency check together across every SpeedMax+1 value.
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingAscendingTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      for (let speed = 1; speed <= 10; speed++) {
+        await multiSpeed.setAttribute(FanControl, 'speedSetting', speed);
+        expect(multiSpeed.getAttribute(FanControl, 'speedSetting')).toBe(speed);
+      }
+    });
+
+    test('Writing SpeedSetting to 0 sets FanMode to Off and PercentSetting to 0 (§ 4.4.6.6.1)', async () => {
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingZeroTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.High, FanControl.FanModeSequence.OffLowMedHighAuto, 90, 90, 10, 9, 9);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      await multiSpeed.setAttribute(FanControl, 'speedSetting', 0);
+
+      expect(multiSpeed.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Off);
+      expect(multiSpeed.getAttribute(FanControl, 'percentSetting')).toBe(0);
+    });
+
+    test('Writing SpeedSetting to SpeedMax sets FanMode to High and PercentSetting to 100 (§ 4.4.6.6.1)', async () => {
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingMaxTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      await multiSpeed.setAttribute(FanControl, 'speedSetting', 10);
+
+      expect(multiSpeed.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.High);
+      expect(multiSpeed.getAttribute(FanControl, 'percentSetting')).toBe(100);
+    });
+  });
+
+  // Nested inside this describe's beforeAll/afterAll (server node lifecycle), not a sibling describe: a sibling
+  // describe's tests would run after the afterAll above has already flushed/stopped the server node.
+  describe('Step command (Matter 1.6 Application Cluster Spec § 4.4.7.1)', () => {
+    let stepDevice: MatterbridgeEndpoint;
+
+    test('Create fan device with default OffLowMedHighAuto sequence', async () => {
+      stepDevice = new MatterbridgeEndpoint(fan, { id: 'FanControlServerStepTest' });
+      stepDevice.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0);
+      stepDevice.addRequiredClusterServers();
+      expect(await addDevice(aggregator, stepDevice)).toBeDefined();
+    });
+
+    test('Increase from Off steps to Low and converges PercentCurrent (§ 4.4.7.1.5)', async () => {
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
+
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Low);
+      const percentSetting = stepDevice.getAttribute(FanControl, 'percentSetting');
+      expect(percentSetting).toBe(stepDevice.getAttribute(FanControl, 'percentCurrent'));
+      expect(percentSetting).toBeGreaterThanOrEqual(1);
+      expect(percentSetting).toBeLessThanOrEqual(33);
+    });
+
+    test('Repeated Increase without wrap walks Low -> Medium -> High then clamps at High (§ 4.4.7.1.5)', async () => {
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Medium);
+
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.High);
+
+      // Already at the highest step value; non-wrap Increase SHALL remain at it.
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.High);
+    });
+
+    test('Increase with Wrap at the highest step value wraps to the lowest (§ 4.4.7.1.5)', async () => {
+      // Currently High (from the previous test).
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true }));
+
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Off);
+      expect(stepDevice.getAttribute(FanControl, 'percentSetting')).toBe(0);
+      expect(stepDevice.getAttribute(FanControl, 'percentCurrent')).toBe(0);
+    });
+
+    test('Decrease without wrap and LowestOff false clamps at Low instead of Off (§ 4.4.7.1.3 / § 4.4.7.1.5)', async () => {
+      await stepDevice.setAttribute(FanControl, 'fanMode', FanControl.FanMode.Low);
+
+      await stepDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false }));
+
+      // LowestOff false excludes Off from the step sequence, so Decrease at the bottom clamps back to Low.
+      expect(stepDevice.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Low);
+    });
+
+    test('Step on a MultiSpeed-enabled endpoint converges SpeedCurrent via the SpeedMax formula (§ 4.4.6.6.1 / § 4.4.7.1.5)', async () => {
+      const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'FanControlServerStepMultiSpeedTest' });
+      multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
+      multiSpeed.addRequiredClusterServers();
+      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+
+      await multiSpeed.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
+
+      const percentSetting = multiSpeed.getAttribute(FanControl, 'percentSetting');
+      expect(typeof percentSetting).toBe('number');
+      if (typeof percentSetting !== 'number') return; // Narrows the type below; the assertion above already failed the test if reached.
+      // speed = ceil( SpeedMax * (percent * 0.01) ), same formula #handlePercentSettingChanging applies.
+      expect(multiSpeed.getAttribute(FanControl, 'speedCurrent')).toBe(Math.ceil(10 * (percentSetting * 0.01)));
+      expect(multiSpeed.getAttribute(FanControl, 'speedCurrent')).toBe(multiSpeed.getAttribute(FanControl, 'speedSetting'));
+    });
   });
 });

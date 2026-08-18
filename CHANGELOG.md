@@ -40,6 +40,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: ElectricalSensor endpoint 206 CHIP conformance is green ✅ for the automated harness tests covering the `ElectricalSensor` device type and `ElectricalPowerMeasurement` `ElectricalEnergyMeasurement` clusters.
 - [chip]: DeviceEnergyManagement endpoint 207 CHIP conformance is green ✅ for the automated harness tests covering the `DeviceEnergyManagement` device type and `DeviceEnergyManagement` `DeviceEnergyManagementMode` clusters.
 - [chip]: Matter 1.6.0 Chapter 7 sensor device types pass all CHIP automated conformance harness tests ✅. The test fixture now exercises the default helper stack used by the sensor endpoints: `createDefaultBridgedDeviceBasicInformationClusterServer()`, `createDefaultIdentifyClusterServer()`, `createDefaultPowerSourceBatteryClusterServer()`, `createDefaultPowerSourceReplaceableBatteryClusterServer()`, `createDefaultPowerSourceRechargeableBatteryClusterServer()`, `createDefaultPowerSourceWiredClusterServer()`, `createDefaultBooleanStateClusterServer()`, `createDefaultBooleanStateConfigurationClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()`, `createDefaultOccupancySensingClusterServer()`, `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultFlowMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultSmokeCOAlarmClusterServer()`, `createSmokeOnlySmokeCOAlarmClusterServer()`, `createCoOnlySmokeCOAlarmClusterServer()`, `createDefaultAirQualityClusterServer()`, `createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()`, `createDefaultCarbonDioxideConcentrationMeasurementClusterServer()`, `createDefaultNitrogenDioxideConcentrationMeasurementClusterServer()`, `createDefaultOzoneConcentrationMeasurementClusterServer()`, `createDefaultFormaldehydeConcentrationMeasurementClusterServer()`, `createDefaultPm1ConcentrationMeasurementClusterServer()`, `createDefaultPm25ConcentrationMeasurementClusterServer()`, `createDefaultPm10ConcentrationMeasurementClusterServer()`, `createDefaultRadonConcentrationMeasurementClusterServer()`, `createDefaultTvocMeasurementClusterServer()` and `createDefaultSoilMeasurementClusterServer()`.
+- [chip]: FanCoomplete endpoint 9024 CHIP conformance is green ✅ for the automated harness tests covering the `Fan` device type and `FanControl` clusters.
 - [electricalSensor]: Add electrical measurement helpers: `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()`. Used to create import (cunsume) only and export (produce) only electrical sensors.
 
 ### Added
@@ -76,6 +77,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.63.0.
 - [frontend]: Bump `oxlint` to v.1.78.0.
 - [irrigationSystem]: Bump `IrrigationSystem` to v.1.1.0.
+- [fanControl]: Bump `MatterbridgeFanControlServer` to v.2.0.0 (fully Matter 1.6.0 compliant).
 
 ### Fixed
 

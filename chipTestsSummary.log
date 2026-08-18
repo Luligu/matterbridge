@@ -1,9 +1,17 @@
-Chip tests run started at 2026-08-17T20:51:56.900Z
+Chip tests run started at 2026-08-18T15:31:53.129Z
 
-✅ OccupancySensing attributes on OccupancySensor (TC_OCC_2_1.py)
-✅ OccupancySensing type interdependency on OccupancySensor (TC_OCC_2_2.py)
-✅ OccupancySensing hold time compatibility on OccupancySensor (TC_OCC_2_3.py)
-✅ OccupancySensing primary functionality on OccupancySensor (TC_OCC_3_1.py)
-✅ OccupancySensing subscription reports on OccupancySensor (TC_OCC_3_2.py)
+✅ FanControl mandatory functionality on Fan Complete (TC_FAN_2_1.py)
+✅ FanControl optional speed attributes on Fan Complete (Test_TC_FAN_2_2)
+✅ FanControl optional rock attributes on Fan Complete (TC_FAN_2_3.py)
+✅ FanControl optional wind attributes on Fan Complete (TC_FAN_2_4.py)
+✅ FanControl optional direction attributes on Fan Complete (Test_TC_FAN_2_5)
+✅ FanControl mandatory functionality with PercentSetting/FanMode ordering on Fan Complete (TC_FAN_3_1.py)
+❌ FanControl optional speed functionality on Fan Complete (TC_FAN_3_2.py)
+   ↳ Timing-fragile test, not a Matterbridge bug (see chipTests.md Known Issues): step 6's rapid, no-delay SpeedSetting writes let matter.js's subscription engine legitimately coalesce intermediate FanMode values into fewer reports than the exact count of 3 the test asserts. Reproduced identically by writing PercentSetting (not SpeedSetting) at the same pace with no Matterbridge involvement beyond the attribute write itself; TC_FAN_3_1.py only avoids this because its own assertion (FanMode report count equals PercentSetting report count) tolerates coalescing instead of requiring an exact count.
+✅ FanControl optional rock functionality on Fan Complete (TC_FAN_3_3.py)
+✅ FanControl optional wind functionality on Fan Complete (TC_FAN_3_4.py)
+✅ FanControl Step command functionality on Fan Complete (TC_FAN_3_5.py)
+✅ FanControl optional direction functionality on Fan Complete (Test_TC_FAN_3_6)
+✅ FanControl interaction with On/Off cluster on Fan Complete (TC_FAN_4_1.py)
 
-Summary: 5/5 tests passed.
+Summary: 11/12 tests passed.
