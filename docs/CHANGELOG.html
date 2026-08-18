@@ -160,6 +160,7 @@
 <li>[chip]: ElectricalSensor endpoint 206 CHIP conformance is green ✅ for the automated harness tests covering the <code>ElectricalSensor</code> device type and <code>ElectricalPowerMeasurement</code> <code>ElectricalEnergyMeasurement</code> clusters.</li>
 <li>[chip]: DeviceEnergyManagement endpoint 207 CHIP conformance is green ✅ for the automated harness tests covering the <code>DeviceEnergyManagement</code> device type and <code>DeviceEnergyManagement</code> <code>DeviceEnergyManagementMode</code> clusters.</li>
 <li>[chip]: Matter 1.6.0 Chapter 7 sensor device types pass all CHIP automated conformance harness tests ✅. The test fixture now exercises the default helper stack used by the sensor endpoints: <code>createDefaultBridgedDeviceBasicInformationClusterServer()</code>, <code>createDefaultIdentifyClusterServer()</code>, <code>createDefaultPowerSourceBatteryClusterServer()</code>, <code>createDefaultPowerSourceReplaceableBatteryClusterServer()</code>, <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>, <code>createDefaultPowerSourceWiredClusterServer()</code>, <code>createDefaultBooleanStateClusterServer()</code>, <code>createDefaultBooleanStateConfigurationClusterServer()</code>, <code>createDefaultIlluminanceMeasurementClusterServer()</code>, <code>createDefaultOccupancySensingClusterServer()</code>, <code>createDefaultTemperatureMeasurementClusterServer()</code>, <code>createDefaultPressureMeasurementClusterServer()</code>, <code>createDefaultFlowMeasurementClusterServer()</code>, <code>createDefaultRelativeHumidityMeasurementClusterServer()</code>, <code>createDefaultSmokeCOAlarmClusterServer()</code>, <code>createSmokeOnlySmokeCOAlarmClusterServer()</code>, <code>createCoOnlySmokeCOAlarmClusterServer()</code>, <code>createDefaultAirQualityClusterServer()</code>, <code>createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultCarbonDioxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultNitrogenDioxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultOzoneConcentrationMeasurementClusterServer()</code>, <code>createDefaultFormaldehydeConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm1ConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm25ConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm10ConcentrationMeasurementClusterServer()</code>, <code>createDefaultRadonConcentrationMeasurementClusterServer()</code>, <code>createDefaultTvocMeasurementClusterServer()</code> and <code>createDefaultSoilMeasurementClusterServer()</code>.</li>
+<li>[chip]: FanCoomplete endpoint 9024 CHIP conformance is green ✅ for the automated harness tests covering the <code>Fan</code> device type and <code>FanControl</code> clusters.</li>
 <li>[electricalSensor]: Add electrical measurement helpers: <code>createImportedElectricalEnergyMeasurementClusterServer()</code> and <code>createExportedElectricalEnergyMeasurementClusterServer()</code>. Used to create import (cunsume) only and export (produce) only electrical sensors.</li>
 </ul>
 <h3 id="added">Added</h3>
@@ -173,8 +174,10 @@
 <li>[occupancySensing]: Add <code>MatterbridgeOccupancySensingServer</code> to mirror Matter 1.6 <code>HoldTime</code> with the legacy <code>PIROccupiedToUnoccupiedDelay</code> attribute when both are exposed for backward compatibility.</li>
 <li>[concentrationMeasurement]: Add optional <code>minMeasuredValue</code> and <code>maxMeasuredValue</code> parameters to <code>createDefaultTvocMeasurementClusterServer()</code>.</li>
 <li>[frontend]: Add Soil Sensor and On/Off Sensor device icons.</li>
+<li>[frontend]: Add AC/DC current tooltips and full/differentiated battery level bar icons to the Home Devices power column.</li>
 <li>[chip]: Add <code>Chip Test</code> stack.</li>
 <li>[chip]: Add <code>Chip Test</code> pipe.</li>
+<li>[chip]: Add <code>Chip Test</code> TestEventTrigger.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -184,6 +187,7 @@
 <li>[matterbridge]: Bump <code>oxlint</code> to v.1.78.0.</li>
 <li>[core]: Bump <code>ws</code> to v.8.21.3.</li>
 <li>[powerSource]: Change <code>createDefaultPowerSourceBatteryClusterServer()</code> defaults to <code>batPercentRemaining</code> 100 and <code>batVoltage</code> 1500.</li>
+<li>[measurement]: Add optional <code>tolerance</code> parameter to <code>createDefaultTemperatureMeasurementClusterServer()</code>, <code>createDefaultRelativeHumidityMeasurementClusterServer()</code>, <code>createDefaultPressureMeasurementClusterServer()</code>, <code>createDefaultIlluminanceMeasurementClusterServer()</code> and <code>createDefaultFlowMeasurementClusterServer()</code>, and add optional <code>lightSensorType</code> parameter to <code>createDefaultIlluminanceMeasurementClusterServer()</code>.</li>
 <li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.8.49.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.5.8.</li>
 <li>[frontend]: Refactor the Devices Icon and Table views to render electrical measurements consistently, including imported/exported energy, <code>kW</code> power and <code>kWh</code> energy units.</li>
@@ -193,6 +197,7 @@
 <li>[frontend]: Bump <code>oxfmt</code> to v.0.63.0.</li>
 <li>[frontend]: Bump <code>oxlint</code> to v.1.78.0.</li>
 <li>[irrigationSystem]: Bump <code>IrrigationSystem</code> to v.1.1.0.</li>
+<li>[fanControl]: Bump <code>MatterbridgeFanControlServer</code> to v.2.0.0 (fully Matter 1.6.0 compliant).</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
