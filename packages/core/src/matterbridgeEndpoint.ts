@@ -3741,8 +3741,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence: FanControl.FanModeSequence.OffHigh, // Fixed attribute
-      percentSetting: 0, // Writable attribute
-      percentCurrent: 0,
+      percentSetting: fanMode === FanControl.FanMode.Off ? 0 : 100, // Writable attribute
+      percentCurrent: fanMode === FanControl.FanMode.Off ? 0 : 100,
     });
     return this;
   }
