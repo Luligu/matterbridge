@@ -30,6 +30,7 @@ import {
   mdiRobotVacuum,
   mdiMeterElectricOutline,
   mdiSprinklerVariant,
+  mdiValve,
 } from '@mdi/js';
 import { Icon } from '@mdi/react';
 // @mui/icons-material
@@ -52,7 +53,6 @@ import LockOpenIcon from '@mui/icons-material/LockOpen';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import MicrowaveIcon from '@mui/icons-material/Microwave';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive'; // Chime, Doorbell, AudioDoorbell
-import OpacityIcon from '@mui/icons-material/Opacity'; // WaterValve
 import SensorOccupiedIcon from '@mui/icons-material/SensorOccupied';
 import SensorsOffIcon from '@mui/icons-material/SensorsOff';
 import ThermostatIcon from '@mui/icons-material/Thermostat'; // Temperature
@@ -523,7 +523,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 
       {/* WaterValve */}
       {deviceType===0x0042 && clusters.filter(cluster => cluster.clusterName === 'ValveConfigurationAndControl' && cluster.attributeName === 'currentState').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<OpacityIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Closed':'Opened'}/>
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiValve} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Closed':'Opened'}/>
       ))}
       {/* IrrigationSystem */}
       {deviceType===0x0040 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
