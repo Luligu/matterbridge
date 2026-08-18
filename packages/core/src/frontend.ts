@@ -48,11 +48,17 @@ import { Diagnostic, Lifecycle, LogDestination, LogFormat as MatterLogFormat, Lo
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { getClusterNameById } from '@matter/types/cluster';
+import { AirQuality } from '@matter/types/clusters/air-quality';
 import type { Binding } from '@matter/types/clusters/binding';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
+import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { type ClusterId, type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
@@ -85,6 +91,7 @@ import {
 } from '@matterbridge/types';
 import { isBun } from '@matterbridge/utils/bun';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getEnumDescription } from '@matterbridge/utils/enum';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -1493,6 +1500,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000))
         attributes += `Cover position: ${attributeValue / 100}% `;
       if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
+      if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && attributeValue === null)
+        attributes += `Position: unknown Latch: unknown SecureState: unknown `;
+      if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && isValidObject(attributeValue)) {
+        const overallCurrentState = attributeValue as ClosureControl.OverallCurrentState;
+        attributes += `Position: ${getEnumDescription(ClosureControl.CurrentPosition, overallCurrentState.position, { fallback: 'unknown' })} `;
+        attributes += `Latch: ${overallCurrentState.latch ?? 'unknown'} `;
+        attributes += `SecureState: ${overallCurrentState.secureState ?? 'unknown'} `;
+      }
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
       if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
@@ -1506,12 +1521,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
         if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
       }
-      const operationalStateClusters = ['operationalState', 'rvcOperationalState'];
-      if (operationalStateClusters.includes(clusterName) && attributeName === 'operationalState') attributes += `OpState: ${attributeValue} `;
+      if (clusterName === 'operationalState' && attributeName === 'operationalState')
+        attributes += `OpState: ${getEnumDescription(OperationalState.OperationalStateEnum, attributeValue as OperationalState.OperationalStateEnum)} `;
+      if (clusterName === 'rvcOperationalState' && attributeName === 'operationalState')
+        attributes += `OpState: ${getEnumDescription(RvcOperationalState.OperationalState, attributeValue as RvcOperationalState.OperationalState)} `;
 
       if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
-      if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState') attributes += `State: ${attributeValue} `;
+      if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState')
+        attributes += `State: ${getEnumDescription(ValveConfigurationAndControl.ValveState, attributeValue as ValveConfigurationAndControl.ValveState, { fallback: 'unknown' })} `;
 
       if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
@@ -1531,8 +1549,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue))
         attributes += `Active alarms: ${stringify(attributeValue)} `;
 
-      if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${attributeValue} `;
-      if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${attributeValue} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState')
+        attributes += `Smoke: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
+      if (clusterName === 'smokeCoAlarm' && attributeName === 'coState')
+        attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
 
       if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
       if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
@@ -1545,32 +1565,19 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (attributeValue === null) attributes += `Illuminance: unknown `;
         else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx`;
       }
-      if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${attributeValue} `;
-      if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Voc: ${attributeValue} `;
-      if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm1: ${attributeValue} `;
-      if (clusterName === 'pm25ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm2.5: ${attributeValue} `;
-      if (clusterName === 'pm10ConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `Pm10: ${attributeValue} `;
-      if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') attributes += `CH₂O: ${attributeValue} `;
-      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') {
-        if (attributeValue === null) attributes += `Temperature: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100} °C `;
-      }
-      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') {
-        if (attributeValue === null) attributes += `Humidity: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Humidity: ${attributeValue / 100}% `;
-      }
-      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') {
-        if (attributeValue === null) attributes += `Pressure: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Pressure: ${attributeValue} hPa `;
-      }
-      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') {
-        if (attributeValue === null) attributes += `Flow: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Flow: ${attributeValue / 10} m³/h `;
-      }
-      if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') {
-        if (attributeValue === null) attributes += `Soil moisture: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Soil moisture: ${attributeValue}% `;
-      }
+      if (clusterName === 'airQuality' && attributeName === 'airQuality')
+        attributes += `Air quality: ${getEnumDescription(AirQuality.AirQualityEnum, attributeValue as AirQuality.AirQualityEnum)} `;
+      if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue')
+        appendMeasurement('Voc', getMeasurementText(attributeValue, 1, ''));
+      if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm1', getMeasurementText(attributeValue, 1, ''));
+      if (clusterName === 'pm25ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm2.5', getMeasurementText(attributeValue, 1, ''));
+      if (clusterName === 'pm10ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm10', getMeasurementText(attributeValue, 1, ''));
+      if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('CH₂O', getMeasurementText(attributeValue, 1, ''));
+      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') appendMeasurement('Temperature', getMeasurementText(attributeValue, 100, ' °C'));
+      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') appendMeasurement('Humidity', getMeasurementText(attributeValue, 100, '%'));
+      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pressure', getMeasurementText(attributeValue, 1, ' hPa'));
+      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') appendMeasurement('Flow', getMeasurementText(attributeValue, 10, ' m³/h'));
+      if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') appendMeasurement('Soil moisture', getMeasurementText(attributeValue, 1, '%'));
       if (clusterName === 'electricalPowerMeasurement' && attributeName === 'voltage') appendMeasurement('Voltage', getMeasurementText(attributeValue, 1_000, 'V'));
       if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activeCurrent') appendMeasurement('Current', getMeasurementText(attributeValue, 1_000, 'A'));
       if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activePower') appendMeasurement('Power', getMeasurementText(attributeValue, 1_000_000, 'kW'));

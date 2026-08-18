@@ -53,8 +53,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [occupancySensing]: Add `MatterbridgeOccupancySensingServer` to mirror Matter 1.6 `HoldTime` with the legacy `PIROccupiedToUnoccupiedDelay` attribute when both are exposed for backward compatibility.
 - [concentrationMeasurement]: Add optional `minMeasuredValue` and `maxMeasuredValue` parameters to `createDefaultTvocMeasurementClusterServer()`.
 - [frontend]: Add Soil Sensor and On/Off Sensor device icons.
+- [frontend]: Add AC/DC current tooltips and full/differentiated battery level bar icons to the Home Devices power column.
 - [chip]: Add `Chip Test` stack.
 - [chip]: Add `Chip Test` pipe.
+- [chip]: Add `Chip Test` TestEventTrigger.
 
 ### Changed
 
@@ -64,6 +66,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint` to v.1.78.0.
 - [core]: Bump `ws` to v.8.21.3.
 - [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
+- [measurement]: Add optional `tolerance` parameter to `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()` and `createDefaultFlowMeasurementClusterServer()`, and add optional `lightSensorType` parameter to `createDefaultIlluminanceMeasurementClusterServer()`.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
 - [frontend]: Bump `frontend` version to v.3.5.8.
 - [frontend]: Refactor the Devices Icon and Table views to render electrical measurements consistently, including imported/exported energy, `kW` power and `kWh` energy units.

@@ -25,8 +25,10 @@
 /* oxlint-disable typescript/no-non-null-assertion */
 
 import { CommonNumberTag } from '@matter/node';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { Closure } from './devices/closure.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
@@ -242,37 +244,58 @@ export async function createChipTestDevices(matterbridge: Matterbridge): Promise
   await registerDevice(ep, 'Smoke Alarm', 'SENSOR-07-09-1');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('SmokeCOAlarm')!, bridgedNode, powerSource], { id: 'COAlarm', number: EndpointNumber(7_09_2) });
-  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultPowerSourceBatteryClusterServer(90, PowerSource.BatChargeLevel.Ok);
   ep.createCoOnlySmokeCOAlarmClusterServer();
   await registerDevice(ep, 'CO Alarm', 'SENSOR-07-09-2');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('AirQualitySensor')!, bridgedNode, powerSource], { id: 'AirQualitySensor', number: EndpointNumber(7_10) });
-  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultPowerSourceBatteryClusterServer(70, PowerSource.BatChargeLevel.Ok);
   ep.createDefaultTvocMeasurementClusterServer(50, undefined, undefined, undefined, 0, 1000);
   ep.addOptionalClusterServers();
   await registerDevice(ep, 'Air Quality Sensor', 'SENSOR-07-10');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterFreezeDetector')!, bridgedNode, powerSource], { id: 'WaterFreezeDetector', number: EndpointNumber(7_11) });
-  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultPowerSourceBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok);
   ep.createDefaultBooleanStateClusterServer(false);
   ep.createDefaultBooleanStateConfigurationClusterServer();
   await registerDevice(ep, 'Water Freeze Detector', 'SENSOR-07-11');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterLeakDetector')!, bridgedNode, powerSource], { id: 'WaterLeakDetector', number: EndpointNumber(7_12) });
-  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultPowerSourceBatteryClusterServer(20, PowerSource.BatChargeLevel.Warning);
   ep.createDefaultBooleanStateClusterServer(false);
   ep.createDefaultBooleanStateConfigurationClusterServer();
   await registerDevice(ep, 'Water Leak Detector', 'SENSOR-07-12');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('RainSensor')!, bridgedNode, powerSource], { id: 'RainSensor', number: EndpointNumber(7_13) });
-  ep.createDefaultPowerSourceRechargeableBatteryClusterServer();
+  ep.createDefaultPowerSourceRechargeableBatteryClusterServer(10, PowerSource.BatChargeLevel.Critical);
   ep.createDefaultBooleanStateClusterServer(false);
   ep.createDefaultBooleanStateConfigurationClusterServer();
   await registerDevice(ep, 'Rain Sensor', 'SENSOR-07-13');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('SoilSensor')!, bridgedNode, powerSource], { id: 'SoilSensor', number: EndpointNumber(7_14) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createDefaultPowerSourceWiredClusterServer(PowerSource.WiredCurrentType.Dc);
   ep.createDefaultSoilMeasurementClusterServer(50);
   await registerDevice(ep, 'Soil Sensor', 'SENSOR-07-14');
+
+  // Chapter 8 - Entry Control Device Types
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLock', number: EndpointNumber(8_01) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  await registerDevice(ep, 'Door Lock', 'ENTRY-08-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLockController')!, bridgedNode, powerSource], { id: 'DoorLockController', number: EndpointNumber(8_02) });
+  await registerDevice(ep, 'Door Lock Controller', 'ENTRY-08-02');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCovering', number: EndpointNumber(8_03) });
+  await registerDevice(ep, 'Window Covering', 'ENTRY-08-03');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
+  await registerDevice(ep, 'Window Covering Controller', 'ENTRY-08-04');
+
+  ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05) });
+  await registerDevice(ep, 'Closure', 'ENTRY-08-05');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
+  await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');
 }
 // v8 ignore end
