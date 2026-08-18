@@ -1,6 +1,6 @@
 {
   "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*"],
-  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml"],
+  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml"],
   "tests": [
     {
       "name": "Generic device basic composition",
@@ -943,6 +943,39 @@
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
       "comment": "Requires OO.C: the DUT itself must issue On/Off/Toggle/OffWithEffect/OnWithRecallGlobalScene/OnWithTimedOff commands to the TH. Matterbridge only ever exposes an OnOff cluster server for bridged devices, never acts as an OnOff client sending commands to a controller — permanently inapplicable."
+    },
+    {
+      "name": "Groups attributes on OnOffLight",
+      "test": "Test_TC_G_2_1",
+      "endpoint": 401,
+      "args": ["--PICS /root/groups.pics"]
+    },
+    {
+      "name": "Groups AddGroup, ViewGroup, RemoveGroup, RemoveAllGroups commands on OnOffLight",
+      "test": "TC_G_2_2.py",
+      "endpoint": 401,
+      "args": ["--PICS /root/groups.pics"]
+    },
+    {
+      "name": "Groups GetGroupMembership, AddGroupIfIdentifying manual verification",
+      "test": "Test_TC_G_2_3",
+      "endpoint": 401,
+      "args": ["--PICS /root/groups.pics"],
+      "skip": true,
+      "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
+    },
+    {
+      "name": "Groups AddGroup with same GroupID on multiple endpoints",
+      "test": "Test_TC_G_2_4",
+      "args": ["--PICS /root/groups.pics"],
+      "comment": "Patched locally (docker/chip-test/patches/Test_TC_G_2_4.yaml, see chip-tests instructions §12) to fix its Step 6 GroupTable read (missing a '&& !G.S.F00' PICS guard, so it wrongly ran and failed alongside the F00-gated Step 7 duplicate whenever GroupNames is supported) and to pin PIXIT.G.ENDPOINT1/ENDPOINT2 to real Groups-server endpoints 401/402 in the YAML's own config defaults instead of via CLI overrides, since chiptool.py's generic PIXIT override path stores CLI values as raw strings with no int coercion and that broke the response's integer Endpoints array comparison."
+    },
+    {
+      "name": "Groups cluster commands with client as DUT",
+      "test": "Test_TC_G_3_2",
+      "args": ["--PICS /root/groups.pics"],
+      "skip": true,
+      "comment": "Requires G.C: the DUT itself must issue AddGroup/ViewGroup/RemoveGroup/... commands to the TH as a Groups client, and every step in this YAML is disabled:true (manual verification flow). Matterbridge only ever exposes a Groups cluster server for bridged devices, never acts as a client — permanently inapplicable."
     }
   ]
 }

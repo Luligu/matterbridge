@@ -126,3 +126,22 @@ Aggregator clusters:
   Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
   `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
   proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
+
+- **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
+  (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
+  GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response *without* a `GroupName`
+  field, while the very next Step 7 (`PICS: GRPKEY.S.A0001 && G.S.F00`) re-reads the same attribute and
+  asserts a response *with* `GroupName` — Step 7's guard implies Step 6 was meant to only run when
+  `!G.S.F00`, but the upstream file never adds that negation, so with `G.S.F00=1` (GroupNames supported, as
+  Matterbridge's `Groups` cluster server always reports on `OnOffLight` endpoint 401) both steps run against
+  the same real response and Step 6 fails on the extra `GroupName` field. Confirmed unfixed on
+  `project-chip/connectedhomeip` master as of this writing (not a Matterbridge bug). The patch adds
+  `&& !G.S.F00` to Step 6's `PICS` line, matching the pattern already used by the file's own Step 11/Step 11
+  pair. The same patched copy also pins `PIXIT.G.ENDPOINT1`/`PIXIT.G.ENDPOINT2` to real Groups-server
+  endpoints `401`/`402` directly in the YAML's `config:` block rather than via a `chipTests.json` CLI
+  override: `chiptool.py`'s generic PIXIT-override path (`tests_tool.py`'s `send_yaml_command`) stores
+  `--Groups.Endpoint1 401`-style overrides as raw strings with no int coercion (unlike the well-known
+  `endpoint` config key, which has its own dedicated handling), so the response's integer `Endpoints` array
+  (`[401, 402]`) failed to match the string-typed expected value (`["401", "402"]`) until the defaults were
+  pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
+  the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
