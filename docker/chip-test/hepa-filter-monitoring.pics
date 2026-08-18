@@ -1,0 +1,15 @@
+# To run tests on HepaFilterMonitoring --PICS is required
+# Matches createDefaultHepaFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+HEPAFREMON.S=1
+HEPAFREMON.S.F00=1 # Condition
+HEPAFREMON.S.F01=1 # Warning
+HEPAFREMON.S.F02=1 # ReplacementProductList
+HEPAFREMON.S.A0000=1 # Condition
+HEPAFREMON.S.A0001=1 # DegradationDirection
+HEPAFREMON.S.A0002=1 # ChangeIndication
+HEPAFREMON.S.A0003=1 # InPlaceIndicator
+HEPAFREMON.S.A0004=1 # LastChangedTime
+HEPAFREMON.S.A0005=1 # ReplacementProductList
+HEPAFREMON.S.C00.Rsp=1 # ResetCondition

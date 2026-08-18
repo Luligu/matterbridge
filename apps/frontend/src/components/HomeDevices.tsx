@@ -1,5 +1,11 @@
 // @mui/icons-material
+import Battery1BarIcon from '@mui/icons-material/Battery1Bar';
+import Battery2BarIcon from '@mui/icons-material/Battery2Bar';
+import Battery3BarIcon from '@mui/icons-material/Battery3Bar';
 import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
+import Battery5BarIcon from '@mui/icons-material/Battery5Bar';
+import Battery6BarIcon from '@mui/icons-material/Battery6Bar';
+import BatteryFullIcon from '@mui/icons-material/BatteryFull';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -31,6 +37,17 @@ import { WebSocketContext } from './WebSocketProvider';
  */
 const getRowKey = (row: MixedApiDevices) => {
   return `${row.pluginName}::${row.serial}`;
+};
+
+const getBatteryIcon = (batteryLevel: number | undefined, fallbackIcon: typeof Battery6BarIcon) => {
+  if (batteryLevel === undefined) return fallbackIcon;
+  if (batteryLevel === 100) return BatteryFullIcon;
+  if (batteryLevel >= 80) return Battery6BarIcon;
+  if (batteryLevel >= 60) return Battery5BarIcon;
+  if (batteryLevel >= 40) return Battery4BarIcon;
+  if (batteryLevel >= 20) return Battery3BarIcon;
+  if (batteryLevel >= 10) return Battery2BarIcon;
+  return Battery1BarIcon;
 };
 
 interface ExtendedBaseRegisteredPlugin extends Omit<ApiPlugin, 'schemaJson' | 'configJson'> {
@@ -132,31 +149,38 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       id: 'powerSource',
       render: (value, rowKey, mixedDevice, _column) => {
         if (mixedDevice.powerSource === 'ac' || mixedDevice.powerSource === 'dc') {
-          return <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />;
+          return (
+            <Tooltip title={mixedDevice.powerSource === 'ac' ? 'AC current' : 'DC current'}>
+              <ElectricalServicesIcon fontSize="small" sx={{ color: 'var(--primary-color)' }} />
+            </Tooltip>
+          );
         } else if (mixedDevice.powerSource === 'ok') {
-          if (mixedDevice.batteryLevel) {
+          const BatteryIcon = getBatteryIcon(mixedDevice.batteryLevel, Battery6BarIcon);
+          if (mixedDevice.batteryLevel !== undefined) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize="small" sx={{ color: 'green' }} />
+                <BatteryIcon fontSize="small" sx={{ color: 'green' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'gray' }} />;
+          } else return <BatteryIcon fontSize="small" sx={{ color: 'gray' }} />;
         } else if (mixedDevice.powerSource === 'warning') {
-          if (mixedDevice.batteryLevel) {
+          const BatteryIcon = getBatteryIcon(mixedDevice.batteryLevel, Battery3BarIcon);
+          if (mixedDevice.batteryLevel !== undefined) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />
+                <BatteryIcon fontSize="small" sx={{ color: 'yellow' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'yellow' }} />;
+          } else return <BatteryIcon fontSize="small" sx={{ color: 'yellow' }} />;
         } else if (mixedDevice.powerSource === 'critical') {
-          if (mixedDevice.batteryLevel) {
+          const BatteryIcon = getBatteryIcon(mixedDevice.batteryLevel, Battery1BarIcon);
+          if (mixedDevice.batteryLevel !== undefined) {
             return (
               <Tooltip title={`Battery level: ${mixedDevice.batteryLevel}%`}>
-                <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />
+                <BatteryIcon fontSize="small" sx={{ color: 'red' }} />
               </Tooltip>
             );
-          } else return <Battery4BarIcon fontSize="small" sx={{ color: 'red' }} />;
+          } else return <BatteryIcon fontSize="small" sx={{ color: 'red' }} />;
         } else return <span></span>;
       },
     },
@@ -471,7 +495,10 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     if (!device.configUrl) return;
     if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
       const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
-      const pluginFrontendPathWithTrailingSlash = pluginFrontendPath.endsWith('/') ? pluginFrontendPath : `${pluginFrontendPath}/`;
+      // Add the trailing slash to the path only, leaving any query string and hash untouched.
+      const pluginFrontendUrl = new URL(pluginFrontendPath, window.location.origin);
+      if (!pluginFrontendUrl.pathname.endsWith('/')) pluginFrontendUrl.pathname += '/';
+      const pluginFrontendPathWithTrailingSlash = `${pluginFrontendUrl.pathname}${pluginFrontendUrl.search}${pluginFrontendUrl.hash}`;
       console.log(
         'handleConfigUrl opening plugin frontend for device:',
         device.name,

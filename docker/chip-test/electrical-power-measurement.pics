@@ -1,0 +1,24 @@
+# To run tests on ElectricalPowerMeasurement --PICS is required
+# Matches createDefaultElectricalPowerMeasurementClusterServer() on CHIP ElectricalSensor endpoint 206
+EPM.S=1
+EPM.S.F00=0 # DirectCurrent
+EPM.S.F01=1 # AlternatingCurrent
+EPM.S.A0000=1 # PowerMode
+EPM.S.A0001=1 # NumberOfMeasurementTypes
+EPM.S.A0002=1 # Accuracy
+EPM.S.A0003=0 # Ranges
+EPM.S.A0004=1 # Voltage
+EPM.S.A0005=1 # ActiveCurrent
+EPM.S.A0006=0 # ReactiveCurrent
+EPM.S.A0007=0 # ApparentCurrent
+EPM.S.A0008=1 # ActivePower
+EPM.S.A0009=0 # ReactivePower
+EPM.S.A000a=0 # ApparentPower
+EPM.S.A000b=0 # RMSVoltage
+EPM.S.A000c=0 # RMSCurrent
+EPM.S.A000d=0 # RMSPower
+EPM.S.A000e=1 # Frequency
+EPM.S.A000f=0 # HarmonicCurrents
+EPM.S.A0010=0 # HarmonicPhases
+EPM.S.A0011=0 # PowerFactor
+EPM.S.A0012=0 # NeutralCurrent

@@ -645,6 +645,8 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     // Convert the map to an array
     const plugins: StoragePlugin[] = [];
     for (const plugin of this.array()) {
+      // v8 ignore next - Skip matterbridge-chip plugin in demo mode
+      if (process.env.MATTERBRIDGE_DEMO_DEVICES && plugin.name === 'matterbridge-chip') continue; // Skip matterbridge-chip plugin in demo mode
       plugins.push({
         name: plugin.name,
         path: plugin.path,

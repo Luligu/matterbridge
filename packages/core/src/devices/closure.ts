@@ -28,7 +28,7 @@
 // @matter
 import { ClosureTag } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
-import { StatusResponse } from '@matter/types';
+import { type EndpointNumber, StatusResponse } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { Identify } from '@matter/types/clusters/identify';
 import type { Semtag } from '@matter/types/globals';
@@ -158,6 +158,17 @@ export interface ClosureOptions {
   /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
   pedestrian?: boolean;
   /**
+   * The unique storage key for the endpoint.
+   * If not provided, a default key will be used.
+   */
+  id?: string;
+  /**
+   * The endpoint number for the endpoint.
+   * If not provided, the endpoint will be created with the next available endpoint number.
+   * If provided, the endpoint will be created with the specified endpoint number.
+   */
+  number?: EndpointNumber;
+  /**
    * Semantic tags for endpoint disambiguation. Defaults to the Closure Covering tag.
    *
    * A Closure SHALL use exactly one semantic tag from the Closure namespace (0x44) in the TagList attribute
@@ -201,10 +212,13 @@ export class Closure extends MatterbridgeEndpoint {
       latchControlModes = { remoteLatching: true, remoteUnlatching: true },
       ventilation = false,
       pedestrian = false,
+      id,
+      number,
       tagList = [getSemtag(ClosureTag.Covering)],
     } = options;
     super(powerSourceType === 'None' ? [closure] : [closure, powerSource], {
-      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      id: id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number,
       tagList,
     });
 

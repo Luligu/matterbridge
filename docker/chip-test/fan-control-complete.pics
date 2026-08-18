@@ -1,0 +1,23 @@
+# To run tests on FanControl --PICS is required
+# Matches createCompleteFanControlClusterServer() (all features, OffLowMedHighAuto) on CHIP Fan Complete endpoint 9024
+PICS_SDK_CI_ONLY=1
+FAN.S=1
+FAN.S.F00=1 # MultiSpeed
+FAN.S.F01=1 # Auto
+FAN.S.F02=1 # Rocking
+FAN.S.F03=1 # Wind
+FAN.S.F04=1 # Step
+FAN.S.F05=1 # AirflowDirection
+FAN.S.A0000=1 # FanMode
+FAN.S.A0001=1 # FanModeSequence
+FAN.S.A0002=1 # PercentSetting
+FAN.S.A0003=1 # PercentCurrent
+FAN.S.A0004=1 # SpeedMax
+FAN.S.A0005=1 # SpeedSetting
+FAN.S.A0006=1 # SpeedCurrent
+FAN.S.A0007=1 # RockSupport
+FAN.S.A0008=1 # RockSetting
+FAN.S.A0009=1 # WindSupport
+FAN.S.A000a=1 # WindSetting
+FAN.S.A000b=1 # AirflowDirection
+FAN.S.C00.Rsp=1 # Step

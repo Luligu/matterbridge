@@ -333,8 +333,11 @@
         "--coverage.include=packages/core/src/behaviors/*.ts",
         "--coverage.exclude=packages/core/src/behaviors/export.ts",
         "packages/core/vitest/behaviors/bindingServer.test.ts",
+        "packages/core/vitest/behaviors/deviceEnergyManagementServer.test.ts",
         "packages/core/vitest/behaviors/doorLockServer.test.ts",
-        "packages/core/vitest/behaviors/matterbridgeServer.test.ts"
+        "packages/core/vitest/behaviors/fanControlServer.test.ts",
+        "packages/core/vitest/behaviors/matterbridgeServer.test.ts",
+        "packages/core/vitest/behaviors/occupancySensingServer.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

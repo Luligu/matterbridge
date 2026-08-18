@@ -77,6 +77,7 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { Identify } from '@matter/types/clusters/identify';
+import type { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import type { ModeSelect } from '@matter/types/clusters/mode-select';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -168,6 +169,8 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getExportedElectricalEnergyMeasurementClusterServer,
+  getImportedElectricalEnergyMeasurementClusterServer,
   invokeBehaviorCommand,
   lowercaseFirstLetter,
   setAttribute,
@@ -2295,6 +2298,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energyImported - The total consumption value in mW/h.
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported, energyExported })`.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(
@@ -2304,6 +2311,42 @@ export class MatterbridgeEndpoint extends Endpoint {
         ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
       ),
       getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ImportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyImported - The total consumption value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported })`.
+   */
+  createImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getImportedElectricalEnergyMeasurementClusterServer(energyImported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ExportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyExported - The total production value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported })`.
+   */
+  createExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getExportedElectricalEnergyMeasurementClusterServer(energyExported),
     );
     return this;
   }
@@ -3698,8 +3741,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence: FanControl.FanModeSequence.OffHigh, // Fixed attribute
-      percentSetting: 0, // Writable attribute
-      percentCurrent: 0,
+      percentSetting: fanMode === FanControl.FanMode.Off ? 0 : 100, // Writable attribute
+      percentCurrent: fanMode === FanControl.FanMode.Off ? 0 : 100,
     });
     return this;
   }
@@ -4500,10 +4543,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} measuredValue - The measured value of the temperature x 100. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the temperature x 100. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the temperature x 100. Default is null.
+   * @param {number} tolerance - The tolerance of the temperature measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultTemperatureMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
@@ -4513,10 +4562,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} measuredValue - The measured value of the relative humidity x 100. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
+   * @param {number} tolerance - The tolerance of the relative humidity measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultRelativeHumidityMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
@@ -4526,6 +4581,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
+   * @param {number} tolerance - The tolerance of the pressure measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4537,8 +4593,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - 1 kPa = 10 hPa
    * - 1 inHg = 33.8639 hPa
    */
-  createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultPressureMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
@@ -4548,6 +4609,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} measuredValue - The measured value of illuminance. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of illuminance. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of illuminance. Default is null.
+   * @param {number} tolerance - The tolerance of the illuminance measurement. Default is 0.
+   * @param {IlluminanceMeasurement.LightSensorType | null} lightSensorType - The type of light sensor. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4563,8 +4626,17 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
    * - Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
-  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultIlluminanceMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+    lightSensorType: IlluminanceMeasurement.LightSensorType | null = null,
+  ): this {
+    this.behaviors.require(
+      IlluminanceMeasurementServer,
+      getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance, lightSensorType),
+    );
     return this;
   }
 
@@ -4574,10 +4646,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
+   * @param {number} tolerance - The tolerance of the flow measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultFlowMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 

@@ -14,6 +14,7 @@ const NAME = 'MatterbridgeServer';
 const MATTER_PORT = 11500;
 const MATTER_CREATE_ONLY = true;
 
+import { Bytes } from '@matter/general';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { Status } from '@matter/types';
@@ -75,6 +76,7 @@ import { type AnsiLogger, LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
 import { MatterbridgeServer } from '../../src/behaviors/matterbridgeServer.js';
+import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';
 import { RoboticVacuumCleaner } from '../../src/devices/roboticVacuumCleaner.js';
 import {
@@ -927,6 +929,11 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('FanControl server', async () => {
+    // vent uses createDefaultFanControlClusterServer() (Auto + Step, FanModeSequence OffLowMedHighAuto), whose
+    // 1-100 PercentSetting domain splits into Low 1-33 / Medium 34-66 / High 67-100 (see fanControlServer.ts's
+    // computePercentRanges()). Step (Matter 1.6 Application Cluster Spec § 4.4.7.1.5) moves FanMode across that
+    // step sequence and lands PercentSetting/PercentCurrent on the boundary of the newly-entered range, so
+    // positioning between calls is done via FanMode (not PercentCurrent directly, which Step itself derives).
     const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     vent.addCommandHandler('step', (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -934,46 +941,59 @@ describe('Server clusters and behaviors', () => {
 
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
+    // Off -> Low (lowest step value above Off).
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
     expect(stepCalls[0]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(1);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    // High, Increase without wrap: already at the highest step value, so it wraps only because Wrap is true here.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
     expect(stepCalls[1]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(1);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    // High, Increase with Wrap and LowestOff: wraps all the way to Off.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
     expect(stepCalls[2]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
-
+    // Medium -> Low (highest step value below Medium).
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Medium);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
     expect(stepCalls[3]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(33);
 
+    // Low, Decrease with Wrap (no reposition — continues from the previous step's Low): wraps to High.
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
     expect(stepCalls[4]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.High);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 0);
-
+    // Off, Decrease with Wrap and LowestOff: wraps to High (Off is itself the bottom of the step sequence here).
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Off);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
     expect(stepCalls[5]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.High);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
-
+    // Low, Decrease without wrap, LowestOff true: steps down to Off.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Low);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true });
     expect(stepCalls[6]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
+    // An invalid Direction value is malformed input, not a valid Decrease: a safe no-op, not a guess.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Medium);
     await vent.setAttribute(FanControl.id, 'percentCurrent', 30);
-
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: 99 as FanControl.StepDirection, wrap: false, lowestOff: false });
     expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: 99, wrap: false, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(30);
   });
 
@@ -1344,6 +1364,135 @@ describe('Server clusters and behaviors', () => {
     } finally {
       vi.useRealTimers();
     }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // Seed 3 ThermostatSuggestions entries, all referencing preset 0, to set up the Presets removal cascade below (the
+    // scenario above already drains the list to empty, so it is reseeded here through real add commands, matching the
+    // earlier scenarios, rather than the try/finally-scoped flow above). The first, being immediately effective,
+    // becomes CurrentThermostatSuggestion as part of the add command's own re-evaluation. Removing preset 0 via a
+    // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that
+    // preset, nulls it (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
+    // `presets$AtomicChanged` through a committed atomic write (AtomicWriteHandler), which local-actor/command-context
+    // test writes bypass entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite()
+    // does it.
+    for (let i = 0; i < 3; i++) {
+      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
+        presetHandle: Uint8Array.from([0]),
+        effectiveTime: null,
+        expirationInMinutes: 30,
+      });
+    }
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ presetHandle: Uint8Array.from([0]) });
+
+    const thermostatSuggestionBehavior = MatterbridgeThermostatServer.with(
+      Thermostat.Feature.Heating,
+      Thermostat.Feature.Cooling,
+      Thermostat.Feature.AutoMode,
+      Thermostat.Feature.Presets,
+      Thermostat.Feature.ThermostatSuggestions,
+    );
+    const presetsWithoutPreset0 = thermostatPresets.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([0])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset0, thermostatPresets, undefined as never);
+    // The reactor runs in its own dedicated, independently-committed transaction (matching production), so its
+    // effect is not necessarily visible synchronously after emit() returns.
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+
+    // Regression test: CurrentThermostatSuggestion must be nulled whenever its own PresetHandle was removed, even
+    // when the ThermostatSuggestions list itself is unaffected (already empty here, so its length doesn't change).
+    // Matter 1.6 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
+    // of point 2 (which only covers ThermostatSuggestions entries).
+    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
+      uniqueId: 5,
+      presetHandle: Uint8Array.from([1]),
+      effectiveTime: 1700000000,
+      expirationTime: 1700001800,
+    });
+    const presetsWithoutPreset1 = presetsWithoutPreset0.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([1])));
+    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset1, presetsWithoutPreset0, undefined as never);
+    await vi.waitFor(() => {
+      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+    });
+    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+  });
+
+  test('removeThermostatSuggestionsForRemovedPresets branch coverage', () => {
+    // Exercises MatterbridgeThermostatServer['removeThermostatSuggestionsForRemovedPresets'] directly against a stub
+    // state/endpoint, mirroring the private-method call pattern used for setpointRaiseLower above. This sidesteps
+    // matter.js's Presets struct validation on presets$AtomicChanged (which rejects a committed entry with a null
+    // PresetHandle), letting each branch be exercised with data that would not otherwise reach the reactor.
+    const info = vi.fn();
+    const debug = vi.fn();
+    const endpoint = {
+      maybeId: 'thermostatSuggestionBranches',
+      maybeNumber: 1,
+      stateOf: () => ({ log: { info, debug } }),
+    };
+    const callReactor = (state: Record<string, unknown>, newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]) => {
+      const server = { state, endpoint } as unknown as MatterbridgeThermostatServer;
+      (
+        MatterbridgeThermostatServer.prototype as unknown as { removeThermostatSuggestionsForRemovedPresets: (n: Thermostat.Preset[], o: Thermostat.Preset[]) => void }
+      ).removeThermostatSuggestionsForRemovedPresets.call(server, newPresets, oldPresets);
+    };
+    const pendingPreset: Thermostat.Preset = {
+      presetHandle: null,
+      presetScenario: Thermostat.PresetScenario.Sleep,
+      name: 'Pending',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
+    const preset2: Thermostat.Preset = {
+      presetHandle: Uint8Array.from([2]),
+      presetScenario: Thermostat.PresetScenario.Wake,
+      name: 'Preset2',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
+    const preset3: Thermostat.Preset = {
+      presetHandle: Uint8Array.from([3]),
+      presetScenario: Thermostat.PresetScenario.Vacation,
+      name: 'Preset3',
+      coolingSetpoint: 2600,
+      heatingSetpoint: 2000,
+      builtIn: null,
+    };
+    const suggestionForPreset2: Thermostat.ThermostatSuggestion = { uniqueId: 10, presetHandle: Uint8Array.from([2]), effectiveTime: 1700000000, expirationTime: 1700003600 };
+    const suggestionForPreset3: Thermostat.ThermostatSuggestion = { uniqueId: 11, presetHandle: Uint8Array.from([3]), effectiveTime: 1700000000, expirationTime: 1700003600 };
+
+    // Line 76 false branch + line 84 true branch: a Preset with a null PresetHandle (skipped, not deduped through
+    // Bytes.toHex(null)) among presets that are only added, never removed, so the reactor returns early untouched.
+    const state1 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
+    callReactor(state1, [pendingPreset, preset2, preset3], [pendingPreset, preset2]);
+    expect(state1.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state1.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(info).not.toHaveBeenCalled();
+
+    // Line 97 true branch: a Preset is removed, but neither ThermostatSuggestions nor CurrentThermostatSuggestion
+    // reference it, so the reactor returns early once it determines neither changed.
+    const state2 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
+    callReactor(state2, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
+    expect(state2.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state2.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(info).not.toHaveBeenCalled();
+
+    // Line 106 false branch: the removed Preset is referenced by a ThermostatSuggestions entry (pruned) but not by
+    // CurrentThermostatSuggestion, which is left untouched.
+    const state3 = {
+      thermostatSuggestions: [suggestionForPreset2, suggestionForPreset3],
+      currentThermostatSuggestion: suggestionForPreset2,
+      thermostatSuggestionNotFollowingReason: { ongoingHold: true },
+    };
+    callReactor(state3, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
+    expect(state3.thermostatSuggestions).toEqual([suggestionForPreset2]);
+    expect(state3.currentThermostatSuggestion).toBe(suggestionForPreset2);
+    expect(state3.thermostatSuggestionNotFollowingReason).toEqual({ ongoingHold: true });
+    expect(info).toHaveBeenCalledTimes(1);
   });
 
   test('ValveConfigurationAndControl server', async () => {
@@ -1413,9 +1562,30 @@ describe('Server clusters and behaviors', () => {
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
 
-    await expectCommand(smoke, SmokeCoAlarm, 'selfTestRequest', undefined, (data) => {
-      expect(data.cluster).toBe('smokeCoAlarm');
-    });
+    // Matter 1.6 Application Cluster Specification, 2.11.9.1.1 SelfTestRequest: a request is rejected with BUSY
+    // when ExpressedState is not Normal (here forced via testInProgress, since the plugin command handler still
+    // runs first regardless).
+    await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', true);
+    await expect(smoke.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest')).rejects.toMatchObject({ code: Status.Busy });
+    await smoke.setAttribute(SmokeCoAlarm.id, 'testInProgress', false);
+
+    // Reduce the self-test duration so the timer-driven completion (#completeSelfTest) fires promptly and does not
+    // leak a pending timer into later tests.
+    const originalSelfTestDurationSeconds = MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds;
+    MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds = 0;
+    try {
+      await expectCommand(smoke, SmokeCoAlarm, 'selfTestRequest', undefined, (data) => {
+        expect(data.cluster).toBe('smokeCoAlarm');
+      });
+      // With selfTestDurationSeconds reduced to 0, the completion timer may already have fired by the time control
+      // returns here, so only the post-completion state (not the transient Testing state) is asserted deterministically.
+      await vi.waitFor(() => {
+        expect(smoke.getAttribute(SmokeCoAlarm.id, 'testInProgress')).toBe(false);
+      });
+      expect(smoke.getAttribute(SmokeCoAlarm.id, 'expressedState')).toBe(SmokeCoAlarm.ExpressedState.Normal);
+    } finally {
+      MatterbridgeSmokeCoAlarmServer.selfTestDurationSeconds = originalSelfTestDurationSeconds;
+    }
 
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
@@ -1516,7 +1686,7 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('DeviceEnergyManagement server', async () => {
-    const powerAdjustRequest = { power: 500, duration: 60, cause: 'Test' };
+    const powerAdjustRequest = { power: 500, duration: 60, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization };
     const cancelCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: unknown }> = [];
 
     energyManagement.addCommandHandler('cancelPowerAdjustRequest', (data) => {
@@ -1528,6 +1698,13 @@ describe('Server clusters and behaviors', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-3000);
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(2000);
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+
+    // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+    // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
+    await energyManagement.setAttribute(DeviceEnergyManagement.id, 'powerAdjustmentCapability', {
+      powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 10, maxDuration: 120 }],
+      cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+    });
 
     await expectCommand(energyManagement, DeviceEnergyManagement, 'powerAdjustRequest', powerAdjustRequest, (data) => {
       expect(data.cluster).toBe('deviceEnergyManagement');

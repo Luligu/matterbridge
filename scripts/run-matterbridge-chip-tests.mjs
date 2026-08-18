@@ -18,21 +18,31 @@
  *                          persisted to disk — the container restart that "resetBefore"/"resetAfter" also
  *                          performs already clears any cluster state kept purely in memory, with no glob
  *                          needed for that.
- *   "yamlTests"            (optional) The list of YAML certification tests (run through chip-tool's
- *                          websocket test runner, scripts/tests/chipyaml/chiptool.py) to run — see below.
- *                          chip-tool's own persistent storage inside the image already holds a fabric paired
- *                          with the matterbridge instance, so each invocation just spawns a short-lived
- *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
- *                          separate commissioning step needed. Defaults to an empty array.
- *   "phytonTests"          (optional) The list of Python (src/python_testing/*.py) tests to run — see
- *                          below. Defaults to an empty array.
- * Each yamlTests/phytonTests entry has:
+ *   "patches"             (optional) Filenames under docker/chip-test/patches/, each copied into the
+ *                          container (overwriting the same-named file under src/python_testing/) right
+ *                          after it (re)starts — see below. Defaults to an empty array.
+ *   "tests"                (optional) The unified list of CHIP tests to run, YAML certification tests and
+ *                          Python tests mixed together — see below. Defaults to an empty array.
+ * Each tests entry has:
  *   "name"                 Human-readable label, matched (case-insensitively, substring) by --test.
- *   "test"                 Required. The test identifier: a YAML test name with no extension (yamlTests,
- *                          e.g. "Test_TC_PS_2_1") or a filename under src/python_testing/ (phytonTests,
- *                          e.g. "TC_PS_2_1.py").
+ *   "test"                 Required. The test identifier. A filename ending in ".py" is run as a Python test
+ *                          (src/python_testing/<test>, e.g. "TC_PS_2_1.py"); anything else is run as a YAML
+ *                          certification test with no extension (e.g. "Test_TC_PS_2_1"), through chip-tool's
+ *                          websocket test runner, scripts/tests/chipyaml/chiptool.py. chip-tool's own
+ *                          persistent storage inside the image already holds a fabric paired with the
+ *                          matterbridge instance, so each YAML invocation just spawns a short-lived
+ *                          `chip-tool interactive server`, runs the one test, and tears it down again — no
+ *                          separate commissioning step needed.
+ *   "endpoint"             (optional) Endpoint number, passed as "--endpoint <n>" ahead of "args" as the
+ *                          first CLI arg after the test name. Also pinned into the running Matterbridge
+ *                          instance before the test runs (see setActiveTestEndpoint()), via a "SetTestEndpoint"
+ *                          command written into the CHIP test app-pipe — chipTests.ts reads that pin so
+ *                          GeneralDiagnostics.TestEventTrigger handlers, which get no endpoint field on the
+ *                          wire, can target the one endpoint the test names instead of broadcasting to every
+ *                          endpoint that implements the affected cluster. Written before every test (as "none"
+ *                          when unset), so a pin never leaks from one test into the next.
  *   "args"                 (optional) Array of strings, each split on whitespace and appended as CLI args
- *                          after the test name, e.g. ["--endpoint 0", "--PICS /root/matterbridge.pics"].
+ *                          after the test name (and after "--endpoint", if set), e.g. ["--PICS /root/matterbridge.pics"].
  *   "input"                (optional) String piped to the test's stdin, for tests that prompt for
  *                          interactive confirmation (for example "y\ny\n").
  *   "skip"                 (optional) true to keep the entry listed (documenting that it exists and why it
@@ -59,7 +69,7 @@
  * is for tests that leave dirty residue (e.g. an unclosed session, a mutated attribute) that would otherwise
  * leak into whichever test runs next — put it on the test that causes the residue, not the one affected by
  * it, so the fix travels with the test that needs it even if the surrounding list is reordered.
- * Each yamlTests/phytonTests entry may also set a "comment" string, printed under a failing/skipped result
+ * Each tests entry may also set a "comment" string, printed under a failing/skipped result
  * in the summary log, and a "skip": true flag to leave the test listed (documenting that it exists and why
  * it doesn't run) without ever invoking it — for tests that can never pass against this image (e.g. ones
  * requiring the CSA reference app's --app-pipe debug hook, which Matterbridge doesn't implement).
@@ -83,6 +93,14 @@
  * A window left open blocks ArmFailSafe ("kBusyWithOtherAdmin") for any later test that needs one, so
  * revokeWindowBefore sends RevokeCommissioning (from alpha, which works regardless of which fabric opened
  * the window) to close it without touching either fabric's pairing.
+ *
+ * The top-level "patches" array names files under docker/chip-test/patches/ that fix a known bug or gap in a
+ * test file baked into the image (e.g. a stale hand-coded namespace whitelist that predates a spec version
+ * the image otherwise supports correctly) without waiting for that fix to land upstream and a new image to
+ * be published. Each entry is a plain filename (e.g. "TC_DeviceBasicComposition.py"), copied over the
+ * same-named file under src/python_testing/ in the container. Applied once by start(), right after the
+ * container comes up — not reapplied by resetContainerState()'s restart, since that only restarts the
+ * matterbridge process and never touches the container's filesystem.
  */
 
 /* eslint-disable no-console */
@@ -100,9 +118,16 @@ const image = 'luligu/matterbridge:chip-test';
 const testsFile = resolve(root, 'chipTests.json');
 const logFile = resolve(root, 'chipTests.log');
 const summaryLogFile = resolve(root, 'chipTestsSummary.log');
+// Local source of files named by chipTests.json's "patches" array, copied over the same-named file under
+// remotePythonTestingDir in the container by applyPatches() — see the "patches" doc comment above.
+const patchesDir = resolve(root, 'docker/chip-test/patches');
+const remotePythonTestingDir = '/root/connectedhomeip/src/python_testing';
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
 // test create a file here, so these globs only ever remove test-mutated state, never device identity.
 const matterstorageRoot = '/root/.matterbridge/matterstorage/Matterbridge';
+// The CHIP test app-pipe (createChipTestAppPipe() in chipTests.ts), used here to pin chipTests.ts's
+// chipTestActiveEndpointId to a test's "endpoint" before it runs — see setActiveTestEndpoint() below.
+const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
 // Printed once Matterbridge's root server node has finished coming online after a (re)start; polled from
 // `docker logs` so the next test doesn't race a not-yet-ready device.
 const readyLogMarker = 'Server node for Matterbridge is online';
@@ -118,6 +143,7 @@ const commissioningWindowTimeoutSeconds = '300';
 const commissioningWindowPakeIterations = '10000';
 
 let resetClusterGlobs;
+let patches;
 let allTests;
 
 class ExitError extends Error {
@@ -213,18 +239,28 @@ function start() {
     '8585:8283',
     '-v',
     `${join(root, 'temp')}:/tmp/matter_testing/logs`,
-    // Opts in to createChipTestsDevices() (packages/core/src/helpers.ts), which — together with the image's
-    // own baked-in MATTERBRIDGE_CHIP_TEST=1 — adds 4 bridged sensor devices (TemperatureSensor,
-    // HumiditySensor, PressureSensor, FlowSensor, one per PowerSource variant) under the aggregator endpoint.
+    // Opts in to createChipTestsDevices(), which — together with the image's
+    // own baked-in MATTERBRIDGE_CHIP_TEST=1 — adds all device types under the aggregator endpoint.
     // Without this, the aggregator stays empty (Descriptor-only), as chipTests.md's Endpoint 1 section
     // previously documented.
     '-e',
-    'MATTERBRIDGE_RUN_CHIP_TEST=1',
+    'MATTERBRIDGE_DEMO_DEVICES=1',
     image,
   ]);
 
   waitForContainerReady(startedAt);
+  applyPatches();
   console.log('Chip-test container ready.');
+}
+
+// Copies each file named in chipTests.json's "patches" array from docker/chip-test/patches/ over the
+// same-named file under remotePythonTestingDir in the container — see the "patches" doc comment above.
+function applyPatches() {
+  for (const patch of patches) {
+    console.log(`Applying patch ${patch}...`);
+    const localPath = join(patchesDir, patch);
+    runOrFail('docker', ['cp', localPath, `${containerName}:${remotePythonTestingDir}/${patch}`]);
+  }
 }
 
 function stop() {
@@ -270,6 +306,16 @@ function resetContainerState() {
   const restartedAt = new Date().toISOString();
   runOrFail('docker', ['restart', containerName]);
   waitForContainerReady(restartedAt);
+}
+
+// Pins chipTests.ts's chipTestActiveEndpointId to `endpointId` (or clears it when undefined) by writing a
+// "SetTestEndpoint" command into the CHIP test app-pipe, so GeneralDiagnostics.TestEventTrigger handlers with
+// no endpoint field of their own can target the one endpoint the running test actually names in its "endpoint"
+// field, instead of broadcasting to every candidate endpoint. Called before every test (see runTests()), even
+// one with no "endpoint" set, so a pin from a previous test never leaks into one that doesn't expect it.
+function setActiveTestEndpoint(endpointId) {
+  const command = endpointId === undefined ? { Name: 'SetTestEndpoint' } : { Name: 'SetTestEndpoint', EndpointId: endpointId };
+  run('docker', ['exec', containerName, 'sh', '-c', `printf '%s\\n' '${JSON.stringify(command)}' > ${chipTestAppPipePath}`]);
 }
 
 // The Python test framework's default_controller keeps its own fabric in admin_storage.json, separate from
@@ -399,25 +445,32 @@ function loadChipTestsFile() {
     fail(`Expected "resetClusterGlobs" to be an array in ${testsFile}`);
   }
 
-  const yamlTests = parsed.yamlTests ?? [];
-  if (!Array.isArray(yamlTests)) {
-    fail(`Expected "yamlTests" to be an array in ${testsFile}`);
-  }
-  const phytonTests = parsed.phytonTests ?? [];
-  if (!Array.isArray(phytonTests)) {
-    fail(`Expected "phytonTests" to be an array in ${testsFile}`);
+  patches = parsed.patches ?? [];
+  if (!Array.isArray(patches)) {
+    fail(`Expected "patches" to be an array in ${testsFile}`);
   }
 
-  allTests = [...yamlTests.map((test) => ({ ...test, kind: 'yaml' })), ...phytonTests.map((test) => ({ ...test, kind: 'python' }))];
-  for (const test of allTests) {
+  const tests = parsed.tests ?? [];
+  if (!Array.isArray(tests)) {
+    fail(`Expected "tests" to be an array in ${testsFile}`);
+  }
+
+  for (const test of tests) {
     if (!test.test) {
       fail(`Missing "test" name for entry ${JSON.stringify(test)} in ${testsFile}`);
     }
   }
+
+  // A "test" filename ending in ".py" is a Python test (src/python_testing/<test>); anything else is a YAML
+  // certification test name run through chip-tool's websocket test runner.
+  allTests = tests.map((test) => ({ ...test, kind: test.test.endsWith('.py') ? 'python' : 'yaml' }));
 }
 
 function buildArgs(test) {
   const scriptArgs = [];
+  if (test.endpoint !== undefined) {
+    scriptArgs.push('--endpoint', String(test.endpoint));
+  }
   for (const entry of test.args ?? []) {
     scriptArgs.push(...entry.split(/\s+/).filter(Boolean));
   }
@@ -450,10 +503,22 @@ function filterTests(tests, nameFilter) {
   return filtered;
 }
 
+// The compact ✅/❌/⏭️ line(s) for one test result, shared between the live per-test append to summaryLogFile
+// and the final recap block written to both log files.
+function formatResultLines(result) {
+  const icon = result.skipped ? '⏭️' : result.passed ? '✅' : '❌';
+  const line = `${icon} ${result.label}`;
+  return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
+}
+
 function runTests(nameFilter) {
   const tests = filterTests(allTests, nameFilter);
   const startedAt = `Chip tests run started at ${new Date().toISOString()}\n\n`;
   writeFileSync(logFile, startedAt);
+  // Written incrementally (header now, one result appended as each test finishes, final status appended last)
+  // rather than only at the end, so a run that's killed or times out partway through still leaves a readable,
+  // up-to-date summary instead of an empty or stale file.
+  writeFileSync(summaryLogFile, startedAt);
 
   const results = [];
   for (const test of tests) {
@@ -462,7 +527,9 @@ function runTests(nameFilter) {
     if (test.skip) {
       console.log(`SKIP: ${label}`);
       appendFileSync(logFile, `=== ${label} ===\nSkipped ("skip": true set in ${testsFile})\n\n`);
-      results.push({ label, passed: false, skipped: true, comment: test.comment });
+      const testResult = { label, passed: false, skipped: true, comment: test.comment };
+      results.push(testResult);
+      appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
       continue;
     }
 
@@ -487,6 +554,9 @@ function runTests(nameFilter) {
       revokeCommissioningWindow();
     }
 
+    appendFileSync(logFile, `--- pin active test endpoint to ${test.endpoint ?? 'none'} before ${label} ---\n`);
+    setActiveTestEndpoint(test.endpoint);
+
     console.log(`Running: ${label}`);
     appendFileSync(logFile, `=== ${label} ===\n${commandLine}\n`);
 
@@ -495,6 +565,11 @@ function runTests(nameFilter) {
       encoding: 'utf8',
       windowsHide: true,
       input: test.input ?? '',
+      // Some tests (e.g. TC_DeviceBasicComposition.py, which logs the entire read-out device composition
+      // tree) produce well over Node's default 1MB maxBuffer, which otherwise kills the child and returns
+      // status: null with error.code 'ENOBUFS' instead of a real exit code — indistinguishable from a crash
+      // in the summary log without inspecting result.error.
+      maxBuffer: Infinity,
     });
 
     appendFileSync(logFile, `${result.stdout ?? ''}${result.stderr ?? ''}\n`);
@@ -503,7 +578,9 @@ function runTests(nameFilter) {
     appendFileSync(logFile, `Result: ${passed ? 'PASS' : 'FAIL'} (exit ${result.status})\n\n`);
     console.log(passed ? `PASS: ${label}` : `FAIL: ${label} (exit ${result.status})`);
 
-    results.push({ label, passed, comment: test.comment });
+    const testResult = { label, passed, comment: test.comment };
+    results.push(testResult);
+    appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
 
     if (test.resetAfter) {
       appendFileSync(logFile, `--- reset stateful cluster storage after ${label} ---\n`);
@@ -523,15 +600,11 @@ function runTests(nameFilter) {
   const executedResults = results.filter((result) => !result.skipped);
   const skippedCount = results.length - executedResults.length;
   const passedCount = executedResults.filter((result) => result.passed).length;
-  const resultLines = results.flatMap((result) => {
-    const icon = result.skipped ? '⏭️' : result.passed ? '✅' : '❌';
-    const line = `${icon} ${result.label}`;
-    return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
-  });
+  const resultLines = results.flatMap(formatResultLines);
   const summary = `Summary: ${passedCount}/${executedResults.length} tests passed${skippedCount ? ` (${skippedCount} skipped)` : ''}.`;
 
   appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n`);
-  writeFileSync(summaryLogFile, `${startedAt}${resultLines.join('\n')}\n\n${summary}\n`);
+  appendFileSync(summaryLogFile, `\n${summary}\n`);
   console.log(resultLines.join('\n'));
   console.log(summary);
 

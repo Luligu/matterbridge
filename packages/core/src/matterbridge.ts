@@ -2204,6 +2204,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Add the virtual devices to the aggregator node in bridge mode (TODO: in childbridge mode the virtual devices are not added)
     await addVirtualDevices(this, this.aggregatorNode);
 
+    // Run manually with: MATTERBRIDGE_DEMO_DEVICES=1 matterbridge
+    // v8 ignore next - No test cause is just chip test demo devices entry point
+    if (process.env.MATTERBRIDGE_DEMO_DEVICES) {
+      const { createChipTestDevices } = await import('./chipTestDevices.js');
+      await createChipTestDevices(this);
+    }
+    // v8 ignore next - No test cause is just chip test entry point
+    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
+    // too, not just the enabling env var, to avoid a crash importing a missing file.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      const { createChipTestAppPipe } = await import('./chipTests.js');
+      createChipTestAppPipe(this);
+    }
+
     // Load and start all plugins without awaiting them to start
     await this.startPlugins(false, true);
 
@@ -2983,10 +2997,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    // v8 ignore if - No test cause is just chip test entry point. This enable the TestEventTrigger on GeneralDiagnostics.
+    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
+    // too, not just the enabling env var, to avoid a crash importing a missing file.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
+      rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
+    }
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
+    const serverNode = await ServerNode.create(rootEndpoint, {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
@@ -3627,6 +3650,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       { cluster: 'FanControl', attribute: 'fanMode' },
       { cluster: 'FanControl', attribute: 'fanModeSequence' },
       { cluster: 'FanControl', attribute: 'percentSetting' },
+      { cluster: 'FanControl', attribute: 'percentCurrent' },
       { cluster: 'ModeSelect', attribute: 'currentMode' },
       { cluster: 'RvcRunMode', attribute: 'currentMode' },
       { cluster: 'RvcCleanMode', attribute: 'currentMode' },

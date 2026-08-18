@@ -23,7 +23,10 @@ import { copyFileSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { Lifecycle } from '@matter/general';
+import { AirQuality } from '@matter/types/clusters/air-quality';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { EndpointNumber } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { BridgeStatus } from '@matterbridge/types';
@@ -453,19 +456,32 @@ describe('Matterbridge frontend', () => {
 
     // Simple branches (no getAttribute dependency)
     const text = runTuples([
+      ['descriptor', 0x1d, 'clientList', 0, [4, 6, 8, 768]],
+      ['binding', 0x1e, 'binding', 0, []],
+      [
+        'binding',
+        0x1e,
+        'binding',
+        0,
+        [
+          { fabricIndex: 1, node: 2n, cluster: 6 },
+          { fabricIndex: 1, node: 3n },
+        ],
+      ],
       ['onOff', 0x06, 'onOff', 0, true],
       ['switch', 0x3b, 'currentPosition', 0, 1],
       ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 5000],
       ['doorLock', 0x101, 'lockState', 0, 1],
       ['doorLock', 0x101, 'lockState', 0, 2],
+      ['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, latch: true, secureState: true }],
       ['thermostat', 0x201, 'localTemperature', 0, 2000],
       ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 2100],
       ['thermostat', 0x201, 'occupiedCoolingSetpoint', 0, 2500],
       ['rvcRunMode', 0x54, 'supportedModes', 0, [{ label: 'Cleaning', mode: 1 }]],
       ['rvcRunMode', 0x54, 'currentMode', 0, 1],
       ['rvcRunMode', 0x54, 'currentMode', 0, 99],
-      ['operationalState', 0x60, 'operationalState', 0, 'Running'],
-      ['rvcOperationalState', 0x61, 'operationalState', 0, 'Docked'],
+      ['operationalState', 0x60, 'operationalState', 0, OperationalState.OperationalStateEnum.Running],
+      ['rvcOperationalState', 0x61, 'operationalState', 0, RvcOperationalState.OperationalState.Docked],
       ['pumpConfigurationAndControl', 0x200, 'operationMode', 0, 1],
       ['valveConfigurationAndControl', 0x81, 'currentState', 0, 1],
       ['levelControl', 0x08, 'currentLevel', 0, 100],
@@ -476,9 +492,11 @@ describe('Matterbridge frontend', () => {
       ['fanControl', 0x202, 'fanMode', 0, 1],
       ['fanControl', 0x202, 'percentCurrent', 0, 50],
       ['fanControl', 0x202, 'speedCurrent', 0, 3],
+      ['hepaFilterMonitoring', 0x71, 'condition', 0, 80],
+      ['activatedCarbonFilterMonitoring', 0x72, 'condition', 0, 90],
       ['occupancySensing', 0x406, 'occupancy', 0, { occupied: true }],
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 50000],
-      ['airQuality', 0x5b, 'airQuality', 0, 1],
+      ['airQuality', 0x5b, 'airQuality', 0, AirQuality.AirQualityEnum.Good],
       ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, 10],
       ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, 5],
       ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, 5],
@@ -489,46 +507,98 @@ describe('Matterbridge frontend', () => {
       ['pressureMeasurement', 0x403, 'measuredValue', 0, 1000],
       ['flowMeasurement', 0x404, 'measuredValue', 0, 100],
       ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, 50],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 220_000],
+      ['electricalPowerMeasurement', 0x90, 'activeCurrent', 0, 1_000],
+      ['electricalPowerMeasurement', 0x90, 'activePower', 0, 220_000],
+      ['electricalPowerMeasurement', 0x90, 'frequency', 0, 50_000],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 100_000_000 }],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyExported', 0, { energy: 10_000_000 }],
+      ['deviceEnergyManagement', 0x98, 'esaCanGenerate', 0, false],
+      ['deviceEnergyManagement', 0x98, 'esaState', 0, 1],
+      ['deviceEnergyManagementMode', 0x9f, 'supportedModes', 0, [{ label: 'No Energy Management', mode: 1 }]],
+      ['deviceEnergyManagementMode', 0x9f, 'currentMode', 0, 1],
     ]);
+    expect(text).toContain('Client cluster(s): [Groups, OnOff, LevelControl, ColorControl]');
+    expect(text).toContain('Bound cluster(s): none');
+    expect(text).toContain('Bound cluster(s): [node: 2, cluster: OnOff, fabricIndex: 1] [node: 3, fabricIndex: 1]');
     expect(text).toContain('OnOff: true');
     expect(text).toContain('Position: 1');
     expect(text).toContain('Cover position: 50%');
     expect(text).toContain('State: Locked');
     expect(text).toContain('State: Not locked');
+    expect(text).toContain('Position: FullyClosed');
+    expect(text).toContain('Latch: true');
+    expect(text).toContain('SecureState: true');
     expect(text).toContain('Temperature: 20°C');
     expect(text).toContain('Heat to: 21°C');
     expect(text).toContain('Cool to: 25°C');
     expect(text).toContain('Mode: Cleaning');
     expect(text).toContain('OpState: Running');
     expect(text).toContain('OpState: Docked');
+    expect(text).toContain('State: Open');
     expect(text).toContain('Level: 100');
     expect(text).toContain('Contact: true');
     expect(text).toContain('Active alarms:');
-    expect(text).toContain('Smoke: 0');
-    expect(text).toContain('Co: 0');
+    expect(text).toContain('Smoke: Normal');
+    expect(text).toContain('Co: Normal');
     expect(text).toContain('Occupancy: true');
-    expect(text).toContain('Air quality: 1');
+    expect(text).toContain('Hepa filter: 80%');
+    expect(text).toContain('Carbon filter: 90%');
+    expect(text).toContain('Air quality: Good');
     expect(text).toContain('Pm2.5: 5');
     expect(text).toContain('Humidity: 50%');
+    expect(text).toContain('Pressure: 1000 hPa');
+    expect(text).toContain('Flow: 10 m³/h');
     expect(text).toContain('Soil moisture: 50%');
+    expect(text).toContain('Voltage: 220V');
+    expect(text).toContain('Current: 1A');
+    expect(text).toContain('Power: 0.22kW');
+    expect(text).toContain('Frequency: 50Hz');
+    expect(text).toContain('Imported: 100kWh');
+    expect(text).toContain('Exported: 10kWh');
+    expect(text).toContain('ESA can generate: false');
+    expect(text).toContain('ESA state: Online');
+    expect(text).toContain('Mode: No Energy Management');
 
     const nullMeasurements = runTuples([
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
+      ['closureControl', 0x104, 'overallCurrentState', 0, null],
+      ['closureControl', 0x104, 'overallCurrentState', 0, { position: null, latch: null, secureState: null }],
+      ['valveConfigurationAndControl', 0x81, 'currentState', 0, null],
+      ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, null],
+      ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, null],
+      ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, null],
+      ['pm10ConcentrationMeasurement', 0x42d, 'measuredValue', 0, null],
+      ['formaldehydeConcentrationMeasurement', 0x42b, 'measuredValue', 0, null],
       ['temperatureMeasurement', 0x402, 'measuredValue', 0, null],
       ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, null],
       ['pressureMeasurement', 0x403, 'measuredValue', 0, null],
       ['flowMeasurement', 0x404, 'measuredValue', 0, null],
       ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, null],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, null],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, null],
     ]);
     expect(nullMeasurements).toContain('Illuminance: unknown');
+    expect(nullMeasurements).toContain('Position: unknown');
+    expect(nullMeasurements).toContain('Latch: unknown');
+    expect(nullMeasurements).toContain('SecureState: unknown');
+    expect(nullMeasurements).toContain('State: unknown');
+    expect(nullMeasurements).toContain('Voc: unknown');
+    expect(nullMeasurements).toContain('Pm1: unknown');
+    expect(nullMeasurements).toContain('Pm2.5: unknown');
+    expect(nullMeasurements).toContain('Pm10: unknown');
+    expect(nullMeasurements).toContain('CH₂O: unknown');
     expect(nullMeasurements).toContain('Temperature: unknown');
     expect(nullMeasurements).toContain('Humidity: unknown');
     expect(nullMeasurements).toContain('Pressure: unknown');
     expect(nullMeasurements).toContain('Flow: unknown');
     expect(nullMeasurements).toContain('Soil moisture: unknown');
+    expect(nullMeasurements).toContain('Voltage: unknown');
+    expect(nullMeasurements).toContain('Imported: unknown');
 
     // isValid* false sides (out-of-range / wrong-type values are not appended)
     const skipped = runTuples([
+      ['descriptor', 0x1d, 'clientList', 0, []],
       ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 20000],
       ['thermostat', 0x201, 'localTemperature', 0, 'x'],
       ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 'x'],
@@ -538,6 +608,15 @@ describe('Matterbridge frontend', () => {
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 'x'],
       ['temperatureMeasurement', 0x402, 'measuredValue', 0, 'x'],
       ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 'x'],
+      ['pressureMeasurement', 0x403, 'measuredValue', 0, 'x'],
+      ['flowMeasurement', 0x404, 'measuredValue', 0, 'x'],
+      ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, 'x'],
+      ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, 'x'],
+      ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, 'x'],
+      ['pm10ConcentrationMeasurement', 0x42d, 'measuredValue', 0, 'x'],
+      ['formaldehydeConcentrationMeasurement', 0x42b, 'measuredValue', 0, 'x'],
+      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 'x'],
+      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 'x' }],
     ]);
     expect(skipped).toBe('');
   });
