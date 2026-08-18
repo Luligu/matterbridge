@@ -74,6 +74,9 @@ import { WebSocketContext } from './WebSocketProvider';
 
 const debugUpdate = false;
 
+// Lookup tables for enum values
+const FanModeLookup = ['Off', 'Low', 'Medium', 'High', 'On', 'Auto', 'Smart'];
+
 // Icon, value, unit sx
 const renderBoxSx = { display: 'flex', gap: '2px', justifyContent: 'space-evenly', width: '100%', height: '40px' };
 const iconSx = { margin: '0', padding: '0', fontSize: '36px', fontWeight: 'medium', color: 'var(--primary-color)' };
@@ -128,6 +131,7 @@ const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x010f, 0x0110];
 const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0110];
+const fanControlDeviceTypes = [0x002b, 0x002d]; // Fan, AirPurifier
 
 interface RenderProps {
   icon: React.JSX.Element;
@@ -234,6 +238,12 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
     clusters
       .filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint')
       .map((cluster) => (details = details + `Cool ${(cluster.attributeLocalValue as number) / 100}°C`));
+
+  // Fan, AirPurifier
+  fanControlDeviceTypes.includes(deviceType) &&
+    clusters
+      .filter((cluster) => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent')
+      .map((cluster) => (details = `Speed ${cluster.attributeValue}%`));
 
   // SmokeCoAlarm
   deviceType === 0x0076 &&
@@ -381,6 +391,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiThermostat} size='40px' color='var(--primary-color)' />} cluster={cluster} value={(cluster.attributeLocalValue as number ?? 0)/100} unit='°C' />
       ))}
+      {/* ThermostatController */}
+      {deviceType===0x030a && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiThermostat} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Controller' />
+      ))}
       {/* DoorLock */}
       {deviceType===0x000a && clusters.filter(cluster => cluster.clusterName === 'DoorLock' && cluster.attributeName === 'lockState').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={cluster.attributeValue==='1' ? <LockIcon/> : <LockOpenIcon/>} cluster={cluster} value={cluster.attributeValue==='1' ? 'Locked' : 'Unlocked'} />
@@ -390,8 +404,8 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LockIcon/>} cluster={cluster} value='Controller' />
       ))}
       {/* Fan */}
-      {deviceType===0x002b && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<AirIcon/>} cluster={cluster} value={cluster.attributeValue} unit='%'/>
+      {deviceType===0x002b && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'fanMode').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<AirIcon/>} cluster={cluster} value={FanModeLookup[cluster.attributeLocalValue as number] ?? 'Unknown'} />
       ))}
       {/* GenericSwitch */}
       {deviceType===0x000f && clusters.filter(cluster => cluster.clusterName === 'Switch' && cluster.attributeName === 'currentPosition').map(cluster => (
@@ -410,8 +424,8 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<CycloneIcon/>} cluster={cluster} value='Controller'/>
       ))}
       {/* Air purifier */}
-      {deviceType===0x002d && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<HvacIcon/>} cluster={cluster} value={cluster.attributeValue} unit='%'/>
+      {deviceType===0x002d && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'fanMode').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<HvacIcon/>} cluster={cluster} value={FanModeLookup[cluster.attributeLocalValue as number] ?? 'Unknown'} />
       ))}
       {/* Air conditioner */}
       {deviceType===0x0072 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (
@@ -586,7 +600,6 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
   // Local states
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [endpoints, setEndpoints] = useState<{ [serial: string]: { endpoint: string; id: string; deviceTypes: number[] }[] }>({});
-  const [deviceTypes, setDeviceTypes] = useState<{ [serial: string]: number[] }>({});
   const [clusters, setClusters] = useState<{ [serial: string]: Cluster[] }>({});
 
   // Refs
@@ -632,35 +645,30 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     [clusters, devices],
   );
 
-  const clusterUpdate = useCallback(
-    (msg: WsMessageApiClustersResponse) => {
-      /* v8 ignore next */
-      if (debug)
-        console.log(
-          `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
-          msg.response,
-        );
-      if (msg.response.clusters.length === 0) return;
-      const serial = msg.response.serialNumber;
-      endpoints[serial] = [];
-      deviceTypes[serial] = msg.response.deviceTypes;
-      clusters[serial] = [];
-      for (const cluster of msg.response.clusters) {
-        if (!endpoints[serial].find((e) => e.endpoint === cluster.endpoint)) {
-          endpoints[serial].push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
-        }
-        if (['FixedLabel', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
-        clusters[serial].push(cluster);
+  const clusterUpdate = useCallback((msg: WsMessageApiClustersResponse) => {
+    /* v8 ignore next */
+    if (debug)
+      console.log(
+        `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
+        msg.response,
+      );
+    if (msg.response.clusters.length === 0) return;
+    const serial = msg.response.serialNumber;
+    const newEndpoints: { endpoint: string; id: string; deviceTypes: number[] }[] = [];
+    const newClusters: Cluster[] = [];
+    for (const cluster of msg.response.clusters) {
+      if (!newEndpoints.find((e) => e.endpoint === cluster.endpoint)) {
+        newEndpoints.push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
       }
-      setEndpoints({ ...endpoints });
-      setDeviceTypes({ ...deviceTypes });
-      setClusters({ ...clusters });
-      if (debug) console.log(`DevicesIcons endpoints for "${serial}":`, endpoints[serial]);
-      if (debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, deviceTypes[serial]);
-      if (debug) console.log(`DevicesIcons clusters for "${serial}":`, clusters[serial]);
-    },
-    [clusters, deviceTypes, endpoints],
-  );
+      if (['FixedLabel', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
+      newClusters.push(cluster);
+    }
+    setEndpoints((prev) => ({ ...prev, [serial]: newEndpoints }));
+    setClusters((prev) => ({ ...prev, [serial]: newClusters }));
+    if (debug) console.log(`DevicesIcons endpoints for "${serial}":`, newEndpoints);
+    if (debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, msg.response.deviceTypes);
+    if (debug) console.log(`DevicesIcons clusters for "${serial}":`, newClusters);
+  }, []);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
@@ -674,7 +682,6 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         if (debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
         setDevices(msg.response);
         setEndpoints({});
-        setDeviceTypes({});
         setClusters({});
         // Request clusters for all devices
         for (const device of msg.response) {
