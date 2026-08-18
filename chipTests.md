@@ -115,23 +115,23 @@ Aggregator clusters:
 
 - **OnOff: found and fixed a real bug via `TC_OO_2_7.py` (Scenes Management interaction) — `on()`/`off()`
   silently dropped when invoked from `ScenesManagement`'s delayed scene-apply timer.** `RecallScene` with a
-  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an *unlocked* timer callback inside
+  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an _unlocked_ timer callback inside
   matter.js's base `OnOffServer` (`#applySceneValues()` in `on-off/OnOffServer.ts`), whose implicit
   transaction context only lives for the synchronous portion of that callback. `MatterbridgeOnOffServer`'s
   `on()`/`off()`/`toggle()`/`offWithEffect()`/`onWithRecallGlobalScene()`/`onWithTimedOff()` all `await`
-  their command-handler forwarder *before* calling `super.X()` — fine for a normal client-invoked command
+  their command-handler forwarder _before_ calling `super.X()` — fine for a normal client-invoked command
   (its request context survives the await), but that await outlived the scene-timer's short-lived context,
   so `super.on()` threw `[expired-reference] ... This value is no longer available because its context has
-  exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
+exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
   Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
   `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
   proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
 
 - **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
   (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
-  GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response *without* a `GroupName`
+GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _without_ a `GroupName`
   field, while the very next Step 7 (`PICS: GRPKEY.S.A0001 && G.S.F00`) re-reads the same attribute and
-  asserts a response *with* `GroupName` — Step 7's guard implies Step 6 was meant to only run when
+  asserts a response _with_ `GroupName` — Step 7's guard implies Step 6 was meant to only run when
   `!G.S.F00`, but the upstream file never adds that negation, so with `G.S.F00=1` (GroupNames supported, as
   Matterbridge's `Groups` cluster server always reports on `OnOffLight` endpoint 401) both steps run against
   the same real response and Step 6 fails on the extra `GroupName` field. Confirmed unfixed on

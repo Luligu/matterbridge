@@ -472,7 +472,7 @@ To carry a fix like this locally until it lands upstream and a new image is publ
    exact baked-in version, not whatever `master` has drifted to since the image was built:
    `docker cp chip-test:/root/connectedhomeip/src/python_testing/<file>.py docker/chip-test/patches/<file>.py`.
 2. Apply the fix to that copy — prefer reusing an upstream PR's actual diff (`gh pr diff <number> --repo
-   project-chip/connectedhomeip`) when one already exists, rather than re-deriving the fix from scratch.
+project-chip/connectedhomeip`) when one already exists, rather than re-deriving the fix from scratch.
 3. Add the plain filename to `chipTests.json`'s `"patches"` array (§5).
 4. Re-verify per §10: `--start` (prints "Applying patch <file>..."), confirm the fix landed
    (`docker exec chip-test grep -n <marker> src/python_testing/<file>.py`), re-run the affected test with

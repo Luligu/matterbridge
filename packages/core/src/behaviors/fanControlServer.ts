@@ -124,6 +124,9 @@ function percentToFanMode(percent: number, sequence: FanControl.FanModeSequence)
  * @returns {number} The PercentSetting value `fanMode` resolves to.
  */
 function resolvePercentSettingForFanMode(fanMode: FanControl.FanMode, currentPercentSetting: number | null, sequence: FanControl.FanModeSequence): number {
+  // Off is handled by #handleFanModeChanging's own Off Value branch before this is ever reached, so its own
+  // caller (below) never passes it Off — kept as a documented, defensive guard against a future second caller.
+  /* v8 ignore next */
   if (fanMode === FanControl.FanMode.Off) return 0;
   // percentToFanMode() only maps values 1-100 (0 is Off's own range), so 0 must be excluded here too or it would
   // be mistaken for "already in range" of whatever Low/Medium/High is checked.

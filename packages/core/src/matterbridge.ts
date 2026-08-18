@@ -2211,8 +2211,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await createChipTestDevices(this);
     }
     // v8 ignore next - No test cause is just chip test entry point
-    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
-    // too, not just the enabling env var, to avoid a crash importing a missing file.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       const { createChipTestAppPipe } = await import('./chipTests.js');
       createChipTestAppPipe(this);
@@ -2999,8 +2997,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
     // v8 ignore if - No test cause is just chip test entry point. This enable the TestEventTrigger on GeneralDiagnostics.
-    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
-    // too, not just the enabling env var, to avoid a crash importing a missing file.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
       rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);

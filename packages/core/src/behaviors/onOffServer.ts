@@ -48,6 +48,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     // callback. Awaiting the forwarder first outlives that context, so the later super.on() call throws
     // "expired-reference" and the real state mutation never happens. Skipping the forwarder in test mode
     // avoids that await entirely until a proper fix (reordering or locking) lands.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.on', {
         command: 'on',
@@ -70,6 +71,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     device.log.info(`Switching device off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // See on()'s comment: forwarder gated off under MATTERBRIDGE_CHIP_TEST to avoid the
     // "expired-reference" failure when this is invoked from an unlocked scene-apply timer callback.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.off', {
         command: 'off',
@@ -92,6 +94,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     device.log.info(`Toggle device on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // See on()'s comment: forwarder gated off under MATTERBRIDGE_CHIP_TEST to avoid the
     // "expired-reference" failure when this is invoked from an unlocked scene-apply timer callback.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.toggle', {
         command: 'toggle',
@@ -118,6 +121,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     );
     // See on()'s comment: forwarder gated off under MATTERBRIDGE_CHIP_TEST to avoid the
     // "expired-reference" failure when this is invoked from an unlocked scene-apply timer callback.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.offWithEffect', {
         command: 'offWithEffect',
@@ -140,6 +144,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     device.log.info(`Switching device on with recall global scene (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // See on()'s comment: forwarder gated off under MATTERBRIDGE_CHIP_TEST to avoid the
     // "expired-reference" failure when this is invoked from an unlocked scene-apply timer callback.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.onWithRecallGlobalScene', {
         command: 'onWithRecallGlobalScene',
@@ -166,6 +171,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
     );
     // See on()'s comment: forwarder gated off under MATTERBRIDGE_CHIP_TEST to avoid the
     // "expired-reference" failure when this is invoked from an unlocked scene-apply timer callback.
+    // v8 ignore else
     if (!process.env.MATTERBRIDGE_CHIP_TEST) {
       await device.commandHandler.executeHandler('OnOff.onWithTimedOff', {
         command: 'onWithTimedOff',
