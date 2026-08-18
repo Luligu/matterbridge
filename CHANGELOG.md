@@ -40,6 +40,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: ElectricalSensor endpoint 206 CHIP conformance is green ✅ for the automated harness tests covering the `ElectricalSensor` device type and `ElectricalPowerMeasurement` `ElectricalEnergyMeasurement` clusters.
 - [chip]: DeviceEnergyManagement endpoint 207 CHIP conformance is green ✅ for the automated harness tests covering the `DeviceEnergyManagement` device type and `DeviceEnergyManagement` `DeviceEnergyManagementMode` clusters.
 - [chip]: Matter 1.6.0 Chapter 7 sensor device types pass all CHIP automated conformance harness tests ✅. The test fixture now exercises the default helper stack used by the sensor endpoints: `createDefaultBridgedDeviceBasicInformationClusterServer()`, `createDefaultIdentifyClusterServer()`, `createDefaultPowerSourceBatteryClusterServer()`, `createDefaultPowerSourceReplaceableBatteryClusterServer()`, `createDefaultPowerSourceRechargeableBatteryClusterServer()`, `createDefaultPowerSourceWiredClusterServer()`, `createDefaultBooleanStateClusterServer()`, `createDefaultBooleanStateConfigurationClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()`, `createDefaultOccupancySensingClusterServer()`, `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultFlowMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultSmokeCOAlarmClusterServer()`, `createSmokeOnlySmokeCOAlarmClusterServer()`, `createCoOnlySmokeCOAlarmClusterServer()`, `createDefaultAirQualityClusterServer()`, `createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()`, `createDefaultCarbonDioxideConcentrationMeasurementClusterServer()`, `createDefaultNitrogenDioxideConcentrationMeasurementClusterServer()`, `createDefaultOzoneConcentrationMeasurementClusterServer()`, `createDefaultFormaldehydeConcentrationMeasurementClusterServer()`, `createDefaultPm1ConcentrationMeasurementClusterServer()`, `createDefaultPm25ConcentrationMeasurementClusterServer()`, `createDefaultPm10ConcentrationMeasurementClusterServer()`, `createDefaultRadonConcentrationMeasurementClusterServer()`, `createDefaultTvocMeasurementClusterServer()` and `createDefaultSoilMeasurementClusterServer()`.
+- [chip]: FanCoomplete endpoint 9024 CHIP conformance is green ✅ for the automated harness tests covering the `Fan` device type and `FanControl` clusters.
 - [electricalSensor]: Add electrical measurement helpers: `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()`. Used to create import (cunsume) only and export (produce) only electrical sensors.
 
 ### Added
@@ -53,8 +54,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [occupancySensing]: Add `MatterbridgeOccupancySensingServer` to mirror Matter 1.6 `HoldTime` with the legacy `PIROccupiedToUnoccupiedDelay` attribute when both are exposed for backward compatibility.
 - [concentrationMeasurement]: Add optional `minMeasuredValue` and `maxMeasuredValue` parameters to `createDefaultTvocMeasurementClusterServer()`.
 - [frontend]: Add Soil Sensor and On/Off Sensor device icons.
+- [frontend]: Add AC/DC current tooltips and full/differentiated battery level bar icons to the Home Devices power column.
 - [chip]: Add `Chip Test` stack.
 - [chip]: Add `Chip Test` pipe.
+- [chip]: Add `Chip Test` TestEventTrigger.
 
 ### Changed
 
@@ -64,6 +67,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint` to v.1.78.0.
 - [core]: Bump `ws` to v.8.21.3.
 - [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
+- [measurement]: Add optional `tolerance` parameter to `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()` and `createDefaultFlowMeasurementClusterServer()`, and add optional `lightSensorType` parameter to `createDefaultIlluminanceMeasurementClusterServer()`.
 - [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
 - [frontend]: Bump `frontend` version to v.3.5.8.
 - [frontend]: Refactor the Devices Icon and Table views to render electrical measurements consistently, including imported/exported energy, `kW` power and `kWh` energy units.
@@ -73,6 +77,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.63.0.
 - [frontend]: Bump `oxlint` to v.1.78.0.
 - [irrigationSystem]: Bump `IrrigationSystem` to v.1.1.0.
+- [fanControl]: Bump `MatterbridgeFanControlServer` to v.2.0.0 (fully Matter 1.6.0 compliant).
 
 ### Fixed
 

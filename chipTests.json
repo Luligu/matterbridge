@@ -808,6 +808,80 @@
       "test": "TC_SOIL_2_2.py",
       "endpoint": 714,
       "args": ["--PICS /root/soil-measurement.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "FanControl mandatory functionality on Fan Complete",
+      "test": "TC_FAN_2_1.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional speed attributes on Fan Complete",
+      "test": "Test_TC_FAN_2_2",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional rock attributes on Fan Complete",
+      "test": "TC_FAN_2_3.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional wind attributes on Fan Complete",
+      "test": "TC_FAN_2_4.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional direction attributes on Fan Complete",
+      "test": "Test_TC_FAN_2_5",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on Fan Complete",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional speed functionality on Fan Complete",
+      "test": "TC_FAN_3_2.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"],
+      "comment": "Timing-fragile test, not a Matterbridge bug (see chipTests.md Known Issues): step 6's rapid, no-delay SpeedSetting writes let matter.js's subscription engine legitimately coalesce intermediate FanMode values into fewer reports than the exact count of 3 the test asserts. Reproduced identically by writing PercentSetting (not SpeedSetting) at the same pace with no Matterbridge involvement beyond the attribute write itself; TC_FAN_3_1.py only avoids this because its own assertion (FanMode report count equals PercentSetting report count) tolerates coalescing instead of requiring an exact count."
+    },
+    {
+      "name": "FanControl optional rock functionality on Fan Complete",
+      "test": "TC_FAN_3_3.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional wind functionality on Fan Complete",
+      "test": "TC_FAN_3_4.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl Step command functionality on Fan Complete",
+      "test": "TC_FAN_3_5.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl optional direction functionality on Fan Complete",
+      "test": "Test_TC_FAN_3_6",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"]
+    },
+    {
+      "name": "FanControl interaction with On/Off cluster on Fan Complete",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 9024,
+      "args": ["--PICS /root/fan-control-complete.pics"],
+      "comment": "Self-skips: gated by @run_if_endpoint_matches(has_cluster(FanControl) and has_cluster(OnOff)); the Fan device type's On/Off cluster is optionalConform and endpoint 9024 does not add it (createCompleteFanControlClusterServer() only creates the FanControl cluster server)."
     }
   ]
 }

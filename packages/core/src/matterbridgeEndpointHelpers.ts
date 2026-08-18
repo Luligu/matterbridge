@@ -1672,14 +1672,20 @@ export function getDefaultOperationalStateClusterServer(operationalState: Operat
  * @param {number | null} measuredValue - The measured value of the temperature x 100.
  * @param {number | null} minMeasuredValue - The minimum measured value of the temperature x 100.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the temperature x 100.
+ * @param {number} tolerance - The tolerance of the temperature measurement.
  * @returns {Behavior.Options<MatterbridgeTemperatureMeasurementServer>} - The default options for the TemperatureMeasurement cluster server.
  */
-export function getDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+export function getDefaultTemperatureMeasurementClusterServer(
+  measuredValue: number | null = null,
+  minMeasuredValue: number | null = null,
+  maxMeasuredValue: number | null = null,
+  tolerance: number = 0,
+) {
   return optionsFor(TemperatureMeasurementServer, {
     measuredValue,
     minMeasuredValue,
     maxMeasuredValue,
-    tolerance: 0,
+    tolerance,
   });
 }
 
@@ -1689,18 +1695,20 @@ export function getDefaultTemperatureMeasurementClusterServer(measuredValue: num
  * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
  * @param {number | null} minMeasuredValue - The minimum measured value of the relative humidity x 100.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the relative humidity x 100.
+ * @param {number} tolerance - The tolerance of the relative humidity measurement.
  * @returns {Behavior.Options<MatterbridgeRelativeHumidityMeasurementServer>} - The default options for the RelativeHumidityMeasurement cluster server.
  */
 export function getDefaultRelativeHumidityMeasurementClusterServer(
   measuredValue: number | null = null,
   minMeasuredValue: number | null = null,
   maxMeasuredValue: number | null = null,
+  tolerance: number = 0,
 ) {
   return optionsFor(RelativeHumidityMeasurementServer, {
     measuredValue,
     minMeasuredValue,
     maxMeasuredValue,
-    tolerance: 0,
+    tolerance,
   });
 }
 
@@ -1710,14 +1718,20 @@ export function getDefaultRelativeHumidityMeasurementClusterServer(
  * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
  * @param {number | null} minMeasuredValue - The minimum measured value for the pressure in kPa x 10.
  * @param {number | null} maxMeasuredValue - The maximum measured value for the pressure in kPa x 10.
+ * @param {number} tolerance - The tolerance of the pressure measurement.
  * @returns {Behavior.Options<MatterbridgePressureMeasurementServer>} - The default options for the PressureMeasurement cluster server.
  */
-export function getDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+export function getDefaultPressureMeasurementClusterServer(
+  measuredValue: number | null = null,
+  minMeasuredValue: number | null = null,
+  maxMeasuredValue: number | null = null,
+  tolerance: number = 0,
+) {
   return optionsFor(PressureMeasurementServer, {
     measuredValue,
     minMeasuredValue,
     maxMeasuredValue,
-    tolerance: 0,
+    tolerance,
   });
 }
 
@@ -1727,6 +1741,8 @@ export function getDefaultPressureMeasurementClusterServer(measuredValue: number
  * @param {number | null} measuredValue - The measured value of illuminance.
  * @param {number | null} minMeasuredValue - The minimum measured value of illuminance.
  * @param {number | null} maxMeasuredValue - The maximum measured value of illuminance.
+ * @param {number | null} tolerance - The tolerance value for the illuminance measurement.
+ * @param {IlluminanceMeasurement.LightSensorType | null} lightSensorType - The type of light sensor used for the measurement.
  * @returns {Behavior.Options<MatterbridgeIlluminanceMeasurementServer>} - The default options for the IlluminanceMeasurement cluster server.
  *
  * @remarks The default value for the illuminance measurement is null.
@@ -1736,12 +1752,19 @@ export function getDefaultPressureMeasurementClusterServer(measuredValue: number
  * • 0 indicates a value of illuminance that is too low to be measured
  * • null indicates that the illuminance measurement is invalid.
  */
-export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+export function getDefaultIlluminanceMeasurementClusterServer(
+  measuredValue: number | null = null,
+  minMeasuredValue: number | null = null,
+  maxMeasuredValue: number | null = null,
+  tolerance: number = 0,
+  lightSensorType: IlluminanceMeasurement.LightSensorType | null = null,
+) {
   return optionsFor(IlluminanceMeasurementServer, {
     measuredValue,
     minMeasuredValue,
     maxMeasuredValue,
-    tolerance: 0,
+    tolerance,
+    lightSensorType,
   });
 }
 
@@ -1751,14 +1774,20 @@ export function getDefaultIlluminanceMeasurementClusterServer(measuredValue: num
  * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
  * @param {number | null} minMeasuredValue - The minimum measured value of the flow in 10 x m3/h.
  * @param {number | null} maxMeasuredValue - The maximum measured value of the flow in 10 x m3/h.
+ * @param {number} tolerance - The tolerance of the flow measurement.
  * @returns {Behavior.Options<MatterbridgeFlowMeasurementServer>} - The default options for the FlowMeasurement cluster server.
  */
-export function getDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null) {
+export function getDefaultFlowMeasurementClusterServer(
+  measuredValue: number | null = null,
+  minMeasuredValue: number | null = null,
+  maxMeasuredValue: number | null = null,
+  tolerance: number = 0,
+) {
   return optionsFor(FlowMeasurementServer, {
     measuredValue,
     minMeasuredValue,
     maxMeasuredValue,
-    tolerance: 0,
+    tolerance,
   });
 }
 

@@ -362,6 +362,8 @@
     "docker:prune:system": "docker system prune --all -f",
     "chip:start": "node scripts/run-matterbridge-chip-tests.mjs --start",
     "chip:test": "node scripts/run-matterbridge-chip-tests.mjs",
+    "chip:test:generic": "node scripts/run-matterbridge-chip-tests.mjs --test Generic",
+    "chip:test:fan-control": "node scripts/run-matterbridge-chip-tests.mjs --test FanControl",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",

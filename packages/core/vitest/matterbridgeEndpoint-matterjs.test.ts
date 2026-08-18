@@ -1162,7 +1162,8 @@ describe('Matterbridge ' + NAME, () => {
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
     await vent.setStateOf(FanControlServer, { percentCurrent: 0 });
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction ${FanControl.StepDirection.Increase} (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Increase wrap: false lowestOff: false (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Decrease wrap: true lowestOff: true (endpoint ${vent.id}.${vent.number})`);
 
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('HepaFilterMonitoring', 'resetCondition', {});

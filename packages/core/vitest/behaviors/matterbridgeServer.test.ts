@@ -929,6 +929,11 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('FanControl server', async () => {
+    // vent uses createDefaultFanControlClusterServer() (Auto + Step, FanModeSequence OffLowMedHighAuto), whose
+    // 1-100 PercentSetting domain splits into Low 1-33 / Medium 34-66 / High 67-100 (see fanControlServer.ts's
+    // computePercentRanges()). Step (Matter 1.6 Application Cluster Spec § 4.4.7.1.5) moves FanMode across that
+    // step sequence and lands PercentSetting/PercentCurrent on the boundary of the newly-entered range, so
+    // positioning between calls is done via FanMode (not PercentCurrent directly, which Step itself derives).
     const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     vent.addCommandHandler('step', (data) => {
       stepCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -936,46 +941,59 @@ describe('Server clusters and behaviors', () => {
 
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
+    // Off -> Low (lowest step value above Off).
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
     expect(stepCalls[0]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(1);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    // High, Increase without wrap: already at the highest step value, so it wraps only because Wrap is true here.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false });
     expect(stepCalls[1]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(1);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 100);
+    // High, Increase with Wrap and LowestOff: wraps all the way to Off.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true });
     expect(stepCalls[2]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Increase, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
-
+    // Medium -> Low (highest step value below Medium).
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Medium);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false });
     expect(stepCalls[3]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: false } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Low);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(33);
 
+    // Low, Decrease with Wrap (no reposition — continues from the previous step's Low): wraps to High.
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
     expect(stepCalls[4]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.High);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 0);
-
+    // Off, Decrease with Wrap and LowestOff: wraps to High (Off is itself the bottom of the step sequence here).
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Off);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
     expect(stepCalls[5]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.High);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(100);
 
-    await vent.setAttribute(FanControl.id, 'percentCurrent', 20);
-
+    // Low, Decrease without wrap, LowestOff true: steps down to Off.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Low);
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true });
     expect(stepCalls[6]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: FanControl.StepDirection.Decrease, wrap: false, lowestOff: true } });
-    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(10);
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(0);
 
+    // An invalid Direction value is malformed input, not a valid Decrease: a safe no-op, not a guess.
+    await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Medium);
     await vent.setAttribute(FanControl.id, 'percentCurrent', 30);
-
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: 99 as FanControl.StepDirection, wrap: false, lowestOff: false });
     expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: 99, wrap: false, lowestOff: false } });
+    expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);
     expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(30);
   });
 

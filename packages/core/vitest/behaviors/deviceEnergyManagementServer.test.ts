@@ -9,7 +9,6 @@ const MATTER_PORT = 11800;
 const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { wait } from '@matterbridge/utils/wait';
 import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -228,19 +227,26 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('An active session completes naturally after its requested duration', async () => {
-    const powerAdjustEnd = vi.fn();
-    (esa.events as any).deviceEnergyManagement.powerAdjustEnd.on(powerAdjustEnd);
+    // The completion timer is a plain Time.getTimer()/setTimeout under the hood (see deviceEnergyManagementServer.ts),
+    // so fake timers let this fire deterministically without waiting out the real 10s duration.
+    vi.useFakeTimers();
+    try {
+      const powerAdjustEnd = vi.fn();
+      (esa.events as any).deviceEnergyManagement.powerAdjustEnd.on(powerAdjustEnd);
 
-    await esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', {
-      power: 2_000_000,
-      duration: 10,
-      cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization,
-    });
-    expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.PowerAdjustActive);
+      await esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', {
+        power: 2_000_000,
+        duration: 10,
+        cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization,
+      });
+      expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.PowerAdjustActive);
 
-    await wait(11_000);
-    expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
-    expect(powerAdjustEnd).toHaveBeenCalledTimes(1);
-    expect(powerAdjustEnd.mock.calls[0]?.[0]).toMatchObject({ cause: DeviceEnergyManagement.Cause.NormalCompletion });
-  }, 15_000);
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
+      expect(powerAdjustEnd).toHaveBeenCalledTimes(1);
+      expect(powerAdjustEnd.mock.calls[0]?.[0]).toMatchObject({ cause: DeviceEnergyManagement.Cause.NormalCompletion });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

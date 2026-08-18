@@ -1,9 +1,8 @@
-Chip tests run started at 2026-08-17T20:51:56.900Z
+Chip tests run started at 2026-08-18T15:40:46.951Z
 
-✅ OccupancySensing attributes on OccupancySensor (TC_OCC_2_1.py)
-✅ OccupancySensing type interdependency on OccupancySensor (TC_OCC_2_2.py)
-✅ OccupancySensing hold time compatibility on OccupancySensor (TC_OCC_2_3.py)
-✅ OccupancySensing primary functionality on OccupancySensor (TC_OCC_3_1.py)
-✅ OccupancySensing subscription reports on OccupancySensor (TC_OCC_3_2.py)
+✅ Generic device basic composition (TC_DeviceBasicComposition.py)
+✅ Generic device conformance (TC_DeviceConformance.py)
+✅ Generic device default warnings (TC_DefaultWarnings.py)
+✅ Generic TestEventTrigger command (TC_TestEventTrigger.py)
 
-Summary: 5/5 tests passed.
+Summary: 4/4 tests passed.

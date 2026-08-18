@@ -13,8 +13,14 @@ vi.mock('../src/components/MbfTable', () => ({
   default: <T extends object>({ rows, columns, getRowKey }: { rows: T[]; columns: MbfTableColumn<T>[]; getRowKey: (row: T) => string }) => (
     <div data-testid="devices-table">
       {rows.map((row) => {
+        const power = columns.find((column) => column.label === 'Power');
         const actions = columns.find((column) => column.label === 'Actions');
-        return <div key={getRowKey(row)}>{actions?.render?.(undefined, getRowKey(row), row, actions)}</div>;
+        return (
+          <div key={getRowKey(row)}>
+            {power?.render?.(undefined, getRowKey(row), row, power)}
+            {actions?.render?.(undefined, getRowKey(row), row, actions)}
+          </div>
+        );
       })}
     </div>
   ),
@@ -38,7 +44,7 @@ const plugins = [
 
 const uiContext = { mobile: false } as UiContextType;
 
-function renderWithDevice(configUrl: string) {
+function renderWithDevice(configUrl: string, deviceOverrides: Record<string, unknown> = {}) {
   let listener: ((message: unknown) => void) | undefined;
   // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
   const addListener = vi.fn((callback: (message: unknown) => void) => {
@@ -64,7 +70,7 @@ function renderWithDevice(configUrl: string) {
     listener?.({ id: 7, method: '/api/plugins', response: plugins });
   });
   act(() => {
-    listener?.({ id: 7, method: '/api/devices', response: [{ pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1', configUrl }] });
+    listener?.({ id: 7, method: '/api/devices', response: [{ pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1', configUrl, ...deviceOverrides }] });
   });
 }
 
@@ -91,5 +97,39 @@ describe('HomeDevices', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
 
     expect(screen.getByTitle('Test Device frontend')).toHaveAttribute('src', '/plugins/matterbridge-test/');
+  });
+
+  it('labels AC power icons with a tooltip', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'ac' });
+    expect(screen.getByLabelText('AC current')).toBeInTheDocument();
+  });
+
+  it('labels DC power icons with a tooltip', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'dc' });
+    expect(screen.getByLabelText('DC current')).toBeInTheDocument();
+  });
+
+  it('uses the full battery icon for battery level 100 percent', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'ok', batteryLevel: 100 });
+    expect(screen.getByTestId('BatteryFullIcon')).toBeInTheDocument();
+    expect(screen.getByLabelText('Battery level: 100%')).toBeInTheDocument();
+  });
+
+  it('uses the 5-bar battery icon for battery levels at or above 60 percent', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'ok', batteryLevel: 60 });
+    expect(screen.getByTestId('Battery5BarIcon')).toBeInTheDocument();
+    expect(screen.getByLabelText('Battery level: 60%')).toBeInTheDocument();
+  });
+
+  it('uses the 4-bar battery icon for battery levels at or above 40 percent', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'ok', batteryLevel: 40 });
+    expect(screen.getByTestId('Battery4BarIcon')).toBeInTheDocument();
+    expect(screen.getByLabelText('Battery level: 40%')).toBeInTheDocument();
+  });
+
+  it('uses the 2-bar battery icon for battery levels at or above 10 percent', () => {
+    renderWithDevice('/plugins/matterbridge-test', { powerSource: 'ok', batteryLevel: 10 });
+    expect(screen.getByTestId('Battery2BarIcon')).toBeInTheDocument();
+    expect(screen.getByLabelText('Battery level: 10%')).toBeInTheDocument();
   });
 });
