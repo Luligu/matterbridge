@@ -228,7 +228,7 @@ function start() {
     // Without this, the aggregator stays empty (Descriptor-only), as chipTests.md's Endpoint 1 section
     // previously documented.
     '-e',
-    'MATTERBRIDGE_CHIP_TEST_DEVICES=1',
+    'MATTERBRIDGE_DEMO_DEVICES=1',
     image,
   ]);
 

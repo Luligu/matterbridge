@@ -1,0 +1,33 @@
+# CHIP conformance test suite (weekly and on demand) v.1.0.2
+# Path: .github/workflows/chip-tests.yml
+
+name: CHIP conformance tests
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  chip-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Start the chip-test container
+        run: node scripts/run-matterbridge-chip-tests.mjs --start
+
+      - name: Run the full CHIP test suite
+        run: node scripts/run-matterbridge-chip-tests.mjs
+
+      - name: Stop the chip-test container
+        if: always()
+        run: node scripts/run-matterbridge-chip-tests.mjs --stop

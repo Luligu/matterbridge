@@ -38,7 +38,7 @@ import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getSemtag } from './matterbridgeEndpointHelpers.js';
 
 export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
-  if (!process.env.MATTERBRIDGE_CHIP_TEST || !process.env.MATTERBRIDGE_CHIP_TEST_DEVICES || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
+  if (!process.env.MATTERBRIDGE_DEMO_DEVICES || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;
   if (!serverNode || !aggregator) {

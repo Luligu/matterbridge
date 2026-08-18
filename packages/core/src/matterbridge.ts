@@ -2204,14 +2204,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Add the virtual devices to the aggregator node in bridge mode (TODO: in childbridge mode the virtual devices are not added)
     await addVirtualDevices(this, this.aggregatorNode);
 
-    // Run manually with: MATTERBRIDGE_CHIP_TEST=1 MATTERBRIDGE_CHIP_TEST_DEVICES=1 matterbridge
+    // Run manually with: MATTERBRIDGE_DEMO_DEVICES=1 matterbridge
+    // v8 ignore next - No test cause is just chip test demo devices entry point
+    if (process.env.MATTERBRIDGE_DEMO_DEVICES) {
+      const { createChipTestDevices } = await import('./chipTestDevices.js');
+      await createChipTestDevices(this);
+    }
     // v8 ignore next - No test cause is just chip test entry point
-    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
+    // too, not just the enabling env var, to avoid a crash importing a missing file.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       const { createChipTestAppPipe } = await import('./chipTests.js');
-      if (process.env.MATTERBRIDGE_CHIP_TEST_DEVICES) {
-        const { createChipTestDevices } = await import('./chipTestDevices.js');
-        await createChipTestDevices(this);
-      }
       createChipTestAppPipe(this);
     }
 
@@ -2996,7 +2999,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
     // v8 ignore if - No test cause is just chip test entry point. This enable the TestEventTrigger on GeneralDiagnostics.
-    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+    // chipTests.js is a dev/test-only file that may be excluded from a published build, so gate on its presence
+    // too, not just the enabling env var, to avoid a crash importing a missing file.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
       rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
     }

@@ -102,7 +102,7 @@ export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => i
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
 // Set by createChipTestAppPipe() (the CHIP test bootstrap entry point, called whenever MATTERBRIDGE_CHIP_TEST
 // is set) so the TestEventTrigger handlers below can look devices up on it, regardless of whether
-// MATTERBRIDGE_CHIP_TEST_DEVICES also created a device tree via createChipTestDevices() (chipTestDevices.ts).
+// MATTERBRIDGE_DEMO_DEVICES also created a device tree via createChipTestDevices() (chipTestDevices.ts).
 let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
