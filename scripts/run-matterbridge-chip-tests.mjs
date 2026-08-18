@@ -19,8 +19,10 @@
  *                          performs already clears any cluster state kept purely in memory, with no glob
  *                          needed for that.
  *   "patches"             (optional) Filenames under docker/chip-test/patches/, each copied into the
- *                          container (overwriting the same-named file under src/python_testing/) right
- *                          after it (re)starts — see below. Defaults to an empty array.
+ *                          container right after it (re)starts, overwriting the same-named file under
+ *                          src/python_testing/ for a ".py" patch (a Python test) or under
+ *                          src/app/tests/suites/certification/ for anything else (a YAML certification
+ *                          test) — see below. Defaults to an empty array.
  *   "tests"                (optional) The unified list of CHIP tests to run, YAML certification tests and
  *                          Python tests mixed together — see below. Defaults to an empty array.
  * Each tests entry has:
@@ -97,10 +99,13 @@
  * The top-level "patches" array names files under docker/chip-test/patches/ that fix a known bug or gap in a
  * test file baked into the image (e.g. a stale hand-coded namespace whitelist that predates a spec version
  * the image otherwise supports correctly) without waiting for that fix to land upstream and a new image to
- * be published. Each entry is a plain filename (e.g. "TC_DeviceBasicComposition.py"), copied over the
- * same-named file under src/python_testing/ in the container. Applied once by start(), right after the
- * container comes up — not reapplied by resetContainerState()'s restart, since that only restarts the
- * matterbridge process and never touches the container's filesystem.
+ * be published. Each entry is a plain filename, copied over the same-named file in the container: a ".py"
+ * name (e.g. "TC_DeviceBasicComposition.py") goes under src/python_testing/; anything else (e.g.
+ * "Test_TC_OO_2_3.yaml") goes under src/app/tests/suites/certification/, matching the extension a YAML
+ * certification test's own file actually has on disk even though chipTests.json's own "test" entries
+ * reference that same test without the extension. Applied once by start(), right after the container comes
+ * up — not reapplied by resetContainerState()'s restart, since that only restarts the matterbridge process
+ * and never touches the container's filesystem.
  */
 
 /* eslint-disable no-console */
@@ -119,9 +124,11 @@ const testsFile = resolve(root, 'chipTests.json');
 const logFile = resolve(root, 'chipTests.log');
 const summaryLogFile = resolve(root, 'chipTestsSummary.log');
 // Local source of files named by chipTests.json's "patches" array, copied over the same-named file under
-// remotePythonTestingDir in the container by applyPatches() — see the "patches" doc comment above.
+// remotePythonTestingDir/remoteCertificationDir in the container by applyPatches() — see the "patches" doc
+// comment above.
 const patchesDir = resolve(root, 'docker/chip-test/patches');
 const remotePythonTestingDir = '/root/connectedhomeip/src/python_testing';
+const remoteCertificationDir = '/root/connectedhomeip/src/app/tests/suites/certification';
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
 // test create a file here, so these globs only ever remove test-mutated state, never device identity.
 const matterstorageRoot = '/root/.matterbridge/matterstorage/Matterbridge';
@@ -254,12 +261,14 @@ function start() {
 }
 
 // Copies each file named in chipTests.json's "patches" array from docker/chip-test/patches/ over the
-// same-named file under remotePythonTestingDir in the container — see the "patches" doc comment above.
+// same-named file in the container — under remotePythonTestingDir for a ".py" patch (a Python test), or
+// remoteCertificationDir for anything else (a YAML certification test) — see the "patches" doc comment above.
 function applyPatches() {
   for (const patch of patches) {
     console.log(`Applying patch ${patch}...`);
     const localPath = join(patchesDir, patch);
-    runOrFail('docker', ['cp', localPath, `${containerName}:${remotePythonTestingDir}/${patch}`]);
+    const remoteDir = patch.endsWith('.py') ? remotePythonTestingDir : remoteCertificationDir;
+    runOrFail('docker', ['cp', localPath, `${containerName}:${remoteDir}/${patch}`]);
   }
 }
 

@@ -1,0 +1,20 @@
+# To run tests on OnOff --PICS is required
+# Matches createDefaultOnOffClusterServer() (via addRequiredClusterServers()) on CHIP OnOffLight endpoint 401
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+OO.S=1
+OO.S.F00=1 # Lighting
+OO.S.F01=0 # DeadFrontBehavior
+OO.S.F02=0 # OffOnly (mutually exclusive with Lighting)
+OO.S.A0000=1 # OnOff
+OO.S.A4000=1 # GlobalSceneControl
+OO.S.A4001=1 # OnTime
+OO.S.A4002=1 # OffWaitTime
+OO.S.A4003=1 # StartUpOnOff
+OO.S.C00.Rsp=1 # Off
+OO.S.C01.Rsp=1 # On
+OO.S.C02.Rsp=1 # Toggle
+OO.S.C40.Rsp=1 # OffWithEffect
+OO.S.C41.Rsp=1 # OnWithRecallGlobalScene
+OO.S.C42.Rsp=1 # OnWithTimedOff
+OO.C=0 # Matterbridge only exposes an OnOff server, never acts as a client

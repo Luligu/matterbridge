@@ -1,5 +1,10 @@
-Chip tests run started at 2026-08-18T17:06:55.305Z
+Chip tests run started at 2026-08-18T18:28:25.021Z
 
-✅ ActivatedCarbonFilterMonitoring attributes on AirPurifier (Test_TC_ACFREMON_2_1)
-
-Summary: 1/1 tests passed.
+⏭️ Binding node binding manual verification on OnOffSensor (Test_TC_BIND_2_1)
+   ↳ Every step in this YAML is disabled:true. It is a DUT-Controller Binding client manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708.
+⏭️ Binding group binding manual verification on OnOffSensor (Test_TC_BIND_2_2)
+   ↳ Every step in this YAML is disabled:true. It is a DUT-Controller Binding client and GroupKeyManagement manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708.
+⏭️ Binding group settings manual verification on OnOffSensor (Test_TC_BIND_2_3)
+   ↳ Every step in this YAML is disabled:true. It is a DUT-Controller Binding client manual verification flow with external controlee nodes, not an automated server assertion on endpoint 708.
+✅ OnOff attributes on OnOffLight (Test_TC_OO_2_1)
+✅ OnOff primary functionality on OnOffLight (Test_TC_OO_2_2)

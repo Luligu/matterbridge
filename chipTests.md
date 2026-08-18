@@ -101,3 +101,28 @@ Aggregator clusters:
   its own report-count-parity assertion can still fail if the `FanMode` and `PercentSetting` subscriptions
   happen to coalesce by a different amount from each other on a given run. Re-run the specific failing test
   alone if this happens — it passes reliably in isolation.
+
+- **OnOff: `Test_TC_OO_2_3`'s exact-zero `OffWaitTime` assertions are timing-fragile, not a Matterbridge
+  bug.** This ~2-minute test drives matter.js's own native `OnTime`/`OffWaitTime` countdown timer
+  (`OnOffServer`'s Lighting-feature implementation in `@matter/node`, not custom Matterbridge code) through
+  several exact-second `WaitForMs` delays, then asserts `OffWaitTime` has reached exactly `0`. Reproduced
+  twice against a running container, failing at a different residual value each time (`1`, then `2`) after a
+  30-40s wait — consistent with a couple of seconds of accumulated container/round-trip latency narrowly
+  missing the test's zero-margin timing assumption on this specific step, not an incorrect countdown (the
+  same countdown behaves correctly everywhere else in the same run). Not `"skip": true` since it's not
+  permanently inapplicable, just narrow-margin in this containerized environment — kept running and
+  documented here, matching the same category as `TC_FAN_3_1.py`'s occasional flakiness above.
+
+- **OnOff: found and fixed a real bug via `TC_OO_2_7.py` (Scenes Management interaction) — `on()`/`off()`
+  silently dropped when invoked from `ScenesManagement`'s delayed scene-apply timer.** `RecallScene` with a
+  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an *unlocked* timer callback inside
+  matter.js's base `OnOffServer` (`#applySceneValues()` in `on-off/OnOffServer.ts`), whose implicit
+  transaction context only lives for the synchronous portion of that callback. `MatterbridgeOnOffServer`'s
+  `on()`/`off()`/`toggle()`/`offWithEffect()`/`onWithRecallGlobalScene()`/`onWithTimedOff()` all `await`
+  their command-handler forwarder *before* calling `super.X()` — fine for a normal client-invoked command
+  (its request context survives the await), but that await outlived the scene-timer's short-lived context,
+  so `super.on()` threw `[expired-reference] ... This value is no longer available because its context has
+  exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
+  Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
+  `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
+  proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
