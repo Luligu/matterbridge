@@ -3645,6 +3645,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       { cluster: 'FanControl', attribute: 'fanMode' },
       { cluster: 'FanControl', attribute: 'fanModeSequence' },
       { cluster: 'FanControl', attribute: 'percentSetting' },
+      { cluster: 'FanControl', attribute: 'percentCurrent' },
       { cluster: 'ModeSelect', attribute: 'currentMode' },
       { cluster: 'RvcRunMode', attribute: 'currentMode' },
       { cluster: 'RvcCleanMode', attribute: 'currentMode' },
