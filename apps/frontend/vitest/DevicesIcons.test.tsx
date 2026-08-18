@@ -309,6 +309,99 @@ describe('DevicesIcons', () => {
 
     expect(socket.removeListener).toHaveBeenCalledTimes(1);
   });
+
+  describe.each([
+    { deviceType: 0x002b, name: 'Fan' },
+    { deviceType: 0x002d, name: 'AirPurifier' },
+  ])('FanControl rendering for $name', ({ deviceType, name }) => {
+    it('renders fanMode 0 as "Off", not the "---" empty placeholder', async () => {
+      const socket = createSocket();
+      const device = createDevice({ name: `${name} Off`, serial: `${name}-OFF`, uniqueId: `${name}-off` });
+      const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '0', 0), createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '0', 0)];
+
+      render(
+        <WebSocketContext.Provider value={socket.context}>
+          <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+        </WebSocketContext.Provider>,
+      );
+      await socket.ready();
+      loadDevice(socket, device, clusters);
+
+      expect(await screen.findByText('Off')).toBeInTheDocument();
+      expect(screen.getByText('Speed 0%')).toBeInTheDocument();
+      expect(screen.queryByText('---')).toBeNull();
+    });
+
+    it('falls back to "Unknown" for a fanMode value outside FanModeLookup', async () => {
+      const socket = createSocket();
+      const device = createDevice({ name: `${name} Weird`, serial: `${name}-WEIRD`, uniqueId: `${name}-weird` });
+      const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '99', 99)];
+
+      render(
+        <WebSocketContext.Provider value={socket.context}>
+          <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+        </WebSocketContext.Provider>,
+      );
+      await socket.ready();
+      loadDevice(socket, device, clusters);
+
+      expect(await screen.findByText('Unknown')).toBeInTheDocument();
+    });
+
+    it('renders only "Speed X%" details, with no fan mode icon, when fanMode is absent', async () => {
+      const socket = createSocket();
+      const device = createDevice({ name: `${name} NoMode`, serial: `${name}-NOMODE`, uniqueId: `${name}-nomode` });
+      const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '77', 77)];
+
+      render(
+        <WebSocketContext.Provider value={socket.context}>
+          <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+        </WebSocketContext.Provider>,
+      );
+      await socket.ready();
+      loadDevice(socket, device, clusters);
+
+      expect(await screen.findByText('Speed 77%')).toBeInTheDocument();
+      for (const mode of ['Off', 'Low', 'Medium', 'High', 'On', 'Auto', 'Smart']) expect(screen.queryByText(mode)).toBeNull();
+    });
+
+    it('live-updates both the fanMode icon text and the percent details on state_update', async () => {
+      const socket = createSocket();
+      const device = createDevice({ name: `${name} Live`, serial: `${name}-LIVE`, uniqueId: `${name}-live` });
+      const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '1', 1), createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '10', 10)];
+
+      render(
+        <WebSocketContext.Provider value={socket.context}>
+          <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+        </WebSocketContext.Provider>,
+      );
+      await socket.ready();
+      loadDevice(socket, device, clusters);
+      expect(await screen.findByText('Low')).toBeInTheDocument();
+      expect(screen.getByText('Speed 10%')).toBeInTheDocument();
+
+      await waitFor(() => expect(socket.removeListener).toHaveBeenCalled());
+      socket.emit(
+        createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'main', cluster: 'FanControl', attribute: 'fanMode', value: 3 }),
+      );
+      socket.emit(
+        createStateUpdate({
+          plugin: device.pluginName,
+          serialNumber: device.serial,
+          uniqueId: device.uniqueId,
+          id: 'main',
+          cluster: 'FanControl',
+          attribute: 'percentCurrent',
+          value: 80,
+        }),
+      );
+
+      expect(await screen.findByText('High')).toBeInTheDocument();
+      expect(screen.getByText('Speed 80%')).toBeInTheDocument();
+      expect(screen.queryByText('Low')).toBeNull();
+      expect(screen.queryByText('Speed 10%')).toBeNull();
+    });
+  });
 });
 
 interface TestSocket {
