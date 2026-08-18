@@ -492,6 +492,8 @@ describe('Matterbridge frontend', () => {
       ['fanControl', 0x202, 'fanMode', 0, 1],
       ['fanControl', 0x202, 'percentCurrent', 0, 50],
       ['fanControl', 0x202, 'speedCurrent', 0, 3],
+      ['hepaFilterMonitoring', 0x71, 'condition', 0, 80],
+      ['activatedCarbonFilterMonitoring', 0x72, 'condition', 0, 90],
       ['occupancySensing', 0x406, 'occupancy', 0, { occupied: true }],
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 50000],
       ['airQuality', 0x5b, 'airQuality', 0, AirQuality.AirQualityEnum.Good],
@@ -540,6 +542,8 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('Smoke: Normal');
     expect(text).toContain('Co: Normal');
     expect(text).toContain('Occupancy: true');
+    expect(text).toContain('Hepa filter: 80%');
+    expect(text).toContain('Carbon filter: 90%');
     expect(text).toContain('Air quality: Good');
     expect(text).toContain('Pm2.5: 5');
     expect(text).toContain('Humidity: 50%');

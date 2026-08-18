@@ -53,6 +53,7 @@ import type { Binding } from '@matter/types/clusters/binding';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { FanControl } from '@matter/types/clusters/fan-control';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
@@ -1554,9 +1555,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'smokeCoAlarm' && attributeName === 'coState')
         attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
 
-      if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${attributeValue} `;
+      if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${getEnumDescription(FanControl.FanMode, attributeValue as FanControl.FanMode)} `;
       if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue} `;
       if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
+
+      if (clusterName === 'hepaFilterMonitoring' && attributeName === 'condition') attributes += `Hepa filter: ${attributeValue}% `;
+      if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;
 
       if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
