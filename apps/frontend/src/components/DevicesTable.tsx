@@ -138,6 +138,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   const updateDevices = useCallback(
     (msg: WsMessageApiStateUpdate) => {
+      /* v8 ignore next */
       if (debug)
         console.log(
           `DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
@@ -145,6 +146,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         );
       const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
       if (!updateDevice) {
+        /* v8 ignore next */
         if (debug) console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
         return;
       }
@@ -153,6 +155,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
           (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
         );
         if (!updatedCluster) {
+          /* v8 ignore next */
           if (debug)
             console.warn(
               `DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`,
@@ -162,6 +165,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         updatedCluster.attributeValue = typeof msg.response.value === 'object' ? JSON.stringify(msg.response.value, undefined, 1).replaceAll('"', '') : String(msg.response.value);
         updatedCluster.attributeLocalValue = msg.response.value;
         setClusters([...clusters]);
+        /* v8 ignore next */
         if (debug)
           console.log(
             `DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,

@@ -1,5 +1,6 @@
 // oxlint-disable unicorn/prefer-set-has
 // oxlint-disable no-unused-expressions
+// oxlint-disable complexity
 
 // TODO: verify each rule
 // oxlint-disable typescript/no-unsafe-type-assertion
@@ -28,6 +29,7 @@ import {
   mdiThermostatBox,
   mdiRobotVacuum,
   mdiMeterElectricOutline,
+  mdiSprinklerVariant,
 } from '@mdi/js';
 import { Icon } from '@mdi/react';
 // @mui/icons-material
@@ -124,8 +126,8 @@ const endpointSx = { margin: '0', padding: '0px 4px', borderRadius: '5px', textA
 
 const lightDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d];
 const outletDeviceTypes = [0x010a, 0x010b];
-const switchDeviceTypes = [0x0103, 0x0104, 0x0105, 0x010f, 0x0110];
-const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0103, 0x0104, 0x0105, 0x0110];
+const switchDeviceTypes = [0x010f, 0x0110];
+const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0110];
 
 interface RenderProps {
   icon: React.JSX.Element;
@@ -301,6 +303,22 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {switchDeviceTypes.includes(deviceType) && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiLightSwitch} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
       ))}
+      {/* OnOffLightSwitch */}
+      {deviceType===0x0103 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiLightSwitch} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Controller' />
+      ))}
+      {/* DimmerSwitch */}
+      {deviceType===0x0104 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LightbulbIcon/>} cluster={cluster} value='Controller' />
+      ))}
+      {/* ColorDimmerSwitch */}
+      {deviceType===0x0105 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LightbulbIcon/>} cluster={cluster} value='Controller' />
+      ))}
+      {/* ControlBridge */}
+      {deviceType===0x0840 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LightbulbIcon/>} cluster={cluster} value='Controller' />
+      ))}
 
       {/* LaundryWasher */}
       {deviceType===0x73 && clusters.filter(cluster => cluster.clusterName === 'OperationalState' && cluster.attributeName === 'operationalState').map(cluster => (
@@ -347,6 +365,18 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number / 100} unit='%' />
       ))}
+      {/* WindowCoveringController */}
+      {deviceType===0x0203 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Controller' />
+      ))}
+      {/* Closure */}
+      {deviceType===0x0230 && clusters.filter(cluster => cluster.clusterName === 'ClosureControl' && cluster.attributeName === 'overallCurrentState').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Closure' />
+      ))}
+      {/* ClosureController */}
+      {deviceType===0x023e && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Controller' />
+      ))}
       {/* Thermostat */}
       {deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiThermostat} size='40px' color='var(--primary-color)' />} cluster={cluster} value={(cluster.attributeLocalValue as number ?? 0)/100} unit='°C' />
@@ -354,6 +384,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* DoorLock */}
       {deviceType===0x000a && clusters.filter(cluster => cluster.clusterName === 'DoorLock' && cluster.attributeName === 'lockState').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={cluster.attributeValue==='1' ? <LockIcon/> : <LockOpenIcon/>} cluster={cluster} value={cluster.attributeValue==='1' ? 'Locked' : 'Unlocked'} />
+      ))}
+      {/* DoorLockController */}
+      {deviceType===0x000b && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<LockIcon/>} cluster={cluster} value='Controller' />
       ))}
       {/* Fan */}
       {deviceType===0x002b && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
@@ -370,6 +404,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* Pump */}
       {deviceType===0x0303 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<CycloneIcon/>} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'}/>
+      ))}
+      {/* PumpController */}
+      {deviceType===0x0304 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<CycloneIcon/>} cluster={cluster} value='Controller'/>
       ))}
       {/* Air purifier */}
       {deviceType===0x002d && clusters.filter(cluster => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent').map(cluster => (
@@ -473,6 +511,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {deviceType===0x0042 && clusters.filter(cluster => cluster.clusterName === 'ValveConfigurationAndControl' && cluster.attributeName === 'currentState').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<OpacityIcon/>} cluster={cluster} value={cluster.attributeLocalValue===0 ?'Closed':'Opened'}/>
       ))}
+      {/* IrrigationSystem */}
+      {deviceType===0x0040 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiSprinklerVariant} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Irrigation'/>
+      ))}
       {/* AirQuality */}
       {deviceType===0x002c && clusters.filter(cluster => cluster.clusterName === 'AirQuality' && cluster.attributeName === 'airQuality').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiAirPurifier} size='40px' color='var(--primary-color)' />} cluster={cluster} value={airQualityLookup[cluster.attributeLocalValue as number ?? 0]}/>
@@ -552,6 +594,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
 
   const stateUpdate = useCallback(
     (msg: WsMessageApiStateUpdate) => {
+      /* v8 ignore next */
       if (debug || debugUpdate)
         console.log(
           `DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
@@ -559,6 +602,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         );
       const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
       if (!updateDevice) {
+        /* v8 ignore next */
         if (debug || debugUpdate)
           console.warn(
             `DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`,
@@ -569,6 +613,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
       );
       if (!updatedCluster) {
+        /* v8 ignore next */
         if (debug || debugUpdate)
           console.warn(
             `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
@@ -578,6 +623,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       updatedCluster.attributeValue = String(msg.response.value);
       updatedCluster.attributeLocalValue = msg.response.value;
       setClusters({ ...clusters });
+      /* v8 ignore next */
       if (debug || debugUpdate)
         console.log(
           `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
@@ -588,6 +634,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
 
   const clusterUpdate = useCallback(
     (msg: WsMessageApiClustersResponse) => {
+      /* v8 ignore next */
       if (debug)
         console.log(
           `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
@@ -653,8 +700,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       removeListener(handleWebSocketMessage);
       if (debug) console.log('DevicesIcons WebSocket effect unmounted');
     };
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [devices]);
+  }, [addListener, clusterUpdate, devices, removeListener, sendMessage, stateUpdate]);
 
   useEffect(() => {
     if (debug) console.log('DevicesIcons useEffect online mounting');
