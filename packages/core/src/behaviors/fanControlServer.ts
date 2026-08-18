@@ -457,15 +457,19 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     const supported = supportedFanModesBySequence[fanModeSequence];
     const stepFanModes: FanControl.FanMode[] = [...(lowestOff ? [FanControl.FanMode.Off] : []), ...steppedFanModes.filter((fanMode) => supported.has(fanMode))];
 
+    // Direction is a mandatory field with exactly two legal values (Increase/Decrease); anything else is
+    // malformed input, so it is a safe no-op rather than being guessed at as one direction or the other.
     let targetFanMode: FanControl.FanMode;
     if (request.direction === FanControl.StepDirection.Increase) {
       const higher = stepFanModes.filter((fanMode) => fanMode > currentFanMode);
       // v8 ignore next: High is always mandatoryConform (Matter 1.6 Application Cluster Spec Sec 4.4.5.1), so
       // stepFanModes always has at least one entry and Math.min/Math.max never see an empty array.
       targetFanMode = higher.length > 0 ? Math.min(...higher) : wrap ? Math.min(...stepFanModes) : Math.max(...stepFanModes);
-    } else {
+    } else if (request.direction === FanControl.StepDirection.Decrease) {
       const lower = stepFanModes.filter((fanMode) => fanMode < currentFanMode);
       targetFanMode = lower.length > 0 ? Math.max(...lower) : wrap ? Math.max(...stepFanModes) : Math.min(...stepFanModes);
+    } else {
+      return;
     }
 
     // Driving FanMode reuses #handleFanModeChanging's existing Off Value handling (Sec 4.4.6.1.1) as the single
