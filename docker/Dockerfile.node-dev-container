@@ -11,7 +11,7 @@ ENV HISTSIZE=100000
 ENV HISTFILESIZE=200000
 
 RUN apt-get update \
-  && apt-get install --yes --no-install-recommends bubblewrap ca-certificates curl fd-find fzf git jq procps ripgrep shellcheck shfmt sudo unzip \
+  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/node/.bash-cache \
   && { \
@@ -24,7 +24,10 @@ RUN apt-get update \
     echo '}'; \
     echo 'PROMPT_COMMAND="__sync_history${PROMPT_COMMAND:+;$PROMPT_COMMAND}"'; \
   } >> /home/node/.bashrc \
-  && chown -R node:node /home/node/.bash-cache /home/node/.bashrc \
+  && chown -R node:node /home/node \
   && echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node \
   && chmod 0440 /etc/sudoers.d/node \
   && rm -rf /var/lib/apt/lists/*
+
+USER node
+WORKDIR /home/node

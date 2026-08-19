@@ -12,7 +12,7 @@ ENV HISTSIZE=100000
 ENV HISTFILESIZE=200000
 
 RUN apt-get update \
-  && apt-get install --yes --no-install-recommends bubblewrap ca-certificates curl fd-find fzf git jq procps ripgrep shellcheck shfmt sudo unzip \
+  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/bun/.bash-cache \
   && { \
@@ -25,7 +25,7 @@ RUN apt-get update \
     echo '}'; \
     echo 'PROMPT_COMMAND="__sync_history${PROMPT_COMMAND:+;$PROMPT_COMMAND}"'; \
   } >> /home/bun/.bashrc \
-  && chown -R bun:bun /home/bun/.bash-cache /home/bun/.bashrc \
+  && chown -R bun:bun /home/bun \
   && echo "bun ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bun \
   && chmod 0440 /etc/sudoers.d/bun \
   && { \
@@ -44,3 +44,6 @@ RUN apt-get update \
   } > /usr/local/bin/npm \
   && chmod +x /usr/local/bin/npm \
   && rm -rf /var/lib/apt/lists/*
+
+USER bun
+WORKDIR /home/bun
