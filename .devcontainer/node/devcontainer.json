@@ -1,37 +1,48 @@
 {
-  "name": "Matterbridge (Node 24)",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "matterbridge-node",
-  "workspaceFolder": "/workspaces/matterbridge",
+  "name": "Matterbridge Node Dev Container",
+  "image": "luligu/matterbridge:node-dev-container",
   "remoteUser": "node",
-  "containerUser": "node",
-  "updateRemoteUserUID": true,
+  "updateRemoteUserUID": false,
   "containerEnv": {
     "TZ": "${localEnv:TZ}"
   },
   "mounts": [
+    // Package specific volumes for matterbridge node node_modules, frontend node node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
     "source=${localWorkspaceFolderBasename}-node-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-node-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-node-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
+    "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/node/.mattercert,type=volume",
+    // Dev container shared volumes for matterbridge, npm cache, bun cache, bash history, claude, codex and agents to improve performance
+    "source=npm-cache,target=/home/node/.npm,type=volume",
+    "source=bun-cache,target=/home/node/.bun/install/cache,type=volume",
+    "source=bash-cache,target=/home/node/.bash-cache,type=volume",
     "source=claude,target=/home/node/.claude,type=volume",
     "source=codex,target=/home/node/.codex,type=volume",
     "source=agents,target=/home/node/.agents,type=volume"
   ],
-  "forwardPorts": [8283],
+  "runArgs": [
+    "--name",
+    "${localWorkspaceFolderBasename}-node",
+    "--security-opt",
+    "seccomp=unconfined",
+    "--network=matterbridge",
+    "--publish",
+    "[::]:8283:8283"
+  ],
   "portsAttributes": {
     "8283": {
-      "label": "Matterbridge frontend"
+      "label": "Matterbridge frontend (IPv4 + IPv6)",
+      "onAutoForward": "ignore"
     }
   },
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   },
-  "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull node:24-trixie-slim",
-  "postCreateCommand": "bash .devcontainer/node/create.sh",
-  "postStartCommand": "bash .devcontainer/node/start.sh",
+  "initializeCommand": "bash .devcontainer/node/initialize.sh",
+  "postCreateCommand": "bash .devcontainer/node/post-create.sh",
+  "postStartCommand": "bash .devcontainer/node/post-start.sh",
   "customizations": {
     "vscode": {
       "extensions": [

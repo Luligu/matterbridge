@@ -2,16 +2,16 @@
 
 set -euo pipefail
 
+echo "Running Matterbridge Bun Dev Container post-create.sh..."
+
 # Ensure required directories exist and are owned by the current user
 workspace_paths=("$PWD/node_modules" "$PWD/apps/frontend/node_modules" "$PWD/.cache")
-home_paths=("$HOME/Matterbridge" "$HOME/.matterbridge" "$HOME/.mattercert" "$HOME/.claude" "$HOME/.codex")
+home_paths=("$HOME/Matterbridge" "$HOME/.matterbridge" "$HOME/.mattercert" "$HOME/.claude" "$HOME/.codex" "$HOME/.agents" "$HOME/.npm" "$HOME/.bash-cache" "$HOME/.bun")
 
+echo "1.post-create - Creating directories..."
 sudo mkdir -p "${workspace_paths[@]}" "${home_paths[@]}" # Create directories if they don't exist
+
+echo "2.post-create - Setting permissions..."
 sudo chown -R "$(id -u):$(id -g)" "${workspace_paths[@]}" "${home_paths[@]}" # Transfer ownership to the current user
 
-# Configure the shell prompt
-prompt_config='PS1="\u:\w\$ "'
-touch "$HOME/.bashrc"
-if ! grep -Fqx "$prompt_config" "$HOME/.bashrc"; then
-  printf '\n%s\n' "$prompt_config" >> "$HOME/.bashrc"
-fi
+echo "3.post-create - Post create setup completed!"

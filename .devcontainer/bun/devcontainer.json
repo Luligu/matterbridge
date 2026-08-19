@@ -1,37 +1,40 @@
 {
-  "name": "Matterbridge (Bun)",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "matterbridge-bun",
-  "workspaceFolder": "/workspaces/matterbridge",
+  "name": "Matterbridge Bun Dev Container",
+  "image": "luligu/matterbridge:bun-dev-container",
   "remoteUser": "bun",
-  "containerUser": "bun",
-  "updateRemoteUserUID": true,
+  "updateRemoteUserUID": false,
   "containerEnv": {
     "TZ": "${localEnv:TZ}"
   },
   "mounts": [
+    // Package specific volumes for matterbridge bun node_modules, frontend bun node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
     "source=${localWorkspaceFolderBasename}-bun-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-bun-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-bun-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
+    "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/bun/.mattercert,type=volume",
+    // Dev container shared volumes for matterbridge, npm cache, bun cache, bash history, claude, codex and agents to improve performance
+    "source=npm-cache,target=/home/bun/.npm,type=volume",
+    "source=bun-cache,target=/home/bun/.bun/install/cache,type=volume",
+    "source=bash-cache,target=/home/bun/.bash-cache,type=volume",
     "source=claude,target=/home/bun/.claude,type=volume",
     "source=codex,target=/home/bun/.codex,type=volume",
     "source=agents,target=/home/bun/.agents,type=volume"
   ],
-  "forwardPorts": [8283],
+  "runArgs": ["--name", "${localWorkspaceFolderBasename}-bun", "--security-opt", "seccomp=unconfined", "--network=matterbridge", "--publish", "[::]:8283:8283"],
   "portsAttributes": {
     "8283": {
-      "label": "Matterbridge frontend"
+      "label": "Matterbridge frontend (IPv4 + IPv6)",
+      "onAutoForward": "ignore"
     }
   },
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   },
-  "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull oven/bun:slim",
-  "postCreateCommand": "bash .devcontainer/bun/create.sh",
-  "postStartCommand": "bash .devcontainer/bun/start.sh",
+  "initializeCommand": "bash .devcontainer/bun/initialize.sh",
+  "postCreateCommand": "bash .devcontainer/bun/post-create.sh",
+  "postStartCommand": "bash .devcontainer/bun/post-start.sh",
   "customizations": {
     "vscode": {
       "extensions": [
