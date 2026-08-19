@@ -12,6 +12,6 @@ echo "1.post-create - Creating directories..."
 sudo mkdir -p "${workspace_paths[@]}" "${home_paths[@]}" # Create directories if they don't exist
 
 echo "2.post-create - Setting permissions..."
-sudo chown -R "$(id -u):$(id -g)" "${workspace_paths[@]}" "${home_paths[@]}" # Transfer ownership to the current user
+sudo chown -R "$(id -u):$(id -g)" . "${workspace_paths[@]}" "${home_paths[@]}" # Transfer ownership to the current user
 
 echo "3.post-create - Post create setup completed!"
