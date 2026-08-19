@@ -1,0 +1,45 @@
+# docker/Dockerfile.bun-dev-container v.2.0.0
+
+# This Dockerfile is used to build a development container for Bun applications.
+# It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.
+# Bash history is configured to be synced across terminals.
+# npm is shimmed to bun, since this image only ships Bun but tasks.json/VS Code still invoke "npm".
+
+FROM oven/bun:slim
+
+ENV HISTFILE=/home/bun/.bash-cache/.bash_history
+ENV HISTSIZE=100000
+ENV HISTFILESIZE=200000
+
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends ca-certificates curl git procps ripgrep sudo unzip bubblewrap \
+  && mkdir -p /home/bun/.bash-cache \
+  && { \
+    echo ''; \
+    echo '# Keep Bash history synced across terminals.'; \
+    echo 'shopt -s histappend'; \
+    echo '__sync_history() {'; \
+    echo '  history -a'; \
+    echo '  history -n'; \
+    echo '}'; \
+    echo 'PROMPT_COMMAND="__sync_history${PROMPT_COMMAND:+;$PROMPT_COMMAND}"'; \
+  } >> /home/bun/.bashrc \
+  && chown -R bun:bun /home/bun/.bash-cache /home/bun/.bashrc \
+  && echo "bun ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/bun \
+  && chmod 0440 /etc/sudoers.d/bun \
+  && { \
+    echo '#!/bin/sh'; \
+    echo '# npm shim: this image only ships Bun. Forward "npm" calls to bun,'; \
+    echo '# which understands "npm run <script>" and most common npm subcommands.'; \
+    echo '# "prune" and "shrinkwrap" are skipped: bun reserves these subcommands'; \
+    echo '# for future use and'; \
+    echo '# exits with an error, but "bun install" already keeps node_modules in'; \
+    echo '# sync with the lockfile, so npm prune has nothing left to do.'; \
+    echo 'if [ "$1" = "prune" ] || [ "$1" = "shrinkwrap" ]; then'; \
+    echo '  printf "%s\\n" "npm shim: skipping npm $1" >&2'; \
+    echo '  exit 0'; \
+    echo 'fi'; \
+    echo 'exec bun "$@"'; \
+  } > /usr/local/bin/npm \
+  && chmod +x /usr/local/bin/npm \
+  && rm -rf /var/lib/apt/lists/*
