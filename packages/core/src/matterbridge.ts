@@ -2204,14 +2204,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Add the virtual devices to the aggregator node in bridge mode (TODO: in childbridge mode the virtual devices are not added)
     await addVirtualDevices(this, this.aggregatorNode);
 
-    // Run manually with: MATTERBRIDGE_DEMO_DEVICES=1 matterbridge
-    // v8 ignore next - No test cause is just chip test demo devices entry point
-    if (process.env.MATTERBRIDGE_DEMO_DEVICES) {
-      const { createChipTestDevices } = await import('./chipTestDevices.js');
-      await createChipTestDevices(this);
+    // Run manually with:
+    // MATTERBRIDGE_DEMO_DEVICES=1 matterbridge
+    // matterbridge --demo-devices
+    // v8 ignore next - No test cause is just the demo devices entry point
+    if (process.env.MATTERBRIDGE_DEMO_DEVICES || hasParameter('demo-devices')) {
+      const { createDemoDevices } = await import('./demoDevices.js');
+      await createDemoDevices(this);
     }
-    // v8 ignore next - No test cause is just chip test entry point
+    // v8 ignore next - No test cause is just chip test entry point for the app pipe
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      this.log.warn('**********************************************************************************');
+      this.log.warn('* MATTERBRIDGE_CHIP_TEST environment variable is set. Running chip test app pipe *');
+      this.log.warn('**********************************************************************************');
       const { createChipTestAppPipe } = await import('./chipTests.js');
       createChipTestAppPipe(this);
     }
@@ -2996,8 +3001,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
-    // v8 ignore if - No test cause is just chip test entry point. This enable the TestEventTrigger on GeneralDiagnostics.
+    // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      this.log.warn('***************************************************************************************');
+      this.log.warn('* MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server *');
+      this.log.warn('***************************************************************************************');
       const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
       rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
     }

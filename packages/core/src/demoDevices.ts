@@ -1,6 +1,6 @@
 /**
- * @file packages/core/src/chipTestDevices.ts
- * @description This file contains the CHIP test device tree synthesized for the Matterbridge CHIP test harness.
+ * @file packages/core/src/demoDevices.ts
+ * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
  * @version 1.0.0
@@ -37,21 +37,21 @@ import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getSemtag } from './matterbridgeEndpointHelpers.js';
 
-export async function createChipTestDevices(matterbridge: Matterbridge): Promise<void> {
-  if (!process.env.MATTERBRIDGE_DEMO_DEVICES || matterbridge.bridgeMode !== 'bridge' || !matterbridge.aggregatorNode) return;
+export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
+  if (matterbridge.bridgeMode !== 'bridge' || !matterbridge.serverNode || !matterbridge.aggregatorNode) return;
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;
   if (!serverNode || !aggregator) {
-    matterbridge.log.error('CHIP test devices can only be created when the server node and aggregator node are available');
+    matterbridge.log.error('Demo devices can only be created when the server node and aggregator node are available');
     return;
   }
   let ep: MatterbridgeEndpoint | undefined;
   matterbridge.plugins.set({
-    name: 'matterbridge-chip',
+    name: 'matterbridge-demo-devices',
     path: '',
     type: 'DynamicPlatform',
     version: '1.0.0',
-    description: 'Chip test plugin',
+    description: 'Matterbridge demo devices',
     author: 'Matterbridge',
     enabled: false,
     private: false,
@@ -61,8 +61,8 @@ export async function createChipTestDevices(matterbridge: Matterbridge): Promise
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
     device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber);
     device.addRequiredClusters();
-    device.plugin = 'matterbridge-chip';
-    await matterbridge.addBridgedEndpoint('matterbridge-chip', device);
+    device.plugin = 'matterbridge-demo-devices';
+    await matterbridge.addBridgedEndpoint('matterbridge-demo-devices', device);
   };
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;
