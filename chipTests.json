@@ -21,19 +21,19 @@
       "endpoint": 0
     },
     {
-      "name": "BasicInformation attributes with server-as-subject",
+      "name": "BasicInformation attributes with server-as-subject on RootNode",
       "test": "TC_BINFO_2_1.py",
       "endpoint": 0,
       "args": ["--PICS /root/matterbridge.pics"]
     },
     {
-      "name": "BasicInformation attributes with node-as-subject",
+      "name": "BasicInformation attributes with node-as-subject on RootNode",
       "test": "TC_BINFO_2_2.py",
       "endpoint": 0,
       "args": ["--PICS /root/matterbridge.pics"]
     },
     {
-      "name": "BasicInformation ProductAppearance",
+      "name": "BasicInformation ProductAppearance on RootNode",
       "test": "TC_BINFO_3_1.py",
       "endpoint": 0,
       "args": ["--PICS /root/matterbridge.pics"],
@@ -41,13 +41,13 @@
       "comment": "Gated by @run_if_endpoint_matches(has_attribute(ProductAppearance)); Matterbridge doesn't implement ProductAppearance (BINFO.S.A0014=0 in matterbridge.pics), so it always skips."
     },
     {
-      "name": "BasicInformation reboot count via app-pipe",
+      "name": "BasicInformation reboot count via app-pipe on RootNode",
       "test": "TC_BINFO_3_2.py",
       "endpoint": 0,
       "args": ["--PICS /root/matterbridge.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
-      "name": "PowerSource attributes on RootNode",
+      "name": "PowerSource attributes on RootNode on RootNode",
       "test": "Test_TC_PS_2_1",
       "endpoint": 0,
       "args": ["--PICS /root/power-source.wired.pics"]
@@ -65,14 +65,14 @@
       "args": ["--PICS /root/power-source.wired.pics"]
     },
     {
-      "name": "Descriptor cluster attributes",
+      "name": "Descriptor cluster attributes on RootNode",
       "test": "Test_TC_DESC_2_1",
       "endpoint": 0,
       "skip": true,
       "comment": "Every step in this YAML is disabled:true (manual chip-tool verification procedure, no automated assertions) and no TC_DESC_*.py exists either — it always runs 0 steps regardless of PICS."
     },
     {
-      "name": "AccessControl simple attributes",
+      "name": "AccessControl simple attributes on RootNode",
       "test": "Test_TC_ACL_2_1",
       "endpoint": 0
     },
@@ -82,19 +82,19 @@
       "endpoint": 0
     },
     {
-      "name": "AccessControl Extension attribute",
+      "name": "AccessControl Extension attribute on RootNode",
       "test": "TC_ACL_2_3.py",
       "endpoint": 0,
       "resetBefore": true,
       "comment": "Asserts Extension starts empty; clears persisted AccessControl.Extension storage first so a previous test's write can't leak in."
     },
     {
-      "name": "AccessControl write/read of Acl attribute",
+      "name": "AccessControl write/read of Acl attribute on RootNode",
       "test": "TC_ACL_2_4.py",
       "endpoint": 0
     },
     {
-      "name": "AccessControl event reporting with server as DUT",
+      "name": "AccessControl event reporting with server as DUT on RootNode",
       "test": "TC_ACL_2_5.py",
       "endpoint": 0,
       "unpairBefore": true,
@@ -103,26 +103,26 @@
       "comment": "unpairBefore/pairBefore give a fresh fabric/event log, but reuse the same fabricIndex, so stale persisted AccessControl.Extension data from a previous test's write can resurface under it — resetBefore clears that storage too (resetClusterGlobs)."
     },
     {
-      "name": "AccessControl commissioning event",
+      "name": "AccessControl commissioning event on RootNode",
       "test": "TC_ACL_2_6.py",
       "endpoint": 0,
       "skip": true,
       "comment": "Expects to read back the AccessControlEntryChanged event generated when TH1's admin entry was added during PASE commissioning. This harness reuses chip-tool's baked-in pairing instead of live-commissioning the DUT per test, so that event was never generated in this session and the test fails with IndexError on an empty event list."
     },
     {
-      "name": "AccessControl multi-fabric Extension attribute",
+      "name": "AccessControl multi-fabric Extension attribute on RootNode",
       "test": "TC_ACL_2_7.py",
       "endpoint": 0
     },
     {
-      "name": "AccessControl multi-fabric Acl attribute and events",
+      "name": "AccessControl multi-fabric Acl attribute and events on RootNode",
       "test": "TC_ACL_2_8.py",
       "endpoint": 0,
       "skip": true,
       "comment": "Test commissions its own fresh TH1 (nodeId=1)/TH2 (nodeId=2) fabrics and validates AccessControlEntryChanged events against them; observed event data (nested fabricIndex inconsistent with the outer event's fabricIndex) doesn't match what the test expects, failing an assert_equal on valid-event count. Reproducible from a fresh --start, independent of test order — needs deeper investigation before enabling."
     },
     {
-      "name": "AccessControl multi-fabric ACL/Extension write with node-as-subject",
+      "name": "AccessControl multi-fabric ACL/Extension write with node-as-subject on RootNode",
       "test": "TC_ACL_2_9.py",
       "endpoint": 0
     },
@@ -132,14 +132,14 @@
       "endpoint": 0
     },
     {
-      "name": "AccessControl Managed Device feature (ARL)",
+      "name": "AccessControl Managed Device feature (ARL) on RootNode",
       "test": "TC_ACL_2_11.py",
       "endpoint": 0,
       "skip": true,
       "comment": "Requires the MNGD/AUX features (Managed Device / Auxiliary ACL) with manufacturer-populated ARL/CommissioningARL restrictions. Matterbridge's AccessControl cluster only implements the EXTS feature (FeatureMap=1), so ARL/CommissioningARL are never populated and the test fails an assert_true immediately."
     },
     {
-      "name": "GeneralDiagnostics attributes",
+      "name": "GeneralDiagnostics attributes on RootNode",
       "test": "Test_TC_DGGEN_2_1",
       "endpoint": 0,
       "skip": true,
@@ -153,37 +153,37 @@
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "GeneralDiagnostics PayloadTestRequest command",
+      "name": "GeneralDiagnostics PayloadTestRequest command on RootNode",
       "test": "Test_TC_DGGEN_2_3",
       "endpoint": 0
     },
     {
-      "name": "GeneralDiagnostics attributes with node-as-subject",
+      "name": "GeneralDiagnostics attributes with node-as-subject on RootNode",
       "test": "TC_DGGEN_2_4.py",
       "endpoint": 0
     },
     {
-      "name": "GeneralDiagnostics RebootCount across a second fabric",
+      "name": "GeneralDiagnostics RebootCount across a second fabric on RootNode",
       "test": "TC_DGGEN_2_5.py",
       "endpoint": 0
     },
     {
-      "name": "GeneralDiagnostics TestEventTrigger",
+      "name": "GeneralDiagnostics TestEventTrigger on RootNode",
       "test": "Test_TC_DGGEN_3_1",
       "endpoint": 0
     },
     {
-      "name": "GeneralDiagnostics TestEventTrigger with server as DUT",
+      "name": "GeneralDiagnostics TestEventTrigger with server as DUT on RootNode",
       "test": "TC_DGGEN_3_2.py",
       "endpoint": 0
     },
     {
-      "name": "GroupKeyManagement attributes",
+      "name": "GroupKeyManagement attributes on RootNode",
       "test": "Test_TC_GRPKEY_2_1",
       "endpoint": 0
     },
     {
-      "name": "GroupKeyManagement KeySet commands",
+      "name": "GroupKeyManagement KeySet commands on RootNode",
       "test": "Test_TC_GRPKEY_2_2",
       "endpoint": 0
     },
@@ -195,76 +195,76 @@
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "OperationalCredentials basic node operational credentials",
+      "name": "OperationalCredentials basic node operational credentials on RootNode",
       "test": "TC_OPCREDS_3_1.py",
       "endpoint": 0
     },
     {
-      "name": "OperationalCredentials AddNOC for a new fabric",
+      "name": "OperationalCredentials AddNOC for a new fabric on RootNode",
       "test": "TC_OPCREDS_3_2.py",
       "endpoint": 0,
       "revokeWindowBefore": true,
       "comment": "TC_OPCREDS_3_1 leaves a commissioning window open, which blocks ArmFailSafe (kBusyWithOtherAdmin) for this test's own AddNOC flow — revokeWindowBefore closes it first."
     },
     {
-      "name": "OperationalCredentials attestation and CSR",
+      "name": "OperationalCredentials attestation and CSR on RootNode",
       "test": "Test_TC_OPCREDS_3_3",
       "endpoint": 0,
       "skip": true,
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "OperationalCredentials UpdateNOC error conditions",
+      "name": "OperationalCredentials UpdateNOC error conditions on RootNode",
       "test": "TC_OPCREDS_3_4.py",
       "endpoint": 0,
       "skip": true,
       "comment": "Expects exactly 1 entry in TrustedRootCertificates, but finds 2 (the same root cert, one normal-sized and one padded to max size) even from a fully fresh unpair+repair cycle. Caused by the Python test framework's own maximize_cert_chains:true default during commission-only, not a Matterbridge behavior — needs a way to disable that default for this harness's commissioning flow before enabling."
     },
     {
-      "name": "OperationalCredentials UpdateNOC",
+      "name": "OperationalCredentials UpdateNOC on RootNode",
       "test": "TC_OPCREDS_3_5.py",
       "endpoint": 0,
       "revokeWindowBefore": true,
       "comment": "Same leftover-open-window issue as TC_OPCREDS_3_2 — revokeWindowBefore closes it first."
     },
     {
-      "name": "OperationalCredentials RemoveFabric manual verification",
+      "name": "OperationalCredentials RemoveFabric manual verification on RootNode",
       "test": "Test_TC_OPCREDS_3_6",
       "endpoint": 0,
       "skip": true,
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "OperationalCredentials UpdateFabricLabel",
+      "name": "OperationalCredentials UpdateFabricLabel on RootNode",
       "test": "Test_TC_OPCREDS_3_7",
       "endpoint": 0
     },
     {
-      "name": "OperationalCredentials VID verification statement",
+      "name": "OperationalCredentials VID verification statement on RootNode",
       "test": "TC_OPCREDS_3_8.py",
       "endpoint": 0,
       "skip": true,
       "comment": "Fails at import time: ModuleNotFoundError: No module named 'nest_asyncio' — missing Python dependency in this image, unrelated to Matterbridge."
     },
     {
-      "name": "GeneralCommissioning attributes",
+      "name": "GeneralCommissioning attributes on RootNode",
       "test": "TC_CGEN_2_1.py",
       "endpoint": 0
     },
     {
-      "name": "GeneralCommissioning ArmFailSafe command",
+      "name": "GeneralCommissioning ArmFailSafe command on RootNode",
       "test": "TC_CGEN_2_2.py",
       "endpoint": 0
     },
     {
-      "name": "GeneralCommissioning OpenCommissioningWindow error conditions",
+      "name": "GeneralCommissioning OpenCommissioningWindow error conditions on RootNode",
       "test": "TC_CGEN_2_4.py",
       "endpoint": 0,
       "revokeWindowBefore": true,
       "comment": "TC_CGEN_2_2 leaves a commissioning window open, which blocks this test's own OpenCommissioningWindow call (IM Error 0x602) — revokeWindowBefore closes it first."
     },
     {
-      "name": "GeneralCommissioning SetTCAcknowledgements",
+      "name": "GeneralCommissioning SetTCAcknowledgements on RootNode",
       "test": "TC_CGEN_2_5.py",
       "endpoint": 0,
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
@@ -272,14 +272,14 @@
       "comment": "Self-skips: Matterbridge doesn't implement the Terms & Conditions (TC) feature. Needs the PIXIT.CGEN.* int-args or the test errors with a KeyError before it can even check the feature, and revokeWindowBefore for the same leftover-window reason as TC_CGEN_2_4."
     },
     {
-      "name": "GeneralCommissioning CommissioningComplete without required terms",
+      "name": "GeneralCommissioning CommissioningComplete without required terms on RootNode",
       "test": "TC_CGEN_2_6.py",
       "endpoint": 0,
       "revokeWindowBefore": true,
       "comment": "Self-skips: gated on the same unimplemented TC feature as TC_CGEN_2_5 (no PIXIT args needed here — it never gets far enough to read them)."
     },
     {
-      "name": "GeneralCommissioning CommissioningComplete with invalid terms",
+      "name": "GeneralCommissioning CommissioningComplete with invalid terms on RootNode",
       "test": "TC_CGEN_2_7.py",
       "endpoint": 0,
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
@@ -287,7 +287,7 @@
       "comment": "Self-skips: same unimplemented TC feature as TC_CGEN_2_5."
     },
     {
-      "name": "GeneralCommissioning TCAcknowledgements reset after factory reset",
+      "name": "GeneralCommissioning TCAcknowledgements reset after factory reset on RootNode",
       "test": "TC_CGEN_2_8.py",
       "endpoint": 0,
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
@@ -295,7 +295,7 @@
       "comment": "Self-skips: same unimplemented TC feature as TC_CGEN_2_5."
     },
     {
-      "name": "GeneralCommissioning TCAcknowledgements reset after all fabrics removed",
+      "name": "GeneralCommissioning TCAcknowledgements reset after all fabrics removed on RootNode",
       "test": "TC_CGEN_2_9.py",
       "endpoint": 0,
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
@@ -303,14 +303,14 @@
       "comment": "Self-skips: same unimplemented TC feature as TC_CGEN_2_5."
     },
     {
-      "name": "GeneralCommissioning required TCAcknowledgements can't be unset",
+      "name": "GeneralCommissioning required TCAcknowledgements can't be unset on RootNode",
       "test": "TC_CGEN_2_10.py",
       "endpoint": 0,
       "revokeWindowBefore": true,
       "comment": "Self-skips: same unimplemented TC feature as TC_CGEN_2_6 (no PIXIT args needed here either)."
     },
     {
-      "name": "GeneralCommissioning TCAcknowledgements update after commissioning",
+      "name": "GeneralCommissioning TCAcknowledgements update after commissioning on RootNode",
       "test": "TC_CGEN_2_11.py",
       "endpoint": 0,
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
@@ -937,7 +937,7 @@
       "comment": "Requires OO.S.F02 (OffOnly), mutually exclusive with the OO.S.F00 (Lighting) feature createDefaultOnOffClusterServer() actually enables on OnOffLight — permanently inapplicable given this device's feature set, not a PICS omission to fix."
     },
     {
-      "name": "OnOff functionality with client as DUT",
+      "name": "OnOff functionality with client as DUT on OnOffLight",
       "test": "Test_TC_OO_3_2_Simulated",
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
@@ -957,7 +957,7 @@
       "args": ["--PICS /root/groups.pics"]
     },
     {
-      "name": "Groups GetGroupMembership, AddGroupIfIdentifying manual verification",
+      "name": "Groups GetGroupMembership, AddGroupIfIdentifying manual verification on OnOffLight",
       "test": "Test_TC_G_2_3",
       "endpoint": 401,
       "args": ["--PICS /root/groups.pics"],
@@ -965,14 +965,16 @@
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "Groups AddGroup with same GroupID on multiple endpoints",
+      "name": "Groups AddGroup with same GroupID on multiple endpoints on OnOffLight and DimmableLight",
       "test": "Test_TC_G_2_4",
+      "endpoint": 401,
       "args": ["--PICS /root/groups.pics"],
       "comment": "Patched locally (docker/chip-test/patches/Test_TC_G_2_4.yaml, see chip-tests instructions §12) to fix its Step 6 GroupTable read (missing a '&& !G.S.F00' PICS guard, so it wrongly ran and failed alongside the F00-gated Step 7 duplicate whenever GroupNames is supported) and to pin PIXIT.G.ENDPOINT1/ENDPOINT2 to real Groups-server endpoints 401/402 in the YAML's own config defaults instead of via CLI overrides, since chiptool.py's generic PIXIT override path stores CLI values as raw strings with no int coercion and that broke the response's integer Endpoints array comparison."
     },
     {
       "name": "Groups cluster commands with client as DUT",
       "test": "Test_TC_G_3_2",
+      "endpoint": 401,
       "args": ["--PICS /root/groups.pics"],
       "skip": true,
       "comment": "Requires G.C: the DUT itself must issue AddGroup/ViewGroup/RemoveGroup/... commands to the TH as a Groups client, and every step in this YAML is disabled:true (manual verification flow). Matterbridge only ever exposes a Groups cluster server for bridged devices, never acts as a client — permanently inapplicable."

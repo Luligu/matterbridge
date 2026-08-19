@@ -145,3 +145,71 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   (`[401, 402]`) failed to match the string-typed expected value (`["401", "402"]`) until the defaults were
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
+
+### matter.js discovery
+
+- **GeneralCommissioning: `TC_CGEN_2_2.py` (ArmFailSafe command) fails intermittently with a generic
+  `InteractionModelError: Failure (0x1)` — root cause traced into `@matter/node`'s `GeneralCommissioningServer`,
+  not Matterbridge code.** Observed in the `chip-tests.yml` run started `2026-08-19T09:52:37.017Z`
+  (`chipTestsSummary.log:57`), not the first occurrence. Matterbridge implements no custom
+  `GeneralCommissioning` cluster behavior at all (`grep -rn "GeneralCommissioning\|ArmFailSafe" src/` returns
+  zero matches across `src/`/`packages/`) — the entire cluster, including `ArmFailSafe`, is the default
+  implementation shipped by `@matter/node`.
+
+  **Where it fails.** Not the test's first `ArmFailSafe` call — that succeeds normally (`Step #3:
+  ArmFailSafeResponse with ErrorCode as OK(0)`, `chipTests.log:30328`ish). The test's `run_steps_3_to_5`
+  helper (`ArmFailSafe` → `CSRRequest` → `AddTrustedRootCertificate`) runs twice in the same test instance —
+  once at Step 3-5, and again at Step 10 via `run_steps_3_to_5(failsafe_expiration_seconds,
+  is_first_run=False)`. Step 7-9 in between force the first fail-safe to expire (`ExpiryLengthSeconds=1`,
+  then wait 1s) so its rollback runs before the second pass starts. The **second** `ArmFailSafe` (Step 10)
+  gets back a bare `IM Error 0x1 (FAILURE)` instead of the expected `ArmFailSafeResponse`, and the test raises
+  an unhandled `matter.interaction_model.InteractionModelError` (`chipTests.log:30388-30416`):
+
+  ```
+  Received status response, status is 0x01 (FAILURE)
+  ERROR Exception occurred in test_TC_CGEN_2_2.
+  Traceback (most recent call last):
+    File ".../TC_CGEN_2_2.py", line 381, in test_TC_CGEN_2_2
+      new_root_cert = await self.run_steps_3_to_5(failsafe_expiration_seconds, is_first_run=False)
+    File ".../TC_CGEN_2_2.py", line 119, in run_steps_3_to_5
+      resp = await self.send_single_cmd(...)
+    File ".../matter/ChipDeviceCtrl.py", line 1908, in SendCommand
+      return await future
+  matter.interaction_model.InteractionModelError: InteractionModelError: Failure (0x1)
+  ```
+
+  **Why matter.js can surface a generic Failure(0x1) here.** In
+  `node_modules/@matter/node/src/behaviors/general-commissioning/GeneralCommissioningServer.ts`:
+  - `#armFailSafe()` (lines 69-135) is the command handler. Line 35 sets `static override lockOnInvoke =
+    false` — `ArmFailSafe` is deliberately exempted from the endpoint's normal transaction lock, explicitly so
+    it can run concurrently with another in-flight endpoint transaction.
+  - Its error handling (lines 124-131) only translates caught errors into a defined
+    `CommissioningError.BusyWithOtherAdmin` response when the error is a `MatterFlowError`
+    (`MatterFlowError.accept()`, `@matter/general/src/MatterError.ts:87-92`, rethrows anything that isn't).
+    Any other exception type escapes `#armFailSafe()` uncaught and is what becomes a bare IM
+    `Failure (0x1)` at the interaction-model layer — the only code path that matches the observed symptom.
+  - Lines 111-114 carry a comment noting the new `ServerNodeFailsafeContext` is constructed and
+    `commissioner.beginTimed(failsafe)` is called *before* `await failsafe.construction` specifically
+    because `commissioner.isFailsafeArmed` would incorrectly read `false` if that promise hadn't resolved yet
+    — i.e. the matter.js authors already had to work around one race in this exact area, evidence the
+    ArmFailSafe/failsafe-lifecycle code is timing-sensitive by nature.
+
+  **Hypothesis.** Step 9's `ArmFailSafe(ExpiryLengthSeconds=0)` expires/disarms the first fail-safe, which
+  drives an async `expire() → close() → rollback()` chain
+  (`@matter/protocol/src/common/FailsafeContext.ts`) that performs real endpoint transactions
+  (`node.act(...)` inside `restoreNetworkState()`/`restoreBreadcrumb()`,
+  `@matter/node/src/behaviors/general-commissioning/ServerNodeFailsafeContext.ts:71-91`) to roll back the
+  breadcrumb and delete the root cert/fabric material added during the first pass. Because
+  `lockOnInvoke = false`, Step 10's fresh `ArmFailSafe` is not blocked from starting while that rollback's
+  transaction is still finishing. If the new `ServerNodeFailsafeContext` construction races the tail end of
+  that still-in-flight rollback, whatever contention error results is not a `MatterFlowError`, so it isn't
+  translated into a defined `CommissioningError` — it propagates uncaught and surfaces as the generic
+  `Failure (0x1)` seen in the log. This would explain the intermittency: it depends on whether the previous
+  fail-safe's async rollback has fully settled before the next `ArmFailSafe` begins, not on any deterministic
+  logic error.
+
+  **Status.** Not yet confirmed as a Matterbridge-side defect — Matterbridge has no ArmFailSafe/
+  GeneralCommissioning code of its own to be wrong. This looks like an `@matter/node`/`@matter/protocol`
+  SDK-level race between fail-safe rollback and a rapid re-arm. Flagging for upstream review before treating
+  it as fixable in this repo; re-run `TC_CGEN_2_2.py` in isolation to confirm whether the failure is
+  reproducible on demand or genuinely timing-dependent.
