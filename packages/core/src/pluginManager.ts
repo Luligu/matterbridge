@@ -624,7 +624,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async loadFromStorage(): Promise<StoragePlugin[]> {
     if (!this.matterbridge.nodeContext) {
-      throw new Error('loadFromStorage: node context is not available.');
+      throw new Error('PluginManager.loadFromStorage: node context is not available.');
     }
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
@@ -640,13 +640,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
    */
   async saveToStorage(): Promise<number> {
     if (!this.matterbridge.nodeContext) {
-      throw new Error('loadFromStorage: node context is not available.');
+      throw new Error('PluginManager.saveToStorage: node context is not available.');
     }
     // Convert the map to an array
     const plugins: StoragePlugin[] = [];
     for (const plugin of this.array()) {
-      // v8 ignore next - Skip matterbridge-chip plugin in demo mode
-      if (process.env.MATTERBRIDGE_DEMO_DEVICES && plugin.name === 'matterbridge-chip') continue; // Skip matterbridge-chip plugin in demo mode
+      // v8 ignore next - Skip matterbridge-demo-devices plugin in demo mode
+      if (process.env.MATTERBRIDGE_DEMO_DEVICES && plugin.name === 'matterbridge-demo-devices') continue; // Skip matterbridge-demo-devices plugin in demo mode
       plugins.push({
         name: plugin.name,
         path: plugin.path,

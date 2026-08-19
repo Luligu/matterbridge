@@ -341,8 +341,8 @@ describe('PluginManager', () => {
     plugins.clear();
     const context = matterbridge.nodeContext;
     matterbridge.nodeContext = undefined;
-    await expect(plugins.saveToStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
-    await expect(plugins.loadFromStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
+    await expect(plugins.saveToStorage()).rejects.toThrow(new Error('PluginManager.saveToStorage: node context is not available.'));
+    await expect(plugins.loadFromStorage()).rejects.toThrow(new Error('PluginManager.loadFromStorage: node context is not available.'));
     matterbridge.nodeContext = context;
   });
 
