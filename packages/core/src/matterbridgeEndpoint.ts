@@ -4498,16 +4498,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * The sensorFault event is automatically triggered when sensorFault changes.
    *
    * @param {boolean} [sensorFault] - Boolean value indicating the sensor fault state. Defaults to `false` if not provided.
-   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `0` if not provided.
-   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
-   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
+   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `1` if not provided.
+   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `3` if not provided (min 2, max 10).
+   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `1` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultBooleanStateConfigurationClusterServer(
     sensorFault: boolean = false,
-    currentSensitivityLevel: number = 0,
-    supportedSensitivityLevels: number = 2,
-    defaultSensitivityLevel: number = 0,
+    currentSensitivityLevel: number = 1,
+    supportedSensitivityLevels: number = 3,
+    defaultSensitivityLevel: number = 1,
   ): this {
     this.behaviors.require(
       MatterbridgeBooleanStateConfigurationServer.with(

@@ -2305,7 +2305,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2329,7 +2329,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2353,7 +2353,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
