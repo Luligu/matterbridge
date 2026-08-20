@@ -5,6 +5,7 @@
     "": {
       "name": "matterbridge",
       "dependencies": {
+        "matterbridge-mock1": "./packages/core/src/mock/plugin1",
         "@matterbridge/core": "3.10.6",
         "@matterbridge/dgram": "3.10.6",
         "@matterbridge/jest-utils": "3.10.6",
@@ -12,6 +13,7 @@
         "@matterbridge/types": "3.10.6",
         "@matterbridge/utils": "3.10.6",
         "@matterbridge/vitest-utils": "3.10.6",
+        "matterbridge-mock1": "./packages/core/src/mock/plugin1",
         "node-ansi-logger": "3.3.0",
         "node-persist-manager": "2.1.0",
       },
@@ -609,6 +611,10 @@
     "marked": ["marked@18.0.9", "", { "bin": "bin/marked.js" }, "sha512-/Sa4qiiHZxf0/FQdBBowr9q4r10krCwMvpK48FUBdXdUXScDxiQGR9zCPrFgRVR5LU3iySOiIjy09ZQvADir1w=="],
 
     "math-intrinsics": ["math-intrinsics@1.1.0", "", {}, "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="],
+
+    "matterbridge-mock1": ["matterbridge-mock1@file:packages/core/src/mock/plugin1", {}],
+
+    "matterbridge-mock1": ["matterbridge-mock1@file:packages/core/src/mock/plugin1", {}],
 
     "media-typer": ["media-typer@1.1.1", "", {}, "sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ=="],
 

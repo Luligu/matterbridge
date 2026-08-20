@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# .devcontainer/bun/post-create.sh v.2.0.0
+
+# This script runs after the Dev Container is created to set up the dev container environment.
+
 set -euo pipefail
 
 echo "Running Matterbridge Bun Dev Container post-create.sh..."
