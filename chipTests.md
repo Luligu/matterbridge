@@ -146,8 +146,6 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
-### matter.js discovery
-
 - **LevelControl: `TC_LVL_2_3.py` and `Test_TC_LVL_6_1` fail because `@matter/node`'s default
   `LevelControlServer` never simulates a transition — it jumps `CurrentLevel` straight to the target and
   ignores `transitionTime` entirely.** `LevelControlServer.js`'s `State.managedTransitionTimeHandling` flag
@@ -176,6 +174,8 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   consistently lets the `MoveToLevel` through instead. `"skip": true` in `chipTests.json`, pending deeper
   investigation into whether `@matter/node`'s state commit for `OnOff.Off` and the following command's read
   of that state can race under pipelined delivery.
+
+### matter.js discovery
 
 - **GeneralCommissioning: `TC_CGEN_2_2.py` (ArmFailSafe command) fails intermittently with a generic
   `InteractionModelError: Failure (0x1)` — root cause traced into `@matter/node`'s `GeneralCommissioningServer`,
