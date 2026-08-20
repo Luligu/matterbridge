@@ -26,6 +26,14 @@
       "detail": "Start Matterbridge in childbridge mode on port 5540."
     },
     {
+      "label": "Run: Demo",
+      "type": "process",
+      "command": "node",
+      "args": ["./bin/matterbridge.js", "--demo-devices", "--port", "5540"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge in demo mode on port 5540."
+    },
+    {
       "label": "Run: Controller",
       "type": "process",
       "command": "node",
