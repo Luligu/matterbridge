@@ -157,10 +157,10 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   implementation shipped by `@matter/node`.
 
   **Where it fails.** Not the test's first `ArmFailSafe` call — that succeeds normally (`Step #3:
-  ArmFailSafeResponse with ErrorCode as OK(0)`, `chipTests.log:30328`ish). The test's `run_steps_3_to_5`
+ArmFailSafeResponse with ErrorCode as OK(0)`, `chipTests.log:30328`ish). The test's `run_steps_3_to_5`
   helper (`ArmFailSafe` → `CSRRequest` → `AddTrustedRootCertificate`) runs twice in the same test instance —
   once at Step 3-5, and again at Step 10 via `run_steps_3_to_5(failsafe_expiration_seconds,
-  is_first_run=False)`. Step 7-9 in between force the first fail-safe to expire (`ExpiryLengthSeconds=1`,
+is_first_run=False)`. Step 7-9 in between force the first fail-safe to expire (`ExpiryLengthSeconds=1`,
   then wait 1s) so its rollback runs before the second pass starts. The **second** `ArmFailSafe` (Step 10)
   gets back a bare `IM Error 0x1 (FAILURE)` instead of the expected `ArmFailSafeResponse`, and the test raises
   an unhandled `matter.interaction_model.InteractionModelError` (`chipTests.log:30388-30416`):
@@ -181,7 +181,7 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   **Why matter.js can surface a generic Failure(0x1) here.** In
   `node_modules/@matter/node/src/behaviors/general-commissioning/GeneralCommissioningServer.ts`:
   - `#armFailSafe()` (lines 69-135) is the command handler. Line 35 sets `static override lockOnInvoke =
-    false` — `ArmFailSafe` is deliberately exempted from the endpoint's normal transaction lock, explicitly so
+false` — `ArmFailSafe` is deliberately exempted from the endpoint's normal transaction lock, explicitly so
     it can run concurrently with another in-flight endpoint transaction.
   - Its error handling (lines 124-131) only translates caught errors into a defined
     `CommissioningError.BusyWithOtherAdmin` response when the error is a `MatterFlowError`
@@ -189,7 +189,7 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
     Any other exception type escapes `#armFailSafe()` uncaught and is what becomes a bare IM
     `Failure (0x1)` at the interaction-model layer — the only code path that matches the observed symptom.
   - Lines 111-114 carry a comment noting the new `ServerNodeFailsafeContext` is constructed and
-    `commissioner.beginTimed(failsafe)` is called *before* `await failsafe.construction` specifically
+    `commissioner.beginTimed(failsafe)` is called _before_ `await failsafe.construction` specifically
     because `commissioner.isFailsafeArmed` would incorrectly read `false` if that promise hadn't resolved yet
     — i.e. the matter.js authors already had to work around one race in this exact area, evidence the
     ArmFailSafe/failsafe-lifecycle code is timing-sensitive by nature.
