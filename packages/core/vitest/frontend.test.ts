@@ -485,6 +485,7 @@ describe('Matterbridge frontend', () => {
       ['pumpConfigurationAndControl', 0x200, 'operationMode', 0, 1],
       ['valveConfigurationAndControl', 0x81, 'currentState', 0, 1],
       ['levelControl', 0x08, 'currentLevel', 0, 100],
+      ['applicationBasic', 0x50d, 'applicationName', 0, 'Netflix'],
       ['booleanState', 0x45, 'stateValue', 0, true],
       ['booleanStateConfiguration', 0x80, 'alarmsActive', 0, { foo: true }],
       ['smokeCoAlarm', 0x5c, 'smokeState', 0, 0],
@@ -537,6 +538,7 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('OpState: Docked');
     expect(text).toContain('State: Open');
     expect(text).toContain('Level: 100');
+    expect(text).toContain('App: Netflix');
     expect(text).toContain('Contact: true');
     expect(text).toContain('Active alarms:');
     expect(text).toContain('Smoke: Normal');

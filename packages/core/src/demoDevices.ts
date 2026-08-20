@@ -30,8 +30,14 @@ import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
+import { CastingVideoClient } from './devices/castingVideoClient.js';
+import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
 import { Closure } from './devices/closure.js';
+import { ContentApp } from './devices/contentApp.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
+import { Speaker } from './devices/speaker.js';
+import { VideoRemoteControl } from './devices/videoRemoteControl.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -372,5 +378,59 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ThermostatController')!, bridgedNode, powerSource], { id: 'ThermostatController', number: EndpointNumber(9_04) });
   await registerDevice(ep, 'Thermostat Controller', 'HVAC-09-04');
+
+  // Chapter 10 - Media Device Types
+  //
+  // All Chapter 10 device types have single device classes. CastingVideoClient and VideoRemoteControl are controller
+  // devices: they only expose client clusters to control a Casting Video Player.
+
+  ep = new BasicVideoPlayer('Basic Video Player', 'MEDIA-10-02', { id: 'BasicVideoPlayer', number: EndpointNumber(10_02) });
+  await registerDevice(ep, 'Basic Video Player', 'MEDIA-10-02');
+
+  ep = new CastingVideoPlayer('Casting Video Player', 'MEDIA-10-03', { id: 'CastingVideoPlayer', number: EndpointNumber(10_03) });
+  await registerDevice(ep, 'Casting Video Player', 'MEDIA-10-03');
+
+  ep = new Speaker('Speaker', 'MEDIA-10-04', { id: 'Speaker', number: EndpointNumber(10_04) });
+  await registerDevice(ep, 'Speaker', 'MEDIA-10-04');
+
+  ep = new ContentApp('Content App', 'MEDIA-10-05', { id: 'ContentApp', number: EndpointNumber(10_05) });
+  await registerDevice(ep, 'Content App', 'MEDIA-10-05');
+
+  ep = new CastingVideoClient('Casting Video Client', 'MEDIA-10-06', { id: 'CastingVideoClient', number: EndpointNumber(10_06) });
+  await registerDevice(ep, 'Casting Video Client', 'MEDIA-10-06');
+
+  ep = new VideoRemoteControl('Video Remote Control', 'MEDIA-10-07', { id: 'VideoRemoteControl', number: EndpointNumber(10_07) });
+  await registerDevice(ep, 'Video Remote Control', 'MEDIA-10-07');
+
+  // Chapter 11 - Generic Device Types
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ModeSelect')!, bridgedNode, powerSource], { id: 'ModeSelect', number: EndpointNumber(11_01) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  ep.createDefaultModeSelectClusterServer('Mode', [
+    { label: 'Mode 1', mode: 0, semanticTags: [] },
+    { label: 'Mode 2', mode: 1, semanticTags: [] },
+  ]);
+  await registerDevice(ep, 'Mode Select', 'GENERIC-11-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'Aggregator', number: EndpointNumber(11_02) });
+  ep.createDefaultPowerSourceWiredClusterServer();
+  await ep.addFixedLabel('composed', 'Aggregator');
+  ep.addChildDeviceType('Plug1', getSupportedDeviceType('OnOffPlugInUnit')!, {
+    number: EndpointNumber(11_02_1),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  }).addRequiredClusters();
+  ep.addChildDeviceType('Plug2', getSupportedDeviceType('OnOffPlugInUnit')!, {
+    number: EndpointNumber(11_02_2),
+    tagList: [getSemtag(CommonNumberTag.Two)],
+  }).addRequiredClusters();
+  ep.addChildDeviceType('Plug3', getSupportedDeviceType('OnOffPlugInUnit')!, {
+    number: EndpointNumber(11_02_3),
+    tagList: [getSemtag(CommonNumberTag.Three)],
+  }).addRequiredClusters();
+  ep.addChildDeviceType('Plug4', getSupportedDeviceType('OnOffPlugInUnit')!, {
+    number: EndpointNumber(11_02_4),
+    tagList: [getSemtag(CommonNumberTag.Four)],
+  }).addRequiredClusters();
+  await registerDevice(ep, 'Aggregator', 'GENERIC-11-02');
 }
 // v8 ignore end
