@@ -1534,6 +1534,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
+      if (clusterName === 'applicationBasic' && attributeName === 'applicationName') attributes += `App: ${attributeValue} `;
+
       if (clusterName === 'colorControl' && attributeName === 'colorMode' && isValidNumber(attributeValue, 0, 2)) attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
       if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue))
         attributes += `Hue: ${Math.round(attributeValue)} `;

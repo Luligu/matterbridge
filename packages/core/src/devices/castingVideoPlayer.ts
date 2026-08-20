@@ -22,24 +22,34 @@
  */
 
 // @matter
-import { ContentLauncherServer } from '@matter/node/behaviors/content-launcher';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
+import type { EndpointNumber } from '@matter/types/datatype';
 
 // Matterbridge
-import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { castingVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeKeypadInputServer, MatterbridgeMediaPlaybackServer } from './basicVideoPlayer.js';
+import {
+  createDefaultContentLauncherClusterServer,
+  createDefaultKeypadInputClusterServer,
+  createDefaultMediaPlaybackClusterServer,
+  createDefaultMediaPowerSourceClusterServer,
+  type MediaPowerSourceType,
+} from './mediaHelpers.js';
 
 /**
  * Options for configuring a {@link CastingVideoPlayer} instance.
- *
- * All temperatures in °C. Typical valid range 0–50 unless otherwise noted.
  */
 export interface CastingVideoPlayerOptions {
-  /** Device state */
+  /** Initial On/Off state. */
   onOff?: boolean;
+  /** Initial media playback state. */
   playbackState?: MediaPlayback.PlaybackState;
+  /** Power source type. `'None'` omits the Power Source cluster entirely. */
+  powerSourceType?: MediaPowerSourceType;
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
 }
 
 /**
@@ -59,69 +69,23 @@ export class CastingVideoPlayer extends MatterbridgeEndpoint {
    * Options defaults:
    *  - onOff: false
    *  - playbackState: NotPlaying
+   *  - powerSourceType: 'Wired'
    *
    * @returns {CastingVideoPlayer} The CastingVideoPlayer instance.
    *
    * @remarks Not supported by Google Home.
    */
   constructor(name: string, serial: string, options: CastingVideoPlayerOptions = {}) {
-    const { onOff = false, playbackState = MediaPlayback.PlaybackState.NotPlaying } = options;
-    super([castingVideoPlayer, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const { onOff = false, playbackState = MediaPlayback.PlaybackState.NotPlaying, powerSourceType = 'Wired' } = options;
+    super(powerSourceType === 'None' ? [castingVideoPlayer] : [castingVideoPlayer, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+    });
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Casting Video Player');
-    this.createDefaultPowerSourceWiredClusterServer();
+    createDefaultMediaPowerSourceClusterServer(this, powerSourceType);
     this.createOnOffClusterServer(onOff);
-    this.createDefaultMediaPlaybackClusterServer(playbackState);
-    this.createDefaultKeypadInputClusterServer();
-    this.createDefaultContentLauncherClusterServer();
-  }
-
-  /**
-   * Creates a default Media Playback Cluster Server.
-   *
-   * @param {MediaPlayback.PlaybackState} currentState - The current state of the video player.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultMediaPlaybackClusterServer(currentState: MediaPlayback.PlaybackState): this {
-    this.behaviors.require(MatterbridgeMediaPlaybackServer, {
-      currentState,
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default Keypad Input Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultKeypadInputClusterServer(): this {
-    this.behaviors.require(MatterbridgeKeypadInputServer, {
-      // No attributes to initialize
-    });
-    return this;
-  }
-
-  /**
-   * Creates a default Keypad Input Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultContentLauncherClusterServer(): this {
-    this.behaviors.require(MatterbridgeContentLauncherServer, {
-      // No attributes to initialize
-    });
-    return this;
-  }
-}
-
-/**
- * ContentLauncher server that forwards launch commands to the Matterbridge command handler.
- */
-export class MatterbridgeContentLauncherServer extends ContentLauncherServer {
-  /**
-   * Initializes the server.
-   */
-  override initialize(): void {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeContentLauncherServer initialized`);
+    createDefaultMediaPlaybackClusterServer(this, playbackState);
+    createDefaultKeypadInputClusterServer(this);
+    createDefaultContentLauncherClusterServer(this);
   }
 }

@@ -32,7 +32,7 @@ describe('DevicesIcons', () => {
     expectText('AC');
     expectText('Front');
     expectText('3300 mV');
-    expect(screen.getAllByText('Controller')).toHaveLength(9);
+    expect(screen.getAllByText('Controller')).toHaveLength(11);
     expect(screen.getAllByText('On').length).toBeGreaterThanOrEqual(3);
     expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(2);
     expectText('Level 128');
@@ -61,6 +61,8 @@ describe('DevicesIcons', () => {
     expectText('HeatPump');
     expectText('Solar');
     expectText('Inverter');
+    expectText('App');
+    expectText('Aggregator');
     expectText('Camera');
     expectText('Floodlight');
     expectText('Video bell');
@@ -607,6 +609,13 @@ function createFullDeviceClusters(): Cluster[] {
   add(0x0309, 'HeatPump', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0017, 'SolarPower', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0018, 'BatteryStorage', [['ElectricalPowerMeasurement', 'featureMap', '{}', {}]]);
+  add(0x0028, 'BasicVideoPlayer', [['OnOff', 'onOff', 'true', true]]);
+  add(0x0023, 'CastingVideoPlayer', [['OnOff', 'onOff', 'false', false]]);
+  add(0x0022, 'Speaker', [['OnOff', 'onOff', 'true', true]]);
+  add(0x0029, 'CastingVideoClient', [['Descriptor', 'clusterRevision', '1', 1]]);
+  add(0x002a, 'VideoRemoteControl', [['Descriptor', 'clusterRevision', '1', 1]]);
+  add(0x0024, 'ContentApp', [['ApplicationBasic', 'applicationName', 'Netflix', 'Netflix']]);
+  add(0x000e, 'Aggregator', [['Descriptor', 'clusterRevision', '1', 1]]);
   addCameraBranches(add);
   add(0x0076, 'SmokeAlarm', [
     ['SmokeCoAlarm', 'featureMap', '{ smokeAlarm: true }', { smokeAlarm: true }],

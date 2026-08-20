@@ -31,6 +31,9 @@ import {
   mdiMeterElectricOutline,
   mdiSprinklerVariant,
   mdiValve,
+  mdiTelevision,
+  mdiVolumeHigh,
+  mdiLan,
 } from '@mdi/js';
 import { Icon } from '@mdi/react';
 // @mui/icons-material
@@ -468,6 +471,36 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* Battery Storage */}
       {deviceType===0x0018 && clusters.filter(cluster => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'featureMap').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiHomeBattery} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'Inverter'}/>
+      ))}
+
+      {/* BasicVideoPlayer */}
+      {deviceType===0x0028 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiTelevision} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
+      ))}
+      {/* CastingVideoPlayer */}
+      {deviceType===0x0023 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiTelevision} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
+      ))}
+      {/* Speaker */}
+      {deviceType===0x0022 && clusters.filter(cluster => cluster.clusterName === 'OnOff' && cluster.attributeName === 'onOff').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiVolumeHigh} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue===true ? 'On' : 'Off'} />
+      ))}
+      {/* CastingVideoClient */}
+      {deviceType===0x0029 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiTelevision} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Controller' />
+      ))}
+      {/* VideoRemoteControl */}
+      {deviceType===0x002a && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiTelevision} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Controller' />
+      ))}
+      {/* ContentApp */}
+      {deviceType===0x0024 && clusters.filter(cluster => cluster.clusterName === 'ApplicationBasic' && cluster.attributeName === 'applicationName').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiTelevision} size='40px' color='var(--primary-color)' />} cluster={cluster} value={`App`} />
+      ))}
+
+      {/* Aggregator */}
+      {deviceType===0x000e && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiLan} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Aggregator' />
       ))}
 
       {/* Camera */}
