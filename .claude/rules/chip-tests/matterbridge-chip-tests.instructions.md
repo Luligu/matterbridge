@@ -7,7 +7,7 @@ paths:
   - 'chipTestsSummary.log'
   - 'scripts/run-matterbridge-chip-tests.mjs'
   - 'packages/core/src/chipTests.ts'
-  - 'packages/core/src/chipTestDevices.ts'
+  - 'packages/core/src/demoDevices.ts'
   - 'packages/core/src/helpers.ts'
   - 'docker/Dockerfile.chip-test'
   - 'docker/entrypoint.chip-test.sh'
@@ -75,15 +75,15 @@ get local code changes to this repo into a running container instead.
   copied over the same-named file under `src/python_testing/` inside the container by `start()`, right after
   it comes up — see §12 for when and how to add one.
 
-## 2. CHIP test devices and backchannels (`packages/core/src/chipTests.ts`, `packages/core/src/chipTestDevices.ts`)
+## 2. CHIP test devices and backchannels (`packages/core/src/chipTests.ts`, `packages/core/src/demoDevices.ts`)
 
 Unlike a plugin repo (which has one real device tree to test), this repo has no plugin under test, so this
 pair of files synthesizes a fixed device tree and both CHIP test backchannels, gated entirely behind env
-vars so none of this ships or runs outside a CHIP-test container. `chipTestDevices.ts` holds only
-`createChipTestDevices()` (the device tree) and has no dependency on `chipTests.ts`. Everything else — the
+vars so none of this ships or runs outside a CHIP-test container. `demoDevices.ts` holds
+`createDemoDevices()` (the device tree) and has no dependency on `chipTests.ts`. Everything else — the
 `TestEventTrigger`/app-pipe backchannels and the `chipTestMatterbridge` module state the TestEventTrigger
 handlers read devices through — stays in `chipTests.ts`, captured by `createChipTestAppPipe()` (not
-`createChipTestDevices()`) since app-pipe creation is the one call that always runs whenever
+`createDemoDevices()`) since app-pipe creation is the one call that always runs whenever
 `MATTERBRIDGE_CHIP_TEST` is set, regardless of whether `MATTERBRIDGE_DEMO_DEVICES` also creates a
 device tree:
 
@@ -92,7 +92,7 @@ device tree:
   endpoint in `matterbridge.ts`) and `createChipTestAppPipe()` (called from `startBridge()`, right after the
   `addVirtualDevices()` call) — i.e. the `GeneralDiagnostics.TestEventTrigger` handling and the app-pipe
   listener.
-- `MATTERBRIDGE_DEMO_DEVICES=1` additionally gates `createChipTestDevices()` (`chipTestDevices.ts`,
+- `MATTERBRIDGE_DEMO_DEVICES=1` additionally gates `createDemoDevices()` (`demoDevices.ts`,
   imported and called from `startBridge()` right alongside `createChipTestAppPipe()`) — the ~20 bridged
   sensor/alarm endpoints (one per device-type chapter: contact/light/occupancy/temperature/pressure/flow/
   humidity/on-off sensors, three SmokeCOAlarm variants, air quality, water freeze/leak, rain, soil)
@@ -289,15 +289,15 @@ zero pre-existing events or an empty ACL) — prefer the former unless a test sp
 
 ## 6. The CHIP test device endpoint map
 
-Because this repo's device tree is fixed by `createChipTestDevices()` (§2) rather than assembled per-plugin,
+Because this repo's device tree is fixed by `createDemoDevices()` (§2) rather than assembled per-plugin,
 the endpoint map is stable across runs and documented once in `chipTests.md`, rather than rediscovered per
 target as a plugin repo would. Endpoint 0 is always the root node (`BasicInformation`, not
 `BridgedDeviceBasicInformation` — use `matterbridge.pics`'s `BINFO.*` section there, not `BRBINFO.*`).
-Endpoint 1 is the aggregator. Everything above that follows `createChipTestDevices()`'s registration order in
-`chipTestDevices.ts` (currently: utility devices in the 2xx range, then sensor/alarm devices in the 7xx range,
+Endpoint 1 is the aggregator. Everything above that follows `createDemoDevices()`'s registration order in
+`demoDevices.ts` (currently: utility devices in the 2xx range, then sensor/alarm devices in the 7xx range,
 e.g. `709`/`7091`/`7092` for the three SmokeCOAlarm variants).
 
-Re-verify (and update `chipTests.md`) after adding, removing, or reordering `createChipTestDevices()`'s
+Re-verify (and update `chipTests.md`) after adding, removing, or reordering `createDemoDevices()`'s
 registrations, using the same throwaway-Python-script approach as a plugin repo would (copy into
 `src/python_testing/` inside the container, run it, then delete it — it is not part of the image and must
 not be left behind):
@@ -416,12 +416,12 @@ gets translated to a Windows path before reaching `docker`).
 ## 10. Verifying any change to this harness
 
 After editing `chipTests.json`, `chipTests.md`, `run-matterbridge-chip-tests.mjs`, `chipTests.ts`,
-`chipTestDevices.ts`, or any `docker/chip-test/*.pics` file, always re-verify end-to-end rather than trusting
+`demoDevices.ts`, or any `docker/chip-test/*.pics` file, always re-verify end-to-end rather than trusting
 the edit alone:
 
-1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`chipTestDevices.ts`/
+1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`demoDevices.ts`/
    `.pics` edit against an already-running container, the cheaper docker-cp-and-restart sync in §4) — a
-   `chipTestDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
+  `demoDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
    whenever it changes which env vars gate device creation, since `docker restart` doesn't refresh env vars
    baked in at `docker run` time.
 2. `node scripts/run-matterbridge-chip-tests.mjs --test <NAME>` for the affected test(s).
@@ -429,7 +429,7 @@ the edit alone:
 4. Run this repo's own formatter/linter/typecheck on the touched files.
 
 Keep `chipTests.md`'s prose (endpoint map, manual-run notes) in sync with
-`chipTests.json`/`chipTests.ts`/`chipTestDevices.ts` whenever tests or devices are added, removed, or
+`chipTests.json`/`chipTests.ts`/`demoDevices.ts` whenever tests or devices are added, removed, or
 re-gated on a different PICS file/endpoint.
 
 ## 11. CI
