@@ -813,16 +813,18 @@
     {
       "name": "ClosureControl Calibrate command primary functionality on Closure",
         "test": "TC_CLCTRL_3_1.py",
-        "endpoint": 805,
+        "endpoint": 8054,
         "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+        "args": ["--PICS /root/closure-control-complete.pics"],
+        "comment": "Runs against the Closure Complete endpoint (8054): the plain Closure endpoint (805) has no Calibration feature, so this test's entire body skips at step 2b there."
     },
     {
       "name": "ClosureControl MoveTo command position functionality on Closure",
         "test": "TC_CLCTRL_4_1.py",
-        "endpoint": 805,
+        "endpoint": 8054,
         "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+        "args": ["--PICS /root/closure-control-complete.pics"],
+        "comment": "Runs against the Closure Complete endpoint (8054): the plain Closure endpoint (805) has no Ventilation or Pedestrian feature, so steps 8b-9i always skip there."
     },
     {
       "name": "ClosureControl MoveTo command latching functionality on Closure",
@@ -843,14 +845,16 @@
         "test": "TC_CLCTRL_4_4.py",
         "endpoint": 805,
         "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+        "args": ["--PICS /root/closure-control.pics", "--timeout 30"],
+        "comment": "Without --timeout, the test falls back to a 259200s (3-day) wait per subscription match since it reads CountdownTime as its own timeout bound; 30s is enough for the 5s simulated MoveTo/Stop completion in closure.ts."
     },
     {
       "name": "ClosureControl Stop command primary functionality on Closure",
         "test": "TC_CLCTRL_5_1.py",
-        "endpoint": 805,
+        "endpoint": 8054,
         "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+        "args": ["--PICS /root/closure-control-complete.pics"],
+        "comment": "Runs against the Closure Complete endpoint (8054): steps 7b-7e (Calibrate then Stop) are gated on the Calibration feature, which the plain Closure endpoint (805) doesn't have and always skips."
     },
     {
       "name": "ClosureControl event functionality on Closure",

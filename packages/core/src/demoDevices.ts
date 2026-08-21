@@ -327,6 +327,16 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   });
   await registerDevice(ep, 'Closure Calibrate', 'ENTRY-08-05-3');
 
+  ep = new Closure('Closure Complete', 'ENTRY-08-05-4', {
+    id: 'ClosureComplete',
+    number: EndpointNumber(8_05_4),
+    ventilation: true,
+    pedestrian: true,
+    calibration: true,
+    tagList: [getSemtag(ClosureTag.Door)],
+  });
+  await registerDevice(ep, 'Closure Complete', 'ENTRY-08-05-4');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
   await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');
 
