@@ -24,7 +24,7 @@
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable typescript/no-non-null-assertion */
 
-import { CommonNumberTag } from '@matter/node';
+import { ClosureTag, ClosureWindowTag, CommonNumberTag } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -303,13 +303,28 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05) });
   await registerDevice(ep, 'Closure', 'ENTRY-08-05');
 
-  ep = new Closure('Closure Pedestrian', 'ENTRY-08-05-1', { id: 'ClosurePedestrian', number: EndpointNumber(8_05_1), pedestrian: true });
+  ep = new Closure('Closure Pedestrian', 'ENTRY-08-05-1', {
+    id: 'ClosurePedestrian',
+    number: EndpointNumber(8_05_1),
+    pedestrian: true,
+    tagList: [getSemtag(ClosureTag.Gate)],
+  });
   await registerDevice(ep, 'Closure Pedestrian', 'ENTRY-08-05-1');
 
-  ep = new Closure('Closure Ventilation', 'ENTRY-08-05-2', { id: 'ClosureVentilation', number: EndpointNumber(8_05_2), ventilation: true });
+  ep = new Closure('Closure Ventilation', 'ENTRY-08-05-2', {
+    id: 'ClosureVentilation',
+    number: EndpointNumber(8_05_2),
+    ventilation: true,
+    tagList: [getSemtag(ClosureTag.Window), getSemtag(ClosureWindowTag.Facade)],
+  });
   await registerDevice(ep, 'Closure Ventilation', 'ENTRY-08-05-2');
 
-  ep = new Closure('Closure Calibrate', 'ENTRY-08-05-3', { id: 'ClosureCalibrate', number: EndpointNumber(8_05_3), calibration: true });
+  ep = new Closure('Closure Calibrate', 'ENTRY-08-05-3', {
+    id: 'ClosureCalibrate',
+    number: EndpointNumber(8_05_3),
+    calibration: true,
+    tagList: [getSemtag(ClosureTag.GarageDoor)],
+  });
   await registerDevice(ep, 'Closure Calibrate', 'ENTRY-08-05-3');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
