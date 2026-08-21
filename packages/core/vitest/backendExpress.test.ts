@@ -212,7 +212,6 @@ describe('BackendExpress', () => {
 
       req.end();
       setImmediate(() => req.destroy());
-      // oxlint-disable-next-line promise/no-multiple-resolved
       setTimeout(resolve, 25);
     });
   };

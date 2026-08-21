@@ -456,6 +456,13 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof ClosureControl)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'ClosureControl.calibrate': {
+    command: 'calibrate';
+    request: {}; // TlvNoArguments
+    cluster: 'closureControl';
+    attributes: ClusterAttributeValues<(typeof ClosureControl)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
 
   // Closure Dimension
   'setTarget': CommandHandlerData<'ClosureDimension.setTarget'>;

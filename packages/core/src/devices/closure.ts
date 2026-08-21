@@ -43,12 +43,13 @@ import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from './closurePanel.js';
 
 /**
- * ClosureControl server that forwards MoveTo/Stop commands to the Matterbridge command handler.
+ * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
  */
 export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
   ClosureControl.Feature.Positioning,
   ClosureControl.Feature.MotionLatching,
   ClosureControl.Feature.Speed,
+  ClosureControl.Feature.Calibration,
 ) {
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -130,6 +131,32 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
       this.state.mainState = ClosureControl.MainState.Stopped;
     }
   };
+
+  override calibrate = async (): Promise<void> => {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Calibrate (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Always forward the command to the Matterbridge command handler without validation to allow for external control of the closure.
+    await device.commandHandler.executeHandler('ClosureControl.calibrate', {
+      command: 'calibrate',
+      request: {},
+      cluster: ClosureControlServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+
+    // 5.4.8.3.1. Effect on Receipt
+    // If this command is received when already in the Calibrating state, the server SHALL respond with SUCCESS.
+    if (this.state.mainState === ClosureControl.MainState.Calibrating) {
+      return;
+    }
+    // Else, if this command is invoked in any state other than Stopped or SetupRequired, the server SHALL respond with INVALID_IN_STATE and there SHALL be no other effect.
+    if (![ClosureControl.MainState.Stopped, ClosureControl.MainState.SetupRequired].includes(this.state.mainState)) {
+      throw new StatusResponse.InvalidInStateError('ClosureControl.calibrate is only allowed while Stopped or SetupRequired');
+    }
+
+    // Otherwise the MainState attribute SHALL be set to Calibrating.
+    this.state.mainState = ClosureControl.MainState.Calibrating;
+  };
 }
 
 export interface ClosureOptions {
@@ -153,6 +180,12 @@ export interface ClosureOptions {
   overallTargetState?: ClosureControl.OverallTargetState;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
+  /** Enable the ClosureControl Ventilation feature. Defaults to false. */
+  ventilation?: boolean;
+  /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
+  pedestrian?: boolean;
+  /** Enable the ClosureControl Calibration feature. Defaults to false. */
+  calibration?: boolean;
   /**
    * The unique storage key for the endpoint.
    * If not provided, a default key will be used.
@@ -206,6 +239,9 @@ export class Closure extends MatterbridgeEndpoint {
         speed: ThreeLevelAuto.Auto,
       },
       latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      ventilation = false,
+      pedestrian = false,
+      calibration = false,
       id,
       number,
       tagList = [getSemtag(ClosureTag.Covering)],
@@ -236,14 +272,27 @@ export class Closure extends MatterbridgeEndpoint {
       // No default
     }
 
-    this.behaviors.require(MatterbridgeClosureControlServer, {
+    const closureControlOptions = {
       countdownTime,
       mainState,
       currentErrorList,
       overallCurrentState,
       overallTargetState,
       latchControlModes,
-    });
+    };
+    this.behaviors.require(
+      calibration || ventilation || pedestrian
+        ? MatterbridgeClosureControlServer.with(
+            ClosureControl.Feature.Positioning,
+            ClosureControl.Feature.MotionLatching,
+            ClosureControl.Feature.Speed,
+            ...(calibration ? [ClosureControl.Feature.Calibration] : []),
+            ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
+            ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
+          )
+        : MatterbridgeClosureControlServer,
+      closureControlOptions,
+    );
   }
 
   /**

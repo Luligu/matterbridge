@@ -33,6 +33,28 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.7] - Dev branch
 
+### Added
+
+- [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.7.
+- [matterbridge]: Bump `@types/bun` to v.1.4.0.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.11.
+- [matterbridge]: Bump `marked` to v.18.0.10.
+- [matterbridge]: Bump `oxfmt` to v.0.64.0.
+- [matterbridge]: Bump `oxlint` to v.1.79.0.
+- [matterbridge]: Bump `vitest` to v.4.1.11.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.54.
+- [frontend]: Bump `frontend` version to v.3.5.9.
+- [frontend]: Bump `@rjsf/core`, `@rjsf/utils` and `@rjsf/validator-ajv8` to v.6.8.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.1.0.
+- [frontend]: Bump `vite` to v.8.2.2.
+- [frontend]: Bump `vitest` to v.4.1.11.
+- [frontend]: Bump `oxfmt` to v.0.64.0.
+- [frontend]: Bump `oxlint` to v.1.79.0.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.6] - 2026-08-21

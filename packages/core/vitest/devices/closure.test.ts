@@ -39,6 +39,7 @@ await setupTest(NAME, false);
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
   let venetianBlind: Closure;
+  let gate: Closure;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -191,6 +192,89 @@ describe('Matterbridge ' + NAME, () => {
     const closureWithoutPowerSource = new Closure('Closure No Power Source Test Device', 'CLNONE', { powerSourceType: 'None' });
     expect(closureWithoutPowerSource.hasClusterServer(PowerSource.id)).toBeFalsy();
     expect(closureWithoutPowerSource.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'closureControl']);
+  });
+
+  test.each([
+    {
+      name: 'Ventilation',
+      serial: 'CLVENTILATION',
+      options: { ventilation: true },
+      expectedFeatures: { ventilation: true, pedestrian: false, calibration: false },
+      expectedCommands: [0, 1],
+    },
+    {
+      name: 'Pedestrian',
+      serial: 'CLPEDESTRIAN',
+      options: { pedestrian: true },
+      expectedFeatures: { ventilation: false, pedestrian: true, calibration: false },
+      expectedCommands: [0, 1],
+    },
+    {
+      name: 'Calibration',
+      serial: 'CLCALIBRATION',
+      options: { calibration: true },
+      expectedFeatures: { ventilation: false, pedestrian: false, calibration: true },
+      expectedCommands: [0, 1, 2],
+    },
+  ])('add only the $name optional feature', async ({ name, serial, options, expectedFeatures, expectedCommands }) => {
+    const closureWithFeature = new Closure(`Closure ${name} Test Device`, serial, options);
+    expect(await addDevice(server, closureWithFeature)).toBeTruthy();
+
+    expect(closureWithFeature.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      ...expectedFeatures,
+    });
+    expect(closureWithFeature.getAttribute(ClosureControl.id, 'acceptedCommandList')).toEqual(expectedCommands);
+  });
+
+  test('create and add a closure device with the Ventilation, Pedestrian, and Calibration features', async () => {
+    gate = new Closure('Sliding Gate Test Device', 'CL789012', {
+      ventilation: true,
+      pedestrian: true,
+      calibration: true,
+    });
+    expect(await addDevice(server, gate)).toBeTruthy();
+
+    expect(gate.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      ventilation: true,
+      pedestrian: true,
+      calibration: true,
+    });
+    expect(gate.getAttribute(ClosureControl.id, 'acceptedCommandList')).toEqual([0, 1, 2]);
+
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
+
+    await expect(gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {})).rejects.toMatchObject({ code: Status.InvalidInState });
+
+    let calibrateForwarded = 0;
+    gate.addCommandHandler('ClosureControl.calibrate', (data) => {
+      calibrateForwarded++;
+      expect(data.command).toBe('calibrate');
+      expect(data.request).toEqual({});
+      expect(data.cluster).toBe('closureControl');
+      expect(data.endpoint).toBe(gate);
+    });
+    await gate.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+    expect(calibrateForwarded).toBe(1);
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+    expect(calibrateForwarded).toBe(2);
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
   });
 
   test('invoke closure control commands', async () => {
@@ -498,12 +582,12 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
-        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
         'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
         'closureControl(0x104).countdownTime(0x0)=0',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
-        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
+        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: true, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
         'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
