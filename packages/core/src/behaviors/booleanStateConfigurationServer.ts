@@ -34,19 +34,6 @@ import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
-const Base = BooleanStateConfigurationServer.with(
-  BooleanStateConfiguration.Feature.Visual,
-  BooleanStateConfiguration.Feature.Audible,
-  BooleanStateConfiguration.Feature.AlarmSuppress,
-  BooleanStateConfiguration.Feature.SensitivityLevel,
-  BooleanStateConfiguration.Feature.FaultEvents,
-);
-
-/**
- * BooleanStateConfiguration alarm mode bitmap.
- */
-type AlarmMode = BooleanStateConfiguration.AlarmMode;
-
 /**
  * BooleanStateConfiguration server that forwards alarm control commands to the Matterbridge command handler.
  * If the `AlarmsStateChanged` event is enabled it is emitted automatically on `AlarmsActive` or `AlarmsSuppressed` changes.
@@ -54,7 +41,13 @@ type AlarmMode = BooleanStateConfiguration.AlarmMode;
  * The cluster has no separate trigger-condition attribute, so plugins that know a physical trigger is met must update
  * `AlarmsActive` when enabling alarms requires immediate activation.
  */
-export class MatterbridgeBooleanStateConfigurationServer extends Base {
+export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(
+  BooleanStateConfiguration.Feature.Visual,
+  BooleanStateConfiguration.Feature.Audible,
+  BooleanStateConfiguration.Feature.AlarmSuppress,
+  BooleanStateConfiguration.Feature.SensitivityLevel,
+  BooleanStateConfiguration.Feature.FaultEvents,
+) {
   override initialize(): MaybePromise {
     /* v8 ignore next -- Visual and Audible are enabled by this server's Base behavior. */
     if (this.features.visual || this.features.audible) {
@@ -77,14 +70,14 @@ export class MatterbridgeBooleanStateConfigurationServer extends Base {
     this.events.sensorFault?.emit({ sensorFault }, this.context);
   }
 
-  #mergeAlarmsSuppressed(alarmsToSuppress: AlarmMode): AlarmMode {
+  #mergeAlarmsSuppressed(alarmsToSuppress: BooleanStateConfiguration.AlarmMode): BooleanStateConfiguration.AlarmMode {
     return {
       visual: [this.state.alarmsSuppressed.visual, alarmsToSuppress.visual].some(Boolean),
       audible: [this.state.alarmsSuppressed.audible, alarmsToSuppress.audible].some(Boolean),
     };
   }
 
-  #applyAlarmsEnabled(alarmsToEnableDisable: AlarmMode): void {
+  #applyAlarmsEnabled(alarmsToEnableDisable: BooleanStateConfiguration.AlarmMode): void {
     const alarmsEnabled = {
       visual: Boolean(alarmsToEnableDisable.visual),
       audible: Boolean(alarmsToEnableDisable.audible),
@@ -101,13 +94,13 @@ export class MatterbridgeBooleanStateConfigurationServer extends Base {
     };
   }
 
-  #assertAlarmModesSupported(alarms: AlarmMode): void {
+  #assertAlarmModesSupported(alarms: BooleanStateConfiguration.AlarmMode): void {
     if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
       throw new StatusResponseError('Requested alarm mode is not supported', Status.ConstraintError);
     }
   }
 
-  #assertSuppressAlarmAllowed(alarmsToSuppress: AlarmMode): void {
+  #assertSuppressAlarmAllowed(alarmsToSuppress: BooleanStateConfiguration.AlarmMode): void {
     if (
       [
         Boolean(alarmsToSuppress.visual && (!this.state.alarmsActive.visual || !this.state.alarmsEnabled?.visual)),
