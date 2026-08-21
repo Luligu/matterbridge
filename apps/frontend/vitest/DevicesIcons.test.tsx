@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 
-import { EndpointNumber } from '@matter/types/datatype';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import DevicesIcons from '../src/components/DevicesIcons';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
+
+// Endpoint numbers are a branded type in the shared API types; this test-only cast avoids
+// depending on the underlying branding package directly from this frontend package.
+const endpointNumber = (value: number): Cluster['number'] => value as Cluster['number'];
 
 describe('DevicesIcons', () => {
   afterEach(() => {
@@ -124,7 +127,7 @@ describe('DevicesIcons', () => {
         plugin: device.pluginName,
         deviceName: device.name,
         serialNumber: device.serial,
-        number: EndpointNumber(1),
+        number: endpointNumber(1),
         id: 'main',
         deviceTypes: [0x002b],
         clusters: clustersFor(i),
@@ -188,7 +191,7 @@ describe('DevicesIcons', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: 'matterbridge-test', deviceName: 'Empty', serialNumber: 'EMPTY-001', number: EndpointNumber(1), id: 'main', deviceTypes: [], clusters: [] },
+      response: { plugin: 'matterbridge-test', deviceName: 'Empty', serialNumber: 'EMPTY-001', number: endpointNumber(1), id: 'main', deviceTypes: [], clusters: [] },
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
@@ -221,7 +224,7 @@ describe('DevicesIcons', () => {
         plugin: device.pluginName,
         serialNumber: device.serial,
         uniqueId: device.uniqueId,
-        number: EndpointNumber(1),
+        number: endpointNumber(1),
         id: 'Light',
         cluster: 'OnOff',
         attribute: 'onOff',
@@ -475,7 +478,7 @@ function loadDevice(socket: TestSocket, device: ApiDevice, clusters: Cluster[]):
       plugin: device.pluginName,
       deviceName: device.name,
       serialNumber: device.serial,
-      number: EndpointNumber(1),
+      number: endpointNumber(1),
       id: 'main',
       deviceTypes: [...new Set(clusters.flatMap((cluster) => cluster.deviceTypes))],
       clusters,
@@ -496,7 +499,7 @@ function createStateUpdate(
       plugin: 'matterbridge-test',
       serialNumber: 'CONTROLLER-001',
       uniqueId: 'controller-test',
-      number: EndpointNumber(1),
+      number: endpointNumber(1),
       id: 'Light',
       cluster: 'OnOff',
       attribute: 'onOff',
@@ -700,7 +703,7 @@ function createCluster(
 ): Cluster {
   return {
     endpoint,
-    number: EndpointNumber(Number(endpoint)),
+    number: endpointNumber(Number(endpoint)),
     id,
     deviceTypes: [deviceType],
     clusterName,

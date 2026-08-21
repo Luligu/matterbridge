@@ -1,12 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 
-import { EndpointNumber } from '@matter/types/datatype';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import DevicesTable from '../src/components/DevicesTable';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
+
+// Endpoint numbers are a branded type in the shared API types; this test-only cast avoids
+// depending on the underlying branding package directly from this frontend package.
+const endpointNumber = (value: number): Cluster['number'] => value as Cluster['number'];
 
 describe('DevicesTable', () => {
   afterEach(() => {
@@ -69,7 +72,7 @@ describe('DevicesTable', () => {
 
   it('should open clusters for a selected device, update cluster values, and toggle the cluster table', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Kitchen Light', serial: 'LIGHT-001', uniqueId: 'light-001', endpoint: EndpointNumber(1) });
+    const device = createDevice({ name: 'Kitchen Light', serial: 'LIGHT-001', uniqueId: 'light-001', endpoint: endpointNumber(1) });
     const clusters = [
       createCluster('1', 'Light', [0x0100], 'Descriptor', 'serverList', '[6]', [6]),
       createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false),
@@ -98,7 +101,7 @@ describe('DevicesTable', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: device.pluginName, deviceName: device.name, serialNumber: device.serial, number: EndpointNumber(1), id: 'Light', deviceTypes: [0x0100], clusters },
+      response: { plugin: device.pluginName, deviceName: device.name, serialNumber: device.serial, number: endpointNumber(1), id: 'Light', deviceTypes: [0x0100], clusters },
     });
 
     expect(await screen.findByText('Clusters')).toBeInTheDocument();
@@ -141,7 +144,7 @@ describe('DevicesTable', () => {
 
   it('should ignore state updates for devices outside the filtered list', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Filtered Light', serial: 'FILTER-001', uniqueId: 'filter-001', endpoint: EndpointNumber(1) });
+    const device = createDevice({ name: 'Filtered Light', serial: 'FILTER-001', uniqueId: 'filter-001', endpoint: endpointNumber(1) });
 
     render(
       <WebSocketContext.Provider value={socket.context}>
@@ -205,7 +208,7 @@ function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
   return {
     pluginName: 'matterbridge-test',
     type: 'DynamicPlatform',
-    endpoint: EndpointNumber(1),
+    endpoint: endpointNumber(1),
     name: 'Test Device',
     serial: 'TEST-001',
     productUrl: '',
@@ -227,7 +230,7 @@ function createCluster(
 ): Cluster {
   return {
     endpoint,
-    number: EndpointNumber(Number(endpoint)),
+    number: endpointNumber(Number(endpoint)),
     id,
     deviceTypes,
     clusterName,
@@ -252,7 +255,7 @@ function createStateUpdate(
       plugin: 'matterbridge-test',
       serialNumber: 'TEST-001',
       uniqueId: 'test-device',
-      number: EndpointNumber(1),
+      number: endpointNumber(1),
       id: 'Light',
       cluster: 'OnOff',
       attribute: 'onOff',
