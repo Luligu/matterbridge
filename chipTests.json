@@ -804,6 +804,62 @@
       "args": ["--PICS /root/soil-measurement.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
+      "name": "ClosureControl attributes on Closure",
+        "test": "TC_CLCTRL_2_1.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl Calibrate command primary functionality on Closure",
+        "test": "TC_CLCTRL_3_1.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command position functionality on Closure",
+        "test": "TC_CLCTRL_4_1.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command latching functionality on Closure",
+        "test": "TC_CLCTRL_4_2.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command field sanity checks on Closure",
+        "test": "TC_CLCTRL_4_3.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command CountdownTime functionality on Closure",
+        "test": "TC_CLCTRL_4_4.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl Stop command primary functionality on Closure",
+        "test": "TC_CLCTRL_5_1.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl event functionality on Closure",
+        "test": "TC_CLCTRL_6_1.py",
+        "endpoint": 805,
+        "resetBefore": true,
+        "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
       "name": "FanControl mandatory functionality on Fan Complete",
       "test": "TC_FAN_2_1.py",
       "endpoint": 9024,

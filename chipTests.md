@@ -68,6 +68,12 @@ Aggregator clusters:
 
 - Descriptor
 
+### Endpoint 805
+
+Closure clusters:
+
+- ClosureControl (Positioning, MotionLatching and Speed features)
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
