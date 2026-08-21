@@ -152,18 +152,36 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
-<h2 id="3106-dev-branch">[3.10.6] - Dev branch</h2>
-<h3 id="development-news">Development news</h3>
+<h2 id="3106-2026-08-21">[3.10.6] - 2026-08-21</h2>
+<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<ul>
+<li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
+</ul>
+<h3 id="development-news">Development News</h3>
 <ul>
 <li>[chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the <code>RootNode</code> device type and <code>BasicInformation</code>, <code>PowerSource</code>, <code>AccessControl</code>, <code>GeneralDiagnostics</code>, <code>GroupKeyManagement</code>, <code>OperationalCredentials</code> and <code>GeneralCommissioning</code> clusters.</li>
 <li>[chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the <code>Aggregator</code> device type.</li>
 <li>[chip]: ElectricalSensor endpoint 206 CHIP conformance is green ✅ for the automated harness tests covering the <code>ElectricalSensor</code> device type and <code>ElectricalPowerMeasurement</code> <code>ElectricalEnergyMeasurement</code> clusters.</li>
 <li>[chip]: DeviceEnergyManagement endpoint 207 CHIP conformance is green ✅ for the automated harness tests covering the <code>DeviceEnergyManagement</code> device type and <code>DeviceEnergyManagement</code> <code>DeviceEnergyManagementMode</code> clusters.</li>
-<li>[chip]: Matter 1.6.0 Chapter 7 sensor device types pass all CHIP automated conformance harness tests ✅. The test fixture now exercises the default helper stack used by the sensor endpoints: <code>createDefaultBridgedDeviceBasicInformationClusterServer()</code>, <code>createDefaultIdentifyClusterServer()</code>, <code>createDefaultPowerSourceBatteryClusterServer()</code>, <code>createDefaultPowerSourceReplaceableBatteryClusterServer()</code>, <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>, <code>createDefaultPowerSourceWiredClusterServer()</code>, <code>createDefaultBooleanStateClusterServer()</code>, <code>createDefaultBooleanStateConfigurationClusterServer()</code>, <code>createDefaultIlluminanceMeasurementClusterServer()</code>, <code>createDefaultOccupancySensingClusterServer()</code>, <code>createDefaultTemperatureMeasurementClusterServer()</code>, <code>createDefaultPressureMeasurementClusterServer()</code>, <code>createDefaultFlowMeasurementClusterServer()</code>, <code>createDefaultRelativeHumidityMeasurementClusterServer()</code>, <code>createDefaultSmokeCOAlarmClusterServer()</code>, <code>createSmokeOnlySmokeCOAlarmClusterServer()</code>, <code>createCoOnlySmokeCOAlarmClusterServer()</code>, <code>createDefaultAirQualityClusterServer()</code>, <code>createDefaultCarbonMonoxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultCarbonDioxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultNitrogenDioxideConcentrationMeasurementClusterServer()</code>, <code>createDefaultOzoneConcentrationMeasurementClusterServer()</code>, <code>createDefaultFormaldehydeConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm1ConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm25ConcentrationMeasurementClusterServer()</code>, <code>createDefaultPm10ConcentrationMeasurementClusterServer()</code>, <code>createDefaultRadonConcentrationMeasurementClusterServer()</code>, <code>createDefaultTvocMeasurementClusterServer()</code> and <code>createDefaultSoilMeasurementClusterServer()</code>.</li>
+<li>[chip]: OnOffLight endpoint 401 CHIP conformance is green ✅ for the automated harness tests covering the <code>OnOffLight</code> device type and the <code>OnOff</code> cluster.</li>
+<li>[chip]: DimmableLight endpoint 402 CHIP conformance is green ✅ for the automated harness tests covering the <code>DimmableLight</code> device type and the <code>LevelControl</code> cluster.</li>
+<li>[chip]: ContactSensor endpoint 701 CHIP conformance is green ✅ for the automated harness tests covering the <code>ContactSensor</code> device type and the <code>BooleanState</code>, <code>BooleanStateConfiguration</code>, <code>Identify</code>, <code>PowerSource</code> and <code>BridgedDeviceBasicInformation</code> clusters.</li>
+<li>[chip]: LightSensor endpoint 702 CHIP conformance is green ✅ for the automated harness tests covering the <code>LightSensor</code> device type and the <code>IlluminanceMeasurement</code> cluster.</li>
+<li>[chip]: OccupancySensor endpoint 703 CHIP conformance is green ✅ for the automated harness tests covering the <code>OccupancySensor</code> device type and the <code>OccupancySensing</code> cluster.</li>
+<li>[chip]: TemperatureSensor endpoint 704 CHIP conformance is green ✅ for the automated harness tests covering the <code>TemperatureSensor</code> device type and the <code>TemperatureMeasurement</code> cluster.</li>
+<li>[chip]: PressureSensor endpoint 705 CHIP conformance is green ✅ for the automated harness tests covering the <code>PressureSensor</code> device type and the <code>PressureMeasurement</code> cluster.</li>
+<li>[chip]: FlowSensor endpoint 706 CHIP conformance is green ✅ for the automated harness tests covering the <code>FlowSensor</code> device type and the <code>FlowMeasurement</code> cluster.</li>
+<li>[chip]: HumiditySensor endpoint 707 CHIP conformance is green ✅ for the automated harness tests covering the <code>HumiditySensor</code> device type and the <code>RelativeHumidityMeasurement</code> cluster.</li>
+<li>[chip]: OnOffSensor endpoint 708 CHIP conformance is green ✅ for the automated harness tests covering the <code>OnOffSensor</code> device type.</li>
+<li>[chip]: SmokeCOAlarm endpoints 709, 7091 and 7092 CHIP conformance is green ✅ for the automated harness tests covering the <code>SmokeCOAlarm</code> device type and the <code>SmokeCOAlarm</code> cluster with the complete, smoke-only and CO-only feature sets.</li>
+<li>[chip]: AirQualitySensor endpoint 710 CHIP conformance is green ✅ for the automated harness tests covering the <code>AirQualitySensor</code> device type and the <code>AirQuality</code>, <code>CarbonMonoxideConcentrationMeasurement</code>, <code>CarbonDioxideConcentrationMeasurement</code>, <code>NitrogenDioxideConcentrationMeasurement</code>, <code>OzoneConcentrationMeasurement</code>, <code>FormaldehydeConcentrationMeasurement</code>, <code>Pm1ConcentrationMeasurement</code>, <code>Pm25ConcentrationMeasurement</code>, <code>Pm10ConcentrationMeasurement</code>, <code>RadonConcentrationMeasurement</code> and <code>TotalVolatileOrganicCompoundsConcentrationMeasurement</code> clusters.</li>
+<li>[chip]: WaterFreezeDetector endpoint 711 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterFreezeDetector</code> device type and the <code>BooleanState</code> and <code>BooleanStateConfiguration</code> clusters.</li>
+<li>[chip]: WaterLeakDetector endpoint 712 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterLeakDetector</code> device type and the <code>BooleanState</code> and <code>BooleanStateConfiguration</code> clusters.</li>
+<li>[chip]: RainSensor endpoint 713 CHIP conformance is green ✅ for the automated harness tests covering the <code>RainSensor</code> device type and the <code>BooleanState</code> and <code>BooleanStateConfiguration</code> clusters.</li>
+<li>[chip]: SoilSensor endpoint 714 CHIP conformance is green ✅ for the automated harness tests covering the <code>SoilSensor</code> device type and the <code>SoilMeasurement</code> cluster.</li>
 <li>[chip]: FanComplete endpoint 9024 CHIP conformance is green ✅ for the automated harness tests covering the <code>Fan</code> device type and <code>FanControl</code> clusters.</li>
-<li>[chip]: AirPurifier endpoint 903 CHIP conformance is green ✅ for the automated harness tests covering the <code>HepaFilterMonitoring</code> and <code>ActivatedCarbonFilterMonitoring</code> clusters.</li>
+<li>[chip]: AirPurifier endpoint 903 CHIP conformance is green ✅ for the automated harness tests covering the <code>AirPurifier</code> device type and the <code>HepaFilterMonitoring</code> and <code>ActivatedCarbonFilterMonitoring</code> clusters.</li>
 <li>[electricalSensor]: Add electrical measurement helpers: <code>createImportedElectricalEnergyMeasurementClusterServer()</code> and <code>createExportedElectricalEnergyMeasurementClusterServer()</code>. Used to create import (cunsume) only and export (produce) only electrical sensors.</li>
-<li>[onOff]: Gate <code>MatterbridgeOnOffServer</code>&#39;s command-handler forwarder behind <code>!MATTERBRIDGE_CHIP_TEST</code>. Found via the new OnOff CHIP tests: <code>ScenesManagement</code>&#39;s delayed scene-apply timer (non-zero <code>transitionTime</code>) invokes <code>on()</code>/<code>off()</code> from an unlocked callback whose implicit transaction context only survives the synchronous portion of the call; awaiting the forwarder first outlived that context and made <code>super.on()</code>/<code>super.off()</code> throw <code>expired-reference</code>, silently dropping the state change. Gated off for now in CHIP test mode only; a proper fix (reordering or locking) is still open.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
@@ -246,7 +264,7 @@
 <ul>
 <li>[instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update <a href="./README-DEV.html">Development Guide</a>.</li>
 </ul>
-<h3 id="development-breaking-changes">Development breaking changes</h3>
+<h3 id="development-breaking-changes-1">Development breaking changes</h3>
 <ul>
 <li>[onOff]: <code>MatterbridgeOnOffServer</code> now bakes in the Lighting feature, so always use <code>MatterbridgeOnOffServer.with()</code> instead of the bare class for endpoints created without the Lighting feature.</li>
 </ul>
@@ -359,7 +377,7 @@
 <ul>
 <li>[matter]: Bump <code>matter.js</code> to 0.17.5 and Matter to 1.6.0. See <a href="Matter-1.6.0.html">Matter 1.6.0 changes from 1.5.1</a> for delta from 1.5.1.</li>
 </ul>
-<h3 id="development-breaking-changes-1">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-2">Development Breaking changes</h3>
 <ul>
 <li>[endpoint]: Add <code>productLabel</code>, <code>productUrl</code> and <code>configurationVersion</code> parameters to the Basic Information creation methods. The default product labels are now <code>Matter Endpoint</code> and <code>Matter Bridged Endpoint</code>, and the default product URL is now <code>https://matterbridge.io</code>.</li>
 <li>[matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.</li>
@@ -589,7 +607,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <ul>
 <li>[plugins]: A new plugin is now available <a href="https://github.com/Luligu/matterbridge-mqtt">matterbridge-mqtt</a>.</li>
 </ul>
-<h3 id="development-breaking-changes-2">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-3">Development Breaking Changes</h3>
 <ul>
 <li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
 <li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().</li>
@@ -670,7 +688,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <li>[matter]: Update to matter.js 0.17.1. See <a href="https://matterbridge.io/Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
 <li>[matter]: Enable <code>tcp</code> transport with <code>udp</code> preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.</li>
 </ul>
-<h3 id="development-breaking-changes-3">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-4">Development Breaking changes</h3>
 <ul>
 <li>[matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.</li>
 <li>[endpoint]: Since the cluster clients have been added to each device type, instead of <code>addRequiredClusterServers()</code> call <code>addRequiredClusters()</code> (3.8.0 only) to add both required server clusters and required client clusters.</li>
@@ -785,7 +803,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="378-2026-05-09">[3.7.8] - 2026-05-09</h2>
-<h3 id="development-breaking-changes-4">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
 <ul>
 <li>[bin]: Remove mb-run bin. It will be replaced by mb-run package.</li>
 <li>[matter]: Add the matter.js renamed Semantic Tag Namespaces in <a href="Matter.js%200.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
@@ -1552,7 +1570,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="340-2025-11-26">[3.4.0] - 2025-11-26</h2>
-<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
 <p>Removed the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).</li>
@@ -1583,7 +1601,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="338-2025-11-15">[3.3.8] - 2025-11-15</h2>
-<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
 <p>This will be the last release with the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).</li>
@@ -2175,7 +2193,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="312-2025-07-06">[3.1.2] - 2025-07-06</h2>
-<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
@@ -2192,7 +2210,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="311-2025-07-04">[3.1.1] - 2025-07-04</h2>
-<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-9">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>

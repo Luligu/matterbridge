@@ -29,10 +29,17 @@ docker exec -it chip-test bash
 In the shell:
 
 ```bash
-# Generic device composition and conformance
+# Generic device composition and conformance python
 python3 src/python_testing/TC_DeviceBasicComposition.py
 python3 src/python_testing/TC_DeviceConformance.py
 python3 src/python_testing/TC_DefaultWarnings.py --bool-arg pixit_allow_default_vendor_id:true
+```
+
+```bash
+# Generic YAML certification test (chip-tool interactive server spawned/torn down for the one test,
+# reusing chip-tool's own baked-in fabric pairing at node id 0x12344321 — no --server_name/--server_path,
+# no separate commissioning step)
+python3 scripts/tests/chipyaml/chiptool.py tests Test_TC_I_2_1 --endpoint 7
 ```
 
 ### Stop the container
@@ -67,14 +74,18 @@ Aggregator clusters:
   a Matterbridge bug — patched locally (`docker/chip-test/patches/TC_DeviceBasicComposition.py`, see
   chip-tests instructions §12).** The unpatched test validates every non-manufacturer-specific
   `Descriptor.TagList` entry's `namespaceID` against a hand-coded whitelist that stops at `0x43` (Switches),
-  never updated for the five Closure namespaces (`0x44`-`0x48`) Matter 1.6 added. Our `Closure` device
-  (endpoint 805, device type `0x0230`) tags itself `namespaceID=0x44` (`ClosureTag.Covering`) — fully
-  spec-compliant, but rejected by the stale whitelist with "Non manufacturer specific tag is not a tag from
-  namespace defined in spec". Confirmed as a known, already-diagnosed upstream gap via
-  `gh search prs --repo project-chip/connectedhomeip "closure namespace"`, which surfaces
-  [PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481) — open/unmerged as of this writing,
-  adding exactly those five missing constants. The patch applies that same PR's diff to the copy of the test
-  baked into the `chip-test` image. Remove this patch (and its `chipTests.json` `"patches"` entry) once
+  never updated for the eight Matter 1.6 namespaces our devices can emit: the five Closure namespaces
+  (`0x44`-`0x48`) and the three Commodity Tariff namespaces (Chronology `0x0B`, Commodity `0x0D`, Flow
+  `0x13`). Our `Closure` device (endpoint 805, device type `0x0230`) tags itself `namespaceID=0x44`
+  (`ClosureTag.Covering`) — fully spec-compliant, but rejected by the stale whitelist with "Non manufacturer
+  specific tag is not a tag from namespace defined in spec". Confirmed as a known, already-diagnosed
+  upstream gap via `gh search prs --repo project-chip/connectedhomeip "closure namespace"`, which surfaces
+  [PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481) — open/unmerged as of this
+  writing (re-verified 2026-08-21: master's copy is still unchanged, last touched by an unrelated pyupgrade
+  style pass). That PR takes a different approach (replaces the whole hand-coded whitelist with one derived
+  dynamically from the bundled data model's `namespaces/*.xml` files via a new `self.xml_namespaces`), so
+  our patch does not apply its diff verbatim — it keeps the existing hand-coded-constant style and adds the
+  eight missing constants directly. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   PR #73481 (or an equivalent fix) merges upstream and a new `chip-test` image is published with it baked in.
 
 - **FanControl: `TC_FAN_3_2.py`'s exact-report-count assertion was inherently timing-fragile, not a

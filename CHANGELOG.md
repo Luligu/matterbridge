@@ -31,9 +31,13 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.10.6] - Dev branch
+## [3.10.6] - 2026-08-21
 
-### Development news
+### Development Breaking Changes
+
+- [devices]: The `Speaker` constructor now takes a `SpeakerOptions` object as its third parameter instead of separate `muted`/`volume` positional parameters. Update `new Speaker(name, serial, muted, volume)` calls to `new Speaker(name, serial, { muted, volume })`. The options object also adds `powerSourceType` (defaults to `'Wired'`, added a `PowerSource` cluster server that previous versions did not create; pass `'None'` to omit it), `id` and `number`.
+
+### Development News
 
 - [chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the `RootNode` device type and `BasicInformation`, `PowerSource`, `AccessControl`, `GeneralDiagnostics`, `GroupKeyManagement`, `OperationalCredentials` and `GeneralCommissioning` clusters.
 - [chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the `Aggregator` device type.

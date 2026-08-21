@@ -65,13 +65,6 @@
       "args": ["--PICS /root/power-source.wired.pics"]
     },
     {
-      "name": "Descriptor cluster attributes on RootNode",
-      "test": "Test_TC_DESC_2_1",
-      "endpoint": 0,
-      "skip": true,
-      "comment": "Every step in this YAML is disabled:true (manual chip-tool verification procedure, no automated assertions) and no TC_DESC_*.py exists either — it always runs 0 steps regardless of PICS."
-    },
-    {
       "name": "AccessControl simple attributes on RootNode",
       "test": "Test_TC_ACL_2_1",
       "endpoint": 0

@@ -403,7 +403,7 @@ the edit alone:
 
 1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`demoDevices.ts`/
    `.pics` edit against an already-running container, the cheaper docker-cp-and-restart sync in §4) — a
-  `demoDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
+   `demoDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
    whenever it changes which env vars gate device creation, since `docker restart` doesn't refresh env vars
    baked in at `docker run` time.
 2. `node scripts/run-matterbridge-chip-tests.mjs --test <NAME>` for the affected test(s).

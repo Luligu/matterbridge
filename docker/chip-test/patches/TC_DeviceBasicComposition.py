@@ -1090,6 +1090,9 @@ class TC_DeviceBasicComposition(BasicCompositionTests):
         CLOSURE_COVERING_NAMESPACE_ID = 0x46
         CLOSURE_WINDOW_NAMESPACE_ID = 0x47
         CLOSURE_CABINET_NAMESPACE_ID = 0x48
+        COMMODITY_TARIFF_CHRONOLOGY_NAMESPACE_ID = 0x0B
+        COMMODITY_TARIFF_COMMODITY_NAMESPACE_ID = 0x0D
+        COMMODITY_TARIFF_FLOW_NAMESPACE_ID = 0x13
 
         END_POINT_UNIQUE_ID_LENGTH_BYTES = 32
 
@@ -1268,7 +1271,10 @@ class TC_DeviceBasicComposition(BasicCompositionTests):
                                                       CLOSURE_PANEL_NAMESPACE_ID,
                                                       CLOSURE_COVERING_NAMESPACE_ID,
                                                       CLOSURE_WINDOW_NAMESPACE_ID,
-                                                      CLOSURE_CABINET_NAMESPACE_ID]:
+                                                      CLOSURE_CABINET_NAMESPACE_ID,
+                                                      COMMODITY_TARIFF_CHRONOLOGY_NAMESPACE_ID,
+                                                      COMMODITY_TARIFF_COMMODITY_NAMESPACE_ID,
+                                                      COMMODITY_TARIFF_FLOW_NAMESPACE_ID]:
                         self.fail_current_test("Non manufacturer specific tag is not a tag from namespace defined in spec")
                 else:
 
