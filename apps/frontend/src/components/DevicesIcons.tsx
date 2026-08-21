@@ -135,6 +135,20 @@ const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x010f, 0x0110];
 const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0110];
 const fanControlDeviceTypes = [0x002b, 0x002d]; // Fan, AirPurifier
+const closurePositionNames = ['Closed', 'Open', 'Partial', 'Pedestrian', 'Ventilation', 'Signature'] as const;
+
+/**
+ * Gets the ClosureControl current position name from an OverallCurrentState value.
+ *
+ * @param {unknown} value ClosureControl OverallCurrentState attribute value.
+ * @returns {string | undefined} The current position name, or undefined when unavailable or invalid.
+ */
+function getClosurePositionName(value: unknown): string | undefined {
+  if (typeof value !== 'object' || value === null || !('position' in value)) return undefined;
+  const position = value.position;
+  if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position >= closurePositionNames.length) return undefined;
+  return closurePositionNames[position];
+}
 
 interface RenderProps {
   icon: React.JSX.Element;
@@ -384,7 +398,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       ))}
       {/* Closure */}
       {deviceType===0x0230 && clusters.filter(cluster => cluster.clusterName === 'ClosureControl' && cluster.attributeName === 'overallCurrentState').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Closure' />
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={getClosurePositionName(cluster.attributeLocalValue)} />
       ))}
       {/* ClosureController */}
       {deviceType===0x023e && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
