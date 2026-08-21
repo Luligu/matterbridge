@@ -1,42 +1,102 @@
+// .devcontainer/bun/devcontainer.json v.2.0.0
+
+// This file defines the bun development container configuration for Matterbridge.
+
+/*
+  ************************************************* NOTICE *************************************************
+Dev containers have networking limitations depending on the host OS and Docker setup.
+
+• Docker Desktop on Windows or macOS (you can use your desktop or laptop PC for development running on your favorite OS):
+  - Runs inside a VM
+  - Host networking mode is NOT available
+  - Use the Matterbridge Dev Container system (https://matterbridge.io/reflector/MatterbridgeDevContainer.html) for development and testing. It provides a similar environment to the native Linux setup with the following features:
+    ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+    ✅ mDNS works normally inside the containers
+    ✅ Remote and local network access (cloud services, internet APIs) work normally
+    ✅ Matterbridge and plugins work normally
+    ✅ Matterbridge frontend works normally
+  - Use the Matterbridge mDNS Reflector with the Matterbridge Dev Container system (https://matterbridge.io/reflector/Reflector.html) if you want to pair with a controller on the local network with the following features:
+    ✅ It is possible to pair with a Home Assistant instance running via Docker Compose on the same host
+    ✅ It is possible to pair with a controller running on the local network using mDNS reflector
+    ✅ mDNS, remote and local network access (cloud services, internet APIs) work normally
+    ✅ Matterbridge and plugins work normally
+    ✅ Matterbridge frontend works normally
+
+• Native Linux or WSL 2 with Docker Engine CLI integration:
+  - ✅ Host networking IS available (with --network=host)
+  - ✅ Full local network access is supported
+  - ✅ Matterbridge and plugins work correctly, including pairing
+  - ✅ Matterbridge frontend works normally
+  ************************************************* NOTICE *************************************************
+*/
 {
-  "name": "Matterbridge (Bun)",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "matterbridge-bun",
-  "workspaceFolder": "/workspaces/matterbridge",
-  "remoteUser": "bun",
-  "containerUser": "bun",
-  "updateRemoteUserUID": true,
+  // Name of the dev container
+  "name": "Matterbridge Bun Dev Container",
+  // Shared Matterbridge bun dev container image published on Docker Hub
+  "image": "luligu/matterbridge:bun-dev-container",
+  // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
   "containerEnv": {
     "TZ": "${localEnv:TZ}"
   },
+  // Both the node and bun base images already use UID/GID 1000. Disabling the UID update avoids
+  // VS Code creating a workspace-derived vsc-* image shared by both variants.
+  "updateRemoteUserUID": false,
+  // Use the non-root bun user (passwordless sudo in this image)
+  "remoteUser": "bun",
   "mounts": [
+    // Package specific volumes for matterbridge bun node_modules, frontend bun node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
     "source=${localWorkspaceFolderBasename}-bun-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-bun-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-bun-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
+    "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/bun/.mattercert,type=volume",
+    // Dev container shared volumes for npm cache, bun cache, bash history, claude, codex and agents to improve performance
+    "source=npm-cache,target=/home/bun/.npm,type=volume",
+    "source=bun-cache,target=/home/bun/.bun/install/cache,type=volume",
+    "source=bash-cache,target=/home/bun/.bash-cache,type=volume",
     "source=claude,target=/home/bun/.claude,type=volume",
     "source=codex,target=/home/bun/.codex,type=volume",
     "source=agents,target=/home/bun/.agents,type=volume"
   ],
-  "forwardPorts": [8283],
+  // Set up the Docker environment (runs on the host before the container starts)
+  "initializeCommand": "bash .devcontainer/bun/initialize.sh",
+  // On create, prepare the directories and install and build Matterbridge (runs inside the container)
+  "postCreateCommand": "bash .devcontainer/bun/post-create.sh",
+  // On start, install and build Matterbridge (runs inside the container)
+  "postStartCommand": "bash .devcontainer/bun/post-start.sh",
+  "runArgs": [
+    // Give the Docker container the same name as the repository (must be unique on host)
+    "--name",
+    "${localWorkspaceFolderBasename}-bun",
+    // OpenAI sandbox requisites (https://learn.chatgpt.com/docs/sandboxing?surface=cli)
+    "--security-opt",
+    "seccomp=unconfined",
+    // Use network host mode if on Docker Engine on Linux or WSL 2 to allow full local network access and mDNS support
+    // "--network=host"
+    // Use a shared bridge network to allow to access other containers with their names (dns resolution). With the default bridge, dns resolution does not work (only ip:port).
+    "--network=matterbridge",
+    // Publish the Matterbridge UI port on the Docker host as a single dual-stack (IPv4 + IPv6) binding, so http://localhost:8283
+    // and http://[::1]:8283 both work even without VS Code port forwarding.
+    "--publish",
+    "[::]:8283:8283"
+  ],
   "portsAttributes": {
     "8283": {
-      "label": "Matterbridge frontend"
+      "label": "Matterbridge frontend (IPv4 + IPv6)",
+      "onAutoForward": "ignore"
     }
   },
   "otherPortsAttributes": {
     "onAutoForward": "ignore"
   },
-  "initializeCommand": "(docker network inspect matterbridge || docker network create matterbridge) && docker pull oven/bun:slim",
-  "postCreateCommand": "bash .devcontainer/bun/create.sh",
-  "postStartCommand": "bash .devcontainer/bun/start.sh",
   "customizations": {
     "vscode": {
+      // Extensions to install in the dev container
       "extensions": [
         "typescriptteam.native-preview",
         "oxc.oxc-vscode",
+        "vitest.explorer",
         "ms-azuretools.vscode-containers",
         "anthropic.claude-code",
         "github.copilot-chat",
@@ -44,78 +104,11 @@
         "github.vscode-pull-request-github",
         "openai.chatgpt"
       ],
+      // Settings for the VS Code environment specific to the dev container (overrides user and workspace settings)
       "settings": {
-        "eslint.enable": false,
-        "prettier.enable": false,
-        "oxc.enable": true,
-        "js/ts.experimental.useTsgo": true,
-        "js/ts.tsdk.promptToUseWorkspaceVersion": false,
-        "terminal.integrated.scrollback": 1000,
-        "editor.tabSize": 2,
-        "editor.rulers": [180],
-        "editor.formatOnSave": false,
-        "editor.defaultFormatter": "oxc.oxc-vscode",
-        "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[json]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[jsonc]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "[markdown]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
-        "editor.formatOnSaveMode": "file",
-        "editor.codeActionsOnSave": {
-          "source.format.oxc": "always",
-          "source.fixAll.oxc": "always"
-        },
-        "diffEditor.ignoreTrimWhitespace": false,
-        "files.eol": "\n",
-        "files.insertFinalNewline": true,
-        "files.trimFinalNewlines": true,
-        "files.trimTrailingWhitespace": true,
-        "files.watcherExclude": {
-          "**/build/**": true,
-          "**/.cache/**": true,
-          "**/coverage/**": true
-        },
-        "search.exclude": {
-          "**/node_modules": true,
-          "**/dist": true,
-          "**/build": true,
-          "**/.cache": true,
-          "**/coverage": true
-        },
-        "remote.restoreForwardedPorts": false,
-        "git.autofetch": true,
-        "git.autoRepositoryDetection": false,
-        "chat.useCustomizationsInParentRepositories": true,
-        "chat.tools.terminal.autoApprove": {
-          "npx tsc": true,
-          "npx oxlint": true,
-          "npx oxfmt": true,
-          "npx vitest": true,
-          "npm run build": true,
-          "npm run typecheck": true,
-          "npm run lint": true,
-          "npm run format:check": true,
-          "npm run test": true,
-          "npm run test:coverage": true,
-          "npm run update-htmls": true,
-          "git status": true,
-          "git diff": true,
-          "git diff --check": true,
-          "git diff --stat": true,
-          "git log": true,
-          "git show": true,
-          "git branch -vv": true,
-          "git ls-files": true,
-          "git --no-pager diff --stat": true,
-          "git --no-pager diff --check": true
-        },
         "terminal.integrated.defaultProfile.linux": "bash",
-        "js/ts.tsserver.watchOptions": {
-          "watchFile": "dynamicPriorityPolling",
-          "watchDirectory": "dynamicPriorityPolling",
-          "fallbackPolling": "dynamicPriorityPolling",
-          "excludeDirectories": ["**/.cache/**", "**/node_modules/**", "**/coverage/**", "**/dist/**", "**/build/**", "**/docs/**"]
-        }
+        "oxc.useExecPath": true,
+        "vitest.nodeExecutable": "/proc/self/exe"
       }
     }
   }

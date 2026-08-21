@@ -1,16 +1,9 @@
+PICS_SDK_CI_ONLY=1
+
 MCORE.BRIDGE=1
 MCORE.BRIDGE.BatInfo=0
 MCORE.BRIDGE.OtherControl=0
 MCORE.BRIDGE.AllowDeviceRename=0
-
-
-# Test_TC_I_2_1.yaml Test_TC_I_2_2.yaml Test_TC_I_2_3.yaml
-# Identify cluster (createDefaultIdentifyClusterServer — no Effects feature, so TriggerEffect (C40) is not
-# exposed on the wire even though MatterbridgeIdentifyServer implements a handler for it; leave C40.Rsp unset)
-I.S=1
-I.S.A0000=1 # IdentifyTime
-I.S.A0001=1 # IdentifyType
-I.S.C00.Rsp=1 # Identify command (mandatory)
 
 
 # Test_TC_BINFO_2_1.yaml Test_TC_BINFO_2_2.yaml
@@ -75,6 +68,8 @@ BRBINFO.S.A0014=0 # ProductAppearance
 BRBINFO.S.A0015=0 # SpecificationVersion: X conformance, excluded from this cluster
 BRBINFO.S.A0016=0 # MaxPathsPerInvoke: X conformance, excluded from this cluster
 BRBINFO.S.A0018=1 # ConfigurationVersion (createDefaultBridgedDeviceBasicInformationClusterServer sets this)
+BRBINFO.S.A.A0018=1 # ConfigurationVersion write/subscribe helper token used by TC_BRBINFO_3_2.py
+BRBINFO.S.M.DeviceConfigurationChange=1 # SDK CI app-pipe hook used to simulate a bridged-device configuration change
 
 BRBINFO.S.E00=0 # StartUp: not enabled (BridgedDeviceBasicInformationServer.enable() only turns on leave/reachableChanged)
 BRBINFO.S.E01=0 # ShutDown: not enabled
@@ -86,38 +81,14 @@ BRBINFO.S.E80=0 # ActiveChanged event: BIS feature not implemented
 
 
 # Test_TC_PS_2_1.yaml Test_TC_PS_2_2.yaml
-# PowerSource cluster
+# PowerSource cluster on root
+PS.S=1
+PS.S.F00=1 # Wired
+PS.S.F01=0 # Battery
+PS.S.F02=0 # Rechargeable
+PS.S.F03=0 # Replaceable
 PS.S.A0000=1 # Status
 PS.S.A0001=1 # Order
 PS.S.A0002=1 # Description
+PS.S.A0005=1 # WiredCurrentType
 PS.S.A001f=1 # EndpointList
-
-
-# Test_TC_BOOL_2_1 Test_TC_BOOL_2_2
-# BooleanState cluster
-BOOL.S.A0000=1
-
-
-# Occupancy Sensing cluster enabled
-OCC.S=1
-
-
-# Test_TC_OO_2_1.yaml
-# OnOff cluster attributes are implemented
-OO.S.A0000=1
-OO.S.A4000=1
-OO.S.A4001=1
-OO.S.A4002=1
-
-
-# Test_TC_OO_2_2.yaml
-# OnOff cluster commands are implemented
-OO.S.C00.Rsp=1
-OO.S.C01.Rsp=1
-OO.S.C02.Rsp=1
-
-# Test_TC_OO_2_4 Startup behavior
-
-# Test_TC_OO_2_6 OffOnly feature
-
-# Test_TC_OO_2_7 Scenes interaction

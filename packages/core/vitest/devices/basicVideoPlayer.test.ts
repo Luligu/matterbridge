@@ -81,6 +81,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'powerSource', 'onOff', 'mediaPlayback', 'keypadInput']);
   });
 
+  test('create a basic video player device with powerSourceType None', () => {
+    const noneDevice = new BasicVideoPlayer('BasicVideoPlayer None Device', 'BVP654321', { powerSourceType: 'None' });
+    expect(noneDevice.hasClusterServer(PowerSource.id)).toBeFalsy();
+  });
+
   test('add a basic video player device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
   });

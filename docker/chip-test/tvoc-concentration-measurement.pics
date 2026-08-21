@@ -1,0 +1,22 @@
+# To run tests on TotalVolatileOrganicCompoundsConcentrationMeasurement --PICS is required
+# Matches createDefaultTvocMeasurementClusterServer(50, undefined, undefined, undefined, 0, 1000) on CHIP AirQualitySensor endpoint 710
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+TVOCCONC.S=1
+TVOCCONC.S.F00=1 # NumericMeasurement
+TVOCCONC.S.F01=0
+TVOCCONC.S.F02=0
+TVOCCONC.S.F03=0
+TVOCCONC.S.F04=0
+TVOCCONC.S.F05=0
+TVOCCONC.S.A0000=1 # MeasuredValue
+TVOCCONC.S.A0001=1 # MinMeasuredValue
+TVOCCONC.S.A0002=1 # MaxMeasuredValue
+TVOCCONC.S.A0003=0 # PeakMeasuredValue
+TVOCCONC.S.A0004=0 # PeakMeasuredValueWindow
+TVOCCONC.S.A0005=0 # AverageMeasuredValue
+TVOCCONC.S.A0006=0 # AverageMeasuredValueWindow
+TVOCCONC.S.A0007=0 # Uncertainty
+TVOCCONC.S.A0008=1 # MeasurementUnit
+TVOCCONC.S.A0009=1 # MeasurementMedium
+TVOCCONC.S.A000a=0 # LevelValue

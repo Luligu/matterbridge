@@ -33,3 +33,4 @@ TODO.md
 # Allow dist folders inside vendor/
 !vendor/**/dist/
 !vendor/**/dist/**
+!chipTestsSummary.log

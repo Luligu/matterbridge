@@ -160,6 +160,8 @@ async function shutdown(): Promise<void> {
 
   cliEmitter.emit('shutdown');
 
+  log.debug('Received shutdown event, exit with code 0');
+
   process.exit(0);
 }
 
@@ -288,6 +290,7 @@ function help(): void {
       --loginterfaces:         log the network interfaces (usefull for finding the name of the interface to use with -mdnsinterface option)
       --logstorage:            log the node storage
       --systemcheck:           perform a system check (check Node.js version and network interfaces)
+      --demo-devices:          create demo devices (only in bridge mode)
 
     Reset Commands:
       --reset:                 remove the commissioning for Matterbridge (bridge mode and childbridge mode). Shutdown Matterbridge before using it!

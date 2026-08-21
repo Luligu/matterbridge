@@ -46,7 +46,6 @@ import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behavio
 import { GroupsServer } from '@matter/node/behaviors/groups';
 import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
 import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
-import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
 import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
 import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
@@ -78,9 +77,9 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { Identify } from '@matter/types/clusters/identify';
+import type { IlluminanceMeasurement } from '@matter/types/clusters/illuminance-measurement';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import type { ModeSelect } from '@matter/types/clusters/mode-select';
-import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -115,6 +114,7 @@ import { MatterbridgeIdentifyServer } from './behaviors/identifyServer.js';
 import { MatterbridgeLevelControlServer } from './behaviors/levelControlServer.js';
 import { MatterbridgeServer } from './behaviors/matterbridgeServer.js';
 import { MatterbridgeModeSelectServer } from './behaviors/modeSelectServer.js';
+import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
@@ -169,6 +169,8 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getExportedElectricalEnergyMeasurementClusterServer,
+  getImportedElectricalEnergyMeasurementClusterServer,
   invokeBehaviorCommand,
   lowercaseFirstLetter,
   setAttribute,
@@ -2059,9 +2061,9 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default power source battery cluster server.
    *
-   * @param {null | number} batPercentRemaining - The remaining battery percentage (default: null). The attribute is in the range 0-200.
+   * @param {null | number} batPercentRemaining - The remaining battery percentage (default: 100). The attribute is in the range 0-200.
    * @param {PowerSource.BatChargeLevel} batChargeLevel - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
-   * @param {null | number} batVoltage - The battery voltage (default: null).
+   * @param {null | number} batVoltage - The battery voltage (default: 1500).
    * @param {PowerSource.BatReplaceability} batReplaceability - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -2071,9 +2073,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
    */
   createDefaultPowerSourceBatteryClusterServer(
-    batPercentRemaining: null | number = null,
+    batPercentRemaining: null | number = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
-    batVoltage: null | number = null,
+    batVoltage: null | number = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
   ): this {
     this.behaviors.require(
@@ -2296,6 +2298,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} energyImported - The total consumption value in mW/h.
    * @param {number} energyExported - The total production value in mW/h.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported, energyExported })`.
    */
   createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
     this.behaviors.require(
@@ -2305,6 +2311,42 @@ export class MatterbridgeEndpoint extends Endpoint {
         ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
       ),
       getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ImportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyImported - The total consumption value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported })`.
+   */
+  createImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getImportedElectricalEnergyMeasurementClusterServer(energyImported),
+    );
+    return this;
+  }
+
+  /**
+   * Creates an Electrical Energy Measurement Cluster Server with features ExportedEnergy and CumulativeEnergy.
+   *
+   * @param {number} energyExported - The total production value in mW/h.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
+   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported })`.
+   */
+  createExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null): this {
+    this.behaviors.require(
+      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
+      getExportedElectricalEnergyMeasurementClusterServer(energyExported),
     );
     return this;
   }
@@ -3699,8 +3741,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence: FanControl.FanModeSequence.OffHigh, // Fixed attribute
-      percentSetting: 0, // Writable attribute
-      percentCurrent: 0,
+      percentSetting: fanMode === FanControl.FanMode.Off ? 0 : 100, // Writable attribute
+      percentCurrent: fanMode === FanControl.FanMode.Off ? 0 : 100,
     });
     return this;
   }
@@ -4418,7 +4460,7 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default boolean state cluster server.
-   * The stateChange event is enabled.
+   * The stateChange event is enabled and automatically triggered when the state changes.
    *
    * @param {boolean} contact - The state of the cluster. Defaults to true (true = contact).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4442,42 +4484,53 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default boolean state configuration cluster server to be used with the waterFreezeDetector, waterLeakDetector, and rainSensor device types.
+   * Creates a default boolean state configuration cluster server to be used with the contactSensor, waterFreezeDetector, waterLeakDetector, and rainSensor device types.
    *
    * Features:
    * - Visual
    * - Audible
+   * - AlarmSuppress
    * - SensitivityLevel
+   * - FaultEvents
    *
-   * @remarks Supports the enableDisableAlarm command.
+   * @remarks Supports the suppressAlarm and enableDisableAlarm commands.
+   * The alarmsStateChanged event is automatically triggered when alarmsActive or alarmsSuppressed changes.
+   * The sensorFault event is automatically triggered when sensorFault changes.
    *
-   * @param {boolean} [sensorFault] - Optional boolean value indicating the sensor fault state. Defaults to `false` if not provided.
-   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `0` if not provided.
-   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `2` if not provided (min 2, max 10).
-   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `0` if not provided.
+   * @param {boolean} [sensorFault] - Boolean value indicating the sensor fault state. Defaults to `false` if not provided.
+   * @param {number} [currentSensitivityLevel] - The current sensitivity level. Defaults to `1` if not provided.
+   * @param {number} [supportedSensitivityLevels] - The number of supported sensitivity levels. Defaults to `3` if not provided (min 2, max 10).
+   * @param {number} [defaultSensitivityLevel] - The default sensitivity level. Defaults to `1` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultBooleanStateConfigurationClusterServer(
     sensorFault: boolean = false,
-    currentSensitivityLevel: number = 0,
-    supportedSensitivityLevels: number = 2,
-    defaultSensitivityLevel: number = 0,
+    currentSensitivityLevel: number = 1,
+    supportedSensitivityLevels: number = 3,
+    defaultSensitivityLevel: number = 1,
   ): this {
     this.behaviors.require(
       MatterbridgeBooleanStateConfigurationServer.with(
         BooleanStateConfiguration.Feature.Visual,
         BooleanStateConfiguration.Feature.Audible,
+        BooleanStateConfiguration.Feature.AlarmSuppress,
         BooleanStateConfiguration.Feature.SensitivityLevel,
+        BooleanStateConfiguration.Feature.FaultEvents,
       ).enable({
         events: { alarmsStateChanged: true, sensorFault: true },
       }),
       {
+        // SensitivityLevel attributes
         currentSensitivityLevel,
         supportedSensitivityLevels,
         defaultSensitivityLevel,
+        // Visual and Audible attributes
         alarmsActive: { visual: false, audible: false },
         alarmsEnabled: { visual: true, audible: true },
         alarmsSupported: { visual: true, audible: true },
+        // AlarmSuppress attributes
+        alarmsSuppressed: { visual: false, audible: false },
+        // Optional attributes
         sensorFault: { generalFault: sensorFault },
       },
     );
@@ -4487,35 +4540,48 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default TemperatureMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value of the temperature x 100.
+   * @param {number | null} measuredValue - The measured value of the temperature x 100. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the temperature x 100. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the temperature x 100. Default is null.
+   * @param {number} tolerance - The tolerance of the temperature measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultTemperatureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultTemperatureMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(TemperatureMeasurementServer, getDefaultTemperatureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
   /**
    * Creates a default RelativeHumidityMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value of the relative humidity x 100.
+   * @param {number | null} measuredValue - The measured value of the relative humidity x 100. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the relative humidity x 100. Default is null.
+   * @param {number} tolerance - The tolerance of the relative humidity measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultRelativeHumidityMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultRelativeHumidityMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(RelativeHumidityMeasurementServer, getDefaultRelativeHumidityMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
   /**
    * Creates a default PressureMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10.
+   * @param {number | null} measuredValue - The measured value for the pressure in kPa x 10. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) for the pressure in kPa x 10. Default is null.
+   * @param {number} tolerance - The tolerance of the pressure measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4527,17 +4593,24 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - 1 kPa = 10 hPa
    * - 1 inHg = 33.8639 hPa
    */
-  createDefaultPressureMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultPressureMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(PressureMeasurementServer, getDefaultPressureMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
   /**
    * Creates a default IlluminanceMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value of illuminance.
+   * @param {number | null} measuredValue - The measured value of illuminance. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of illuminance. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of illuminance. Default is null.
+   * @param {number} tolerance - The tolerance of the illuminance measurement. Default is 0.
+   * @param {IlluminanceMeasurement.LightSensorType | null} lightSensorType - The type of light sensor. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4553,21 +4626,36 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - Lux to matter = Math.round(Math.max(Math.min(10000 * Math.log10(lux), 0xfffe), 0))
    * - Matter to Lux = Math.round(Math.max(Math.pow(10, value / 10000), 0))
    */
-  createDefaultIlluminanceMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(IlluminanceMeasurementServer, getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultIlluminanceMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+    lightSensorType: IlluminanceMeasurement.LightSensorType | null = null,
+  ): this {
+    this.behaviors.require(
+      IlluminanceMeasurementServer,
+      getDefaultIlluminanceMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance, lightSensorType),
+    );
     return this;
   }
 
   /**
    * Creates a default FlowMeasurement cluster server.
    *
-   * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h.
+   * @param {number | null} measuredValue - The measured value of the flow in 10 x m3/h. Default is null.
    * @param {number | null} minMeasuredValue - The minimum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
    * @param {number | null} maxMeasuredValue - The maximum measured value (that is capable of being measured) of the flow in 10 x m3/h. Default is null.
+   * @param {number} tolerance - The tolerance of the flow measurement. Default is 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultFlowMeasurementClusterServer(measuredValue: number | null = null, minMeasuredValue: number | null = null, maxMeasuredValue: number | null = null): this {
-    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue));
+  createDefaultFlowMeasurementClusterServer(
+    measuredValue: number | null = null,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
+    tolerance: number = 0,
+  ): this {
+    this.behaviors.require(FlowMeasurementServer, getDefaultFlowMeasurementClusterServer(measuredValue, minMeasuredValue, maxMeasuredValue, tolerance));
     return this;
   }
 
@@ -4583,17 +4671,14 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks The default value for the occupancy sensor type is PIR.
    */
   createDefaultOccupancySensingClusterServer(occupied: boolean = false, holdTime: number = 30, holdTimeMin: number = 1, holdTimeMax: number = 300): this {
-    this.behaviors.require(
-      OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared),
-      getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax),
-    );
+    this.behaviors.require(MatterbridgeOccupancySensingServer, getDefaultOccupancySensingClusterServer(occupied, holdTime, holdTimeMin, holdTimeMax));
     return this;
   }
 
   /**
    * Creates a default SoilMeasurement cluster server.
    *
-   * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percentage x 100. Default is null.
+   * @param {number | null} soilMoistureMeasuredValue - The measured value of the soil moisture in percent. Default is null.
    * @param {MeasurementAccuracy} soilMoistureMeasurementLimits - The measurement limits for the soil moisture measurement. Default is a range of 0% to 100% with an accuracy of 1%.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -4621,10 +4706,12 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default TotalVolatileOrganicCompoundsConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @param {number} [uncertainty] - The uncertainty value (optional).
+   * @param {number | null} [minMeasuredValue] - The minimum measured value (that is capable of being measured) of the concentration. Default is null.
+   * @param {number | null} [maxMeasuredValue] - The maximum measured value (that is capable of being measured) of the concentration. Default is null.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4636,11 +4723,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     measurementUnit: ConcentrationMeasurement.MeasurementUnit = ConcentrationMeasurement.MeasurementUnit.Ugm3,
     measurementMedium: ConcentrationMeasurement.MeasurementMedium = ConcentrationMeasurement.MeasurementMedium.Air,
     uncertainty?: number,
+    minMeasuredValue: number | null = null,
+    maxMeasuredValue: number | null = null,
   ): this {
     this.behaviors.require(TotalVolatileOrganicCompoundsConcentrationMeasurementServer.with(ConcentrationMeasurement.Feature.NumericMeasurement), {
       measuredValue,
-      minMeasuredValue: null,
-      maxMeasuredValue: null,
+      minMeasuredValue,
+      maxMeasuredValue,
       uncertainty,
       measurementUnit,
       measurementMedium,
@@ -4679,7 +4768,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default CarbonMonoxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4706,7 +4795,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default CarbonDioxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ppm).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4733,7 +4822,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default FormaldehydeConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Mgm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4761,7 +4850,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm1ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4789,7 +4878,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm25ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4817,7 +4906,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default Pm10ConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4845,7 +4934,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default OzoneConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4872,7 +4961,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default RadonConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Bqm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
@@ -4900,7 +4989,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Create a default NitrogenDioxideConcentrationMeasurement cluster server with feature NumericMeasurement.
    *
-   * @param {number | null} measuredValue - The measured value of the concentration.
+   * @param {number | null} measuredValue - The measured value of the concentration. Default is null.
    * @param {ConcentrationMeasurement.MeasurementUnit} measurementUnit - The unit of measurement (default to ConcentrationMeasurement.MeasurementUnit.Ugm3).
    * @param {ConcentrationMeasurement.MeasurementMedium} measurementMedium - The unit of measurement (default to ConcentrationMeasurement.MeasurementMedium.Air).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.

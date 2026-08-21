@@ -1,0 +1,102 @@
+name: Build Docker Image bundev with buildx
+
+on:
+  # Use in other repository workflows with:
+  # - name: Trigger Matterbridge Docker Build Bundev
+  #   uses: actions/github-script@v9
+  #   with:
+  #     github-token: ${{ secrets.TRIGGER_TOKEN }}
+  #     script: |
+  #       await github.rest.actions.createWorkflowDispatch({
+  #         owner: 'Luligu',
+  #         repo: 'matterbridge',
+  #         workflow_id: 'docker-buildx-bundev.yml',
+  #         ref: 'dev'
+  #       })
+
+  # Allow manual dispatch and trigger from other workflows
+  workflow_dispatch:
+
+# Cancel previous runs when a new one is triggered
+concurrency:
+  group: docker-build-bundev
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code to dev branch
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+
+      - name: Setup Node.js 24.x
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24.x'
+          cache: npm
+
+      - name: Verify Node.js version
+        run: node -v
+
+      - name: Verify Npm version
+        run: npm -v
+
+      - name: Set metadata
+        id: meta
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "VCS_REF=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      - name: Write build metadata to .dockerbuild.json
+        run: |
+          cat > .dockerbuild.json <<EOF
+          {
+            "version": "${{ steps.meta.outputs.VERSION }}",
+            "sha": "${GITHUB_SHA}",
+            "sha7": "${GITHUB_SHA::7}",
+            "event": "${GITHUB_EVENT_NAME}",
+            "workflow": "${GITHUB_WORKFLOW}",
+            "type": "${GITHUB_REF_TYPE}",
+            "name": "bundev",
+            "dev": true
+          }
+          EOF
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+        with:
+          version: latest
+
+      - name: Run Docker Buildx with Dockerfile.bundev for version ${{ steps.meta.outputs.VERSION }}
+        run: |
+          docker buildx build \
+            --no-cache \
+            --pull \
+            --platform linux/amd64,linux/arm64 \
+            -f docker/Dockerfile.bundev \
+            -t luligu/matterbridge:bundev \
+            -t luligu/matterbridge:bundev-${{ steps.meta.outputs.VERSION }} \
+            --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
+            --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
+            --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
+            --push .
+        timeout-minutes: 60
+
+      - name: Inspect pushed manifest
+        run: docker manifest inspect luligu/matterbridge:bundev

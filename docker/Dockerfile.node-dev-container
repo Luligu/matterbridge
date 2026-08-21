@@ -1,0 +1,33 @@
+# docker/Dockerfile.node-dev-container v.2.0.0
+
+# This Dockerfile is used to build a development container for Node.js applications.
+# It is based on the official Node.js Docker image and includes additional tools and configurations for a better development experience.
+# Bash history is configured to be synced across terminals.
+
+FROM node:24-trixie-slim
+
+ENV HISTFILE=/home/node/.bash-cache/.bash_history
+ENV HISTSIZE=100000
+ENV HISTFILESIZE=200000
+
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
+  && ln -s /usr/bin/fdfind /usr/local/bin/fd \
+  && mkdir -p /home/node/.bash-cache \
+  && { \
+    echo ''; \
+    echo '# Keep Bash history synced across terminals.'; \
+    echo 'shopt -s histappend'; \
+    echo '__sync_history() {'; \
+    echo '  history -a'; \
+    echo '  history -n'; \
+    echo '}'; \
+    echo 'PROMPT_COMMAND="__sync_history${PROMPT_COMMAND:+;$PROMPT_COMMAND}"'; \
+  } >> /home/node/.bashrc \
+  && chown -R node:node /home/node \
+  && echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node \
+  && chmod 0440 /etc/sudoers.d/node \
+  && rm -rf /var/lib/apt/lists/*
+
+USER node
+WORKDIR /home/node

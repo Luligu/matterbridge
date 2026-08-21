@@ -26,10 +26,28 @@
 // @matter
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
+import type { EndpointNumber } from '@matter/types/datatype';
 
 // matterbridge
-import { speaker } from '../matterbridgeDeviceTypes.js';
+import { powerSource, speaker } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { createDefaultMediaPowerSourceClusterServer, type MediaPowerSourceType } from './mediaHelpers.js';
+
+/**
+ * Options for configuring a {@link Speaker} instance.
+ */
+export interface SpeakerOptions {
+  /** Initial muted state (true => muted, default false if omitted). */
+  muted?: boolean;
+  /** Initial volume (1..254, coerced; default 128 ≈ 50% if omitted). */
+  volume?: number;
+  /** Power source type. `'None'` omits the Power Source cluster entirely. */
+  powerSourceType?: MediaPowerSourceType;
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+}
 
 /**
  * Represents a Speaker endpoint (Device Type 0x0022) exposing mute (OnOff) and volume (LevelControl).
@@ -50,22 +68,27 @@ export class Speaker extends MatterbridgeEndpoint {
    *
    * @param {string} name   Human readable device name.
    * @param {string} serial Unique serial (used to derive storage key).
-   * @param {boolean} muted Initial muted state (true => unmuted, default true if omitted).
-   * @param {number} volume Initial volume (1..254, coerced; default 128 ≈ 50% if omitted).
+   * @param {SpeakerOptions} [options] - Optional configuration values. Missing fields use defaults.
    * @returns {Speaker} New speaker instance.
    *
    * @remarks Supported by:
    * - SmartThings (OnOff mute, LevelControl volume)
    * - Google Home (OnOff mute, LevelControl volume)
    */
-  constructor(name: string, serial: string, muted: boolean = false, volume: number = 128) {
+  constructor(name: string, serial: string, options: SpeakerOptions = {}) {
+    const { muted = false, powerSourceType = 'Wired' } = options;
+    let { volume = 128 } = options;
     // sanitize volume
     if (!Number.isFinite(volume)) volume = 128;
     if (volume < 1) volume = 1;
     if (volume > 254) volume = 254;
 
-    super([speaker], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super(powerSourceType === 'None' ? [speaker] : [speaker, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+    });
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Speaker');
+    createDefaultMediaPowerSourceClusterServer(this, powerSourceType);
     // On/Off used for mute state (TRUE => unmuted) - using no features
     this.createOnOffClusterServer(!muted);
     // LevelControl for volume - using no features

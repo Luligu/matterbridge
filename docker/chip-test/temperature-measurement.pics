@@ -1,0 +1,10 @@
+# To run tests on TemperatureMeasurement --PICS is required
+# Matches createDefaultTemperatureMeasurementClusterServer(2000, -27315, 32767) on CHIP TemperatureSensor endpoint 704
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+TMP.S=1
+TMP.S.A0000=1 # MeasuredValue
+TMP.S.A0001=1 # MinMeasuredValue
+TMP.S.A0002=1 # MaxMeasuredValue
+TMP.S.A0003=1 # Tolerance
+TMP.M.ManuallyControlled=0

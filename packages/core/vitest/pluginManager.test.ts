@@ -56,6 +56,7 @@ process.argv = [
 ];
 process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
+await fs.rm(NPM_CONFIG_PREFIX, { recursive: true, force: true });
 await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
 await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
 
@@ -269,7 +270,7 @@ describe('PluginManager', () => {
     expect(
       (await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.packageName,
     ).toBeDefined();
-    execSync(`npm uninstall ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
@@ -301,6 +302,10 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       // await setDebug(false);
       expect(plugins.has('matterbridge-mock1')).toBe(false);
+      execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+        stdio: 'inherit',
+        env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
+      });
     }
   }, 10000);
 
@@ -341,8 +346,8 @@ describe('PluginManager', () => {
     plugins.clear();
     const context = matterbridge.nodeContext;
     matterbridge.nodeContext = undefined;
-    await expect(plugins.saveToStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
-    await expect(plugins.loadFromStorage()).rejects.toThrow(new Error('loadFromStorage: node context is not available.'));
+    await expect(plugins.saveToStorage()).rejects.toThrow(new Error('PluginManager.saveToStorage: node context is not available.'));
+    await expect(plugins.loadFromStorage()).rejects.toThrow(new Error('PluginManager.loadFromStorage: node context is not available.'));
     matterbridge.nodeContext = context;
   });
 
@@ -2212,5 +2217,6 @@ describe('PluginManager', () => {
     await closeMdnsInstance(matterbridge);
     // Close runtime instance
     await closeRuntimeInstance(matterbridge);
+    await fs.rm(NPM_CONFIG_PREFIX, { recursive: true, force: true });
   });
 });

@@ -24,7 +24,6 @@ import {
   DescriptorBehavior,
   FormaldehydeConcentrationMeasurementServer,
   NitrogenDioxideConcentrationMeasurementServer,
-  OccupancySensingServer,
   OzoneConcentrationMeasurementServer,
   Pm1ConcentrationMeasurementServer,
   Pm10ConcentrationMeasurementServer,
@@ -91,6 +90,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
+import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
 import {
   airPurifier,
   airQualitySensor,
@@ -2206,9 +2206,18 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
+    const stateChangeEvents: unknown[] = [];
+    const stateChange = device.eventsOf('booleanState').stateChange;
+    expect(stateChange).toBeDefined();
+    stateChange?.on((event) => {
+      stateChangeEvents.push(event);
+    });
+
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(false);
     await device.setAttribute(BooleanState.id, 'stateValue', true);
     expect(called).toBe(true);
+    expect(stateChangeEvents).toHaveLength(1);
+    expect(stateChangeEvents[0]).toEqual({ stateValue: true });
 
     vi.clearAllMocks();
     await device.setAttribute(BooleanStateConfiguration.id, 'stateValue', true, device.log);
@@ -2296,7 +2305,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2320,7 +2329,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2344,7 +2353,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
-    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(0);
+    expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2389,8 +2398,8 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(PowerSource.id, 'description')).toBe('Primary battery');
     expect(device.getAttribute(PowerSource.id, 'status')).toBe(PowerSource.PowerSourceStatus.Active);
-    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(null);
-    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(null);
+    expect(device.getAttribute(PowerSource.id, 'batVoltage')).toBe(1500);
+    expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(200);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
 
     await flushAsync();
@@ -2466,17 +2475,46 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createImportedElectricalEnergyMeasurementClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ImportedElectricalSensor' });
+    expect(device).toBeDefined();
+    device.createImportedElectricalEnergyMeasurementClusterServer(1000);
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual({ energy: 1000 });
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createExportedElectricalEnergyMeasurementClusterServer', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ExportedElectricalSensor' });
+    expect(device).toBeDefined();
+    device.createExportedElectricalEnergyMeasurementClusterServer(2000);
+    expect(device.hasClusterServer(ElectricalEnergyMeasurement.id)).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toEqual({ energy: 2000 });
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
   test('createDefaultTemperatureMeasurementClusterServer', async () => {
     const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TemperatureSensor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultTemperatureMeasurementClusterServer(21 * 100);
+    device.createDefaultTemperatureMeasurementClusterServer(21 * 100, null, null, 10);
     expect(device.hasClusterServer(TemperatureMeasurement.id)).toBe(true);
     expect(device.hasAttributeServer(TemperatureMeasurement.id, 'measuredValue')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(TemperatureMeasurement.id, 'measuredValue')).toBe(2100);
+    expect(device.getAttribute(TemperatureMeasurement.id, 'tolerance')).toBe(10);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2484,13 +2522,14 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(humiditySensor, { id: 'HumiditySensor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultRelativeHumidityMeasurementClusterServer(50 * 100);
+    device.createDefaultRelativeHumidityMeasurementClusterServer(50 * 100, null, null, 20);
     expect(device.hasClusterServer(RelativeHumidityMeasurement.id)).toBe(true);
     expect(device.hasAttributeServer(RelativeHumidityMeasurement.id, 'measuredValue')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(RelativeHumidityMeasurement.id, 'measuredValue')).toBe(5000);
+    expect(device.getAttribute(RelativeHumidityMeasurement.id, 'tolerance')).toBe(20);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2498,13 +2537,14 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(pressureSensor, { id: 'PressureSensor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultPressureMeasurementClusterServer(980);
+    device.createDefaultPressureMeasurementClusterServer(980, null, null, 30);
     expect(device.hasClusterServer(PressureMeasurement.id)).toBe(true);
     expect(device.hasAttributeServer(PressureMeasurement.id, 'measuredValue')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(PressureMeasurement.id, 'measuredValue')).toBe(980);
+    expect(device.getAttribute(PressureMeasurement.id, 'tolerance')).toBe(30);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2526,13 +2566,14 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(flowSensor, { id: 'FlowSensor' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    device.createDefaultFlowMeasurementClusterServer(20 * 10);
+    device.createDefaultFlowMeasurementClusterServer(20 * 10, null, null, 40);
     expect(device.hasClusterServer(FlowMeasurement.id)).toBe(true);
     expect(device.hasAttributeServer(FlowMeasurement.id, 'measuredValue')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(FlowMeasurement.id, 'measuredValue')).toBe(200);
+    expect(device.getAttribute(FlowMeasurement.id, 'tolerance')).toBe(40);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2541,12 +2582,22 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultOccupancySensingClusterServer(true);
-    expect(device.hasClusterServer(OccupancySensingServer)).toBe(true);
-    expect(device.hasAttributeServer(OccupancySensingServer, 'occupancy')).toBe(true);
+    expect(device.hasClusterServer(MatterbridgeOccupancySensingServer)).toBe(true);
+    expect(device.hasAttributeServer(MatterbridgeOccupancySensingServer, 'occupancy')).toBe(true);
 
     await add(device);
 
     expect(device.getAttribute(OccupancySensing.id, 'occupancy')).toEqual({ occupied: true });
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(30);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(30);
+
+    await device.setAttribute(OccupancySensing.id, 'holdTime', 1);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(1);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(1);
+
+    await device.setAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay', 300);
+    expect(device.getAttribute(OccupancySensing.id, 'holdTime')).toBe(300);
+    expect(device.getAttribute(OccupancySensing.id, 'pirOccupiedToUnoccupiedDelay')).toBe(300);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

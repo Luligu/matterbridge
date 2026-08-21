@@ -25,8 +25,12 @@
 
 // Chapter 10. Media Device Types - Single class device types
 export * from './basicVideoPlayer.js';
+export * from './castingVideoClient.js';
 export * from './castingVideoPlayer.js';
+export * from './contentApp.js';
+export * from './mediaHelpers.js';
 export * from './speaker.js';
+export * from './videoRemoteControl.js';
 
 // Matter 1.5.0 - Single class device types
 export * from './closure.js';
@@ -50,6 +54,7 @@ export * from './refrigerator.js';
 
 // Chapter 14. Energy Device Types - Single class device types
 export * from './batteryStorage.js';
+export * from './electricalUtilityMeter.js';
 export * from './evse.js';
 export * from './heatPump.js';
 export * from './solarPower.js';

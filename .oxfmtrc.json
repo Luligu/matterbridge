@@ -19,6 +19,7 @@
     "vendor/**",
     "**/package-lock.json",
     "scripts/*.html",
+    "docker/chip-test/**",
     "eslint.config.js"
   ],
   "printWidth": 180,

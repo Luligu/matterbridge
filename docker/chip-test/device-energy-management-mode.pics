@@ -1,0 +1,11 @@
+# To run tests on DeviceEnergyManagementMode --PICS is required
+# Matches createDefaultDeviceEnergyManagementModeClusterServer() on CHIP DeviceEnergyManagement endpoint 207
+DEMM.S=1
+DEMM.S.A0000=1 # SupportedModes
+DEMM.S.A0001=1 # CurrentMode
+DEMM.S.A0002=0 # StartUpMode
+DEMM.S.A0003=1 # OnMode
+DEMM.S.C00.Rsp=1 # ChangeToMode
+DEMM.S.C01.Tx=1 # ChangeToModeResponse
+DEMM.S.M.CAN_TEST_MODE_FAILURE=0
+DEMM.S.M.CAN_MANUALLY_CONTROLLED=0

@@ -121,6 +121,18 @@ jobs:
               ref: 'main'
             })
 
+      - name: Trigger Matterbridge Docker Build Bundev
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-bundev.yml',
+              ref: 'main'
+            })
+
       - name: Trigger Matterbridge Docker Build 24-ubuntu-slim
         uses: actions/github-script@v9
         with:
@@ -194,7 +206,7 @@ jobs:
             })
 
   publish-dev:
-    name: Publish daily dev to npm and trigger docker build dev
+    name: Publish daily dev to npm and trigger docker builds dev and bundev
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
     steps:
@@ -328,5 +340,18 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
+              ref: 'dev'
+            })
+
+      - name: Trigger Matterbridge Docker Build Bundev
+        if: steps.check_new.outputs.should_publish == 'true'
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-bundev.yml',
               ref: 'dev'
             })

@@ -11,6 +11,7 @@ const MATTER_CREATE_ONLY = true;
 // @matter
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -71,10 +72,11 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
     expect(device.hasClusterServer(LevelControl.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
   });
 
   test('create speaker device (custom states)', () => {
-    const custom = new Speaker('Bedroom Speaker', 'SPK654321', true, 10);
+    const custom = new Speaker('Bedroom Speaker', 'SPK654321', { muted: true, volume: 10 });
     expect(custom.id).toBe('BedroomSpeaker-SPK654321');
     expect(custom.getClusterServerOptions(OnOff.id)).toEqual({ onOff: false });
     expect(custom.getClusterServerOptions(LevelControl.id)).toEqual({
@@ -97,10 +99,15 @@ describe('Matterbridge ' + NAME, () => {
       [5000, 254], // far above max -> clamp to 254
     ];
     for (const [input, expected] of cases) {
-      const s = new Speaker(`Clamp ${input}`, `V${expected}`, false, input);
+      const s = new Speaker(`Clamp ${input}`, `V${expected}`, { volume: input });
       const level = s.getClusterServerOptions(LevelControl.id) as any;
       expect(level?.currentLevel).toBe(expected);
     }
+  });
+
+  test('create speaker device with powerSourceType None', () => {
+    const noneDevice = new Speaker('Speaker None Device', 'SPK000001', { powerSourceType: 'None' });
+    expect(noneDevice.hasClusterServer(PowerSource.id)).toBeFalsy();
   });
 
   test('add speaker to server', async () => {
@@ -185,11 +192,11 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 34, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 34, revision: 1 }, { deviceType: 17, revision: 1 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 6, 8, 29 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 6, 8, 29, 47 ]',
         'levelControl(0x8).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5, 6, 7 ]',
         'levelControl(0x8).attributeList(0xfffb)=[ 0, 2, 3, 15, 17, 65528, 65529, 65531, 65532, 65533 ]',
         'levelControl(0x8).clusterRevision(0xfffd)=7',
@@ -206,6 +213,16 @@ describe('Matterbridge ' + NAME, () => {
         'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
         'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
         'onOff(0x6).onOff(0x0)=true',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
       ].toSorted(),
     );
   });

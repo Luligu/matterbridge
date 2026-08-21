@@ -22,8 +22,11 @@
  */
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable typescript/unbound-method */
 
+import type { MaybePromise } from '@matter/general';
 import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
+import { Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { debugStringify } from 'node-ansi-logger';
 
@@ -33,14 +36,105 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * BooleanStateConfiguration server that forwards alarm control commands to the Matterbridge command handler.
+ * If the `AlarmsStateChanged` event is enabled it is emitted automatically on `AlarmsActive` or `AlarmsSuppressed` changes.
+ * If the `SensorFault` event is enabled it is emitted automatically on `SensorFault` changes.
+ * The cluster has no separate trigger-condition attribute, so plugins that know a physical trigger is met must update
+ * `AlarmsActive` when enabling alarms requires immediate activation.
  */
 export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateConfigurationServer.with(
   BooleanStateConfiguration.Feature.Visual,
   BooleanStateConfiguration.Feature.Audible,
+  BooleanStateConfiguration.Feature.AlarmSuppress,
   BooleanStateConfiguration.Feature.SensitivityLevel,
+  BooleanStateConfiguration.Feature.FaultEvents,
 ) {
+  override initialize(): MaybePromise {
+    /* v8 ignore next -- Visual and Audible are enabled by this server's Base behavior. */
+    if (this.features.visual || this.features.audible) {
+      this.reactTo(this.events.alarmsActive$Changed, this.#emitAlarmsStateChanged);
+      this.reactTo(this.events.alarmsSuppressed$Changed, this.#emitAlarmsStateChanged);
+    }
+    /* v8 ignore else -- FaultEvents is enabled by this server's Base behavior. */
+    if (this.features.faultEvents) {
+      const sensorFaultChanged = this.events.sensorFault$Changed;
+      /* v8 ignore else -- sensorFault$Changed exists when FaultEvents is enabled. */
+      if (sensorFaultChanged) this.reactTo(sensorFaultChanged, this.#emitSensorFault);
+    }
+  }
+
+  #emitAlarmsStateChanged(): void {
+    this.events.alarmsStateChanged?.emit({ alarmsActive: this.state.alarmsActive, alarmsSuppressed: this.state.alarmsSuppressed }, this.context);
+  }
+
+  #emitSensorFault(sensorFault: BooleanStateConfiguration.SensorFault): void {
+    this.events.sensorFault?.emit({ sensorFault }, this.context);
+  }
+
+  #mergeAlarmsSuppressed(alarmsToSuppress: BooleanStateConfiguration.AlarmMode): BooleanStateConfiguration.AlarmMode {
+    return {
+      visual: [this.state.alarmsSuppressed.visual, alarmsToSuppress.visual].some(Boolean),
+      audible: [this.state.alarmsSuppressed.audible, alarmsToSuppress.audible].some(Boolean),
+    };
+  }
+
+  #applyAlarmsEnabled(alarmsToEnableDisable: BooleanStateConfiguration.AlarmMode): void {
+    const alarmsEnabled = {
+      visual: Boolean(alarmsToEnableDisable.visual),
+      audible: Boolean(alarmsToEnableDisable.audible),
+    };
+
+    this.state.alarmsEnabled = alarmsEnabled;
+    this.state.alarmsActive = {
+      visual: Boolean(this.state.alarmsActive.visual && alarmsEnabled.visual),
+      audible: Boolean(this.state.alarmsActive.audible && alarmsEnabled.audible),
+    };
+    this.state.alarmsSuppressed = {
+      visual: Boolean(this.state.alarmsSuppressed.visual && alarmsEnabled.visual),
+      audible: Boolean(this.state.alarmsSuppressed.audible && alarmsEnabled.audible),
+    };
+  }
+
+  #assertAlarmModesSupported(alarms: BooleanStateConfiguration.AlarmMode): void {
+    if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
+      throw new StatusResponseError('Requested alarm mode is not supported', Status.ConstraintError);
+    }
+  }
+
+  #assertSuppressAlarmAllowed(alarmsToSuppress: BooleanStateConfiguration.AlarmMode): void {
+    if (
+      [
+        Boolean(alarmsToSuppress.visual && (!this.state.alarmsActive.visual || !this.state.alarmsEnabled?.visual)),
+        Boolean(alarmsToSuppress.audible && (!this.state.alarmsActive.audible || !this.state.alarmsEnabled?.audible)),
+      ].some(Boolean)
+    ) {
+      throw new StatusResponseError('Requested alarm mode is not active', Status.InvalidInState);
+    }
+  }
+
   /**
-   * Forwards EnableDisableAlarm requests to the Matterbridge command handler.
+   * Forwards SuppressAlarm requests to the Matterbridge command handler and then updates AlarmsSuppressed.
+   *
+   * @param {BooleanStateConfiguration.SuppressAlarmRequest} request - Suppress-alarm request payload.
+   */
+  override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Suppressing alarm ${debugStringify(request.alarmsToSuppress)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('BooleanStateConfiguration.suppressAlarm', {
+      command: 'suppressAlarm',
+      request,
+      cluster: BooleanStateConfigurationServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    this.#assertAlarmModesSupported(request.alarmsToSuppress);
+    this.#assertSuppressAlarmAllowed(request.alarmsToSuppress);
+    this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
+    device.log.debug(`MatterbridgeBooleanStateConfigurationServer: suppressAlarm called`);
+  }
+
+  /**
+   * Forwards EnableDisableAlarm requests to the Matterbridge command handler and then updates alarm attributes.
    *
    * @param {BooleanStateConfiguration.EnableDisableAlarmRequest} request - Enable/disable-alarm request payload.
    */
@@ -55,6 +149,8 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
+    this.#assertAlarmModesSupported(request.alarmsToEnableDisable);
+    this.#applyAlarmsEnabled(request.alarmsToEnableDisable);
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called`);
   }
 }

@@ -31,6 +31,83 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.6] - 2026-08-21
+
+### Development Breaking Changes
+
+- [devices]: The `Speaker` constructor now takes a `SpeakerOptions` object as its third parameter instead of separate `muted`/`volume` positional parameters. Update `new Speaker(name, serial, muted, volume)` calls to `new Speaker(name, serial, { muted, volume })`. The options object also adds `powerSourceType` (defaults to `'Wired'`, added a `PowerSource` cluster server that previous versions did not create; pass `'None'` to omit it), `id` and `number`.
+
+### Development News
+
+- [chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the `RootNode` device type and `BasicInformation`, `PowerSource`, `AccessControl`, `GeneralDiagnostics`, `GroupKeyManagement`, `OperationalCredentials` and `GeneralCommissioning` clusters.
+- [chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the `Aggregator` device type.
+- [chip]: ElectricalSensor endpoint 206 CHIP conformance is green ✅ for the automated harness tests covering the `ElectricalSensor` device type and `ElectricalPowerMeasurement` `ElectricalEnergyMeasurement` clusters.
+- [chip]: DeviceEnergyManagement endpoint 207 CHIP conformance is green ✅ for the automated harness tests covering the `DeviceEnergyManagement` device type and `DeviceEnergyManagement` `DeviceEnergyManagementMode` clusters.
+- [chip]: OnOffLight endpoint 401 CHIP conformance is green ✅ for the automated harness tests covering the `OnOffLight` device type and the `OnOff` cluster.
+- [chip]: DimmableLight endpoint 402 CHIP conformance is green ✅ for the automated harness tests covering the `DimmableLight` device type and the `LevelControl` cluster.
+- [chip]: ContactSensor endpoint 701 CHIP conformance is green ✅ for the automated harness tests covering the `ContactSensor` device type and the `BooleanState`, `BooleanStateConfiguration`, `Identify`, `PowerSource` and `BridgedDeviceBasicInformation` clusters.
+- [chip]: LightSensor endpoint 702 CHIP conformance is green ✅ for the automated harness tests covering the `LightSensor` device type and the `IlluminanceMeasurement` cluster.
+- [chip]: OccupancySensor endpoint 703 CHIP conformance is green ✅ for the automated harness tests covering the `OccupancySensor` device type and the `OccupancySensing` cluster.
+- [chip]: TemperatureSensor endpoint 704 CHIP conformance is green ✅ for the automated harness tests covering the `TemperatureSensor` device type and the `TemperatureMeasurement` cluster.
+- [chip]: PressureSensor endpoint 705 CHIP conformance is green ✅ for the automated harness tests covering the `PressureSensor` device type and the `PressureMeasurement` cluster.
+- [chip]: FlowSensor endpoint 706 CHIP conformance is green ✅ for the automated harness tests covering the `FlowSensor` device type and the `FlowMeasurement` cluster.
+- [chip]: HumiditySensor endpoint 707 CHIP conformance is green ✅ for the automated harness tests covering the `HumiditySensor` device type and the `RelativeHumidityMeasurement` cluster.
+- [chip]: OnOffSensor endpoint 708 CHIP conformance is green ✅ for the automated harness tests covering the `OnOffSensor` device type.
+- [chip]: SmokeCOAlarm endpoints 709, 7091 and 7092 CHIP conformance is green ✅ for the automated harness tests covering the `SmokeCOAlarm` device type and the `SmokeCOAlarm` cluster with the complete, smoke-only and CO-only feature sets.
+- [chip]: AirQualitySensor endpoint 710 CHIP conformance is green ✅ for the automated harness tests covering the `AirQualitySensor` device type and the `AirQuality`, `CarbonMonoxideConcentrationMeasurement`, `CarbonDioxideConcentrationMeasurement`, `NitrogenDioxideConcentrationMeasurement`, `OzoneConcentrationMeasurement`, `FormaldehydeConcentrationMeasurement`, `Pm1ConcentrationMeasurement`, `Pm25ConcentrationMeasurement`, `Pm10ConcentrationMeasurement`, `RadonConcentrationMeasurement` and `TotalVolatileOrganicCompoundsConcentrationMeasurement` clusters.
+- [chip]: WaterFreezeDetector endpoint 711 CHIP conformance is green ✅ for the automated harness tests covering the `WaterFreezeDetector` device type and the `BooleanState` and `BooleanStateConfiguration` clusters.
+- [chip]: WaterLeakDetector endpoint 712 CHIP conformance is green ✅ for the automated harness tests covering the `WaterLeakDetector` device type and the `BooleanState` and `BooleanStateConfiguration` clusters.
+- [chip]: RainSensor endpoint 713 CHIP conformance is green ✅ for the automated harness tests covering the `RainSensor` device type and the `BooleanState` and `BooleanStateConfiguration` clusters.
+- [chip]: SoilSensor endpoint 714 CHIP conformance is green ✅ for the automated harness tests covering the `SoilSensor` device type and the `SoilMeasurement` cluster.
+- [chip]: FanComplete endpoint 9024 CHIP conformance is green ✅ for the automated harness tests covering the `Fan` device type and `FanControl` clusters.
+- [chip]: AirPurifier endpoint 903 CHIP conformance is green ✅ for the automated harness tests covering the `AirPurifier` device type and the `HepaFilterMonitoring` and `ActivatedCarbonFilterMonitoring` clusters.
+- [electricalSensor]: Add electrical measurement helpers: `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()`. Used to create import (cunsume) only and export (produce) only electrical sensors.
+
+### Added
+
+- [electricalUtilityMeter]: Add `ElectricalUtilityMeter` device class (Electrical Utility Meter device type, superset of Meter Reference Point) with the `MeterIdentification` cluster.
+- [electricalUtilityMeter]: Add `addElectricalMeter()` to add an Electrical Meter (+ Electrical Sensor) child endpoint with `ElectricalPowerMeasurement`, `ElectricalEnergyMeasurement` and `CommodityMetering`.
+- [electricalUtilityMeter]: Add `addElectricalEnergyTariff()` to add an Electrical Energy Tariff child endpoint with `CommodityPrice`, `CommodityTariff` and `ElectricalGridConditions`.
+- [electricalSensor]: Add electrical measurement helpers: `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()`.
+- [booleanStateConfiguration]: Add `SuppressAlarm` command forwarding. The BooleanStateConfiguration cluster is always optional so it needs to be add with createDefaultBooleanStateConfigurationClusterServer().
+- [booleanStateConfiguration]: Add automatic `AlarmsStateChanged` and `SensorFault` event emission.
+- [occupancySensing]: Add `MatterbridgeOccupancySensingServer` to mirror Matter 1.6 `HoldTime` with the legacy `PIROccupiedToUnoccupiedDelay` attribute when both are exposed for backward compatibility.
+- [concentrationMeasurement]: Add optional `minMeasuredValue` and `maxMeasuredValue` parameters to `createDefaultTvocMeasurementClusterServer()`.
+- [frontend]: Add Soil Sensor and On/Off Sensor device icons.
+- [frontend]: Add AC/DC current tooltips and full/differentiated battery level bar icons to the Home Devices power column.
+- [chip]: Add `Chip Test` stack.
+- [chip]: Add `Chip Test` pipe.
+- [chip]: Add `Chip Test` TestEventTrigger.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.6.
+- [matterbridge]: Bump `@types/node` to v.26.2.0.
+- [matterbridge]: Bump `oxfmt` to v.0.63.0.
+- [matterbridge]: Bump `oxlint` to v.1.78.0.
+- [core]: Bump `ws` to v.8.21.3.
+- [powerSource]: Change `createDefaultPowerSourceBatteryClusterServer()` defaults to `batPercentRemaining` 100 and `batVoltage` 1500.
+- [measurement]: Add optional `tolerance` parameter to `createDefaultTemperatureMeasurementClusterServer()`, `createDefaultRelativeHumidityMeasurementClusterServer()`, `createDefaultPressureMeasurementClusterServer()`, `createDefaultIlluminanceMeasurementClusterServer()` and `createDefaultFlowMeasurementClusterServer()`, and add optional `lightSensorType` parameter to `createDefaultIlluminanceMeasurementClusterServer()`.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.49.
+- [frontend]: Bump `frontend` version to v.3.5.8.
+- [frontend]: Refactor the `Devices Icons` and `Devices Table` views to render all device types consistently, including their clusters.
+- [frontend]: Bump `@testing-library/jest-dom` to v.7.0.1.
+- [frontend]: Bump `@types/node` to v.26.2.0.
+- [frontend]: Bump `globals` to v.17.11.0.
+- [frontend]: Bump `oxfmt` to v.0.63.0.
+- [frontend]: Bump `oxlint` to v.1.78.0.
+- [irrigationSystem]: Bump `IrrigationSystem` to v.1.1.0.
+- [fanControl]: Bump `MatterbridgeFanControlServer` to v.2.0.0 (fully Matter 1.6.0 compliant).
+
+### Fixed
+
+- [frontend]: Fix `FlowMeasurement` unit in the Devices Icon and Table views: the raw `measuredValue` (`10 x m³/h`) was shown unconverted and labelled `l/h`; now divided by 10 and labelled `m³/h`.
+- [frontend]: Apply the trailing-slash normalization of a device configUrl to the path only, so query strings are no longer corrupted (#579). Thanks Sebastian RAFF.
+- [thermostat]: Apply thermostat suggestions: `AddThermostatSuggestion`/`RemoveThermostatSuggestion` now re-evaluate `CurrentThermostatSuggestion`, syncing `ActivePresetHandle` and clearing `ThermostatSuggestionNotFollowingReason`, and prune expired entries from `ThermostatSuggestions`. Thanks Ludovic BOUÉ.
+- [thermostat]: Cascade Preset removal to ThermostatSuggestions. Thanks Ludovic BOUÉ.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.5] - 2026-08-14
 
 ### Development news

@@ -1,0 +1,25 @@
+# To run tests on Groups --PICS is required
+# Matches createDefaultGroupsClusterServer() (via addRequiredClusterServers()) on CHIP OnOffLight endpoint 401
+# (and every other bridged endpoint whose device type requires Groups, e.g. 402/403/404/501-504/902/4041/4042/9021-9024)
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+G.S=1
+G.S.F00=1 # GroupNames
+G.S.A0000=1 # NameSupport
+G.S.C00.Rsp=1 # AddGroup
+G.S.C00.Tx=1 # AddGroup, TH-initiated step gating used by Test_TC_G_2_4
+G.S.C01.Rsp=1 # ViewGroup
+G.S.C01.Tx=1 # ViewGroup, TH-initiated step gating used by Test_TC_G_2_4
+G.S.C02.Rsp=1 # GetGroupMembership
+G.S.C03.Rsp=1 # RemoveGroup
+G.S.C03.Tx=1 # RemoveGroup, TH-initiated step gating used by Test_TC_G_2_4
+G.S.C04.Rsp=1 # RemoveAllGroups
+G.S.C05.Rsp=1 # AddGroupIfIdentifying
+G.C=0 # Matterbridge only exposes a Groups server, never acts as a client
+MCORE.G.MULTIENDPOINT=1 # Multiple bridged endpoints each expose their own Groups server, used by Test_TC_G_2_4
+
+# GroupKeyManagement (root endpoint 0), needed by Test_TC_G_2_4's cross-endpoint GroupTable assertions
+GRPKEY.S=1
+GRPKEY.S.A0000=1 # GroupKeyMap
+GRPKEY.S.A0001=1 # GroupTable
+GRPKEY.S.C00.Rsp=1 # KeySetWrite

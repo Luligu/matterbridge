@@ -21,30 +21,34 @@
  * limitations under the License.
  */
 
-/* oxlint-disable typescript/no-unsafe-type-assertion */
-
 // @matter
-import { KeypadInputServer } from '@matter/node/behaviors/keypad-input';
-import { MediaPlaybackServer } from '@matter/node/behaviors/media-playback';
-import { KeypadInput } from '@matter/types/clusters/keypad-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
+import type { EndpointNumber } from '@matter/types/datatype';
 
 // Matterbridge
-import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
-import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { basicVideoPlayer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import {
+  createDefaultKeypadInputClusterServer,
+  createDefaultMediaPlaybackClusterServer,
+  createDefaultMediaPowerSourceClusterServer,
+  type MediaPowerSourceType,
+} from './mediaHelpers.js';
 
 /**
  * Options for configuring an {@link BasicVideoPlayer} instance.
- *
- * All temperatures in °C. Typical valid range 0–50 unless otherwise noted.
  */
 export interface BasicVideoPlayerOptions {
-  /** Device state */
+  /** Initial On/Off state. */
   onOff?: boolean;
+  /** Initial media playback state. */
   playbackState?: MediaPlayback.PlaybackState;
+  /** Power source type. `'None'` omits the Power Source cluster entirely. */
+  powerSourceType?: MediaPowerSourceType;
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
 }
 
 /**
@@ -64,230 +68,22 @@ export class BasicVideoPlayer extends MatterbridgeEndpoint {
    * Options defaults:
    *  - onOff: false
    *  - playbackState: NotPlaying
+   *  - powerSourceType: 'Wired'
    *
    * @returns {BasicVideoPlayer} The BasicVideoPlayer instance.
    *
    * @remarks Not supported by Google Home.
    */
   constructor(name: string, serial: string, options: BasicVideoPlayerOptions = {}) {
-    const { onOff = false, playbackState = MediaPlayback.PlaybackState.NotPlaying } = options;
-    super([basicVideoPlayer, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const { onOff = false, playbackState = MediaPlayback.PlaybackState.NotPlaying, powerSourceType = 'Wired' } = options;
+    super(powerSourceType === 'None' ? [basicVideoPlayer] : [basicVideoPlayer, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+    });
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Basic Video Player');
-    this.createDefaultPowerSourceWiredClusterServer();
+    createDefaultMediaPowerSourceClusterServer(this, powerSourceType);
     this.createOnOffClusterServer(onOff);
-    this.createDefaultMediaPlaybackClusterServer(playbackState);
-    this.createDefaultKeypadInputClusterServer();
-  }
-
-  /**
-   * Creates a default Media Playback Cluster Server.
-   *
-   * @param {MediaPlayback.PlaybackState} currentState - The current state of the video player.
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultMediaPlaybackClusterServer(currentState: MediaPlayback.PlaybackState): this {
-    this.behaviors.require(
-      MatterbridgeMediaPlaybackServer.enable({
-        commands: { next: true, previous: true, skipForward: true, skipBackward: true },
-      }),
-      {
-        currentState,
-      },
-    );
-    return this;
-  }
-
-  /**
-   * Creates a default Keypad Input Cluster Server.
-   *
-   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
-   */
-  createDefaultKeypadInputClusterServer(): this {
-    this.behaviors.require(MatterbridgeKeypadInputServer, {
-      // No attributes to initialize
-    });
-    return this;
-  }
-}
-
-/**
- * MediaPlayback server that forwards playback commands and tracks state.
- */
-export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
-  /**
-   * Initializes the server and hooks on/off changes.
-   */
-  override initialize(): void {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeMediaPlaybackServer initialized: currentState is ${this.state.currentState}`);
-    // oxlint-disable-next-line typescript/unbound-method
-    this.reactTo(this.agent.get(MatterbridgeOnOffServer.with()).events.onOff$Changed, this.handleOnOffChange);
-  }
-
-  protected handleOnOffChange(_onOff: boolean): void {
-    this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
-  }
-
-  /**
-   * Handles the MediaPlayback `Play` command.
-   *
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async play(): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.play', {
-      command: 'play',
-      request: {},
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `Pause` command.
-   *
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async pause(): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.pause', {
-      command: 'pause',
-      request: {},
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `Stop` command.
-   *
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async stop(): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.stop', {
-      command: 'stop',
-      request: {},
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `Previous` command.
-   *
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async previous(): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.previous', {
-      command: 'previous',
-      request: {},
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `Next` command.
-   *
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async next(): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.next', {
-      command: 'next',
-      request: {},
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `SkipForward` command.
-   *
-   * @param {MediaPlayback.SkipForwardRequest} request - Skip forward request payload.
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async skipForward(request: MediaPlayback.SkipForwardRequest): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SkipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.skipForward', {
-      command: 'skipForward',
-      request,
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    return { status: MediaPlayback.Status.Success };
-  }
-
-  /**
-   * Handles the MediaPlayback `SkipBackward` command.
-   *
-   * @param {MediaPlayback.SkipBackwardRequest} request - Skip backward request payload.
-   * @returns {MediaPlayback.PlaybackResponse} Command response with status.
-   */
-  override async skipBackward(request: MediaPlayback.SkipBackwardRequest): Promise<MediaPlayback.PlaybackResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SkipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('MediaPlayback.skipBackward', {
-      command: 'skipBackward',
-      request,
-      cluster: MediaPlaybackServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    return { status: MediaPlayback.Status.Success };
-  }
-}
-
-/**
- * KeypadInput server that forwards key events to the Matterbridge command handler.
- */
-export class MatterbridgeKeypadInputServer extends KeypadInputServer {
-  /**
-   * Initializes the server.
-   */
-  override initialize(): void {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeKeypadInputServer initialized`);
-  }
-
-  /**
-   * Handles the KeypadInput `SendKey` command.
-   *
-   * @param {KeypadInput.SendKeyRequest} request - Key request payload.
-   * @returns {KeypadInput.SendKeyResponse} Command response with status.
-   */
-  override async sendKey(request: KeypadInput.SendKeyRequest): Promise<KeypadInput.SendKeyResponse> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    await device.commandHandler.executeHandler('KeypadInput.sendKey', {
-      command: 'sendKey',
-      request,
-      cluster: KeypadInputServer.id,
-      attributes: {},
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-    });
-    return { status: KeypadInput.Status.Success };
+    createDefaultMediaPlaybackClusterServer(this, playbackState, true);
+    createDefaultKeypadInputClusterServer(this);
   }
 }

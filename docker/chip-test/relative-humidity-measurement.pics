@@ -1,0 +1,10 @@
+# To run tests on RelativeHumidityMeasurement --PICS is required
+# Matches createDefaultRelativeHumidityMeasurementClusterServer(5000, 0, 10000) on CHIP HumiditySensor endpoint 707
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+RH.S=1
+RH.S.A0000=1 # MeasuredValue
+RH.S.A0001=1 # MinMeasuredValue
+RH.S.A0002=1 # MaxMeasuredValue
+RH.S.A0003=1 # Tolerance
+RH.M.ManuallyControlled=0

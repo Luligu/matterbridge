@@ -29,6 +29,7 @@
 import type { ActionContext } from '@matter/main';
 import type { ClusterType } from '@matter/types/cluster';
 import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import type { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import type { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import type { ColorControl } from '@matter/types/clusters/color-control';
 import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
@@ -1000,6 +1001,29 @@ export type CommandHandlerDataMap = {
     request: KeypadInput.SendKeyRequest;
     cluster: 'keypadInput';
     attributes: {};
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Application Launcher
+  'ApplicationLauncher.launchApp': {
+    command: 'launchApp';
+    request: ApplicationLauncher.LaunchAppRequest;
+    cluster: 'applicationLauncher';
+    attributes: ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ApplicationLauncher.stopApp': {
+    command: 'stopApp';
+    request: ApplicationLauncher.StopAppRequest;
+    cluster: 'applicationLauncher';
+    attributes: ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ApplicationLauncher.hideApp': {
+    command: 'hideApp';
+    request: ApplicationLauncher.HideAppRequest;
+    cluster: 'applicationLauncher';
+    attributes: ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

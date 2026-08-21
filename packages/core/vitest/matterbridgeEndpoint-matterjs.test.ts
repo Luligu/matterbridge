@@ -1162,7 +1162,8 @@ describe('Matterbridge ' + NAME, () => {
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
     await vent.setStateOf(FanControlServer, { percentCurrent: 0 });
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction ${FanControl.StepDirection.Increase} (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Increase wrap: false lowestOff: false (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Decrease wrap: true lowestOff: true (endpoint ${vent.id}.${vent.number})`);
 
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('HepaFilterMonitoring', 'resetCondition', {});
@@ -1218,11 +1219,47 @@ describe('Matterbridge ' + NAME, () => {
   test('invoke MatterbridgeBooleanStateConfigurationServer commands', async () => {
     expect(leak.behaviors.has(BooleanStateConfigurationServer)).toBeTruthy();
     expect(leak.behaviors.has(MatterbridgeBooleanStateConfigurationServer)).toBeTruthy();
+    expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('suppressAlarm')).toBeTruthy();
     expect(leak.behaviors.elementsOf(MatterbridgeBooleanStateConfigurationServer).commands.has('enableDisableAlarm')).toBeTruthy();
-    expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([1]);
+    expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).acceptedCommandList).toEqual([0, 1]);
     expect((leak.stateOf(MatterbridgeBooleanStateConfigurationServer) as any).generatedCommandList).toEqual([]);
-    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: true } });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+
+    const alarmsStateChangedEvents: unknown[] = [];
+    const alarmsStateChanged = leak.eventsOf('booleanStateConfiguration').alarmsStateChanged;
+    expect(alarmsStateChanged).toBeDefined();
+    alarmsStateChanged?.on((event) => {
+      alarmsStateChangedEvents.push(event);
+    });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: false });
+    expect(alarmsStateChangedEvents).toHaveLength(1);
+    expect(alarmsStateChangedEvents[0]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { visual: false, audible: false } });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: true, visual: true });
+    expect(alarmsStateChangedEvents).toHaveLength(2);
+    expect(alarmsStateChangedEvents[1]).toEqual({ alarmsActive: { audible: true, visual: false }, alarmsSuppressed: { audible: true, visual: true } });
+
+    const sensorFaultEvents: unknown[] = [];
+    const sensorFault = leak.eventsOf('booleanStateConfiguration').sensorFault;
+    expect(sensorFault).toBeDefined();
+    sensorFault?.on((event) => {
+      sensorFaultEvents.push(event);
+    });
+
+    await leak.setAttribute('booleanStateConfiguration', 'sensorFault', { generalFault: true });
+    expect(sensorFaultEvents).toHaveLength(1);
+    expect(sensorFaultEvents[0]).toEqual({ sensorFault: { generalFault: true } });
+
+    await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
+    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'suppressAlarm', { alarmsToSuppress: { audible: true, visual: true } });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: true });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+    vi.clearAllMocks();
+    await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: false } });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsActive')).toEqual({ audible: true, visual: false });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsEnabled')).toEqual({ audible: true, visual: false });
+    expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: false });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })} (endpoint ${leak.id}.${leak.number})`);
   });
 
   test('invoke MatterbridgeOperationalStateServer commands', async () => {
@@ -1384,10 +1421,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(dem.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementServer).commands.has('cancelPowerAdjustRequest')).toBeTruthy();
     expect((dem as any).state['deviceEnergyManagement'].acceptedCommandList).toEqual([0, 1]);
     expect((dem as any).state['deviceEnergyManagement'].generatedCommandList).toEqual([]);
+    // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+    // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
+    await dem.setAttribute('deviceEnergyManagement', 'powerAdjustmentCapability', {
+      powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 0, maxDuration: 60 }],
+      cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+    });
     vi.clearAllMocks();
-    await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.powerAdjustRequest', { power: 0, duration: 0, cause: 'Test' }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 0 cause Test (endpoint ${dem.id}.${dem.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 0 cause Test`);
+    await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.powerAdjustRequest', {
+      power: 0,
+      duration: 60,
+      cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization,
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 60 cause 0 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 60 cause 0`);
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.cancelPowerAdjustRequest', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancelling power adjustment (endpoint ${dem.id}.${dem.number})`);
