@@ -54,6 +54,7 @@ function WebSocketLogs() {
         }, 1000);
       }
     }
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
   }, [messages, logAutoScroll, isHovering, isTouchscreen]);
 
   const getLevelMessageBgColor = (level: string) => {

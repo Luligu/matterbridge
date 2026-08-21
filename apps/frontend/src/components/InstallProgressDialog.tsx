@@ -41,6 +41,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
       if (debug) console.log('Scrolling to bottom:', endOfMessagesRef.current);
       endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 0);
+    // oxlint-disable-next-line react/exhaustive-effect-dependencies
   }, [output]);
 
   return (

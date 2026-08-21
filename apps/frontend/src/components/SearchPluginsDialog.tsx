@@ -182,6 +182,13 @@ const writeVersionsCache = (cache: VersionsCache) => {
   }
 };
 
+const formatYyyyMmDd = (date: Date): string => {
+  const yyyy = date.getFullYear().toString();
+  const mm = (date.getMonth() + 1).toString().padStart(2, '0');
+  const dd = date.getDate().toString().padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 interface SearchPluginsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -246,13 +253,6 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
   type NpmPackageResponse = {
     versions?: Record<string, unknown>;
     'dist-tags'?: Record<string, unknown>;
-  };
-
-  const formatYyyyMmDd = (date: Date) => {
-    const yyyy = date.getFullYear().toString();
-    const mm = (date.getMonth() + 1).toString().padStart(2, '0');
-    const dd = date.getDate().toString().padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
   };
 
   const getPackageVersions = useCallback(async (packageName: string, asOf: string): Promise<string[]> => {

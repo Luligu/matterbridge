@@ -740,7 +740,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       removeListener(handleWebSocketMessage);
       if (debug) console.log('DevicesIcons WebSocket effect unmounted');
     };
-  }, [addListener, clusterUpdate, devices, removeListener, sendMessage, stateUpdate]);
+  }, [addListener, clusterUpdate, removeListener, sendMessage, stateUpdate]);
 
   useEffect(() => {
     if (debug) console.log('DevicesIcons useEffect online mounting');
