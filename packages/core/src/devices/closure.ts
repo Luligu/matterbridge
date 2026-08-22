@@ -24,6 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable unicorn/no-negated-condition */
 /* oxlint-disable typescript/no-misused-spread */
+/* oxlint-disable typescript/no-namespace */
 
 // @matter
 import { ClosureTag } from '@matter/node';
@@ -42,17 +43,6 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from './closurePanel.js';
 
-/**
- * Simulated duration, in milliseconds, that a MoveTo/Calibrate operation takes to complete.
- *
- * @remarks
- * There is no real motor to wait on, so completion of a movement or calibration is simulated by this fixed
- * delay: `OverallTargetState`/`MainState` are set synchronously on command receipt (Moving/Calibrating), and
- * `OverallCurrentState`/`MainState` (plus the relevant events) are updated this many milliseconds later, as if
- * the closure had finished moving.
- */
-const movementSimulationMs = 5000;
-
 /** Maps a MoveTo command's TargetPositionEnum to the OverallCurrentState.position it simulates reaching. */
 const targetToCurrentPosition: Partial<Record<ClosureControl.TargetPosition, ClosureControl.CurrentPosition>> = {
   [ClosureControl.TargetPosition.MoveToFullyClosed]: ClosureControl.CurrentPosition.FullyClosed,
@@ -62,17 +52,19 @@ const targetToCurrentPosition: Partial<Record<ClosureControl.TargetPosition, Clo
   [ClosureControl.TargetPosition.MoveToSignaturePosition]: ClosureControl.CurrentPosition.OpenedAtSignature,
 };
 
-/**
- * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
- */
-export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
+const MatterbridgeClosureControlServerBase = ClosureControlServer.with(
   ClosureControl.Feature.Positioning,
   ClosureControl.Feature.MotionLatching,
   ClosureControl.Feature.Speed,
   ClosureControl.Feature.Calibration,
-) {
-  /** Pending timer that simulates completion of an in-progress MoveTo or Calibrate; cancelled by Stop or a new MoveTo/Calibrate. */
-  private movementTimer?: NodeJS.Timeout;
+);
+
+/**
+ * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
+ */
+export class MatterbridgeClosureControlServer extends MatterbridgeClosureControlServerBase {
+  declare readonly state: MatterbridgeClosureControlServer.State;
+  declare protected internal: MatterbridgeClosureControlServer.Internal;
 
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -151,21 +143,24 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
     this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
 
     // Cancel any movement/calibration still in flight from a previous command before (re)scheduling.
-    clearTimeout(this.movementTimer);
+    clearTimeout(this.internal.movementTimer);
     if (isAtTarget) {
-      this.movementTimer = undefined;
+      this.internal.movementTimer = undefined;
       this.state.countdownTime = 0;
-    } else if (currentState === null) {
-      // Nothing to converge to without an OverallCurrentState to move from.
-      this.movementTimer = undefined;
+    } else if (currentState === null || this.state.movementDuration <= 0) {
+      // Gate: with no OverallCurrentState to converge from, or a non-positive movementDuration, this server
+      // does not simulate movement completion at all — MainState stays Moving/WaitingForMotion and it's left
+      // entirely to the real device implementation (via the command handler forwarded above) to eventually
+      // report completion through setState()/triggerMovementCompleted().
+      this.internal.movementTimer = undefined;
     } else {
-      this.state.countdownTime = movementSimulationMs / 1000;
+      this.state.countdownTime = this.state.movementDuration / 1000;
       // Captured now because `this.state` can no longer be read once this command's transaction context has exited.
       const previousState = currentState;
-      this.movementTimer = setTimeout(() => {
-        this.movementTimer = undefined;
+      this.internal.movementTimer = setTimeout(() => {
+        this.internal.movementTimer = undefined;
         void this.completeMoveTo(nextTarget, previousState);
-      }, movementSimulationMs);
+      }, this.state.movementDuration);
     }
   };
 
@@ -210,8 +205,10 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
     // If MainState has one of Moving, WaitingForMotion, or Calibrating, any motions SHALL be stopped and MainState
     // SHALL be set to Stopped. A status code of SUCCESS SHALL always be returned, regardless of MainState.
     // Cancel the simulated movement/calibration completion so OverallCurrentState stays wherever it was interrupted.
-    clearTimeout(this.movementTimer);
-    this.movementTimer = undefined;
+    clearTimeout(this.internal.movementTimer);
+    this.internal.movementTimer = undefined;
+    clearTimeout(this.internal.calibrateTimer);
+    this.internal.calibrateTimer = undefined;
     if ([ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Calibrating].includes(this.state.mainState)) {
       this.state.mainState = ClosureControl.MainState.Stopped;
       this.state.countdownTime = 0;
@@ -242,13 +239,20 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
 
     // Otherwise the MainState attribute SHALL be set to Calibrating.
     this.state.mainState = ClosureControl.MainState.Calibrating;
-    this.state.countdownTime = movementSimulationMs / 1000;
 
-    clearTimeout(this.movementTimer);
-    this.movementTimer = setTimeout(() => {
-      this.movementTimer = undefined;
-      void this.completeCalibrate();
-    }, movementSimulationMs);
+    clearTimeout(this.internal.calibrateTimer);
+    if (this.state.calibrationDuration <= 0) {
+      // Gate: a non-positive calibrationDuration means this server does not simulate calibration completion
+      // at all — MainState stays Calibrating and it's left entirely to the real device implementation (via
+      // the command handler forwarded above) to eventually report completion through setAttribute().
+      this.internal.calibrateTimer = undefined;
+    } else {
+      this.state.countdownTime = this.state.calibrationDuration / 1000;
+      this.internal.calibrateTimer = setTimeout(() => {
+        this.internal.calibrateTimer = undefined;
+        void this.completeCalibrate();
+      }, this.state.calibrationDuration);
+    }
   };
 
   /**
@@ -261,6 +265,34 @@ export class MatterbridgeClosureControlServer extends ClosureControlServer.with(
     await closure.setAttribute(ClosureControl, 'countdownTime', 0);
     await closure.setAttribute(ClosureControl, 'mainState', ClosureControl.MainState.Stopped);
   };
+}
+
+export namespace MatterbridgeClosureControlServer {
+  export class Internal extends MatterbridgeClosureControlServerBase.Internal {
+    /** Pending timer that simulates completion of an in-progress MoveTo; cancelled by Stop or a new MoveTo. */
+    movementTimer?: NodeJS.Timeout;
+    /** Pending timer that simulates completion of an in-progress Calibrate; cancelled by Stop or a new Calibrate. */
+    calibrateTimer?: NodeJS.Timeout;
+  }
+
+  /**
+   * Simulated timing knobs for `moveTo()`/`calibrate()`, in addition to the standard ClosureControl attributes.
+   *
+   * @remarks
+   * There is no real motor to wait on, so completion of a movement or calibration can optionally be simulated
+   * by these fixed delays: `OverallTargetState`/`MainState` are set synchronously on command receipt (Moving/
+   * Calibrating), and `OverallCurrentState`/`MainState` (plus the relevant events) are updated this many
+   * milliseconds later, as if the closure had finished moving. A non-positive value (the default) gates the
+   * handler off entirely — the server does nothing further after setting MainState to Moving/Calibrating,
+   * leaving completion (`OverallCurrentState`/`MainState`/events) to whatever real device integration is
+   * wired up through the command handler forwarded at the top of `moveTo()`/`calibrate()`.
+   */
+  export class State extends MatterbridgeClosureControlServerBase.State {
+    /** Simulated duration, in milliseconds, that a MoveTo operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
+    movementDuration = 0;
+    /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
+    calibrationDuration = 0;
+  }
 }
 
 export interface ClosureOptions {
@@ -284,6 +316,10 @@ export interface ClosureOptions {
   overallTargetState?: ClosureControl.OverallTargetState;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
+  /** Simulated duration, in milliseconds, that a MoveTo operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
+  movementDuration?: number;
+  /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
+  calibrationDuration?: number;
   /** Enable the ClosureControl Ventilation feature. Defaults to false. */
   ventilation?: boolean;
   /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
@@ -343,6 +379,8 @@ export class Closure extends MatterbridgeEndpoint {
         speed: ThreeLevelAuto.Auto,
       },
       latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      movementDuration = 0,
+      calibrationDuration = 0,
       ventilation = false,
       pedestrian = false,
       calibration = false,
@@ -383,6 +421,8 @@ export class Closure extends MatterbridgeEndpoint {
       overallCurrentState,
       overallTargetState,
       latchControlModes,
+      movementDuration,
+      calibrationDuration,
     };
     this.behaviors.require(
       calibration || ventilation || pedestrian
