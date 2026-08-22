@@ -71,7 +71,7 @@ export async function checkUpdates(matterbridge: SharedMatterbridge, server: Bro
   // writeDiagnostic('CheckUpdates', 'checking Matterbridge dev version');
   await getMatterbridgeDevVersion(matterbridge, log, server);
 
-  for (const plugin of plugins.filter((p) => p.local !== true)) {
+  for (const plugin of plugins.filter((p) => p.local !== true && !p.private)) {
     // writeDiagnostic('CheckUpdates', `checking plugin ${plugin.name} latest version`);
     await getPluginLatestVersion(log, server, plugin);
 

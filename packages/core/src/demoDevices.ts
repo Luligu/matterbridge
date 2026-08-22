@@ -60,7 +60,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     description: 'Matterbridge demo devices',
     author: 'Matterbridge',
     enabled: false,
-    private: false,
+    private: true,
     registeredDevices: 0,
   });
 
