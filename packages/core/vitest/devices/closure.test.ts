@@ -277,6 +277,31 @@ describe('Matterbridge ' + NAME, () => {
     expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
   });
 
+  test('reject moveTo with invalid field constraints', async () => {
+    // General Interaction Model requirement: an out-of-range enum or wrong-typed field is rejected with
+    // CONSTRAINT_ERROR ahead of any state-dependent check, regardless of the device's current MainState.
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: 99 as ClosureControl.TargetPosition,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: 'yes' as unknown as boolean,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        speed: 99 as ThreeLevelAuto,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    // None of the rejected commands above touched state.
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+  });
+
   test('invoke closure control commands', async () => {
     await device.setAttribute(ClosureControl.id, 'overallCurrentState', null);
     await device.setAttribute(ClosureControl.id, 'overallTargetState', null);
@@ -431,6 +456,136 @@ describe('Matterbridge ' + NAME, () => {
       latch: false,
       speed: ThreeLevelAuto.Auto,
     });
+  });
+
+  test('simulate MoveTo completion via movementDuration', async () => {
+    const timedDevice = new Closure('Closure Timed Test Device', 'CLTIMED', { movementDuration: 1000 });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+
+    const movementCompleted = vi.fn();
+    const secureStateChanged = vi.fn();
+    (timedDevice.events as any).closureControl.movementCompleted.on(movementCompleted);
+    (timedDevice.events as any).closureControl.secureStateChanged.on(secureStateChanged);
+
+    // The completion timer is a plain setTimeout under the hood (see closure.ts), so fake timers let this fire
+    // deterministically without waiting out the real 1s duration.
+    vi.useFakeTimers();
+    try {
+      // Default state is fully closed and latched; moving to fully open while unlatching also flips SecureState.
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+        latch: false,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged.mock.calls[0]?.[0]).toMatchObject({ secureValue: false });
+
+      // A second move that doesn't change the latch-derived SecureState should not re-trigger SecureStateChanged.
+      movementCompleted.mockClear();
+      secureStateChanged.mockClear();
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyClosed,
+        latch: false,
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged).not.toHaveBeenCalled();
+
+      // A position-only MoveTo with no prior OverallTargetState to carry a latch value forward falls back to
+      // OverallCurrentState's own latch once the movement completes (the closure is currently unlatched, so
+      // this doesn't trip the "position change requires latch false while latched" check).
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', null);
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+
+      // A latch-only MoveTo with no prior OverallTargetState to carry a position value forward falls back to
+      // OverallCurrentState's own position once the movement completes.
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', null);
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: true,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+        secureState: true,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+
+      // An explicit null position inherited from OverallTargetState (as left by e.g. setPartiallyOpened()) is
+      // treated the same as an absent one: it also falls back to OverallCurrentState's own position.
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', { position: null, latch: true, speed: ThreeLevelAuto.Auto });
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: false,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('simulate Calibrate completion via calibrationDuration', async () => {
+    const timedDevice = new Closure('Closure Calibration Timed Test Device', 'CLCALTIMED', { calibration: true, calibrationDuration: 1000 });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+
+    // The completion timer is a plain setTimeout under the hood (see closure.ts), so fake timers let this fire
+    // deterministically without waiting out the real 1s duration.
+    vi.useFakeTimers();
+    try {
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('create and add a closure device with two panels', async () => {

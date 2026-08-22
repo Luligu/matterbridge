@@ -176,8 +176,14 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
   private completeMoveTo = async (targetState: ClosureControl.OverallTargetState, previousState: ClosureControl.OverallCurrentState): Promise<void> => {
     const closure = this.endpoint as Closure;
 
-    const position =
-      targetState.position !== undefined && targetState.position !== null ? (targetToCurrentPosition[targetState.position] ?? previousState.position) : previousState.position;
+    let position = previousState.position;
+    if (targetState.position !== undefined && targetState.position !== null) {
+      const mappedPosition = targetToCurrentPosition[targetState.position];
+      // targetToCurrentPosition covers every TargetPosition value, and moveTo()'s own constraint check already
+      // rejects anything else, so mappedPosition is always defined here.
+      /* v8 ignore next */
+      if (mappedPosition !== undefined) position = mappedPosition;
+    }
     const latch = targetState.latch ?? previousState.latch;
     // The MotionLatching feature is always enabled on this server, so the secure state always follows the latch.
     const secureState = latch === true;
@@ -267,6 +273,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
   };
 }
 
+/* v8 ignore start */
 export namespace MatterbridgeClosureControlServer {
   export class Internal extends MatterbridgeClosureControlServerBase.Internal {
     /** Pending timer that simulates completion of an in-progress MoveTo; cancelled by Stop or a new MoveTo. */
@@ -294,6 +301,7 @@ export namespace MatterbridgeClosureControlServer {
     calibrationDuration = 0;
   }
 }
+/* v8 ignore stop */
 
 export interface ClosureOptions {
   /** Identify time in seconds. Default: 0 */
