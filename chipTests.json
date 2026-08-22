@@ -961,8 +961,7 @@
       "name": "OnOff secondary (Lighting) functionality on OnOffLight",
       "test": "Test_TC_OO_2_3",
       "endpoint": 401,
-      "args": ["--PICS /root/on-off.pics"],
-      "comment": "Upstream test's exact-zero OffWaitTime assertions were timing-fragile, not a Matterbridge bug (see chipTests.md Known Issues): this ~2-minute test drives matter.js's own native OnTime/OffWaitTime countdown timer through several exact-second WaitForMs delays, then asserted OffWaitTime had reached exactly 0 -- reproduced twice, failing at a different residual value each time (1, then 2) after a 30-40s wait, consistent with a couple seconds of accumulated container/round-trip latency narrowly missing a zero-margin assumption. Patched locally (docker/chip-test/patches/Test_TC_OO_2_3.yaml, see chip-tests instructions §12) to give those 3 post-wait checks the same small-margin tolerance (2 * PIXIT.OO.MaxCommunicationTurnaround) the file's own other near-zero/near-max checks already use."
+      "args": ["--PICS /root/on-off.pics"]
     },
     {
       "name": "OnOff startup functionality on OnOffLight",

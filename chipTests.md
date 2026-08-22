@@ -186,20 +186,6 @@ Extended Color Light EHS XY CT clusters:
   permanently inapplicable, just narrow-margin in this containerized environment — kept running and
   documented here, matching the same category as `TC_FAN_3_1.py`'s occasional flakiness above.
 
-- **OnOff: found and fixed a real bug via `TC_OO_2_7.py` (Scenes Management interaction) — `on()`/`off()`
-  silently dropped when invoked from `ScenesManagement`'s delayed scene-apply timer.** `RecallScene` with a
-  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an _unlocked_ timer callback inside
-  matter.js's base `OnOffServer` (`#applySceneValues()` in `on-off/OnOffServer.ts`), whose implicit
-  transaction context only lives for the synchronous portion of that callback. `MatterbridgeOnOffServer`'s
-  `on()`/`off()`/`toggle()`/`offWithEffect()`/`onWithRecallGlobalScene()`/`onWithTimedOff()` all `await`
-  their command-handler forwarder _before_ calling `super.X()` — fine for a normal client-invoked command
-  (its request context survives the await), but that await outlived the scene-timer's short-lived context,
-  so `super.on()` threw `[expired-reference] ... This value is no longer available because its context has
-exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
-  Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
-  `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
-  proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
-
 - **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
   (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
 GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _without_ a `GroupName`
@@ -242,7 +228,7 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   `@matter/node` bug.** `MatterbridgeColorControlServer` opts into `managedTransitionTimeHandling` under
   `MATTERBRIDGE_CHIP_TEST` only (`packages/core/src/behaviors/colorControlServer.ts`, same mechanism as
   LevelControl above, production behavior unchanged), which makes this test's HS `Stop` (step 9) and CT/HS
-  sections pass (60 successes/1 error, up from 10/1). It still fails at step 37 (Step 5e — the *second*
+  sections pass (60 successes/1 error, up from 10/1). It still fails at step 37 (Step 5e — the _second_
   `EnhancedCurrentHue` read, 10s after `StopMoveStep`; the first read at step 5d, right after `Stop`, passes)
   — the value keeps climbing at the full commanded rate for the entire post-`Stop` wait, as if `Stop` had no
   effect at all. Root-caused directly against the container with an isolated repro script (start
