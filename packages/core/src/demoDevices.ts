@@ -297,15 +297,21 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCovering', number: EndpointNumber(8_03) });
   await registerDevice(ep, 'Window Covering', 'ENTRY-08-03');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringTilt', number: EndpointNumber(8_03_1) });
+  ep.createDefaultLiftTiltWindowCoveringClusterServer();
+  await registerDevice(ep, 'Window Covering Tilt', 'ENTRY-08-03-1');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
   await registerDevice(ep, 'Window Covering Controller', 'ENTRY-08-04');
 
-  ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05) });
+  ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05), movementDuration: 2000, calibrationDuration: 2000 });
   await registerDevice(ep, 'Closure', 'ENTRY-08-05');
 
   ep = new Closure('Closure Pedestrian', 'ENTRY-08-05-1', {
     id: 'ClosurePedestrian',
     number: EndpointNumber(8_05_1),
+    movementDuration: 2000,
+    calibrationDuration: 2000,
     pedestrian: true,
     tagList: [getSemtag(ClosureTag.Gate)],
   });
@@ -314,6 +320,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new Closure('Closure Ventilation', 'ENTRY-08-05-2', {
     id: 'ClosureVentilation',
     number: EndpointNumber(8_05_2),
+    movementDuration: 2000,
+    calibrationDuration: 2000,
     ventilation: true,
     tagList: [getSemtag(ClosureTag.Window), getSemtag(ClosureWindowTag.Facade)],
   });
@@ -322,10 +330,24 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new Closure('Closure Calibrate', 'ENTRY-08-05-3', {
     id: 'ClosureCalibrate',
     number: EndpointNumber(8_05_3),
+    movementDuration: 2000,
+    calibrationDuration: 2000,
     calibration: true,
     tagList: [getSemtag(ClosureTag.GarageDoor)],
   });
   await registerDevice(ep, 'Closure Calibrate', 'ENTRY-08-05-3');
+
+  ep = new Closure('Closure Complete', 'ENTRY-08-05-4', {
+    id: 'ClosureComplete',
+    number: EndpointNumber(8_05_4),
+    movementDuration: 2000,
+    calibrationDuration: 2000,
+    ventilation: true,
+    pedestrian: true,
+    calibration: true,
+    tagList: [getSemtag(ClosureTag.Door)],
+  });
+  await registerDevice(ep, 'Closure Complete', 'ENTRY-08-05-4');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
   await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');

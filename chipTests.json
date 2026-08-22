@@ -804,60 +804,61 @@
       "args": ["--PICS /root/soil-measurement.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
-      "name": "ClosureControl attributes on Closure",
-        "test": "TC_CLCTRL_2_1.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl attributes on ClosureComplete",
+      "test": "TC_CLCTRL_2_1.py",
+      "endpoint": 805,
+      "note": "Exercises PS, LT, SP, IS (branches per live FeatureMap read); no VT/PD/CL/PT/MO coverage.",
+      "args": ["--PICS /root/closure-control.pics"]
     },
     {
-      "name": "ClosureControl Calibrate command primary functionality on Closure",
-        "test": "TC_CLCTRL_3_1.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl Calibrate command primary functionality on ClosureComplete",
+      "test": "TC_CLCTRL_3_1.py",
+      "endpoint": 8054,
+      "note": "Exercises CL (Calibrate, primary focus) and LT; the whole test body skips immediately without the Calibration feature.",
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
-      "name": "ClosureControl MoveTo command position functionality on Closure",
-        "test": "TC_CLCTRL_4_1.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl MoveTo command position functionality on ClosureComplete",
+      "test": "TC_CLCTRL_4_1.py",
+      "endpoint": 8054,
+      "note": "Exercises PS, LT, SP, VT, PD, PT, MO, IS — the broadest coverage of any ClosureControl test; the VT/PD sections need Closure Complete (8054).",
+      "args": ["--PICS /root/closure-control-complete.pics", "--timeout 120"]
     },
     {
-      "name": "ClosureControl MoveTo command latching functionality on Closure",
-        "test": "TC_CLCTRL_4_2.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl MoveTo command latching functionality on ClosureComplete",
+      "test": "TC_CLCTRL_4_2.py",
+      "endpoint": 805,
+      "note": "Exercises LT (latching), primary focus.",
+      "args": ["--PICS /root/closure-control.pics"]
     },
     {
-      "name": "ClosureControl MoveTo command field sanity checks on Closure",
-        "test": "TC_CLCTRL_4_3.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl MoveTo command field sanity checks on ClosureComplete",
+      "test": "TC_CLCTRL_4_3.py",
+      "endpoint": 805,
+      "note": "Exercises field constraint validation (CONSTRAINT_ERROR) for PS (Position), LT (Latch), and SP (Speed) MoveTo fields.",
+      "args": ["--PICS /root/closure-control.pics"]
     },
     {
-      "name": "ClosureControl MoveTo command CountdownTime functionality on Closure",
-        "test": "TC_CLCTRL_4_4.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl MoveTo command CountdownTime functionality on ClosureComplete",
+      "test": "TC_CLCTRL_4_4.py",
+      "endpoint": 805,
+      "note": "Exercises CountdownTime (A0000) timing and Stop-interrupt behavior, plus LT.",
+      "args": ["--PICS /root/closure-control.pics", "--timeout 30"]
     },
     {
-      "name": "ClosureControl Stop command primary functionality on Closure",
-        "test": "TC_CLCTRL_5_1.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl Stop command primary functionality on ClosureComplete",
+      "test": "TC_CLCTRL_5_1.py",
+      "endpoint": 8054,
+      "note": "Exercises Stop (primary focus), plus PS, LT, CL (Calibrate then Stop), PT, MO, IS gating; needs Closure Complete (8054) for the CL section.",
+      "resetBefore": true,
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
-      "name": "ClosureControl event functionality on Closure",
-        "test": "TC_CLCTRL_6_1.py",
-        "endpoint": 805,
-        "resetBefore": true,
-        "args": ["--PICS /root/closure-control.pics"]
+      "name": "ClosureControl event functionality on ClosureComplete",
+      "test": "TC_CLCTRL_6_1.py",
+      "endpoint": 805,
+      "note": "Exercises the OperationalError/MovementCompleted/EngageStateChanged/SecureStateChanged events across PS, LT, MO, IS gating.",
+      "args": ["--PICS /root/closure-control.pics"]
     },
     {
       "name": "FanControl mandatory functionality on Fan Complete",
