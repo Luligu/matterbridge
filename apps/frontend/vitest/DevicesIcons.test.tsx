@@ -174,6 +174,34 @@ describe('DevicesIcons', () => {
     expect(screen.queryByText('Level 128')).toBeNull();
   });
 
+  it('should render Closure and WindowCovering position names with N/A for invalid values', async () => {
+    const socket = createSocket();
+    const device = createDevice({ name: 'Position Test', serial: 'POSITION-001', uniqueId: 'position-test' });
+    const clusters = [
+      createCluster('1', 'ClosureClosed', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 0 }', { position: 0 }),
+      createCluster('2', 'ClosureOpen', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 1 }', { position: 1 }),
+      createCluster('3', 'ClosurePartial', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 2 }', { position: 2 }),
+      createCluster('4', 'ClosureInvalid', 0x0230, 'ClosureControl', 'overallCurrentState', '{}', {}),
+      createCluster('5', 'WindowClosed', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '0', 0),
+      createCluster('6', 'WindowOpen', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '10000', 10_000),
+      createCluster('7', 'WindowPartial', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '5000', 5000),
+      createCluster('8', 'WindowInvalid', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '-1', -1),
+    ];
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    loadDevice(socket, device, clusters);
+
+    expect(await screen.findAllByText('Closed')).toHaveLength(2);
+    expect(screen.getAllByText('Open')).toHaveLength(2);
+    expect(screen.getAllByText('Partial')).toHaveLength(2);
+    expect(screen.getAllByText('N/A')).toHaveLength(2);
+  });
+
   it('should send refresh requests and ignore empty cluster responses', async () => {
     const socket = createSocket(false);
 

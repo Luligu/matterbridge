@@ -304,7 +304,7 @@ false` — `ArmFailSafe` is deliberately exempted from the endpoint's normal tra
     `triggerMovementCompleted()`/`triggerSecureStateChanged()` helpers; `stop()` cancels the pending timer,
     leaving state wherever it was interrupted. One subtlety hit along the way: reading `this.state` from
     inside the `setTimeout` callback throws `[expired-reference] ... This value is no longer available
-    because its context has exited` (the same failure mode documented above for `OnOffServer`'s scene-apply
+because its context has exited` (the same failure mode documented above for `OnOffServer`'s scene-apply
     timer) since a behavior's transactional state isn't readable outside the command's own invocation —
     fixed by capturing the needed values synchronously in `moveTo()` before scheduling, rather than
     re-reading `this.state` from the timer callback.

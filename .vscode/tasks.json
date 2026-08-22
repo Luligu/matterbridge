@@ -29,7 +29,7 @@
       "label": "Run: Demo",
       "type": "process",
       "command": "node",
-      "args": ["./bin/matterbridge.js", "--bridge", "--demo-devices", "--port", "5540"],
+      "args": ["./bin/matterbridge.js", "--bridge", "--demo-devices", "--novirtual", "--profile", "Demo", "--port", "5540"],
       "problemMatcher": [],
       "detail": "Start Matterbridge in demo mode on port 5540."
     },

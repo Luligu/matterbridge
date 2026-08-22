@@ -141,13 +141,26 @@ const closurePositionNames = ['Closed', 'Open', 'Partial', 'Pedestrian', 'Ventil
  * Gets the ClosureControl current position name from an OverallCurrentState value.
  *
  * @param {unknown} value ClosureControl OverallCurrentState attribute value.
- * @returns {string | undefined} The current position name, or undefined when unavailable or invalid.
+ * @returns {string} The current position name, or N/A when unavailable or invalid.
  */
-function getClosurePositionName(value: unknown): string | undefined {
-  if (typeof value !== 'object' || value === null || !('position' in value)) return undefined;
+function getClosurePositionName(value: unknown): string {
+  if (typeof value !== 'object' || value === null || !('position' in value)) return 'N/A';
   const position = value.position;
-  if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position >= closurePositionNames.length) return undefined;
+  if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position >= closurePositionNames.length) return 'N/A';
   return closurePositionNames[position];
+}
+
+/**
+ * Gets the WindowCovering current position name from a percentage in hundredths.
+ *
+ * @param {unknown} value WindowCovering currentPositionLiftPercent100ths attribute value.
+ * @returns {string} The current position name, or N/A when unavailable or invalid.
+ */
+function getWindowCoveringPositionName(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 10_000) return 'N/A';
+  if (value === 0) return 'Closed';
+  if (value === 10_000) return 'Open';
+  return 'Partial';
 }
 
 interface RenderProps {
@@ -390,7 +403,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 
       {/* WindowCovering */}
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number / 100} unit='%' />
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={getWindowCoveringPositionName(cluster.attributeLocalValue)} />
       ))}
       {/* WindowCoveringController */}
       {deviceType===0x0203 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
