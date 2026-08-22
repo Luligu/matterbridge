@@ -297,6 +297,10 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCovering', number: EndpointNumber(8_03) });
   await registerDevice(ep, 'Window Covering', 'ENTRY-08-03');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringTilt', number: EndpointNumber(8_03_1) });
+  ep.createDefaultLiftTiltWindowCoveringClusterServer();
+  await registerDevice(ep, 'Window Covering Tilt', 'ENTRY-08-03-1');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
   await registerDevice(ep, 'Window Covering Controller', 'ENTRY-08-04');
 
