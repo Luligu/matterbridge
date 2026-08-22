@@ -1,8 +1,12 @@
-Chip tests run started at 2026-08-21T22:59:21.300Z
+Chip tests run started at 2026-08-22T14:49:55.375Z
 
-✅ ClosureControl attributes on Closure (TC_CLCTRL_2_1.py)
-✅ ClosureControl Calibrate command primary functionality on Closure (TC_CLCTRL_3_1.py)
-❌ ClosureControl MoveTo command position functionality on Closure (TC_CLCTRL_4_1.py)
-   ↳ Runs against the Closure Complete endpoint (8054): the plain Closure endpoint (805) has no Ventilation or Pedestrian feature, so steps 8b-9i always skip there.
-✅ ClosureControl MoveTo command latching functionality on Closure (TC_CLCTRL_4_2.py)
-✅ ClosureControl MoveTo command field sanity checks on Closure (TC_CLCTRL_4_3.py)
+✅ ClosureControl attributes on ClosureComplete (TC_CLCTRL_2_1.py)
+✅ ClosureControl Calibrate command primary functionality on ClosureComplete (TC_CLCTRL_3_1.py)
+✅ ClosureControl MoveTo command position functionality on ClosureComplete (TC_CLCTRL_4_1.py)
+✅ ClosureControl MoveTo command latching functionality on ClosureComplete (TC_CLCTRL_4_2.py)
+✅ ClosureControl MoveTo command field sanity checks on ClosureComplete (TC_CLCTRL_4_3.py)
+✅ ClosureControl MoveTo command CountdownTime functionality on ClosureComplete (TC_CLCTRL_4_4.py)
+✅ ClosureControl Stop command primary functionality on ClosureComplete (TC_CLCTRL_5_1.py)
+✅ ClosureControl event functionality on ClosureComplete (TC_CLCTRL_6_1.py)
+
+Summary: 8/8 tests passed.

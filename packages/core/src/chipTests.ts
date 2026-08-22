@@ -32,6 +32,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
 import { Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
@@ -97,6 +98,22 @@ const deviceEnergyManagementForecastClearTrigger = 0x0098000000000010n;
 // TC_BOOLCFG_4_2/4_3/4_4/5_1/5_2's sensorTrigger/sensorUntrigger constants (src/python_testing/TC_BOOLCFG_4_2.py etc.).
 const booleanStateConfigurationSensorTrigger = 0x0080000000000000n;
 const booleanStateConfigurationSensorUntriggerTrigger = 0x0080000000000001n;
+// TC_CLCTRL_5_1/TC_CLCTRL_6_1's triggerError/triggerProtected/triggerDisengaged/triggerSetupRequired/triggerClear
+// constants (src/python_testing/TC_CLCTRL_5_1.py's/TC_CLCTRL_6_1.py's own module-level assignments — both
+// files hardcode the same values rather than importing a shared constant). Sent via the framework's default
+// send_test_event_triggers() enable key (chipTestEnableKey), not a cluster-specific one. Unlike every other
+// trigger constant in this file, these two tests send eventTrigger through the shared
+// MatterBaseTest.send_test_event_triggers() helper (matter_testing.py's _update_legacy_test_event_triggers()),
+// which — unless the CLI's --use-legacy-test-event-triggers flag is set, which run-matterbridge-chip-tests.mjs
+// never passes — ORs the *target endpoint* (0x1f76 for endpoint 8054, in TC_CLCTRL_5_1's/6_1's case) into bits
+// 32-47 of the value actually sent on the wire, so the raw eventTrigger received here never equals these bare
+// constants directly; closureControlEndpointTriggerMask strips that endpoint field back out before comparing.
+const closureControlErrorTrigger = 0x0104000000000000n;
+const closureControlProtectedTrigger = 0x0104000000000001n;
+const closureControlDisengagedTrigger = 0x0104000000000002n;
+const closureControlSetupRequiredTrigger = 0x0104000000000003n;
+const closureControlClearTrigger = 0x0104000000000004n;
+const closureControlEndpointTriggerMask = 0x0000ffff00000000n;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
@@ -266,6 +283,17 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
 async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
   if (eventTrigger === booleanStateConfigurationSensorTrigger || eventTrigger === booleanStateConfigurationSensorUntriggerTrigger) {
     return await handleBooleanStateConfigurationTestEventTrigger(eventTrigger);
+  }
+  // oxlint-disable-next-line no-bitwise
+  const closureControlTrigger = eventTrigger & ~closureControlEndpointTriggerMask;
+  if (
+    closureControlTrigger === closureControlErrorTrigger ||
+    closureControlTrigger === closureControlProtectedTrigger ||
+    closureControlTrigger === closureControlDisengagedTrigger ||
+    closureControlTrigger === closureControlSetupRequiredTrigger ||
+    closureControlTrigger === closureControlClearTrigger
+  ) {
+    return await handleClosureControlTestEventTrigger(closureControlTrigger);
   }
   if (
     eventTrigger !== smokeCoAlarmWarningSmokeAlarmTrigger &&
@@ -454,6 +482,50 @@ async function applyBooleanStateConfigurationTestEventTrigger(endpoint: Matterbr
     case booleanStateConfigurationSensorUntriggerTrigger:
       await endpoint.setCluster(BooleanStateConfiguration, { alarmsActive: { visual: false, audible: false }, alarmsSuppressed: { visual: false, audible: false } }, log);
       return;
+    default:
+      return;
+  }
+}
+
+// The Error/Protected/Disengaged/SetupRequired/Clear triggers carry no endpoint field on the wire, but every
+// TC_CLCTRL_5_1/TC_CLCTRL_6_1 chipTests.json entry sets "endpoint" to the one ClosureControl endpoint it
+// actually targets — see chipTestActiveEndpointId — so this never needs to guess or broadcast.
+async function handleClosureControlTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint || !endpoint.hasClusterServer(ClosureControl.id)) return false;
+
+  await applyClosureControlTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
+  return true;
+}
+
+async function applyClosureControlTestEventTrigger(endpoint: MatterbridgeEndpoint, eventTrigger: bigint, log: AnsiLogger): Promise<void> {
+  switch (eventTrigger) {
+    case closureControlErrorTrigger: {
+      const errorState = [ClosureControl.ClosureError.PhysicallyBlocked];
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Error, currentErrorList: errorState }, log);
+      await endpoint.triggerEvent(ClosureControl, 'operationalError', { errorState }, log);
+      return;
+    }
+    case closureControlProtectedTrigger:
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Protected }, log);
+      return;
+    case closureControlDisengagedTrigger:
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Disengaged }, log);
+      await endpoint.triggerEvent(ClosureControl, 'engageStateChanged', { engageValue: false }, log);
+      return;
+    case closureControlSetupRequiredTrigger:
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.SetupRequired }, log);
+      return;
+    case closureControlClearTrigger: {
+      // TC_CLCTRL_6_1 step 6e expects an EngageStateChanged(engageValue=true) event when clearing back out of
+      // the Disengaged test state (steps 4d/11 clear Error/SetupRequired/Protected instead, which have no
+      // corresponding "re-engaged" event to emit), so only re-fire it when that was the state being cleared.
+      const wasDisengaged = endpoint.getAttribute(ClosureControl.id, 'mainState') === ClosureControl.MainState.Disengaged;
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Stopped, currentErrorList: [] }, log);
+      if (wasDisengaged) await endpoint.triggerEvent(ClosureControl, 'engageStateChanged', { engageValue: true }, log);
+      return;
+    }
     default:
       return;
   }

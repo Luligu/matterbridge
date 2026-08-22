@@ -858,7 +858,6 @@
       "test": "TC_CLCTRL_6_1.py",
       "endpoint": 805,
       "note": "Exercises the OperationalError/MovementCompleted/EngageStateChanged/SecureStateChanged events across PS, LT, MO, IS gating.",
-      "resetBefore": true,
       "args": ["--PICS /root/closure-control.pics"]
     },
     {

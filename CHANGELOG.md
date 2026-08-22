@@ -33,6 +33,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.7] - Dev branch
 
+### Development News
+
 ### Added
 
 - [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
