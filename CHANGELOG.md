@@ -36,10 +36,12 @@ If you like this project and find it useful, please consider giving it a star on
 ### Development News
 
 - [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `Closure` device type and `ClosureControl` clusters.
+- [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `WaterValve` device type and the `ValveConfigurationAndControl` cluster.
 
 ### Added
 
 - [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
+- [matterbridge]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and simulates the Open/Close movement duration and RemainingDuration countdown/auto-close under `MATTERBRIDGE_CHIP_TEST`.
 
 ### Fixed
 

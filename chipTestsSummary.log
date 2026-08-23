@@ -1,31 +1,14 @@
-Chip tests run started at 2026-08-22T20:44:51.047Z
+Chip tests run started at 2026-08-23T09:20:16.290Z
 
-✅ ColorControl attributes on ExtendedColorLightEnhancedEHSXYCT (TC_CC_2_1.py)
-✅ ColorControl attributes writable and subscription reporting on ExtendedColorLightEnhancedEHSXYCT (TC_CC_2_2.py)
-✅ ColorControl Hue MoveTo functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_1)
-✅ ColorControl Hue Move functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_2)
-✅ ColorControl Hue Step functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_3)
-✅ ColorControl Saturation MoveTo functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_1)
-✅ ColorControl Saturation Move functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_2)
-✅ ColorControl Saturation Step functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_3)
-✅ ColorControl MoveToHueAndSaturation functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_4)
-✅ ColorControl Color MoveTo functionality on ExtendedColorLightXYCT (Test_TC_CC_5_1)
-✅ ColorControl Color Move functionality on ExtendedColorLightXYCT (Test_TC_CC_5_2)
-✅ ColorControl Color Step functionality on ExtendedColorLightXYCT (Test_TC_CC_5_3)
-✅ ColorControl Color Temperature MoveTo functionality on ColorTemperatureLight (Test_TC_CC_6_1)
-✅ ColorControl Color Temperature Move functionality on ColorTemperatureLight (Test_TC_CC_6_2)
-✅ ColorControl Color Temperature Step functionality on ColorTemperatureLight (Test_TC_CC_6_3)
-⏭️ ColorControl StartUpColorTemperatureMireds across a DUT reboot on ColorTemperatureLight (TC_CC_6_5.py)
-   ↳ Same class of limitation as Test_TC_OO_2_4: requires a real DUT reboot (request_device_reboot(), no restart flag file configured for this harness) with StartUpColorTemperatureMireds re-verified after it actually restarts Matterbridge. Verified directly: the test proceeds past the reboot request without error but ColorTemperatureMireds reads back as the pre-write default (250) instead of the written StartUpColorTemperatureMireds target (323) — the DUT never actually restarted, so startup behavior was never exercised.
-✅ ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_1)
-✅ ColorControl Enhanced MoveHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_2)
-✅ ColorControl Enhanced Step functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_3)
-✅ ColorControl MoveToEnhancedHueAndSaturation functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_4)
-⏭️ ColorControl StopMoveStep functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_8_1)
-   ↳ The managedTransitionTimeHandling opt-in under MATTERBRIDGE_CHIP_TEST (packages/core/src/behaviors/colorControlServer.ts) fixed this test's original failure (step 9, HS Stop) and the CT/HS Stop sections that follow — the test now progresses from 10 successes/1 error to 60 successes/1 error. It still fails at step 37 (Step 5d, the EnhancedMoveHue section): after EnhancedMoveToHue(20000) then EnhancedMoveHue(Up, Rate=500 units/s) for 10s then StopMoveStep, EnhancedCurrentHue is expected in [24250, 25750] (~+5000, i.e. rate x time) but reads back 30023 (~+10023, roughly double). Root-caused directly against the container: the equivalent non-enhanced Hue MoveHue Stop check earlier in this same test (step 2d/2e, [221, 229]) passes correctly, so the generic Stop/transition machinery works — only EnhancedMoveHue's rate-to-distance math over the 16-bit EnhancedHue range appears to run at roughly 2x the requested rate. This is inside @matter/node's own ColorControlServer.moveHueLogic()/#startTransition(), not Matterbridge code; needs further investigation before enabling.
-✅ ColorControl ColorLoopSet Validation on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_1)
-✅ ColorControl ColorLoopSet Validation - change direction without stop on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_2)
-✅ ColorControl ColorLoopSet Validation - change time without stop on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_3)
-✅ ColorControl full feature conformance on ExtendedColorLightEnhancedEHSXYCT (TC_CC_10_1.py)
+❌ ValveConfigurationAndControl attributes on WaterValve (TC_VALCC_2_1.py)
+❌ ValveConfigurationAndControl Open/Close primary functionality on WaterValve (TC_VALCC_3_1.py)
+❌ ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve (TC_VALCC_3_2.py)
+❌ ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve (TC_VALCC_3_3.py)
+❌ ValveConfigurationAndControl LevelStep functionality on WaterValve (TC_VALCC_3_4.py)
+❌ ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve (TC_VALCC_4_1.py)
+❌ ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve (TC_VALCC_4_2.py)
+❌ ValveConfigurationAndControl AutoCloseTime functionality on WaterValve (TC_VALCC_4_3.py)
+❌ ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve (TC_VALCC_4_4.py)
+❌ ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve (TC_VALCC_4_5.py)
 
-Summary: 23/23 tests passed (2 skipped).
+Summary: 0/10 tests passed.

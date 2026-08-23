@@ -4148,8 +4148,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates the default Valve Configuration And Control cluster server with features Level.
    *
    * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
-   * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
+   * @param {number} [valveLevel] - The valve level to set (100 percent SHALL indicate the fully open position). Defaults to 0.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * `MatterbridgeValveConfigurationAndControlServer.state.movementDuration` (in milliseconds) defaults to 0,
+   * which disables the built-in Open/Close movement simulation and leaves completion of the transition to the
+   * real device implementation.
    */
   createDefaultValveConfigurationAndControlClusterServer(
     valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,

@@ -386,6 +386,7 @@
     "chip:test:level-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_LVL_",
     "chip:test:color-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CC_",
     "chip:test:closure-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CLCTRL_",
+    "chip:test:valve": "node scripts/run-matterbridge-chip-tests.mjs --test TC_VALCC_",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",

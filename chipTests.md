@@ -130,6 +130,18 @@ Extended Color Light EHS XY CT clusters:
   ColorControl feature set of any Matterbridge endpoint (`createEnhancedColorControlClusterServer()`). No
   endpoint enables the ColorLoop feature — see "Known Issues" below.
 
+### Endpoint 505
+
+Pump clusters:
+
+- PumpConfigurationAndControl (ConstantSpeed feature only)
+
+### Endpoint 506
+
+Water Valve clusters:
+
+- ValveConfigurationAndControl (Level feature only, no TimeSync)
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
@@ -255,6 +267,17 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   error, but `ColorTemperatureMireds` reads back as the pre-write default (`250`) instead of the written
   `StartUpColorTemperatureMireds` target (`323`), showing the DUT never actually restarted. `"skip": true` in
   `chipTests.json`, same category as `Test_TC_OO_2_4`.
+
+- **PumpConfigurationAndControl: `Test_TC_PCC_2_2` fails because `OperationMode` writes are never reflected
+  in `EffectiveOperationMode` — a real Matterbridge gap, not a matter.js bug.** Matterbridge uses the stock
+  `@matter/node` `PumpConfigurationAndControlServer` directly for the Pump device type (endpoint 505;
+  `matterbridgeEndpoint.ts` imports it as-is, unlike OnOff/LevelControl/ColorControl/Valve which each get a
+  `MatterbridgeXxxServer` subclass), and that stock behavior has no override for `OperationMode` at all — per
+  spec, mapping `OperationMode` to `EffectiveOperationMode` is manufacturer-specific business logic the SDK
+  deliberately leaves to the device, so nothing links the two attributes today. Verified directly: writing
+  `OperationMode=1` (Minimum) and reading `EffectiveOperationMode` back still shows `0`. Fixable by adding a
+  `MatterbridgePumpConfigurationAndControlServer` behavior that syncs the two, but that's a feature addition
+  out of scope for just cataloging these tests. `"skip": true` in `chipTests.json`, not fixable via PICS.
 
 ### matter.js discovery
 

@@ -1276,6 +1276,106 @@
       "endpoint": 4042,
       "note": "Branches per live FeatureMap across HS, EHUE, XY and CT (all enabled on this endpoint — every branch actually runs); the CL branch always self-skips since ColorLoop is never enabled.",
       "args": ["--PICS /root/color-control-enhanced.pics"]
+    },
+    {
+      "name": "PumpConfigurationAndControl attributes on Pump",
+      "test": "Test_TC_PCC_2_1",
+      "endpoint": 505,
+      "note": "Plain reads of every base PumpConfigurationAndControl attribute; no feature-gated branching beyond ConstantSpeed (the only feature this endpoint enables).",
+      "args": ["--PICS /root/pump-configuration-and-control.pics"]
+    },
+    {
+      "name": "PumpConfigurationAndControl Operation Mode on Pump",
+      "test": "Test_TC_PCC_2_2",
+      "endpoint": 505,
+      "note": "Exercises OperationMode writes and the expectation that EffectiveOperationMode follows them.",
+      "args": ["--PICS /root/pump-configuration-and-control.pics"],
+      "skip": true,
+      "comment": "Fails at the first ConstantSpeed-gated step: writes OperationMode=1 (Minimum) then reads EffectiveOperationMode expecting 1 back, but it stays 0. Root-caused directly: Matterbridge uses the stock @matter/node PumpConfigurationAndControlServer as-is (matterbridgeEndpoint.ts imports it directly, no MatterbridgeXxxServer subclass like OnOff/LevelControl/ColorControl/Valve have), and that stock behavior has no override at all for OperationMode — per spec, mapping OperationMode to EffectiveOperationMode is manufacturer-specific business logic the SDK deliberately leaves to the device, so nothing links the two attributes. A real gap (not a matter.js bug), fixable by giving Pump its own Matterbridge behavior class, but out of scope for adding these tests; not fixable via PICS."
+    },
+    {
+      "name": "PumpConfigurationAndControl Control Mode on Pump",
+      "test": "Test_TC_PCC_2_3",
+      "endpoint": 505,
+      "note": "Gated on PCC.S.F00-F05 (ConstantPressure/CompensatedPressure/ConstantFlow/ConstantSpeed/ConstantTemperature/Automatic); only the ConstantSpeed (F03) branch applies on this endpoint, so most steps self-skip.",
+      "args": ["--PICS /root/pump-configuration-and-control.pics"]
+    },
+    {
+      "name": "PumpConfigurationAndControl Life Time Counters on Pump",
+      "test": "Test_TC_PCC_2_4",
+      "endpoint": 505,
+      "note": "Gated on the optional LifetimeRunningHours (A0015) and LifetimeEnergyConsumed (A0017) attributes, neither of which createDefaultPumpConfigurationAndControlClusterServer() implements, so this test self-skips entirely beyond commissioning.",
+      "args": ["--PICS /root/pump-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl attributes on WaterValve",
+      "test": "TC_VALCC_2_1.py",
+      "endpoint": 506,
+      "note": "Plain reads of every base ValveConfigurationAndControl attribute, branching per the live AttributeList; AutoCloseTime is absent (gated on the unsupported TimeSync feature).",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl Open/Close primary functionality on WaterValve",
+      "test": "TC_VALCC_3_1.py",
+      "endpoint": 506,
+      "note": "Exercises Open/Close and the TargetState reporting sequence.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve",
+      "test": "TC_VALCC_3_2.py",
+      "endpoint": 506,
+      "note": "Exercises Open with TargetLevel plus the TargetState/TargetLevel reporting sequence.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve",
+      "test": "TC_VALCC_3_3.py",
+      "endpoint": 506,
+      "note": "Exercises Open with no fields populated, falling back to DefaultOpenLevel.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl LevelStep functionality on WaterValve",
+      "test": "TC_VALCC_3_4.py",
+      "endpoint": 506,
+      "note": "Exercises LevelStep and the set of level values Open accepts.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve",
+      "test": "TC_VALCC_4_1.py",
+      "endpoint": 506,
+      "note": "Exercises Open with OpenDuration and the resulting RemainingDuration countdown.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve",
+      "test": "TC_VALCC_4_2.py",
+      "endpoint": 506,
+      "note": "Exercises DefaultOpenDuration fallback plus the same RemainingDuration countdown as TC_VALCC_4_1.py.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl AutoCloseTime functionality on WaterValve",
+      "test": "TC_VALCC_4_3.py",
+      "endpoint": 506,
+      "note": "Gated on the TimeSync feature (VALCC.S.F00) and the Time Synchronization cluster's UTCTime, neither of which this endpoint supports, so this test self-skips entirely beyond commissioning.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve",
+      "test": "TC_VALCC_4_4.py",
+      "endpoint": 506,
+      "note": "Same TimeSync gating as TC_VALCC_4_3.py; self-skips entirely beyond commissioning.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve",
+      "test": "TC_VALCC_4_5.py",
+      "endpoint": 506,
+      "note": "Exercises the valve auto-closing once OpenDuration elapses, tracked via RemainingDuration reaching 0.",
+      "args": ["--PICS /root/valve-configuration-and-control.pics"]
     }
   ]
 }
