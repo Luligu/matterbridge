@@ -42,11 +42,7 @@ test('WorkerWrapper', async () => {
   };
   const worker = new Worker(new URL('./worker-wrapper.worker.ts', import.meta.url), options);
 
-  // Record the exit code if/when 'exit' fires.
-  let exitCode: number | undefined;
-  worker.once('exit', (c) => {
-    exitCode = c;
-  });
+  const exit = new Promise<number>((resolve) => worker.once('exit', resolve));
 
   // Confirm the worker is alive and processed the message before it closes its port.
   await new Promise<unknown>((resolve, reject) => {
@@ -63,11 +59,7 @@ test('WorkerWrapper', async () => {
     worker.postMessage({ type: 'ping' });
   });
 
-  // Ensure the thread is gone even when 'exit' never fired (Bun).
-  await worker.terminate();
-
-  // Node: worker exited with code 0. Bun: 'exit' never fired, so exitCode is still undefined.
-  expect(exitCode).toBe(0);
+  expect(await exit).toBe(0);
 
   // Close the server
   server.close();

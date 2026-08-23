@@ -157,16 +157,10 @@ describe('node:worker_threads (Matterbridge worker manager)', () => {
     }
   });
 
-  // Documents the Bun quirk above: a worker that only calls parentPort.close() keeps
-  // running, so 'exit' never fires on its own. We prove the worker still replies, then
-  // confirm no 'exit' arrives within a grace window, and finally use terminate() to end it.
-  test('parentPort.close() does NOT exit the worker under Bun', async () => {
+  test('parentPort.close() exits the worker under Bun', async () => {
     const worker = new Worker(new URL('./close.worker.ts', import.meta.url));
 
-    let exited = false;
-    worker.once('exit', () => {
-      exited = true;
-    });
+    const exit = new Promise<number>((resolve) => worker.once('exit', resolve));
 
     const reply = await new Promise<string>((resolve, reject) => {
       worker.once('message', (m) => resolve(String(m)));
@@ -175,12 +169,6 @@ describe('node:worker_threads (Matterbridge worker manager)', () => {
     });
     expect(reply).toBe('echo:ping');
 
-    // Grace window: in Node the worker would have exited by now; in Bun it stays alive.
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(exited).toBe(false);
-
-    // terminate() is what actually ends the thread under Bun.
-    const code = await worker.terminate();
-    expect(typeof code).toBe('number');
+    expect(await exit).toBe(0);
   });
 });
