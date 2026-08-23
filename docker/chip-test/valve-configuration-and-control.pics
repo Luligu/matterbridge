@@ -1,0 +1,24 @@
+# To run tests on ValveConfigurationAndControl --PICS is required
+# Matches createDefaultValveConfigurationAndControlClusterServer() (via addRequiredClusters()) on CHIP
+# WaterValve endpoint 506 (Level feature only, no TimeSync).
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+VALCC.S=1
+VALCC.S.F00=0 # TimeSync (requires the Time Synchronization cluster, not present on this endpoint)
+VALCC.S.F01=1 # Level
+VALCC.S.A0000=1 # OpenDuration
+VALCC.S.A0001=1 # DefaultOpenDuration
+VALCC.S.A0002=0 # AutoCloseTime (conformant only when TimeSync is supported)
+VALCC.S.A0003=1 # RemainingDuration
+VALCC.S.A0004=1 # CurrentState
+VALCC.S.A0005=1 # TargetState
+VALCC.S.A0006=1 # CurrentLevel
+VALCC.S.A0007=1 # TargetLevel
+VALCC.S.A0008=1 # DefaultOpenLevel
+VALCC.S.A0009=1 # ValveFault
+VALCC.S.A000a=1 # LevelStep
+VALCC.S.E00=0 # ValveStateChanged (not implemented)
+VALCC.S.E01=0 # ValveFault (not implemented)
+VALCC.S.C00.Rsp=1 # Open
+VALCC.S.C01.Rsp=1 # Close
+VALCC.C=0 # Matterbridge only exposes a ValveConfigurationAndControl server, never acts as a client

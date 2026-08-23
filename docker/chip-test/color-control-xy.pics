@@ -1,0 +1,91 @@
+# To run tests on ColorControl --PICS is required
+# Matches createXyColorControlClusterServer() on CHIP ExtendedColorLightXYCT endpoint 404 (Xy +
+# ColorTemperature features). See color-control-ct.pics (endpoint 403, ColorTemperature only),
+# color-control.pics (endpoint 4041, HueSaturation + Xy + ColorTemperature), and
+# color-control-enhanced.pics (endpoint 4042, HueSaturation + EnhancedHue + Xy + ColorTemperature) for the
+# other three feature combinations.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+CC.S=1
+CC.S.F00=0 # HueSaturation
+CC.S.F01=0 # EnhancedHue
+CC.S.F02=0 # ColorLoop (never enabled by any Matterbridge ColorControl helper)
+CC.S.F03=1 # Xy
+CC.S.F04=1 # ColorTemperature
+CC.S.A0000=0 # CurrentHue (HueSaturation not supported)
+CC.S.A0001=0 # CurrentSaturation (HueSaturation not supported)
+CC.S.A0002=1 # RemainingTime
+CC.S.A0003=1 # CurrentX
+CC.S.A0004=1 # CurrentY
+CC.S.A0005=0 # DriftCompensation (optional, not implemented)
+CC.S.A0006=0 # CompensationText (optional, not implemented)
+CC.S.A0007=1 # ColorTemperatureMireds
+CC.S.A0008=1 # ColorMode
+CC.S.A000f=1 # Options
+CC.S.A0010=1 # NumberOfPrimaries (always implemented, value null i.e. not supported)
+CC.S.A0011=0 # Primary1X (NumberOfPrimaries is null)
+CC.S.A0012=0 # Primary1Y (NumberOfPrimaries is null)
+CC.S.A0013=0 # Primary1Intensity (NumberOfPrimaries is null)
+CC.S.A0015=0 # Primary2X (NumberOfPrimaries is null)
+CC.S.A0016=0 # Primary2Y (NumberOfPrimaries is null)
+CC.S.A0017=0 # Primary2Intensity (NumberOfPrimaries is null)
+CC.S.A0019=0 # Primary3X (NumberOfPrimaries is null)
+CC.S.A001a=0 # Primary3Y (NumberOfPrimaries is null)
+CC.S.A001b=0 # Primary3Intensity (NumberOfPrimaries is null)
+CC.S.A0020=0 # Primary4X (NumberOfPrimaries is null)
+CC.S.A0021=0 # Primary4Y (NumberOfPrimaries is null)
+CC.S.A0022=0 # Primary4Intensity (NumberOfPrimaries is null)
+CC.S.A0024=0 # Primary5X (NumberOfPrimaries is null)
+CC.S.A0025=0 # Primary5Y (NumberOfPrimaries is null)
+CC.S.A0026=0 # Primary5Intensity (NumberOfPrimaries is null)
+CC.S.A0028=0 # Primary6X (NumberOfPrimaries is null)
+CC.S.A0029=0 # Primary6Y (NumberOfPrimaries is null)
+CC.S.A002a=0 # Primary6Intensity (NumberOfPrimaries is null)
+CC.S.A0030=0 # WhitePointX (optional, not implemented)
+CC.S.A0031=0 # WhitePointY (optional, not implemented)
+CC.S.A0032=0 # ColorPointRX (optional, not implemented)
+CC.S.A0033=0 # ColorPointRY (optional, not implemented)
+CC.S.A0034=0 # ColorPointRIntensity (optional, not implemented)
+CC.S.A0036=0 # ColorPointGX (optional, not implemented)
+CC.S.A0037=0 # ColorPointGY (optional, not implemented)
+CC.S.A0038=0 # ColorPointGIntensity (optional, not implemented)
+CC.S.A003a=0 # ColorPointBX (optional, not implemented)
+CC.S.A003b=0 # ColorPointBY (optional, not implemented)
+CC.S.A003c=0 # ColorPointBIntensity (optional, not implemented)
+CC.S.A4000=0 # EnhancedCurrentHue (EnhancedHue not supported)
+CC.S.A4001=1 # EnhancedColorMode
+CC.S.A4002=0 # ColorLoopActive (ColorLoop not supported)
+CC.S.A4003=0 # ColorLoopDirection (ColorLoop not supported)
+CC.S.A4004=0 # ColorLoopTime (ColorLoop not supported)
+CC.S.A4005=0 # ColorLoopStartEnhancedHue (ColorLoop not supported)
+CC.S.A4006=0 # ColorLoopStoredEnhancedHue (ColorLoop not supported)
+CC.S.A400a=1 # ColorCapabilities
+CC.S.A400b=1 # ColorTempPhysicalMinMireds
+CC.S.A400c=1 # ColorTempPhysicalMaxMireds
+CC.S.A400d=1 # CoupleColorTempToLevelMinMireds
+CC.S.A4010=1 # StartUpColorTemperatureMireds
+CC.S.C00.Rsp=0 # MoveToHue (HueSaturation not supported)
+CC.S.C01.Rsp=0 # MoveHue (HueSaturation not supported)
+CC.S.C02.Rsp=0 # StepHue (HueSaturation not supported)
+CC.S.C03.Rsp=0 # MoveToSaturation (HueSaturation not supported)
+CC.S.C04.Rsp=0 # MoveSaturation (HueSaturation not supported)
+CC.S.C05.Rsp=0 # StepSaturation (HueSaturation not supported)
+CC.S.C06.Rsp=0 # MoveToHueAndSaturation (HueSaturation not supported)
+CC.S.C07.Rsp=1 # MoveToColor
+CC.S.C08.Rsp=1 # MoveColor
+CC.S.C09.Rsp=1 # StepColor
+CC.S.C0a.Rsp=1 # MoveToColorTemperature
+CC.S.C40.Rsp=0 # EnhancedMoveToHue (EnhancedHue not supported)
+CC.S.C41.Rsp=0 # EnhancedMoveHue (EnhancedHue not supported)
+CC.S.C42.Rsp=0 # EnhancedStepHue (EnhancedHue not supported)
+CC.S.C43.Rsp=0 # EnhancedMoveToHueAndSaturation (EnhancedHue not supported)
+CC.S.C44.Rsp=0 # ColorLoopSet (ColorLoop not supported)
+CC.S.C47.Rsp=1 # StopMoveStep (conformant on HS | XY | CT; ColorTemperature is present)
+CC.S.C4b.Rsp=1 # MoveColorTemperature
+CC.S.C4c.Rsp=1 # StepColorTemperature
+CC.C=0 # Matterbridge only exposes a ColorControl server, never acts as a client
+OO.S=1 # OnOff (also present on the same endpoint, added by addRequiredClusters(); needed to satisfy
+       # the OO.S.C00.Rsp/OO.S.C01.Rsp-gated On/Off steps these ColorControl tests use to light the
+       # device before moving color, since ColorControl's ExecuteIfOff option defaults to false
+OO.S.C00.Rsp=1 # Off
+OO.S.C01.Rsp=1 # On

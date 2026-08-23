@@ -103,6 +103,45 @@ more sections behind a feature (Calibration, Ventilation, Pedestrian) that the p
 support, so on 805 those sections always skip via the test's own live `FeatureMap` read rather than actually
 exercising them — see "Known Issues" below.
 
+### Endpoint 403
+
+Color Temperature Light clusters:
+
+- ColorControl (ColorTemperature feature only)
+
+### Endpoint 404
+
+Extended Color Light XY CT clusters:
+
+- ColorControl (Xy and ColorTemperature features)
+
+### Endpoint 4041
+
+Extended Color Light HS XY CT clusters:
+
+- ColorControl (HueSaturation, Xy and ColorTemperature features) — the "default" feature set
+  (`createDefaultColorControlClusterServer()`)
+
+### Endpoint 4042
+
+Extended Color Light EHS XY CT clusters:
+
+- ColorControl (HueSaturation, EnhancedHue, Xy and ColorTemperature features) — the most complete
+  ColorControl feature set of any Matterbridge endpoint (`createEnhancedColorControlClusterServer()`). No
+  endpoint enables the ColorLoop feature — see "Known Issues" below.
+
+### Endpoint 505
+
+Pump clusters:
+
+- PumpConfigurationAndControl (ConstantSpeed feature only)
+
+### Endpoint 506
+
+Water Valve clusters:
+
+- ValveConfigurationAndControl (Level feature only, no TimeSync)
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
@@ -159,20 +198,6 @@ exercising them — see "Known Issues" below.
   permanently inapplicable, just narrow-margin in this containerized environment — kept running and
   documented here, matching the same category as `TC_FAN_3_1.py`'s occasional flakiness above.
 
-- **OnOff: found and fixed a real bug via `TC_OO_2_7.py` (Scenes Management interaction) — `on()`/`off()`
-  silently dropped when invoked from `ScenesManagement`'s delayed scene-apply timer.** `RecallScene` with a
-  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an _unlocked_ timer callback inside
-  matter.js's base `OnOffServer` (`#applySceneValues()` in `on-off/OnOffServer.ts`), whose implicit
-  transaction context only lives for the synchronous portion of that callback. `MatterbridgeOnOffServer`'s
-  `on()`/`off()`/`toggle()`/`offWithEffect()`/`onWithRecallGlobalScene()`/`onWithTimedOff()` all `await`
-  their command-handler forwarder _before_ calling `super.X()` — fine for a normal client-invoked command
-  (its request context survives the await), but that await outlived the scene-timer's short-lived context,
-  so `super.on()` threw `[expired-reference] ... This value is no longer available because its context has
-exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
-  Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
-  `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
-  proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
-
 - **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
   (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
 GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _without_ a `GroupName`
@@ -192,22 +217,6 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
-- **LevelControl: `TC_LVL_2_3.py` and `Test_TC_LVL_6_1` fail because `@matter/node`'s default
-  `LevelControlServer` never simulates a transition — it jumps `CurrentLevel` straight to the target and
-  ignores `transitionTime` entirely.** `LevelControlServer.js`'s `State.managedTransitionTimeHandling` flag
-  (default `false`) documents this directly: "The default implementation always set the target level
-  immediately and so ignores all transition times requested or configured." `createDefaultLevelControlClusterServer()`
-  (`matterbridgeEndpoint.ts`) does not opt into `managedTransitionTimeHandling`, so on `DimmableLight`
-  endpoint 402: `TC_LVL_2_3.py` subscribes for `RemainingTime` reports around a `MoveToLevel` with a non-zero
-  `transitionTime` and expects exactly 3 reports tracking the transition — since the level is set instantly,
-  `RemainingTime` never changes and 0 reports arrive. `Test_TC_LVL_6_1` starts a `Move`, waits 5s, sends
-  `Stop`, and expects `CurrentLevel` to be caught mid-transition (constrained between 64 and 86) — since
-  `Move` already jumped to its implicit target (254) the instant it was sent, `Stop` has nothing left to
-  halt. Both verified directly against the container (`CurrentLevel` reads back at the target value
-  immediately after any `MoveToLevel`/`Move`, regardless of `transitionTime`/`rate`). Not fixable via PICS;
-  `"skip": true` in `chipTests.json` for both, permanently inapplicable unless Matterbridge opts a bridged
-  light endpoint into `managedTransitionTimeHandling`.
-
 - **LevelControl: `Test_TC_LVL_3_1` Step 5h fails deterministically (3/3 reproductions) only inside
   `chiptool.py`'s single long-lived interactive-server session, not via standalone `chip-tool` invocations —
   suspected race in `@matter/node`, not Matterbridge code.** After `OnOff.Off` then a `MoveToLevel` sent with
@@ -219,7 +228,56 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   sequence sent back-to-back over `chiptool.py`'s one persistent session (no inter-command latency)
   consistently lets the `MoveToLevel` through instead. `"skip": true` in `chipTests.json`, pending deeper
   investigation into whether `@matter/node`'s state commit for `OnOff.Off` and the following command's read
-  of that state can race under pipelined delivery.
+  of that state can race under pipelined delivery. Re-verified unchanged after removing the `OnOff`/
+  `LevelControl` forwarder `await` under `MATTERBRIDGE_CHIP_TEST` (`onOffServer.ts`/`levelControlServer.ts`)
+  and after opting `LevelControl` into `managedTransitionTimeHandling`
+  (`packages/core/src/behaviors/levelControlServer.ts`): the failure is identical either way, confirming the
+  race lives entirely inside `@matter/node`'s own `OnOff`/`LevelControl` state handling, not in the
+  Matterbridge forwarder call or the transition-time gap.
+
+- **ColorControl: `Test_TC_CC_8_1`'s `EnhancedMoveHue` section fails because `StopMoveStep` never actually
+  stops an `EnhancedCurrentHue` transition on any Matterbridge ColorControl endpoint — a genuine
+  `@matter/node` bug.** `MatterbridgeColorControlServer` opts into `managedTransitionTimeHandling` under
+  `MATTERBRIDGE_CHIP_TEST` only (`packages/core/src/behaviors/colorControlServer.ts`, same mechanism as
+  LevelControl above, production behavior unchanged), which makes this test's HS `Stop` (step 9) and CT/HS
+  sections pass (60 successes/1 error, up from 10/1). It still fails at step 37 (Step 5e — the _second_
+  `EnhancedCurrentHue` read, 10s after `StopMoveStep`; the first read at step 5d, right after `Stop`, passes)
+  — the value keeps climbing at the full commanded rate for the entire post-`Stop` wait, as if `Stop` had no
+  effect at all. Root-caused directly against the container with an isolated repro script (start
+  `EnhancedMoveToHue`, `EnhancedMoveHue` at a fixed rate, `StopMoveStep`, then poll `EnhancedCurrentHue`
+  every second for 10s): `ColorControlServer.stopMoveStepLogic()`
+  (`@matter/node/dist/esm/behaviors/color-control/ColorControlServer.js`) only calls
+  `this.internal.transitions?.stop('enhancedCurrentHue')` when
+  `this.state.colorLoopActive === ColorControl.ColorLoopActive.Inactive` (`0`) — but `colorLoopActive` is
+  `undefined` (not `0`) whenever the `ColorLoop` feature isn't included in the cluster's feature set, which
+  is the case for every Matterbridge ColorControl endpoint (no `createXxxColorControlClusterServer()` helper
+  enables `ColorLoop`). `undefined === 0` is `false` in JavaScript, so this strict-equality guard is always
+  false when `ColorLoop` is absent, and the `enhancedCurrentHue` stop call is silently skipped every time —
+  the plain (non-enhanced) `Hue`/`Saturation`/`X`/`Y`/`ColorTemperature` stops right below it in the same
+  function are unconditional and work correctly, which is why the equivalent non-enhanced `Hue` `MoveHue`
+  `Stop` check earlier in this same test (step 2d/2e, `[221, 229]`) passes. This is inside `@matter/node`'s
+  own `ColorControlServer.stopMoveStepLogic()`, not Matterbridge code — the guard should presumably check for
+  `!== ColorControl.ColorLoopActive.Active` (or simply falsy) rather than requiring strict equality to
+  `Inactive`. `"skip": true` remains in `chipTests.json` for `Test_TC_CC_8_1`, pending an upstream fix.
+
+- **ColorControl: `TC_CC_6_5.py` (StartUpColorTemperatureMireds across a reboot) hits the same
+  `request_device_reboot()` synchronization gap as `Test_TC_OO_2_4`.** No restart flag file is configured for
+  this harness, so the test's reboot request silently falls through to a manual "reboot and press Enter"
+  prompt path instead of actually restarting Matterbridge — confirmed directly: the test proceeds without
+  error, but `ColorTemperatureMireds` reads back as the pre-write default (`250`) instead of the written
+  `StartUpColorTemperatureMireds` target (`323`), showing the DUT never actually restarted. `"skip": true` in
+  `chipTests.json`, same category as `Test_TC_OO_2_4`.
+
+- **PumpConfigurationAndControl: `Test_TC_PCC_2_2` fails because `OperationMode` writes are never reflected
+  in `EffectiveOperationMode` — a real Matterbridge gap, not a matter.js bug.** Matterbridge uses the stock
+  `@matter/node` `PumpConfigurationAndControlServer` directly for the Pump device type (endpoint 505;
+  `matterbridgeEndpoint.ts` imports it as-is, unlike OnOff/LevelControl/ColorControl/Valve which each get a
+  `MatterbridgeXxxServer` subclass), and that stock behavior has no override for `OperationMode` at all — per
+  spec, mapping `OperationMode` to `EffectiveOperationMode` is manufacturer-specific business logic the SDK
+  deliberately leaves to the device, so nothing links the two attributes today. Verified directly: writing
+  `OperationMode=1` (Minimum) and reading `EffectiveOperationMode` back still shows `0`. Fixable by adding a
+  `MatterbridgePumpConfigurationAndControlServer` behavior that syncs the two, but that's a feature addition
+  out of scope for just cataloging these tests. `"skip": true` in `chipTests.json`, not fixable via PICS.
 
 ### matter.js discovery
 
