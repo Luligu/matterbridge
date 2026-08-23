@@ -37,6 +37,7 @@ import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-man
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
+import { OperationalState } from '@matter/types/clusters/operational-state';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import type { AnsiLogger } from 'node-ansi-logger';
 
@@ -52,6 +53,9 @@ type ChipTestAppPipeCommand = {
   Occupancy?: number;
   SensorFault?: number;
   SoilMoistureValue?: number;
+  Device?: string;
+  Operation?: string;
+  Param?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -798,6 +802,39 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       await endpoint.setStateOf(endpoint.behaviors.supported.soilMeasurement, { soilMoistureMeasuredValue: command.SoilMoistureValue ?? null });
       matterbridge.log.info(`CHIP test app pipe set SoilMeasurement.SoilMoistureMeasuredValue to ${command.SoilMoistureValue ?? null} on endpoint ${endpointId}`);
       return;
+    case 'OperationalStateChange':
+      // TC_OpstateCommon.py's send_manual_or_pipe_command() drives the DUT into states/errors a real command
+      // can't reach on its own (e.g. forcing Error), independently of the actual Pause/Stop/Start/Resume
+      // command handlers under test elsewhere in the same test. OnFault with NoError only clears the error
+      // (the test always follows it with an explicit Stop/Start pipe command of its own to pick the resulting
+      // state); any other error id also moves the device to Error, per the base cluster's Effect on Receipt.
+      switch (command.Operation) {
+        case 'Stop':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Stopped });
+          break;
+        case 'Start':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Running });
+          break;
+        case 'Pause':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Paused });
+          break;
+        case 'OnFault': {
+          const errorStateId: OperationalState.ErrorState = command.Param ?? OperationalState.ErrorState.NoError;
+          const isNoError = errorStateId === OperationalState.ErrorState.NoError;
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, {
+            operationalError: { errorStateId, errorStateDetails: isNoError ? 'Fully operational' : 'Simulated CHIP test fault' },
+            ...(isNoError ? {} : { operationalState: OperationalState.OperationalStateEnum.Error }),
+          });
+          break;
+        }
+        default:
+          matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe OperationalStateChange operation: ${JSON.stringify(command)}`);
+          return;
+      }
+      matterbridge.log.info(
+        `CHIP test app pipe OperationalStateChange(${command.Operation}${command.Param === undefined ? '' : `, ${command.Param}`}) applied on endpoint ${endpointId}`,
+      );
+      return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
   }
@@ -825,7 +862,10 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('NewState' in value) || typeof value.NewState === 'boolean') &&
     (!('Occupancy' in value) || typeof value.Occupancy === 'number') &&
     (!('SensorFault' in value) || typeof value.SensorFault === 'number') &&
-    (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number')
+    (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number') &&
+    (!('Device' in value) || typeof value.Device === 'string') &&
+    (!('Operation' in value) || typeof value.Operation === 'string') &&
+    (!('Param' in value) || typeof value.Param === 'number')
   );
 }
 // v8 ignore end

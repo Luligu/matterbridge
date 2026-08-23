@@ -1376,6 +1376,49 @@
       "endpoint": 506,
       "note": "Exercises the valve auto-closing once OpenDuration elapses, tracked via RemainingDuration reaching 0.",
       "args": ["--PICS /root/valve-configuration-and-control.pics"]
+    },
+    {
+      "name": "OperationalState attributes on IrrigationSystem",
+      "test": "TC_OPSTATE_2_1.py",
+      "endpoint": 507,
+      "note": "Plain reads of every base OperationalState attribute, plus manual (app-pipe) transitions through every OperationalState/ErrorState value.",
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OperationalState Start/Stop on IrrigationSystem",
+      "test": "TC_OPSTATE_2_2.py",
+      "endpoint": 507,
+      "note": "Exercises Start/Stop and the CommandInvalidInState/UnableToStartOrResume paths.",
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState Pause/Resume on IrrigationSystem",
+      "test": "TC_OPSTATE_2_3.py",
+      "endpoint": 507,
+      "note": "Exercises Pause/Resume and the Pause/Resume-compatibility tables from Stopped and Error.",
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState OperationalError event on IrrigationSystem",
+      "test": "TC_OPSTATE_2_4.py",
+      "endpoint": 507,
+      "note": "Exercises the mandatory OperationalError event (E00), emitted automatically by the base @matter/node OperationalStateServer whenever OperationalError becomes non-NoError. resetBefore avoids a false negative: TC_OPSTATE_2_3.py's own last step leaves OperationalError already at UnableToStartOrResume, and this event only fires on an actual value change, not on re-setting the same error id.",
+      "resetBefore": true,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OPSTATE.ErrorEventGen:1"]
+    },
+    {
+      "name": "OperationalState OperationCompletion event on IrrigationSystem",
+      "test": "TC_OPSTATE_2_5.py",
+      "endpoint": 507,
+      "note": "Exercises the optional OperationCompletion event (E01), emitted by stop() in operationalStateServer.ts. CountdownTime is always null on this endpoint though, so the test's own CountdownTime guard self-skips the steps that would otherwise wait for and assert on the event's fields (also sidesteps the test's own DUT-reboot step).",
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OperationalState CountdownTime reporting on IrrigationSystem",
+      "test": "TC_OPSTATE_2_6.py",
+      "endpoint": 507,
+      "note": "CountdownTime is always null on this endpoint (createDefaultOperationalStateClusterServer() never updates it), so every CountdownTime-report assertion self-skips; only the plain Start/Pause transitions are exercised.",
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     }
   ]
 }

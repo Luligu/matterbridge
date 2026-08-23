@@ -1640,6 +1640,10 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * Get the default OperationalState Cluster Server.
  *
  * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+ * @param {OperationalState.OperationalStateStruct[]} operationalStateList - The list of operational states supported by the device.
+ * @param {OperationalState.ErrorStateStruct} operationalError - The initial operational error state.
+ * @param {string[] | null} phaseList - The list of phase names supported by the device, or null if not supported.
+ * @param {number | null} currentPhase - The index of the current phase in phaseList, or null if phaseList is empty/null.
  * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
  *
  * @remarks
@@ -1649,20 +1653,25 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
  * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
-export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
-  // TODO: matter.js 0.16.0 needs a with() method
+export function getDefaultOperationalStateClusterServer(
+  operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
+  operationalStateList: OperationalState.OperationalStateStruct[] = [
+    { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+    { operationalStateId: OperationalState.OperationalStateEnum.Running },
+    { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+    { operationalStateId: OperationalState.OperationalStateEnum.Error },
+  ],
+  operationalError: OperationalState.ErrorStateStruct = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+  phaseList: string[] | null = [],
+  currentPhase: number | null = null,
+) {
   return optionsFor(MatterbridgeOperationalStateServer.with(), {
-    phaseList: [],
-    currentPhase: null,
-    countdownTime: null,
-    operationalStateList: [
-      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
-      { operationalStateId: OperationalState.OperationalStateEnum.Running },
-      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
-      { operationalStateId: OperationalState.OperationalStateEnum.Error },
-    ],
+    phaseList,
+    currentPhase,
+    countdownTime: null, // optional
+    operationalStateList,
     operationalState,
-    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    operationalError,
   });
 }
 

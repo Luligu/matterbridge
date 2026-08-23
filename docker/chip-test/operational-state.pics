@@ -1,0 +1,28 @@
+# To run tests on OperationalState --PICS is required
+# Matches getDefaultOperationalStateClusterServer()/MatterbridgeOperationalStateServer
+# (packages/core/src/matterbridgeEndpointHelpers.ts, packages/core/src/behaviors/operationalStateServer.ts) on
+# CHIP IrrigationSystem endpoint 507.
+PICS_SDK_CI_ONLY=1
+OPSTATE.S=1
+OPSTATE.C=0 # Matterbridge only exposes an OperationalState server, never acts as a client
+OPSTATE.S.M.ST_STOPPED=1
+OPSTATE.S.M.ST_RUNNING=1
+OPSTATE.S.M.ST_PAUSED=1
+OPSTATE.S.M.ST_ERROR=1
+OPSTATE.S.M.ERR_NO_ERROR=1
+OPSTATE.S.M.ERR_UNABLE_TO_START_OR_RESUME=1 # Start rejects with this error when the device is in the Error state (see start() in operationalStateServer.ts)
+OPSTATE.S.M.ERR_UNABLE_TO_COMPLETE_OPERATION=1
+OPSTATE.S.M.ERR_COMMAND_INVALID_IN_STATE=1
+OPSTATE.S.A0000=1 # PhaseList
+OPSTATE.S.A0001=1 # CurrentPhase
+OPSTATE.S.A0002=1 # CountdownTime (always null; MatterbridgeOperationalStateServer never drives a real countdown)
+OPSTATE.S.A0003=1 # OperationalStateList
+OPSTATE.S.A0004=1 # OperationalState
+OPSTATE.S.A0005=1 # OperationalError
+OPSTATE.S.C00.Rsp=1 # Pause
+OPSTATE.S.C01.Rsp=1 # Stop
+OPSTATE.S.C02.Rsp=1 # Start
+OPSTATE.S.C03.Rsp=1 # Resume
+OPSTATE.S.C04.Tx=1 # OperationalCommandResponse
+OPSTATE.S.E00=1 # OperationalError event (mandatory; emitted automatically by the base @matter/node OperationalStateServer whenever OperationalError becomes non-NoError)
+OPSTATE.S.E01=1 # OperationCompletion event (optional; emitted by stop() in operationalStateServer.ts, tracking TotalOperationalTime/PausedTime via internal.operationStartedAt/pausedAccumulatedMs)

@@ -157,6 +157,7 @@
 <ul>
 <li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>Closure</code> device type and <code>ClosureControl</code> clusters.</li>
 <li>[chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterValve</code> device type and the <code>ValveConfigurationAndControl</code> cluster.</li>
+<li>[chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the <code>OperationalState</code> cluster.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
@@ -164,6 +165,8 @@
 <li>[matterbridge]: <code>MatterbridgeValveConfigurationAndControlServer</code> now implements the Matter 1.6 <code>ValveConfigurationAndControl</code> Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new <code>state.movementDuration</code>/<code>state.autoClose</code> (both disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
 <li>[matterbridge]: Add the optional <code>movementDuration</code> and <code>autoClose</code> parameters to <code>createDefaultValveConfigurationAndControlClusterServer()</code>, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.</li>
 <li>[devices]: Add the optional <code>movementDuration</code> and <code>autoClose</code> parameters to <code>IrrigationSystem.addZone()</code>, passed through to the zone&#39;s <code>ValveConfigurationAndControl</code> cluster server.</li>
+<li>[matterbridge]: <code>MatterbridgeOperationalStateServer</code> now implements the Matter 1.6 <code>OperationalState</code> cluster&#39;s Pause/Resume compatibility tables, rejects Start with <code>UnableToStartOrResume</code> from the Error state, and emits the <code>OperationalError</code>/<code>OperationCompletion</code> events (<code>OperationCompletion</code>&#39;s <code>TotalOperationalTime</code>/<code>PausedTime</code> tracked across Start/Pause/Resume cycles).</li>
+<li>[matterbridge]: Add the optional <code>operationalStateList</code>, <code>operationalError</code>, <code>phaseList</code>, and <code>currentPhase</code> parameters to <code>createDefaultOperationalStateClusterServer()</code>.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>

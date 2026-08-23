@@ -142,6 +142,30 @@ Water Valve clusters:
 
 - ValveConfigurationAndControl (Level feature only, no TimeSync)
 
+### Endpoint 507
+
+Irrigation System clusters:
+
+- OperationalState (base cluster; Pause/Stop/Start/Resume all implemented and fully conformant — including
+  the Pause/Resume compatibility tables and Start rejecting with `UnableToStartOrResume` from the Error state
+  — PhaseList/CurrentPhase/CountdownTime always empty/null). Both events are implemented: `OperationalError`
+  (E00, mandatory) is emitted automatically by the base `@matter/node` `OperationalStateServer` whenever
+  `OperationalError` becomes non-`NoError`; `OperationCompletion` (E01, optional) is emitted by `stop()` in
+  `operationalStateServer.ts`, which tracks `TotalOperationalTime`/`PausedTime` across Start/Pause/Resume via
+  `MatterbridgeOperationalStateServer.Internal` (persists correctly across separate command invocations, unlike
+  plain class fields, the same way `this.state` does — see `MatterbridgeValveConfigurationAndControlServer`'s
+  own `Internal` for the established pattern).
+
+Driven via the `OperationalStateChange` app-pipe command (`Device`/`Operation`/`Param` fields,
+`handleChipTestAppPipeCommand()` in `chipTests.ts`), the same mechanism `TC_OpstateCommon.py`'s
+`send_manual_or_pipe_command()` uses to force the DUT into states/errors no real command can reach on its own
+(e.g. Error), independently of the real Pause/Stop/Start/Resume command handlers under test elsewhere in the
+same test. `TC_OPSTATE_2_1`-`2_6` pass 6/6 with `docker/chip-test/operational-state.pics` matching the
+generic `ci-pics-values` defaults exactly (no attribute/command/error-state/event gaps against this endpoint).
+`TC_OPSTATE_2_4.py` needs `"resetBefore": true` in `chipTests.json`: `OperationalError` only emits on an
+actual value change, and `TC_OPSTATE_2_3.py`'s own last step leaves it at `UnableToStartOrResume`, which would
+otherwise make `TC_OPSTATE_2_4.py`'s identical `OnFault` trigger a false "event never arrived" failure.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

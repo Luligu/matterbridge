@@ -166,7 +166,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   await registerDevice(ep, 'Water Valve', 'ACTUATOR-05-06');
 
   // IrrigationSystem has a single device class.
-  ep = new IrrigationSystem('Irrigation System with 2 zones', 'ACTUATOR-05-07', { id: 'IrrigationSystem', number: EndpointNumber(5_07) });
+  ep = new IrrigationSystem('Irrigation System with 2 zones', 'ACTUATOR-05-07', { id: 'IrrigationSystem', number: EndpointNumber(5_07), autoOpenClose: true });
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.One), 'IrrigationSystemZone1', EndpointNumber(5_07_1), 5000, true);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion

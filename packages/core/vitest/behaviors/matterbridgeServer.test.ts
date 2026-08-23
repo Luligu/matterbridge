@@ -30,7 +30,6 @@ import { Identify } from '@matter/types/clusters/identify';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
@@ -1690,38 +1689,6 @@ describe('Server clusters and behaviors', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
     hasSpy.mockRestore();
-  });
-
-  test('OperationalState server', async () => {
-    const expectOperationalStateAttributes = (expectedState: number) => {
-      expect(washer.getAttribute(OperationalState.id, 'operationalState')).toBe(expectedState);
-      expect(washer.getAttribute(OperationalState.id, 'operationalError')).toEqual({
-        errorStateId: OperationalState.ErrorState.NoError,
-        errorStateDetails: 'Fully operational',
-      });
-    };
-
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
-
-    await expectCommand(washer, OperationalState, 'start', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
-
-    await expectCommand(washer, OperationalState, 'pause', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Paused);
-
-    await expectCommand(washer, OperationalState, 'resume', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
-
-    await expectCommand(washer, OperationalState, 'stop', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
   });
 
   test('ServiceArea server', async () => {

@@ -3,7 +3,7 @@
  * @description Matter 1.5 Irrigation System device class.
  * @author Luca Liguori
  * @created 2026-03-02
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -27,6 +27,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import type { Semtag } from '@matter/types/globals';
 import { fireAndForget } from '@matterbridge/utils';
 
+import { MatterbridgeValveConfigurationAndControlServer } from '../behaviors/valveConfigurationAndControlServer.js';
 import { irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
@@ -38,7 +39,13 @@ export interface IrrigationSystemOptions {
   operationalState?: OperationalState.OperationalStateEnum;
   /** Flow measurement in 10 x m3/h. This is an optional attribute that may be included if the irrigation system has a flow measurement capability. */
   flowMeasuredValue?: number | null;
+  /** Whether the system automatically opens all zone valves when operationalState changes to Running, and closes them on Paused and Stopped. Defaults to `false` (disabled). */
+  autoOpenClose?: boolean;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
   id?: string;
+  /** Explicit endpoint number. */
   number?: EndpointNumber;
 }
 
@@ -57,7 +64,7 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
    * @param {IrrigationSystemOptions} [options] - Optional initial operational state and attributes.
    */
   constructor(name: string, serial: string, options: IrrigationSystemOptions = {}) {
-    super([irrigationSystem, powerSource], { id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, number: options.number });
+    super([irrigationSystem, powerSource], { id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, number: options.number, tagList: options.tagList });
 
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Irrigation System');
@@ -72,6 +79,29 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     if (options.flowMeasuredValue !== undefined) this.createDefaultFlowMeasurementClusterServer(options.flowMeasuredValue);
     fireAndForget(this.addFixedLabel('composed', 'IrrigationSystem'), this.log, 'IrrigationSystem addFixedLabel');
     this.addRequiredClusterServers();
+
+    // Subscribe to the OperationalState cluster's OperationalState attribute changes to log state changes.
+    if (options.autoOpenClose !== true) return;
+    this.subscribeAttribute(OperationalState, 'operationalState', (value) => {
+      switch (value) {
+        case OperationalState.OperationalStateEnum.Stopped:
+          this.log.info('IrrigationSystem operationalState changed to: Stopped');
+          fireAndForget(this.closeAllZones(), this.log, 'IrrigationSystem closeAllZones');
+          break;
+        case OperationalState.OperationalStateEnum.Running:
+          this.log.info('IrrigationSystem operationalState changed to: Running');
+          fireAndForget(this.openAllZones(), this.log, 'IrrigationSystem openAllZones');
+          break;
+        case OperationalState.OperationalStateEnum.Paused:
+          this.log.info('IrrigationSystem operationalState changed to: Paused');
+          fireAndForget(this.closeAllZones(), this.log, 'IrrigationSystem closeAllZones');
+          break;
+        case OperationalState.OperationalStateEnum.Error:
+          this.log.info('IrrigationSystem operationalState changed to: Error');
+          break;
+        // No default
+      }
+    });
   }
 
   /**
@@ -90,5 +120,31 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
       .createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, movementDuration, autoClose)
       .addRequiredClusterServers();
     return this;
+  }
+
+  /**
+   * Opens the ValveConfigurationAndControl cluster of every child zone endpoint.
+   *
+   * @returns {Promise<void>} A promise that resolves when all zone valves have been commanded to open.
+   */
+  async openAllZones(): Promise<void> {
+    await Promise.all(
+      this.getChildEndpoints()
+        .filter((child) => child.hasClusterServer(MatterbridgeValveConfigurationAndControlServer))
+        .map(async (child) => child.act(async (agent) => agent.get(MatterbridgeValveConfigurationAndControlServer).open({}))),
+    );
+  }
+
+  /**
+   * Closes the ValveConfigurationAndControl cluster of every child zone endpoint.
+   *
+   * @returns {Promise<void>} A promise that resolves when all zone valves have been commanded to close.
+   */
+  async closeAllZones(): Promise<void> {
+    await Promise.all(
+      this.getChildEndpoints()
+        .filter((child) => child.hasClusterServer(MatterbridgeValveConfigurationAndControlServer))
+        .map(async (child) => child.act(async (agent) => agent.get(MatterbridgeValveConfigurationAndControlServer).close())),
+    );
   }
 }

@@ -4464,6 +4464,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default OperationalState Cluster Server.
    *
    * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+   * @param {OperationalState.OperationalStateStruct[]} operationalStateList - The list of operational states supported by the device.
+   * @param {OperationalState.ErrorStateStruct} operationalError - The initial operational error state.
+   * @param {string[] | null} phaseList - The list of phase names supported by the device, or null if not supported.
+   * @param {number | null} currentPhase - The index of the current phase in phaseList, or null if phaseList is empty/null.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -4474,8 +4478,22 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
    * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
    */
-  createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
-    this.behaviors.require(MatterbridgeOperationalStateServer, getDefaultOperationalStateClusterServer(operationalState));
+  createDefaultOperationalStateClusterServer(
+    operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
+    operationalStateList: OperationalState.OperationalStateStruct[] = [
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error },
+    ],
+    operationalError: OperationalState.ErrorStateStruct = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    phaseList: string[] | null = [],
+    currentPhase: number | null = null,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeOperationalStateServer,
+      getDefaultOperationalStateClusterServer(operationalState, operationalStateList, operationalError, phaseList, currentPhase),
+    );
     return this;
   }
 
