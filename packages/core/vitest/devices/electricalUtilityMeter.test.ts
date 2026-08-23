@@ -35,7 +35,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { ElectricalUtilityMeter, MatterbridgeCommodityPriceServer, MatterbridgeCommodityTariffServer } from '../../src/devices/electricalUtilityMeter.js';
-import { electricalEnergyTariff, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';
+import { electricalEnergyTariff, electricalMeter, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
@@ -168,6 +168,54 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(explicitMeter.getClusterServerOptions(Descriptor.id)).toMatchObject({
       tagList: [{ mfgCode: null, namespaceId: CommonNumberTag.One.namespaceId, tag: CommonNumberTag.One.tag }],
+    });
+  });
+
+  test('addElectricalMeter with tariff sub-option combines Electrical Energy Tariff onto the same endpoint', () => {
+    // Device Library Specification § 14.9.6 "Basic Utility Meter" topology example, EP2: Electrical Meter +
+    // Electrical Energy Tariff + Electrical Sensor on a single endpoint.
+    const combinedMeter = device.addElectricalMeter('Electrical Meter Current', {
+      voltage: 230_000,
+      current: 2_000,
+      power: 460_000,
+      energyImported: 1_000_000,
+      tariff: { tariffLabel: 'Standard', providerName: 'Matterbridge Example', currentPrice: explicitCurrentPrice },
+    });
+
+    // The meter's own clusters are still present...
+    expect(combinedMeter.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(combinedMeter.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(combinedMeter.hasClusterServer(CommodityMetering.id)).toBeTruthy();
+    // ...and the tariff device type and clusters were folded onto this same endpoint, not a separate one.
+    expect(combinedMeter.getDeviceTypes().map((dt) => dt.code)).toEqual(expect.arrayContaining([electricalMeter.code, electricalEnergyTariff.code]));
+    expect(combinedMeter.hasClusterServer(CommodityPrice.id)).toBeTruthy();
+    expect(combinedMeter.hasClusterServer(CommodityTariff.id)).toBeTruthy();
+    expect(combinedMeter.hasClusterServer(ElectricalGridConditions.id)).toBeTruthy();
+
+    expect(combinedMeter.getClusterServerOptions(CommodityPrice.id)).toMatchObject({
+      tariffUnit: TariffUnit.KWh,
+      currency: null,
+      currentPrice: explicitCurrentPrice,
+    });
+    expect(combinedMeter.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
+      tariffInfo: { tariffLabel: 'Standard', providerName: 'Matterbridge Example', currency: null, blockMode: CommodityTariff.BlockMode.NoBlock },
+      tariffUnit: TariffUnit.KWh,
+    });
+    // The default semantic tags for Electrical Energy Tariff (§ 14.7.4) are applied to the combined endpoint.
+    expect(combinedMeter.getClusterServerOptions(Descriptor.id)).toMatchObject({
+      tagList: expect.arrayContaining([expect.objectContaining({ namespaceId: 0x0b }), expect.objectContaining({ namespaceId: 0x0d })]),
+    });
+  });
+
+  test('addElectricalMeter with tariff sub-option keeps CommodityTariff tariffUnit null while tariffInfo is null', () => {
+    const partialMeter = device.addElectricalMeter('Electrical Meter Partial Tariff', { tariff: { tariffUnit: TariffUnit.KVAh } });
+    expect(partialMeter.getClusterServerOptions(CommodityPrice.id)).toMatchObject({
+      tariffUnit: TariffUnit.KVAh,
+    });
+    expect(partialMeter.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
+      tariffInfo: null,
+      // Application Cluster Specification § 9.12.6.2: TariffUnit SHALL be null when TariffInfo is null.
+      tariffUnit: null,
     });
   });
 

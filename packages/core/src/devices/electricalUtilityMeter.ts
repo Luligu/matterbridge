@@ -22,6 +22,7 @@
  */
 
 // @matter
+import type { AtLeastOne } from '@matter/general';
 import { CommodityTariffChronologyTag, CommodityTariffCommodityTag, PowerSourceTag } from '@matter/node';
 import { CommodityMeteringServer } from '@matter/node/behaviors/commodity-metering';
 import { CommodityPriceServer } from '@matter/node/behaviors/commodity-price';
@@ -37,7 +38,15 @@ import type { MeterIdentification } from '@matter/types/clusters/meter-identific
 import { type Currency, type Semtag, TariffUnit } from '@matter/types/globals';
 
 // Matterbridge
-import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter, meterReferencePoint, powerSource } from '../matterbridgeDeviceTypes.js';
+import {
+  type DeviceTypeDefinition,
+  electricalEnergyTariff,
+  electricalMeter,
+  electricalSensor,
+  electricalUtilityMeter,
+  meterReferencePoint,
+  powerSource,
+} from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag, optionsFor } from '../matterbridgeEndpointHelpers.js';
 
@@ -145,6 +154,15 @@ export interface ElectricalMeterOptions {
   maximumMeteredQuantities?: number | null;
   /** Semantic tags for endpoint disambiguation, e.g. to disambiguate multiple electrical meters. */
   tagList?: Semtag[];
+  /**
+   * When provided, also adds the Electrical Energy Tariff device type and its clusters (CommodityPrice,
+   * CommodityTariff, ElectricalGridConditions) to this **same** endpoint, instead of requiring a separate one — the
+   * EP2 "Electrical Meter + Electrical Energy Tariff + Electrical Sensor" combo of the Device Library
+   * Specification § 14.9.6 "Basic Utility Meter" topology example. Use `addElectricalEnergyTariff` instead when the
+   * tariff belongs on its own endpoint (e.g. EP3 of that same example). Its own `tagList` option, if given, is
+   * ignored — pass the combined endpoint's tags on `ElectricalMeterOptions.tagList` instead.
+   */
+  tariff?: ElectricalEnergyTariffOptions;
 }
 
 /**
@@ -192,8 +210,9 @@ export interface ElectricalEnergyTariffOptions {
  * § 14.6.6, inherited from Meter Reference Point via the superset relationship, requires this device to be composed
  * of at least one child endpoint with the Electrical Meter device type and at least one with Electrical Energy
  * Tariff. This is left to the caller, not enforced here (matching how `Oven`/`Refrigerator`/`Cooktop` leave their own
- * "min 1" composition rules to `addCabinet`/`addSurface`) — use `addElectricalMeter` to add at least one electrical
- * meter endpoint and `addElectricalEnergyTariff` to add at least one tariff endpoint for a spec-conformant device.
+ * "min 1" composition rules to `addCabinet`/`addSurface`) — use `addElectricalMeter` (optionally with its `tariff`
+ * sub-option, to fold Electrical Energy Tariff onto the same endpoint) and/or `addElectricalEnergyTariff` for a
+ * spec-conformant device.
  *
  * § 14.9.4 also marks the `TimeSynchronization` cluster as mandatory on the node's Root Node endpoint (not this
  * endpoint) whenever an Electrical Utility Meter device type is present. This is intentionally not implemented here:
@@ -248,7 +267,8 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
   /**
    * Adds an Electrical Meter child endpoint (combined with the Electrical Sensor device type, as required by the
    * Electrical Meter device type composition rules) and configures the ElectricalPowerMeasurement,
-   * ElectricalEnergyMeasurement and CommodityMetering clusters.
+   * ElectricalEnergyMeasurement and CommodityMetering clusters. When `options.tariff` is provided, also folds the
+   * Electrical Energy Tariff device type and its clusters onto this same endpoint (see `ElectricalMeterOptions`).
    *
    * Device Library Specification § 14.8 (Electrical Meter Device Type), § 14.8.4 (Cluster Requirements:
    * ElectricalPowerMeasurement, ElectricalEnergyMeasurement mandatory, CommodityMetering optional/provisional) and
@@ -272,12 +292,17 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       tariffUnit = null,
       maximumMeteredQuantities = null,
       tagList,
+      tariff,
     } = options;
-    const meter = this.addChildDeviceType(name, [electricalMeter, electricalSensor], tagList ? { tagList } : {})
+    const deviceTypes: AtLeastOne<DeviceTypeDefinition> = tariff ? [electricalMeter, electricalSensor, electricalEnergyTariff] : [electricalMeter, electricalSensor];
+    // § 14.7.4 Semantic Tag Requirements still apply once Electrical Energy Tariff is folded onto this endpoint.
+    const combinedTagList = tariff ? [...(tagList ?? []), ...this.getDefaultElectricalEnergyTariffTagList()] : tagList;
+    const meter = this.addChildDeviceType(name, deviceTypes, combinedTagList ? { tagList: combinedTagList } : {})
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported);
     meter.behaviors.require(CommodityMeteringServer, optionsFor(CommodityMeteringServer, { meteredQuantity, meteredQuantityTimestamp, tariffUnit, maximumMeteredQuantities }));
+    if (tariff) this.configureElectricalEnergyTariffClusters(meter, tariff);
     meter.addRequiredClusterServers();
     return meter;
   }
@@ -291,16 +316,36 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
    * (Commodity Tariff Chronology `Current` and Commodity Tariff Commodity `ElectricalEnergy`, both applied via the
    * default `tagList`).
    *
-   * Per Application Cluster Specification § 9.12.6.1/§ 9.12.6.2, chip's `TC_SETRF_TestBase` asserts that every
-   * CommodityTariff attribute — including `tariffUnit` — must read back `null` while `tariffInfo` is `null`; this is
-   * enforced below regardless of the `tariffUnit` option (which otherwise only feeds the CommodityPrice cluster,
-   * § 9.9.6.1, where `tariffUnit` is non-nullable).
+   * Use this method when the tariff belongs on its own endpoint (e.g. EP3 of the Device Library Specification
+   * § 14.9.6 "Basic Utility Meter" topology example). Use `addElectricalMeter`'s `tariff` sub-option instead to fold
+   * the tariff onto the same endpoint as an electrical meter (e.g. that same example's EP2).
    *
    * @param {string} name - Human-readable name of the electrical energy tariff endpoint.
    * @param {ElectricalEnergyTariffOptions} [options] - Optional initial cluster attribute values.
    * @returns {MatterbridgeEndpoint} The created electrical energy tariff endpoint.
    */
   addElectricalEnergyTariff(name: string, options: ElectricalEnergyTariffOptions = {}): MatterbridgeEndpoint {
+    const { tagList = this.getDefaultElectricalEnergyTariffTagList() } = options;
+    const tariff = this.addChildDeviceType(name, electricalEnergyTariff, { tagList });
+    this.configureElectricalEnergyTariffClusters(tariff, options);
+    tariff.addRequiredClusterServers();
+    return tariff;
+  }
+
+  /**
+   * Configures the CommodityPrice, CommodityTariff and ElectricalGridConditions clusters for an Electrical Energy
+   * Tariff device type on the given endpoint. Shared by `addElectricalEnergyTariff` (its own endpoint) and
+   * `addElectricalMeter` (folded onto the electrical meter's own endpoint via its `tariff` sub-option).
+   *
+   * Per Application Cluster Specification § 9.12.6.1/§ 9.12.6.2, chip's `TC_SETRF_TestBase` asserts that every
+   * CommodityTariff attribute — including `tariffUnit` — must read back `null` while `tariffInfo` is `null`; this is
+   * enforced below regardless of the `tariffUnit` option (which otherwise only feeds the CommodityPrice cluster,
+   * § 9.9.6.1, where `tariffUnit` is non-nullable).
+   *
+   * @param {MatterbridgeEndpoint} endpoint - The endpoint to configure. Already carries the Electrical Energy Tariff device type.
+   * @param {ElectricalEnergyTariffOptions} options - The tariff cluster attribute values.
+   */
+  private configureElectricalEnergyTariffClusters(endpoint: MatterbridgeEndpoint, options: ElectricalEnergyTariffOptions): void {
     const {
       tariffLabel = null,
       providerName = null,
@@ -309,16 +354,14 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       currentPrice = null,
       localGenerationAvailable = null,
       currentConditions = null,
-      tagList = [getSemtag(CommodityTariffChronologyTag.Current), getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
     } = options;
-    const tariff = this.addChildDeviceType(name, electricalEnergyTariff, { tagList });
 
-    tariff.behaviors.require(MatterbridgeCommodityPriceServer, optionsFor(MatterbridgeCommodityPriceServer, { tariffUnit, currency, currentPrice }));
+    endpoint.behaviors.require(MatterbridgeCommodityPriceServer, optionsFor(MatterbridgeCommodityPriceServer, { tariffUnit, currency, currentPrice }));
 
     // Application Cluster Specification § 9.12.6.1: TariffInfo is null unless a label, provider name, or currency is given.
     const tariffInfo =
       tariffLabel !== null || providerName !== null || currency !== null ? { tariffLabel, providerName, currency, blockMode: CommodityTariff.BlockMode.NoBlock } : null;
-    tariff.behaviors.require(
+    endpoint.behaviors.require(
       MatterbridgeCommodityTariffServer,
       optionsFor(MatterbridgeCommodityTariffServer, {
         tariffInfo,
@@ -342,9 +385,16 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       }),
     );
 
-    tariff.behaviors.require(ElectricalGridConditionsServer, optionsFor(ElectricalGridConditionsServer, { localGenerationAvailable, currentConditions }));
+    endpoint.behaviors.require(ElectricalGridConditionsServer, optionsFor(ElectricalGridConditionsServer, { localGenerationAvailable, currentConditions }));
+  }
 
-    tariff.addRequiredClusterServers();
-    return tariff;
+  /**
+   * The default semantic tags for an Electrical Energy Tariff device type: Commodity Tariff Chronology `Current`
+   * and Commodity Tariff Commodity `ElectricalEnergy` (Device Library Specification § 14.7.4).
+   *
+   * @returns {Semtag[]} The default tag list.
+   */
+  private getDefaultElectricalEnergyTariffTagList(): Semtag[] {
+    return [getSemtag(CommodityTariffChronologyTag.Current), getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)];
   }
 }
