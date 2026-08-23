@@ -74,16 +74,20 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     this.addRequiredClusterServers();
   }
 
-  /*
+  /**
    * Helper method to add a new irrigation zone to the system.
    * Each zone is represented as a child device of type Water Valve, with the appropriate tags.
    *
    * @param {Semtag} tag - Semantic tag describing the zone (e.g. CommonNumberTag.One).
+   * @param {string} [id] - Stable storage key for the zone endpoint.
+   * @param {EndpointNumber} [number] - Explicit endpoint number for the zone.
+   * @param {number} [movementDuration] - Simulated duration, in milliseconds, that the zone valve's Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled).
+   * @param {boolean} [autoClose] - Whether the zone valve's RemainingDuration countdown timer auto-closes it once it reaches 0. Defaults to `false` (disabled), leaving auto-close to the real device implementation.
    * @returns {this} The current endpoint instance for chaining.
    */
-  addZone(tag: Semtag, id?: string, number?: EndpointNumber): this {
+  addZone(tag: Semtag, id?: string, number?: EndpointNumber, movementDuration?: number, autoClose?: boolean): this {
     this.addChildDeviceType(`Zone ${tag.tag}`, waterValve, { tagList: [getSemtag(tag), getSemtag(CommonLocationTag.Zone)], id, number })
-      .createDefaultValveConfigurationAndControlClusterServer()
+      .createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, movementDuration, autoClose)
       .addRequiredClusterServers();
     return this;
   }

@@ -160,14 +160,17 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
   ep.createDefaultPowerSourceWiredClusterServer();
+  // No plugin manages this demo endpoint's physical valve, so enable the built-in Open/Close movement and
+  // auto-close simulation directly here (rather than relying on MATTERBRIDGE_CHIP_TEST's initialize() default).
+  ep.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 5000, true);
   await registerDevice(ep, 'Water Valve', 'ACTUATOR-05-06');
 
   // IrrigationSystem has a single device class.
   ep = new IrrigationSystem('Irrigation System with 2 zones', 'ACTUATOR-05-07', { id: 'IrrigationSystem', number: EndpointNumber(5_07) });
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.One), 'IrrigationSystemZone1', EndpointNumber(5_07_1));
+  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.One), 'IrrigationSystemZone1', EndpointNumber(5_07_1), 5000, true);
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.Two), 'IrrigationSystemZone2', EndpointNumber(5_07_2));
+  (ep as IrrigationSystem).addZone(getSemtag(CommonNumberTag.Two), 'IrrigationSystemZone2', EndpointNumber(5_07_2), 5000, true);
   await registerDevice(ep, 'Irrigation System with 2 zones', 'ACTUATOR-05-07');
 
   // Chapter 6 - Switches and Controls Device Types

@@ -35,7 +35,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -97,7 +96,6 @@ import {
   smokeCoAlarm,
   temperatureSensor,
   thermostat,
-  waterValve,
   windowCovering,
 } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -119,7 +117,6 @@ describe('Server clusters and behaviors', () => {
   let thermostatPreset: MatterbridgeEndpoint;
   let thermostatSchedule: MatterbridgeEndpoint;
   let thermostatSuggestion: MatterbridgeEndpoint;
-  let valve: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
   let contact: MatterbridgeEndpoint;
   let mode: MatterbridgeEndpoint;
@@ -401,14 +398,6 @@ describe('Server clusters and behaviors', () => {
     thermostatPreset = createPresetThermostatEndpoint('thermostatPreset');
     expect(thermostatPreset).toBeDefined();
     expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
-  });
-
-  test('Device type: valve', async () => {
-    valve = new MatterbridgeEndpoint(waterValve, { id: 'valve' });
-    valve.createDefaultValveConfigurationAndControlClusterServer();
-    valve.addRequiredClusterServers();
-    expect(valve).toBeDefined();
-    expect(await addDevice(aggregator, valve)).toBeTruthy();
   });
 
   test('Device type: smokeSensor', async () => {
@@ -1493,69 +1482,6 @@ describe('Server clusters and behaviors', () => {
     expect(state3.currentThermostatSuggestion).toBe(suggestionForPreset2);
     expect(state3.thermostatSuggestionNotFollowingReason).toEqual({ ongoingHold: true });
     expect(info).toHaveBeenCalledTimes(1);
-  });
-
-  test('ValveConfigurationAndControl server', async () => {
-    const expectValveAttributes = (expected: {
-      currentState: number;
-      targetState: number;
-      currentLevel: number;
-      targetLevel: number;
-      openDuration: number | null;
-      remainingDuration: number | null;
-    }) => {
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(expected.currentState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(expected.targetState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentLevel')).toBe(expected.currentLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetLevel')).toBe(expected.targetLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'openDuration')).toBe(expected.openDuration);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'remainingDuration')).toBe(expected.remainingDuration);
-    };
-
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Closed,
-      targetState: ValveConfigurationAndControl.ValveState.Closed,
-      currentLevel: 0,
-      targetLevel: 0,
-      openDuration: null,
-      remainingDuration: null,
-    });
-
-    const openRequest = { targetLevel: 50, openDuration: 60 };
-    await expectCommand(valve, ValveConfigurationAndControl, 'open', openRequest, (data) => {
-      expect(data.cluster).toBe('valveConfigurationAndControl');
-    });
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Open,
-      targetState: ValveConfigurationAndControl.ValveState.Open,
-      currentLevel: 50,
-      targetLevel: 50,
-      openDuration: 60,
-      remainingDuration: null,
-    });
-
-    await valve.setAttribute(ValveConfigurationAndControl.id, 'defaultOpenDuration', null);
-    await valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'open', {});
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Open,
-      targetState: ValveConfigurationAndControl.ValveState.Open,
-      currentLevel: 100,
-      targetLevel: 100,
-      openDuration: null,
-      remainingDuration: null,
-    });
-
-    await expectCommand(valve, ValveConfigurationAndControl, 'close', undefined, (data) => {
-      expect(data.cluster).toBe('valveConfigurationAndControl');
-    });
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Closed,
-      targetState: ValveConfigurationAndControl.ValveState.Closed,
-      currentLevel: 0,
-      targetLevel: 0,
-      openDuration: null,
-      remainingDuration: null,
-    });
   });
 
   test('SmokeCoAlarm server', async () => {

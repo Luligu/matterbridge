@@ -39,26 +39,40 @@ const MatterbridgeValveConfigurationAndControlServerBase = ValveConfigurationAnd
  * ValveConfigurationAndControl server that forwards valve commands to the Matterbridge command handler.
  *
  * @remarks
- * There is no real valve actuator to wait on in the base implementation, so the movement simulated by `open()`/
- * `close()` (CurrentState/CurrentLevel converging on TargetState/TargetLevel, and the RemainingDuration countdown
- * towards an auto-close) is only driven by the built-in timers under `MATTERBRIDGE_CHIP_TEST`. In production the
- * attributes are set synchronously to the values required by the Effect on Receipt of each command, and it's left
- * to the real device implementation (via the command handler forwarded at the top of `open()`/`close()`) to report
- * the eventual completion through `setAttribute()`/`updateAttribute()`.
+ * There is no real valve actuator to wait on in the base implementation, so `open()`/`close()` always set the
+ * attributes required by the Matter spec's Effect on Receipt synchronously (TargetState/TargetLevel/OpenDuration/
+ * RemainingDuration, CurrentState set to Transitioning), but the two built-in simulation timers that would drive
+ * completion are each gated on their own `state` knob, both disabled (0 / `false`) by default:
+ * - `state.movementDuration` (milliseconds): when `> 0`, CurrentState/CurrentLevel converge on TargetState/
+ *   TargetLevel (which then revert to `null`) after this many milliseconds. When `0` (the default), completion
+ *   is left entirely to the real device implementation, e.g. via `setAttribute()`/`updateAttribute()` from the
+ *   command handler forwarded at the top of `open()`/`close()`.
+ * - `state.autoClose` (boolean): when `true`, RemainingDuration counts down once per second and the valve calls
+ *   `close()` on its own once it reaches 0. When `false` (the default), RemainingDuration is still set on Open
+ *   but never ticks down or triggers an internal Close — auto-close is left entirely to the real device
+ *   implementation.
+ *
+ * `initialize()` sets both knobs to CHIP-test-friendly values (`movementDuration = 2000`, `autoClose = true`)
+ * under `MATTERBRIDGE_CHIP_TEST` only; production behavior (both disabled) is otherwise unaffected. A real
+ * device implementation may also opt into either simulation directly by setting the same `state` values.
  */
 export class MatterbridgeValveConfigurationAndControlServer extends MatterbridgeValveConfigurationAndControlServerBase {
   declare readonly state: MatterbridgeValveConfigurationAndControlServer.State;
   declare protected internal: MatterbridgeValveConfigurationAndControlServer.Internal;
 
   /**
-   * Enables the built-in movement simulation under MATTERBRIDGE_CHIP_TEST only; production behavior is
-   * unaffected (`movementDuration` stays 0, i.e. disabled, unless overridden by the real device implementation).
+   * Enables the built-in movement and auto-close simulation under MATTERBRIDGE_CHIP_TEST only; production
+   * behavior is unaffected (`movementDuration` stays 0 and `autoClose` stays `false`, i.e. both disabled,
+   * unless overridden by the real device implementation).
    *
    * @returns {MaybePromise} The result of the superclass initializer.
    */
   override initialize(): MaybePromise {
-    // v8 ignore next - only enabled under MATTERBRIDGE_CHIP_TEST
-    if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.movementDuration = 2000;
+    // v8 ignore next 2 - only enabled under MATTERBRIDGE_CHIP_TEST
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.state.movementDuration = 2000;
+      this.state.autoClose = true;
+    }
     return super.initialize();
   }
 
@@ -113,16 +127,17 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
       if (request.targetLevel !== undefined && request.targetLevel !== 100 && this.state.levelStep !== undefined && request.targetLevel % this.state.levelStep !== 0) {
         throw new StatusResponseError(`Open TargetLevel ${request.targetLevel} is not a multiple of LevelStep ${this.state.levelStep}`, Status.ConstraintError);
       }
+      // v8 ignore next - defensive fallback: DefaultOpenLevel's own schema default is already 100
       this.state.targetLevel = request.targetLevel ?? this.state.defaultOpenLevel ?? 100;
     }
 
     // 4.6.8.1.3: When the relevant target and duration attributes have been set, the device SHALL start the
     // movement towards the target value and start the countdown of the RemainingDuration attribute.
-    // v8 ignore next - the built-in movement/countdown simulation only runs under MATTERBRIDGE_CHIP_TEST
-    if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Open, this.state.targetLevel ?? 100);
-      if (this.state.remainingDuration !== null) this.#scheduleAutoClose();
-    }
+    // A non-positive movementDuration disables the built-in movement simulation, leaving completion to the real
+    // device implementation. If autoClose is false, Close is likewise left entirely to the real device
+    // implementation: no countdown timer is started, so RemainingDuration is set (above) but never ticks down.
+    if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Open, this.state.targetLevel ?? 100);
+    if (this.state.autoClose && this.state.remainingDuration !== null) this.#scheduleAutoClose();
   }
 
   /**
@@ -162,9 +177,9 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     if (this.features.level) this.state.targetLevel = 0;
 
     // 4.6.8.2.1: When the relevant target attributes have been set, the device SHALL start the movement towards
-    // the target value.
-    // v8 ignore next - the built-in movement simulation only runs under MATTERBRIDGE_CHIP_TEST
-    if (process.env.MATTERBRIDGE_CHIP_TEST) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Closed, 0);
+    // the target value. A non-positive movementDuration disables the built-in movement simulation, leaving
+    // completion to the real device implementation.
+    if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Closed, 0);
   }
 
   /**
@@ -289,12 +304,14 @@ export namespace MatterbridgeValveConfigurationAndControlServer {
   }
 
   /**
-   * Simulated timing knob for `open()`/`close()`, in addition to the standard ValveConfigurationAndControl
+   * Simulated timing knobs for `open()`/`close()`, in addition to the standard ValveConfigurationAndControl
    * attributes.
    */
   export class State extends MatterbridgeValveConfigurationAndControlServerBase.State {
     /** Simulated duration, in milliseconds, that an Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Default: 0 (disabled); set to 2000 (2 seconds) under MATTERBRIDGE_CHIP_TEST by `initialize()`. */
     movementDuration = 0;
+    /** Whether the RemainingDuration countdown timer auto-closes the valve once it reaches 0. When `false`, RemainingDuration is still set on Open but never ticks down, and Close is left entirely to the real device implementation. Default: `false` (disabled); set to `true` under MATTERBRIDGE_CHIP_TEST by `initialize()`. */
+    autoClose = false;
   }
 }
 /* v8 ignore stop */

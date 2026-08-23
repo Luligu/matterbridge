@@ -156,10 +156,14 @@
 <h3 id="development-news">Development News</h3>
 <ul>
 <li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>Closure</code> device type and <code>ClosureControl</code> clusters.</li>
+<li>[chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterValve</code> device type and the <code>ValveConfigurationAndControl</code> cluster.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[closure]: Add the optional <code>ventilation</code>, <code>pedestrian</code>, and <code>calibration</code> options to the <code>Closure</code> constructor. Each option defaults to <code>false</code> and enables the corresponding ClosureControl feature when set to <code>true</code>. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.</li>
+<li>[matterbridge]: <code>MatterbridgeValveConfigurationAndControlServer</code> now implements the Matter 1.6 <code>ValveConfigurationAndControl</code> Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new <code>state.movementDuration</code>/<code>state.autoClose</code> (both disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
+<li>[matterbridge]: Add the optional <code>movementDuration</code> and <code>autoClose</code> parameters to <code>createDefaultValveConfigurationAndControlClusterServer()</code>, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.</li>
+<li>[devices]: Add the optional <code>movementDuration</code> and <code>autoClose</code> parameters to <code>IrrigationSystem.addZone()</code>, passed through to the zone&#39;s <code>ValveConfigurationAndControl</code> cluster server.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>

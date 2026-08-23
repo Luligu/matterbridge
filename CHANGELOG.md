@@ -41,7 +41,9 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
-- [matterbridge]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and simulates the Open/Close movement duration and RemainingDuration countdown/auto-close under `MATTERBRIDGE_CHIP_TEST`.
+- [matterbridge]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [matterbridge]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
+- [devices]: Add the optional `movementDuration` and `autoClose` parameters to `IrrigationSystem.addZone()`, passed through to the zone's `ValveConfigurationAndControl` cluster server.
 
 ### Fixed
 

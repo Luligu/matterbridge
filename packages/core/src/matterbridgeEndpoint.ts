@@ -4149,16 +4149,29 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
    * @param {number} [valveLevel] - The valve level to set (100 percent SHALL indicate the fully open position). Defaults to 0.
+   * @param {number} [movementDuration] - Simulated duration, in milliseconds, that an Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled).
+   * @param {boolean} [autoClose] - Whether the RemainingDuration countdown timer auto-closes the valve once it reaches 0. Defaults to `false` (disabled), leaving auto-close to the real device implementation.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * `MatterbridgeValveConfigurationAndControlServer.state.movementDuration` (in milliseconds) defaults to 0,
-   * which disables the built-in Open/Close movement simulation and leaves completion of the transition to the
-   * real device implementation.
+   * The created server's `open()`/`close()` always set the attributes required by the Matter spec synchronously
+   * (TargetState/TargetLevel/OpenDuration/RemainingDuration, CurrentState set to Transitioning), but completion
+   * is simulated only if `movementDuration`/`autoClose` enable it — both disabled by default, and left disabled
+   * unless explicitly passed here, so the real device implementation stays in control:
+   * - `movementDuration` (`> 0`): CurrentState/CurrentLevel converge on TargetState/TargetLevel automatically
+   *   after this many milliseconds.
+   * - `autoClose` (`true`): RemainingDuration counts down once per second and the valve closes itself once it
+   *   reaches 0.
+   *
+   * `MatterbridgeValveConfigurationAndControlServer.initialize()` additionally sets both to CHIP-test-friendly
+   * values (`movementDuration = 2000`, `autoClose = true`) under `MATTERBRIDGE_CHIP_TEST` only, regardless of
+   * what's passed here.
    */
   createDefaultValveConfigurationAndControlClusterServer(
     valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,
     valveLevel: number = 0,
+    movementDuration: number = 0,
+    autoClose: boolean = false,
   ): this {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
@@ -4172,6 +4185,9 @@ export class MatterbridgeEndpoint extends Endpoint {
       targetLevel: valveLevel,
       defaultOpenLevel: 100, // Writable and persistent across restarts
       levelStep: 1, // Fixed
+      // Simulation knobs
+      movementDuration,
+      autoClose,
     });
     return this;
   }

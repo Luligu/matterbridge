@@ -1,14 +1,14 @@
-Chip tests run started at 2026-08-23T09:20:16.290Z
+Chip tests run started at 2026-08-23T11:39:31.571Z
 
-❌ ValveConfigurationAndControl attributes on WaterValve (TC_VALCC_2_1.py)
-❌ ValveConfigurationAndControl Open/Close primary functionality on WaterValve (TC_VALCC_3_1.py)
-❌ ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve (TC_VALCC_3_2.py)
-❌ ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve (TC_VALCC_3_3.py)
-❌ ValveConfigurationAndControl LevelStep functionality on WaterValve (TC_VALCC_3_4.py)
-❌ ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve (TC_VALCC_4_1.py)
-❌ ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve (TC_VALCC_4_2.py)
-❌ ValveConfigurationAndControl AutoCloseTime functionality on WaterValve (TC_VALCC_4_3.py)
-❌ ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve (TC_VALCC_4_4.py)
-❌ ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve (TC_VALCC_4_5.py)
+✅ ValveConfigurationAndControl attributes on WaterValve (TC_VALCC_2_1.py)
+✅ ValveConfigurationAndControl Open/Close primary functionality on WaterValve (TC_VALCC_3_1.py)
+✅ ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve (TC_VALCC_3_2.py)
+✅ ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve (TC_VALCC_3_3.py)
+✅ ValveConfigurationAndControl LevelStep functionality on WaterValve (TC_VALCC_3_4.py)
+✅ ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve (TC_VALCC_4_1.py)
+✅ ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve (TC_VALCC_4_2.py)
+✅ ValveConfigurationAndControl AutoCloseTime functionality on WaterValve (TC_VALCC_4_3.py)
+✅ ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve (TC_VALCC_4_4.py)
+✅ ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve (TC_VALCC_4_5.py)
 
-Summary: 0/10 tests passed.
+Summary: 10/10 tests passed.
