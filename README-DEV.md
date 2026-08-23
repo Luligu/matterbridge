@@ -191,6 +191,26 @@ Matterbridge exports from:
 
 - Vitest Matter test helpers.
 
+**"matterbridge/test-utils"**
+
+- Common test utilities shared by all test runners.
+
+**"matterbridge/test-utils/matter"**
+
+- Common Matter test helpers shared by all test runners.
+
+**"matterbridge/test-utils/jest"**
+
+- Jest-specific test utilities and Matter test helpers.
+
+**"matterbridge/test-utils/vitest"**
+
+- Vitest-specific test utilities and Matter test helpers.
+
+**"matterbridge/test-utils/buntest"**
+
+- Bun test-specific utilities and Matter test helpers.
+
 **"matterbridge/matter"**
 
 - All relevant matter.js exports.

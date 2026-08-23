@@ -60,6 +60,7 @@
     "packages/types",
     "packages/jest-utils",
     "packages/vitest-utils",
+    "packages/test-utils",
     "packages/utils",
     "packages/dgram",
     "packages/thread",
@@ -105,6 +106,26 @@
     "./vitest-utils/matter": {
       "import": "./dist/vitest-utils/matter.js",
       "types": "./dist/vitest-utils/matter.d.ts"
+    },
+    "./test-utils": {
+      "import": "./dist/test-utils/export.js",
+      "types": "./dist/test-utils/export.d.ts"
+    },
+    "./test-utils/matter": {
+      "import": "./dist/test-utils/matter/export.js",
+      "types": "./dist/test-utils/matter/export.d.ts"
+    },
+    "./test-utils/jest": {
+      "import": "./dist/test-utils/jest/export.js",
+      "types": "./dist/test-utils/jest/export.d.ts"
+    },
+    "./test-utils/vitest": {
+      "import": "./dist/test-utils/vitest/export.js",
+      "types": "./dist/test-utils/vitest/export.d.ts"
+    },
+    "./test-utils/buntest": {
+      "import": "./dist/test-utils/buntest/export.js",
+      "types": "./dist/test-utils/buntest/export.d.ts"
     },
     "./logger": {
       "import": "./dist/logger/export.js",
@@ -401,6 +422,7 @@
     "@matterbridge/core": "3.10.7",
     "@matterbridge/dgram": "3.10.7",
     "@matterbridge/jest-utils": "3.10.7",
+    "@matterbridge/test-utils": "3.10.7",
     "@matterbridge/thread": "3.10.7",
     "@matterbridge/types": "3.10.7",
     "@matterbridge/utils": "3.10.7",
@@ -409,6 +431,7 @@
     "node-persist-manager": "2.1.0"
   },
   "devDependencies": {
+    "@matter/main": "0.17.9",
     "@types/bun": "1.4.0",
     "@types/node": "26.2.0",
     "@vitest/coverage-v8": "4.1.11",

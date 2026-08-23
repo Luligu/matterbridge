@@ -74,6 +74,11 @@ export default defineConfig({
         'src/matter/model.ts', // Root package entrypoint re-export file
         'src/matter/types.ts', // Root package entrypoint re-export file
         'src/storage/export.ts', // Root package entrypoint re-export file
+        'src/test-utils/buntest/export.ts', // Root package entrypoint re-export file
+        'src/test-utils/export.ts', // Root package entrypoint re-export file
+        'src/test-utils/jest/export.ts', // Root package entrypoint re-export file
+        'src/test-utils/matter/export.ts', // Root package entrypoint re-export file
+        'src/test-utils/vitest/export.ts', // Root package entrypoint re-export file
         'src/utils/export.ts', // Root package entrypoint re-export file
         'src/vitest-utils/export.ts', // Root package entrypoint re-export file
         'src/vitest-utils/matter.ts', // Root package entrypoint re-export file

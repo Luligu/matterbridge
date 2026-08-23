@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "rootDir": ".",
+    "noEmit": true
+  },
+  "include": ["src/*.ts", "src/matter/**/*.ts"],
+  "exclude": ["src/jest.ts", "src/vitest.ts", "src/buntest.ts", "src/jest/**/*.ts", "src/vitest/**/*.ts", "src/buntest/**/*.ts"]
+}
