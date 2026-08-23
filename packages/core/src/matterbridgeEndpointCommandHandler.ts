@@ -86,6 +86,17 @@ export type ClusterAttributeValues<T extends Record<string, unknown>> = {
 };
 
 /**
+ * Shorthand for the 'doorLock' cluster command handler data shape, used for the WeekDayAccessSchedules, YearDayAccessSchedules, and HolidaySchedules commands, which all share the same cluster/attributes/endpoint shape.
+ */
+type DoorLockScheduleCommand<Command extends string, Request> = {
+  command: Command;
+  request: Request;
+  cluster: 'doorLock';
+  attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+  endpoint: MatterbridgeEndpoint;
+};
+
+/**
  * Keys of the supported commands for MatterbridgeEndpoint. The keys are in the format 'ClusterName.commandName' and correspond to the commands defined in the clusters used by MatterbridgeEndpoint.
  */
 export type CommandHandlers = keyof CommandHandlerDataMap;
@@ -482,6 +493,7 @@ export type CommandHandlerDataMap = {
   };
 
   // Door Lock
+  // WDSCH/YDSCH/HDSCH entries below share the 'doorLock' cluster/attributes/endpoint shape, expressed via DoorLockScheduleCommand<Command, Request> to stay under the file line-count limit.
   'lockDoor': CommandHandlerData<'DoorLock.lockDoor'>;
   'unlockDoor': CommandHandlerData<'DoorLock.unlockDoor'>;
   'DoorLock.lockDoor': {
@@ -547,69 +559,15 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
-  'DoorLock.setWeekDaySchedule': {
-    command: 'setWeekDaySchedule'; // WDSCH
-    request: DoorLock.SetWeekDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getWeekDaySchedule': {
-    command: 'getWeekDaySchedule'; // WDSCH
-    request: DoorLock.GetWeekDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearWeekDaySchedule': {
-    command: 'clearWeekDaySchedule'; // WDSCH
-    request: DoorLock.ClearWeekDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setYearDaySchedule': {
-    command: 'setYearDaySchedule'; // YDSCH
-    request: DoorLock.SetYearDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getYearDaySchedule': {
-    command: 'getYearDaySchedule'; // YDSCH
-    request: DoorLock.GetYearDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearYearDaySchedule': {
-    command: 'clearYearDaySchedule'; // YDSCH
-    request: DoorLock.ClearYearDayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.setHolidaySchedule': {
-    command: 'setHolidaySchedule'; // HDSCH
-    request: DoorLock.SetHolidayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.getHolidaySchedule': {
-    command: 'getHolidaySchedule'; // HDSCH
-    request: DoorLock.GetHolidayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'DoorLock.clearHolidaySchedule': {
-    command: 'clearHolidaySchedule'; // HDSCH
-    request: DoorLock.ClearHolidayScheduleRequest;
-    cluster: 'doorLock';
-    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
+  'DoorLock.setWeekDaySchedule': DoorLockScheduleCommand<'setWeekDaySchedule', DoorLock.SetWeekDayScheduleRequest>; // WDSCH
+  'DoorLock.getWeekDaySchedule': DoorLockScheduleCommand<'getWeekDaySchedule', DoorLock.GetWeekDayScheduleRequest>; // WDSCH
+  'DoorLock.clearWeekDaySchedule': DoorLockScheduleCommand<'clearWeekDaySchedule', DoorLock.ClearWeekDayScheduleRequest>; // WDSCH
+  'DoorLock.setYearDaySchedule': DoorLockScheduleCommand<'setYearDaySchedule', DoorLock.SetYearDayScheduleRequest>; // YDSCH
+  'DoorLock.getYearDaySchedule': DoorLockScheduleCommand<'getYearDaySchedule', DoorLock.GetYearDayScheduleRequest>; // YDSCH
+  'DoorLock.clearYearDaySchedule': DoorLockScheduleCommand<'clearYearDaySchedule', DoorLock.ClearYearDayScheduleRequest>; // YDSCH
+  'DoorLock.setHolidaySchedule': DoorLockScheduleCommand<'setHolidaySchedule', DoorLock.SetHolidayScheduleRequest>; // HDSCH
+  'DoorLock.getHolidaySchedule': DoorLockScheduleCommand<'getHolidaySchedule', DoorLock.GetHolidayScheduleRequest>; // HDSCH
+  'DoorLock.clearHolidaySchedule': DoorLockScheduleCommand<'clearHolidaySchedule', DoorLock.ClearHolidayScheduleRequest>; // HDSCH
 
   // Thermostat
   'setpointRaiseLower': CommandHandlerData<'Thermostat.setpointRaiseLower'>;
