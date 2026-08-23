@@ -119,6 +119,14 @@
       "detail": "Start Matterbridge with --no-ansi to disable ANSI escapes."
     },
     {
+      "label": "Run: Bun",
+      "type": "process",
+      "command": "bun",
+      "args": ["--bun", "./bin/matterbridge.js", "--profile", "Bun"],
+      "problemMatcher": [],
+      "detail": "Start Matterbridge with Bun."
+    },
+    {
       "label": "Build",
       "detail": "npm run build",
       "type": "npm",

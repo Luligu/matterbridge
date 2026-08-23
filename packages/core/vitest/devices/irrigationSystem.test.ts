@@ -161,7 +161,13 @@ describe('Matterbridge ' + NAME, () => {
 
   test('autoOpenClose opens all zones when operationalState changes to Running', async () => {
     await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Running);
-    await invokeSubscribeHandler(autoOpenCloseDevice, OperationalState, 'operationalState', OperationalState.OperationalStateEnum.Running, OperationalState.OperationalStateEnum.Stopped);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Running,
+      OperationalState.OperationalStateEnum.Stopped,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Running');
     const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
     expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Open);
@@ -169,7 +175,13 @@ describe('Matterbridge ' + NAME, () => {
 
   test('autoOpenClose closes all zones when operationalState changes to Paused', async () => {
     await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Paused);
-    await invokeSubscribeHandler(autoOpenCloseDevice, OperationalState, 'operationalState', OperationalState.OperationalStateEnum.Paused, OperationalState.OperationalStateEnum.Running);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Paused,
+      OperationalState.OperationalStateEnum.Running,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Paused');
     const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
     expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
@@ -179,7 +191,13 @@ describe('Matterbridge ' + NAME, () => {
     await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Running);
     await autoOpenCloseDevice.openAllZones();
     await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Stopped);
-    await invokeSubscribeHandler(autoOpenCloseDevice, OperationalState, 'operationalState', OperationalState.OperationalStateEnum.Stopped, OperationalState.OperationalStateEnum.Running);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Stopped,
+      OperationalState.OperationalStateEnum.Running,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Stopped');
     const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
     expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
@@ -187,7 +205,13 @@ describe('Matterbridge ' + NAME, () => {
 
   test('autoOpenClose only logs when operationalState changes to Error', async () => {
     await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Error);
-    await invokeSubscribeHandler(autoOpenCloseDevice, OperationalState, 'operationalState', OperationalState.OperationalStateEnum.Error, OperationalState.OperationalStateEnum.Stopped);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Error,
+      OperationalState.OperationalStateEnum.Stopped,
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Error');
   });
 
