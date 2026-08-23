@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-// Exercises the Bun Matter test environment helpers in ./bunMatterTest.ts against the real matter.js
+// Exercises the Bun Matter test environment helpers from @matterbridge/test-utils against the real matter.js
 // runtime on Bun: create the environment, create a server node + aggregator, add and remove a bridged
 // device, then flush and tear down. Runs in create-only mode (no network start) to keep it deterministic.
 // Run from the repo root with:  bun test  (bunfig.toml scopes discovery to buntest/).
@@ -47,7 +47,6 @@ import { Endpoint } from '@matter/node';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { VendorId } from '@matter/types/datatype';
-
 import {
   addDevice,
   aggregator,
@@ -59,8 +58,8 @@ import {
   flushServerNode,
   getMatterbridge,
   server,
-} from './bunMatterTest.js';
-import { setupTest } from './bunSetupTest.js';
+  setupTest,
+} from '@matterbridge/test-utils/buntest';
 
 const NAME = 'BunMatter';
 const MATTER_PORT = 6010;

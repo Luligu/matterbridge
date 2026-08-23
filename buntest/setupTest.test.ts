@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-// Verifies the Bun setup helpers in ./bunSetupTest.ts actually do their job:
+// Verifies the Bun setup helpers from @matterbridge/test-utils actually do their job:
 //   - they set NAME / HOMEDIR / process.argv and create the home directory,
 //   - they apply extra argv and environment variables,
 //   - they install working logger/console spies,
@@ -14,8 +14,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-
-import { AnsiLogger } from 'node-ansi-logger';
 
 import {
   consoleDebugSpy,
@@ -37,7 +35,8 @@ import {
   originalProcessEnv,
   setDebug,
   setupTest,
-} from './bunSetupTest.js';
+} from '@matterbridge/test-utils/buntest';
+import { AnsiLogger } from 'node-ansi-logger';
 
 describe('bunSetupTest', () => {
   afterEach(() => {
