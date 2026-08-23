@@ -418,7 +418,14 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(matterbridge.devices.size).toBe(0);
 
     expect((matterbridge as any).initialized).toBeFalsy();
-    await (matterbridge as any).initialize();
+    const linkLocalPlugins = process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
+    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'false';
+    try {
+      await (matterbridge as any).initialize();
+    } finally {
+      if (linkLocalPlugins === undefined) delete process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
+      else process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = linkLocalPlugins;
+    }
     expect((matterbridge as any).initialized).toBeTruthy();
     expect((matterbridge as any).systemCheckTimeout).toBeDefined();
     expect((matterbridge as any).checkUpdateTimeout).toBeDefined();

@@ -747,8 +747,8 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.initialize() reinstall of plugins', async () => {
     // await setDebug(true);
-    process.env.MATTERBRIDGE_REINSTALL_PLUGINS = 'jest';
-    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'jest';
+    process.env.MATTERBRIDGE_REINSTALL_PLUGINS = 'test';
+    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'test';
     process.argv.push('--debug', '--logger', 'debug', '--matterlogger', 'debug');
     expect(plugins.length).toBe(0);
     for (const plugin of plugins.array()) {
