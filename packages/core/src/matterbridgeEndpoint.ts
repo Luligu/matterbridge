@@ -4122,6 +4122,96 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a door lock cluster server with feature User (USR), PinCredential (PIN), WeekDayAccessSchedules (WDSCH), YearDayAccessSchedules (YDSCH), and HolidaySchedules (HDSCH).
+   * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands, and the doorLockAlarm, lockOperation, and lockOperationError events.
+   *
+   * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
+   * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
+   * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
+   * @param {number} [minPinCodeLength] - The minimum length of the PIN code (default: 4).
+   * @param {number} [maxPinCodeLength] - The maximum length of the PIN code (default: 10).
+   * @param {number} [numberOfWeekDaySchedulesSupportedPerUser] - The number of week day schedules supported per user (default: 10).
+   * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - The number of year day schedules supported per user (default: 10).
+   * @param {number} [numberOfHolidaySchedulesSupported] - The number of holiday schedules supported by the lock (default: 10).
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * All operating modes NOT supported by a lock SHALL be set to one. The value of the OperatingMode enumeration defines the related bit to be set.
+   *
+   * @remarks
+   * Unlike WeekDayAccessSchedules and YearDayAccessSchedules, HolidaySchedules are not associated with a userIndex: they apply to the whole lock.
+   */
+  createScheduleDoorLockClusterServer(
+    lockState: DoorLock.LockState = DoorLock.LockState.Locked,
+    lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
+    autoRelockTime: number = 0,
+    minPinCodeLength: number = 4,
+    maxPinCodeLength: number = 10,
+    numberOfWeekDaySchedulesSupportedPerUser: number = 10,
+    numberOfYearDaySchedulesSupportedPerUser: number = 10,
+    numberOfHolidaySchedulesSupported: number = 10,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeDoorLockServer.with(
+        DoorLock.Feature.User,
+        DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/,
+        DoorLock.Feature.WeekDayAccessSchedules,
+        DoorLock.Feature.YearDayAccessSchedules,
+        DoorLock.Feature.HolidaySchedules,
+      ).enable({
+        events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
+        commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
+      }),
+      {
+        // Base attributes
+        lockState,
+        lockType,
+        /** This attribute SHALL indicate if the lock is currently able to (Enabled) or not able to (Disabled) process remote Lock, Unlock, or Unlock with Timeout commands. */
+        actuatorEnabled: true,
+        /** This attribute SHALL indicate the current operating mode of the lock as defined in OperatingModeEnum */
+        operatingMode: DoorLock.OperatingMode.Normal,
+        /**
+         * This attribute SHALL contain a bitmap with all operating bits of the OperatingMode attribute supported
+         * by the lock. All operating modes NOT supported by a lock SHALL be set to one. The value of
+         * the OperatingMode enumeration defines the related bit to be set.
+         * OperatingModesBitmap.Normal and OperatingModesBitmap.noRemoteLockUnlock are mandatory and SHALL always be supported.
+         * Default value 0xFFF6 (1111 1111 1111 0110) means:
+         * - normal: false (bit 0)
+         * - vacation: true (bit 1)
+         * - privacy: true (bit 2)
+         * - noRemoteLockUnlock: false (bit 3)
+         * - passage: true (bit 4)
+         * Special case of inverted bitmap: add also alwaysSet = 2047 (0000 0111 1111 1111) to have all bits set except the unsupported ones.
+         * Specs: "Any bit that is not yet defined in OperatingModesBitmap SHALL be set to 1."
+         */
+        supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
+        autoRelockTime, // 0=disabled
+        // PinCredential feature attributes
+        numberOfPinUsersSupported: 10,
+        minPinCodeLength,
+        maxPinCodeLength,
+        // PinCredential or RfidCredential feature attributes
+        wrongCodeEntryLimit: 5,
+        userCodeTemporaryDisableTime: 60,
+        // PinCredential and CredentialOverTheAirAccess features attributes
+        /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+        requirePinForRemoteOperation: true,*/
+        // User feature attributes
+        numberOfTotalUsersSupported: 10,
+        credentialRulesSupport: { single: true },
+        numberOfCredentialsSupportedPerUser: 10,
+        // WeekDayAccessSchedules feature attributes
+        numberOfWeekDaySchedulesSupportedPerUser,
+        // YearDayAccessSchedules feature attributes
+        numberOfYearDaySchedulesSupportedPerUser,
+        // HolidaySchedules feature attributes
+        numberOfHolidaySchedulesSupported,
+      },
+    );
+    return this;
+  }
+
+  /**
    * Creates a default Mode Select cluster server.
    *
    * @param {string} description - The description of the mode select cluster.

@@ -1974,6 +1974,27 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createScheduleDoorLockClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'ScheduleLock' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createScheduleDoorLockClusterServer();
+    expect(device.hasAttributeServer(DoorLock, 'operatingMode')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+    expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(10);
+    expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(10);
+    expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(10);
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
   test('createDefaultModeSelectClusterServer', async () => {
     const device = new MatterbridgeEndpoint(modeSelect, { id: 'ModeSelect' });
     expect(device).toBeDefined();

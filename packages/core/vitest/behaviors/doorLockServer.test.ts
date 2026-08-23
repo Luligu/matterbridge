@@ -8,6 +8,7 @@ const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
+import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { wait } from '@matterbridge/utils/wait';
 import { setupTest } from '@matterbridge/vitest-utils';
@@ -33,9 +34,14 @@ await setupTest(NAME, false);
 describe('Client clusters and behaviors', () => {
   let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
+  let scheduleDoorLock: MatterbridgeEndpoint;
 
   function supportedDoorLockServer(): typeof MatterbridgeDoorLockServer {
     return userPinDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+  }
+
+  function supportedScheduleDoorLockServer(): typeof MatterbridgeDoorLockServer {
+    return scheduleDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
   }
 
   beforeAll(async () => {
@@ -434,5 +440,120 @@ describe('Client clusters and behaviors', () => {
       credentialExists: false,
       userIndex: null,
     });
+  });
+
+  test('Create scheduleDoorLock device', async () => {
+    scheduleDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'scheduleDoorLock' });
+    expect(scheduleDoorLock).toBeDefined();
+    scheduleDoorLock.createScheduleDoorLockClusterServer();
+    scheduleDoorLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, scheduleDoorLock)).toBeDefined();
+    expect(scheduleDoorLock.behaviors.has(scheduleDoorLock.behaviors.supported.doorLock)).toBe(true);
+    expect(scheduleDoorLock.getAttribute(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(10);
+    expect(scheduleDoorLock.getAttribute(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(10);
+    expect(scheduleDoorLock.getAttribute(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(10);
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Schedule User',
+      userUniqueId: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+  });
+
+  test('Week day schedule set, get and clear', async () => {
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', {
+      weekDayIndex: 1,
+      userIndex: 1,
+      daysMask: { monday: true, tuesday: true, wednesday: false, thursday: false, friday: false, saturday: false, sunday: false },
+      startHour: 8,
+      startMinute: 0,
+      endHour: 18,
+      endMinute: 0,
+    });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      weekDayIndex: 1,
+      userIndex: 1,
+      status: Status.Success,
+      startHour: 8,
+      startMinute: 0,
+      endHour: 18,
+      endMinute: 0,
+    });
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', { weekDayIndex: 1, userIndex: 1 });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      weekDayIndex: 1,
+      userIndex: 1,
+    });
+  });
+
+  test('Year day schedule set, get and clear', async () => {
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', {
+      yearDayIndex: 1,
+      userIndex: 1,
+      localStartTime: 1000,
+      localEndTime: 2000,
+    });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      yearDayIndex: 1,
+      userIndex: 1,
+      localStartTime: 1000,
+      localEndTime: 2000,
+    });
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', { yearDayIndex: 1, userIndex: 1 });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      yearDayIndex: 1,
+      userIndex: 1,
+    });
+  });
+
+  test('Holiday schedule set, get and clear', async () => {
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', {
+      holidayIndex: 1,
+      localStartTime: 5000,
+      localEndTime: 6000,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      holidayIndex: 1,
+      localStartTime: 5000,
+      localEndTime: 6000,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    });
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', { holidayIndex: 0xfe });
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      holidayIndex: 1,
+    });
+  });
+
+  test('Schedule getter delegation via command handler', async () => {
+    const handlerResponse: DoorLock.GetWeekDayScheduleResponse = {
+      weekDayIndex: 2,
+      userIndex: 1,
+      status: Status.Success,
+      daysMask: { monday: true, tuesday: false, wednesday: false, thursday: false, friday: false, saturday: false, sunday: false },
+      startHour: 9,
+      startMinute: 0,
+      endHour: 17,
+      endMinute: 0,
+    };
+
+    scheduleDoorLock.addCommandHandler('DoorLock.getWeekDaySchedule', () => handlerResponse);
+
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(supportedScheduleDoorLockServer()).getWeekDaySchedule({ weekDayIndex: 2, userIndex: 1 }))).toEqual(
+      handlerResponse,
+    );
   });
 });

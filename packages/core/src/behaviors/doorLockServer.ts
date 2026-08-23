@@ -32,11 +32,14 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
- * DoorLock server that forwards lock, user, and credential commands to the Matterbridge command handler.
+ * DoorLock server that forwards lock, user, credential, and schedule commands to the Matterbridge command handler.
  */
 export class MatterbridgeDoorLockServer extends DoorLockServer.with(
   DoorLock.Feature.User,
   DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/,
+  DoorLock.Feature.WeekDayAccessSchedules,
+  DoorLock.Feature.YearDayAccessSchedules,
+  DoorLock.Feature.HolidaySchedules,
 ).enable({
   events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
   commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
@@ -269,6 +272,223 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     });
     device.log.debug('MatterbridgeDoorLockServer: clearCredential called');
     await super.clearCredential(request);
+  }
+
+  /**
+   * Handles the SetWeekDaySchedule command.
+   * It will set a recurring weekly access schedule for the specified user and week day schedule index.
+   *
+   * @param {DoorLock.SetWeekDayScheduleRequest} request - SetWeekDaySchedule request payload { weekDayIndex: number, userIndex: number, daysMask: DoorLock.DaysMask, startHour: number, startMinute: number, endHour: number, endMinute: number }.
+   */
+  override async setWeekDaySchedule(request: DoorLock.SetWeekDayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Setting week day schedule weekDayIndex ${request.weekDayIndex} userIndex ${request.userIndex} daysMask ${JSON.stringify(request.daysMask)} startHour ${request.startHour} startMinute ${request.startMinute} endHour ${request.endHour} endMinute ${request.endMinute} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.setWeekDaySchedule', {
+      command: 'setWeekDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: setWeekDaySchedule called for weekDayIndex ${request.weekDayIndex} userIndex ${request.userIndex}`);
+    await super.setWeekDaySchedule(request);
+  }
+
+  /**
+   * Handles the GetWeekDaySchedule command.
+   *
+   * @param {DoorLock.GetWeekDayScheduleRequest} request - GetWeekDaySchedule request payload { weekDayIndex: number, userIndex: number }.
+   * @returns {Promise<DoorLock.GetWeekDayScheduleResponse>} - The week day schedule for the requested weekDayIndex and userIndex, or a not-found/invalid status if it does not exist.
+   */
+  override async getWeekDaySchedule(request: DoorLock.GetWeekDayScheduleRequest): Promise<DoorLock.GetWeekDayScheduleResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Getting week day schedule weekDayIndex ${request.weekDayIndex} userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    const response = await device.commandHandler.executeHandler('DoorLock.getWeekDaySchedule', {
+      command: 'getWeekDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    if (response !== undefined) {
+      return response;
+    }
+    device.log.debug(`MatterbridgeDoorLockServer: getWeekDaySchedule called for weekDayIndex ${request.weekDayIndex} userIndex ${request.userIndex}`);
+    return await super.getWeekDaySchedule(request);
+  }
+
+  /**
+   * Handles the ClearWeekDaySchedule command.
+   * If weekDayIndex is 0xFE, all week day schedules for the specified user will be cleared.
+   * Otherwise, only the week day schedule with the specified weekDayIndex will be cleared.
+   *
+   * @param {DoorLock.ClearWeekDayScheduleRequest} request - ClearWeekDaySchedule request payload { weekDayIndex: number, userIndex: number }.
+   */
+  override async clearWeekDaySchedule(request: DoorLock.ClearWeekDayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Clearing week day schedule weekDayIndex ${request.weekDayIndex} ${request.weekDayIndex === 0xfe ? '(all week day schedules)' : ''} userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.clearWeekDaySchedule', {
+      command: 'clearWeekDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: clearWeekDaySchedule called for weekDayIndex ${request.weekDayIndex} userIndex ${request.userIndex}`);
+    await super.clearWeekDaySchedule(request);
+  }
+
+  /**
+   * Handles the SetYearDaySchedule command.
+   * It will set a fixed date-range access schedule for the specified user and year day schedule index.
+   *
+   * @param {DoorLock.SetYearDayScheduleRequest} request - SetYearDaySchedule request payload { yearDayIndex: number, userIndex: number, localStartTime: number, localEndTime: number }.
+   */
+  override async setYearDaySchedule(request: DoorLock.SetYearDayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Setting year day schedule yearDayIndex ${request.yearDayIndex} userIndex ${request.userIndex} localStartTime ${request.localStartTime} localEndTime ${request.localEndTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.setYearDaySchedule', {
+      command: 'setYearDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: setYearDaySchedule called for yearDayIndex ${request.yearDayIndex} userIndex ${request.userIndex}`);
+    await super.setYearDaySchedule(request);
+  }
+
+  /**
+   * Handles the GetYearDaySchedule command.
+   *
+   * @param {DoorLock.GetYearDayScheduleRequest} request - GetYearDaySchedule request payload { yearDayIndex: number, userIndex: number }.
+   * @returns {Promise<DoorLock.GetYearDayScheduleResponse>} - The year day schedule for the requested yearDayIndex and userIndex, or a not-found/invalid status if it does not exist.
+   */
+  override async getYearDaySchedule(request: DoorLock.GetYearDayScheduleRequest): Promise<DoorLock.GetYearDayScheduleResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Getting year day schedule yearDayIndex ${request.yearDayIndex} userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    const response = await device.commandHandler.executeHandler('DoorLock.getYearDaySchedule', {
+      command: 'getYearDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    if (response !== undefined) {
+      return response;
+    }
+    device.log.debug(`MatterbridgeDoorLockServer: getYearDaySchedule called for yearDayIndex ${request.yearDayIndex} userIndex ${request.userIndex}`);
+    return await super.getYearDaySchedule(request);
+  }
+
+  /**
+   * Handles the ClearYearDaySchedule command.
+   * If yearDayIndex is 0xFE, all year day schedules for the specified user will be cleared.
+   * Otherwise, only the year day schedule with the specified yearDayIndex will be cleared.
+   *
+   * @param {DoorLock.ClearYearDayScheduleRequest} request - ClearYearDaySchedule request payload { yearDayIndex: number, userIndex: number }.
+   */
+  override async clearYearDaySchedule(request: DoorLock.ClearYearDayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Clearing year day schedule yearDayIndex ${request.yearDayIndex} ${request.yearDayIndex === 0xfe ? '(all year day schedules)' : ''} userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.clearYearDaySchedule', {
+      command: 'clearYearDaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: clearYearDaySchedule called for yearDayIndex ${request.yearDayIndex} userIndex ${request.userIndex}`);
+    await super.clearYearDaySchedule(request);
+  }
+
+  /**
+   * Handles the SetHolidaySchedule command.
+   * It will set a lock-wide holiday schedule with the associated operating mode, unlike WeekDay/YearDay schedules this is not tied to a userIndex.
+   *
+   * @param {DoorLock.SetHolidayScheduleRequest} request - SetHolidaySchedule request payload { holidayIndex: number, localStartTime: number, localEndTime: number, operatingMode: DoorLock.OperatingMode }.
+   */
+  override async setHolidaySchedule(request: DoorLock.SetHolidayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Setting holiday schedule holidayIndex ${request.holidayIndex} localStartTime ${request.localStartTime} localEndTime ${request.localEndTime} operatingMode ${getEnumDescription(DoorLock.OperatingMode, request.operatingMode)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.setHolidaySchedule', {
+      command: 'setHolidaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: setHolidaySchedule called for holidayIndex ${request.holidayIndex}`);
+    await super.setHolidaySchedule(request);
+  }
+
+  /**
+   * Handles the GetHolidaySchedule command.
+   *
+   * @param {DoorLock.GetHolidayScheduleRequest} request - GetHolidaySchedule request payload { holidayIndex: number }.
+   * @returns {Promise<DoorLock.GetHolidayScheduleResponse>} - The holiday schedule for the requested holidayIndex, or a not-found/invalid status if it does not exist.
+   */
+  override async getHolidaySchedule(request: DoorLock.GetHolidayScheduleRequest): Promise<DoorLock.GetHolidayScheduleResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`Getting holiday schedule holidayIndex ${request.holidayIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    const response = await device.commandHandler.executeHandler('DoorLock.getHolidaySchedule', {
+      command: 'getHolidaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    if (response !== undefined) {
+      return response;
+    }
+    device.log.debug(`MatterbridgeDoorLockServer: getHolidaySchedule called for holidayIndex ${request.holidayIndex}`);
+    return await super.getHolidaySchedule(request);
+  }
+
+  /**
+   * Handles the ClearHolidaySchedule command.
+   * If holidayIndex is 0xFE, all holiday schedules will be cleared.
+   * Otherwise, only the holiday schedule with the specified holidayIndex will be cleared.
+   *
+   * @param {DoorLock.ClearHolidayScheduleRequest} request - ClearHolidaySchedule request payload { holidayIndex: number }.
+   */
+  override async clearHolidaySchedule(request: DoorLock.ClearHolidayScheduleRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `Clearing holiday schedule holidayIndex ${request.holidayIndex} ${request.holidayIndex === 0xfe ? '(all holiday schedules)' : ''} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('DoorLock.clearHolidaySchedule', {
+      command: 'clearHolidaySchedule',
+      request,
+      cluster: DoorLockServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof DoorLock)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeDoorLockServer: clearHolidaySchedule called for holidayIndex ${request.holidayIndex}`);
+    await super.clearHolidaySchedule(request);
   }
 
   /*
