@@ -1,0 +1,173 @@
+/**
+ * @file packages/core/src/behaviors/pumpConfigurationAndControlServer.ts
+ * @description This file contains the MatterbridgePumpConfigurationAndControlServer class of Matterbridge.
+ * @author Luca Liguori
+ * @created 2026-08-24
+ * @version 1.0.0
+ * @license Apache-2.0
+ *
+ * Copyright 2026, 2027, 2028 Luca Liguori.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* oxlint-disable typescript/no-namespace */
+
+import type { MaybePromise } from '@matter/general';
+import { LevelControlServer } from '@matter/node/behaviors/level-control';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
+import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+
+import { MatterbridgeServer } from './matterbridgeServer.js';
+
+/**
+ * PumpConfigurationAndControl server that synchronizes pump state from OnOff and LevelControl clusters.
+ */
+export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed) {
+  declare protected internal: MatterbridgePumpConfigurationAndControlServer.Internal;
+
+  /**
+   * Registers OnOff and LevelControl state handlers used by Pump devices, and fills in reasonable
+   * medium capacity pump defaults for any physical limit attribute left `null` by the caller.
+   *
+   * @returns {MaybePromise} The result of the base class initialization.
+   */
+  override initialize(): MaybePromise {
+    this.state.minConstSpeed ??= 600; // 600 RPM
+    this.state.maxConstSpeed ??= 3000; // 3000 RPM
+    this.state.maxPressure ??= 6000; // 600 kPa (value x10)
+    this.state.maxSpeed ??= 3000; // 3000 RPM
+    this.state.maxFlow ??= 100; // 10 m3/h (value x10)
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgePumpConfigurationAndControlServer: initialized with minConstSpeed=${this.state.minConstSpeed}, maxConstSpeed=${this.state.maxConstSpeed}, maxPressure=${this.state.maxPressure}, maxSpeed=${this.state.maxSpeed}, maxFlow=${this.state.maxFlow} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+
+    if (this.endpoint.behaviors.has(OnOffServer.id)) {
+      // oxlint-disable-next-line typescript/unbound-method
+      this.reactTo(this.agent.get(OnOffServer).events.onOff$Changed, this.#handleOnOffChanged);
+    }
+    if (this.endpoint.behaviors.has(LevelControlServer.id)) {
+      const levelControlState = this.agent.get(LevelControlServer).state;
+      this.internal.lastLevel = levelControlState.currentLevel ?? levelControlState.maxLevel;
+      // oxlint-disable-next-line typescript/unbound-method
+      this.reactTo(this.agent.get(LevelControlServer).events.currentLevel$Changed, this.#handleCurrentLevelChanged);
+    }
+  }
+
+  /**
+   * Maps a LevelControl CurrentLevel onto a pump setpoint percentage, per the Matter Device Library Pump
+   * device type clarifications (§5.5.5.2): Level 0 stops the pump; Level 1-200 is a setpoint of Level/2
+   * percent (0.5-100.0%); Level 201-255 is a setpoint of 100.0%.
+   *
+   * @param {number} currentLevel - The LevelControl CurrentLevel to map.
+   * @returns {number} The resulting setpoint, in percent (0-100).
+   */
+  #percentFromLevel(currentLevel: number): number {
+    if (currentLevel <= 0) return 0;
+    return currentLevel <= 200 ? currentLevel / 2 : 100;
+  }
+
+  /**
+   * Converts a setpoint percentage into the Pump ConstantSpeed Speed attribute value, applying the
+   * percentage to `maxConstSpeed`.
+   *
+   * @param {number} percent - The setpoint, in percent (0-100).
+   * @returns {number} The resulting Speed attribute value.
+   */
+  #speedFromPercent(percent: number): number {
+    const maxConstSpeed = this.state.maxConstSpeed ?? this.state.maxSpeed ?? 0;
+    return Math.round((percent / 100) * maxConstSpeed);
+  }
+
+  /**
+   * Converts a setpoint percentage into the Capacity attribute value (§4.2.7.17): "the actual capacity of
+   * the pump as a percentage of the effective maximum setpoint value", in units of 0.005%.
+   *
+   * @param {number} percent - The setpoint, in percent (0-100).
+   * @returns {number} The resulting Capacity attribute value.
+   */
+  #capacityFromPercent(percent: number): number {
+    return Math.round(percent * 200);
+  }
+
+  /**
+   * Applies a LevelControl-derived setpoint percentage to the Pump's Speed and Capacity attributes.
+   * Both are Read-only (access "R V", no Write) per the Matter spec — asLocalActor() authorizes this
+   * internal, spec-mandated update.
+   *
+   * @param {number} currentLevel - The LevelControl CurrentLevel the setpoint is derived from.
+   * @returns {{ speed: number; capacity: number }} The Speed and Capacity values that were applied.
+   */
+  #applySetpoint(currentLevel: number): { speed: number; capacity: number } {
+    const percent = this.#percentFromLevel(currentLevel);
+    const speed = this.#speedFromPercent(percent);
+    const capacity = this.#capacityFromPercent(percent);
+    this.agent.asLocalActor(() => {
+      this.state.speed = speed;
+      this.state.capacity = capacity;
+    });
+    return { speed, capacity };
+  }
+
+  /**
+   * Reacts to OnOff changes by stopping the pump, or powering it on to the setpoint for the last known
+   * LevelControl CurrentLevel (which LevelControl itself restores to its pre-Off value on power-on, and
+   * which reaches us via #handleCurrentLevelChanged), falling back to MaxLevel/254 (100%) if none is known
+   * yet — i.e. "the maximum level allowed for the pump" per the On command clarification.
+   *
+   * @param {boolean} onOff - The new OnOff state.
+   * @param {boolean} oldOnOff - The previous OnOff state.
+   */
+  #handleOnOffChanged(onOff: boolean, oldOnOff: boolean): void {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgePumpConfigurationAndControlServer: onOff changed to ${onOff} from ${oldOnOff} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+
+    const { speed, capacity } = this.#applySetpoint(onOff ? (this.internal.lastLevel ?? 254) : 0);
+    device.log.info(
+      `MatterbridgePumpConfigurationAndControlServer: pump speed changed to ${speed}, capacity changed to ${capacity} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+  }
+
+  /**
+   * Reacts to LevelControl CurrentLevel changes using the Pump device type level-to-setpoint mapping.
+   *
+   * @param {number | null} currentLevel - The new CurrentLevel value.
+   * @param {number | null} oldCurrentLevel - The previous CurrentLevel value.
+   */
+  #handleCurrentLevelChanged(currentLevel: number | null, oldCurrentLevel: number | null): void {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgePumpConfigurationAndControlServer: currentLevel changed to ${currentLevel} from ${oldCurrentLevel} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+
+    this.internal.lastLevel = currentLevel ?? this.internal.lastLevel;
+    const { speed, capacity } = this.#applySetpoint(currentLevel ?? 0);
+    device.log.info(
+      `MatterbridgePumpConfigurationAndControlServer: pump speed changed to ${speed}, capacity changed to ${capacity} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+  }
+}
+
+/* v8 ignore start */
+export namespace MatterbridgePumpConfigurationAndControlServer {
+  /**
+   * Internal state for MatterbridgePumpConfigurationAndControlServer.
+   */
+  export class Internal {
+    /** Last known LevelControl CurrentLevel, used to restore the pump's speed on OnOff.on. */
+    lastLevel?: number;
+  }
+}
+/* v8 ignore stop */
