@@ -1,14 +1,8 @@
-Chip tests run started at 2026-08-23T11:39:31.571Z
+Chip tests run started at 2026-08-24T09:54:13.164Z
 
-✅ ValveConfigurationAndControl attributes on WaterValve (TC_VALCC_2_1.py)
-✅ ValveConfigurationAndControl Open/Close primary functionality on WaterValve (TC_VALCC_3_1.py)
-✅ ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve (TC_VALCC_3_2.py)
-✅ ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve (TC_VALCC_3_3.py)
-✅ ValveConfigurationAndControl LevelStep functionality on WaterValve (TC_VALCC_3_4.py)
-✅ ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve (TC_VALCC_4_1.py)
-✅ ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve (TC_VALCC_4_2.py)
-✅ ValveConfigurationAndControl AutoCloseTime functionality on WaterValve (TC_VALCC_4_3.py)
-✅ ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve (TC_VALCC_4_4.py)
-✅ ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve (TC_VALCC_4_5.py)
+✅ PumpConfigurationAndControl attributes on Pump (Test_TC_PCC_2_1)
+✅ PumpConfigurationAndControl Operation Mode on Pump (Test_TC_PCC_2_2)
+✅ PumpConfigurationAndControl Control Mode on Pump (Test_TC_PCC_2_3)
+✅ PumpConfigurationAndControl Life Time Counters on Pump (Test_TC_PCC_2_4)
 
-Summary: 10/10 tests passed.
+Summary: 4/4 tests passed.

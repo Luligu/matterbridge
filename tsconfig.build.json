@@ -4,6 +4,7 @@
     { "path": "./packages/types/tsconfig.build.json" },
     { "path": "./packages/jest-utils/tsconfig.build.json" },
     { "path": "./packages/vitest-utils/tsconfig.build.json" },
+    { "path": "./packages/test-utils/tsconfig.build.json" },
     { "path": "./packages/utils/tsconfig.build.json" },
     { "path": "./packages/thread/tsconfig.build.json" },
     { "path": "./packages/dgram/tsconfig.build.json" },

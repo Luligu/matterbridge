@@ -1,0 +1,97 @@
+{
+  "name": "@matterbridge/test-utils",
+  "version": "3.10.7",
+  "description": "Matterbridge common and framework-specific test utilities",
+  "author": "https://github.com/Luligu",
+  "homepage": "https://matterbridge.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Luligu/matterbridge.git",
+    "directory": "packages/test-utils"
+  },
+  "bugs": {
+    "url": "https://github.com/Luligu/matterbridge/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "matterbridge",
+    "homebridge",
+    "bridge",
+    "plugin",
+    "frontend",
+    "matter.js",
+    "matter-node.js",
+    "matter",
+    "matterprotocol",
+    "iot",
+    "smarthome",
+    "connectedthings",
+    "hap",
+    "homekit",
+    "siri",
+    "google-home",
+    "alexa",
+    "homeassistant",
+    "smartthings",
+    "ewelink"
+  ],
+  "license": "Apache-2.0",
+  "funding": {
+    "type": "buymeacoffee",
+    "url": "https://www.buymeacoffee.com/luligugithub"
+  },
+  "type": "module",
+  "main": "./dist/export.js",
+  "types": "./dist/export.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/export.d.ts",
+      "import": "./dist/export.js"
+    },
+    "./matter": {
+      "types": "./dist/matter/export.d.ts",
+      "import": "./dist/matter/export.js"
+    },
+    "./jest": {
+      "types": "./dist/jest/export.d.ts",
+      "import": "./dist/jest/export.js"
+    },
+    "./vitest": {
+      "types": "./dist/vitest/export.d.ts",
+      "import": "./dist/vitest/export.js"
+    },
+    "./buntest": {
+      "types": "./dist/buntest/export.d.ts",
+      "import": "./dist/buntest/export.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "npm-shrinkwrap.json",
+    "CHANGELOG.md"
+  ],
+  "automator": {
+    "node": true,
+    "vitestTypes": true,
+    "skipPackageJson": true,
+    "skipTsconfig": true
+  },
+  "dependencies": {
+    "@matter/main": "0.17.9",
+    "@matterbridge/types": "3.10.7",
+    "@matterbridge/utils": "3.10.7",
+    "node-ansi-logger": "3.3.0"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.0",
+    "@types/jest": "30.0.0",
+    "@types/node": "26.2.0",
+    "vitest": "4.1.11"
+  }
+}

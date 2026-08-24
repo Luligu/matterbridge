@@ -784,6 +784,7 @@ Matterbridge is published as an npm **monorepo**. The package you install, `matt
 | `packages/types`        | `@matterbridge/types`        | Shared TypeScript types and constants.                                                                                        |
 | `packages/jest-utils`   | `@matterbridge/jest-utils`   | Jest test-environment setup helpers.                                                                                          |
 | `packages/vitest-utils` | `@matterbridge/vitest-utils` | Vitest test-environment setup helpers.                                                                                        |
+| `packages/test-utils`   | `@matterbridge/test-utils`   | Common test helpers with Matter, Jest, Vitest and Bun test-specific exports.                                                  |
 
 ## Imports graph
 
@@ -798,9 +799,11 @@ graph TD
   utils["@matterbridge/utils"]
   types["@matterbridge/types"]
   vitestutils["@matterbridge/vitest-utils"]
+  testutils["@matterbridge/test-utils"]
 
   matterbridge --> core
   matterbridge --> vitestutils
+  matterbridge --> testutils
 
   core --> thread
   core --> dgram
@@ -812,13 +815,15 @@ graph TD
   dgram --> utils
   vitestutils --> utils
   vitestutils --> types
+  testutils --> utils
+  testutils --> types
 ```
 
 The graph is acyclic and layered:
 
 - **Foundation (no internal dependencies):** `@matterbridge/types`, `@matterbridge/utils`.
 - **Networking & workers:** `@matterbridge/dgram` (→ `utils`), `@matterbridge/thread` (→ `utils`, `types`).
-- **Test helpers:** `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` (→ `utils`, `types`).
+- **Test helpers:** `@matterbridge/jest-utils`, `@matterbridge/vitest-utils` and `@matterbridge/test-utils` (→ `utils`, `types`).
 - **Core:** `@matterbridge/core` (→ `dgram`, `thread`, `utils`, `types`).
 - **Top level:** `matterbridge` declares all scoped packages as direct dependencies; `core` pulls in the rest transitively.
 

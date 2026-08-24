@@ -60,6 +60,7 @@
     "packages/types",
     "packages/jest-utils",
     "packages/vitest-utils",
+    "packages/test-utils",
     "packages/utils",
     "packages/dgram",
     "packages/thread",
@@ -105,6 +106,26 @@
     "./vitest-utils/matter": {
       "import": "./dist/vitest-utils/matter.js",
       "types": "./dist/vitest-utils/matter.d.ts"
+    },
+    "./test-utils": {
+      "import": "./dist/test-utils/export.js",
+      "types": "./dist/test-utils/export.d.ts"
+    },
+    "./test-utils/matter": {
+      "import": "./dist/test-utils/matter/export.js",
+      "types": "./dist/test-utils/matter/export.d.ts"
+    },
+    "./test-utils/jest": {
+      "import": "./dist/test-utils/jest/export.js",
+      "types": "./dist/test-utils/jest/export.d.ts"
+    },
+    "./test-utils/vitest": {
+      "import": "./dist/test-utils/vitest/export.js",
+      "types": "./dist/test-utils/vitest/export.d.ts"
+    },
+    "./test-utils/buntest": {
+      "import": "./dist/test-utils/buntest/export.js",
+      "types": "./dist/test-utils/buntest/export.d.ts"
     },
     "./logger": {
       "import": "./dist/logger/export.js",
@@ -276,9 +297,9 @@
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && node scripts/prepublish-clean.mjs --workspaces && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu && npm run softReset",
     "updateDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu -u && npm run softReset",
-    "updateMatter:latest": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact @matter/main@latest && npm run softReset",
-    "updateMatter:dev": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact @matter/main@dev && npm run softReset",
-    "updateMatter:loc": "npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils uninstall @matter/general @matter/model @matter/node @matter/nodejs @matter/protocol @matter/types && npm --workspace packages/core --workspace packages/jest-utils --workspace packages/types --workspace packages/vitest-utils install --no-fund --no-audit --save-exact ../matter.js/packages/main && npm run softReset",
+    "updateMatter:latest": "node scripts/update-matter.mjs latest",
+    "updateMatter:dev": "node scripts/update-matter.mjs dev",
+    "updateMatter:loc": "node scripts/update-matter.mjs loc",
     "docker:run:bun:trixie": "docker pull oven/bun:latest && docker run -it --rm --network matterbridge -p 8283:8283 --name matterbridge-bun-latest oven/bun:latest bash",
     "docker:run:bun:trixie-slim": "docker pull oven/bun:slim && docker run -it --rm --network matterbridge -p 8283:8283 --name matterbridge-bun-slim oven/bun:slim bash",
     "docker:run:bun:ubuntu": "docker pull luligu/matterbridge:bun-ubuntu-slim && docker run -it --rm --network matterbridge -p 8283:8283 --name matterbridge-bun-ubuntu luligu/matterbridge:bun-ubuntu-slim bash",
@@ -386,6 +407,7 @@
     "chip:test:level-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_LVL_",
     "chip:test:color-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CC_",
     "chip:test:closure-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CLCTRL_",
+    "chip:test:pump": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PCC_",
     "chip:test:valve": "node scripts/run-matterbridge-chip-tests.mjs --test TC_VALCC_",
     "chip:test:operational-state": "node scripts/run-matterbridge-chip-tests.mjs --test TC_OPSTATE_",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
@@ -401,6 +423,7 @@
     "@matterbridge/core": "3.10.7",
     "@matterbridge/dgram": "3.10.7",
     "@matterbridge/jest-utils": "3.10.7",
+    "@matterbridge/test-utils": "3.10.7",
     "@matterbridge/thread": "3.10.7",
     "@matterbridge/types": "3.10.7",
     "@matterbridge/utils": "3.10.7",
@@ -409,6 +432,7 @@
     "node-persist-manager": "2.1.0"
   },
   "devDependencies": {
+    "@matter/main": "0.17.9",
     "@types/bun": "1.4.0",
     "@types/node": "26.2.0",
     "@vitest/coverage-v8": "4.1.11",

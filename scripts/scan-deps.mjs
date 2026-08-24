@@ -1,13 +1,13 @@
 /**
  * scan-deps.mjs
- * Version: 1.0.0
+ * Version: 1.1.0
  *
  * Dependency-free scanner that checks declared/referenced dependency hygiene
  * for the `@matter/*` and `@matterbridge/*` imports across the monorepo.
  *
  * For every unit (the root `matterbridge` package and each workspace package) it:
  *   1) Collects every `@matter/*` and `@matterbridge/*` import, split into
- *      production sources (`src/`) and tests (`vitest/`, `test/`).
+ *      production sources (`src/`) and tests (`vitest/`, `test/`, `buntest/`).
  *   2) Flags `src` imports that are not declared in package.json `dependencies`.
  *   3) Flags `src` imports of workspace packages (`@matterbridge/*`) that are
  *      missing a TypeScript project reference in `tsconfig.build.json` and
@@ -15,6 +15,10 @@
  *   4) Flags test imports that are not declared in `dependencies` or
  *      `devDependencies` (tests compile via the no-emit per-package
  *      `tsconfig.json`, so they need no project reference).
+ *   5) For workspace packages, flags declared `@matter/*` and
+ *      `@matterbridge/*` dependencies that are not imported by production
+ *      sources or tests. The root aggregate package is excluded because its
+ *      exports and build entrypoints intentionally span workspace packages.
  *
  * matter.js is a single lockstep-versioned monorepo: `@matter/main` depends on
  * `@matter/{general,model,node,protocol,types}` and pulls `@matter/nodejs` as an
@@ -41,7 +45,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const ROOT = process.cwd();
-const PKGS = ['types', 'jest-utils', 'vitest-utils', 'utils', 'dgram', 'thread', 'core'];
+const ROOT_PACKAGE_JSON = join(ROOT, 'package.json');
 
 // ANSI colors: green for compliant, red for issues, dark grey for transitively
 // satisfied notes. Disabled when output is not a TTY or NO_COLOR is set.
@@ -53,42 +57,47 @@ const grey = (s) => (COLOR ? `\x1b[90m${s}\x1b[0m` : s);
 // Directories never worth descending into while collecting source files.
 const SKIP = new Set(['node_modules', 'dist', 'build', '.cache', 'coverage', '.git', 'mock']);
 
-// Maps a `@matterbridge/<name>` specifier to its workspace directory name, used
-// to verify TypeScript project references.
-const MB_TO_DIR = {
-  '@matterbridge/types': 'types',
-  '@matterbridge/jest-utils': 'jest-utils',
-  '@matterbridge/vitest-utils': 'vitest-utils',
-  '@matterbridge/utils': 'utils',
-  '@matterbridge/dgram': 'dgram',
-  '@matterbridge/thread': 'thread',
-  '@matterbridge/core': 'core',
-};
-
 // Matches `import ... from '...'`, `export ... from '...'`, dynamic `import('...')`
 // and bare `import '...'` statements, capturing the module specifier.
 const IMPORT_RE = /(?:import|export)\b[^'"]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|import\s*['"]([^'"]+)['"]/g;
 
 // Builds the list of units to scan: the root package plus every workspace.
 function buildUnits() {
-  const units = [];
-  units.push({
-    id: 'root (matterbridge)',
-    srcDirs: [{ d: join(ROOT, 'src'), kind: 'src' }],
-    pkgJson: join(ROOT, 'package.json'),
-    tsBuild: join(ROOT, 'tsconfig.build.json'),
-    tsProd: join(ROOT, 'tsconfig.build.production.json'),
-  });
-  for (const p of PKGS) {
-    const dir = join(ROOT, 'packages', p);
+  const rootPackage = JSON.parse(readFileSync(ROOT_PACKAGE_JSON, 'utf8'));
+  const workspacePaths = Array.isArray(rootPackage.workspaces) ? rootPackage.workspaces : rootPackage.workspaces?.packages || [];
+  const units = [
+    {
+      id: 'root (matterbridge)',
+      dirName: null,
+      packageName: rootPackage.name,
+      srcDirs: [
+        { d: join(ROOT, 'src'), kind: 'src' },
+        { d: join(ROOT, 'vitest'), kind: 'test' },
+        { d: join(ROOT, 'test'), kind: 'test' },
+        { d: join(ROOT, 'buntest'), kind: 'test' },
+      ],
+      pkgJson: ROOT_PACKAGE_JSON,
+      tsBuild: join(ROOT, 'tsconfig.build.json'),
+      tsProd: join(ROOT, 'tsconfig.build.production.json'),
+    },
+  ];
+  for (const workspacePath of workspacePaths) {
+    const dir = join(ROOT, workspacePath);
+    const pkgJson = join(dir, 'package.json');
+    if (!existsSync(pkgJson)) throw new Error(`Workspace package.json not found: ${workspacePath}`);
+    const pkg = JSON.parse(readFileSync(pkgJson, 'utf8'));
+    const dirName = workspacePath.split(/[\\/]/).at(-1);
     units.push({
-      id: p,
+      id: dirName,
+      dirName,
+      packageName: pkg.name,
       srcDirs: [
         { d: join(dir, 'src'), kind: 'src' },
         { d: join(dir, 'vitest'), kind: 'test' },
         { d: join(dir, 'test'), kind: 'test' },
+        { d: join(dir, 'buntest'), kind: 'test' },
       ],
-      pkgJson: join(dir, 'package.json'),
+      pkgJson,
       tsBuild: join(dir, 'tsconfig.build.json'),
       tsProd: join(dir, 'tsconfig.build.production.json'),
     });
@@ -179,6 +188,15 @@ function matterClosure(declaredNames) {
   return provided;
 }
 
+// Returns whether a declared scoped dependency is used directly or, for a
+// `@matter/*` package, provides an imported package through its dependency tree.
+function isDependencyUsed(name, importedNames) {
+  if (importedNames.has(name)) return true;
+  if (!name.startsWith('@matter/')) return false;
+  const provided = matterClosure([name]);
+  return [...importedNames].some((importedName) => importedName.startsWith('@matter/') && provided.has(importedName));
+}
+
 // Reads a tsconfig (tolerating // and /* */ comments) and returns the set of
 // referenced workspace directory names.
 function refSet(tsPath) {
@@ -197,8 +215,10 @@ function refSet(tsPath) {
 
 function main() {
   let problems = 0;
+  const units = buildUnits();
+  const workspaceDirs = new Map(units.filter((u) => u.dirName).map((u) => [u.packageName, u.dirName]));
 
-  for (const u of buildUnits()) {
+  for (const u of units) {
     const pkg = JSON.parse(readFileSync(u.pkgJson, 'utf8'));
     const deps = pkg.dependencies || {};
     const devDeps = pkg.devDependencies || {};
@@ -210,6 +230,7 @@ function main() {
     const testFiles = u.srcDirs.filter((x) => x.kind === 'test').flatMap((x) => walk(x.d));
     const srcImports = collectImports(srcFiles);
     const testImports = collectImports(testFiles);
+    const importedNames = new Set([...srcImports.keys(), ...testImports.keys()]);
 
     const prodRefs = refSet(u.tsProd);
     const buildRefs = refSet(u.tsBuild);
@@ -231,8 +252,8 @@ function main() {
         else issues.push(`SRC import of '${base}' but NOT in "dependencies" (found in: ${where(base)})`);
       }
       if (base.startsWith('@matterbridge/')) {
-        const dirName = MB_TO_DIR[base];
-        if (dirName && dirName !== u.id) {
+        const dirName = workspaceDirs.get(base);
+        if (dirName && dirName !== u.dirName) {
           if (prodRefs && !prodRefs.has(dirName)) issues.push(`SRC import of '${base}' but missing reference in tsconfig.build.production.json`);
           if (buildRefs && !buildRefs.has(dirName)) issues.push(`SRC import of '${base}' but missing reference in tsconfig.build.json`);
         }
@@ -245,6 +266,22 @@ function main() {
         const via = allClosure.get(base);
         if (via) notes.push(`TEST import of '${base}' satisfied transitively via declared '${via}'`);
         else issues.push(`TEST import of '${base}' but NOT in dependencies or devDependencies`);
+      }
+    }
+
+    // Workspace package declarations must be used directly or, for Matter
+    // packages, provide an imported package transitively. Root is an aggregate
+    // package whose exports and build entrypoints span workspace packages.
+    if (u.dirName) {
+      for (const [field, declared] of [
+        ['dependencies', deps],
+        ['devDependencies', devDeps],
+      ]) {
+        for (const name of Object.keys(declared)) {
+          if ((name.startsWith('@matter/') || name.startsWith('@matterbridge/')) && !isDependencyUsed(name, importedNames)) {
+            issues.push(`'${name}' declared in "${field}" but not imported`);
+          }
+        }
       }
     }
 

@@ -40,6 +40,7 @@ export * from './onOffServer.js';
 export * from './occupancySensingServer.js';
 export * from './operationalStateServer.js';
 export * from './powerSourceServer.js';
+export * from './pumpConfigurationAndControlServer.js';
 export * from './serviceAreaServer.js';
 export * from './smokeCoAlarmServer.js';
 export * from './switchServer.js';

@@ -3,5 +3,5 @@
   "compilerOptions": {
     "types": ["node", "bun"]
   },
-  "include": ["**/*.ts", "../packages/thread/src/**/*.ts"]
+  "include": ["**/*.ts"]
 }

@@ -52,7 +52,6 @@ import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-
 import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
 import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
 import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
@@ -118,6 +117,7 @@ import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensing
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
@@ -4196,19 +4196,36 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
    * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @param {number | null} [maxPressure] - The maximum pressure to set. Defaults to `null`.
+   * @param {number | null} [maxSpeed] - The maximum speed to set. Defaults to `null`.
+   * @param {number | null} [maxFlow] - The maximum flow to set. Defaults to `null`.
+   * @param {number | null} [minConstSpeed] - The minimum constant speed to set. Defaults to `null`.
+   * @param {number | null} [maxConstSpeed] - The maximum constant speed to set. Defaults to `null`.
+   * @param {number | null} [speed] - The speed to set. Defaults to `null`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPumpConfigurationAndControlClusterServer(pumpMode: PumpConfigurationAndControl.OperationMode = PumpConfigurationAndControl.OperationMode.Normal): this {
-    this.behaviors.require(PumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed), {
-      minConstSpeed: null,
-      maxConstSpeed: null,
-      maxPressure: null,
-      maxSpeed: null,
-      maxFlow: null,
+  createDefaultPumpConfigurationAndControlClusterServer(
+    pumpMode: PumpConfigurationAndControl.OperationMode = PumpConfigurationAndControl.OperationMode.Normal,
+    maxPressure: number | null = null,
+    maxSpeed: number | null = null,
+    maxFlow: number | null = null,
+    minConstSpeed: number | null = null,
+    maxConstSpeed: number | null = null,
+    speed: number | null = null,
+  ): this {
+    this.behaviors.require(MatterbridgePumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed), {
+      minConstSpeed,
+      maxConstSpeed,
+      maxPressure,
+      maxSpeed,
+      maxFlow,
+      speed,
       effectiveOperationMode: pumpMode,
       effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
       capacity: null,
+      pumpStatus: new PumpConfigurationAndControl.PumpStatus({ running: false }),
       operationMode: pumpMode,
+      controlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
     });
     return this;
   }
