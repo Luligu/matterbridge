@@ -7,7 +7,7 @@
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
     "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
   ],
-  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml", "Test_TC_WASHERCTRL_2_2.yaml"],
+  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml", "Test_TC_WASHERCTRL_2_2.yaml", "Test_TC_DRYERCTRL_2_1.yaml"],
   "tests": [
     {
       "name": "Generic device basic composition",
@@ -1678,6 +1678,13 @@
       "skip": true,
       "comment": "Not applicable to endpoint 1305: WaterLevelError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
       "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "LaundryDryerControls optional dryness attributes on LaundryDryer",
+      "test": "Test_TC_DRYERCTRL_2_1",
+      "endpoint": 1306,
+      "comment": "Patched locally to omit the undefined DrynessLevelEnum value 4 write, which CHIP rejects during local command encoding before it reaches the DUT; all attribute, supported-list, valid-write, readback, and applicable state coverage remains.",
+      "args": ["--PICS /root/laundry-dryer-controls.pics"]
     }
   ]
 }

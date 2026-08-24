@@ -254,6 +254,21 @@ non-provisional `DoorError` alarm is supported.
 
 Result on 2026-08-24: all 3 applicable automated tests pass; 6 upstream-disabled tests are skipped.
 
+### Endpoint 1306
+
+Laundry Dryer cluster:
+
+- Laundry Dryer Controls
+
+The sole upstream Matter 1.6 server test, `Test_TC_DRYERCTRL_2_1`, is registered with
+`docker/chip-test/laundry-dryer-controls.pics`. It validates `SupportedDrynessLevels`,
+`SelectedDrynessLevel`, a supported write, and persistent readback. The local YAML patch omits the upstream write of
+undefined `DrynessLevelEnum` value `4`: chip-tool rejects that value during local command encoding and reports
+generic `FAILURE` before any request reaches the DUT, so it cannot verify the expected `CONSTRAINT_ERROR`. The final
+`INVALID_IN_STATE` scenario is gated by `DRYERCTRL.S.M.ManuallyControlled` and does not apply to endpoint 1306.
+
+Result on 2026-08-24: the applicable automated test passes (1/1).
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

@@ -49,6 +49,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for the applicable automated `LaundryDryerControls` harness test (1/1 passed).
 - [chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DishwasherMode` and `DishwasherAlarm` clusters (3/3 passed; 6 upstream-disabled manual tests skipped).
 - [chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the `RefrigeratorAndTemperatureControlledCabinetMode` and `RefrigeratorAlarm` clusters (3/3 passed; 2 non-applicable or upstream-disabled tests skipped).
 - [chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the `LaundryWasherMode` cluster.
@@ -63,6 +64,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.
 - [chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.
 - [chip]: Add all Refrigerator Mode and Refrigerator Alarm server tests for endpoint 1302, with dedicated PICS and automated door-state/Notify-event control for `TC_REFALM_2_2`.
 - [LaundryWasher]: Add `MatterbridgeLaundryWasherControlsServer` with Matter 1.6-compliant `SpinSpeedCurrent` write validation for the Spin and Rinse feature combination.
