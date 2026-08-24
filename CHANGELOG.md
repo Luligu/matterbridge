@@ -56,6 +56,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [demoDevices]: Add all Chapter 12 and Chapter 13 device types, including the Robotic Vacuum Cleaner, every appliance device, composed refrigerator/freezer cabinets, four Cook Surface endpoints, and double-oven cabinets.
 - [Closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
 - [WaterValve]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
 - [WaterValve]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
