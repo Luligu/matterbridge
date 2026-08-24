@@ -7,7 +7,7 @@
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
     "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
   ],
-  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml"],
+  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml", "Test_TC_WASHERCTRL_2_2.yaml"],
   "tests": [
     {
       "name": "Generic device basic composition",
@@ -1523,6 +1523,61 @@
       "skip": true,
       "comment": "Not applicable: endpoint 1201 does not implement the ServiceArea ProgressReporting feature or Progress attribute. The directly launched upstream test does not enforce its own declared PICS prerequisites and otherwise assumes the reference app's hardcoded area IDs 7 and 1234567.",
       "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "DeadFrontOnOff attributes on LaundryWasher",
+      "test": "Test_TC_OO_2_1",
+      "endpoint": 1301,
+      "args": ["--PICS /root/on-off-dead-front.pics"]
+    },
+    {
+      "name": "DeadFrontOnOff primary functionality on LaundryWasher",
+      "test": "Test_TC_OO_2_2",
+      "endpoint": 1301,
+      "args": ["--PICS /root/on-off-dead-front.pics"]
+    },
+    {
+      "name": "LaundryWasherMode attributes on LaundryWasher",
+      "test": "TC_LWM_1_2.py",
+      "endpoint": 1301,
+      "args": ["--PICS /root/laundry-washer.pics"]
+    },
+    {
+      "name": "LaundryWasherMode ChangeToMode on LaundryWasher",
+      "test": "Test_TC_LWM_2_1",
+      "endpoint": 1301,
+      "args": ["--PICS /root/laundry-washer.pics"]
+    },
+    {
+      "name": "LaundryWasherControls Spin attributes on LaundryWasher",
+      "test": "TC_WASHERCTRL_2_1.py",
+      "endpoint": 1301,
+      "args": ["--PICS /root/laundry-washer.pics"]
+    },
+    {
+      "name": "LaundryWasherControls Rinse attributes on LaundryWasher",
+      "test": "Test_TC_WASHERCTRL_2_2",
+      "endpoint": 1301,
+      "note": "Patched locally to remove the upstream final step that writes undefined NumberOfRinsesEnum value 4; CHIP rejects it during local encoding before any request reaches the DUT. Attribute, supported-list, valid-write, and readback coverage is retained.",
+      "args": ["--PICS /root/laundry-washer.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl attributes on LaundryWasherNumberTemperature",
+      "test": "Test_TC_TCTL_2_1",
+      "endpoint": 13012,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl optional attributes on LaundryWasherNumberTemperature",
+      "test": "Test_TC_TCTL_2_2",
+      "endpoint": 13012,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "LevelTemperatureControl attributes on LaundryWasher",
+      "test": "TC_TCTL_2_3.py",
+      "endpoint": 1301,
+      "args": ["--PICS /root/temperature-control-level.pics"]
     }
   ]
 }

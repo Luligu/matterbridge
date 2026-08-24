@@ -3,7 +3,7 @@
  * @description This file contains the LaundryWasher class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.2.0
+ * @version 1.4.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,7 +26,7 @@
 // @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
-import type { EndpointNumber } from '@matter/types';
+import { Status, StatusResponseError, type EndpointNumber } from '@matter/types';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
@@ -203,13 +203,42 @@ export class LaundryWasher extends MatterbridgeEndpoint {
       LaundryWasherControls.NumberOfRinses.Extra,
     ],
   ): this {
-    this.behaviors.require(LaundryWasherControlsServer.with(LaundryWasherControls.Feature.Spin, LaundryWasherControls.Feature.Rinse), {
+    this.behaviors.require(MatterbridgeLaundryWasherControlsServer, {
       spinSpeeds,
       spinSpeedCurrent, // Writable and nullable
       supportedRinses,
       numberOfRinses, // Writable
     });
     return this;
+  }
+}
+
+/**
+ * Laundry Washer Controls server enforcing the SpinSpeedCurrent index constraint.
+ */
+export class MatterbridgeLaundryWasherControlsServer extends LaundryWasherControlsServer.with(LaundryWasherControls.Feature.Spin, LaundryWasherControls.Feature.Rinse) {
+  /**
+   * Registers validation for SpinSpeedCurrent writes.
+   */
+  override initialize(): void {
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.spinSpeedCurrent$Changing, this.#validateSpinSpeedCurrent);
+  }
+
+  /**
+   * Validates a requested spin-speed index.
+   *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §8.6.6.2: `SpinSpeedCurrent` is an index into `SpinSpeeds`.
+   * A write that does not match a valid index SHALL receive `CONSTRAINT_ERROR`. A null value remains valid and
+   * indicates that the selected cycle has no spin speed.
+   *
+   * @param {number | null} spinSpeedCurrent - Requested SpinSpeedCurrent value.
+   */
+  #validateSpinSpeedCurrent(spinSpeedCurrent: number | null): void {
+    if (spinSpeedCurrent !== null && spinSpeedCurrent >= this.state.spinSpeeds.length) {
+      throw new StatusResponseError(`SpinSpeedCurrent ${spinSpeedCurrent} is not a valid SpinSpeeds index`, Status.ConstraintError);
+    }
   }
 }
 
@@ -241,6 +270,11 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   /**
    * Handles the LaundryWasherMode `ChangeToMode` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
+   * any `SupportedModes` entry, `ChangeToModeResponse.Status` SHALL indicate `UnsupportedMode`. Section 1.10.7.2
+   * additionally requires `StatusText` to be an empty string when the status is `UnsupportedMode`.
+   *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
@@ -255,13 +289,12 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    if (supportedMode) {
-      device.log.debug(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
-      this.state.currentMode = request.newMode;
-      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
-    } else {
-      device.log.error(`MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+    if (!supportedMode) {
+      device.log.error(`MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode ${request.newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
+    device.log.debug(`MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
+    this.state.currentMode = request.newMode;
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

@@ -521,12 +521,23 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 13 - Appliances Device Types
 
-  ep = new LaundryWasher('Laundry Washer', 'APPLIANCE-13-01', {
+  ep = new LaundryWasher('Laundry Washer Level Temperature', 'APPLIANCE-13-01', {
     id: 'LaundryWasher',
     number: EndpointNumber(13_01),
     tagList: [getSemtag(CommonNumberTag.One)],
   });
   await registerDevice(ep, 'Laundry Washer', 'APPLIANCE-13-01');
+
+  ep = new LaundryWasher('Laundry Washer Number Temperature', 'APPLIANCE-13-01-2', {
+    id: 'LaundryWasherNumberTemperature',
+    number: EndpointNumber(13_01_2),
+    tagList: [getSemtag(CommonNumberTag.Two)],
+    temperatureSetpoint: 40 * 100,
+    minTemperature: 30 * 100,
+    maxTemperature: 60 * 100,
+    step: 10 * 100,
+  });
+  await registerDevice(ep, 'Laundry Washer Number Temperature', 'APPLIANCE-13-01-2');
 
   const refrigeratorDevice = new Refrigerator('Refrigerator', 'APPLIANCE-13-02', {
     id: 'Refrigerator',

@@ -187,6 +187,40 @@ because endpoint 1201 does not implement the optional ProgressReporting feature 
 
 The full output is retained in `chipTests.log`; the pass/fail summary is in `chipTestsSummary.log`.
 
+### Endpoint 1301
+
+Laundry Washer with level temperature control clusters:
+
+- OnOff (DeadFrontBehavior)
+- LaundryWasherMode
+- LaundryWasherControls (Spin and Rinse)
+- TemperatureControl (TemperatureLevel)
+
+### Endpoint 13012
+
+Second Laundry Washer with numeric temperature control clusters:
+
+- OnOff (DeadFrontBehavior)
+- LaundryWasherMode
+- LaundryWasherControls (Spin and Rinse)
+- TemperatureControl (TemperatureNumber and TemperatureStep)
+
+The nine applicable server tests use `docker/chip-test/on-off-dead-front.pics`,
+`docker/chip-test/laundry-washer.pics`, `docker/chip-test/temperature-control-level.pics`, and
+`docker/chip-test/temperature-control-number.pics`. The 2026-08-24 aggregate run passes 9/9 tests:
+
+- DeadFrontOnOff attributes and primary functionality pass 2/2.
+- LaundryWasherMode attributes and ChangeToMode pass 2/2.
+- LaundryWasherControls Spin attributes pass.
+- LaundryWasherControls Rinse attributes, supported-list, valid-write, and readback checks pass. The local
+  `Test_TC_WASHERCTRL_2_2.yaml` patch removes only the upstream final step that writes undefined
+  `NumberOfRinsesEnum` value `4`; CHIP rejects that value locally during encoding before any request reaches the DUT,
+  so the step cannot test the expected `INVALID_IN_STATE` response.
+- NumberTemperatureControl passes 2/2 and LevelTemperatureControl passes 1/1.
+
+The patched Rinse test does not cover `INVALID_IN_STATE`; that requires a separate valid test scenario using a
+defined enum value that is unavailable in the current mode's `SupportedRinses` list.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

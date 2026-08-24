@@ -49,6 +49,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the `LaundryWasherMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcRunMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcCleanMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcOperationalState` cluster.
@@ -60,6 +61,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [LaundryWasher]: Add `MatterbridgeLaundryWasherControlsServer` with Matter 1.6-compliant `SpinSpeedCurrent` write validation for the Spin and Rinse feature combination.
+- [demoDevices]: Add a second Laundry Washer device exposing `TemperatureControl` with the `TemperatureNumber` and `TemperatureStep` features, alongside the existing `TemperatureLevel` washer.
+- [chip]: Add all applicable Laundry Washer server tests for DeadFrontOnOff, LaundryWasherMode, LaundryWasherControls, NumberTemperatureControl, and LevelTemperatureControl, with dedicated PICS files. Patch `TC_WASHERCTRL_2_2` to omit its unencodable undefined-enum write while retaining its attribute, supported-list, valid-write, and readback coverage.
 - [demoDevices]: Add all Chapter 12 and Chapter 13 device types, including the Robotic Vacuum Cleaner, every appliance device, composed refrigerator/freezer cabinets, four Cook Surface endpoints, and double-oven cabinets.
 - [Closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
 - [WaterValve]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
@@ -92,6 +96,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [LaundryWasher]: Reject a `SpinSpeedCurrent` value that is not a valid `SpinSpeeds` index with `CONSTRAINT_ERROR`, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.
+- [LaundryWasher]: Return `UnsupportedMode` with an empty status text when `ChangeToMode` requests a mode absent from `SupportedModes`, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.
 - [RoboticVacuumCleaner]: Refactor the RVC Run Mode, RVC Clean Mode, and RVC Operational State servers for Matter 1.6 conformance, including direct-mode-change restrictions, Pause/Resume compatibility, GoHome state handling, CountdownTime exposure, and the mandatory OperationCompletion event.
 - [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
 

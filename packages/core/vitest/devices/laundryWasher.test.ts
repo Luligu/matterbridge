@@ -9,9 +9,11 @@ const MATTER_PORT = 8009;
 const MATTER_CREATE_ONLY = true;
 
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
+import { Status } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
+import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -31,7 +33,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-import { LaundryWasher, MatterbridgeLaundryWasherModeServer } from '../../src/devices/laundryWasher.js';
+import { LaundryWasher, MatterbridgeLaundryWasherControlsServer, MatterbridgeLaundryWasherModeServer } from '../../src/devices/laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { laundryWasher } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -219,12 +221,20 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode 0`);
+    const unsupportedResponse = await device.act(async (agent) => await agent.get(MatterbridgeLaundryWasherModeServer).changeToMode({ newMode: 0 }));
+    expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0`);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate`);
+  });
+
+  test('validate SpinSpeedCurrent writes', async () => {
+    expect(device.behaviors.has(MatterbridgeLaundryWasherControlsServer)).toBeTruthy();
+    await device.setAttribute(LaundryWasherControls.id, 'spinSpeedCurrent', 3);
+    await expect(device.setAttribute(LaundryWasherControls.id, 'spinSpeedCurrent', 4)).rejects.toMatchObject({ code: Status.ConstraintError });
+    await device.setAttribute(LaundryWasherControls.id, 'spinSpeedCurrent', null);
   });
 
   test('invoke MatterbridgeLevelTemperatureControlServer commands', async () => {

@@ -1,20 +1,13 @@
-Chip tests run started at 2026-08-24T20:09:19.036Z
+Chip tests run started at 2026-08-24T20:54:10.146Z
 
-✅ RvcRunMode attributes on RoboticVacuumCleaner (TC_RVCRUNM_1_2.py)
-✅ RvcRunMode ChangeToMode on RoboticVacuumCleaner (TC_RVCRUNM_2_1.py)
-✅ RvcRunMode mode transitions on RoboticVacuumCleaner (TC_RVCRUNM_2_2.py)
-✅ RvcCleanMode attributes on RoboticVacuumCleaner (TC_RVCCLEANM_1_2.py)
-✅ RvcCleanMode ChangeToMode on RoboticVacuumCleaner (TC_RVCCLEANM_2_1.py)
-✅ RvcCleanMode changes while running on RoboticVacuumCleaner (TC_RVCCLEANM_2_2.py)
-✅ RvcOperationalState attributes on RoboticVacuumCleaner (TC_RVCOPSTATE_2_1.py)
-✅ RvcOperationalState Pause/Resume on RoboticVacuumCleaner (TC_RVCOPSTATE_2_3.py)
-✅ RvcOperationalState GoHome on RoboticVacuumCleaner (TC_RVCOPSTATE_2_4.py)
-✅ RvcOperationalState GoHome run-mode interaction on RoboticVacuumCleaner (TC_RVCOPSTATE_2_5.py)
-✅ ServiceArea attributes on RoboticVacuumCleaner (TC_SEAR_1_2.py)
-✅ ServiceArea SelectAreas on RoboticVacuumCleaner (TC_SEAR_1_3.py)
-✅ ServiceArea SkipArea conformance on RoboticVacuumCleaner (TC_SEAR_1_4.py)
-✅ ServiceArea SkipArea command on RoboticVacuumCleaner (TC_SEAR_1_5.py)
-⏭️ ServiceArea Progress reporting on RoboticVacuumCleaner (TC_SEAR_1_6.py)
-   ↳ Not applicable: endpoint 1201 does not implement the ServiceArea ProgressReporting feature or Progress attribute. The directly launched upstream test does not enforce its own declared PICS prerequisites and otherwise assumes the reference app's hardcoded area IDs 7 and 1234567.
+✅ DeadFrontOnOff attributes on LaundryWasher (Test_TC_OO_2_1)
+✅ DeadFrontOnOff primary functionality on LaundryWasher (Test_TC_OO_2_2)
+✅ LaundryWasherMode attributes on LaundryWasher (TC_LWM_1_2.py)
+✅ LaundryWasherMode ChangeToMode on LaundryWasher (Test_TC_LWM_2_1)
+✅ LaundryWasherControls Spin attributes on LaundryWasher (TC_WASHERCTRL_2_1.py)
+✅ LaundryWasherControls Rinse attributes on LaundryWasher (Test_TC_WASHERCTRL_2_2)
+✅ NumberTemperatureControl attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_1)
+✅ NumberTemperatureControl optional attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_2)
+✅ LevelTemperatureControl attributes on LaundryWasher (TC_TCTL_2_3.py)
 
-Summary: 14/14 tests passed (1 skipped).
+Summary: 9/9 tests passed.
