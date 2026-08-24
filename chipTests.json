@@ -1,5 +1,12 @@
 {
-  "resetClusterGlobs": ["root.accessControl.acl", "root.accessControl.extension", "*.smokeCoAlarm.*", "*.DimmableLight.levelControl.*"],
+  "resetClusterGlobs": [
+    "root.accessControl.acl",
+    "root.accessControl.extension",
+    "*.smokeCoAlarm.*",
+    "*.DimmableLight.levelControl.*",
+    "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
+    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
+  ],
   "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml"],
   "tests": [
     {
@@ -1417,6 +1424,73 @@
       "endpoint": 507,
       "note": "CountdownTime is always null on this endpoint (createDefaultOperationalStateClusterServer() never updates it), so every CountdownTime-report assertion self-skips; only the plain Start/Pause transitions are exercised.",
       "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "RvcRunMode attributes on RoboticVacuumCleaner",
+      "test": "TC_RVCRUNM_1_2.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics"]
+    },
+    {
+      "name": "RvcRunMode ChangeToMode on RoboticVacuumCleaner",
+      "test": "TC_RVCRUNM_2_1.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.RVCRUNM.MODE_CHANGE_OK:0", "--int-arg PIXIT.RVCRUNM.MODE_CHANGE_FAIL:3"]
+    },
+    {
+      "name": "RvcRunMode mode transitions on RoboticVacuumCleaner",
+      "test": "TC_RVCRUNM_2_2.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.RVCRUNM.MODE_A:2", "--int-arg PIXIT.RVCRUNM.MODE_B:3"]
+    },
+    {
+      "name": "RvcCleanMode attributes on RoboticVacuumCleaner",
+      "test": "TC_RVCCLEANM_1_2.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics"]
+    },
+    {
+      "name": "RvcCleanMode ChangeToMode on RoboticVacuumCleaner",
+      "test": "TC_RVCCLEANM_2_1.py",
+      "endpoint": 1201,
+      "args": [
+        "--PICS /root/rvc.pics",
+        "--app-pipe /tmp/matterbridge-chip-test-app-pipe",
+        "--int-arg PIXIT.RVCCLEANM.MODE_CHANGE_OK:2",
+        "--int-arg PIXIT.RVCCLEANM.MODE_CHANGE_FAIL:3"
+      ]
+    },
+    {
+      "name": "RvcCleanMode changes while running on RoboticVacuumCleaner",
+      "test": "TC_RVCCLEANM_2_2.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "RvcOperationalState attributes on RoboticVacuumCleaner",
+      "test": "TC_RVCOPSTATE_2_1.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "RvcOperationalState Pause/Resume on RoboticVacuumCleaner",
+      "test": "TC_RVCOPSTATE_2_3.py",
+      "endpoint": 1201,
+      "resetBefore": true,
+      "note": "This test performs timing-sensitive mid-test app-pipe resets; restart once beforehand to avoid accumulated Matter sessions delaying a reset beyond the test's 50 ms wait.",
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "RvcOperationalState GoHome on RoboticVacuumCleaner",
+      "test": "TC_RVCOPSTATE_2_4.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "RvcOperationalState GoHome run-mode interaction on RoboticVacuumCleaner",
+      "test": "TC_RVCOPSTATE_2_5.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg runmode_cleanmode:1"]
     }
   ]
 }

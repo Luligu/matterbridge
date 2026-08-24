@@ -3,7 +3,7 @@
  * @description This file contains the CHIP test helpers of Matterbridge.
  * @author Luca Liguori
  * @created 2026-08-16
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -38,11 +38,14 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
+import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
@@ -56,6 +59,7 @@ type ChipTestAppPipeCommand = {
   Device?: string;
   Operation?: string;
   Param?: number;
+  Error?: string;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -786,6 +790,72 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
   }
 
   switch (command.Name) {
+    case 'Reset': {
+      if (!endpoint.behaviors.has(MatterbridgeRvcRunModeServer) || !endpoint.behaviors.has(MatterbridgeRvcOperationalStateServer)) {
+        matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command on non-RVC endpoint ${endpointId}`);
+        return;
+      }
+      const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      if (!idleMode) {
+        matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command because endpoint ${endpointId} has no Idle run mode`);
+        return;
+      }
+      await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, {
+        operationalState: RvcOperationalState.OperationalState.Stopped,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+      });
+      matterbridge.log.info(`CHIP test app pipe reset RVC endpoint ${endpointId}`);
+      return;
+    }
+    case 'ErrorEvent': {
+      const errorStates: Record<string, RvcOperationalState.ErrorState> = {
+        UnableToStartOrResume: RvcOperationalState.ErrorState.UnableToStartOrResume,
+        UnableToCompleteOperation: RvcOperationalState.ErrorState.UnableToCompleteOperation,
+        CommandInvalidInState: RvcOperationalState.ErrorState.CommandInvalidInState,
+        FailedToFindChargingDock: RvcOperationalState.ErrorState.FailedToFindChargingDock,
+        Stuck: RvcOperationalState.ErrorState.Stuck,
+        DustBinMissing: RvcOperationalState.ErrorState.DustBinMissing,
+        DustBinFull: RvcOperationalState.ErrorState.DustBinFull,
+        WaterTankEmpty: RvcOperationalState.ErrorState.WaterTankEmpty,
+        WaterTankMissing: RvcOperationalState.ErrorState.WaterTankMissing,
+        WaterTankLidOpen: RvcOperationalState.ErrorState.WaterTankLidOpen,
+        MopCleaningPadMissing: RvcOperationalState.ErrorState.MopCleaningPadMissing,
+        BatteryLow: RvcOperationalState.ErrorState.LowBattery,
+        CannotReachTargetArea: RvcOperationalState.ErrorState.CannotReachTargetArea,
+        DirtyWaterTankFull: RvcOperationalState.ErrorState.DirtyWaterTankFull,
+        DirtyWaterTankMissing: RvcOperationalState.ErrorState.DirtyWaterTankMissing,
+        WheelsJammed: RvcOperationalState.ErrorState.WheelsJammed,
+        BrushJammed: RvcOperationalState.ErrorState.BrushJammed,
+        NavigationSensorObscured: RvcOperationalState.ErrorState.NavigationSensorObscured,
+      };
+      const errorStateId = command.Error === undefined ? undefined : errorStates[command.Error];
+      if (errorStateId === undefined) {
+        matterbridge.log.warn(`Ignoring unsupported RVC ErrorEvent CHIP test app pipe command: ${JSON.stringify(command)}`);
+        return;
+      }
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, {
+        operationalState: RvcOperationalState.OperationalState.Error,
+        operationalError: { errorStateId, errorStateDetails: 'Simulated CHIP test fault' },
+      });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalError to ${command.Error} on endpoint ${endpointId}`);
+      return;
+    }
+    case 'ChargerFound':
+    case 'Charging':
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Charging });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Charging on endpoint ${endpointId}`);
+      return;
+    case 'Charged':
+    case 'Docked': {
+      const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      if (idleMode) await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Docked on endpoint ${endpointId}`);
+      return;
+    }
     case 'SetBooleanState':
       await endpoint.setStateOf(endpoint.behaviors.supported.booleanState, { stateValue: Boolean(command.NewState) });
       matterbridge.log.info(`CHIP test app pipe set BooleanState.StateValue to ${Boolean(command.NewState)} on endpoint ${endpointId}`);

@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -28,6 +28,8 @@ import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, Refri
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { EndpointNumber } from '@matter/types/datatype';
 
 import { AirConditioner } from './devices/airConditioner.js';
@@ -499,6 +501,21 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'RoboticVacuumCleaner',
     number: EndpointNumber(12_01),
     tagList: [getSemtag(CommonNumberTag.One)],
+    // The upstream automated RVC tests use the reference application's PIXIT mode numbering (Idle=0,
+    // Cleaning=1). Keep that test-facing numbering explicit here without changing the public class defaults.
+    currentRunMode: 0,
+    supportedRunModes: [
+      { label: 'Idle', mode: 0, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
+      { label: 'Cleaning', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+      { label: 'Mapping', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Mapping }] },
+      { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }, { value: RvcRunMode.ModeTag.Max }] },
+    ],
+    currentCleanMode: 1,
+    supportedCleanModes: [
+      { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+      { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+      { label: 'DeepClean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
+    ],
   });
   await registerDevice(ep, 'Robotic Vacuum Cleaner', 'ROBOTIC-12-01');
 

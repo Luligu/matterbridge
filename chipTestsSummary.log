@@ -1,8 +1,14 @@
-Chip tests run started at 2026-08-24T12:19:23.254Z
+Chip tests run started at 2026-08-24T20:01:57.104Z
 
-✅ PumpConfigurationAndControl attributes on Pump (Test_TC_PCC_2_1)
-✅ PumpConfigurationAndControl Operation Mode on Pump (Test_TC_PCC_2_2)
-✅ PumpConfigurationAndControl Control Mode on Pump (Test_TC_PCC_2_3)
-✅ PumpConfigurationAndControl Life Time Counters on Pump (Test_TC_PCC_2_4)
+✅ RvcRunMode attributes on RoboticVacuumCleaner (TC_RVCRUNM_1_2.py)
+✅ RvcRunMode ChangeToMode on RoboticVacuumCleaner (TC_RVCRUNM_2_1.py)
+✅ RvcRunMode mode transitions on RoboticVacuumCleaner (TC_RVCRUNM_2_2.py)
+✅ RvcCleanMode attributes on RoboticVacuumCleaner (TC_RVCCLEANM_1_2.py)
+✅ RvcCleanMode ChangeToMode on RoboticVacuumCleaner (TC_RVCCLEANM_2_1.py)
+✅ RvcCleanMode changes while running on RoboticVacuumCleaner (TC_RVCCLEANM_2_2.py)
+✅ RvcOperationalState attributes on RoboticVacuumCleaner (TC_RVCOPSTATE_2_1.py)
+✅ RvcOperationalState Pause/Resume on RoboticVacuumCleaner (TC_RVCOPSTATE_2_3.py)
+✅ RvcOperationalState GoHome on RoboticVacuumCleaner (TC_RVCOPSTATE_2_4.py)
+✅ RvcOperationalState GoHome run-mode interaction on RoboticVacuumCleaner (TC_RVCOPSTATE_2_5.py)
 
-Summary: 4/4 tests passed.
+Summary: 10/10 tests passed.

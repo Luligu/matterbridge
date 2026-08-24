@@ -410,6 +410,7 @@
     "chip:test:pump": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PCC_",
     "chip:test:valve": "node scripts/run-matterbridge-chip-tests.mjs --test TC_VALCC_",
     "chip:test:operational-state": "node scripts/run-matterbridge-chip-tests.mjs --test TC_OPSTATE_",
+    "chip:test:rvc": "node scripts/run-matterbridge-chip-tests.mjs --test TC_RVC",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",

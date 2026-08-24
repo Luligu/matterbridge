@@ -166,6 +166,24 @@ generic `ci-pics-values` defaults exactly (no attribute/command/error-state/even
 actual value change, and `TC_OPSTATE_2_3.py`'s own last step leaves it at `UnableToStartOrResume`, which would
 otherwise make `TC_OPSTATE_2_4.py`'s identical `OnFault` trigger a false "event never arrived" failure.
 
+### Endpoint 1201
+
+Robotic Vacuum Cleaner clusters:
+
+- RvcRunMode (Idle, Cleaning, Mapping, and SpotCleaning modes)
+- RvcCleanMode (Vacuum, Mop, and DeepClean modes)
+- RvcOperationalState (Stopped, Running, Paused, Error, SeekingCharger, Charging, and Docked states)
+
+The ten `TC_RVCRUNM_*`, `TC_RVCCLEANM_*`, and `TC_RVCOPSTATE_*` Python tests use
+`docker/chip-test/rvc.pics`. Tests with manual setup steps use the CHIP app-pipe and restart the container
+first so each test begins from the demo RVC's configured state.
+
+The 2026-08-24 run passes all ten RVC tests (10/10). This includes direct-mode-change restrictions,
+Idle-tagged run-mode transitions, clean-mode changes while operating, mandatory error-state exposure,
+Pause/Resume, GoHome, CountdownTime, and the GoHome/run-mode interaction.
+
+The full output is retained in `chipTests.log`; the pass/fail summary is in `chipTestsSummary.log`.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
