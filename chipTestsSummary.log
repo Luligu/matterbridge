@@ -1,13 +1,11 @@
-Chip tests run started at 2026-08-24T20:54:10.146Z
+Chip tests run started at 2026-08-24T21:24:49.909Z
 
-✅ DeadFrontOnOff attributes on LaundryWasher (Test_TC_OO_2_1)
-✅ DeadFrontOnOff primary functionality on LaundryWasher (Test_TC_OO_2_2)
-✅ LaundryWasherMode attributes on LaundryWasher (TC_LWM_1_2.py)
-✅ LaundryWasherMode ChangeToMode on LaundryWasher (Test_TC_LWM_2_1)
-✅ LaundryWasherControls Spin attributes on LaundryWasher (TC_WASHERCTRL_2_1.py)
-✅ LaundryWasherControls Rinse attributes on LaundryWasher (Test_TC_WASHERCTRL_2_2)
-✅ NumberTemperatureControl attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_1)
-✅ NumberTemperatureControl optional attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_2)
-✅ LevelTemperatureControl attributes on LaundryWasher (TC_TCTL_2_3.py)
+✅ RefrigeratorMode attributes on Refrigerator (TC_TCCM_1_2.py)
+⏭️ RefrigeratorMode ChangeToMode on Refrigerator (Test_TC_TCCM_2_1)
+   ↳ The upstream v1.6 YAML test contains only disabled manual verification steps, so it executes no conformance checks. It remains listed until an automated upstream test is available.
+✅ RefrigeratorAlarm attributes on Refrigerator (Test_TC_REFALM_2_1)
+✅ RefrigeratorAlarm primary functionality on Refrigerator (TC_REFALM_2_2.py)
+⏭️ RefrigeratorAlarm local suppression on Refrigerator (Test_TC_REFALM_2_3)
+   ↳ Not applicable: the Refrigerator endpoint does not expose a local mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false.
 
-Summary: 9/9 tests passed.
+Summary: 3/3 tests passed (2 skipped).

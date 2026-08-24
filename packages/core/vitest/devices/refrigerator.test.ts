@@ -11,6 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { TlvOfModel } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -31,7 +32,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
+import { MatterbridgeRefrigeratorAlarmServer, MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
 import { refrigerator } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -435,6 +436,37 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     requireSpy.mockRestore();
+  });
+
+  test('encode RefrigeratorAlarm attributes with the DoorOpen bitmap', () => {
+    for (const attributeName of ['Mask', 'State', 'Supported']) {
+      const attribute = [...MatterbridgeRefrigeratorAlarmServer.schema.conformant.attributes].find(({ name }) => name === attributeName);
+      expect(attribute).toBeDefined();
+      if (!attribute) continue;
+      const schema = TlvOfModel(attribute);
+      const encoded = schema.encode({ doorOpen: true });
+      expect(schema.decode(encoded)).toEqual({ doorOpen: true });
+    }
+  });
+
+  test('encode the RefrigeratorAlarm Notify event with the DoorOpen bitmap', () => {
+    const notifyEvent = [...MatterbridgeRefrigeratorAlarmServer.schema.conformant.events].find(({ name }) => name === 'Notify');
+    expect(notifyEvent).toBeDefined();
+    if (!notifyEvent) return;
+
+    const schema = TlvOfModel(notifyEvent);
+    const encoded = schema.encode({
+      active: { doorOpen: true },
+      inactive: { doorOpen: false },
+      state: { doorOpen: true },
+      mask: { doorOpen: true },
+    });
+    expect(schema.decode(encoded)).toEqual({
+      active: { doorOpen: true },
+      inactive: { doorOpen: false },
+      state: { doorOpen: true },
+      mask: { doorOpen: true },
+    });
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {

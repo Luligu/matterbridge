@@ -1578,6 +1578,40 @@
       "test": "TC_TCTL_2_3.py",
       "endpoint": 1301,
       "args": ["--PICS /root/temperature-control-level.pics"]
+    },
+    {
+      "name": "RefrigeratorMode attributes on Refrigerator",
+      "test": "TC_TCCM_1_2.py",
+      "endpoint": 1302,
+      "args": ["--PICS /root/refrigerator.pics"]
+    },
+    {
+      "name": "RefrigeratorMode ChangeToMode on Refrigerator",
+      "test": "Test_TC_TCCM_2_1",
+      "endpoint": 1302,
+      "skip": true,
+      "comment": "The upstream v1.6 YAML test contains only disabled manual verification steps, so it executes no conformance checks. It remains listed until an automated upstream test is available.",
+      "args": ["--PICS /root/refrigerator.pics"]
+    },
+    {
+      "name": "RefrigeratorAlarm attributes on Refrigerator",
+      "test": "Test_TC_REFALM_2_1",
+      "endpoint": 1302,
+      "args": ["--PICS /root/refrigerator.pics"]
+    },
+    {
+      "name": "RefrigeratorAlarm primary functionality on Refrigerator",
+      "test": "TC_REFALM_2_2.py",
+      "endpoint": 1302,
+      "args": ["--PICS /root/refrigerator.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.REFALM.AlarmThreshold:1"]
+    },
+    {
+      "name": "RefrigeratorAlarm local suppression on Refrigerator",
+      "test": "Test_TC_REFALM_2_3",
+      "endpoint": 1302,
+      "skip": true,
+      "comment": "Not applicable: the Refrigerator endpoint does not expose a local mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false.",
+      "args": ["--PICS /root/refrigerator.pics"]
     }
   ]
 }

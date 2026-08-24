@@ -23,6 +23,7 @@
 
 // @matter
 import type { MaybePromise } from '@matter/general';
+import { AttributeElement, EventElement, FieldElement } from '@matter/model';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
 import type { EndpointNumber, Semtag } from '@matter/types';
@@ -224,7 +225,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * @returns {MatterbridgeEndpoint} The updated MatterbridgeEndpoint instance.
    */
   createDefaultRefrigeratorAlarmClusterServer(endpoint: MatterbridgeEndpoint, doorOpen: boolean = false): MatterbridgeEndpoint {
-    endpoint.behaviors.require(RefrigeratorAlarmServer, {
+    endpoint.behaviors.require(MatterbridgeRefrigeratorAlarmServer, {
       mask: { doorOpen: true },
       supported: { doorOpen: true },
       state: { doorOpen },
@@ -254,14 +255,24 @@ export class Refrigerator extends MatterbridgeEndpoint {
       await this.triggerEvent(
         'RefrigeratorAlarm',
         'notify',
-        { active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } },
+        {
+          active: { doorOpen: true },
+          inactive: { doorOpen: false },
+          state: { doorOpen: true },
+          mask: { doorOpen: true },
+        },
         this.log,
       );
     } else {
       await this.triggerEvent(
         'RefrigeratorAlarm',
         'notify',
-        { active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } },
+        {
+          active: { doorOpen: false },
+          inactive: { doorOpen: true },
+          state: { doorOpen: false },
+          mask: { doorOpen: true },
+        },
         this.log,
       );
     }
@@ -303,4 +314,31 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
     }
   }
+}
+
+const MatterbridgeRefrigeratorAlarmSchema = RefrigeratorAlarmServer.schema.extend(
+  {},
+  AttributeElement({ name: 'Mask', id: 0x0000, type: 'AlarmBitmap', access: 'R V', conformance: 'M' }),
+  AttributeElement({ name: 'State', id: 0x0002, type: 'AlarmBitmap', access: 'R V', conformance: 'M' }),
+  AttributeElement({ name: 'Supported', id: 0x0003, type: 'AlarmBitmap', access: 'R V', conformance: 'M', quality: 'F' }),
+  EventElement(
+    { name: 'Notify', id: 0x0000, access: 'V', conformance: 'M', priority: 'info' },
+    FieldElement({ name: 'Active', id: 0x0000, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'Inactive', id: 0x0001, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'State', id: 0x0002, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'Mask', id: 0x0003, type: 'AlarmBitmap', conformance: 'M' }),
+  ),
+);
+
+/**
+ * Refrigerator Alarm server with the inherited alarm attributes bound to the Refrigerator-specific AlarmBitmap.
+ *
+ * @remarks
+ * Matter 1.6 Application Cluster Specification §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1
+ * define `DoorOpen` as bit 0 of `Mask`, `State`, `Supported`, and the `Notify` event's bitmap fields. Redeclaring
+ * these inherited elements makes their wire schema resolve the Refrigerator Alarm cluster's `AlarmBitmap`, rather
+ * than the empty base-cluster bitmap.
+ */
+export class MatterbridgeRefrigeratorAlarmServer extends RefrigeratorAlarmServer {
+  static override readonly schema = MatterbridgeRefrigeratorAlarmSchema;
 }

@@ -221,6 +221,23 @@ The nine applicable server tests use `docker/chip-test/on-off-dead-front.pics`,
 The patched Rinse test does not cover `INVALID_IN_STATE`; that requires a separate valid test scenario using a
 defined enum value that is unavailable in the current mode's `SupportedRinses` list.
 
+### Endpoint 1302
+
+Refrigerator clusters:
+
+- Refrigerator And Temperature Controlled Cabinet Mode
+- Refrigerator Alarm
+
+The five upstream server tests are registered with `docker/chip-test/refrigerator.pics`. Three are applicable and
+automated: the mode attribute test, alarm attribute test, and alarm primary-functionality test. The latter uses the
+CHIP test app pipe to open and close the simulated refrigerator door and validates both State changes and Notify
+events. Two upstream tests are retained as explicit skips:
+
+- `Test_TC_TCCM_2_1` contains only disabled manual verification steps and executes no conformance checks.
+- `Test_TC_REFALM_2_3` requires local alarm suppression, which endpoint 1302 does not implement.
+
+Result on 2026-08-24: all 3 applicable tests pass; 2 non-applicable/upstream-disabled tests are skipped.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

@@ -1,0 +1,22 @@
+# To run tests on the Refrigerator And Temperature Controlled Cabinet Mode and Refrigerator Alarm clusters --PICS is required
+# Matches the Refrigerator endpoint 1302.
+PICS_SDK_CI_ONLY=1
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+TCCM.S=1
+TCCM.C=0
+TCCM.S.A0000=1 # SupportedModes
+TCCM.S.A0001=1 # CurrentMode
+TCCM.S.C00.Rsp=1 # ChangeToMode
+TCCM.S.C01.Tx=1 # ChangeToModeResponse
+TCCM.S.M.CAN_MANUALLY_CONTROLLED=0
+TCCM.S.M.CAN_TEST_MODE_FAILURE=0
+
+REFALM.S=1
+REFALM.C=0
+REFALM.S.A0000=1 # Mask
+REFALM.S.A0002=1 # State
+REFALM.S.A0003=1 # Supported
+REFALM.S.E00=1 # Notify
+REFALM.S.M.LocalSuppress=0

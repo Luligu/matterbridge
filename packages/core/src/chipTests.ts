@@ -38,6 +38,7 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
@@ -45,6 +46,7 @@ import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
+import { MatterbridgeRefrigeratorAlarmServer } from './devices/refrigerator.js';
 import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -60,6 +62,7 @@ type ChipTestAppPipeCommand = {
   Operation?: string;
   Param?: number;
   Error?: string;
+  DoorOpen?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -872,6 +875,24 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       await endpoint.setStateOf(endpoint.behaviors.supported.soilMeasurement, { soilMoistureMeasuredValue: command.SoilMoistureValue ?? null });
       matterbridge.log.info(`CHIP test app pipe set SoilMeasurement.SoilMoistureMeasuredValue to ${command.SoilMoistureValue ?? null} on endpoint ${endpointId}`);
       return;
+    case 'SetRefrigeratorDoorStatus': {
+      const doorOpen = Boolean(command.DoorOpen);
+      const wasDoorOpen = Boolean(endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).state.doorOpen);
+      await endpoint.setCluster(RefrigeratorAlarm, { state: { doorOpen } }, matterbridge.log);
+      await endpoint.triggerEvent(
+        'RefrigeratorAlarm',
+        'notify',
+        {
+          active: { doorOpen: doorOpen && !wasDoorOpen },
+          inactive: { doorOpen: !doorOpen && wasDoorOpen },
+          state: { doorOpen },
+          mask: endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).mask,
+        },
+        matterbridge.log,
+      );
+      matterbridge.log.info(`CHIP test app pipe set RefrigeratorAlarm.State.DoorOpen to ${doorOpen} on endpoint ${endpointId}`);
+      return;
+    }
     case 'OperationalStateChange':
       // TC_OpstateCommon.py's send_manual_or_pipe_command() drives the DUT into states/errors a real command
       // can't reach on its own (e.g. forcing Error), independently of the actual Pause/Stop/Start/Resume
