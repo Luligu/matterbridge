@@ -24,6 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 // @matter
+import { AttributeElement, EventElement, FieldElement } from '@matter/model';
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
 import type { EndpointNumber } from '@matter/types';
@@ -170,10 +171,10 @@ export class Dishwasher extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultDishwasherAlarmClusterServer(): this {
-    this.behaviors.require(DishwasherAlarmServer, {
-      mask: { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true },
+    this.behaviors.require(MatterbridgeDishwasherAlarmServer, {
+      mask: { inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false },
       state: { inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false },
-      supported: { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true },
+      supported: { inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false },
     });
     return this;
   }
@@ -207,6 +208,10 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   /**
    * Handles the DishwasherMode `ChangeToMode` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1 requires `UnsupportedMode` when `NewMode` does not
+   * match any `SupportedModes` entry. Section 1.10.7.2 requires an empty `StatusText` for `UnsupportedMode`.
+   *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
@@ -226,8 +231,35 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
-      device.log.error(`DishwasherModeServer: changeToMode called with invalid mode ${request.newMode}`);
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+      device.log.error(`DishwasherModeServer: changeToMode called with unsupported mode ${request.newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
   }
+}
+
+const MatterbridgeDishwasherAlarmSchema = DishwasherAlarmServer.schema.extend(
+  {},
+  AttributeElement({ name: 'Mask', id: 0x0000, type: 'AlarmBitmap', access: 'R V', conformance: 'M' }),
+  AttributeElement({ name: 'State', id: 0x0002, type: 'AlarmBitmap', access: 'R V', conformance: 'M' }),
+  AttributeElement({ name: 'Supported', id: 0x0003, type: 'AlarmBitmap', access: 'R V', conformance: 'M', quality: 'F' }),
+  EventElement(
+    { name: 'Notify', id: 0x0000, access: 'V', conformance: 'M', priority: 'info' },
+    FieldElement({ name: 'Active', id: 0x0000, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'Inactive', id: 0x0001, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'State', id: 0x0002, type: 'AlarmBitmap', conformance: 'M' }),
+    FieldElement({ name: 'Mask', id: 0x0003, type: 'AlarmBitmap', conformance: 'M' }),
+  ),
+);
+
+/**
+ * Dishwasher Alarm server with inherited alarm elements bound to the Dishwasher-specific AlarmBitmap.
+ *
+ * @remarks
+ * Matter 1.6 Application Cluster Specification §8.4.4.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1
+ * define the dishwasher alarm bits carried by `Mask`, `State`, `Supported`, and the `Notify` event. Redeclaring
+ * these inherited elements makes their wire schema resolve the Dishwasher Alarm cluster's `AlarmBitmap`, rather
+ * than the empty base-cluster bitmap.
+ */
+export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmServer {
+  static override readonly schema = MatterbridgeDishwasherAlarmSchema;
 }

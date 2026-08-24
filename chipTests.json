@@ -1612,6 +1612,72 @@
       "skip": true,
       "comment": "Not applicable: the Refrigerator endpoint does not expose a local mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false.",
       "args": ["--PICS /root/refrigerator.pics"]
+    },
+    {
+      "name": "DishwasherMode attributes on Dishwasher",
+      "test": "TC_DISHM_1_2.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherMode ChangeToMode on Dishwasher",
+      "test": "TC_DISHM_2_1.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/dishwasher.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.DISHM.MODE_CHANGE_OK:1"]
+    },
+    {
+      "name": "DishwasherAlarm attributes on Dishwasher",
+      "test": "TC_DISHALM_2_1.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm inflow alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_1",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "Not applicable to endpoint 1305: InflowError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm drain alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_2",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "Not applicable to endpoint 1305: DrainError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm door alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_3",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "The DoorError alarm is supported, but the upstream Matter 1.6 YAML test contains only disabled manual verification steps and executes no automated conformance checks.",
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm low-temperature alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_4",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "Not applicable to endpoint 1305: TempTooLow is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm high-temperature alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_5",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "Not applicable to endpoint 1305: TempTooHigh is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
+      "args": ["--PICS /root/dishwasher.pics"]
+    },
+    {
+      "name": "DishwasherAlarm water-level alarm functionality on Dishwasher",
+      "test": "Test_TC_DISHALM_3_6",
+      "endpoint": 1305,
+      "skip": true,
+      "comment": "Not applicable to endpoint 1305: WaterLevelError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
+      "args": ["--PICS /root/dishwasher.pics"]
     }
   ]
 }

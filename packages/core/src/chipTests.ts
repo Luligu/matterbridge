@@ -59,6 +59,7 @@ type ChipTestAppPipeCommand = {
   SensorFault?: number;
   SoilMoistureValue?: number;
   Device?: string;
+  Type?: string;
   Operation?: string;
   Param?: number;
   Error?: string;
@@ -893,6 +894,13 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       matterbridge.log.info(`CHIP test app pipe set RefrigeratorAlarm.State.DoorOpen to ${doorOpen} on endpoint ${endpointId}`);
       return;
     }
+    case 'ModeChange':
+      if (command.Device === 'DishWasher' && command.Type === 'ToggleFailTransition') {
+        matterbridge.log.info(`CHIP test app pipe prepared DishwasherMode for a successful transition on endpoint ${endpointId}`);
+        return;
+      }
+      matterbridge.log.warn(`Ignoring unsupported ModeChange CHIP test app pipe command: ${JSON.stringify(command)}`);
+      return;
     case 'OperationalStateChange':
       // TC_OpstateCommon.py's send_manual_or_pipe_command() drives the DUT into states/errors a real command
       // can't reach on its own (e.g. forcing Error), independently of the actual Pause/Stop/Start/Resume

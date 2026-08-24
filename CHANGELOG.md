@@ -49,6 +49,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DishwasherMode` and `DishwasherAlarm` clusters (3/3 passed; 6 upstream-disabled manual tests skipped).
 - [chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the `RefrigeratorAndTemperatureControlledCabinetMode` and `RefrigeratorAlarm` clusters (3/3 passed; 2 non-applicable or upstream-disabled tests skipped).
 - [chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the `LaundryWasherMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcRunMode` cluster.
@@ -62,6 +63,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.
 - [chip]: Add all Refrigerator Mode and Refrigerator Alarm server tests for endpoint 1302, with dedicated PICS and automated door-state/Notify-event control for `TC_REFALM_2_2`.
 - [LaundryWasher]: Add `MatterbridgeLaundryWasherControlsServer` with Matter 1.6-compliant `SpinSpeedCurrent` write validation for the Spin and Rinse feature combination.
 - [demoDevices]: Add a second Laundry Washer device exposing `TemperatureControl` with the `TemperatureNumber` and `TemperatureStep` features, alongside the existing `TemperatureLevel` washer.
@@ -98,6 +100,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [Dishwasher]: Make `DishwasherMode.ChangeToMode` return `UnsupportedMode` for an unsupported mode, bind inherited Dishwasher Alarm attributes and `Notify` fields to the Dishwasher-specific `AlarmBitmap`, and advertise only the non-provisional `DoorError` alarm by default, as required by Matter 1.6.
 - [Refrigerator]: Add `MatterbridgeRefrigeratorAlarmServer`, binding the inherited `Mask`, `State`, and `Supported` attributes and `Notify` event fields to the Refrigerator-specific `AlarmBitmap` so the `DoorOpen` bit is encoded correctly over Matter, as required by Matter 1.6 Refrigerator Alarm §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1.
 - [LaundryWasher]: Reject a `SpinSpeedCurrent` value that is not a valid `SpinSpeeds` index with `CONSTRAINT_ERROR`, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.
 - [LaundryWasher]: Return `UnsupportedMode` with an empty status text when `ChangeToMode` requests a mode absent from `SupportedModes`, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.

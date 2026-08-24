@@ -238,6 +238,22 @@ events. Two upstream tests are retained as explicit skips:
 
 Result on 2026-08-24: all 3 applicable tests pass; 2 non-applicable/upstream-disabled tests are skipped.
 
+### Endpoint 1305
+
+Dishwasher clusters:
+
+- Dishwasher Mode
+- Dishwasher Alarm
+
+All nine upstream Matter 1.6 server tests are registered with `docker/chip-test/dishwasher.pics`. The two
+Dishwasher Mode tests and the Dishwasher Alarm attribute test are automated and pass. The Mode functionality test
+checks successful transitions and the mandatory `UnsupportedMode` response over Matter. The six Dishwasher Alarm
+functionality YAML tests are retained as explicit skips because every verification step is disabled/manual upstream.
+Additionally, five target provisional alarm bits which endpoint 1305 correctly does not advertise; only the
+non-provisional `DoorError` alarm is supported.
+
+Result on 2026-08-24: all 3 applicable automated tests pass; 6 upstream-disabled tests are skipped.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
