@@ -53,6 +53,12 @@ The image (tag **24-ubuntu-slim** 83 MB) is based on `ubuntu:latest` with Node.j
 
 The image (tag **bun-ubuntu-slim** 79 MB) is based on `ubuntu:latest` with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun.
 
+### Matterbridge Dev Container images
+
+The image (tag **node-dev-container**) is based on `node:24-trixie-slim` and provides a development environment for Node.js applications. It includes common development and networking tools, synchronized Bash history, and a non-root `node` user with passwordless sudo access.
+
+The image (tag **bun-dev-container**) is based on `oven/bun:slim` and provides a development environment for Bun applications. It includes common development and networking tools, synchronized Bash history, a non-root `bun` user with passwordless sudo access, and an `npm` shim that forwards supported commands to Bun.
+
 ### Docker health check
 
 All images include a health check.
