@@ -1,6 +1,6 @@
-# To run tests on the RVC Run Mode, RVC Clean Mode, and RVC Operational State clusters --PICS is required
+# To run tests on the RVC Run Mode, RVC Clean Mode, RVC Operational State, and Service Area clusters --PICS is required
 # Matches RoboticVacuumCleaner/MatterbridgeRvcRunModeServer/MatterbridgeRvcCleanModeServer/
-# MatterbridgeRvcOperationalStateServer (packages/core/src/devices/roboticVacuumCleaner.ts) on endpoint 1201.
+# MatterbridgeRvcOperationalStateServer/MatterbridgeServiceAreaServer on endpoint 1201.
 PICS_SDK_CI_ONLY=1
 
 RVCRUNM.S=1
@@ -65,3 +65,32 @@ RVCOPSTATE.S.C00.Rsp=1 # Pause
 RVCOPSTATE.S.C03.Rsp=1 # Resume
 RVCOPSTATE.S.C04.Tx=1 # OperationalCommandResponse
 RVCOPSTATE.S.C80.Rsp=1 # GoHome
+
+SEAR.S=1
+SEAR.C=0
+SEAR.S.F00=0 # SelectWhileRunning
+SEAR.S.F01=0 # ProgressReporting
+SEAR.S.F02=1 # Maps
+SEAR.S.A0000=1 # SupportedAreas
+SEAR.S.A0001=1 # SupportedMaps
+SEAR.S.A0002=1 # SelectedAreas
+SEAR.S.A0003=1 # CurrentArea
+SEAR.S.A0004=1 # EstimatedEndTime
+SEAR.S.A0005=0 # Progress
+SEAR.S.C00.Rsp=1 # SelectAreas
+SEAR.S.C01.Tx=1 # SelectAreasResponse
+SEAR.S.C02.Rsp=0 # SkipArea
+SEAR.S.C03.Tx=0 # SkipAreaResponse
+SEAR.S.M.REMOVE_MAP=0
+SEAR.S.M.ADD_MAP=0
+SEAR.S.M.REMOVE_AREA=0
+SEAR.S.M.ADD_AREA=0
+SEAR.S.M.INVALID_STATE_FOR_SELECT_AREAS=0
+SEAR.S.M.VALID_STATE_FOR_SELECT_AREAS=0
+SEAR.S.M.HAS_MANUAL_SELAREA_STATE_CONTROL=0
+SEAR.S.M.SELECT_AREAS_WHILE_NON_IDLE=0
+SEAR.S.M.INVALID_STATE_FOR_SKIP=0
+SEAR.S.M.NO_SELAREA_FOR_SKIP=0
+SEAR.S.M.VALID_STATE_FOR_SKIP=0
+SEAR.S.M.HAS_MANUAL_SKIP_STATE_CONTROL=0
+SEAR.S.M.HAS_MANUAL_OPERATING_STATE_CONTROL=0

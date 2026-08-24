@@ -1491,6 +1491,38 @@
       "test": "TC_RVCOPSTATE_2_5.py",
       "endpoint": 1201,
       "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg runmode_cleanmode:1"]
+    },
+    {
+      "name": "ServiceArea attributes on RoboticVacuumCleaner",
+      "test": "TC_SEAR_1_2.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "ServiceArea SelectAreas on RoboticVacuumCleaner",
+      "test": "TC_SEAR_1_3.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "ServiceArea SkipArea conformance on RoboticVacuumCleaner",
+      "test": "TC_SEAR_1_4.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics"]
+    },
+    {
+      "name": "ServiceArea SkipArea command on RoboticVacuumCleaner",
+      "test": "TC_SEAR_1_5.py",
+      "endpoint": 1201,
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "ServiceArea Progress reporting on RoboticVacuumCleaner",
+      "test": "TC_SEAR_1_6.py",
+      "endpoint": 1201,
+      "skip": true,
+      "comment": "Not applicable: endpoint 1201 does not implement the ServiceArea ProgressReporting feature or Progress attribute. The directly launched upstream test does not enforce its own declared PICS prerequisites and otherwise assumes the reference app's hardcoded area IDs 7 and 1234567.",
+      "args": ["--PICS /root/rvc.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     }
   ]
 }

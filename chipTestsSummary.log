@@ -1,4 +1,4 @@
-Chip tests run started at 2026-08-24T20:01:57.104Z
+Chip tests run started at 2026-08-24T20:09:19.036Z
 
 ✅ RvcRunMode attributes on RoboticVacuumCleaner (TC_RVCRUNM_1_2.py)
 ✅ RvcRunMode ChangeToMode on RoboticVacuumCleaner (TC_RVCRUNM_2_1.py)
@@ -10,5 +10,11 @@ Chip tests run started at 2026-08-24T20:01:57.104Z
 ✅ RvcOperationalState Pause/Resume on RoboticVacuumCleaner (TC_RVCOPSTATE_2_3.py)
 ✅ RvcOperationalState GoHome on RoboticVacuumCleaner (TC_RVCOPSTATE_2_4.py)
 ✅ RvcOperationalState GoHome run-mode interaction on RoboticVacuumCleaner (TC_RVCOPSTATE_2_5.py)
+✅ ServiceArea attributes on RoboticVacuumCleaner (TC_SEAR_1_2.py)
+✅ ServiceArea SelectAreas on RoboticVacuumCleaner (TC_SEAR_1_3.py)
+✅ ServiceArea SkipArea conformance on RoboticVacuumCleaner (TC_SEAR_1_4.py)
+✅ ServiceArea SkipArea command on RoboticVacuumCleaner (TC_SEAR_1_5.py)
+⏭️ ServiceArea Progress reporting on RoboticVacuumCleaner (TC_SEAR_1_6.py)
+   ↳ Not applicable: endpoint 1201 does not implement the ServiceArea ProgressReporting feature or Progress attribute. The directly launched upstream test does not enforce its own declared PICS prerequisites and otherwise assumes the reference app's hardcoded area IDs 7 and 1234567.
 
-Summary: 10/10 tests passed.
+Summary: 14/14 tests passed (1 skipped).

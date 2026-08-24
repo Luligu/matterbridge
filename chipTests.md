@@ -173,14 +173,17 @@ Robotic Vacuum Cleaner clusters:
 - RvcRunMode (Idle, Cleaning, Mapping, and SpotCleaning modes)
 - RvcCleanMode (Vacuum, Mop, and DeepClean modes)
 - RvcOperationalState (Stopped, Running, Paused, Error, SeekingCharger, Charging, and Docked states)
+- ServiceArea (Maps and SelectAreas; ProgressReporting and SkipArea are not implemented)
 
-The ten `TC_RVCRUNM_*`, `TC_RVCCLEANM_*`, and `TC_RVCOPSTATE_*` Python tests use
-`docker/chip-test/rvc.pics`. Tests with manual setup steps use the CHIP app-pipe and restart the container
-first so each test begins from the demo RVC's configured state.
+The fifteen `TC_RVCRUNM_*`, `TC_RVCCLEANM_*`, `TC_RVCOPSTATE_*`, and `TC_SEAR_*` Python tests use
+`docker/chip-test/rvc.pics`. Tests with manual setup steps use lightweight CHIP app-pipe resets. Only the
+timing-sensitive `TC_RVCOPSTATE_2_3.py` test restarts the container beforehand.
 
-The 2026-08-24 run passes all ten RVC tests (10/10). This includes direct-mode-change restrictions,
-Idle-tagged run-mode transitions, clean-mode changes while operating, mandatory error-state exposure,
-Pause/Resume, GoHome, CountdownTime, and the GoHome/run-mode interaction.
+The 2026-08-24 aggregate run passes all fourteen applicable RVC tests (14/14). This includes
+direct-mode-change restrictions, Idle-tagged run-mode transitions, clean-mode changes while operating,
+mandatory error-state exposure, Pause/Resume, GoHome, CountdownTime, the GoHome/run-mode interaction,
+ServiceArea attributes, SelectAreas, and SkipArea conformance. `TC_SEAR_1_6.py` is registered but skipped
+because endpoint 1201 does not implement the optional ProgressReporting feature required by that test.
 
 The full output is retained in `chipTests.log`; the pass/fail summary is in `chipTestsSummary.log`.
 
