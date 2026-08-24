@@ -41,16 +41,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
-- [matterbridge]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
-- [matterbridge]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
-- [devices]: Add the optional `movementDuration` and `autoClose` parameters to `IrrigationSystem.addZone()`, passed through to the zone's `ValveConfigurationAndControl` cluster server.
-- [matterbridge]: `MatterbridgeOperationalStateServer` now implements the Matter 1.6 `OperationalState` cluster's Pause/Resume compatibility tables, rejects Start with `UnableToStartOrResume` from the Error state, and emits the `OperationalError`/`OperationCompletion` events (`OperationCompletion`'s `TotalOperationalTime`/`PausedTime` tracked across Start/Pause/Resume cycles).
-- [matterbridge]: Add the optional `operationalStateList`, `operationalError`, `phaseList`, and `currentPhase` parameters to `createDefaultOperationalStateClusterServer()`.
-
-### Fixed
-
-- [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
+- [Closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
+- [WaterValve]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [WaterValve]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
+- [IrrigationSystem]: Add the optional `movementDuration` and `autoClose` parameters to `IrrigationSystem.addZone()`, passed through to the zone's `ValveConfigurationAndControl` cluster server.
+- [OperationalState]: `MatterbridgeOperationalStateServer` now implements the Matter 1.6 `OperationalState` cluster's Pause/Resume compatibility tables, rejects Start with `UnableToStartOrResume` from the Error state, and emits the `OperationalError`/`OperationCompletion` events (`OperationCompletion`'s `TotalOperationalTime`/`PausedTime` tracked across Start/Pause/Resume cycles).
+- [OperationalState]: Add the optional `operationalStateList`, `operationalError`, `phaseList`, and `currentPhase` parameters to `createDefaultOperationalStateClusterServer()`.
 
 ### Changed
 
@@ -69,6 +65,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `vitest` to v.4.1.11.
 - [frontend]: Bump `oxfmt` to v.0.64.0.
 - [frontend]: Bump `oxlint` to v.1.79.0.
+
+### Fixed
+
+- [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
