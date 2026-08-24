@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -36,6 +36,7 @@ import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
+import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { Speaker } from './devices/speaker.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
 import type { Matterbridge } from './matterbridge.js';
@@ -482,5 +483,14 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(CommonNumberTag.Four)],
   }).addRequiredClusters();
   await registerDevice(ep, 'Aggregator', 'GENERIC-11-02');
+
+  // Chapter 12 - Robotic Device Types
+
+  ep = new RoboticVacuumCleaner('Robotic Vacuum Cleaner', 'ROBOTIC-12-01', {
+    id: 'RoboticVacuumCleaner',
+    number: EndpointNumber(12_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Robotic Vacuum Cleaner', 'ROBOTIC-12-01');
 }
 // v8 ignore end

@@ -8,7 +8,9 @@ const NAME = 'Vacuum';
 const MATTER_PORT = 8013;
 const MATTER_CREATE_ONLY = true;
 
+import { CommonNumberTag } from '@matter/node';
 import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
+import { EndpointNumber } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
@@ -37,6 +39,7 @@ import {
   RoboticVacuumCleaner,
 } from '../../src/devices/roboticVacuumCleaner.js';
 import { roboticVacuumCleaner } from '../../src/matterbridgeDeviceTypes.js';
+import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -83,6 +86,62 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(device.hasClusterServer(RvcCleanMode.id)).toBeTruthy();
     expect(device.hasClusterServer(RvcOperationalState.id)).toBeTruthy();
     expect(device.hasClusterServer(ServiceArea.id)).toBeTruthy();
+  });
+
+  test('create an RVC device with endpoint options', () => {
+    const tagList = [getSemtag(CommonNumberTag.One)];
+    const supportedRunModes = [
+      { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
+      { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+    ];
+    const supportedCleanModes = [
+      { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+      { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+    ];
+    const phaseList = ['Cleaning'];
+    const operationalStateList = [{ operationalStateId: RvcOperationalState.OperationalState.Running }];
+    const supportedMaps = [{ mapId: 7, name: 'Main floor' }];
+    const supportedAreas = [
+      {
+        areaId: 8,
+        mapId: 7,
+        areaInfo: { locationInfo: { locationName: 'Office', floorNumber: 0, areaType: null }, landmarkInfo: null },
+      },
+    ];
+    const runModeSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcRunModeClusterServer').mockReturnThis();
+    const cleanModeSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcCleanModeClusterServer').mockReturnThis();
+    const operationalStateSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcOperationalStateClusterServer').mockReturnThis();
+    const serviceAreaSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultServiceAreaClusterServer').mockReturnThis();
+    const configuredDevice = new RoboticVacuumCleaner('Configured RVC', 'RVC654321', {
+      id: 'ConfiguredRvc',
+      number: EndpointNumber(12_01),
+      tagList,
+      currentRunMode: 2,
+      supportedRunModes,
+      currentCleanMode: 2,
+      supportedCleanModes,
+      currentPhase: 0,
+      phaseList,
+      operationalState: RvcOperationalState.OperationalState.Running,
+      operationalStateList,
+      supportedAreas,
+      selectedAreas: [8],
+      currentArea: 8,
+      supportedMaps,
+    });
+
+    expect(configuredDevice.id).toBe('ConfiguredRvc');
+    expect(configuredDevice.number).toBe(EndpointNumber(12_01));
+    expect(configuredDevice.tagList).toEqual(tagList);
+    expect(runModeSpy).toHaveBeenCalledWith(2, supportedRunModes);
+    expect(cleanModeSpy).toHaveBeenCalledWith(2, supportedCleanModes);
+    expect(operationalStateSpy).toHaveBeenCalledWith(phaseList, 0, operationalStateList, RvcOperationalState.OperationalState.Running);
+    expect(serviceAreaSpy).toHaveBeenCalledWith(supportedAreas, [8], 8, supportedMaps);
+
+    runModeSpy.mockRestore();
+    cleanModeSpy.mockRestore();
+    operationalStateSpy.mockRestore();
+    serviceAreaSpy.mockRestore();
   });
 
   test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {

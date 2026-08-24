@@ -33,6 +33,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.7] - Dev branch
 
+### Development Breaking Changes
+
+- [RoboticVacuumCleaner]: The constructor now accepts a `RoboticVacuumCleanerOptions` object as its third parameter, consolidating `mode`, RVC mode, operational-state, service-area, `id`, `number`, and `tagList` configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to `new RoboticVacuumCleaner(name, serial, { ...options })`.
+
 ### Development News
 
 - [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `Closure` device type and `ClosureControl` clusters.

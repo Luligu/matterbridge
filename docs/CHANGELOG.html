@@ -153,6 +153,10 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="3107-dev-branch">[3.10.7] - Dev branch</h2>
+<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<ul>
+<li>[RoboticVacuumCleaner]: The constructor now accepts a <code>RoboticVacuumCleanerOptions</code> object as its third parameter, consolidating <code>mode</code>, RVC mode, operational-state, service-area, <code>id</code>, <code>number</code>, and <code>tagList</code> configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to <code>new RoboticVacuumCleaner(name, serial, { ...options })</code>.</li>
+</ul>
 <h3 id="development-news">Development News</h3>
 <ul>
 <li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>Closure</code> device type and <code>ClosureControl</code> clusters.</li>
@@ -197,7 +201,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3106-2026-08-21">[3.10.6] - 2026-08-21</h2>
-<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-1">Development Breaking Changes</h3>
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
@@ -308,7 +312,7 @@
 <ul>
 <li>[instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update <a href="./README-DEV.html">Development Guide</a>.</li>
 </ul>
-<h3 id="development-breaking-changes-1">Development breaking changes</h3>
+<h3 id="development-breaking-changes-2">Development breaking changes</h3>
 <ul>
 <li>[onOff]: <code>MatterbridgeOnOffServer</code> now bakes in the Lighting feature, so always use <code>MatterbridgeOnOffServer.with()</code> instead of the bare class for endpoints created without the Lighting feature.</li>
 </ul>
@@ -421,7 +425,7 @@
 <ul>
 <li>[matter]: Bump <code>matter.js</code> to 0.17.5 and Matter to 1.6.0. See <a href="Matter-1.6.0.html">Matter 1.6.0 changes from 1.5.1</a> for delta from 1.5.1.</li>
 </ul>
-<h3 id="development-breaking-changes-2">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-3">Development Breaking changes</h3>
 <ul>
 <li>[endpoint]: Add <code>productLabel</code>, <code>productUrl</code> and <code>configurationVersion</code> parameters to the Basic Information creation methods. The default product labels are now <code>Matter Endpoint</code> and <code>Matter Bridged Endpoint</code>, and the default product URL is now <code>https://matterbridge.io</code>.</li>
 <li>[matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.</li>
@@ -651,7 +655,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <ul>
 <li>[plugins]: A new plugin is now available <a href="https://github.com/Luligu/matterbridge-mqtt">matterbridge-mqtt</a>.</li>
 </ul>
-<h3 id="development-breaking-changes-3">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-4">Development Breaking Changes</h3>
 <ul>
 <li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
 <li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().</li>
@@ -732,7 +736,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <li>[matter]: Update to matter.js 0.17.1. See <a href="https://matterbridge.io/Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
 <li>[matter]: Enable <code>tcp</code> transport with <code>udp</code> preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.</li>
 </ul>
-<h3 id="development-breaking-changes-4">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-5">Development Breaking changes</h3>
 <ul>
 <li>[matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.</li>
 <li>[endpoint]: Since the cluster clients have been added to each device type, instead of <code>addRequiredClusterServers()</code> call <code>addRequiredClusters()</code> (3.8.0 only) to add both required server clusters and required client clusters.</li>
@@ -847,7 +851,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="378-2026-05-09">[3.7.8] - 2026-05-09</h2>
-<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
 <ul>
 <li>[bin]: Remove mb-run bin. It will be replaced by mb-run package.</li>
 <li>[matter]: Add the matter.js renamed Semantic Tag Namespaces in <a href="Matter.js%200.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
@@ -1614,7 +1618,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="340-2025-11-26">[3.4.0] - 2025-11-26</h2>
-<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
 <p>Removed the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).</li>
@@ -1645,7 +1649,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="338-2025-11-15">[3.3.8] - 2025-11-15</h2>
-<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
 <p>This will be the last release with the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).</li>
@@ -2237,7 +2241,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="312-2025-07-06">[3.1.2] - 2025-07-06</h2>
-<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-9">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
@@ -2254,7 +2258,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="311-2025-07-04">[3.1.1] - 2025-07-04</h2>
-<h3 id="development-breaking-changes-9">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-10">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>

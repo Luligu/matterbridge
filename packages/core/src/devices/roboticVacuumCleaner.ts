@@ -3,7 +3,7 @@
  * @description This file contains the RoboticVacuumCleaner class.
  * @author Luca Liguori
  * @created 2025-05-01
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -29,6 +29,7 @@ import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
 import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
+import type { EndpointNumber } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -36,6 +37,7 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -43,6 +45,44 @@ import { MatterbridgeServiceAreaServer } from '../behaviors/serviceAreaServer.js
 import { powerSource, roboticVacuumCleaner } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+
+/**
+ * Options for configuring a {@link RoboticVacuumCleaner} endpoint.
+ */
+export interface RoboticVacuumCleanerOptions {
+  /** Endpoint operating mode. Use `server` or `matter` for Apple Home compatibility. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial RVC run mode. Defaults to 1 (Idle). */
+  currentRunMode?: number;
+  /** Supported RVC run modes. Defaults to Idle, Cleaning, Mapping, and SpotCleaning. */
+  supportedRunModes?: RvcRunMode.ModeOption[];
+  /** Initial RVC clean mode. Defaults to 1 (Vacuum). */
+  currentCleanMode?: number;
+  /** Supported RVC clean modes. Defaults to Vacuum, Mop, and DeepClean. */
+  supportedCleanModes?: RvcCleanMode.ModeOption[];
+  /** Initial phase index. Defaults to null. */
+  currentPhase?: number | null;
+  /** Operational phase names. Defaults to null. */
+  phaseList?: string[] | null;
+  /** Initial operational state. Defaults to Docked. */
+  operationalState?: RvcOperationalState.OperationalState;
+  /** Supported operational states. Defaults to the standard RVC operational states. */
+  operationalStateList?: RvcOperationalState.OperationalStateStruct[];
+  /** Supported service areas. Defaults to Living, Kitchen, Bedroom, and Bathroom. */
+  supportedAreas?: ServiceArea.Area[];
+  /** Initially selected service areas. Defaults to an empty array (all areas allowed). */
+  selectedAreas?: number[];
+  /** Initial service area ID. Defaults to 1 (Living). */
+  currentArea?: number | null;
+  /** Supported service-area maps. Defaults to an empty array. */
+  supportedMaps?: ServiceArea.Map[];
+}
 
 /**
  * Matterbridge endpoint representing a robotic vacuum cleaner device.
@@ -53,24 +93,22 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the robotic vacuum cleaner.
    * @param {string} serial - The serial number of the robotic vacuum cleaner.
-   * @param {'server' | 'matter' | undefined} [mode] - The mode of the robotic vacuum cleaner. Defaults to undefined. Use 'server' or 'matter' if you want Apple Home compatibility.
-   * @param {number} [currentRunMode] - The current run mode of the robotic vacuum cleaner. Defaults to 1 (Idle).
-   * @param {RvcRunMode.ModeOption[]} [supportedRunModes] - The supported run modes for the robotic vacuum cleaner. Defaults to a predefined set of modes.
-   * @param {number} [currentCleanMode] - The current clean mode of the robotic vacuum cleaner. Defaults to 1 (Vacuum).
-   * @param {RvcCleanMode.ModeOption[]} [supportedCleanModes] - The supported clean modes for the robotic vacuum cleaner. Defaults to a predefined set of modes.
-   * @param {number | null} [currentPhase] - The current phase of the robotic vacuum cleaner. Defaults to null.
-   * @param {string[] | null} [phaseList] - The list of phases for the robotic vacuum cleaner. Defaults to null.
-   * @param {RvcOperationalState.OperationalState} [operationalState] - The current operational state of the robotic vacuum cleaner. Defaults to Docked.
-   * @param {RvcOperationalState.OperationalStateStruct[]} [operationalStateList] - The list of operational states for the robotic vacuum cleaner. Defaults to a predefined set of states.
-   * @param {ServiceArea.Area[]} [supportedAreas] - The supported areas for the robotic vacuum cleaner. Defaults to a predefined set of areas.
-   * @param {number[]} [selectedAreas] - The selected areas for the robotic vacuum cleaner. Defaults to an empty array (all areas allowed).
-   * @param {number | null} [currentArea] - The current area of the robotic vacuum cleaner. Defaults to 1 (Living).
-   * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults to empty list.
+   * @param {RoboticVacuumCleanerOptions} [options] - Endpoint and initial cluster configuration.
    */
+  constructor(name: string, serial: string, options?: RoboticVacuumCleanerOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass a {@link RoboticVacuumCleanerOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, mode?: 'server' | 'matter', currentRunMode?: number, supportedRunModes?: RvcRunMode.ModeOption[], currentCleanMode?: number, supportedCleanModes?: RvcCleanMode.ModeOption[], currentPhase?: number | null, phaseList?: string[] | null, operationalState?: RvcOperationalState.OperationalState, operationalStateList?: RvcOperationalState.OperationalStateStruct[], supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number | null, supportedMaps?: ServiceArea.Map[]);
+
   constructor(
     name: string,
     serial: string,
-    mode?: 'server' | 'matter',
+    modeOrOptions?: 'server' | 'matter' | RoboticVacuumCleanerOptions,
     currentRunMode?: number,
     supportedRunModes?: RvcRunMode.ModeOption[],
     currentCleanMode?: number,
@@ -84,14 +122,37 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     currentArea?: number | null,
     supportedMaps?: ServiceArea.Map[],
   ) {
-    super([roboticVacuumCleaner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, mode });
+    const options: RoboticVacuumCleanerOptions =
+      typeof modeOrOptions === 'object'
+        ? modeOrOptions
+        : {
+            mode: modeOrOptions,
+            currentRunMode,
+            supportedRunModes,
+            currentCleanMode,
+            supportedCleanModes,
+            currentPhase,
+            phaseList,
+            operationalState,
+            operationalStateList,
+            supportedAreas,
+            selectedAreas,
+            currentArea,
+            supportedMaps,
+          };
+    super([roboticVacuumCleaner, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Robot Vacuum Cleaner')
       .createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 5900)
-      .createDefaultRvcRunModeClusterServer(currentRunMode, supportedRunModes)
-      .createDefaultRvcCleanModeClusterServer(currentCleanMode, supportedCleanModes)
-      .createDefaultRvcOperationalStateClusterServer(phaseList, currentPhase, operationalStateList, operationalState)
-      .createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps);
+      .createDefaultRvcRunModeClusterServer(options.currentRunMode, options.supportedRunModes)
+      .createDefaultRvcCleanModeClusterServer(options.currentCleanMode, options.supportedCleanModes)
+      .createDefaultRvcOperationalStateClusterServer(options.phaseList, options.currentPhase, options.operationalStateList, options.operationalState)
+      .createDefaultServiceAreaClusterServer(options.supportedAreas, options.selectedAreas, options.currentArea, options.supportedMaps);
   }
 
   /**
