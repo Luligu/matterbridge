@@ -155,7 +155,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   // Pump has no Element Requirement for OnOff Feature Lighting (unlike the plug-in/lighting device types above),
   // so the addRequiredClusters() default (Lighting feature) would be non-conformant here — override with the
   // plain, featureless OnOff cluster server instead.
-  ep.createOnOffClusterServer();
+  ep.createOnOffClusterServer(false);
+  ep.createLevelControlClusterServer(0);
   await registerDevice(ep, 'Pump', 'ACTUATOR-05-05');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
