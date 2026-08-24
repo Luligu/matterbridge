@@ -54,6 +54,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [docker]: Rename the **24-ubuntu-slim** base image and its Dockerfile, entrypoint, Docker ignore file, workflow, scripts, and documentation to **node-ubuntu-slim**.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.7.
 - [matterbridge]: Bump `@types/bun` to v.1.4.0.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.11.

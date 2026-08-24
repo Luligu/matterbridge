@@ -14,7 +14,7 @@ RUN \
   set -eux \
   && DPKG_ARCH=$(dpkg --print-architecture) \
   && if [ "${DPKG_ARCH}" = "armhf" ]; then \
-  echo >&2 "ERROR: docker/Dockerfile.24-ubuntu-slim does not support linux/arm/v7 (armhf)."; \
+  echo >&2 "ERROR: docker/Dockerfile.node-ubuntu-slim does not support linux/arm/v7 (armhf)."; \
   echo >&2 "       Node.js v24 does not publish linux-armv7l binaries on nodejs.org."; \
   exit 1; \
   fi \
@@ -64,7 +64,7 @@ ARG VCS_REF
 ARG BUILD_DATE
 
 # ---- OCI standard labels (https://opencontainers.org/) ----
-LABEL org.opencontainers.image.title="matterbridge:24-ubuntu-slim" \
+LABEL org.opencontainers.image.title="matterbridge:node-ubuntu-slim" \
   org.opencontainers.image.description="Ubuntu 24.04.4 LTS (noble) with Node.js 24 from nodejs.org" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \
@@ -83,7 +83,7 @@ RUN \
   && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/*
 
 # Copy and execute the entrypoint script
-COPY ./docker/entrypoint.24-ubuntu-slim.sh ./
-RUN chmod +x ./entrypoint.24-ubuntu-slim.sh
-ENTRYPOINT ["./entrypoint.24-ubuntu-slim.sh"]
+COPY ./docker/entrypoint.node-ubuntu-slim.sh ./
+RUN chmod +x ./entrypoint.node-ubuntu-slim.sh
+ENTRYPOINT ["./entrypoint.node-ubuntu-slim.sh"]
 CMD ["bash"]

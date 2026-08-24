@@ -1,4 +1,4 @@
-FROM luligu/matterbridge:24-ubuntu-slim
+FROM luligu/matterbridge:node-ubuntu-slim
 
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.title="matterbridge" \
   org.opencontainers.image.created=$BUILD_DATE
 
 # Install matterbridge
-WORKDIR /matterbridge    
+WORKDIR /matterbridge
 COPY ./.dockerbuild.json ./
 RUN \
   npm install matterbridge --global --verbose --no-fund --no-audit --omit=dev && \

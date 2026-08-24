@@ -49,9 +49,9 @@ The image (tag **chip-test** 400MB) is based on `ubuntu:latest` with Node.js 24 
 
 ### Matterbridge docker base images
 
-The image (tag **24-ubuntu-slim** 83 MB) is based on `ubuntu:latest` with Node.js 24 LTS from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
+The image (tag **node-ubuntu-slim** 83 MB) is based on `ubuntu:latest` with Node.js 24 LTS from NodeSource. It is used to build the **ubuntu** image but can also be used to open a shell in ubuntu latest with node 24 (node doesn't publish node:24-ubuntu).
 
-The image (tag **bun-ubuntu-slim** 79 MB) is based on `ubuntu:latest` with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun.
+The image (tag **bun-ubuntu-slim** 79 MB) is based on `ubuntu:latest` with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun (bun doesn't publish an ubuntu based image).
 
 ### Matterbridge Dev Container images
 
