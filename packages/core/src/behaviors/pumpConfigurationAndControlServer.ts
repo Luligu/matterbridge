@@ -27,6 +27,7 @@ import type { MaybePromise } from '@matter/general';
 import { LevelControlServer } from '@matter/node/behaviors/level-control';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { Status, StatusResponseError } from '@matter/types';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
 
 import { MatterbridgeServer } from './matterbridgeServer.js';
@@ -64,6 +65,11 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
       // oxlint-disable-next-line typescript/unbound-method
       this.reactTo(this.agent.get(LevelControlServer).events.currentLevel$Changed, this.#handleCurrentLevelChanged);
     }
+
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.operationMode$Changing, this.#handleOperationModeChanging);
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.operationMode$Changed, this.#handleOperationModeChanged);
   }
 
   /**
@@ -119,6 +125,39 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
       this.state.capacity = capacity;
     });
     return { speed, capacity };
+  }
+
+  /**
+   * Rejects an OperationMode write while LocalOverride is set (§4.2.6.1.3): "Any request changing
+   * OperationMode SHALL generate a FAILURE error status until LocalOverride is cleared on the physical
+   * device."
+   */
+  #handleOperationModeChanging(): void {
+    if (this.state.pumpStatus?.localOverride) {
+      throw new StatusResponseError('OperationMode cannot be changed while PumpStatus.LocalOverride is set', Status.Failure);
+    }
+  }
+
+  /**
+   * Reacts to OperationMode changes by mirroring the new value onto EffectiveOperationMode (§4.2.7.15):
+   * "The value of the EffectiveOperationMode attribute is the same as the OperationMode attribute", unless
+   * PumpStatus.LocalOverride is set — but #handleOperationModeChanging already rejects OperationMode writes
+   * in that case, so this handler only ever runs while LocalOverride is clear.
+   *
+   * @param {PumpConfigurationAndControl.OperationMode} operationMode - The new OperationMode value.
+   * @param {PumpConfigurationAndControl.OperationMode} oldOperationMode - The previous OperationMode value.
+   */
+  #handleOperationModeChanged(operationMode: PumpConfigurationAndControl.OperationMode, oldOperationMode: PumpConfigurationAndControl.OperationMode): void {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgePumpConfigurationAndControlServer: operationMode changed to ${operationMode} from ${oldOperationMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+
+    // EffectiveOperationMode is Read-only (access "R V", no Write) per the Matter spec — asLocalActor()
+    // authorizes this internal, spec-mandated update.
+    this.agent.asLocalActor(() => {
+      this.state.effectiveOperationMode = operationMode;
+    });
   }
 
   /**

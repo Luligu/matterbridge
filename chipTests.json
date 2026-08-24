@@ -1288,10 +1288,8 @@
       "name": "PumpConfigurationAndControl Operation Mode on Pump",
       "test": "Test_TC_PCC_2_2",
       "endpoint": 505,
-      "note": "Exercises OperationMode writes and the expectation that EffectiveOperationMode follows them.",
-      "args": ["--PICS /root/pump-configuration-and-control.pics"],
-      "skip": true,
-      "comment": "Fails at the first ConstantSpeed-gated step: writes OperationMode=1 (Minimum) then reads EffectiveOperationMode expecting 1 back, but it stays 0. Root-caused directly: Matterbridge uses the stock @matter/node PumpConfigurationAndControlServer as-is (matterbridgeEndpoint.ts imports it directly, no MatterbridgeXxxServer subclass like OnOff/LevelControl/ColorControl/Valve have), and that stock behavior has no override at all for OperationMode — per spec, mapping OperationMode to EffectiveOperationMode is manufacturer-specific business logic the SDK deliberately leaves to the device, so nothing links the two attributes. A real gap (not a matter.js bug), fixable by giving Pump its own Matterbridge behavior class, but out of scope for adding these tests; not fixable via PICS."
+      "note": "Exercises OperationMode writes and the expectation that EffectiveOperationMode follows them; the Local (PCC.S.F06) step self-skips since this endpoint only enables ConstantSpeed.",
+      "args": ["--PICS /root/pump-configuration-and-control.pics"]
     },
     {
       "name": "PumpConfigurationAndControl Control Mode on Pump",

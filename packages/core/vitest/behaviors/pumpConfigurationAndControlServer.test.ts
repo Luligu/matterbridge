@@ -8,6 +8,7 @@ const NAME = 'PumpConfigurationAndControlServer';
 const MATTER_PORT = 12400;
 const MATTER_CREATE_ONLY = true;
 
+import { Status } from '@matter/types';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
@@ -255,5 +256,56 @@ describe('Server clusters and behaviors', () => {
     await flushAsync();
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
+  });
+
+  test('should mirror OperationMode writes onto EffectiveOperationMode', async () => {
+    // Device Library Pump clarifications (§4.2.7.15): "The value of the EffectiveOperationMode attribute is
+    // the same as the OperationMode attribute" (outside of LocalOverride, covered separately below).
+    const opModePump = new MatterbridgeEndpoint(pump, { id: 'opModePump' });
+    opModePump.createDefaultIdentifyClusterServer();
+    opModePump.createOnOffClusterServer();
+    opModePump.createDefaultPumpConfigurationAndControlClusterServer();
+    opModePump.addRequiredClusterServers();
+    expect(await addDevice(aggregator, opModePump)).toBeTruthy();
+    expect(opModePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Normal);
+
+    await opModePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(opModePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Minimum);
+
+    await opModePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum);
+    expect(opModePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Maximum);
+
+    await opModePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Normal);
+    expect(opModePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Normal);
+  });
+
+  test('should reject OperationMode writes while PumpStatus.LocalOverride is set', async () => {
+    // §4.2.6.1.3 LocalOverride Bit: "Any request changing OperationMode SHALL generate a FAILURE error
+    // status until LocalOverride is cleared on the physical device." This Pump only enables the
+    // ConstantSpeed feature, so LocalOverride never legitimately gets set by this class itself (the Local
+    // OperationMode value requires the LocalOperation feature) — this test sets it directly to exercise the
+    // rejection rule on its own.
+    const localOverridePump = new MatterbridgeEndpoint(pump, { id: 'localOverridePump' });
+    localOverridePump.createDefaultIdentifyClusterServer();
+    localOverridePump.createOnOffClusterServer();
+    localOverridePump.createDefaultPumpConfigurationAndControlClusterServer();
+    localOverridePump.addRequiredClusterServers();
+    expect(await addDevice(aggregator, localOverridePump)).toBeTruthy();
+
+    await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Minimum);
+
+    await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'pumpStatus', { running: false, localOverride: true });
+
+    await expect(localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum)).rejects.toMatchObject({
+      code: Status.Failure,
+    });
+    expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'operationMode')).toBe(PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Minimum);
+
+    // Once LocalOverride clears, OperationMode writes are accepted again.
+    await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'pumpStatus', { running: false, localOverride: false });
+    await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum);
+    expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Maximum);
   });
 });
