@@ -38,20 +38,19 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `Closure` device type and `ClosureControl` clusters.
 - [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `WaterValve` device type and the `ValveConfigurationAndControl` cluster.
 - [chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the `OperationalState` cluster.
+- [chip]: Pump endpoint 505 CHIP conformance is green ✅ for the automated harness tests covering the `PumpConfigurationAndControl` cluster.
 
 ### Added
 
-- [devices]: Add the `tariff` sub-option to `ElectricalUtilityMeter.addElectricalMeter()`, so callers can fold the Electrical Energy Tariff device type and its clusters (CommodityPrice, CommodityTariff, ElectricalGridConditions) onto the **same** endpoint as the electrical meter, instead of requiring a separate one via `addElectricalEnergyTariff()`. Lets the class's own public convenience methods build the exact EP1/EP2/EP3 "Basic Utility Meter" topology example (§ 14.9.6). Thanks Ludovic BOUÉ.
-- [closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
-- [matterbridge]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
-- [matterbridge]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
-- [devices]: Add the optional `movementDuration` and `autoClose` parameters to `IrrigationSystem.addZone()`, passed through to the zone's `ValveConfigurationAndControl` cluster server.
-- [matterbridge]: `MatterbridgeOperationalStateServer` now implements the Matter 1.6 `OperationalState` cluster's Pause/Resume compatibility tables, rejects Start with `UnableToStartOrResume` from the Error state, and emits the `OperationalError`/`OperationCompletion` events (`OperationCompletion`'s `TotalOperationalTime`/`PausedTime` tracked across Start/Pause/Resume cycles).
-- [matterbridge]: Add the optional `operationalStateList`, `operationalError`, `phaseList`, and `currentPhase` parameters to `createDefaultOperationalStateClusterServer()`.
-
-### Fixed
-
-- [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
+- [Closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
+- [WaterValve]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [WaterValve]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
+- [IrrigationSystem]: Add the optional `movementDuration` and `autoClose` parameters to `IrrigationSystem.addZone()`, passed through to the zone's `ValveConfigurationAndControl` cluster server.
+- [OperationalState]: `MatterbridgeOperationalStateServer` now implements the Matter 1.6 `OperationalState` cluster's Pause/Resume compatibility tables, rejects Start with `UnableToStartOrResume` from the Error state, and emits the `OperationalError`/`OperationCompletion` events (`OperationCompletion`'s `TotalOperationalTime`/`PausedTime` tracked across Start/Pause/Resume cycles).
+- [OperationalState]: Add the optional `operationalStateList`, `operationalError`, `phaseList`, and `currentPhase` parameters to `createDefaultOperationalStateClusterServer()`.
+- [Pump]: Add `MatterbridgePumpConfigurationAndControlServer`, synchronizing the `PumpConfigurationAndControl` cluster's `Speed` and `Capacity` attributes from the `OnOff`/`LevelControl` clusters per the Matter Device Library Pump device type clarifications (§5.5.5.1/§5.5.5.2): `CurrentLevel` maps to the setpoint percentage (Level 0 stops the pump, Level 1-200 is Level/2 percent, Level 201-255 is 100%), applied to `MaxConstSpeed` for `Speed` and expressed directly as `Capacity`; `OnOff.On` restores the last known `CurrentLevel`, falling back to `MaxLevel` if none is known yet. `createDefaultPumpConfigurationAndControlClusterServer()` also fills in reasonable medium-capacity-pump defaults (`MinConstSpeed`, `MaxConstSpeed`, `MaxPressure`, `MaxSpeed`, `MaxFlow`) for any physical limit left `null` by the caller.
+- [Pump]: `MatterbridgePumpConfigurationAndControlServer` also mirrors `OperationMode` writes onto `EffectiveOperationMode` (§4.2.7.15), and rejects `OperationMode` writes with a `FAILURE` status while `PumpStatus.LocalOverride` is set (§4.2.6.1.3).
+- [ElectricalUtilityMeter]: Add the `tariff` sub-option to `ElectricalUtilityMeter.addElectricalMeter()`, so callers can fold the Electrical Energy Tariff device type and its clusters (CommodityPrice, CommodityTariff, ElectricalGridConditions) onto the **same** endpoint as the electrical meter, instead of requiring a separate one via `addElectricalEnergyTariff()`. Lets the class's own public convenience methods build the exact EP1/EP2/EP3 "Basic Utility Meter" topology example (§ 14.9.6). Thanks Ludovic BOUÉ.
 
 ### Changed
 
@@ -70,6 +69,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `vitest` to v.4.1.11.
 - [frontend]: Bump `oxfmt` to v.0.64.0.
 - [frontend]: Bump `oxlint` to v.1.79.0.
+
+### Fixed
+
+- [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
