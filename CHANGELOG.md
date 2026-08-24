@@ -36,6 +36,16 @@ If you like this project and find it useful, please consider giving it a star on
 ### Development Breaking Changes
 
 - [RoboticVacuumCleaner]: The constructor now accepts a `RoboticVacuumCleanerOptions` object as its third parameter, consolidating `mode`, RVC mode, operational-state, service-area, `id`, `number`, and `tagList` configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to `new RoboticVacuumCleaner(name, serial, { ...options })`.
+- [Appliances]: All Chapter 13 appliance constructors now accept an options object for endpoint and initial cluster configuration, including `mode`, `id`, `number`, and `tagList`. Existing defaults and two-argument `name, serial` construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:
+  - `new LaundryWasher(name, serial, currentMode, ...)`; use `new LaundryWasher(name, serial, { ...options })`.
+  - `new Refrigerator(name, serial, currentMode, ...)`; use `new Refrigerator(name, serial, { ...options })`.
+  - `new Dishwasher(name, serial, currentMode, ...)`; use `new Dishwasher(name, serial, { ...options })`.
+  - `new LaundryDryer(name, serial, currentMode, ...)`; use `new LaundryDryer(name, serial, { ...options })`.
+  - `new ExtractorHood(name, serial, hepaCondition, ...)`; use `new ExtractorHood(name, serial, { ...options })`.
+  - `new MicrowaveOven(name, serial, currentMode, ...)`; use `new MicrowaveOven(name, serial, { ...options })`.
+  - `Refrigerator.addCabinet(name, tagList, ...)`; use `Refrigerator.addCabinet(name, { ...options })`.
+  - `Oven.addCabinet(name, tagList, ...)`; use `Oven.addCabinet(name, { ...options })`.
+  - `Cooktop.addSurface(name, tagList, ...)`; use `Cooktop.addSurface(name, { ...options })`.
 
 ### Development News
 

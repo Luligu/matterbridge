@@ -156,6 +156,18 @@
 <h3 id="development-breaking-changes">Development Breaking Changes</h3>
 <ul>
 <li>[RoboticVacuumCleaner]: The constructor now accepts a <code>RoboticVacuumCleanerOptions</code> object as its third parameter, consolidating <code>mode</code>, RVC mode, operational-state, service-area, <code>id</code>, <code>number</code>, and <code>tagList</code> configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to <code>new RoboticVacuumCleaner(name, serial, { ...options })</code>.</li>
+<li>[Appliances]: All Chapter 13 appliance constructors now accept an options object for endpoint and initial cluster configuration, including <code>mode</code>, <code>id</code>, <code>number</code>, and <code>tagList</code>. Existing defaults and two-argument <code>name, serial</code> construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:<ul>
+<li><code>new LaundryWasher(name, serial, currentMode, ...)</code>; use <code>new LaundryWasher(name, serial, { ...options })</code>.</li>
+<li><code>new Refrigerator(name, serial, currentMode, ...)</code>; use <code>new Refrigerator(name, serial, { ...options })</code>.</li>
+<li><code>new Dishwasher(name, serial, currentMode, ...)</code>; use <code>new Dishwasher(name, serial, { ...options })</code>.</li>
+<li><code>new LaundryDryer(name, serial, currentMode, ...)</code>; use <code>new LaundryDryer(name, serial, { ...options })</code>.</li>
+<li><code>new ExtractorHood(name, serial, hepaCondition, ...)</code>; use <code>new ExtractorHood(name, serial, { ...options })</code>.</li>
+<li><code>new MicrowaveOven(name, serial, currentMode, ...)</code>; use <code>new MicrowaveOven(name, serial, { ...options })</code>.</li>
+<li><code>Refrigerator.addCabinet(name, tagList, ...)</code>; use <code>Refrigerator.addCabinet(name, { ...options })</code>.</li>
+<li><code>Oven.addCabinet(name, tagList, ...)</code>; use <code>Oven.addCabinet(name, { ...options })</code>.</li>
+<li><code>Cooktop.addSurface(name, tagList, ...)</code>; use <code>Cooktop.addSurface(name, { ...options })</code>.</li>
+</ul>
+</li>
 </ul>
 <h3 id="development-news">Development News</h3>
 <ul>

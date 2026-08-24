@@ -3,7 +3,7 @@
  * @description This file contains the Refrigerator class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,7 +25,7 @@
 import type { MaybePromise } from '@matter/general';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import type { Semtag } from '@matter/types';
+import type { EndpointNumber, Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -37,6 +37,46 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
 /**
+ * Options for configuring a {@link Refrigerator} endpoint.
+ */
+export interface RefrigeratorOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial refrigerator mode. Defaults to 1 (Auto). */
+  currentMode?: number;
+  /** Supported refrigerator modes. */
+  supportedModes?: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[];
+}
+
+/**
+ * Options for configuring a refrigerated Temperature Controlled Cabinet child endpoint.
+ */
+export interface RefrigeratorCabinetOptions {
+  /** Stable storage key for the endpoint. Defaults to the cabinet name. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList: Semtag[];
+  /** Target temperature in hundredths of a degree Celsius. Defaults to 1000 (10°C). */
+  targetTemperature?: number;
+  /** Minimum temperature in hundredths of a degree Celsius. Defaults to -3000 (-30°C). */
+  minTemperature?: number;
+  /** Maximum temperature in hundredths of a degree Celsius. Defaults to 2000 (20°C). */
+  maxTemperature?: number;
+  /** Temperature step in hundredths of a degree Celsius. Defaults to 100 (1°C). */
+  step?: number;
+  /** Current temperature in hundredths of a degree Celsius. Defaults to 1000 (10°C). */
+  currentTemperature?: number;
+}
+
+/**
  * Matterbridge endpoint representing a refrigerator device.
  */
 export class Refrigerator extends MatterbridgeEndpoint {
@@ -45,8 +85,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the refrigerator.
    * @param {string} serial - The serial number of the refrigerator.
-   * @param {number} currentMode - The current mode of the cabinet. Defaults to 1 (which corresponds to 'Auto').
-   * @param {RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]} supportedModes - The supported modes for the cabinet. Defaults to 'Auto', 'RapidCool', and 'RapidFreeze'.
+   * @param {RefrigeratorOptions} [options] - Endpoint and initial mode configuration.
    *
    * @remarks
    * 13.2 A refrigerator represents a device that contains one or more cabinets that are capable of chilling or
@@ -55,22 +94,33 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * A refrigerator is always defined via endpoint composition.
    * - Use `addCabinet` to add one or more cabinets to the refrigerator.
    */
-  constructor(
-    name: string,
-    serial: string,
-    currentMode: number = 1,
-    supportedModes: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[] = [
+  constructor(name: string, serial: string, options?: RefrigeratorOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link RefrigeratorOptions} object as the third argument instead.
+   */
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]);
+
+  constructor(name: string, serial: string, optionsOrCurrentMode?: RefrigeratorOptions | number, supportedModes?: RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]) {
+    const options: RefrigeratorOptions = typeof optionsOrCurrentMode === 'object' ? optionsOrCurrentMode : { currentMode: optionsOrCurrentMode, supportedModes };
+    const configuredSupportedModes = options.supportedModes ?? [
       { label: 'Auto', mode: 1, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.Auto }] },
       { label: 'RapidCool', mode: 2, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] },
       { label: 'RapidFreeze', mode: 3, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidFreeze }] },
-    ],
-  ) {
-    super([refrigerator, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    ];
+    super([refrigerator, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Refrigerator');
     this.createDefaultPowerSourceWiredClusterServer();
     fireAndForget(this.addFixedLabel('composed', 'Refrigerator'), this.log, 'Error adding composed label to Refrigerator');
-    this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(this, currentMode, supportedModes);
+    this.createDefaultRefrigeratorAndTemperatureControlledCabinetModeClusterServer(this, options.currentMode ?? 1, configuredSupportedModes);
     this.createDefaultRefrigeratorAlarmClusterServer(this, false);
   }
 
@@ -78,12 +128,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * Adds a Level Temperature Controlled Cabinet Cooler to the refrigerator.
    *
    * @param {string} name - The name of the cabinet.
-   * @param {Semtag[]} tagList - The tagList associated with the cabinet.
-   * @param {number} targetTemperature - The selected temperature setpoint in degrees Celsius. Defaults to 10°C.
-   * @param {number} minTemperature - The minimum temperature for the cabinet. Defaults to -30°C.
-   * @param {number} maxTemperature - The maximum temperature for the cabinet. Defaults to 20°C.
-   * @param {number} step - The step size for temperature changes. Defaults to 1°C.
-   * @param {number} currentTemperature - The current temperature of the cabinet in degrees Celsius. Defaults to 10°C.
+   * @param {RefrigeratorCabinetOptions} options - Endpoint and temperature-control configuration.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the cabinet.
    *
@@ -103,19 +148,45 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *  ]);
    * ```
    */
+  addCabinet(name: string, options: RefrigeratorCabinetOptions): MatterbridgeEndpoint;
+
+  /**
+   * Adds a cabinet using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link RefrigeratorCabinetOptions} object as the second argument instead.
+   */
   addCabinet(
     name: string,
     tagList: Semtag[],
-    targetTemperature: number = 10 * 100,
-    minTemperature: number = -30 * 100,
-    maxTemperature: number = 20 * 100,
-    step: number = 1 * 100,
-    currentTemperature: number = 10 * 100, // Default to 10.00 degrees Celsius
+    targetTemperature?: number,
+    minTemperature?: number,
+    maxTemperature?: number,
+    step?: number,
+    currentTemperature?: number,
+  ): MatterbridgeEndpoint;
+
+  addCabinet(
+    name: string,
+    optionsOrTagList: RefrigeratorCabinetOptions | Semtag[],
+    targetTemperature?: number,
+    minTemperature?: number,
+    maxTemperature?: number,
+    step?: number,
+    currentTemperature?: number,
   ): MatterbridgeEndpoint {
-    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetCooler, { tagList });
+    const options: RefrigeratorCabinetOptions = Array.isArray(optionsOrTagList)
+      ? { tagList: optionsOrTagList, targetTemperature, minTemperature, maxTemperature, step, currentTemperature }
+      : optionsOrTagList;
+    const cabinet = this.addChildDeviceType(options.id ?? name, temperatureControlledCabinetCooler, { number: options.number, tagList: options.tagList });
     cabinet.log.logName = name;
-    createNumberTemperatureControlClusterServer(cabinet, targetTemperature, minTemperature, maxTemperature, step);
-    cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
+    createNumberTemperatureControlClusterServer(
+      cabinet,
+      options.targetTemperature ?? 10 * 100,
+      options.minTemperature ?? -30 * 100,
+      options.maxTemperature ?? 20 * 100,
+      options.step ?? 1 * 100,
+    );
+    cabinet.createDefaultTemperatureMeasurementClusterServer(options.currentTemperature ?? 10 * 100);
     return cabinet;
   }
 

@@ -3,7 +3,7 @@
  * @description This file contains the LaundryDryer class.
  * @author Luca Liguori
  * @created 2025-06-29
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -23,15 +23,49 @@
 
 // @matter
 import { LaundryDryerControlsServer } from '@matter/node/behaviors/laundry-dryer-controls';
+import type { EndpointNumber } from '@matter/types';
 import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { laundryDryer, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeLaundryWasherModeServer } from './laundryWasher.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
+
+/**
+ * Options for configuring a {@link LaundryDryer} endpoint.
+ */
+export interface LaundryDryerOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial dryer mode. */
+  currentMode?: number;
+  /** Supported dryer modes. */
+  supportedModes?: LaundryWasherMode.ModeOption[];
+  /** Selected temperature-level index. */
+  selectedTemperatureLevel?: number;
+  /** Supported temperature-level labels. */
+  supportedTemperatureLevels?: string[];
+  /** Numeric temperature setpoint in hundredths of a degree Celsius. */
+  temperatureSetpoint?: number;
+  /** Minimum temperature in hundredths of a degree Celsius. */
+  minTemperature?: number;
+  /** Maximum temperature in hundredths of a degree Celsius. */
+  maxTemperature?: number;
+  /** Temperature step in hundredths of a degree Celsius. */
+  step?: number;
+  /** Initial operational state. */
+  operationalState?: OperationalState.OperationalStateEnum;
+}
 
 /**
  * Matterbridge endpoint representing a laundry dryer device.
@@ -42,24 +76,26 @@ export class LaundryDryer extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the laundry dryer.
    * @param {string} serial - The serial number of the laundry dryer.
-   * @param {number} [currentMode] - The current mode of the laundry dryer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry dryer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
-   * @param {number} [selectedTemperatureLevel] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
-   * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
-   * @param {number} [minTemperature] - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
-   * @param {number} [maxTemperature] - The maximum temperature * 100. Defaults to 60 * 100 (which corresponds to 60°C). Fixed attribute.
-   * @param {number} [step] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
-   * @param {OperationalState.OperationalStateEnum} [operationalState] - The operational state of the laundry washer. Defaults to OperationalState.OperationalStateEnum.Off.
+   * @param {LaundryDryerOptions} [options] - Endpoint and initial cluster configuration.
    *
    * Remarks:
    * - If `temperatureSetpoint` is provided, the `createNumberTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
    * - If `temperatureSetpoint` is not provided, the `createLevelTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with feature TemperatureLevel.
    */
+  constructor(name: string, serial: string, options?: LaundryDryerOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link LaundryDryerOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: LaundryWasherMode.ModeOption[], selectedTemperatureLevel?: number, supportedTemperatureLevels?: string[], temperatureSetpoint?: number, minTemperature?: number, maxTemperature?: number, step?: number, operationalState?: OperationalState.OperationalStateEnum);
+
   constructor(
     name: string,
     serial: string,
-    currentMode?: number,
+    optionsOrCurrentMode?: LaundryDryerOptions | number,
     supportedModes?: LaundryWasherMode.ModeOption[],
     selectedTemperatureLevel?: number,
     supportedTemperatureLevels?: string[],
@@ -69,16 +105,35 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super([laundryDryer, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const options: LaundryDryerOptions =
+      typeof optionsOrCurrentMode === 'object'
+        ? optionsOrCurrentMode
+        : {
+            currentMode: optionsOrCurrentMode,
+            supportedModes,
+            selectedTemperatureLevel,
+            supportedTemperatureLevels,
+            temperatureSetpoint,
+            minTemperature,
+            maxTemperature,
+            step,
+            operationalState,
+          };
+    super([laundryDryer, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Dryer');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
-    this.createDefaultLaundryWasherModeClusterServer(currentMode, supportedModes);
+    this.createDefaultLaundryWasherModeClusterServer(options.currentMode, options.supportedModes);
     this.createDefaultLaundryDryerControlsClusterServer(1);
-    if (temperatureSetpoint) createNumberTemperatureControlClusterServer(this, temperatureSetpoint, minTemperature, maxTemperature, step);
-    else createLevelTemperatureControlClusterServer(this, selectedTemperatureLevel, supportedTemperatureLevels);
-    this.createDefaultOperationalStateClusterServer(operationalState);
+    if (options.temperatureSetpoint) createNumberTemperatureControlClusterServer(this, options.temperatureSetpoint, options.minTemperature, options.maxTemperature, options.step);
+    else createLevelTemperatureControlClusterServer(this, options.selectedTemperatureLevel, options.supportedTemperatureLevels);
+    this.createDefaultOperationalStateClusterServer(options.operationalState);
   }
 
   /**

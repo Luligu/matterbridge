@@ -246,6 +246,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a laundry dryer device with number temperature control', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');

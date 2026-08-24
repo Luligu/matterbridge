@@ -3,7 +3,7 @@
  * @description This file contains the Cooktop class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,7 +22,7 @@
  */
 
 // @matter
-import type { Semtag } from '@matter/types';
+import type { EndpointNumber, Semtag } from '@matter/types';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
@@ -30,6 +30,36 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 import { cookSurface, cooktop, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer } from './temperatureControl.js';
+
+/**
+ * Options for configuring a {@link Cooktop} endpoint.
+ */
+export interface CooktopOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+}
+
+/**
+ * Options for configuring a Cook Surface child endpoint.
+ */
+export interface CookSurfaceOptions {
+  /** Stable storage key for the endpoint. Defaults to the surface name. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList: Semtag[];
+  /** Selected temperature-level index. Defaults to 2. */
+  selectedTemperatureLevel?: number;
+  /** Supported temperature-level labels. Defaults to five levels. */
+  supportedTemperatureLevels?: string[];
+}
 
 /**
  * Matterbridge endpoint representing a cooktop device.
@@ -40,6 +70,7 @@ export class Cooktop extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the cooktop.
    * @param {string} serial - The serial number of the cooktop.
+   * @param {CooktopOptions} [options] - Endpoint configuration.
    *
    * @remarks
    * 13.8 A cooktop is a cooking surface that heats food either by transferring currents from an electromagnetic
@@ -50,8 +81,13 @@ export class Cooktop extends MatterbridgeEndpoint {
    * An Cooktop is always defined via endpoint composition.
    * - Use `addSurface` to add one or more surfaces to the cooktop.
    */
-  constructor(name: string, serial: string) {
-    super([cooktop, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+  constructor(name: string, serial: string, options: CooktopOptions = {}) {
+    super([cooktop, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Cooktop');
     this.createDefaultPowerSourceWiredClusterServer();
@@ -63,9 +99,7 @@ export class Cooktop extends MatterbridgeEndpoint {
    * Adds a surface to the cooktop.
    *
    * @param {string} name - The name of the surface.
-   * @param {Semtag[]} tagList - The tagList associated with the surface.
-   * @param {number} selectedTemperatureLevel - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 2 (which corresponds to 'Level 3').
-   * @param {string[]} supportedTemperatureLevels - The list of supported temperature levels for the surface. Defaults to ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'].
+   * @param {CookSurfaceOptions} options - Endpoint and temperature-control configuration.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the surface.
    *
@@ -76,15 +110,24 @@ export class Cooktop extends MatterbridgeEndpoint {
    * The OffOnly feature is required for the On/Off cluster in this device type due to safety requirements.
    * TemperatureLevel is the only valid temperature control mode.
    */
-  addSurface(
-    name: string,
-    tagList: Semtag[],
-    selectedTemperatureLevel: number = 2,
-    supportedTemperatureLevels: string[] = ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
-  ): MatterbridgeEndpoint {
-    const surface = this.addChildDeviceType(name, cookSurface, { tagList });
+  addSurface(name: string, options: CookSurfaceOptions): MatterbridgeEndpoint;
+
+  /**
+   * Adds a surface using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link CookSurfaceOptions} object as the second argument instead.
+   */
+  addSurface(name: string, tagList: Semtag[], selectedTemperatureLevel?: number, supportedTemperatureLevels?: string[]): MatterbridgeEndpoint;
+
+  addSurface(name: string, optionsOrTagList: CookSurfaceOptions | Semtag[], selectedTemperatureLevel?: number, supportedTemperatureLevels?: string[]): MatterbridgeEndpoint {
+    const options: CookSurfaceOptions = Array.isArray(optionsOrTagList) ? { tagList: optionsOrTagList, selectedTemperatureLevel, supportedTemperatureLevels } : optionsOrTagList;
+    const surface = this.addChildDeviceType(options.id ?? name, cookSurface, { number: options.number, tagList: options.tagList });
     surface.log.logName = name;
-    createLevelTemperatureControlClusterServer(surface, selectedTemperatureLevel, supportedTemperatureLevels);
+    createLevelTemperatureControlClusterServer(
+      surface,
+      options.selectedTemperatureLevel ?? 2,
+      options.supportedTemperatureLevels ?? ['Level 1', 'Level 2', 'Level 3', 'Level 4', 'Level 5'],
+    );
     surface.createDefaultTemperatureMeasurementClusterServer(2000);
     surface.createOffOnlyOnOffClusterServer(true);
     return surface;

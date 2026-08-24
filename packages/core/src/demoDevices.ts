@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -24,18 +24,27 @@
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable typescript/no-non-null-assertion */
 
-import { ClosureTag, ClosureWindowTag, CommonNumberTag } from '@matter/node';
+import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
 
+import { AirConditioner } from './devices/airConditioner.js';
 import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
 import { CastingVideoClient } from './devices/castingVideoClient.js';
 import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
+import { Cooktop } from './devices/cooktop.js';
+import { Dishwasher } from './devices/dishwasher.js';
+import { ExtractorHood } from './devices/extractorHood.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
+import { LaundryDryer } from './devices/laundryDryer.js';
+import { LaundryWasher } from './devices/laundryWasher.js';
+import { MicrowaveOven } from './devices/microwaveOven.js';
+import { Oven } from './devices/oven.js';
+import { Refrigerator } from './devices/refrigerator.js';
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { Speaker } from './devices/speaker.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
@@ -492,5 +501,130 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(CommonNumberTag.One)],
   });
   await registerDevice(ep, 'Robotic Vacuum Cleaner', 'ROBOTIC-12-01');
+
+  // Chapter 13 - Appliances Device Types
+
+  ep = new LaundryWasher('Laundry Washer', 'APPLIANCE-13-01', {
+    id: 'LaundryWasher',
+    number: EndpointNumber(13_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Laundry Washer', 'APPLIANCE-13-01');
+
+  const refrigeratorDevice = new Refrigerator('Refrigerator', 'APPLIANCE-13-02', {
+    id: 'Refrigerator',
+    number: EndpointNumber(13_02),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  refrigeratorDevice
+    .addCabinet('Refrigerator Cabinet Top', {
+      id: 'RefrigeratorCabinetTop',
+      number: EndpointNumber(13_02_1),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(RefrigeratorTag.Refrigerator)],
+    })
+    .addRequiredClusters();
+  refrigeratorDevice
+    .addCabinet('Freezer Cabinet Bottom', {
+      id: 'FreezerCabinetBottom',
+      number: EndpointNumber(13_02_2),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(RefrigeratorTag.Freezer)],
+      targetTemperature: -20 * 100,
+      minTemperature: -30 * 100,
+      maxTemperature: 10 * 100,
+      step: 10 * 100,
+    })
+    .addRequiredClusters();
+  await registerDevice(refrigeratorDevice, 'Refrigerator', 'APPLIANCE-13-02');
+
+  ep = new AirConditioner('Air Conditioner', 'APPLIANCE-13-03', {
+    id: 'AirConditioner',
+    number: EndpointNumber(13_03),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Air Conditioner', 'APPLIANCE-13-03');
+
+  ep = new Dishwasher('Dishwasher', 'APPLIANCE-13-05', {
+    id: 'Dishwasher',
+    number: EndpointNumber(13_05),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Dishwasher', 'APPLIANCE-13-05');
+
+  ep = new LaundryDryer('Laundry Dryer', 'APPLIANCE-13-06', {
+    id: 'LaundryDryer',
+    number: EndpointNumber(13_06),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Laundry Dryer', 'APPLIANCE-13-06');
+
+  const cooktopDevice = new Cooktop('Cooktop', 'APPLIANCE-13-08', {
+    id: 'Cooktop',
+    number: EndpointNumber(13_08),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  cooktopDevice
+    .addSurface('Cook Surface Top Left', {
+      id: 'CookSurfaceTopLeft',
+      number: EndpointNumber(13_08_1),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(CommonPositionTag.Left)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Top Right', {
+      id: 'CookSurfaceTopRight',
+      number: EndpointNumber(13_08_2),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(CommonPositionTag.Right)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Bottom Left', {
+      id: 'CookSurfaceBottomLeft',
+      number: EndpointNumber(13_08_3),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(CommonPositionTag.Left)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Bottom Right', {
+      id: 'CookSurfaceBottomRight',
+      number: EndpointNumber(13_08_4),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(CommonPositionTag.Right)],
+    })
+    .addRequiredClusters();
+  await registerDevice(cooktopDevice, 'Cooktop', 'APPLIANCE-13-08');
+
+  const ovenDevice = new Oven('Oven', 'APPLIANCE-13-09', {
+    id: 'Oven',
+    number: EndpointNumber(13_09),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  ovenDevice
+    .addCabinet('Oven Cabinet Top', {
+      id: 'OvenCabinetTop',
+      number: EndpointNumber(13_09_1),
+      tagList: [getSemtag(CommonPositionTag.Top)],
+    })
+    .addRequiredClusters();
+  ovenDevice
+    .addCabinet('Oven Cabinet Bottom', {
+      id: 'OvenCabinetBottom',
+      number: EndpointNumber(13_09_2),
+      tagList: [getSemtag(CommonPositionTag.Bottom)],
+    })
+    .addRequiredClusters();
+  await registerDevice(ovenDevice, 'Oven', 'APPLIANCE-13-09');
+
+  ep = new ExtractorHood('Extractor Hood', 'APPLIANCE-13-10', {
+    id: 'ExtractorHood',
+    number: EndpointNumber(13_10),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Extractor Hood', 'APPLIANCE-13-10');
+
+  ep = new MicrowaveOven('Microwave Oven', 'APPLIANCE-13-11', {
+    id: 'MicrowaveOven',
+    number: EndpointNumber(13_11),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Microwave Oven', 'APPLIANCE-13-11');
 }
 // v8 ignore end

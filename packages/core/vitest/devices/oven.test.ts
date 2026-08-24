@@ -10,12 +10,14 @@ const MATTER_CREATE_ONLY = true;
 
 import { CommonPositionTag } from '@matter/node';
 import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/node/behaviors';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -80,6 +82,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet1 = device.addCabinet('Oven Test Cabinet Top', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
     ]);
@@ -89,6 +92,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet2 = device.addCabinet(
       'Oven Test Cabinet Bottom',
       [{ mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label }],
@@ -112,6 +116,33 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.hasClusterServer(OvenMode.id)).toBeTruthy();
     expect(cabinet2.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+  });
+
+  test('add an oven cabinet with endpoint options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label }];
+    const configuredDevice = new Oven('Configured Oven', 'OV654321');
+    const configuredCabinet = configuredDevice.addCabinet('Configured Cabinet', {
+      id: 'ConfiguredCabinet',
+      number: EndpointNumber(13_09_1),
+      tagList,
+      currentMode: 1,
+      supportedModes: [{ label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] }],
+      targetTemperature: 200 * 100,
+      minTemperature: 50 * 100,
+      maxTemperature: 250 * 100,
+      step: 5 * 100,
+      currentTemperature: 25 * 100,
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      currentPhase: 0,
+      phaseList: ['pre-heating'],
+    });
+
+    expect(configuredCabinet.id).toBe('ConfiguredCabinet');
+    expect(configuredCabinet.number).toBe(EndpointNumber(13_09_1));
+    expect(configuredCabinet.tagList).toEqual(tagList);
+    expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: 25 * 100 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenModeServer)).toMatchObject({ currentMode: 1 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenCavityOperationalStateServer)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
   });
 
   test('add a oven device', async () => {

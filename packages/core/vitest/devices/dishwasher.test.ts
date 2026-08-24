@@ -225,6 +225,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a dishwasher device with number temperature control', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
     device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');

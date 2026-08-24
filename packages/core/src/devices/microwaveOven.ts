@@ -3,7 +3,7 @@
  * @description This file contains the MicrowaveOven class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,9 +27,11 @@
 // @matter
 import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
 import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
+import type { EndpointNumber } from '@matter/types';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -37,6 +39,36 @@ import { MatterbridgeOperationalStateServer } from '../behaviors/operationalStat
 import { microwaveOven, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+
+/**
+ * Options for configuring a {@link MicrowaveOven} endpoint.
+ */
+export interface MicrowaveOvenOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial microwave mode. Defaults to 1 (Auto). */
+  currentMode?: number;
+  /** Supported microwave modes. */
+  supportedModes?: MicrowaveOvenMode.ModeOption[];
+  /** Initial power setting. Defaults to 100. */
+  powerSetting?: number;
+  /** Minimum power setting. Defaults to 10. */
+  minPower?: number;
+  /** Maximum power setting. Defaults to 100. */
+  maxPower?: number;
+  /** Power-setting step. Defaults to 10. */
+  powerStep?: number;
+  /** Initial cook time in seconds. Defaults to 60. */
+  cookTime?: number;
+  /** Maximum cook time in seconds. Defaults to 3600. */
+  maxCookTime?: number;
+}
 
 /**
  * Matterbridge endpoint representing a microwave oven device.
@@ -47,25 +79,40 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the microwave oven.
    * @param {string} serial - The serial number of the microwave oven.
-   * @param {number} currentMode - The current mode of the microwave oven. Default is 1 = Auto.
-   * @param {MicrowaveOvenMode.ModeOption[]} supportedModes - The supported modes of the microwave oven. Default is an array of all modes.
-   * @param {number} powerSetting - The power level associated with the operation of the device. Default is 100.
-   * @param {number} minPower - The minimum value to which the PowerSetting attribute can be set. Default is 10.
-   * @param {number} maxPower - The maximum value to which the PowerSetting attribute can be set. Default is 100.
-   * @param {number} powerStep - The increment of power that can be set on the server. Default is 10.
-   * @param {number} cookTime - The initial cook time in seconds. Default is 60 seconds.
-   * @param {number} maxCookTime - The maximum cook time in seconds. Default is 3600 seconds (1 hour).
+   * @param {MicrowaveOvenOptions} [options] - Endpoint, mode, power, and cook-time configuration.
    *
    * @remarks
    * - 8.12. Microwave Oven Mode Cluster
    * - Exactly one entry in the SupportedModes attribute SHALL include the Normal mode tag in the ModeTags field.
    * - The Normal and Defrost mode tags are mutually exclusive and SHALL NOT both be used together in a mode’s ModeTags.
    */
+  constructor(name: string, serial: string, options?: MicrowaveOvenOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link MicrowaveOvenOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: MicrowaveOvenMode.ModeOption[], powerSetting?: number, minPower?: number, maxPower?: number, powerStep?: number, cookTime?: number, maxCookTime?: number);
+
   constructor(
     name: string,
     serial: string,
-    currentMode: number = 1,
-    supportedModes: MicrowaveOvenMode.ModeOption[] = [
+    optionsOrCurrentMode?: MicrowaveOvenOptions | number,
+    supportedModes?: MicrowaveOvenMode.ModeOption[],
+    powerSetting?: number,
+    minPower?: number,
+    maxPower?: number,
+    powerStep?: number,
+    cookTime?: number,
+    maxCookTime?: number,
+  ) {
+    const options: MicrowaveOvenOptions =
+      typeof optionsOrCurrentMode === 'object'
+        ? optionsOrCurrentMode
+        : { currentMode: optionsOrCurrentMode, supportedModes, powerSetting, minPower, maxPower, powerStep, cookTime, maxCookTime };
+    const configuredSupportedModes = options.supportedModes ?? [
       { label: 'Auto', mode: 1, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Auto }] },
       { label: 'Quick', mode: 2, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Quick }] },
       { label: 'Quiet', mode: 3, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Quiet }] },
@@ -73,21 +120,26 @@ export class MicrowaveOven extends MatterbridgeEndpoint {
       { label: 'Max', mode: 5, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Max }] },
       { label: 'Normal', mode: 6, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Normal }] },
       { label: 'Defrost', mode: 7, modeTags: [{ value: MicrowaveOvenMode.ModeTag.Defrost }] },
-    ],
-    powerSetting: number = 100,
-    minPower: number = 10,
-    maxPower: number = 100,
-    powerStep: number = 10,
-    cookTime: number = 60, // 1 minute
-    maxCookTime: number = 3600, // 1 hour
-  ) {
-    super([microwaveOven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    ];
+    super([microwaveOven, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Microwave Oven');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDefaultOperationalStateClusterServer(OperationalState.OperationalStateEnum.Stopped);
-    this.createDefaultMicrowaveOvenModeClusterServer(currentMode, supportedModes);
-    this.createDefaultMicrowaveOvenControlClusterServer(powerSetting, minPower, maxPower, powerStep, cookTime, maxCookTime);
+    this.createDefaultMicrowaveOvenModeClusterServer(options.currentMode ?? 1, configuredSupportedModes);
+    this.createDefaultMicrowaveOvenControlClusterServer(
+      options.powerSetting ?? 100,
+      options.minPower ?? 10,
+      options.maxPower ?? 100,
+      options.powerStep ?? 10,
+      options.cookTime ?? 60,
+      options.maxCookTime ?? 3600,
+    );
   }
 
   /**

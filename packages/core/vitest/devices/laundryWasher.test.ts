@@ -247,6 +247,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a laundry washer device with number temperature control', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
     device = new LaundryWasher(
       'Laundry Washer Test Device',
       'LW123456',

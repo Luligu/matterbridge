@@ -3,7 +3,7 @@
  * @description This file contains the Dishwasher class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,10 +26,12 @@
 // @matter
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
+import type { EndpointNumber } from '@matter/types';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -37,6 +39,38 @@ import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { dishwasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
+
+/**
+ * Options for configuring a {@link Dishwasher} endpoint.
+ */
+export interface DishwasherOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial dishwasher mode. */
+  currentMode?: number;
+  /** Supported dishwasher modes. */
+  supportedModes?: DishwasherMode.ModeOption[];
+  /** Selected temperature-level index. */
+  selectedTemperatureLevel?: number;
+  /** Supported temperature-level labels. */
+  supportedTemperatureLevels?: string[];
+  /** Numeric temperature setpoint in hundredths of a degree Celsius. */
+  temperatureSetpoint?: number;
+  /** Minimum temperature in hundredths of a degree Celsius. */
+  minTemperature?: number;
+  /** Maximum temperature in hundredths of a degree Celsius. */
+  maxTemperature?: number;
+  /** Temperature step in hundredths of a degree Celsius. */
+  step?: number;
+  /** Initial operational state. */
+  operationalState?: OperationalState.OperationalStateEnum;
+}
 
 /**
  * Matterbridge endpoint representing a dishwasher device.
@@ -47,24 +81,26 @@ export class Dishwasher extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the dish washer.
    * @param {string} serial - The serial number of the dish washer.
-   * @param {number} [currentMode] - The current mode of the dish washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {DishwasherMode.ModeOption[]} [supportedModes] - The supported modes of the dish washer. Defaults to a set of common modes (which include Light, Normal, Heavy). Fixed attribute.
-   * @param {number} [selectedTemperatureLevel] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
-   * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
-   * @param {number} [minTemperature] - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
-   * @param {number} [maxTemperature] - The maximum temperature * 100. Defaults to 60 * 100 (which corresponds to 60°C). Fixed attribute.
-   * @param {number} [step] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
-   * @param {OperationalState.OperationalStateEnum} [operationalState] - The operational state of the laundry washer. Defaults to OperationalState.OperationalStateEnum.Off.
+   * @param {DishwasherOptions} [options] - Endpoint and initial cluster configuration.
    *
    * Remarks:
    * - If `temperatureSetpoint` is provided, the `createNumberTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
    * - If `temperatureSetpoint` is not provided, the `createLevelTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with feature TemperatureLevel.
    */
+  constructor(name: string, serial: string, options?: DishwasherOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link DishwasherOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: DishwasherMode.ModeOption[], selectedTemperatureLevel?: number, supportedTemperatureLevels?: string[], temperatureSetpoint?: number, minTemperature?: number, maxTemperature?: number, step?: number, operationalState?: OperationalState.OperationalStateEnum);
+
   constructor(
     name: string,
     serial: string,
-    currentMode?: number,
+    optionsOrCurrentMode?: DishwasherOptions | number,
     supportedModes?: DishwasherMode.ModeOption[],
     selectedTemperatureLevel?: number,
     supportedTemperatureLevels?: string[],
@@ -74,16 +110,35 @@ export class Dishwasher extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super([dishwasher, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const options: DishwasherOptions =
+      typeof optionsOrCurrentMode === 'object'
+        ? optionsOrCurrentMode
+        : {
+            currentMode: optionsOrCurrentMode,
+            supportedModes,
+            selectedTemperatureLevel,
+            supportedTemperatureLevels,
+            temperatureSetpoint,
+            minTemperature,
+            maxTemperature,
+            step,
+            operationalState,
+          };
+    super([dishwasher, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Dishwasher');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
-    this.createDefaultDishwasherModeClusterServer(currentMode, supportedModes);
+    this.createDefaultDishwasherModeClusterServer(options.currentMode, options.supportedModes);
     this.createDefaultDishwasherAlarmClusterServer();
-    if (temperatureSetpoint) createNumberTemperatureControlClusterServer(this, temperatureSetpoint, minTemperature, maxTemperature, step);
-    else createLevelTemperatureControlClusterServer(this, selectedTemperatureLevel, supportedTemperatureLevels);
-    this.createDefaultOperationalStateClusterServer(operationalState);
+    if (options.temperatureSetpoint) createNumberTemperatureControlClusterServer(this, options.temperatureSetpoint, options.minTemperature, options.maxTemperature, options.step);
+    else createLevelTemperatureControlClusterServer(this, options.selectedTemperatureLevel, options.supportedTemperatureLevels);
+    this.createDefaultOperationalStateClusterServer(options.operationalState);
   }
 
   /**

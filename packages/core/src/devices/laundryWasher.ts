@@ -3,7 +3,7 @@
  * @description This file contains the LaundryWasher class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,11 +26,13 @@
 // @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
+import type { EndpointNumber } from '@matter/types';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -38,6 +40,46 @@ import { MatterbridgeOnOffServer } from '../behaviors/onOffServer.js';
 import { laundryWasher, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from './temperatureControl.js';
+
+/**
+ * Options for configuring a {@link LaundryWasher} endpoint.
+ */
+export interface LaundryWasherOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial washer mode. */
+  currentMode?: number;
+  /** Supported washer modes. */
+  supportedModes?: LaundryWasherMode.ModeOption[];
+  /** Current spin-speed index. */
+  spinSpeedCurrent?: number;
+  /** Supported spin-speed labels. */
+  spinSpeeds?: string[];
+  /** Selected number of rinses. */
+  numberOfRinses?: LaundryWasherControls.NumberOfRinses;
+  /** Supported rinse counts. */
+  supportedRinses?: LaundryWasherControls.NumberOfRinses[];
+  /** Selected temperature-level index. */
+  selectedTemperatureLevel?: number;
+  /** Supported temperature-level labels. */
+  supportedTemperatureLevels?: string[];
+  /** Numeric temperature setpoint in hundredths of a degree Celsius. */
+  temperatureSetpoint?: number;
+  /** Minimum temperature in hundredths of a degree Celsius. */
+  minTemperature?: number;
+  /** Maximum temperature in hundredths of a degree Celsius. */
+  maxTemperature?: number;
+  /** Temperature step in hundredths of a degree Celsius. */
+  step?: number;
+  /** Initial operational state. */
+  operationalState?: OperationalState.OperationalStateEnum;
+}
 
 /**
  * Matterbridge endpoint representing a laundry washer device.
@@ -48,28 +90,26 @@ export class LaundryWasher extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the laundry washer.
    * @param {string} serial - The serial number of the laundry washer.
-   * @param {number} [currentMode] - The current mode of the laundry washer. Defaults to 2 (Normal mode). Dead Front OnOff Cluster will set this to 2 when turned off. Persistent attribute.
-   * @param {LaundryWasherMode.ModeOption[]} [supportedModes] - The supported modes of the laundry washer. Defaults to a set of common modes (which include Delicate, Normal, Heavy, and Whites). Fixed attribute.
-   * @param {number} [spinSpeedCurrent] - The current spin speed as index of the spinSpeeds array. Defaults to 2 (which corresponds to '1200').
-   * @param {string[]} [spinSpeeds] - The supported spin speeds. Defaults to ['400', '800', '1200', '1600'].
-   * @param {LaundryWasherControls.NumberOfRinses} [numberOfRinses] - The number of rinses. Defaults to LaundryWasherControls.NumberOfRinses.Normal (which corresponds to 1 rinse).
-   * @param {LaundryWasherControls.NumberOfRinses[]} [supportedRinses] - The supported rinses. Defaults to [NumberOfRinses.None, NumberOfRinses.Normal, NumberOfRinses.Max, NumberOfRinses.Extra].
-   * @param {number} [selectedTemperatureLevel] - The selected temperature level as an index of the supportedTemperatureLevels array. Defaults to 1 (which corresponds to 'Warm').
-   * @param {string[]} [supportedTemperatureLevels] - The supported temperature levels. Defaults to ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']. Fixed attribute.
-   * @param {number} [temperatureSetpoint] - The temperature setpoint * 100. Defaults to 40 * 100 (which corresponds to 40°C).
-   * @param {number} [minTemperature] - The minimum temperature * 100. Defaults to 30 * 100 (which corresponds to 30°C). Fixed attribute.
-   * @param {number} [maxTemperature] - The maximum temperature * 100. Defaults to 60 * 100 (which corresponds to 60°C). Fixed attribute.
-   * @param {number} [step] - The step size for temperature changes. Defaults to 10 * 100 (which corresponds to 10°C). Fixed attribute.
-   * @param {OperationalState.OperationalStateEnum} [operationalState] - The operational state of the laundry washer. Defaults to OperationalState.OperationalStateEnum.Off.
+   * @param {LaundryWasherOptions} [options] - Endpoint and initial cluster configuration.
    *
    * Remarks:
    * - If `temperatureSetpoint` is provided, the `createNumberTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with features TemperatureNumber and TemperatureStep.
    * - If `temperatureSetpoint` is not provided, the `createLevelTemperatureControlClusterServer` method will be used to create the TemperatureControl Cluster Server with feature TemperatureLevel.
    */
+  constructor(name: string, serial: string, options?: LaundryWasherOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link LaundryWasherOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, currentMode?: number, supportedModes?: LaundryWasherMode.ModeOption[], spinSpeedCurrent?: number, spinSpeeds?: string[], numberOfRinses?: LaundryWasherControls.NumberOfRinses, supportedRinses?: LaundryWasherControls.NumberOfRinses[], selectedTemperatureLevel?: number, supportedTemperatureLevels?: string[], temperatureSetpoint?: number, minTemperature?: number, maxTemperature?: number, step?: number, operationalState?: OperationalState.OperationalStateEnum);
+
   constructor(
     name: string,
     serial: string,
-    currentMode?: number,
+    optionsOrCurrentMode?: LaundryWasherOptions | number,
     supportedModes?: LaundryWasherMode.ModeOption[],
     spinSpeedCurrent?: number,
     spinSpeeds?: string[],
@@ -83,16 +123,39 @@ export class LaundryWasher extends MatterbridgeEndpoint {
     step?: number,
     operationalState?: OperationalState.OperationalStateEnum,
   ) {
-    super([laundryWasher, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const options: LaundryWasherOptions =
+      typeof optionsOrCurrentMode === 'object'
+        ? optionsOrCurrentMode
+        : {
+            currentMode: optionsOrCurrentMode,
+            supportedModes,
+            spinSpeedCurrent,
+            spinSpeeds,
+            numberOfRinses,
+            supportedRinses,
+            selectedTemperatureLevel,
+            supportedTemperatureLevels,
+            temperatureSetpoint,
+            minTemperature,
+            maxTemperature,
+            step,
+            operationalState,
+          };
+    super([laundryWasher, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Laundry Washer');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
-    this.createDefaultLaundryWasherModeClusterServer(currentMode, supportedModes);
-    this.createDefaultLaundryWasherControlsClusterServer(spinSpeedCurrent, spinSpeeds, numberOfRinses, supportedRinses);
-    if (temperatureSetpoint) createNumberTemperatureControlClusterServer(this, temperatureSetpoint, minTemperature, maxTemperature, step);
-    else createLevelTemperatureControlClusterServer(this, selectedTemperatureLevel, supportedTemperatureLevels);
-    this.createDefaultOperationalStateClusterServer(operationalState);
+    this.createDefaultLaundryWasherModeClusterServer(options.currentMode, options.supportedModes);
+    this.createDefaultLaundryWasherControlsClusterServer(options.spinSpeedCurrent, options.spinSpeeds, options.numberOfRinses, options.supportedRinses);
+    if (options.temperatureSetpoint) createNumberTemperatureControlClusterServer(this, options.temperatureSetpoint, options.minTemperature, options.maxTemperature, options.step);
+    else createLevelTemperatureControlClusterServer(this, options.selectedTemperatureLevel, options.supportedTemperatureLevels);
+    this.createDefaultOperationalStateClusterServer(options.operationalState);
   }
 
   /**
