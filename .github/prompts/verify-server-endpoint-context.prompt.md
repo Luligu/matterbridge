@@ -1,6 +1,6 @@
 ---
 name: 'Verify Server Endpoint Context'
-description: 'Verify that behavior server logs and thrown errors start with the server name and end with the Matter endpoint id and number'
+description: 'Verify server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates'
 argument-hint: 'Optional scope, notes, or request to fix violations'
 agent: 'agent'
 ---
@@ -46,13 +46,32 @@ Plugin forwarding contract:
 - Verify all validation and state mutation occur only after the awaited forwarding call.
 - Report a missing command-entry log, command-entry log at a level other than `info`, missing forwarding call, non-awaited forwarding call, or any disallowed operation before forwarding completes as a plugin forwarding contract violation.
 
+Matter specification comments:
+
+- Verify every validation branch or guard and every state update that enforces Matter behavior has an immediately preceding single-line comment in this form:
+
+  ```typescript
+  // Matter 1.6.0 § <paragraph>: <short description of the normative rule enforced by this code>.
+  ```
+
+- Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
+- Keep each comment concise and specific to the validation or state update immediately below it. State the observable requirement, including the required status code for validation failures when the specification defines one.
+- Add separate comments when adjacent state assignments enforce different normative requirements. Do not use one generic comment to cover multiple assignments with distinct effects.
+- Place validation and state-update comments both where the rule is implemented and immediately before each call to a helper that performs the validation or state update. At each call site, use the paragraph for that specific command rather than a combined reference covering other callers.
+- Accept a combined paragraph reference only when the same validation or state update implements the same rule for multiple commands, for example `§ 1.8.7.1.2 and § 1.8.7.2.2`.
+- Do not accept method-level JSDoc, a distant block comment, a bare paragraph number, a comment without `Matter 1.6.0`, or a comment that describes implementation mechanics without explaining the specification rule.
+- Report a missing, misplaced, inaccurate, or incomplete specification comment as a Matter specification comment violation.
+
 Compliant examples from [booleanStateConfigurationServer.ts](../../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
 
 ```typescript
-throw new StatusResponseError(
-  `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-  Status.ConstraintError,
-);
+// Matter 1.6.0 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
+  throw new StatusResponseError(
+    `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    Status.ConstraintError,
+  );
+}
 
 override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmRequest): Promise<void> {
   const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -67,7 +86,12 @@ override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmReq
     endpoint: this.endpoint as MatterbridgeEndpoint,
     context: this.context,
   });
+  // Matter 1.6.0 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
   this.#assertAlarmModesSupported(request.alarmsToSuppress);
+  // Matter 1.6.0 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
+  this.#assertSuppressAlarmAllowed(request.alarmsToSuppress);
+  // Matter 1.6.0 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
+  this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
 }
 ```
 
@@ -76,10 +100,11 @@ Output requirements:
 - List each violation with a concise file and line reference, the log or throw kind, and the current message.
 - For each violation, identify whether the server-name prefix, endpoint suffix, or both are invalid.
 - List each plugin forwarding contract violation with the command handler, the invalid operation or ordering, and whether the command-entry log is missing or uses the wrong level, the forwarding call is missing, or forwarding is not awaited.
+- List each Matter specification comment violation with the validation or state update, whether the comment is missing, misplaced, inaccurate, or incomplete, and the applicable Matter 1.6.0 paragraph when it can be determined.
 - Group results by `behaviors` and `devices`.
-- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, and every command handler respects the plugin forwarding contract.
+- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, every command handler respects the plugin forwarding contract, and every Matter validation and state update has an accurate Matter 1.6.0 paragraph comment.
 - Do not modify files unless I explicitly ask you to fix the violations.
-- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, then re-run the full verification and report any remaining violations.
+- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, add or correct concise Matter 1.6.0 paragraph comments immediately before validations and state updates, then re-run the full verification and report any remaining violations.
 
 Post-edit validation:
 
