@@ -15,7 +15,8 @@
     "Test_TC_OO_2_6.yaml",
     "Test_TC_G_2_4.yaml",
     "Test_TC_WASHERCTRL_2_2.yaml",
-    "Test_TC_DRYERCTRL_2_1.yaml"
+    "Test_TC_DRYERCTRL_2_1.yaml",
+    "TC_MWOCTRL_2_2.py"
   ],
   "tests": [
     {
@@ -1885,6 +1886,37 @@
       "test": "Test_TC_ACFREMON_2_1",
       "endpoint": 1310,
       "args": ["--PICS /root/activated-carbon-filter-monitoring.pics"]
+    },
+    {
+      "name": "MicrowaveOvenMode attributes on MicrowaveOven",
+      "test": "TC_MWOM_1_2.py",
+      "endpoint": 1311,
+      "args": ["--PICS /root/microwave-oven.pics"]
+    },
+    {
+      "name": "MicrowaveOvenControl cook-time functionality on MicrowaveOven",
+      "test": "TC_MWOCTRL_2_1.py",
+      "endpoint": 1311,
+      "args": ["--PICS /root/microwave-oven.pics"]
+    },
+    {
+      "name": "MicrowaveOvenControl numeric-power functionality on MicrowaveOven",
+      "test": "TC_MWOCTRL_2_2.py",
+      "endpoint": 1311,
+      "comment": "Patched locally only to accept the spec-valid MaxPower=100 boundary; all numeric-power range and PowerStep checks remain unchanged.",
+      "args": ["--PICS /root/microwave-oven.pics"]
+    },
+    {
+      "name": "MicrowaveOvenControl watts functionality on MicrowaveOven",
+      "test": "TC_MWOCTRL_2_4.py",
+      "endpoint": 1311,
+      "args": ["--PICS /root/microwave-oven.pics"]
+    },
+    {
+      "name": "MicrowaveOvenControl AddMoreTime functionality on MicrowaveOven",
+      "test": "Test_TC_MWOCTRL_2_5",
+      "endpoint": 1311,
+      "args": ["--PICS /root/microwave-oven.pics"]
     }
   ]
 }

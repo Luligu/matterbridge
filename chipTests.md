@@ -310,6 +310,30 @@ Top Oven Cabinet clusters:
 - `CountdownTime` is not implemented on endpoint 13091. The corresponding upstream Matter 1.6 script also hardcodes
   endpoint 1 instead of using its configured endpoint.
 
+### Endpoint 1311
+
+Microwave Oven clusters:
+
+- Microwave Oven Mode
+- Microwave Oven Control (`PowerAsNumber` and `PowerNumberLimits`)
+
+All five upstream Matter 1.6 server tests are registered with `docker/chip-test/microwave-oven.pics`. The conformance
+run passes 5/5 tests:
+
+- `TC_MWOM_1_2.py` passes all SupportedModes and CurrentMode checks.
+- `TC_MWOCTRL_2_4.py` passes by correctly identifying that the mutually exclusive `PowerInWatts` feature is not
+  supported and skipping its feature-specific steps.
+- `Test_TC_MWOCTRL_2_5` passes the SetCookingParameters, AddMoreTime, and CookTime readback flow.
+- `TC_MWOCTRL_2_1.py` passes valid CookTime writes and verifies that values below 1 or above MaxCookTime return
+  `CONSTRAINT_ERROR` without a local test patch.
+- `TC_MWOCTRL_2_2.py` passes valid numeric-power writes and verifies both range and PowerStep constraints. Its local
+  patch only corrects the upstream `MaxPower < 100` assertion to `MaxPower <= 100`, as required by Matter 1.6
+  §8.13.5.5.
+
+`MatterbridgeMicrowaveOvenControlServer` validates supplied CookTime and PowerSetting fields before invoking command
+handlers or mutating state. Values outside the configured ranges, or a PowerSetting for which
+`(PowerSetting - MinPower) % PowerStep != 0`, return `CONSTRAINT_ERROR` as required by §8.13.6.2.2 and §8.13.6.2.3.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
