@@ -7,7 +7,16 @@
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
     "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
   ],
-  "patches": ["TC_DeviceBasicComposition.py", "TC_FAN_3_2.py", "Test_TC_OO_2_3.yaml", "Test_TC_G_2_4.yaml", "Test_TC_WASHERCTRL_2_2.yaml", "Test_TC_DRYERCTRL_2_1.yaml"],
+  "patches": [
+    "TC_DeviceBasicComposition.py",
+    "TC_FAN_3_2.py",
+    "Test_TC_OO_2_2.yaml",
+    "Test_TC_OO_2_3.yaml",
+    "Test_TC_OO_2_6.yaml",
+    "Test_TC_G_2_4.yaml",
+    "Test_TC_WASHERCTRL_2_2.yaml",
+    "Test_TC_DRYERCTRL_2_1.yaml"
+  ],
   "tests": [
     {
       "name": "Generic device basic composition",
@@ -1685,6 +1694,64 @@
       "endpoint": 1306,
       "comment": "Patched locally to omit the undefined DrynessLevelEnum value 4 write, which CHIP rejects during local command encoding before it reaches the DUT; all attribute, supported-list, valid-write, readback, and applicable state coverage remains.",
       "args": ["--PICS /root/laundry-dryer-controls.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff attributes on Cooktop",
+      "test": "Test_TC_OO_2_1",
+      "endpoint": 1308,
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff primary functionality on Cooktop",
+      "test": "Test_TC_OO_2_2",
+      "endpoint": 1308,
+      "comment": "Patched locally so each state read inherits the PICS guard of the command that establishes its expected value, allowing the applicable Off path to run without asserting effects from unsupported On/Toggle commands.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff secondary Lighting functionality on Cooktop",
+      "test": "Test_TC_OO_2_3",
+      "endpoint": 1308,
+      "skip": true,
+      "comment": "Not applicable: endpoint 1308 implements OffOnly, while this test covers the mutually exclusive Lighting feature and its optional attributes and commands.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff startup functionality on Cooktop",
+      "test": "Test_TC_OO_2_4",
+      "endpoint": 1308,
+      "skip": true,
+      "comment": "Not applicable: StartUpOnOff is excluded when the OffOnly feature is present, and endpoint 1308 does not expose it.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff feature behavior on Cooktop",
+      "test": "Test_TC_OO_2_6",
+      "endpoint": 1308,
+      "comment": "Patched locally to remove the contradictory On/Toggle command-support PICS guards so the test verifies their required UNSUPPORTED_COMMAND responses on an OffOnly server.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff scenes management interaction on Cooktop",
+      "test": "TC_OO_2_7.py",
+      "endpoint": 1308,
+      "skip": true,
+      "comment": "Not applicable: TC-OO-2.7 requires a Scenes Management server, which endpoint 1308 does not expose.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OffOnlyOnOff functionality with client as DUT on Cooktop",
+      "test": "Test_TC_OO_3_2_Simulated",
+      "endpoint": 1308,
+      "skip": true,
+      "comment": "Not applicable: the Cooktop exposes an OnOff server and does not act as an OnOff client issuing commands to the test harness.",
+      "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "FixedLabel attributes and write protection on Cooktop",
+      "test": "TC_FLABEL_2_1.py",
+      "endpoint": 1308,
+      "args": ["--PICS /root/cooktop.pics"]
     }
   ]
 }

@@ -269,6 +269,30 @@ generic `FAILURE` before any request reaches the DUT, so it cannot verify the ex
 
 Result on 2026-08-24: the applicable automated test passes (1/1).
 
+### Endpoint 1308
+
+Cooktop clusters:
+
+- OnOff (OffOnly)
+- Fixed Label
+
+All eight upstream Matter 1.6 OnOff and Fixed Label tests are registered with
+`docker/chip-test/cooktop.pics`. Four are applicable and automated: OnOff attributes, primary Off functionality,
+OffOnly feature behavior, and Fixed Label attribute/write-protection checks. Four are retained as explicit skips:
+
+- `Test_TC_OO_2_3` covers the mutually exclusive Lighting feature.
+- `Test_TC_OO_2_4` covers `StartUpOnOff`, which is excluded by OffOnly.
+- `TC_OO_2_7.py` requires a Scenes Management server, which endpoint 1308 does not expose.
+- `Test_TC_OO_3_2_Simulated` requires the DUT to act as an OnOff client.
+
+The local `Test_TC_OO_2_2.yaml` patch adds the triggering command's PICS guard to each subsequent state read. The
+upstream test otherwise skips an unsupported `On` or `Toggle` command on an OffOnly endpoint but still asserts the
+state change that command would have caused. The local `Test_TC_OO_2_6.yaml` patch removes those same unsupported
+commands' contradictory PICS guards from the negative checks, allowing the test to verify the Matter 1.6-required
+`UNSUPPORTED_COMMAND` responses.
+
+Result on 2026-08-25: all 4 applicable automated tests pass; 4 non-applicable tests are skipped.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

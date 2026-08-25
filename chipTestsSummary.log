@@ -1,5 +1,16 @@
-Chip tests run started at 2026-08-24T21:48:42.907Z
+Chip tests run started at 2026-08-25T07:29:56.609Z
 
-✅ LaundryDryerControls optional dryness attributes on LaundryDryer (Test_TC_DRYERCTRL_2_1)
+✅ OffOnlyOnOff attributes on Cooktop (Test_TC_OO_2_1)
+✅ OffOnlyOnOff primary functionality on Cooktop (Test_TC_OO_2_2)
+⏭️ OffOnlyOnOff secondary Lighting functionality on Cooktop (Test_TC_OO_2_3)
+   ↳ Not applicable: endpoint 1308 implements OffOnly, while this test covers the mutually exclusive Lighting feature and its optional attributes and commands.
+⏭️ OffOnlyOnOff startup functionality on Cooktop (Test_TC_OO_2_4)
+   ↳ Not applicable: StartUpOnOff is excluded when the OffOnly feature is present, and endpoint 1308 does not expose it.
+✅ OffOnlyOnOff feature behavior on Cooktop (Test_TC_OO_2_6)
+⏭️ OffOnlyOnOff scenes management interaction on Cooktop (TC_OO_2_7.py)
+   ↳ Not applicable: TC-OO-2.7 requires a Scenes Management server, which endpoint 1308 does not expose.
+⏭️ OffOnlyOnOff functionality with client as DUT on Cooktop (Test_TC_OO_3_2_Simulated)
+   ↳ Not applicable: the Cooktop exposes an OnOff server and does not act as an OnOff client issuing commands to the test harness.
+✅ FixedLabel attributes and write protection on Cooktop (TC_FLABEL_2_1.py)
 
-Summary: 1/1 tests passed.
+Summary: 4/4 tests passed (4 skipped).
