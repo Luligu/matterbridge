@@ -22,7 +22,11 @@
  */
 
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
+/* oxlint-disable max-lines-per-function */
 /* oxlint-disable typescript/no-non-null-assertion */
+
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 
 import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
@@ -32,6 +36,8 @@ import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { EndpointNumber } from '@matter/types/datatype';
+import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
+import { getErrorMessage } from '@matterbridge/utils/error';
 
 import { AirConditioner } from './devices/airConditioner.js';
 import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
@@ -56,32 +62,142 @@ import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getSemtag } from './matterbridgeEndpointHelpers.js';
 
+const demoPluginName = 'matterbridge-demo-devices';
+const demoPluginType = 'DynamicPlatform';
+const demoPluginVersion = '1.0.0';
+
+const demoPluginSchema: PlatformSchema = {
+  title: 'Matterbridge Demo Devices',
+  description: `${demoPluginName} v. ${demoPluginVersion} by Matterbridge`,
+  type: 'object',
+  properties: {
+    name: {
+      'description': 'Plugin name',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
+    },
+    type: {
+      'description': 'Plugin type',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
+    },
+    version: {
+      'description': 'Plugin version',
+      'type': 'string',
+      'readOnly': true,
+      'default': demoPluginVersion,
+      'ui:widget': 'hidden',
+    },
+    whiteList: {
+      description: 'Only the devices in the list will be exposed. If the list is empty, all devices will be exposed.',
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      uniqueItems: true,
+      selectFrom: 'name',
+    },
+    blackList: {
+      description: 'The devices in the list will not be exposed. If the list is empty, no devices will be excluded.',
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      uniqueItems: true,
+      selectFrom: 'name',
+    },
+    debug: {
+      description: 'Enable debug logging for the plugin.',
+      type: 'boolean',
+      default: false,
+    },
+    unregisterOnShutdown: {
+      description: 'Unregister all devices when the plugin is stopped.',
+      type: 'boolean',
+      default: false,
+    },
+  },
+};
+
 export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
-  if (matterbridge.bridgeMode !== 'bridge' || !matterbridge.serverNode || !matterbridge.aggregatorNode) return;
+  if (matterbridge.bridgeMode !== 'bridge') {
+    matterbridge.log.error('Demo devices can only be created in bridge mode');
+    return;
+  }
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;
   if (!serverNode || !aggregator) {
     matterbridge.log.error('Demo devices can only be created when the server node and aggregator node are available');
     return;
   }
+  const configFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.config.json`);
+  const schemaFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.schema.json`);
+  const defaultConfig: PlatformConfig = {
+    name: demoPluginName,
+    type: demoPluginType,
+    version: demoPluginVersion,
+    debug: false,
+    unregisterOnShutdown: false,
+    whiteList: [],
+    blackList: [],
+  };
+  let config = defaultConfig;
+  try {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const storedConfig = JSON.parse(await readFile(configFile, 'utf8')) as PlatformConfig;
+    config = {
+      ...defaultConfig,
+      ...storedConfig,
+      name: demoPluginName,
+      type: demoPluginType,
+      version: demoPluginVersion,
+      whiteList: Array.isArray(storedConfig.whiteList) ? storedConfig.whiteList : [],
+      blackList: Array.isArray(storedConfig.blackList) ? storedConfig.blackList : [],
+    };
+  } catch (error) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') matterbridge.log.error(`Failed to read demo devices config ${configFile}: ${getErrorMessage(error)}`);
+  }
+  try {
+    await writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+    await writeFile(schemaFile, JSON.stringify(demoPluginSchema, null, 2), 'utf8');
+  } catch (error) {
+    matterbridge.log.error(`Failed to write demo devices config or schema: ${getErrorMessage(error)}`);
+  }
   let ep: MatterbridgeEndpoint | undefined;
   matterbridge.plugins.set({
-    name: 'matterbridge-demo-devices',
+    name: demoPluginName,
     path: '',
-    type: 'DynamicPlatform',
-    version: '1.0.0',
+    type: demoPluginType,
+    version: demoPluginVersion,
     description: 'Matterbridge demo devices',
     author: 'Matterbridge',
     enabled: false,
     private: true,
     registeredDevices: 0,
+    configJson: config,
+    schemaJson: demoPluginSchema,
+    hasWhiteList: true,
+    hasBlackList: true,
   });
 
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const whiteList = config.whiteList as string[];
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const blackList = config.blackList as string[];
+    if (blackList.includes(deviceName)) {
+      matterbridge.log.info(`Skipping demo device ${deviceName} because it is in the blacklist`);
+      return;
+    }
+    if (whiteList.length > 0 && !whiteList.includes(deviceName)) {
+      matterbridge.log.info(`Skipping demo device ${deviceName} because it is not in the whitelist`);
+      return;
+    }
     device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber);
     device.addRequiredClusters();
-    device.plugin = 'matterbridge-demo-devices';
-    await matterbridge.addBridgedEndpoint('matterbridge-demo-devices', device);
+    device.plugin = demoPluginName;
+    await matterbridge.addBridgedEndpoint(demoPluginName, device);
   };
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;

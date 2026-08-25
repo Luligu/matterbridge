@@ -506,6 +506,9 @@ describe('Matterbridge ' + NAME, () => {
         LogLevel.INFO,
         `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,
       );
+
+      // A repeated Stop does not complete the same operation again.
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
     } finally {
       vi.useRealTimers();
     }

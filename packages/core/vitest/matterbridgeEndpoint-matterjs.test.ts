@@ -93,7 +93,7 @@ import {
 } from '@matter/types/clusters';
 import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
-import { AnsiLogger, debugStringify, er, hk, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, debugStringify, er, hk, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeBooleanStateConfigurationServer } from '../src/behaviors/booleanStateConfigurationServer.js';
 import { MatterbridgeColorControlServer } from '../src/behaviors/colorControlServer.js';
@@ -1253,13 +1253,16 @@ describe('Matterbridge ' + NAME, () => {
     await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'suppressAlarm', { alarmsToSuppress: { audible: true, visual: true } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })}${nf} (endpoint ${leak.id}.${leak.number})`);
     vi.clearAllMocks();
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: false } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsActive')).toEqual({ audible: true, visual: false });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsEnabled')).toEqual({ audible: true, visual: false });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: false });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })} (endpoint ${leak.id}.${leak.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })}${nf} (endpoint ${leak.id}.${leak.number})`,
+    );
   });
 
   test('invoke MatterbridgeOperationalStateServer commands', async () => {
