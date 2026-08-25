@@ -1,5 +1,5 @@
 # To run tests on ActivatedCarbonFilterMonitoring --PICS is required
-# Matches createDefaultActivatedCarbonFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903
+# Matches createDefaultActivatedCarbonFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903 and Extractor Hood endpoint 1310
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
 ACFREMON.S=1

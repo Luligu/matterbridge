@@ -28,6 +28,7 @@ import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, Refri
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { EndpointNumber } from '@matter/types/datatype';
@@ -645,6 +646,24 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'ExtractorHood',
     number: EndpointNumber(13_10),
     tagList: [getSemtag(CommonNumberTag.One)],
+    hepaCondition: 30,
+    hepaChangeIndication: ResourceMonitoring.ChangeIndication.Warning,
+    hepaLastChangedTime: 1_735_689_600,
+    hepaReplacementProductList: [
+      {
+        productIdentifierType: ResourceMonitoring.ProductIdentifierType.Upc,
+        productIdentifierValue: '012345678905',
+      },
+    ],
+    activatedCarbonCondition: 30,
+    activatedCarbonChangeIndication: ResourceMonitoring.ChangeIndication.Warning,
+    activatedCarbonLastChangedTime: 1_735_689_600,
+    activatedCarbonReplacementProductList: [
+      {
+        productIdentifierType: ResourceMonitoring.ProductIdentifierType.Ean,
+        productIdentifierValue: '4006381333931',
+      },
+    ],
   });
   await registerDevice(ep, 'Extractor Hood', 'APPLIANCE-13-10');
 

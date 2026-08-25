@@ -1800,6 +1800,91 @@
       "skip": true,
       "comment": "Not applicable: endpoint 13091 does not implement the optional CountdownTime attribute required by this test. The upstream Matter 1.6 test also ignores its configured endpoint and hardcodes endpoint 1.",
       "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "FanControl mandatory functionality on ExtractorHood",
+      "test": "TC_FAN_2_1.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional speed attributes on ExtractorHood",
+      "test": "Test_TC_FAN_2_2",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional rock attributes on ExtractorHood",
+      "test": "TC_FAN_2_3.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional wind attributes on ExtractorHood",
+      "test": "TC_FAN_2_4.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional direction attributes on ExtractorHood",
+      "test": "Test_TC_FAN_2_5",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on ExtractorHood",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional speed functionality on ExtractorHood",
+      "test": "TC_FAN_3_2.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional rock functionality on ExtractorHood",
+      "test": "TC_FAN_3_3.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional wind functionality on ExtractorHood",
+      "test": "TC_FAN_3_4.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl Step command functionality on ExtractorHood",
+      "test": "TC_FAN_3_5.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl optional direction functionality on ExtractorHood",
+      "test": "Test_TC_FAN_3_6",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    {
+      "name": "FanControl interaction with On/Off cluster on ExtractorHood",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 1310,
+      "args": ["--PICS /root/fan-control-base.pics"],
+      "comment": "Self-skips: the Extractor Hood endpoint does not add the optional On/Off cluster."
+    },
+    {
+      "name": "HepaFilterMonitoring attributes on ExtractorHood",
+      "test": "Test_TC_HEPAFREMON_2_1",
+      "endpoint": 1310,
+      "args": ["--PICS /root/hepa-filter-monitoring.pics"]
+    },
+    {
+      "name": "ActivatedCarbonFilterMonitoring attributes on ExtractorHood",
+      "test": "Test_TC_ACFREMON_2_1",
+      "endpoint": 1310,
+      "args": ["--PICS /root/activated-carbon-filter-monitoring.pics"]
     }
   ]
 }

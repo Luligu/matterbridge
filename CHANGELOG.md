@@ -49,6 +49,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base `FanControl`, `HepaFilterMonitoring`, and `ActivatedCarbonFilterMonitoring` clusters (14/14 passed).
 - [chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OvenMode` and `OvenCavityOperationalState` clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).
 - [chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OffOnlyOnOff` and `FixedLabel` clusters (4/4 passed; 4 non-applicable tests skipped).
 - [chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for the applicable automated `LaundryDryerControls` harness test (1/1 passed).

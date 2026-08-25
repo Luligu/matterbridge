@@ -1,13 +1,18 @@
-Chip tests run started at 2026-08-25T08:02:52.814Z
+Chip tests run started at 2026-08-25T08:20:01.432Z
 
-✅ OvenMode attributes on Oven (TC_OTCCM_1_2.py)
-✅ OvenMode ChangeToMode on Oven (Test_TC_OTCCM_2_1)
-✅ OvenCavityOperationalState attributes on Oven (TC_OVENOPSTATE_2_1.py)
-✅ OvenCavityOperationalState Start and Stop commands on Oven (TC_OVENOPSTATE_2_2.py)
-⏭️ OvenCavityOperationalState OperationalError event on Oven (TC_OVENOPSTATE_2_4.py)
-   ↳ Not currently automatable: the demo endpoint has no vendor action for injecting an Oven Cavity fault, so the test harness cannot trigger and observe the OperationalError event scenario.
-✅ OvenCavityOperationalState OperationCompletion event on Oven (TC_OVENOPSTATE_2_5.py)
-⏭️ OvenCavityOperationalState CountdownTime reporting on Oven (TC_OVENOPSTATE_2_6.py)
-   ↳ Not applicable: endpoint 13091 does not implement the optional CountdownTime attribute required by this test. The upstream Matter 1.6 test also ignores its configured endpoint and hardcodes endpoint 1.
+✅ FanControl mandatory functionality on ExtractorHood (TC_FAN_2_1.py)
+✅ FanControl optional speed attributes on ExtractorHood (Test_TC_FAN_2_2)
+✅ FanControl optional rock attributes on ExtractorHood (TC_FAN_2_3.py)
+✅ FanControl optional wind attributes on ExtractorHood (TC_FAN_2_4.py)
+✅ FanControl optional direction attributes on ExtractorHood (Test_TC_FAN_2_5)
+✅ FanControl mandatory functionality with PercentSetting/FanMode ordering on ExtractorHood (TC_FAN_3_1.py)
+✅ FanControl optional speed functionality on ExtractorHood (TC_FAN_3_2.py)
+✅ FanControl optional rock functionality on ExtractorHood (TC_FAN_3_3.py)
+✅ FanControl optional wind functionality on ExtractorHood (TC_FAN_3_4.py)
+✅ FanControl Step command functionality on ExtractorHood (TC_FAN_3_5.py)
+✅ FanControl optional direction functionality on ExtractorHood (Test_TC_FAN_3_6)
+✅ FanControl interaction with On/Off cluster on ExtractorHood (TC_FAN_4_1.py)
+✅ HepaFilterMonitoring attributes on ExtractorHood (Test_TC_HEPAFREMON_2_1)
+✅ ActivatedCarbonFilterMonitoring attributes on ExtractorHood (Test_TC_ACFREMON_2_1)
 
-Summary: 5/5 tests passed (2 skipped).
+Summary: 14/14 tests passed.
