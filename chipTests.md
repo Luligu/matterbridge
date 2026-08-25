@@ -293,6 +293,23 @@ commands' contradictory PICS guards from the negative checks, allowing the test 
 
 Result on 2026-08-25: all 4 applicable automated tests pass; 4 non-applicable tests are skipped.
 
+### Endpoint 13091
+
+Top Oven Cabinet clusters:
+
+- Oven Mode
+- Oven Cavity Operational State
+
+- Oven Mode returns `UnsupportedMode` (`0x01`) with an empty status text for a mode absent from `SupportedModes`,
+  as required by Mode Base §1.10.7.1.1 and §1.10.7.2.
+- Oven Cavity Operational State exposes Stopped, Running, Paused, and Error in `OperationalStateList`.
+- The mandatory `OperationCompletion` event is available on the wire and is emitted when Stop ends an active oven
+  operation.
+- Automatic `OperationalError` event validation is unavailable because the demo endpoint has no vendor action for
+  injecting an Oven Cavity fault.
+- `CountdownTime` is not implemented on endpoint 13091. The corresponding upstream Matter 1.6 script also hardcodes
+  endpoint 1 instead of using its configured endpoint.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

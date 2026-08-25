@@ -417,6 +417,7 @@
     "chip:test:dishwasher": "node scripts/run-matterbridge-chip-tests.mjs --test Dishwasher",
     "chip:test:laundry-dryer": "node scripts/run-matterbridge-chip-tests.mjs --test LaundryDryer",
     "chip:test:cooktop": "node scripts/run-matterbridge-chip-tests.mjs --test Cooktop",
+    "chip:test:oven": "node scripts/run-matterbridge-chip-tests.mjs --test Oven",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",

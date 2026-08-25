@@ -1752,6 +1752,54 @@
       "test": "TC_FLABEL_2_1.py",
       "endpoint": 1308,
       "args": ["--PICS /root/cooktop.pics"]
+    },
+    {
+      "name": "OvenMode attributes on Oven",
+      "test": "TC_OTCCM_1_2.py",
+      "endpoint": 13091,
+      "args": ["--PICS /root/oven.pics"]
+    },
+    {
+      "name": "OvenMode ChangeToMode on Oven",
+      "test": "Test_TC_OTCCM_2_1",
+      "endpoint": 13091,
+      "args": ["--PICS /root/oven.pics"]
+    },
+    {
+      "name": "OvenCavityOperationalState attributes on Oven",
+      "test": "TC_OVENOPSTATE_2_1.py",
+      "endpoint": 13091,
+      "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OvenCavityOperationalState Start and Stop commands on Oven",
+      "test": "TC_OVENOPSTATE_2_2.py",
+      "endpoint": 13091,
+      "comment": "Fails Step 3: OperationalStateList contains Stopped, Running, and Error but omits the mandatory Paused enum value required by the shared Operational State test and base cluster data model.",
+      "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OvenCavityOperationalState OperationalError event on Oven",
+      "test": "TC_OVENOPSTATE_2_4.py",
+      "endpoint": 13091,
+      "skip": true,
+      "comment": "Not currently automatable: the demo endpoint has no vendor action for injecting an Oven Cavity fault, so the test harness cannot trigger and observe the OperationalError event scenario.",
+      "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OVENOPSTATE.ErrorEventGen:0"]
+    },
+    {
+      "name": "OvenCavityOperationalState OperationCompletion event on Oven",
+      "test": "TC_OVENOPSTATE_2_5.py",
+      "endpoint": 13091,
+      "comment": "Fails Step 6: subscribing to the OperationCompletion event returns INVALID_ACTION, although the Temperature Controlled Cabinet device type mandates this event for an Oven Cavity Operational State server.",
+      "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OvenCavityOperationalState CountdownTime reporting on Oven",
+      "test": "TC_OVENOPSTATE_2_6.py",
+      "endpoint": 13091,
+      "skip": true,
+      "comment": "Not applicable: endpoint 13091 does not implement the optional CountdownTime attribute required by this test. The upstream Matter 1.6 test also ignores its configured endpoint and hardcodes endpoint 1.",
+      "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     }
   ]
 }

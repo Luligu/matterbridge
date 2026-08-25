@@ -49,6 +49,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OvenMode` and `OvenCavityOperationalState` clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).
 - [chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OffOnlyOnOff` and `FixedLabel` clusters (4/4 passed; 4 non-applicable tests skipped).
 - [chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for the applicable automated `LaundryDryerControls` harness test (1/1 passed).
 - [chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DishwasherMode` and `DishwasherAlarm` clusters (3/3 passed; 6 upstream-disabled manual tests skipped).
@@ -65,6 +66,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [chip]: Add all seven Matter 1.6 Oven Mode and Oven Cavity Operational State tests for Oven Cabinet endpoint 13091 with dedicated PICS and documented applicability and conformance findings.
 - [chip]: Add all Matter 1.6 OnOff and Fixed Label tests for Cooktop endpoint 1308 with dedicated PICS; patch the generic OnOff primary and OffOnly tests so their command guards correctly exercise an OffOnly server.
 - [chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.
 - [chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.
@@ -104,6 +106,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [Oven]: Expose and emit the mandatory Oven Cavity `OperationCompletion` event when an active oven operation is stopped, as required by Matter 1.6 Operational State §1.14.7.2 and Temperature Controlled Cabinet §13.4.5.
+- [Oven]: Fully populate the Oven Cavity `OperationalStateList` with the mandatory `Paused` state, as required by Matter 1.6 Operational State §1.14.4.1 and Temperature Controlled Cabinet §13.4.5.
+- [Oven]: Return `UnsupportedMode` with an empty status text when `OvenMode.ChangeToMode` requests a mode absent from `SupportedModes`, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.
 - [Dishwasher]: Make `DishwasherMode.ChangeToMode` return `UnsupportedMode` for an unsupported mode, bind inherited Dishwasher Alarm attributes and `Notify` fields to the Dishwasher-specific `AlarmBitmap`, and advertise only the non-provisional `DoorError` alarm by default, as required by Matter 1.6.
 - [Refrigerator]: Add `MatterbridgeRefrigeratorAlarmServer`, binding the inherited `Mask`, `State`, and `Supported` attributes and `Notify` event fields to the Refrigerator-specific `AlarmBitmap` so the `DoorOpen` bit is encoded correctly over Matter, as required by Matter 1.6 Refrigerator Alarm §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1.
 - [LaundryWasher]: Reject a `SpinSpeedCurrent` value that is not a valid `SpinSpeeds` index with `CONSTRAINT_ERROR`, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.

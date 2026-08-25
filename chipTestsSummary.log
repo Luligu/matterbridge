@@ -1,16 +1,13 @@
-Chip tests run started at 2026-08-25T07:29:56.609Z
+Chip tests run started at 2026-08-25T08:02:52.814Z
 
-✅ OffOnlyOnOff attributes on Cooktop (Test_TC_OO_2_1)
-✅ OffOnlyOnOff primary functionality on Cooktop (Test_TC_OO_2_2)
-⏭️ OffOnlyOnOff secondary Lighting functionality on Cooktop (Test_TC_OO_2_3)
-   ↳ Not applicable: endpoint 1308 implements OffOnly, while this test covers the mutually exclusive Lighting feature and its optional attributes and commands.
-⏭️ OffOnlyOnOff startup functionality on Cooktop (Test_TC_OO_2_4)
-   ↳ Not applicable: StartUpOnOff is excluded when the OffOnly feature is present, and endpoint 1308 does not expose it.
-✅ OffOnlyOnOff feature behavior on Cooktop (Test_TC_OO_2_6)
-⏭️ OffOnlyOnOff scenes management interaction on Cooktop (TC_OO_2_7.py)
-   ↳ Not applicable: TC-OO-2.7 requires a Scenes Management server, which endpoint 1308 does not expose.
-⏭️ OffOnlyOnOff functionality with client as DUT on Cooktop (Test_TC_OO_3_2_Simulated)
-   ↳ Not applicable: the Cooktop exposes an OnOff server and does not act as an OnOff client issuing commands to the test harness.
-✅ FixedLabel attributes and write protection on Cooktop (TC_FLABEL_2_1.py)
+✅ OvenMode attributes on Oven (TC_OTCCM_1_2.py)
+✅ OvenMode ChangeToMode on Oven (Test_TC_OTCCM_2_1)
+✅ OvenCavityOperationalState attributes on Oven (TC_OVENOPSTATE_2_1.py)
+✅ OvenCavityOperationalState Start and Stop commands on Oven (TC_OVENOPSTATE_2_2.py)
+⏭️ OvenCavityOperationalState OperationalError event on Oven (TC_OVENOPSTATE_2_4.py)
+   ↳ Not currently automatable: the demo endpoint has no vendor action for injecting an Oven Cavity fault, so the test harness cannot trigger and observe the OperationalError event scenario.
+✅ OvenCavityOperationalState OperationCompletion event on Oven (TC_OVENOPSTATE_2_5.py)
+⏭️ OvenCavityOperationalState CountdownTime reporting on Oven (TC_OVENOPSTATE_2_6.py)
+   ↳ Not applicable: endpoint 13091 does not implement the optional CountdownTime attribute required by this test. The upstream Matter 1.6 test also ignores its configured endpoint and hardcodes endpoint 1.
 
-Summary: 4/4 tests passed (4 skipped).
+Summary: 5/5 tests passed (2 skipped).

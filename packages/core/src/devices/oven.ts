@@ -3,7 +3,7 @@
  * @description This file contains the Oven class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+/* oxlint-disable typescript/no-namespace */
+
 // @matter
 import type { MaybePromise } from '@matter/general';
 import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
@@ -37,6 +39,8 @@ import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { oven, powerSource, temperatureControlledCabinetHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
+
+const MatterbridgeOvenCavityOperationalStateServerBase = OvenCavityOperationalStateServer.enable({ events: { operationCompletion: true } });
 
 /**
  * Options for configuring an {@link Oven} endpoint.
@@ -232,6 +236,9 @@ export class Oven extends MatterbridgeEndpoint {
    * @remarks
    * For this derived cluster, only these pre-defined strings may be used in the PhaseList attribute:
    * "pre-heating", "pre-heated", and "cooling down".
+   * Matter 1.6 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
+   * mandatory OperationalStateEnum values. Device Library Specification §13.4.5 requires the Temperature
+   * Controlled Cabinet device type's OperationalStateList to be fully populated.
    */
   // oxfmt-ignore
   createDefaultOvenCavityOperationalStateClusterServer(endpoint: MatterbridgeEndpoint, operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped, currentPhase?: number, phaseList?: string[]): MatterbridgeEndpoint {
@@ -241,6 +248,7 @@ export class Oven extends MatterbridgeEndpoint {
       operationalStateList: [
         { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
         { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
         { operationalStateId: OperationalState.OperationalStateEnum.Error },
       ],
       operationalState,
@@ -265,6 +273,10 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
   /**
    * Handles the OvenMode `ChangeToMode` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1 requires `UnsupportedMode` when `NewMode` does not
+   * match any `SupportedModes` entry. Section 1.10.7.2 requires an empty `StatusText` for `UnsupportedMode`.
+   *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
@@ -278,8 +290,8 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
-      device.log.error(`MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with invalid mode ${request.newMode}`);
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+      device.log.error(`MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with unsupported mode ${request.newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
   }
 }
@@ -288,7 +300,9 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
 /**
  * Oven cavity operational state server that initializes and updates operational state.
  */
-export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOperationalStateServer {
+export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOvenCavityOperationalStateServerBase {
+  declare protected internal: MatterbridgeOvenCavityOperationalStateServer.Internal;
+
   /**
    * Initializes operational state defaults.
    */
@@ -297,10 +311,18 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info('MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    super.initialize();
   }
 
   /**
    * Handles the OvenCavityOperationalState `Stop` command.
+   *
+   * @remarks
+   * Matter 1.6 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
+   * Controlled Cabinet exposes Oven Cavity Operational State. Application Cluster Specification §1.14.7.2
+   * recommends generating the event whenever the overall operation ends and defines its completion status and
+   * timing fields. A successful Stop ends the operation started by the initial Start command, so this method emits
+   * the event once and clears the stored start time. A repeated Stop does not emit another completion event.
    *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
@@ -309,6 +331,18 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info(
       `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Stopped and operational error to No error`,
     );
+    if (this.internal.operationStartedAt !== undefined) {
+      const totalOperationalTime = Math.round((Date.now() - this.internal.operationStartedAt) / 1000);
+      this.events.operationCompletion.emit(
+        {
+          completionErrorCode: this.state.operationalError.errorStateId,
+          totalOperationalTime,
+          pausedTime: 0,
+        },
+        this.context,
+      );
+      this.internal.operationStartedAt = undefined;
+    }
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
@@ -319,6 +353,11 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
   /**
    * Handles the OvenCavityOperationalState `Start` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.14.7.2.2 defines `TotalOperationalTime` from the initial
+   * Start command (or autonomous/manual start) until completion. Repeated Start commands therefore preserve the
+   * original start time.
+   *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
@@ -326,6 +365,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info(
       `MatterbridgeOvenCavityOperationalStateServer: start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Running and operational error to No error`,
     );
+    this.internal.operationStartedAt ??= Date.now();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
@@ -333,3 +373,13 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     };
   }
 }
+
+/* v8 ignore start */
+export namespace MatterbridgeOvenCavityOperationalStateServer {
+  /** Internal timing state used to populate the mandatory OperationCompletion event. */
+  export class Internal extends MatterbridgeOvenCavityOperationalStateServerBase.Internal {
+    /** Wall-clock time at which the current operation began, or undefined when no operation is active. */
+    operationStartedAt: number | undefined;
+  }
+}
+/* v8 ignore stop */
