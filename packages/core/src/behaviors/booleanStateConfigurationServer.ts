@@ -96,7 +96,10 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
 
   #assertAlarmModesSupported(alarms: BooleanStateConfiguration.AlarmMode): void {
     if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
-      throw new StatusResponseError(`Requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.ConstraintError);
+      throw new StatusResponseError(
+        `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ConstraintError,
+      );
     }
   }
 
@@ -107,7 +110,10 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
         Boolean(alarmsToSuppress.audible && (!this.state.alarmsActive.audible || !this.state.alarmsEnabled?.audible)),
       ].some(Boolean)
     ) {
-      throw new StatusResponseError(`Requested alarm mode is not active (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.InvalidInState);
+      throw new StatusResponseError(
+        `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not active (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
+      );
     }
   }
 
@@ -118,7 +124,9 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    */
   override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Suppressing alarm ${debugStringify(request.alarmsToSuppress)}${nf} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeBooleanStateConfigurationServer: suppressing alarm ${debugStringify(request.alarmsToSuppress)}${nf} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('BooleanStateConfiguration.suppressAlarm', {
       command: 'suppressAlarm',
       request,
@@ -140,7 +148,9 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    */
   override async enableDisableAlarm(request: BooleanStateConfiguration.EnableDisableAlarmRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Enabling/disabling alarm ${debugStringify(request.alarmsToEnableDisable)}${nf} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeBooleanStateConfigurationServer: enabling/disabling alarm ${debugStringify(request.alarmsToEnableDisable)}${nf} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('BooleanStateConfiguration.enableDisableAlarm', {
       command: 'enableDisableAlarm',
       request,

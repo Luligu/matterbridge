@@ -1253,7 +1253,10 @@ describe('Matterbridge ' + NAME, () => {
     await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'suppressAlarm', { alarmsToSuppress: { audible: true, visual: true } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })}${nf} (endpoint ${leak.id}.${leak.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeBooleanStateConfigurationServer: suppressing alarm ${debugStringify({ audible: true, visual: true })}${nf} (endpoint ${leak.id}.${leak.number})`,
+    );
     vi.clearAllMocks();
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: false } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsActive')).toEqual({ audible: true, visual: false });
@@ -1261,7 +1264,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: false });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })}${nf} (endpoint ${leak.id}.${leak.number})`,
+      `MatterbridgeBooleanStateConfigurationServer: enabling/disabling alarm ${debugStringify({ audible: true, visual: false })}${nf} (endpoint ${leak.id}.${leak.number})`,
     );
   });
 
