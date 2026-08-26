@@ -142,19 +142,19 @@
 <h2 id="run-matterbridge-with-bun-1">Run matterbridge with bun</h2>
 <pre><code class="language-shell">bunx --bun matterbridge
 </code></pre>
-<h1 id="run-matterbridge-with-the-bun-docker-hub-image-experimental">Run matterbridge with the bun docker hub image (experimental)</h1>
+<h1 id="run-matterbridge-with-the-bun-docker-hub-image">Run matterbridge with the bun docker hub image</h1>
 <p>The image (tag <strong>bun</strong> 69 MB) includes only Matterbridge, using the latest release published on npm. This image is based on <code>oven/bun:slim</code>. Plugins are not included in the image: they will be reinstalled on first run.</p>
 <pre><code class="language-shell">docker pull luligu/matterbridge:bun &amp;&amp; docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:bun
 </code></pre>
-<h1 id="bun-local-image-development">Bun local image (development)</h1>
-<p>The <strong>bun</strong> image runs Matterbridge directly from the <strong>local source files</strong> with <a href="https://bun.com">Bun</a> runtime.</p>
+<h1 id="bun-image-installed-from-npm">Bun image installed from npm</h1>
+<p>The <strong>bun</strong> image installs the latest Matterbridge release from npm and runs it with the <a href="https://bun.com">Bun</a> runtime. It does not copy or build the local Matterbridge source tree.</p>
 <ul>
-<li>Base image: <code>oven/bun:slim</code> (Debian trixie slim + Bun).</li>
-<li>Install dependencies and link only (no build!) with Bun:<ul>
-<li><code>bun install --omit=dev </code></li>
-<li><code>bun link</code></li>
-</ul>
-</li>
+<li>Base image: <code>oven/bun:slim</code>.</li>
+<li>Installs Matterbridge globally from npm with <code>bun install matterbridge --global --omit=dev</code>.</li>
+<li>Removes Bun caches, package documentation, TypeScript sources, source maps, declarations, and unused Matter.js <code>src</code> and <code>cjs</code> directories to reduce the image size.</li>
+<li>Checks container health every 60 seconds with <code>mb_health</code>.</li>
+<li>Starts Matterbridge with <code>bun --bun /usr/local/bin/matterbridge --docker</code>.</li>
+<li>Uses <code>docker/entrypoint.bun.sh</code> to print the container environment before starting Matterbridge.</li>
 </ul>
 <h2 id="files">Files</h2>
 <table>
@@ -165,147 +165,78 @@
 </tr>
 </thead>
 <tbody><tr>
-<td><a href="docker/Dockerfile.local.bun"><code>docker/Dockerfile.local.bun</code></a></td>
-<td>The Bun image definition</td>
+<td><a href="docker/Dockerfile.bun"><code>docker/Dockerfile.bun</code></a></td>
+<td>Builds the Bun image with Matterbridge installed from npm</td>
 </tr>
 <tr>
-<td><a href="docker/Dockerfile.local.bun.dockerignore"><code>docker/Dockerfile.local.bun.dockerignore</code></a></td>
-<td>Per-Dockerfile build context (keeps source, drops <code>.git</code>/<code>chip</code>/<code>scripts</code>/…)</td>
+<td><a href="docker/Dockerfile.bun.dockerignore"><code>docker/Dockerfile.bun.dockerignore</code></a></td>
+<td>Limits the Docker build context</td>
 </tr>
 <tr>
-<td><a href="docker/entrypoint.local.bun.sh"><code>docker/entrypoint.local.bun.sh</code></a></td>
-<td>Entrypoint banner (prints the Bun version)</td>
+<td><a href="docker/entrypoint.bun.sh"><code>docker/entrypoint.bun.sh</code></a></td>
+<td>Prints container and Bun details, then starts Matterbridge</td>
 </tr>
 </tbody></table>
 <h2 id="scripts">Scripts</h2>
+<pre><code class="language-bash">npm run docker:build:local:bun   # build the local image (matterbridge:bun)
+npm run docker:run:local:bun     # run the local image (container matterbridge-bun-local, port 8283)
+npm run docker:run:hub:bun       # pull and run luligu/matterbridge:bun
+npm run docker:buildx:cloud:bun  # build and publish the multi-platform image
+</code></pre>
+<h1 id="bun-local-image-with-no-production-build-development">Bun local image with no production build (development)</h1>
+<p>The <strong>local-bun</strong> image copies the local Matterbridge source tree and runs it directly with the <a href="https://bun.com">Bun</a> runtime. It does not create a production TypeScript build.</p>
+<ul>
+<li>Base image: <code>oven/bun:slim</code>.</li>
+<li>Generates the Bun package exports with <code>bun scripts/bun-exports.mjs</code>.</li>
+<li>Installs production dependencies with <code>bun install --omit=dev</code>.</li>
+<li>Installs and builds the web frontend with Bun, then removes its development sources and dependencies.</li>
+<li>Links the local Matterbridge package globally with <code>bun link</code>.</li>
+<li>Removes Bun caches, temporary files, and unused Matter.js <code>src</code> and <code>cjs</code> directories to reduce the image size.</li>
+<li>Checks container health every 60 seconds with <code>mb_health</code>.</li>
+<li>Starts Matterbridge with <code>bun --bun bin/matterbridge.js --docker</code>.</li>
+<li>Uses <code>docker/entrypoint.local.bun.sh</code> to print the container environment before starting Matterbridge.</li>
+</ul>
+<h2 id="files-1">Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><a href="docker/Dockerfile.local.bun"><code>docker/Dockerfile.local.bun</code></a></td>
+<td>Builds the development image from the local source tree</td>
+</tr>
+<tr>
+<td><a href="docker/Dockerfile.local.bun.dockerignore"><code>docker/Dockerfile.local.bun.dockerignore</code></a></td>
+<td>Limits the Docker build context</td>
+</tr>
+<tr>
+<td><a href="docker/entrypoint.local.bun.sh"><code>docker/entrypoint.local.bun.sh</code></a></td>
+<td>Prints container and Bun details, then starts Matterbridge</td>
+</tr>
+</tbody></table>
+<h2 id="scripts-1">Scripts</h2>
 <pre><code class="language-bash">npm run docker:build:localbun   # build the image (matterbridge:local-bun)
 npm run docker:run:localbun     # run it (container matterbridge-local-bun, port 8283)
 npm run docker:exec:localbun    # open a shell in the running container
 npm run docker:log:localbun     # follow the container logs
 </code></pre>
-<h2 id="status">Status</h2>
+<h1 id="status">Status</h1>
 <p>The core bridge runs on Bun: it creates its directories, initializes the Matter
 node storage, and brings up the server node and endpoints. The web frontend is
 built and served. See the TODO list below for the known limitations.</p>
 <hr>
-<h1 id="bun-port-status">Bun port status</h1>
-<p>The approach is to detect if running in <code>bun</code> with isBun() and switch the
-package-manager command and global-modules paths to Bun where needed.</p>
-<h2 id="done">Done</h2>
+<h2 id="known-issue-with-release-140">Known issue with release 1.4.0</h2>
 <ul>
-<li><input checked="" disabled="" type="checkbox"> <strong>Global package resolution.</strong> <code>bun link</code> (in <code>Dockerfile.bun</code>) registers the
-local build as the global <code>matterbridge</code> package — and installs all CLI bins
-and their exec bits — so plugins resolve <code>import &#39;matterbridge&#39;</code>. This is the
-full <code>npm link</code> replacement.</li>
-<li><input checked="" disabled="" type="checkbox"> <strong><code>npm root -g</code> discovery.</strong> <code>getGlobalNodeModules()</code> returns
-<code>getGlobalBunModules()</code> when running on Bun (there is no <code>bun root -g</code>; the path is
-derived from <code>$BUN_INSTALL</code> / <code>~/.bun</code>).
-(<a href="packages/utils/src/npmPrefix.ts"><code>npmPrefix.ts</code></a>, <a href="packages/utils/src/runtimeBun.ts"><code>runtimeBun.ts</code></a>)</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Plugin path resolution.</strong> <code>PluginManager</code> resolves plugins from the Bun
-global modules dir when running on Bun. (<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>)</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Runtime-aware package management.</strong> Plugin installation, uninstallation,
-uploaded tarball installation, Matterbridge updates, and Docker-recreate
-recovery use Bun commands when running on Bun. The SpawnCommand worker also
-supports Bun on Windows and through <code>sudo</code>.
-(<a href="packages/core/src/pluginManager.ts"><code>pluginManager.ts</code></a>, <a href="packages/core/src/frontend.ts"><code>frontend.ts</code></a>, <a href="packages/core/src/backendExpress.ts"><code>backendExpress.ts</code></a>, <a href="packages/thread/src/spawnCommand.ts"><code>spawnCommand.ts</code></a>)</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Auto-reinstall on Docker recreate.</strong> Uses <code>isBun() ? &#39;bun&#39; : &#39;npm&#39;</code>.
-(<a href="packages/core/src/matterbridge.ts"><code>matterbridge.ts</code></a>)</li>
-<li><input checked="" disabled="" type="checkbox"> <strong><code>--add</code> local plugin.</strong> When running on Bun, the plugin is no longer treated as
-&quot;local&quot;, so the <code>npm link matterbridge</code> step is skipped (<code>bun link</code> already
-provides resolution). (<a href="packages/core/src/matterbridge.ts"><code>matterbridge.ts</code></a>)</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>The threads doesn&#39;t flag no running after exit.</strong></li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Bun node:worker_threads module is unstable</strong> The runtime randomly crashes on worker exit. See <a href="#worker-thread-crash-sigtrap-on-arm64">Worker thread crash (SIGTRAP) on ARM64</a> for the full analysis and captured log.</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Bun needs process.exit() or worker.terminate().</strong> If not called the memory is not released.</li>
-<li><input checked="" disabled="" type="checkbox"> <strong>Validate Bun/Node compatibility</strong> of the full runtime over a longer run
-(commissioning, mDNS, plugin behaviors) — only short smoke starts verified.</li>
-</ul>
-<h2 id="known-issue">Known issue</h2>
-<ul>
-<li><input disabled="" type="checkbox"> <strong>Bun cannot resolve the container user name.</strong> In the official Bun images,
+<li><input disabled="" type="checkbox"> <strong>Bun docker image cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
 from <code>os.userInfo()</code>, even though they correctly return the UID, GID, and home
 directory. Consequently, Matterbridge sends <code>User: unknown</code> to the frontend
 system-information view instead of the container account (for example, <code>root</code>).
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
-<li><input disabled="" type="checkbox"> <strong>Matter.js atomic writes fail under Bun on windows.</strong> Repro with bun --eval &quot;import { mkdir, open, rename, rm, readFile } from &#39;node:fs/promises&#39;; const dir=&#39;C:/Users/lligu/.matterbridge/bun-rename-repro&#39;; await rm(dir,{recursive:true,force:true}); await mkdir(dir,{recursive:true}); const final=dir+&#39;/final&#39;; await Bun.write(final,&#39;old&#39;); for (let i=0;i&lt;1000;i++){ const tmp=final+&#39;.tmp&#39;; const handle=await open(tmp,&#39;w&#39;); const writer=handle.createWriteStream({encoding:&#39;utf8&#39;,flush:true}); await new Promise((resolve,reject)=&gt;{writer.on(&#39;finish&#39;,resolve);writer.on(&#39;error&#39;,reject);writer.write(&#39;new &#39;+i);writer.end();}); await handle.close(); await rename(tmp,final); } console.log(await readFile(final,&#39;utf8&#39;)); await rm(dir,{recursive:true,force:true});&quot;. The issue I openend on Bun repo has been merged and closed. Next release should have it fixed.</li>
 </ul>
-<pre><code class="language-typescript">// Change: FileStorageDriver.js
-async #writeAndMoveFile(filepath, valueOrStream) {
-  const tmpName = `${filepath}.tmp`;
-  await writeFile(tmpName, valueOrStream, { encoding: &quot;utf8&quot;, flush: true });
-  await rename(tmpName, filepath);
-}
-</code></pre>
-<pre><code class="language-typescript">// Change: FileStorageDriver.js
-import { isBunjs } from &#39;../../util/runtimeChecks.js&#39;;
-if (isBunjs()) {
-  if (typeof valueOrStream === &#39;string&#39;) {
-    await writeFile(tmpName, valueOrStream, { encoding: &#39;utf8&#39;, flush: true });
-  } else {
-    const value = new Uint8Array(await new Response(valueOrStream).arrayBuffer());
-    await writeFile(tmpName, value, { flush: true });
-  }
-  await rename(tmpName, filepath);
-  return;
-}
-</code></pre>
-<pre><code class="language-typescript">/**
- * @license
- * Copyright 2022-2026 Matter.js Authors
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import * as assert from &#39;node:assert&#39;;
-import { mkdtemp, readFile, rm } from &#39;node:fs/promises&#39;;
-import { tmpdir } from &#39;node:os&#39;;
-import { join } from &#39;node:path&#39;;
-
-import { FileStorageDriver } from &#39;../../src/storage/fs/FileStorageDriver.js&#39;;
-
-describe(&#39;FileStorageDriver Bun runtime&#39;, () =&gt; {
-  let rootDir: string;
-
-  beforeEach(async () =&gt; {
-    rootDir = await mkdtemp(join(tmpdir(), &#39;matterjs-file-storage-bun-test-&#39;));
-  });
-
-  afterEach(async () =&gt; {
-    await rm(rootDir, { recursive: true, force: true });
-  });
-
-  it(&#39;uses the Bun write path for string and stream values&#39;, async () =&gt; {
-    const previousBun = process.versions.bun;
-    Object.defineProperty(process.versions, &#39;bun&#39;, { value: &#39;1&#39;, configurable: true });
-    try {
-      const storage = new FileStorageDriver(rootDir);
-      await storage.initialize();
-      await storage.set([&#39;context&#39;], &#39;text&#39;, &#39;value&#39;);
-      assert.equal(await storage.get([&#39;context&#39;], &#39;text&#39;), &#39;value&#39;);
-
-      await storage.writeBlobFromStream(
-        [&#39;context&#39;],
-        &#39;blob&#39;,
-        new ReadableStream&lt;Uint8Array&gt;({
-          start(controller) {
-            controller.enqueue(new Uint8Array([1, 2, 3]));
-            controller.close();
-          },
-        }),
-      );
-      await storage.close();
-
-      const file = await readFile(join(rootDir, &#39;context.blob&#39;));
-      assert.deepEqual(new Uint8Array(file), new Uint8Array([1, 2, 3]));
-    } finally {
-      if (previousBun === undefined) {
-        delete process.versions.bun;
-      } else {
-        Object.defineProperty(process.versions, &#39;bun&#39;, { value: previousBun, configurable: true });
-      }
-    }
-  });
-});
-</code></pre>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
     const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';

@@ -9,7 +9,7 @@ ARG VCS_REF
 ARG BUILD_DATE
 
 # ---- OCI standard labels (https://opencontainers.org/) ----
-LABEL org.opencontainers.image.title="matterbridge:local" \
+LABEL org.opencontainers.image.title="matterbridge:local-node" \
   org.opencontainers.image.description="Matterbridge built from local source files" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \
@@ -49,4 +49,4 @@ HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
 COPY ./docker/entrypoint.local.node.sh ./
 RUN chmod +x ./entrypoint.local.node.sh
 ENTRYPOINT ["./entrypoint.local.node.sh"]
-CMD ["node", "--expose-gc","bin/matterbridge.js", "--docker", "--force-gc", "--tracker", "--debug-threads"]
+CMD ["node", "bin/matterbridge.js", "--docker"]

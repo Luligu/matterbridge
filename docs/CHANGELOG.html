@@ -171,9 +171,18 @@
 </ul>
 <h3 id="development-news">Development News</h3>
 <ul>
+<li>[chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the <code>MicrowaveOvenMode</code> and <code>MicrowaveOvenControl</code> clusters (5/5 passed).</li>
+<li>[chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base <code>FanControl</code>, <code>HepaFilterMonitoring</code>, and <code>ActivatedCarbonFilterMonitoring</code> clusters (14/14 passed).</li>
+<li>[chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OvenMode</code> and <code>OvenCavityOperationalState</code> clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).</li>
+<li>[chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OffOnlyOnOff</code> and <code>FixedLabel</code> clusters (4/4 passed; 4 non-applicable tests skipped).</li>
+<li>[chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for the applicable automated <code>LaundryDryerControls</code> harness test (1/1 passed).</li>
+<li>[chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DishwasherMode</code> and <code>DishwasherAlarm</code> clusters (3/3 passed; 6 upstream-disabled manual tests skipped).</li>
+<li>[chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>RefrigeratorAndTemperatureControlledCabinetMode</code> and <code>RefrigeratorAlarm</code> clusters (3/3 passed; 2 non-applicable or upstream-disabled tests skipped).</li>
+<li>[chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the <code>LaundryWasherMode</code> cluster.</li>
 <li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcRunMode</code> cluster.</li>
 <li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcCleanMode</code> cluster.</li>
 <li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcOperationalState</code> cluster.</li>
+<li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the implemented <code>ServiceArea</code> feature set.</li>
 <li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>Closure</code> device type and <code>ClosureControl</code> clusters.</li>
 <li>[chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterValve</code> device type and the <code>ValveConfigurationAndControl</code> cluster.</li>
 <li>[chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the <code>OperationalState</code> cluster.</li>
@@ -181,6 +190,14 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[chip]: Add all seven Matter 1.6 Oven Mode and Oven Cavity Operational State tests for Oven Cabinet endpoint 13091 with dedicated PICS and documented applicability and conformance findings.</li>
+<li>[chip]: Add all Matter 1.6 OnOff and Fixed Label tests for Cooktop endpoint 1308 with dedicated PICS; patch the generic OnOff primary and OffOnly tests so their command guards correctly exercise an OffOnly server.</li>
+<li>[chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.</li>
+<li>[chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.</li>
+<li>[chip]: Add all Refrigerator Mode and Refrigerator Alarm server tests for endpoint 1302, with dedicated PICS and automated door-state/Notify-event control for <code>TC_REFALM_2_2</code>.</li>
+<li>[LaundryWasher]: Add <code>MatterbridgeLaundryWasherControlsServer</code> with Matter 1.6-compliant <code>SpinSpeedCurrent</code> write validation for the Spin and Rinse feature combination.</li>
+<li>[demoDevices]: Add a second Laundry Washer device exposing <code>TemperatureControl</code> with the <code>TemperatureNumber</code> and <code>TemperatureStep</code> features, alongside the existing <code>TemperatureLevel</code> washer.</li>
+<li>[chip]: Add all applicable Laundry Washer server tests for DeadFrontOnOff, LaundryWasherMode, LaundryWasherControls, NumberTemperatureControl, and LevelTemperatureControl, with dedicated PICS files. Patch <code>TC_WASHERCTRL_2_2</code> to omit its unencodable undefined-enum write while retaining its attribute, supported-list, valid-write, and readback coverage.</li>
 <li>[demoDevices]: Add all Chapter 12 and Chapter 13 device types, including the Robotic Vacuum Cleaner, every appliance device, composed refrigerator/freezer cabinets, four Cook Surface endpoints, and double-oven cabinets.</li>
 <li>[Closure]: Add the optional <code>ventilation</code>, <code>pedestrian</code>, and <code>calibration</code> options to the <code>Closure</code> constructor. Each option defaults to <code>false</code> and enables the corresponding ClosureControl feature when set to <code>true</code>. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.</li>
 <li>[WaterValve]: <code>MatterbridgeValveConfigurationAndControlServer</code> now implements the Matter 1.6 <code>ValveConfigurationAndControl</code> Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new <code>state.movementDuration</code>/<code>state.autoClose</code> (both disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
@@ -213,6 +230,13 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[Oven]: Expose and emit the mandatory Oven Cavity <code>OperationCompletion</code> event when an active oven operation is stopped, as required by Matter 1.6 Operational State §1.14.7.2 and Temperature Controlled Cabinet §13.4.5.</li>
+<li>[Oven]: Fully populate the Oven Cavity <code>OperationalStateList</code> with the mandatory <code>Paused</code> state, as required by Matter 1.6 Operational State §1.14.4.1 and Temperature Controlled Cabinet §13.4.5.</li>
+<li>[Oven]: Return <code>UnsupportedMode</code> with an empty status text when <code>OvenMode.ChangeToMode</code> requests a mode absent from <code>SupportedModes</code>, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.</li>
+<li>[Dishwasher]: Make <code>DishwasherMode.ChangeToMode</code> return <code>UnsupportedMode</code> for an unsupported mode, bind inherited Dishwasher Alarm attributes and <code>Notify</code> fields to the Dishwasher-specific <code>AlarmBitmap</code>, and advertise only the non-provisional <code>DoorError</code> alarm by default, as required by Matter 1.6.</li>
+<li>[Refrigerator]: Add <code>MatterbridgeRefrigeratorAlarmServer</code>, binding the inherited <code>Mask</code>, <code>State</code>, and <code>Supported</code> attributes and <code>Notify</code> event fields to the Refrigerator-specific <code>AlarmBitmap</code> so the <code>DoorOpen</code> bit is encoded correctly over Matter, as required by Matter 1.6 Refrigerator Alarm §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1.</li>
+<li>[LaundryWasher]: Reject a <code>SpinSpeedCurrent</code> value that is not a valid <code>SpinSpeeds</code> index with <code>CONSTRAINT_ERROR</code>, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.</li>
+<li>[LaundryWasher]: Return <code>UnsupportedMode</code> with an empty status text when <code>ChangeToMode</code> requests a mode absent from <code>SupportedModes</code>, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.</li>
 <li>[RoboticVacuumCleaner]: Refactor the RVC Run Mode, RVC Clean Mode, and RVC Operational State servers for Matter 1.6 conformance, including direct-mode-change restrictions, Pause/Resume compatibility, GoHome state handling, CountdownTime exposure, and the mandatory OperationCompletion event.</li>
 <li>[thread]: <code>checkUpdates</code> no longer checks the npm latest version for private plugins.</li>
 </ul>
