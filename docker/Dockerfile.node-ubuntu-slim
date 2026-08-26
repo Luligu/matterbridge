@@ -25,7 +25,7 @@ RUN \
   esac \
   && NODE_PATTERN="linux-${NODE_ARCH}\\.tar\\.xz$" \
   && NODE_BASE_URL="https://nodejs.org/dist/latest-v24.x" \
-  && curl -fsSL "${NODE_BASE_URL}/SHASUMS256.txt" -o /tmp/SHASUMS256.txt \
+  && curl -4 -fsSL "${NODE_BASE_URL}/SHASUMS256.txt" -o /tmp/SHASUMS256.txt \
   && NODE_LINE="$(grep -m 1 "${NODE_PATTERN}" /tmp/SHASUMS256.txt || true)" \
   && if [ -z "${NODE_LINE}" ]; then \
   echo >&2 "ERROR: Node.js binary not found for linux-${NODE_ARCH} in dist 'latest-v24.x'."; \
@@ -35,7 +35,7 @@ RUN \
   fi \
   && NODE_SHA256="$(echo "${NODE_LINE}" | awk '{print $1}')" \
   && NODE_TARBALL="$(echo "${NODE_LINE}" | awk '{print $2}')" \
-  && curl -fsSL "${NODE_BASE_URL}/${NODE_TARBALL}" -o /tmp/node.tar.xz \
+  && curl -4 -fsSL "${NODE_BASE_URL}/${NODE_TARBALL}" -o /tmp/node.tar.xz \
   && echo "${NODE_SHA256}  /tmp/node.tar.xz" | sha256sum -c - \
   && mkdir -p /opt/node \
   && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 --no-same-owner \
@@ -65,7 +65,7 @@ ARG BUILD_DATE
 
 # ---- OCI standard labels (https://opencontainers.org/) ----
 LABEL org.opencontainers.image.title="matterbridge:node-ubuntu-slim" \
-  org.opencontainers.image.description="Ubuntu 24.04.4 LTS (noble) with Node.js 24 from nodejs.org" \
+  org.opencontainers.image.description="Ubuntu 26.04 LTS (resolute) with Node.js 24 from nodejs.org" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \
   org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
