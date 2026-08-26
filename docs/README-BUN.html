@@ -147,7 +147,7 @@
 <pre><code class="language-shell">docker pull luligu/matterbridge:bun &amp;&amp; docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:bun
 </code></pre>
 <h1 id="bun-image-installed-from-npm">Bun image installed from npm</h1>
-<p>The <strong>bun</strong> image installs the latest Matterbridge release from npm and runs it with the <a href="https://bun.com">Bun</a> runtime. It does not copy or build the local Matterbridge source tree.</p>
+<p>The <strong>bun</strong> image installs the latest Matterbridge release from npm and runs it with the <a href="https://bun.com">Bun</a> runtime.</p>
 <ul>
 <li>Base image: <code>oven/bun:slim</code>.</li>
 <li>Installs Matterbridge globally from npm with <code>bun install matterbridge --global --omit=dev</code>.</li>
