@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.3.0
+ * @version 1.5.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -32,6 +32,7 @@ import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, Refri
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
@@ -41,13 +42,17 @@ import { getErrorMessage } from '@matterbridge/utils/error';
 
 import { AirConditioner } from './devices/airConditioner.js';
 import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
+import { BatteryStorage } from './devices/batteryStorage.js';
 import { CastingVideoClient } from './devices/castingVideoClient.js';
 import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
 import { Cooktop } from './devices/cooktop.js';
 import { Dishwasher } from './devices/dishwasher.js';
+import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
+import { Evse } from './devices/evse.js';
 import { ExtractorHood } from './devices/extractorHood.js';
+import { HeatPump } from './devices/heatPump.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
 import { LaundryDryer } from './devices/laundryDryer.js';
 import { LaundryWasher } from './devices/laundryWasher.js';
@@ -55,8 +60,10 @@ import { MicrowaveOven } from './devices/microwaveOven.js';
 import { Oven } from './devices/oven.js';
 import { Refrigerator } from './devices/refrigerator.js';
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
+import { SolarPower } from './devices/solarPower.js';
 import { Speaker } from './devices/speaker.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
+import { WaterHeater } from './devices/waterHeater.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -206,19 +213,28 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   // Chapter 2 - Utility Device Types
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensor', number: EndpointNumber(2_06) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.TreeTopology);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
   await registerDevice(ep, 'Electrical Sensor', 'UTILITY-02-06');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorImported', number: EndpointNumber(2_06_1) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createImportedElectricalEnergyMeasurementClusterServer(200_000_000);
   await registerDevice(ep, 'Electrical Sensor Imported', 'UTILITY-02-06-1');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorExported', number: EndpointNumber(2_06_2) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.SetTopology, [EndpointNumber(2_06), EndpointNumber(2_06_1)]);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000);
   await registerDevice(ep, 'Electrical Sensor Exported', 'UTILITY-02-06-2');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorDynamic', number: EndpointNumber(2_06_3) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.DynamicPowerFlow, [EndpointNumber(2_06), EndpointNumber(2_06_1)], [EndpointNumber(2_06)]);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
+  await registerDevice(ep, 'Electrical Sensor Dynamic', 'UTILITY-02-06-3');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DeviceEnergyManagement')!, bridgedNode, powerSource], { id: 'DeviceEnergyManagement', number: EndpointNumber(2_07) });
   ep.createDefaultDeviceEnergyManagementClusterServer();
@@ -789,5 +805,25 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(CommonNumberTag.One)],
   });
   await registerDevice(ep, 'Microwave Oven', 'APPLIANCE-13-11');
+
+  // Chapter 14 - Energy Device Types
+
+  ep = new Evse('EVSE', 'ENERGY-14-01', {});
+  await registerDevice(ep, 'EVSE', 'ENERGY-14-01');
+
+  ep = new WaterHeater('Water Heater', 'ENERGY-14-02', {});
+  await registerDevice(ep, 'Water Heater', 'ENERGY-14-02');
+
+  ep = new SolarPower('Solar Power', 'ENERGY-14-03', {});
+  await registerDevice(ep, 'Solar Power', 'ENERGY-14-03');
+
+  ep = new BatteryStorage('Battery Storage', 'ENERGY-14-04', {});
+  await registerDevice(ep, 'Battery Storage', 'ENERGY-14-04');
+
+  ep = new HeatPump('Heat Pump', 'ENERGY-14-05', {});
+  await registerDevice(ep, 'Heat Pump', 'ENERGY-14-05');
+
+  ep = new ElectricalUtilityMeter('Electrical Utility Meter', 'ENERGY-14-09');
+  await registerDevice(ep, 'Electrical Utility Meter', 'ENERGY-14-09');
 }
 // v8 ignore end
