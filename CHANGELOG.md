@@ -55,6 +55,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
+- [chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow feature sets (4/4 passed).
 - [endpoint]: Extend `createDefaultPowerTopologyClusterServer()` to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.
 - [chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the `MicrowaveOvenMode` and `MicrowaveOvenControl` clusters (5/5 passed).
 - [chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base `FanControl`, `HepaFilterMonitoring`, and `ActivatedCarbonFilterMonitoring` clusters (14/14 passed).

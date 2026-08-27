@@ -334,6 +334,30 @@
       "args": ["--PICS /root/electrical-power-measurement.pics"]
     },
     {
+      "name": "PowerTopology TreeTopology attributes on ElectricalSensor",
+      "test": "TC_PWRTL_2_1.py",
+      "endpoint": 206,
+      "args": ["--PICS /root/power-topology.tree.pics"]
+    },
+    {
+      "name": "PowerTopology NodeTopology attributes on ElectricalSensor",
+      "test": "TC_PWRTL_2_1.py",
+      "endpoint": 2061,
+      "args": ["--PICS /root/power-topology.node.pics"]
+    },
+    {
+      "name": "PowerTopology SetTopology attributes on ElectricalSensor",
+      "test": "TC_PWRTL_2_1.py",
+      "endpoint": 2062,
+      "args": ["--PICS /root/power-topology.set.pics"]
+    },
+    {
+      "name": "PowerTopology DynamicPowerFlow attributes on ElectricalSensor",
+      "test": "TC_PWRTL_2_1.py",
+      "endpoint": 2063,
+      "args": ["--PICS /root/power-topology.dynamic.pics"]
+    },
+    {
       "name": "ElectricalPowerMeasurement primary functionality on ElectricalSensor",
       "test": "TC_EPM_2_2.py",
       "endpoint": 206,

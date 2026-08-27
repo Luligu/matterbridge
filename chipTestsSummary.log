@@ -1,9 +1,8 @@
-Chip tests run started at 2026-08-25T10:02:33.864Z
+Chip tests run started at 2026-08-27T15:20:16.697Z
 
-✅ MicrowaveOvenMode attributes on MicrowaveOven (TC_MWOM_1_2.py)
-✅ MicrowaveOvenControl cook-time functionality on MicrowaveOven (TC_MWOCTRL_2_1.py)
-✅ MicrowaveOvenControl numeric-power functionality on MicrowaveOven (TC_MWOCTRL_2_2.py)
-✅ MicrowaveOvenControl watts functionality on MicrowaveOven (TC_MWOCTRL_2_4.py)
-✅ MicrowaveOvenControl AddMoreTime functionality on MicrowaveOven (Test_TC_MWOCTRL_2_5)
+✅ PowerTopology TreeTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
+✅ PowerTopology NodeTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
+✅ PowerTopology SetTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
+✅ PowerTopology DynamicPowerFlow attributes on ElectricalSensor (TC_PWRTL_2_1.py)
 
-Summary: 5/5 tests passed.
+Summary: 4/4 tests passed.
