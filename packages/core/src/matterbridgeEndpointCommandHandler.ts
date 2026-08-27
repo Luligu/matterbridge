@@ -895,6 +895,13 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'EnergyEvse.startDiagnostics': {
+    command: 'startDiagnostics';
+    request: {}; // TlvNoArguments
+    cluster: 'energyEvse';
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
   'EnergyEvse.setTargets': {
     command: 'setTargets';
     request: EnergyEvse.SetTargetsRequest;
