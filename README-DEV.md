@@ -656,7 +656,31 @@ The properties of the schema file shall correspond to the properties of the conf
 
 ## Deprecation list
 
-No deprecated code at the moment.
+The following legacy positional configuration signatures are deprecated. Pass an options object instead. Existing defaults and two-argument `name, serial` construction remain supported.
+
+### Robotic vacuum cleaner
+
+- `new RoboticVacuumCleaner(name, serial, mode, ...)`; use `new RoboticVacuumCleaner(name, serial, { ...options })`.
+
+### Chapter 13 appliance devices
+
+- `new LaundryWasher(name, serial, currentMode, ...)`; use `new LaundryWasher(name, serial, { ...options })`.
+- `new Refrigerator(name, serial, currentMode, ...)`; use `new Refrigerator(name, serial, { ...options })`.
+- `new Dishwasher(name, serial, currentMode, ...)`; use `new Dishwasher(name, serial, { ...options })`.
+- `new LaundryDryer(name, serial, currentMode, ...)`; use `new LaundryDryer(name, serial, { ...options })`.
+- `new ExtractorHood(name, serial, hepaCondition, ...)`; use `new ExtractorHood(name, serial, { ...options })`.
+- `new MicrowaveOven(name, serial, currentMode, ...)`; use `new MicrowaveOven(name, serial, { ...options })`.
+- `Refrigerator.addCabinet(name, tagList, ...)`; use `Refrigerator.addCabinet(name, { ...options })`.
+- `Oven.addCabinet(name, tagList, ...)`; use `Oven.addCabinet(name, { ...options })`.
+- `Cooktop.addSurface(name, tagList, ...)`; use `Cooktop.addSurface(name, { ...options })`.
+
+### Chapter 14 energy devices
+
+- `new Evse(name, serial, currentMode, ...)`; use `new Evse(name, serial, { ...options })`.
+- `new WaterHeater(name, serial, waterTemperature, ...)`; use `new WaterHeater(name, serial, { ...options })`.
+- `new SolarPower(name, serial, voltage, ...)`; use `new SolarPower(name, serial, { ...options })`.
+- `new BatteryStorage(name, serial, batPercentRemaining, ...)`; use `new BatteryStorage(name, serial, { ...options })`.
+- `new HeatPump(name, serial, voltage, ...)`; use `new HeatPump(name, serial, { ...options })`.
 
 # Frequently asked questions
 
