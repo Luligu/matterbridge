@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgeEndpoint that extends the Endpoint class from the Matter.js library.
  * @author Luca Liguori
  * @created 2024-10-01
- * @version 2.2.0
+ * @version 2.3.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -2283,12 +2283,37 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
+   * Creates a default Power Topology Cluster Server. Only needed for an electricalSensor device type.
    *
+   * @param {PowerTopology.Feature} feature - Topology feature to enable. Defaults to TreeTopology.
+   * @param {EndpointNumber[]} availableEndpoints - Endpoints capable of providing or consuming power. Used by SetTopology and DynamicPowerFlow.
+   * @param {EndpointNumber[]} activeEndpoints - Endpoints currently providing or consuming power. Used by DynamicPowerFlow and must be a subset of availableEndpoints.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - NodeTopology means the endpoint provides or consumes power to or from the entire node.
+   * - TreeTopology means the endpoint provides or consumes power to or from itself and its child endpoints.
+   * - SetTopology means the endpoint provides or consumes power to or from `availableEndpoints`.
+   * - DynamicPowerFlow also enables SetTopology and reports the currently participating endpoints through `activeEndpoints`.
+   * - `activeEndpoints` must be a subset of `availableEndpoints`.
    */
-  createDefaultPowerTopologyClusterServer(): this {
-    this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+  createDefaultPowerTopologyClusterServer(
+    feature: PowerTopology.Feature = PowerTopology.Feature.TreeTopology,
+    availableEndpoints: EndpointNumber[] = [],
+    activeEndpoints: EndpointNumber[] = [],
+  ): this {
+    if (feature === PowerTopology.Feature.NodeTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.NodeTopology));
+    } else if (feature === PowerTopology.Feature.TreeTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+    } else if (feature === PowerTopology.Feature.SetTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology), { availableEndpoints });
+    } else if (feature === PowerTopology.Feature.DynamicPowerFlow) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology, PowerTopology.Feature.DynamicPowerFlow), {
+        availableEndpoints,
+        activeEndpoints,
+      });
+    }
     return this;
   }
 

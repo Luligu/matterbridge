@@ -46,9 +46,16 @@ If you like this project and find it useful, please consider giving it a star on
   - `Refrigerator.addCabinet(name, tagList, ...)`; use `Refrigerator.addCabinet(name, { ...options })`.
   - `Oven.addCabinet(name, tagList, ...)`; use `Oven.addCabinet(name, { ...options })`.
   - `Cooktop.addSurface(name, tagList, ...)`; use `Cooktop.addSurface(name, { ...options })`.
+- [Energy devices]: The Chapter 14 EVSE and energy-device constructors now accept an options object for endpoint and initial cluster configuration, including `mode`, `id`, `number`, and `tagList`. Existing defaults and two-argument `name, serial` construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:
+  - `new Evse(name, serial, currentMode, ...)`; use `new Evse(name, serial, { ...options })`.
+  - `new WaterHeater(name, serial, waterTemperature, ...)`; use `new WaterHeater(name, serial, { ...options })`.
+  - `new SolarPower(name, serial, voltage, ...)`; use `new SolarPower(name, serial, { ...options })`.
+  - `new BatteryStorage(name, serial, batPercentRemaining, ...)`; use `new BatteryStorage(name, serial, { ...options })`.
+  - `new HeatPump(name, serial, voltage, ...)`; use `new HeatPump(name, serial, { ...options })`.
 
 ### Development News
 
+- [endpoint]: Extend `createDefaultPowerTopologyClusterServer()` to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.
 - [chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the `MicrowaveOvenMode` and `MicrowaveOvenControl` clusters (5/5 passed).
 - [chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base `FanControl`, `HepaFilterMonitoring`, and `ActivatedCarbonFilterMonitoring` clusters (14/14 passed).
 - [chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OvenMode` and `OvenCavityOperationalState` clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).

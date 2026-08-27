@@ -168,9 +168,18 @@
 <li><code>Cooktop.addSurface(name, tagList, ...)</code>; use <code>Cooktop.addSurface(name, { ...options })</code>.</li>
 </ul>
 </li>
+<li>[Energy devices]: The Chapter 14 EVSE and energy-device constructors now accept an options object for endpoint and initial cluster configuration, including <code>mode</code>, <code>id</code>, <code>number</code>, and <code>tagList</code>. Existing defaults and two-argument <code>name, serial</code> construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:<ul>
+<li><code>new Evse(name, serial, currentMode, ...)</code>; use <code>new Evse(name, serial, { ...options })</code>.</li>
+<li><code>new WaterHeater(name, serial, waterTemperature, ...)</code>; use <code>new WaterHeater(name, serial, { ...options })</code>.</li>
+<li><code>new SolarPower(name, serial, voltage, ...)</code>; use <code>new SolarPower(name, serial, { ...options })</code>.</li>
+<li><code>new BatteryStorage(name, serial, batPercentRemaining, ...)</code>; use <code>new BatteryStorage(name, serial, { ...options })</code>.</li>
+<li><code>new HeatPump(name, serial, voltage, ...)</code>; use <code>new HeatPump(name, serial, { ...options })</code>.</li>
+</ul>
+</li>
 </ul>
 <h3 id="development-news">Development News</h3>
 <ul>
+<li>[endpoint]: Extend <code>createDefaultPowerTopologyClusterServer()</code> to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.</li>
 <li>[chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the <code>MicrowaveOvenMode</code> and <code>MicrowaveOvenControl</code> clusters (5/5 passed).</li>
 <li>[chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base <code>FanControl</code>, <code>HepaFilterMonitoring</code>, and <code>ActivatedCarbonFilterMonitoring</code> clusters (14/14 passed).</li>
 <li>[chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OvenMode</code> and <code>OvenCavityOperationalState</code> clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).</li>
