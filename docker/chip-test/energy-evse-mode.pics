@@ -1,0 +1,9 @@
+# To run tests on EnergyEvseMode --PICS is required
+# Matches createDefaultEnergyEvseModeClusterServer() on CHIP EVSE endpoint 1401
+EEVSEM.S=1
+EEVSEM.S.A0000=1 # SupportedModes
+EEVSEM.S.A0001=1 # CurrentMode
+EEVSEM.S.C00.Rsp=1 # ChangeToMode
+EEVSEM.S.C01.Tx=1 # ChangeToModeResponse
+EEVSEM.S.M.CAN_TEST_MODE_FAILURE=0
+EEVSEM.S.M.CAN_MANUALLY_CONTROLLED=0
