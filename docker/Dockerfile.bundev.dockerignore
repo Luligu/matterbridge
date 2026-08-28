@@ -22,6 +22,7 @@ chip
 .github
 **/.cache/
 **/.vscode/
+temp
 
 # systemd unit files — not used by the build (the builder deletes them anyway)
 systemd
