@@ -28,7 +28,18 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { ClosureTag, ClosureWindowTag, CommonNumberTag, CommonPositionTag, RefrigeratorTag } from '@matter/node';
+import {
+  ClosureTag,
+  ClosureWindowTag,
+  CommodityTariffChronologyTag,
+  CommodityTariffCommodityTag,
+  CommodityTariffFlowTag,
+  CommonNumberTag,
+  CommonPositionTag,
+  ElectricalMeasurementTag,
+  PowerSourceTag,
+  RefrigeratorTag,
+} from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -808,22 +819,93 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 14 - Energy Device Types
 
-  ep = new Evse('EVSE', 'ENERGY-14-01', {});
+  ep = new Evse('EVSE', 'ENERGY-14-01', {
+    id: 'Evse',
+    number: EndpointNumber(14_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
   await registerDevice(ep, 'EVSE', 'ENERGY-14-01');
 
-  ep = new WaterHeater('Water Heater', 'ENERGY-14-02', {});
+  ep = new WaterHeater('Water Heater', 'ENERGY-14-02', {
+    id: 'WaterHeater',
+    number: EndpointNumber(14_02),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
   await registerDevice(ep, 'Water Heater', 'ENERGY-14-02');
 
-  ep = new SolarPower('Solar Power', 'ENERGY-14-03', {});
+  ep = new SolarPower('Solar Power', 'ENERGY-14-03', {
+    id: 'SolarPower',
+    number: EndpointNumber(14_03),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
   await registerDevice(ep, 'Solar Power', 'ENERGY-14-03');
 
-  ep = new BatteryStorage('Battery Storage', 'ENERGY-14-04', {});
+  ep = new BatteryStorage('Battery Storage', 'ENERGY-14-04', {
+    id: 'BatteryStorage',
+    number: EndpointNumber(14_04),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
   await registerDevice(ep, 'Battery Storage', 'ENERGY-14-04');
 
-  ep = new HeatPump('Heat Pump', 'ENERGY-14-05', {});
+  ep = new HeatPump('Heat Pump', 'ENERGY-14-05', {
+    id: 'HeatPump',
+    number: EndpointNumber(14_05),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
   await registerDevice(ep, 'Heat Pump', 'ENERGY-14-05');
 
-  ep = new ElectricalUtilityMeter('Electrical Utility Meter', 'ENERGY-14-09');
-  await registerDevice(ep, 'Electrical Utility Meter', 'ENERGY-14-09');
+  const electricalUtilityMeterEndpoint = new ElectricalUtilityMeter('Electrical Utility Meter', 'ENERGY-14-09', {
+    id: 'ElectricalUtilityMeter',
+    number: EndpointNumber(14_09),
+    tagList: [getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
+  });
+  electricalUtilityMeterEndpoint.addElectricalMeter('Electrical Meter', {
+    id: 'ElectricalMeter',
+    number: EndpointNumber(14_09_1),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Device Library Specification § 14.9.6.1 (Basic Utility Meter, Figure 30): optional endpoint, sibling of the
+  // meter endpoint, representing the upcoming import tariff for grid power.
+  electricalUtilityMeterEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Upcoming', {
+    id: 'ElectricalEnergyTariffUpcoming',
+    number: EndpointNumber(14_09_2),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  await registerDevice(electricalUtilityMeterEndpoint, 'Electrical Utility Meter', 'ENERGY-14-09');
+
+  // Device Library Specification § 14.9.6.2 (Separate EV Rate, Figure 32): building on the basic topology
+  // (§ 14.9.6.1), a second Electrical Utility Meter device keeps the grid meter (+ its optional upcoming tariff)
+  // and adds a separate EV meter (+ its optional upcoming tariff) for a separate EV charging rate.
+  const electricalUtilityMeterEvEndpoint = new ElectricalUtilityMeter('Electrical Utility Meter Ev', 'ENERGY-14-10', {
+    id: 'ElectricalUtilityMeterEv',
+    number: EndpointNumber(14_10),
+    tagList: [getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
+  });
+  electricalUtilityMeterEvEndpoint.addElectricalMeter('Electrical Meter', {
+    id: 'ElectricalMeter',
+    number: EndpointNumber(14_10_1),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Optional endpoint, sibling of the grid meter endpoint, representing the upcoming import tariff for grid power.
+  electricalUtilityMeterEvEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Upcoming', {
+    id: 'ElectricalEnergyTariffUpcoming',
+    number: EndpointNumber(14_10_2),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  electricalUtilityMeterEvEndpoint.addElectricalMeter('Electrical Meter Ev', {
+    id: 'ElectricalMeterEv',
+    number: EndpointNumber(14_10_3),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Ev), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Optional endpoint, sibling of the EV meter endpoint, representing the upcoming EV charging tariff.
+  electricalUtilityMeterEvEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Ev Upcoming', {
+    id: 'ElectricalEnergyTariffEvUpcoming',
+    number: EndpointNumber(14_10_4),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Ev), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  await registerDevice(electricalUtilityMeterEvEndpoint, 'Electrical Utility Meter Ev', 'ENERGY-14-10');
 }
 // v8 ignore end
