@@ -77,13 +77,13 @@
   "dependencies": {
     "@matterbridge/types": "3.10.8",
     "@matterbridge/utils": "3.10.8",
-    "@zip.js/zip.js": "2.8.54",
+    "@zip.js/zip.js": "2.8.60",
     "node-ansi-logger": "3.3.0"
   },
   "devDependencies": {
     "@matterbridge/types": "3.10.8",
     "@matterbridge/vitest-utils": "3.10.8",
-    "@types/node": "26.2.0",
+    "@types/node": "26.4.0",
     "vitest": "4.1.11"
   }
 }

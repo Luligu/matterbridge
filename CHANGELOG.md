@@ -31,6 +31,26 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.8] - 2026-09-04
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.8.
+- [matterbridge]: Bump `@types/node` to v.26.4.0.
+- [matterbridge]: Bump `marked` to v.18.0.11.
+- [matterbridge]: Bump `oxfmt` to v.0.65.0.
+- [matterbridge]: Bump `oxlint` to v.1.80.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.8.60.
+- [frontend]: Bump `frontend` version to v.3.5.10.
+- [frontend]: Bump `@testing-library/react` to v.16.3.3.
+- [frontend]: Bump `@types/node` to v.26.4.0.
+- [frontend]: Bump `@types/react-dom` to v.19.2.5.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.1.1.
+- [frontend]: Bump `oxfmt` to v.0.65.0.
+- [frontend]: Bump `oxlint` to v.1.80.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.7] - 2026-08-28
 
 ### Development Breaking Changes

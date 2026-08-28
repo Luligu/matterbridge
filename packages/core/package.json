@@ -150,7 +150,7 @@
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
     "@types/multer": "2.2.0",
-    "@types/node": "26.2.0",
+    "@types/node": "26.4.0",
     "@types/ws": "8.18.1",
     "vitest": "4.1.11"
   }
