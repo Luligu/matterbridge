@@ -1,10 +1,20 @@
-Chip tests run started at 2026-08-28T07:03:32.971Z
+Chip tests run started at 2026-08-28T16:39:01.368Z
 
-✅ OperationalState attributes on IrrigationSystem (TC_OPSTATE_2_1.py)
-✅ OperationalState Start/Stop on IrrigationSystem (TC_OPSTATE_2_2.py)
-✅ OperationalState Pause/Resume on IrrigationSystem (TC_OPSTATE_2_3.py)
-✅ OperationalState OperationalError event on IrrigationSystem (TC_OPSTATE_2_4.py)
-✅ OperationalState OperationCompletion event on IrrigationSystem (TC_OPSTATE_2_5.py)
-✅ OperationalState CountdownTime reporting on IrrigationSystem (TC_OPSTATE_2_6.py)
+❌ DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules (Test_TC_DRLK_2_1)
+❌ DoorLock LockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_2.py)
+✅ DoorLock UnlockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_3.py)
+✅ DoorLock UnlockWithTimeout with PIN on DoorLockUserPINSchedules (Test_TC_DRLK_2_4)
+✅ DoorLock week day schedule commands on DoorLockUserPINSchedules (TC_DRLK_2_5.py)
+✅ DoorLock holiday schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_6)
+✅ DoorLock year day schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_7)
+✅ DoorLock user commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_8)
+✅ DoorLock PIN credential commands on DoorLockUserPINSchedules (TC_DRLK_2_9.py)
+✅ DoorLock events on DoorLockUserPINSchedules (Test_TC_DRLK_2_10)
+✅ DoorLock PIN credential type on DoorLockUserPINSchedules (Test_TC_DRLK_2_11)
+⏭️ DoorLock UnboltDoor command on DoorLockUserPINSchedules (TC_DRLK_2_12.py)
+   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 8012 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
+⏭️ DoorLock Aliro functionality on DoorLockUserPINSchedules (TC_DRLK_2_13.py)
+   ↳ Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0.
+✅ DoorLock client commands on DoorLockUserPINSchedules (Test_TC_DRLK_3_2)
 
-Summary: 6/6 tests passed.
+Summary: 10/12 tests passed (2 skipped).

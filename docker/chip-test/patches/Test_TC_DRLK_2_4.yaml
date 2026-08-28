@@ -1,0 +1,240 @@
+# Copyright (c) 2021 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name:
+    111.2.4. [TC-DRLK-2.4] Verification for Unlock with Timeout command
+    [DUT-Server]
+
+PICS:
+    - DRLK.S
+
+config:
+    nodeId: 0x12344321
+    cluster: "Door Lock"
+    endpoint: 1
+    PIXIT.DRLK.AutoRelockTime:
+        type: int16u
+        defaultValue: 60
+    PIXIT.DRLK.AutoRelockWaitTimeMs:
+        type: int32u
+        defaultValue: 70000
+
+tests:
+    - label: "Wait for the commissioned device to be retrieved"
+      cluster: "DelayCommands"
+      command: "WaitForCommissionee"
+      arguments:
+          values:
+              - name: "nodeId"
+                value: nodeId
+
+    - label:
+          "Step 1a: TH writes AutoRelockTime attribute value as 10 seconds on
+          the DUT"
+      PICS: DRLK.S.M.AutoRelockTimeAttributeWritable && PICS_SDK_CI_ONLY
+      command: "writeAttribute"
+      attribute: "AutoRelockTime"
+      arguments:
+          value: 10
+
+    - label:
+          "Step 1b: TH writes AutoRelockTime attribute value from
+          PIXIT.DRLK.AutoRelockTime on the DUT"
+      PICS: DRLK.S.M.AutoRelockTimeAttributeWritable && PICS_SKIP_SAMPLE_APP
+      command: "writeAttribute"
+      attribute: "AutoRelockTime"
+      arguments:
+          value: PIXIT.DRLK.AutoRelockTime
+
+    - label:
+          "Step 1c: TH writes AutoRelockTime attribute value as 10 seconds on
+          the DUT"
+      PICS: PICS_SDK_CI_ONLY && !DRLK.S.M.AutoRelockTimeAttributeWritable
+      command: "writeAttribute"
+      attribute: "AutoRelockTime"
+      arguments:
+          value: 10
+      response:
+          error: UNSUPPORTED_WRITE
+
+    - label:
+          "Step 1d: TH writes AutoRelockTime attribute value from
+          PIXIT.DRLK.AutoRelockTime on the DUT"
+      PICS: PICS_SKIP_SAMPLE_APP && !DRLK.S.M.AutoRelockTimeAttributeWritable
+      command: "writeAttribute"
+      attribute: "AutoRelockTime"
+      arguments:
+          value: PIXIT.DRLK.AutoRelockTime
+      response:
+          error: UNSUPPORTED_WRITE
+
+    - label:
+          "Step 2a: TH sends SetUser Command to DUT with the following values:"
+      command: "SetUser"
+      PICS: DRLK.S.F08 && DRLK.S.C1a.Rsp
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "OperationType"
+                value: 0
+              - name: "UserIndex"
+                value: 1
+              - name: "UserName"
+                value: "xxx"
+              - name: "UserUniqueID"
+                value: 6452
+              - name: "UserStatus"
+                value: 1
+              - name: "UserType"
+                value: 0
+              - name: "CredentialRule"
+                value: 0
+
+    - label: "Step 2b: TH reads MinPINCodeLength attribute from DUT"
+      PICS: DRLK.S.F00 && DRLK.S.A0018
+      command: "readAttribute"
+      attribute: "MinPINCodeLength"
+      response:
+          saveAs: MinPINCodeLengthValue
+          constraints:
+              type: int8u
+              minValue: 0
+              maxValue: 255
+
+    - label: "Step 2c: TH reads MaxPINCodeLength attribute from DUT"
+      PICS: DRLK.S.F00 && DRLK.S.A0017
+      command: "readAttribute"
+      attribute: "MaxPINCodeLength"
+      response:
+          saveAs: MaxPINCodeLengthValue
+          constraints:
+              type: int8u
+              minValue: 0
+              maxValue: 255
+
+    - label:
+          "Step 2d: TH sends SetCredential Command to DUT with the following
+          fields and CredentialData Length is in an inclusive range of
+          MaxPINCodeLengthValue to MaxPINCodeLengthValue"
+      command: "SetCredential"
+      PICS: DRLK.S.F00 && DRLK.S.C22.Rsp && DRLK.S.C23.Tx
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "OperationType"
+                value: 0
+              - name: "Credential"
+                value: { CredentialType: 1, CredentialIndex: 1 }
+              - name: "CredentialData"
+                value: "123456"
+              - name: "UserIndex"
+                value: 1
+              - name: "UserStatus"
+                value: null
+              - name: "UserType"
+                value: null
+      response:
+          values:
+              - name: "Status"
+                value: 0
+              - name: "UserIndex"
+                value: null
+              - name: "NextCredentialIndex"
+                value: 2
+
+    - label:
+          "Step 2e: TH sends the Unlock with Timeout argument value as 10
+          seconds"
+      PICS: DRLK.S.C03.Rsp && PICS_SDK_CI_ONLY
+      command: "UnlockWithTimeout"
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "Timeout"
+                value: 10
+              - name: "PINCode"
+                value: "123456"
+
+    - label:
+          "Step 2f: TH sends Unlock with Timeout using
+          PIXIT.DRLK.AutoRelockTime"
+      PICS:
+          " DRLK.S.F08 && DRLK.S.F00 && DRLK.S.C03.Rsp && PICS_SKIP_SAMPLE_APP "
+      command: "UnlockWithTimeout"
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "Timeout"
+                value: PIXIT.DRLK.AutoRelockTime
+              - name: "PINCode"
+                value: "123456"
+
+    - label:
+          "Step 2g: TH sends Unlock with Timeout using
+          PIXIT.DRLK.AutoRelockTime"
+      PICS:
+          " (!DRLK.S.F08 || !DRLK.S.F00) && DRLK.S.C03.Rsp &&
+          PICS_SKIP_SAMPLE_APP "
+      command: "UnlockWithTimeout"
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "Timeout"
+                value: PIXIT.DRLK.AutoRelockTime
+
+    - label: "Wait for AutoRelockTime Expires"
+      cluster: "DelayCommands"
+      command: "WaitForMs"
+      PICS: DRLK.S.C03.Rsp && PICS_SDK_CI_ONLY
+      arguments:
+          values:
+              - name: "ms"
+                value: 11000
+
+    - label: "Wait for AutoRelockTime Expires"
+      PICS: DRLK.S.C03.Rsp && PICS_SKIP_SAMPLE_APP
+      cluster: "DelayCommands"
+      command: "WaitForMs"
+      arguments:
+          values:
+              - name: "ms"
+                value: PIXIT.DRLK.AutoRelockWaitTimeMs
+
+    - label: "Step 2h: TH reads LockState attribute"
+      PICS: DRLK.S.A0000 && DRLK.S.C03.Rsp
+      command: "readAttribute"
+      attribute: "LockState"
+      response:
+          value: 1
+
+    - label:
+          "Step 3a: TH sends ClearCredential Command to DUT with the following
+          fields:"
+      PICS: DRLK.S.F00 && DRLK.S.C26.Rsp
+      command: "ClearCredential"
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "Credential"
+                value: { CredentialType: 1, CredentialIndex: 1 }
+
+    - label:
+          "Step 3b: TH sends ClearUser Command to DUT with the UserIndex as 1"
+      command: "ClearUser"
+      PICS: DRLK.S.F08 && DRLK.S.C1d.Rsp
+      timedInteractionTimeoutMs: 1000
+      arguments:
+          values:
+              - name: "UserIndex"
+                value: 1

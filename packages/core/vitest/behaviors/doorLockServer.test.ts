@@ -8,6 +8,7 @@ const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
+import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { wait } from '@matterbridge/utils/wait';
 import { setupTest } from '@matterbridge/vitest-utils';
@@ -33,9 +34,14 @@ await setupTest(NAME, false);
 describe('Client clusters and behaviors', () => {
   let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
+  let scheduleDoorLock: MatterbridgeEndpoint;
 
   function supportedDoorLockServer(): typeof MatterbridgeDoorLockServer {
     return userPinDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+  }
+
+  function supportedScheduleDoorLockServer(): typeof MatterbridgeDoorLockServer {
+    return scheduleDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
   }
 
   beforeAll(async () => {
@@ -140,6 +146,104 @@ describe('Client clusters and behaviors', () => {
     expect(userPinDoorLock.behaviors.has(userPinDoorLock.behaviors.supported.doorLock)).toBe(true);
     expect(userPinDoorLock.getAttribute(DoorLock, 'requirePinForRemoteOperation')).toBe(undefined);
     expect(userPinDoorLock.getAttribute(DoorLock, 'numberOfTotalUsersSupported')).toBe(10);
+  });
+
+  test('DoorLock forwards week day, year day, and holiday schedule commands', async () => {
+    scheduleDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'scheduleDoorLock' });
+    scheduleDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 2, 2);
+    scheduleDoorLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, scheduleDoorLock)).toBeDefined();
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Scheduled User',
+      userUniqueId: 100,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+
+    const weekDayRequest: DoorLock.SetWeekDayScheduleRequest = {
+      weekDayIndex: 1,
+      userIndex: 1,
+      daysMask: new DoorLock.DaysMask({ monday: true }),
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+    };
+    const yearDayRequest: DoorLock.SetYearDayScheduleRequest = {
+      yearDayIndex: 1,
+      userIndex: 1,
+      localStartTime: 1_000,
+      localEndTime: 2_000,
+    };
+    const holidayRequest: DoorLock.SetHolidayScheduleRequest = {
+      holidayIndex: 1,
+      localStartTime: 3_000,
+      localEndTime: 4_000,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    };
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', weekDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', yearDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', holidayRequest);
+
+    const scheduleServer = supportedScheduleDoorLockServer();
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      startHour: 8,
+      endHour: 17,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      localStartTime: 1_000,
+      localEndTime: 2_000,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    });
+
+    const handlers = {
+      setWeekDay: vi.fn(),
+      getWeekDay: vi.fn(() => ({ weekDayIndex: 1, userIndex: 1, status: Status.NotFound })),
+      clearWeekDay: vi.fn(),
+      setYearDay: vi.fn(),
+      getYearDay: vi.fn(() => ({ yearDayIndex: 1, userIndex: 1, status: Status.NotFound })),
+      clearYearDay: vi.fn(),
+      setHoliday: vi.fn(),
+      getHoliday: vi.fn(() => ({ holidayIndex: 1, status: Status.NotFound })),
+      clearHoliday: vi.fn(),
+    };
+    scheduleDoorLock.addCommandHandler('DoorLock.setWeekDaySchedule', handlers.setWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.getWeekDaySchedule', handlers.getWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearWeekDaySchedule', handlers.clearWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.setYearDaySchedule', handlers.setYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.getYearDaySchedule', handlers.getYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearYearDaySchedule', handlers.clearYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.setHolidaySchedule', handlers.setHoliday);
+    scheduleDoorLock.addCommandHandler('DoorLock.getHolidaySchedule', handlers.getHoliday);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearHolidaySchedule', handlers.clearHoliday);
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', weekDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', yearDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', holidayRequest);
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', { weekDayIndex: 1, userIndex: 1 });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', { yearDayIndex: 1, userIndex: 1 });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', { holidayIndex: 1 });
+
+    for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledTimes(1);
   });
 
   test('User PIN set and modify user', async () => {
@@ -269,6 +373,29 @@ describe('Client clusters and behaviors', () => {
       sourceNode: null,
       dataIndex: 0xfffe,
     });
+  });
+
+  test('User PIN returns duplicate and occupied credential statuses', async () => {
+    const credential = { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 };
+    const request = {
+      operationType: DoorLock.DataOperationType.Add,
+      credential,
+      credentialData: Buffer.from('1234'),
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    };
+
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', request);
+
+    await expect(
+      userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).setCredential({ ...request, credential: { ...credential, credentialIndex: 2 } })),
+    ).rejects.toMatchObject({ code: Status.Failure, clusterCode: DoorLock.StatusCode.Duplicate });
+    await expect(
+      userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).setCredential({ ...request, credentialData: Buffer.from('5678') })),
+    ).rejects.toMatchObject({ code: Status.Failure, clusterCode: DoorLock.StatusCode.Occupied });
+
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
   });
 
   test('User PIN clear user', async () => {

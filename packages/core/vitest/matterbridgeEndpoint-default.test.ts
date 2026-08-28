@@ -1954,10 +1954,28 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultDoorLockClusterServer with access schedules', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'ScheduleLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 2, 3, 4);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(2);
+    expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(3);
+    expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(4);
   });
 
   test('createUserPinDoorLockClusterServer', async () => {
@@ -1969,10 +1987,28 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createUserPinDoorLockClusterServer with access schedules', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinScheduleLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(2);
+    expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(3);
+    expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(4);
   });
 
   test('createDefaultModeSelectClusterServer', async () => {

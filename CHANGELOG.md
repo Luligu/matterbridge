@@ -33,6 +33,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.8] - Dev branch
 
+### Development News
+
+- [chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
+- [chip]: DoorLockUserPIN endpoint 8011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
+
+### Added
+
+- [doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.
+- [ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.8.

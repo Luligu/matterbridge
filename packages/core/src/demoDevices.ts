@@ -41,6 +41,7 @@ import {
   RefrigeratorTag,
 } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
@@ -189,7 +190,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     type: demoPluginType,
     version: demoPluginVersion,
     description: 'Matterbridge demo devices',
-    author: 'Matterbridge',
+    author: 'https://github.com/Luligu',
     enabled: false,
     private: true,
     registeredDevices: 0,
@@ -450,6 +451,16 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLock', number: EndpointNumber(8_01) });
   ep.createDefaultPowerSourceBatteryClusterServer();
   await registerDevice(ep, 'Door Lock', 'ENTRY-08-01');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPin', number: EndpointNumber(8_01_1) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createUserPinDoorLockClusterServer();
+  await registerDevice(ep, 'Door Lock User PIN', 'ENTRY-08-01-1');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPinSchedules', number: EndpointNumber(8_01_2) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4);
+  await registerDevice(ep, 'Door Lock User PIN Schedules', 'ENTRY-08-01-2');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLockController')!, bridgedNode, powerSource], { id: 'DoorLockController', number: EndpointNumber(8_02) });
   await registerDevice(ep, 'Door Lock Controller', 'ENTRY-08-02');

@@ -1,0 +1,172 @@
+# Copyright (c) 2021 Project CHIP Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name:
+    111.2.7. [TC-DRLK-2.6] Verification for the following Commands - Set Year
+    Schedule, Get Year Schedule, Get Year Day Schedule Response and Clear Year
+    Day Schedule[DUT-Server]
+
+PICS:
+    - DRLK.S
+
+config:
+    nodeId: 0x12344321
+    cluster: "Door Lock"
+    endpoint: 1
+
+tests:
+    - label: "Wait for commissionee"
+      cluster: "DelayCommands"
+      command: "WaitForCommissionee"
+      arguments:
+          values:
+              - name: "nodeId"
+                value: nodeId
+
+    - label:
+          "Step 1: TH reads NumberOfHoliday SchedulesSupported and saves for
+          future use."
+      PICS: DRLK.S.F0b && DRLK.S.A0016
+      command: "readAttribute"
+      attribute: "NumberOfHolidaySchedulesSupported"
+      response:
+          saveAs: NumberOfHolidaySchedulesSupportedValue
+          constraints:
+              minValue: 0
+              maxValue: 255
+
+    - label:
+          "Step 2: TH sends Set Holiday Schedule Command to DUT with the
+          following values: a)HolidayIndex as 1  b)LocalStartTime as 20 Seconds
+          c)LocalEndTime as 30 Seconds d)OperatingMode as 0"
+      PICS: DRLK.S.F0b && DRLK.S.C11.Rsp
+      command: "SetHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+              - name: "LocalStartTime"
+                value: 20
+              - name: "LocalEndTime"
+                value: 30
+              - name: "OperatingMode"
+                value: 0
+
+    - label:
+          "Step 3a: TH sends Get Holiday Schedule Command to DUT with
+          HolidayIndex as 1"
+      PICS: DRLK.S.F0b && DRLK.S.C12.Rsp && DRLK.S.C12.Tx
+      command: "GetHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+      response:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+              - name: "Status"
+                value: 0x0
+              - name: "LocalStartTime"
+                value: 20
+              - name: "LocalEndTime"
+                value: 30
+                constraints:
+                    minValue: 21
+              - name: "OperatingMode"
+                value: 0
+
+    - label:
+          "Step 5: TH sends GetHolidaySchedule Command to DUT with Invalid
+          HolidayIndex > number_holiday_sch_supported ."
+      PICS: DRLK.S.F0b && DRLK.S.C12.Rsp && DRLK.S.C12.Tx
+      command: "GetHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: NumberOfHolidaySchedulesSupportedValue + 1
+      response:
+          values:
+              - name: "Status"
+                value: 0x85
+
+    - label:
+          "Step 6: TH sends GetHolidaySchedule Command to DUT with the
+          HolidayIndex as any value that is different from 1 and value <=
+          number_holiday_sch_supported"
+      PICS: DRLK.S.F0b && DRLK.S.C12.Rsp && DRLK.S.C12.Tx
+      command: "GetHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: NumberOfHolidaySchedulesSupportedValue
+      response:
+          values:
+              - name: "HolidayIndex"
+                value: NumberOfHolidaySchedulesSupportedValue
+              - name: "Status"
+                value: 0x8B
+
+    - label:
+          "Step 7a: TH send Clear Holiday Schedule Command to DUT with
+          HolidayIndex as 1"
+      PICS: DRLK.S.F0b && DRLK.S.C13.Rsp
+      command: "ClearHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+
+    - label:
+          "Step 7b: TH send Clear Holiday Schedule Command to DUT with
+          HolidayIndex as 0"
+      PICS: DRLK.S.F0b && DRLK.S.C13.Rsp
+      command: "ClearHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: 0
+      response:
+          error: INVALID_COMMAND
+
+    - label:
+          "Step 8: TH sends Get Holiday Schedule Command to DUT with
+          HolidayIndex as 1"
+      PICS: DRLK.S.F0b && DRLK.S.C12.Rsp && DRLK.S.C12.Tx
+      command: "GetHolidaySchedule"
+      arguments:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+      response:
+          values:
+              - name: "HolidayIndex"
+                value: 1
+              - name: "Status"
+                value: 139
+
+    - label: "Cleanup the created user"
+      PICS: DRLK.S.F08 && DRLK.S.C1d.Rsp
+      command: "ClearUser"
+      timedInteractionTimeoutMs: 10000
+      arguments:
+          values:
+              - name: "UserIndex"
+                value: 1
+
+# See https://github.com/project-chip/connectedhomeip/blob/master/docs/testing/yaml.md#defining-the-ci-test-arguments
+# for details about the block below.
+CI:
+    - name: lock
+      app: lock

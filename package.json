@@ -408,6 +408,7 @@
     "chip:test:level-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_LVL_",
     "chip:test:color-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CC_",
     "chip:test:closure-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CLCTRL_",
+    "chip:test:door-lock": "node scripts/run-matterbridge-chip-tests.mjs --test TC_DRLK_",
     "chip:test:pump": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PCC_",
     "chip:test:valve": "node scripts/run-matterbridge-chip-tests.mjs --test TC_VALCC_",
     "chip:test:operational-state": "node scripts/run-matterbridge-chip-tests.mjs --test TC_OPSTATE_",

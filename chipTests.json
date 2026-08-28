@@ -14,6 +14,12 @@
     "Test_TC_OO_2_3.yaml",
     "Test_TC_OO_2_6.yaml",
     "Test_TC_G_2_4.yaml",
+    "Test_TC_DRLK_2_1.yaml",
+    "Test_TC_DRLK_2_4.yaml",
+    "TC_DRLK_2_5.py",
+    "Test_TC_DRLK_2_6.yaml",
+    "Test_TC_DRLK_2_8.yaml",
+    "TC_DRLK_2_9.py",
     "Test_TC_WASHERCTRL_2_2.yaml",
     "Test_TC_DRYERCTRL_2_1.yaml",
     "TC_MWOCTRL_2_2.py",
@@ -838,6 +844,232 @@
       "test": "TC_SOIL_2_2.py",
       "endpoint": 714,
       "args": ["--PICS /root/soil-measurement.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "DoorLock attributes on DoorLock",
+      "test": "Test_TC_DRLK_2_1",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"]
+    },
+    {
+      "name": "DoorLock LockDoor command on DoorLock",
+      "test": "TC_DRLK_2_2.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"]
+    },
+    {
+      "name": "DoorLock UnlockDoor command on DoorLock",
+      "test": "TC_DRLK_2_3.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics", "--int-arg auto_relock_time:1"]
+    },
+    {
+      "name": "DoorLock UnlockWithTimeout command on DoorLock",
+      "test": "Test_TC_DRLK_2_4",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics", "--PIXIT.DRLK.AutoRelockTime 1", "--PIXIT.DRLK.AutoRelockWaitTimeMs 6000"]
+    },
+    {
+      "name": "DoorLock week day schedule commands on DoorLock",
+      "test": "TC_DRLK_2_5.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 32 functional steps: requires the Week Day Access Schedules feature (DRLK.S.F04) and related commands; endpoint 801 implements neither."
+    },
+    {
+      "name": "DoorLock holiday schedule commands on DoorLock",
+      "test": "Test_TC_DRLK_2_6",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 10 functional steps: requires the Holiday Schedules feature (DRLK.S.F0b) and related commands; endpoint 801 implements neither. Patched locally so the ClearUser cleanup also requires the User feature and ClearUser command."
+    },
+    {
+      "name": "DoorLock year day schedule commands on DoorLock",
+      "test": "Test_TC_DRLK_2_7",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 16 functional steps: requires the User and Year Day Access Schedules features (DRLK.S.F08/F0a) and related commands; endpoint 801 implements none of them."
+    },
+    {
+      "name": "DoorLock user commands on DoorLock",
+      "test": "Test_TC_DRLK_2_8",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 14 functional steps: requires the User feature (DRLK.S.F08) and SetUser/GetUser/ClearUser commands; endpoint 801 implements none of them."
+    },
+    {
+      "name": "DoorLock credential commands on DoorLock",
+      "test": "TC_DRLK_2_9.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 102 functional steps: requires the User feature plus PIN, RFID, or Aliro credential support and related commands; endpoint 801 implements none of those optional features."
+    },
+    {
+      "name": "DoorLock events on DoorLock",
+      "test": "Test_TC_DRLK_2_10",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"]
+    },
+    {
+      "name": "DoorLock multiple credential types on DoorLock",
+      "test": "Test_TC_DRLK_2_11",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "comment": "Self-skips all 21 functional steps: requires the User, PIN, RFID, and Finger Credential features (DRLK.S.F08/F00/F01/F02); endpoint 801 implements none of them."
+    },
+    {
+      "name": "DoorLock UnboltDoor command on DoorLock",
+      "test": "TC_DRLK_2_12.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "skip": true,
+      "comment": "Requires the Unbolting feature and UnboltDoor command; endpoint 801 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0."
+    },
+    {
+      "name": "DoorLock Aliro functionality on DoorLock",
+      "test": "TC_DRLK_2_13.py",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"],
+      "skip": true,
+      "comment": "Requires the Aliro Provisioning feature; endpoint 801 does not implement it. The Python test still sends an unconditional ClearUser command when DRLK.S.F0d=0 and fails with UNSUPPORTED_COMMAND."
+    },
+    {
+      "name": "DoorLock client commands on DoorLock",
+      "test": "Test_TC_DRLK_3_2",
+      "endpoint": 801,
+      "args": ["--PICS /root/door-lock.pics"]
+    },
+    {
+      "name": "DoorLock User and PIN attributes on DoorLockUserPin",
+      "test": "Test_TC_DRLK_2_1",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics"]
+    },
+    {
+      "name": "DoorLock LockDoor with PIN on DoorLockUserPin",
+      "test": "TC_DRLK_2_2.py",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
+    },
+    {
+      "name": "DoorLock UnlockDoor with PIN on DoorLockUserPin",
+      "test": "TC_DRLK_2_3.py",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
+    },
+    {
+      "name": "DoorLock UnlockWithTimeout with PIN on DoorLockUserPin",
+      "test": "Test_TC_DRLK_2_4",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics", "--PIXIT.DRLK.AutoRelockTime 1", "--PIXIT.DRLK.AutoRelockWaitTimeMs 6000"]
+    },
+    {
+      "name": "DoorLock user commands on DoorLockUserPin",
+      "test": "Test_TC_DRLK_2_8",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics"]
+    },
+    {
+      "name": "DoorLock PIN credential commands on DoorLockUserPin",
+      "test": "TC_DRLK_2_9.py",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics"]
+    },
+    {
+      "name": "DoorLock PIN credential type on DoorLockUserPin",
+      "test": "Test_TC_DRLK_2_11",
+      "endpoint": 8011,
+      "args": ["--PICS /root/door-lock-user-pin.pics"],
+      "comment": "Exercises the independent PIN credential branches; RFID and Finger Credential branches self-skip because endpoint 8011 does not implement those features."
+    },
+    {
+      "name": "DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_1",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock LockDoor with PIN on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_2.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
+    },
+    {
+      "name": "DoorLock UnlockDoor with PIN on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_3.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
+    },
+    {
+      "name": "DoorLock UnlockWithTimeout with PIN on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_4",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics", "--PIXIT.DRLK.AutoRelockTime 1", "--PIXIT.DRLK.AutoRelockWaitTimeMs 6000"]
+    },
+    {
+      "name": "DoorLock week day schedule commands on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_5.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock holiday schedule commands on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_6",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock year day schedule commands on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_7",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock user commands on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_8",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock PIN credential commands on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_9.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock events on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_10",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
+    },
+    {
+      "name": "DoorLock PIN credential type on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_2_11",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"],
+      "comment": "Exercises the independent PIN credential branches; RFID and Finger Credential branches self-skip because endpoint 8012 does not implement those features."
+    },
+    {
+      "name": "DoorLock UnboltDoor command on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_12.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"],
+      "skip": true,
+      "comment": "Requires the Unbolting feature and UnboltDoor command; endpoint 8012 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0."
+    },
+    {
+      "name": "DoorLock Aliro functionality on DoorLockUserPINSchedules",
+      "test": "TC_DRLK_2_13.py",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"],
+      "skip": true,
+      "comment": "Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0."
+    },
+    {
+      "name": "DoorLock client commands on DoorLockUserPINSchedules",
+      "test": "Test_TC_DRLK_3_2",
+      "endpoint": 8012,
+      "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
     },
     {
       "name": "ClosureControl attributes on ClosureComplete",

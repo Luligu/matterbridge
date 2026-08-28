@@ -1,0 +1,33 @@
+# To run tests on DoorLock --PICS is required
+# Matches createDefaultDoorLockClusterServer() (via addRequiredClusters()) on CHIP DoorLock endpoint 801.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+DRLK.S=1
+DRLK.S.F00=0 # PIN Credential
+DRLK.S.F01=0 # RFID Credential
+DRLK.S.F02=0 # Finger Credentials
+DRLK.S.F04=0 # Week Day Access Schedules
+DRLK.S.F05=0 # Door Position Sensor
+DRLK.S.F06=0 # Face Credentials
+DRLK.S.F07=0 # Credential OTA Access
+DRLK.S.F08=0 # User
+DRLK.S.F0a=0 # Year Day Access Schedules
+DRLK.S.F0b=0 # Holiday Schedules
+DRLK.S.F0c=0 # Unbolting
+DRLK.S.F0d=0 # Aliro Provisioning
+DRLK.S.F0e=0 # Aliro BLE UWB
+DRLK.S.A0000=1 # LockState
+DRLK.S.A0001=1 # LockType
+DRLK.S.A0002=1 # ActuatorEnabled
+DRLK.S.A0023=1 # AutoRelockTime
+DRLK.S.A0025=1 # OperatingMode
+DRLK.S.A0026=1 # SupportedOperatingModes
+DRLK.S.M.AutoRelockTimeAttributeWritable=1
+DRLK.S.M.OperatingModeAttributeWritable=1
+DRLK.S.E00=1 # DoorLockAlarm
+DRLK.S.E02=1 # LockOperation
+DRLK.S.E03=1 # LockOperationError
+DRLK.S.C00.Rsp=1 # LockDoor
+DRLK.S.C01.Rsp=1 # UnlockDoor
+DRLK.S.C03.Rsp=1 # UnlockWithTimeout
+DRLK.C=0 # Matterbridge only exposes a DoorLock server, never acts as a client

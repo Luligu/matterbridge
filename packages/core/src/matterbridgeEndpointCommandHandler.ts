@@ -22,6 +22,7 @@
  */
 
 /* oxlint-disable typescript/no-empty-object-type */
+/* oxlint-disable max-lines */
 
 // TODO: analyze each rule
 
@@ -545,6 +546,69 @@ export type CommandHandlerDataMap = {
   'DoorLock.clearCredential': {
     command: 'clearCredential'; // USR
     request: DoorLock.ClearCredentialRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setWeekDaySchedule': {
+    command: 'setWeekDaySchedule'; // WDSCH
+    request: DoorLock.SetWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getWeekDaySchedule': {
+    command: 'getWeekDaySchedule'; // WDSCH
+    request: DoorLock.GetWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearWeekDaySchedule': {
+    command: 'clearWeekDaySchedule'; // WDSCH
+    request: DoorLock.ClearWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setYearDaySchedule': {
+    command: 'setYearDaySchedule'; // YDSCH
+    request: DoorLock.SetYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getYearDaySchedule': {
+    command: 'getYearDaySchedule'; // YDSCH
+    request: DoorLock.GetYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearYearDaySchedule': {
+    command: 'clearYearDaySchedule'; // YDSCH
+    request: DoorLock.ClearYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setHolidaySchedule': {
+    command: 'setHolidaySchedule'; // HDSCH
+    request: DoorLock.SetHolidayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getHolidaySchedule': {
+    command: 'getHolidaySchedule'; // HDSCH
+    request: DoorLock.GetHolidayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearHolidaySchedule': {
+    command: 'clearHolidaySchedule'; // HDSCH
+    request: DoorLock.ClearHolidayScheduleRequest;
     cluster: 'doorLock';
     attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
@@ -1103,6 +1167,9 @@ export type CommandHandlerDataMap = {
  */
 export type CommandHandlerResponseMap = {
   'DoorLock.getUser': DoorLock.GetUserResponse;
+  'DoorLock.getWeekDaySchedule': DoorLock.GetWeekDayScheduleResponse;
+  'DoorLock.getYearDaySchedule': DoorLock.GetYearDayScheduleResponse;
+  'DoorLock.getHolidaySchedule': DoorLock.GetHolidayScheduleResponse;
 };
 
 type CommandHandlerEntry = {
@@ -1136,7 +1203,7 @@ export class CommandHandler {
    */
   addHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    this.handler.push({ command, handler } as CommandHandlerEntry);
+    this.handler.push({ command, handler } as unknown as CommandHandlerEntry);
   }
 
   /**
@@ -1153,7 +1220,7 @@ export class CommandHandler {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === command) {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return await (handler as CommandHandlerFunction<K>)(...args);
+        return await (handler as unknown as CommandHandlerFunction<K>)(...args);
       }
     }
 
@@ -1164,7 +1231,7 @@ export class CommandHandler {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === fallbackCommand) {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return await (handler as CommandHandlerFunction<K>)(...args);
+        return await (handler as unknown as CommandHandlerFunction<K>)(...args);
       }
     }
 
@@ -1180,7 +1247,7 @@ export class CommandHandler {
    */
   removeHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     this.handler = this.handler.filter(({ command: registeredCommand, handler: registeredHandler }) => {
-      return registeredCommand !== command || registeredHandler !== handler;
+      return registeredCommand !== command || registeredHandler !== (handler as unknown);
     });
   }
 }
