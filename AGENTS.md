@@ -34,7 +34,9 @@
 For task-specific guidance, read relevant files in [.agents](./.agents/):
 
 - `.agents/testing.md` for testing and validation expectations;
-- `.agents/matterbridge.md` for instruction about using matterbridge in a plugin.
+- `.agents/matterbridge.md` for instruction about using matterbridge in a plugin;
+- `.agents/plugin-frontend.md` for guidance on plugin frontend SPAs and custom REST APIs;
+- `.agents/matterbridge-chip-tests.md` for guidance on the Matterbridge CHIP conformance test harness.
 
 ## Matter Specs
 
