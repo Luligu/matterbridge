@@ -1,6 +1,6 @@
 /**
  * @file packages/jest-utils/src/logKeepAlives.ts
- * @description This file contains the Jest logKeepAlives helper.
+ * @description This file contains the logKeepAlives helper.
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.1
