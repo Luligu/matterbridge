@@ -1,0 +1,7 @@
+# To run tests on CommodityMetering --PICS is required
+# Matches addElectricalMeter()'s CommodityMeteringServer on CHIP Electrical Meter endpoint 14091
+COMMTR.S=1
+COMMTR.S.A0000=1 # MeteredQuantity
+COMMTR.S.A0001=1 # MeteredQuantityTimestamp
+COMMTR.S.A0002=1 # TariffUnit
+COMMTR.S.A0003=1 # MaximumMeteredQuantities

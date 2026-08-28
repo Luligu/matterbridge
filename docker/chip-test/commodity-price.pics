@@ -1,0 +1,13 @@
+# To run tests on CommodityPrice --PICS is required
+# Matches MatterbridgeCommodityPriceServer on CHIP Electrical Energy Tariff endpoint 14092
+SEPR.S=1
+SEPR.S.F00=0 # Forecasting
+SEPR.S.A0000=1 # TariffUnit
+SEPR.S.A0001=1 # Currency
+SEPR.S.A0002=1 # CurrentPrice
+SEPR.S.A0003=0 # PriceForecast (Forecasting feature not enabled)
+SEPR.S.C00.Rsp=1 # GetDetailedPriceRequest
+SEPR.S.C01.Tx=1 # GetDetailedPriceResponse
+SEPR.S.C02.Rsp=0 # GetDetailedForecastRequest (Forecasting feature not enabled)
+SEPR.S.C03.Tx=0 # GetDetailedForecastResponse (Forecasting feature not enabled)
+SEPR.S.E00=1 # PriceChange
