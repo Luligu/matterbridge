@@ -32,6 +32,8 @@ import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/act
 import type { ApplicationLauncher } from '@matter/types/clusters/application-launcher';
 import type { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import type { ColorControl } from '@matter/types/clusters/color-control';
+import type { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import type { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import type { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
@@ -1066,6 +1068,31 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'activatedCarbonFilterMonitoring';
     attributes: ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Commodity Price
+  'CommodityPrice.getDetailedPriceRequest': {
+    command: 'getDetailedPriceRequest';
+    request: CommodityPrice.GetDetailedPriceRequest;
+    cluster: 'commodityPrice';
+    attributes: ClusterAttributeValues<(typeof CommodityPrice)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Commodity Tariff
+  'CommodityTariff.getTariffComponent': {
+    command: 'getTariffComponent';
+    request: CommodityTariff.GetTariffComponentRequest;
+    cluster: 'commodityTariff';
+    attributes: ClusterAttributeValues<(typeof CommodityTariff)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'CommodityTariff.getDayEntry': {
+    command: 'getDayEntry';
+    request: CommodityTariff.GetDayEntryRequest;
+    cluster: 'commodityTariff';
+    attributes: ClusterAttributeValues<(typeof CommodityTariff)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 };
