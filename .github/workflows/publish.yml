@@ -205,6 +205,30 @@ jobs:
               ref: 'main'
             })
 
+      - name: Trigger Matterbridge Docker Build bun-dev-container
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-bun-dev-container.yml',
+              ref: 'main'
+            })
+
+      - name: Trigger Matterbridge Docker Build node-dev-container
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-node-dev-container.yml',
+              ref: 'main'
+            })
+
   publish-dev:
     name: Publish daily dev to npm and trigger docker builds dev and bundev
     if: github.event_name != 'release'

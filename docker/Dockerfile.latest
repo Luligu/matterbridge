@@ -9,7 +9,7 @@ ARG VCS_REF
 ARG BUILD_DATE
 
 # ---- OCI standard labels (https://opencontainers.org/) ----
-LABEL org.opencontainers.image.title="matterbridge" \
+LABEL org.opencontainers.image.title="matterbridge:latest" \
   org.opencontainers.image.description="Matterbridge plugin manager for Matter" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \
@@ -23,21 +23,7 @@ LABEL org.opencontainers.image.title="matterbridge" \
 WORKDIR /matterbridge
 COPY ./.dockerbuild.json ./
 RUN \
-  npm install --global --no-fund --no-audit --omit=dev \
-  matterbridge && \
-  # matterbridge-zigbee2mqtt \
-  # matterbridge-somfy-tahoma \
-  # matterbridge-shelly \
-  # matterbridge-hass \
-  # matterbridge-webhooks \
-  # matterbridge-test \
-  # matterbridge-example-accessory-platform \
-  # matterbridge-example-dynamic-platform \
-  # matterbridge-eve-door \
-  # matterbridge-eve-motion \
-  # matterbridge-eve-energy \
-  # matterbridge-eve-room \
-  # matterbridge-eve-weather && \
+  npm install --global --no-fund --no-audit --omit=dev matterbridge && \
   npm uninstall -g corepack && \
   npm cache clean --force && \
   rm -rf /tmp/* /var/tmp/* /root/.npm /root/.cache /var/lib/apt/lists/* && \
