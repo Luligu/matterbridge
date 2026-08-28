@@ -61,7 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: Electrical Meter endpoint 14091 CHIP conformance is green ✅ for the automated harness tests covering the `CommodityMetering` cluster.
 - [chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CommodityPrice` cluster.
 - [chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all automated harness tests covering the `CommodityTariff` cluster.
-- [chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow feature sets.
+- [chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the `PowerTopology` cluster.
 - [chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the `MicrowaveOvenMode` and `MicrowaveOvenControl` clusters.
 - [chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base `FanControl`, `HepaFilterMonitoring`, and `ActivatedCarbonFilterMonitoring` clusters.
 - [chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OvenMode` and `OvenCavityOperationalState` clusters.
@@ -73,9 +73,9 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcRunMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcCleanMode` cluster.
 - [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcOperationalState` cluster.
-- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the implemented `ServiceArea` feature set.
-- [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `Closure` device type and `ClosureControl` clusters.
-- [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `WaterValve` device type and the `ValveConfigurationAndControl` cluster.
+- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `ServiceArea` cluster.
+- [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
+- [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `ValveConfigurationAndControl` cluster.
 - [chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the `OperationalState` cluster.
 - [chip]: Pump endpoint 505 CHIP conformance is green ✅ for the automated harness tests covering the `PumpConfigurationAndControl` cluster.
 
