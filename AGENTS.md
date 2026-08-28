@@ -37,6 +37,8 @@ For task-specific guidance, read relevant files in [.agents](./.agents/):
 - `.agents/matterbridge.md` for instruction about using matterbridge in a plugin;
 - `.agents/plugin-frontend.md` for guidance on plugin frontend SPAs and custom REST APIs;
 - `.agents/matterbridge-chip-tests.md` for guidance on the Matterbridge CHIP conformance test harness.
+- `.agents/verify-server-endpoint-context.md` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
+- `.agents/verify-version-alignment.md` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
 
 ## Matter Specs
 
