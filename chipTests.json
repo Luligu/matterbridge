@@ -940,49 +940,6 @@
       "args": ["--PICS /root/door-lock.pics"]
     },
     {
-      "name": "DoorLock User and PIN attributes on DoorLockUserPin",
-      "test": "Test_TC_DRLK_2_1",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics"]
-    },
-    {
-      "name": "DoorLock LockDoor with PIN on DoorLockUserPin",
-      "test": "TC_DRLK_2_2.py",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
-    },
-    {
-      "name": "DoorLock UnlockDoor with PIN on DoorLockUserPin",
-      "test": "TC_DRLK_2_3.py",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics", "--int-arg user_code_temporary_disable_time:1", "--int-arg auto_relock_time:1"]
-    },
-    {
-      "name": "DoorLock UnlockWithTimeout with PIN on DoorLockUserPin",
-      "test": "Test_TC_DRLK_2_4",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics", "--PIXIT.DRLK.AutoRelockTime 1", "--PIXIT.DRLK.AutoRelockWaitTimeMs 6000"]
-    },
-    {
-      "name": "DoorLock user commands on DoorLockUserPin",
-      "test": "Test_TC_DRLK_2_8",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics"]
-    },
-    {
-      "name": "DoorLock PIN credential commands on DoorLockUserPin",
-      "test": "TC_DRLK_2_9.py",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics"]
-    },
-    {
-      "name": "DoorLock PIN credential type on DoorLockUserPin",
-      "test": "Test_TC_DRLK_2_11",
-      "endpoint": 8011,
-      "args": ["--PICS /root/door-lock-user-pin.pics"],
-      "comment": "Exercises the independent PIN credential branches; RFID and Finger Credential branches self-skip because endpoint 8011 does not implement those features."
-    },
-    {
       "name": "DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules",
       "test": "Test_TC_DRLK_2_1",
       "endpoint": 8012,

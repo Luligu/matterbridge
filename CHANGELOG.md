@@ -35,8 +35,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development News
 
-- [chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
-- [chip]: DoorLockUserPIN endpoint 8011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
+- [chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
 
 ### Added
 
