@@ -334,6 +334,120 @@ run passes 5/5 tests:
 handlers or mutating state. Values outside the configured ranges, or a PowerSetting for which
 `(PowerSetting - MinPower) % PowerStep != 0`, return `CONSTRAINT_ERROR` as required by §8.13.6.2.2 and §8.13.6.2.3.
 
+### Endpoint 1409
+
+Electrical Utility Meter clusters:
+
+- Meter Identification
+
+`TC_MTRID_2_1.py` and `TC_MTRID_3_1.py` are registered with `docker/chip-test/meter-identification.pics`
+(`MTRID.S.F00=0`/`MTRID.S.A0004=0`: the `PowerThreshold` feature is not enabled by
+`createDefaultMeterIdentificationClusterServer()`). `MeterType`/`PointOfDelivery`/`MeterSerialNumber`/
+`ProtocolVersion` default to `null` (`createDemoDevices()` registers this endpoint with no
+MeterIdentification options). `TC_MTRID_3_1`'s Attributes Value Set / Test Event Clear TestEventTriggers
+(`0x0B06000000000000`/`0x0B06000000000001`) are implemented in `handleMeterIdentificationTestEventTrigger()`
+(`chipTests.ts`): the former swaps in distinct non-null fake values so the subscription's
+"reported value differs from the pre-trigger value" assertions fire, the latter restores the original `null`
+values.
+
+### Endpoint 14091
+
+Electrical Meter (child of Electrical Utility Meter, endpoint 1409) clusters:
+
+- Commodity Metering
+
+`TC_COMMTR_2_1.py` and `TC_COMMTR_3_1.py` are registered with `docker/chip-test/commodity-metering.pics`.
+`MeteredQuantity`/`MeteredQuantityTimestamp`/`TariffUnit`/`MaximumMeteredQuantities` default to `null`
+(`addElectricalMeter()` is called with no CommodityMetering options). `TC_COMMTR_3_1`'s Attributes Value Set /
+Test Event Clear TestEventTriggers (`0x0B07000000000000`/`0x0B07000000000001`) are implemented in
+`handleCommodityMeteringTestEventTrigger()` (`chipTests.ts`): the former swaps in distinct non-null fake
+values (a non-null `MaximumMeteredQuantities` is required whenever `MeteredQuantity` is non-null) so the
+subscription's "reported value differs from the pre-trigger value" assertions fire, the latter restores the
+original `null` values.
+
+### Endpoint 14092
+
+Electrical Energy Tariff Upcoming (child of Electrical Utility Meter, endpoint 1409) clusters:
+
+- Commodity Price
+- Commodity Tariff
+
+`TC_SEPR_2_1.py` and `TC_SEPR_2_2.py` are registered with `docker/chip-test/commodity-price.pics`. `TC_SEPR_2_3.py`
+(the Forecasting-feature-gated forecast test) is `"skip": true` — `MatterbridgeCommodityPriceServer` does not
+enable that optional feature. `CurrentPrice` defaults to `null` (`configureElectricalEnergyTariffClusters()` is
+called with no `currentPrice` option); `TariffUnit` always reports a valid `TariffUnitEnum` value (non-nullable
+per spec). `TC_SEPR_2_2`'s Price Update TestEventTrigger (`0x0095000000000000`) is implemented in
+`handleCommodityPriceTestEventTrigger()` (`chipTests.ts`): it publishes a fake `CommodityPriceStruct` (both
+`Price` and `PriceLevel` populated — see below) and emits the matching `PriceChange` event. There is no Test
+Event Clear trigger for this cluster.
+
+Two matter.js quirks needed working around, both still spec-conformant fixes rather than test-only hacks:
+
+- `PriceChange` (§ 9.9.8.1) has optional conformance with no feature gate, so matter.js excludes it from the
+  cluster's runtime schema by default — subscribing to it returned `INVALID_ACTION` until
+  `MatterbridgeCommodityPriceServer` was changed to extend `CommodityPriceServer.enable({ events: { priceChange:
+true } })` instead of `CommodityPriceServer` directly (`electricalUtilityMeter.ts`).
+- `CommodityPriceStruct`'s `Components` field declares a model-level `default: []`
+  (`@matter/model`'s `commodity-price.element.ts`), and matter.js's `ClassForValueModel.initialize()` applies
+  that default before overlaying caller-provided keys — an omitted `components` key silently leaves the `[]`
+  default on the wire, violating § 9.9.6.3 ("Description and Components fields shall be omitted" from
+  `CurrentPrice`). `configureElectricalEnergyTariffClusters()` now explicitly overlays `components: undefined`
+  (and `description: undefined`) on any caller-supplied `currentPrice`, and
+  `handleCommodityPriceTestEventTrigger()` does the same for its fake trigger value.
+- `TC_SEPRTestBase.check_CommodityPriceStruct()` guards its `Price`/`PriceLevel` validation with `is not
+NullValue`, but a genuinely absent (non-nullable) optional struct field decodes to Python `None` in the CHIP
+  SDK, not `NullValue` — so omitting either field trips `assert_valid_int64`/`assert_valid_int16` on `None`
+  and fails. Populating both fields in the trigger's fake price sidesteps this upstream test quirk.
+
+`TC_SETRF_2_1.py`/`TC_SETRF_2_2.py`/`TC_SETRF_2_3.py`/`TC_SETRF_3_1.py` are registered with
+`docker/chip-test/commodity-tariff.pics`. `MatterbridgeCommodityTariffServer` (`electricalUtilityMeter.ts`) enables
+only the `Pricing` feature (required for `TariffInfo.Currency` and `TariffComponent.Price`), so every attribute
+gated on `FriendlyCredit`/`AuxiliaryLoad`/`PeakPeriod`/`PowerThreshold`/`Randomization` is absent from the runtime
+schema entirely — `TC_SETRF_2_1`'s `DefaultRandomizationType`/`DefaultRandomizationOffset` checks (`Randomization`
+feature) skip gracefully via the test's own `attribute_guard()`, no PICS entry needed for either. All 17 mandatory
+attributes default to `null` (`configureElectricalEnergyTariffClusters()` forces every `CommodityTariff` attribute
+to `null` unless `tariffLabel`/`providerName`/`currency` are supplied). `TC_SETRF_TestBase.py`'s four
+TestEventTrigger constants (`EventTriggerFakeData`/`EventTriggerClear`/`EventTriggerChangeDay`/
+`EventTriggerChangeTime` — `0x0700000000000000`/`...01`/`...02`/`...03`, the cluster's own ID `0x0700` as prefix)
+are implemented in `handleCommodityTariffTestEventTrigger()` (`chipTests.ts`), publishing/clearing a small,
+internally-consistent fake tariff: two `DayEntryStruct`s per day (`dayEntryId` 1 at minute 0, 2 at minute 720), one
+`DayPatternStruct`/`CalendarPeriodStruct` covering every day of the week, and two `TariffComponentStruct`/
+`TariffPeriodStruct` pairs mapping 1:1 to those day entries. `GetTariffComponent`/`GetDayEntry` (`TC_SETRF_2_2`) are
+plain lookups already implemented generically against whatever `tariffComponents`/`tariffPeriods`/`dayEntries` are
+currently published (`MatterbridgeCommodityTariffServer.getTariffComponent()`/`getDayEntry()`).
+
+`TC_SETRF_2_3` additionally drives the Change Time and Change Day triggers and asserts a specific relationship
+between the `CurrentDay(Entry)`/`NextDay(Entry)` values before and after each one. Which of the two day entries is
+"current" (`entryIndex`) and how many days have elapsed (`dayOffset`) is tracked module-locally in `chipTests.ts`
+and reset by the Attributes Value Set/Test Event Clear triggers. Change Time only advances `entryIndex`; Change Day
+only advances `dayOffset`, deliberately leaving `entryIndex` untouched rather than resetting it to the day's first
+entry — resetting it would land the new `CurrentDayEntryDate` exactly on the `NextDayEntryDate` that was read just
+before Change Day fired, which `TC_SETRF_2_3.py` step 18 asserts must NOT be the case (even though the new
+`CurrentDay` must equal the old `NextDay`). This is self-consistent fake data chosen to satisfy that assertion, not
+a claim about how a real device's day/entry transitions should compose.
+
+Two matter.js default-leak quirks needed working around, the same class of bug as `CommodityPrice`'s `Components`
+field above, both worked around directly in the trigger's fake data rather than needing a production-code fix
+(unlike `CommodityPrice`, nothing here is caller-supplied through `configureElectricalEnergyTariffClusters()`):
+
+- `DayEntryStruct`'s `RandomizationType` field declares a model-level `default: 0`
+  (`@matter/model`'s `commodity-tariff.element.ts`) despite its `[RNDM]` conformance forbidding it from being set
+  at all when the `Randomization` feature isn't enabled — an omitted key on a supplied `DayEntry` still leaks the
+  `0` default onto the wire and fails cluster-state validation with `ConstraintError`. Every fake `DayEntry`
+  explicitly overlays `randomizationType: undefined` to clear it.
+- `TariffComponentStruct`'s `PeakPeriod`/`PowerThreshold` fields each declare a model-level `default: { type:
+"none" }`, gated on the (disabled) `PeakPeriod`/`PowerThreshold` features — the same fix, explicitly overlaying
+  `peakPeriod: undefined`/`powerThreshold: undefined` on every fake `TariffComponent`.
+
+Two attributes also needed non-`null` fake values specifically for `TC_SETRF_3_1`'s subscription assertions (every
+mandatory attribute's reported value must differ from its pre-trigger value) without breaking the day/entry math
+`TC_SETRF_2_3` depends on: the top-level `StartDate` attribute and the (single) `CalendarPeriodStruct`'s own
+`StartDate` field are both set to one year before the current day (`anchor - 365 days`, rather than `null`) —
+strictly less than any `CurrentDayEntryDate`/`NextDayEntryDate` this fake data can produce, which
+`TC_SETRF_TestBase.get_day_pattern_IDs_for_active_calendar_period()` requires to resolve the active calendar
+period. `IndividualDays` is populated with one day 30 days in the past (clear of any `CurrentDay`/`NextDay` date)
+rather than left `null`, for the same reason.
+
 ### Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not

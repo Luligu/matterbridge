@@ -1596,7 +1596,7 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeHepaFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`);
   });
 
   test('ActivatedCarbonFilterMonitoring server', async () => {
@@ -1607,7 +1607,10 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`,
+    );
   });
 
   test('DeviceEnergyManagement server', async () => {

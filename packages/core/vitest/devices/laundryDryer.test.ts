@@ -93,7 +93,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.INFO,
       `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('device forEachAttribute', () => {
@@ -267,7 +270,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.INFO,
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('invoke MatterbridgeNumberTemperatureControlServer commands', async () => {

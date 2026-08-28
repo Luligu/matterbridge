@@ -20,6 +20,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { MeterIdentification } from '@matter/types/clusters/meter-identification';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { EndpointNumber } from '@matter/types/datatype';
 import { TariffPriceType, TariffUnit } from '@matter/types/globals';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -35,7 +36,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { ElectricalUtilityMeter, MatterbridgeCommodityPriceServer, MatterbridgeCommodityTariffServer } from '../../src/devices/electricalUtilityMeter.js';
-import { electricalEnergyTariff, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';
+import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
@@ -103,11 +104,15 @@ describe('Matterbridge ' + NAME, () => {
 
   test('create an electrical utility meter device with explicit options', () => {
     const explicitDevice = new ElectricalUtilityMeter('Electrical Utility Meter Explicit Device', 'EUM000000', {
+      id: 'ElectricalUtilityMeterOptions',
+      number: EndpointNumber(14_09),
       meterType: 0,
       pointOfDelivery: 'POD-0000001',
       meterSerialNumber: 'SN-0000001',
       protocolVersion: '1.0',
     });
+    expect(explicitDevice.id).toBe('ElectricalUtilityMeterOptions');
+    expect(explicitDevice.number).toBe(EndpointNumber(14_09));
     expect(explicitDevice.getClusterServerOptions(MeterIdentification.id)).toMatchObject({
       meterType: 0,
       pointOfDelivery: 'POD-0000001',
@@ -124,6 +129,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(meter.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
     expect(meter.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
     expect(meter.hasClusterServer(CommodityMetering.id)).toBeTruthy();
+    expect(meter.hasClusterServer(CommodityPrice.id)).toBeFalsy();
+    expect(meter.hasClusterServer(CommodityTariff.id)).toBeFalsy();
+    expect(meter.deviceTypes.get(electricalMeter.code)).toBe(electricalMeter);
+    expect(meter.deviceTypes.get(electricalSensor.code)).toBe(electricalSensor);
+    expect(meter.deviceTypes.get(electricalEnergyTariff.code)).toBeUndefined();
 
     expect(meter.getClusterServerOptions(ElectricalPowerMeasurement.id)).toMatchObject({
       voltage: null,
@@ -140,6 +150,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('addElectricalMeter with explicit options', () => {
     const explicitMeter = device.addElectricalMeter('Electrical Meter Explicit', {
+      id: 'ElectricalMeterExplicit',
+      number: EndpointNumber(14_09_1),
       voltage: 230_000,
       current: 2_000,
       power: 460_000,
@@ -151,6 +163,8 @@ describe('Matterbridge ' + NAME, () => {
       maximumMeteredQuantities: 1,
       tagList: [getSemtag(CommonNumberTag.One)],
     });
+    expect(explicitMeter.id).toBe('ElectricalMeterExplicit');
+    expect(explicitMeter.number).toBe(EndpointNumber(14_09_1));
     expect(explicitMeter.getClusterServerOptions(ElectricalPowerMeasurement.id)).toMatchObject({
       voltage: 230_000,
       activeCurrent: 2_000,
@@ -168,6 +182,29 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(explicitMeter.getClusterServerOptions(Descriptor.id)).toMatchObject({
       tagList: [{ mfgCode: null, namespaceId: CommonNumberTag.One.namespaceId, tag: CommonNumberTag.One.tag }],
+    });
+  });
+
+  test('addElectricalMeter with energy tariff options', () => {
+    const tariffMeter = device.addElectricalMeter('Electrical Meter With Tariff', {
+      energyTariff: {
+        tariffLabel: 'Standard',
+        providerName: 'Provider',
+        tariffUnit: TariffUnit.KWh,
+        currency: { currency: 978, decimalPoints: 4 },
+        currentPrice: explicitCurrentPrice,
+        localGenerationAvailable: true,
+        currentConditions: { periodStart: 1_700_000_000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 },
+      },
+    });
+
+    expect(tariffMeter.deviceTypes.get(electricalEnergyTariff.code)).toBe(electricalEnergyTariff);
+    expect(tariffMeter.hasClusterServer(CommodityPrice.id)).toBeTruthy();
+    expect(tariffMeter.hasClusterServer(CommodityTariff.id)).toBeTruthy();
+    expect(tariffMeter.hasClusterServer(ElectricalGridConditions.id)).toBeTruthy();
+    expect(tariffMeter.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
+      tariffInfo: { tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: CommodityTariff.BlockMode.NoBlock },
+      tariffUnit: TariffUnit.KWh,
     });
   });
 
@@ -208,6 +245,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('addElectricalEnergyTariff with explicit options', () => {
     explicitTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff Explicit', {
+      id: 'ElectricalEnergyTariffExplicit',
+      number: EndpointNumber(14_09_2),
       tariffLabel: 'Standard',
       providerName: 'Provider',
       tariffUnit: TariffUnit.KWh,
@@ -216,6 +255,8 @@ describe('Matterbridge ' + NAME, () => {
       localGenerationAvailable: true,
       currentConditions: { periodStart: 1_700_000_000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 },
     });
+    expect(explicitTariff.id).toBe('ElectricalEnergyTariffExplicit');
+    expect(explicitTariff.number).toBe(EndpointNumber(14_09_2));
     expect(explicitTariff.getClusterServerOptions(CommodityPrice.id)).toMatchObject({
       tariffUnit: TariffUnit.KWh,
       currency: { currency: 978, decimalPoints: 4 },
@@ -301,7 +342,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('MatterbridgeCommodityPriceServer getDetailedPriceRequest', async () => {
-    const response = await commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityPriceServer).getDetailedPriceRequest());
+    const response = await commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityPriceServer).getDetailedPriceRequest({ details: {} }));
     expect(response).toEqual({ currentPrice: explicitCurrentPrice });
   });
 
@@ -310,13 +351,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(found).toEqual({ label: 'Standard', dayEntryIDs: [1], tariffComponent: tariffComponents[0] });
 
     await expect(commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 99 }))).rejects.toThrow(
-      /No TariffComponent with id 99/,
+      /no TariffComponent with id 99/,
     );
 
     const dayEntry = await commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }));
     expect(dayEntry).toEqual({ dayEntry: dayEntries[0] });
 
-    await expect(commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 99 }))).rejects.toThrow(/No DayEntry with id 99/);
+    await expect(commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 99 }))).rejects.toThrow(/no DayEntry with id 99/);
   });
 
   test('MatterbridgeCommodityTariffServer getTariffComponent falls back when no owning tariffPeriod exists', async () => {
@@ -328,9 +369,9 @@ describe('Matterbridge ' + NAME, () => {
     // `tariff` (addElectricalEnergyTariff with default options) never had dayEntries/tariffComponents/tariffPeriods
     // set, so its CommodityTariff state has them as null — exercises the `?? []` fallback on a null state.
     await expect(tariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }))).rejects.toThrow(
-      /No TariffComponent with id 1/,
+      /no TariffComponent with id 1/,
     );
-    await expect(tariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }))).rejects.toThrow(/No DayEntry with id 1/);
+    await expect(tariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }))).rejects.toThrow(/no DayEntry with id 1/);
   });
 
   test('start the server node', async () => {

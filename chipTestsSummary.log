@@ -1,8 +1,10 @@
-Chip tests run started at 2026-08-27T15:20:16.697Z
+Chip tests run started at 2026-08-28T07:03:32.971Z
 
-✅ PowerTopology TreeTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
-✅ PowerTopology NodeTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
-✅ PowerTopology SetTopology attributes on ElectricalSensor (TC_PWRTL_2_1.py)
-✅ PowerTopology DynamicPowerFlow attributes on ElectricalSensor (TC_PWRTL_2_1.py)
+✅ OperationalState attributes on IrrigationSystem (TC_OPSTATE_2_1.py)
+✅ OperationalState Start/Stop on IrrigationSystem (TC_OPSTATE_2_2.py)
+✅ OperationalState Pause/Resume on IrrigationSystem (TC_OPSTATE_2_3.py)
+✅ OperationalState OperationalError event on IrrigationSystem (TC_OPSTATE_2_4.py)
+✅ OperationalState OperationCompletion event on IrrigationSystem (TC_OPSTATE_2_5.py)
+✅ OperationalState CountdownTime reporting on IrrigationSystem (TC_OPSTATE_2_6.py)
 
-Summary: 4/4 tests passed.
+Summary: 6/6 tests passed.

@@ -14,6 +14,7 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -80,6 +81,31 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getChildEndpointById('Battery')?.hasClusterServer(PowerSource.id)).toBeTruthy();
     expect(device.getChildEndpointById('Battery')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
     expect(device.getChildEndpointById('Battery')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+  });
+
+  test('create battery storage with explicit endpoint and measurement options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: 1, tag: 1, label: 'One' }];
+    const optionsDevice = new BatteryStorage('Battery Storage', 'BS-OPTIONS', {
+      id: 'BatteryStorageOptions',
+      number: EndpointNumber(14_04),
+      tagList,
+      batPercentRemaining: 75,
+      batChargeLevel: PowerSource.BatChargeLevel.Warning,
+      voltage: 48_000,
+      current: 20_000,
+      power: 960_000,
+      energyImported: 6_000,
+      energyExported: 3_000,
+      absMinPower: -3_000_000,
+      absMaxPower: 2_000_000,
+    });
+    expect(optionsDevice.id).toBe('BatteryStorageOptions');
+    expect(optionsDevice.number).toBe(EndpointNumber(14_04));
+    expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('create battery storage with an empty options object', () => {
+    expect(new BatteryStorage('Battery Storage Defaults', 'BS-DEFAULTS', {})).toBeDefined();
   });
 
   test('add a battery storage device', async () => {

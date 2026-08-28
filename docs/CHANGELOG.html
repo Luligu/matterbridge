@@ -179,15 +179,20 @@
 </ul>
 <h3 id="development-news">Development News</h3>
 <ul>
-<li>[chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow feature sets (4/4 passed).</li>
-<li>[endpoint]: Extend <code>createDefaultPowerTopologyClusterServer()</code> to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.</li>
-<li>[chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the <code>MicrowaveOvenMode</code> and <code>MicrowaveOvenControl</code> clusters (5/5 passed).</li>
-<li>[chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base <code>FanControl</code>, <code>HepaFilterMonitoring</code>, and <code>ActivatedCarbonFilterMonitoring</code> clusters (14/14 passed).</li>
-<li>[chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OvenMode</code> and <code>OvenCavityOperationalState</code> clusters (5/5 passed; 2 non-applicable or non-automatable tests skipped).</li>
-<li>[chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OffOnlyOnOff</code> and <code>FixedLabel</code> clusters (4/4 passed; 4 non-applicable tests skipped).</li>
-<li>[chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for the applicable automated <code>LaundryDryerControls</code> harness test (1/1 passed).</li>
-<li>[chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DishwasherMode</code> and <code>DishwasherAlarm</code> clusters (3/3 passed; 6 upstream-disabled manual tests skipped).</li>
-<li>[chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>RefrigeratorAndTemperatureControlledCabinetMode</code> and <code>RefrigeratorAlarm</code> clusters (3/3 passed; 2 non-applicable or upstream-disabled tests skipped).</li>
+<li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
+<li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
+<li>[chip]: Electrical Utility Meter endpoint 1409 CHIP conformance is green ✅ for the automated harness tests covering the <code>MeterIdentification</code> cluster.</li>
+<li>[chip]: Electrical Meter endpoint 14091 CHIP conformance is green ✅ for the automated harness tests covering the <code>CommodityMetering</code> cluster.</li>
+<li>[chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>CommodityPrice</code> cluster.</li>
+<li>[chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all automated harness tests covering the <code>CommodityTariff</code> cluster.</li>
+<li>[chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow feature sets.</li>
+<li>[chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the <code>MicrowaveOvenMode</code> and <code>MicrowaveOvenControl</code> clusters.</li>
+<li>[chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base <code>FanControl</code>, <code>HepaFilterMonitoring</code>, and <code>ActivatedCarbonFilterMonitoring</code> clusters.</li>
+<li>[chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OvenMode</code> and <code>OvenCavityOperationalState</code> clusters.</li>
+<li>[chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OffOnlyOnOff</code> and <code>FixedLabel</code> clusters.</li>
+<li>[chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>LaundryDryerControls</code> cluster.</li>
+<li>[chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DishwasherMode</code> and <code>DishwasherAlarm</code> clusters.</li>
+<li>[chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>RefrigeratorAndTemperatureControlledCabinetMode</code> and <code>RefrigeratorAlarm</code> clusters.</li>
 <li>[chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the <code>LaundryWasherMode</code> cluster.</li>
 <li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcRunMode</code> cluster.</li>
 <li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcCleanMode</code> cluster.</li>
@@ -200,6 +205,7 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[chip]: Add all applicable Matter 1.6 EnergyEvse and EnergyEvseMode tests for endpoint 1401, with dedicated PICS; patch <code>TC_EEVSE_2_2</code> so its <code>UserMaximumChargeCurrent</code> write targets the configured EVSE endpoint instead of the upstream test&#39;s hardcoded endpoint 1.</li>
 <li>[chip]: Add all seven Matter 1.6 Oven Mode and Oven Cavity Operational State tests for Oven Cabinet endpoint 13091 with dedicated PICS and documented applicability and conformance findings.</li>
 <li>[chip]: Add all Matter 1.6 OnOff and Fixed Label tests for Cooktop endpoint 1308 with dedicated PICS; patch the generic OnOff primary and OffOnly tests so their command guards correctly exercise an OffOnly server.</li>
 <li>[chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.</li>
@@ -218,6 +224,7 @@
 <li>[Pump]: Add <code>MatterbridgePumpConfigurationAndControlServer</code>, synchronizing the <code>PumpConfigurationAndControl</code> cluster&#39;s <code>Speed</code> and <code>Capacity</code> attributes from the <code>OnOff</code>/<code>LevelControl</code> clusters per the Matter Device Library Pump device type clarifications (§5.5.5.1/§5.5.5.2): <code>CurrentLevel</code> maps to the setpoint percentage (Level 0 stops the pump, Level 1-200 is Level/2 percent, Level 201-255 is 100%), applied to <code>MaxConstSpeed</code> for <code>Speed</code> and expressed directly as <code>Capacity</code>; <code>OnOff.On</code> restores the last known <code>CurrentLevel</code>, falling back to <code>MaxLevel</code> if none is known yet. <code>createDefaultPumpConfigurationAndControlClusterServer()</code> also fills in reasonable medium-capacity-pump defaults (<code>MinConstSpeed</code>, <code>MaxConstSpeed</code>, <code>MaxPressure</code>, <code>MaxSpeed</code>, <code>MaxFlow</code>) for any physical limit left <code>null</code> by the caller.</li>
 <li>[Pump]: <code>MatterbridgePumpConfigurationAndControlServer</code> also mirrors <code>OperationMode</code> writes onto <code>EffectiveOperationMode</code> (§4.2.7.15), and rejects <code>OperationMode</code> writes with a <code>FAILURE</code> status while <code>PumpStatus.LocalOverride</code> is set (§4.2.6.1.3).</li>
 <li>[Pump]: <code>MatterbridgePumpConfigurationAndControlServer</code> forces <code>Speed</code>/<code>Capacity</code> to <code>MinConstSpeed</code>/<code>MaxConstSpeed</code> (§4.2.6.2) while <code>OperationMode</code> is Minimum/Maximum, independent of <code>LevelControl</code>; switching back to Normal restores the <code>LevelControl</code>-derived setpoint (§4.2.6.2.1).</li>
+<li>[endpoint]: Extend <code>createDefaultPowerTopologyClusterServer()</code> to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -249,6 +256,7 @@
 <li>[LaundryWasher]: Return <code>UnsupportedMode</code> with an empty status text when <code>ChangeToMode</code> requests a mode absent from <code>SupportedModes</code>, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.</li>
 <li>[RoboticVacuumCleaner]: Refactor the RVC Run Mode, RVC Clean Mode, and RVC Operational State servers for Matter 1.6 conformance, including direct-mode-change restrictions, Pause/Resume compatibility, GoHome state handling, CountdownTime exposure, and the mandatory OperationCompletion event.</li>
 <li>[thread]: <code>checkUpdates</code> no longer checks the npm latest version for private plugins.</li>
+<li>[endpoint]: Fix <code>MatterbridgeCommodityPriceServer</code> to enable the optional <code>PriceChange</code> event (§ 9.9.8.1) so subscriptions to it succeed, and to omit the <code>Description</code>/<code>Components</code> fields from <code>CurrentPrice</code> (§ 9.9.6.3).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3106-2026-08-21">[3.10.6] - 2026-08-21</h2>

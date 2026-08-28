@@ -16,7 +16,8 @@
     "Test_TC_G_2_4.yaml",
     "Test_TC_WASHERCTRL_2_2.yaml",
     "Test_TC_DRYERCTRL_2_1.yaml",
-    "TC_MWOCTRL_2_2.py"
+    "TC_MWOCTRL_2_2.py",
+    "TC_EEVSE_2_2.py"
   ],
   "tests": [
     {
@@ -361,8 +362,7 @@
       "name": "ElectricalPowerMeasurement primary functionality on ElectricalSensor",
       "test": "TC_EPM_2_2.py",
       "endpoint": 206,
-      "args": ["--PICS /root/electrical-power-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required: without it, the Python test framework encodes --endpoint into EventTrigger bits 32-47 before sending, which doesn't match the plain trigger constants handleElectricalPowerMeasurementTestEventTrigger (chipTests.ts) checks for — GeneralDiagnostics.TestEventTrigger has no endpoint field per spec, so Matterbridge (like a real device) only recognizes the raw, unencoded trigger value."
+      "args": ["--PICS /root/electrical-power-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "ElectricalEnergyMeasurement attributes on ElectricalSensor",
@@ -374,15 +374,13 @@
       "name": "ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensor",
       "test": "TC_EEM_2_2.py",
       "endpoint": 206,
-      "args": ["--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
+      "args": ["--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensor",
       "test": "TC_EEM_2_3.py",
       "endpoint": 206,
-      "args": ["--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
+      "args": ["--PICS /root/electrical-energy-measurement.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensor",
@@ -410,8 +408,7 @@
       "name": "DeviceEnergyManagement PowerAdjustment functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_2.py",
       "endpoint": 207,
-      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
+      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "DeviceEnergyManagement StartTimeAdjustment functionality on DeviceEnergyManagement",
@@ -465,15 +462,13 @@
       "name": "DeviceEnergyManagement PowerForecastRReporting functionality on DeviceEnergyManagement",
       "test": "TC_DEM_2_9.py",
       "endpoint": 207,
-      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
+      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "DeviceEnergyManagement quiet-reporting quality on DeviceEnergyManagement",
       "test": "TC_DEM_2_10.py",
       "endpoint": 207,
-      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--use-legacy-test-event-triggers"],
-      "comment": "--use-legacy-test-event-triggers is required, same reason as TC_EPM_2_2 (see that entry)."
+      "args": ["--PICS /root/device-energy-management.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "DeviceEnergyManagementMode attributes on DeviceEnergyManagement",
@@ -1941,6 +1936,155 @@
       "test": "Test_TC_MWOCTRL_2_5",
       "endpoint": 1311,
       "args": ["--PICS /root/microwave-oven.pics"]
+    },
+    {
+      "name": "EnergyEvse attributes on EVSE",
+      "test": "Test_TC_EEVSE_2_1",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics"]
+    },
+    {
+      "name": "EnergyEvse primary functionality on EVSE",
+      "test": "TC_EEVSE_2_2.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "comment": "Patched locally so the UserMaximumChargeCurrent write uses the configured EVSE endpoint instead of the upstream test's hardcoded endpoint 1."
+    },
+    {
+      "name": "EnergyEvse charging preferences functionality on EVSE",
+      "test": "TC_EEVSE_2_3.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse fault functionality on EVSE",
+      "test": "TC_EEVSE_2_4.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse diagnostics functionality on EVSE",
+      "test": "TC_EEVSE_2_5.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse reporting functionality on EVSE",
+      "test": "TC_EEVSE_2_6.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse state-of-charge functionality on EVSE",
+      "test": "TC_EEVSE_2_7.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the SoCReporting feature; endpoint 1401 does not enable this optional feature."
+    },
+    {
+      "name": "EnergyEvse vehicle identification functionality on EVSE",
+      "test": "TC_EEVSE_2_8.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the PlugAndCharge feature; endpoint 1401 does not enable this optional feature."
+    },
+    {
+      "name": "EnergyEvse RFID event functionality on EVSE",
+      "test": "TC_EEVSE_2_9.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the RFID feature; endpoint 1401 does not enable this optional feature."
+    },
+    {
+      "name": "EnergyEvse bidirectional functionality on EVSE",
+      "test": "TC_EEVSE_2_10.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the V2X feature; endpoint 1401 does not enable this optional feature."
+    },
+    {
+      "name": "EnergyEvseMode attributes on EVSE",
+      "test": "TC_EEVSEM_1_2.py",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse-mode.pics"]
+    },
+    {
+      "name": "EnergyEvseMode change mode on EVSE",
+      "test": "Test_TC_EEVSEM_2_1",
+      "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse-mode.pics"]
+    },
+    {
+      "name": "MeterIdentification attributes on Electrical Utility Meter",
+      "test": "TC_MTRID_2_1.py",
+      "endpoint": 1409,
+      "args": ["--PICS /root/meter-identification.pics"]
+    },
+    {
+      "name": "MeterIdentification subscription report verification on Electrical Utility Meter",
+      "test": "TC_MTRID_3_1.py",
+      "endpoint": 1409,
+      "args": ["--PICS /root/meter-identification.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CommodityMetering attributes on Electrical Meter",
+      "test": "TC_COMMTR_2_1.py",
+      "endpoint": 14091,
+      "args": ["--PICS /root/commodity-metering.pics"]
+    },
+    {
+      "name": "CommodityMetering subscription report verification on Electrical Meter",
+      "test": "TC_COMMTR_3_1.py",
+      "endpoint": 14091,
+      "args": ["--PICS /root/commodity-metering.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CommodityPrice attributes on Electrical Energy Tariff",
+      "test": "TC_SEPR_2_1.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-price.pics"]
+    },
+    {
+      "name": "CommodityPrice primary functionality on Electrical Energy Tariff",
+      "test": "TC_SEPR_2_2.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-price.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CommodityPrice forecast functionality on Electrical Energy Tariff",
+      "test": "TC_SEPR_2_3.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-price.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "skip": true,
+      "comment": "Requires the Forecasting feature; endpoint 14092 does not enable this optional feature."
+    },
+    {
+      "name": "CommodityTariff attributes on Electrical Energy Tariff",
+      "test": "TC_SETRF_2_1.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-tariff.pics"]
+    },
+    {
+      "name": "CommodityTariff commands on Electrical Energy Tariff",
+      "test": "TC_SETRF_2_2.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-tariff.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CommodityTariff primary functionality on Electrical Energy Tariff",
+      "test": "TC_SETRF_2_3.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-tariff.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CommodityTariff subscription report verification on Electrical Energy Tariff",
+      "test": "TC_SETRF_3_1.py",
+      "endpoint": 14092,
+      "args": ["--PICS /root/commodity-tariff.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     }
   ]
 }
