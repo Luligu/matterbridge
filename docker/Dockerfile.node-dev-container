@@ -10,6 +10,23 @@ ENV HISTFILE=/home/node/.bash-cache/.bash_history
 ENV HISTSIZE=100000
 ENV HISTFILESIZE=200000
 
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:node-dev-container" \
+  org.opencontainers.image.description="Matterbridge Node.js Dev Container" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
+
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \

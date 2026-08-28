@@ -152,15 +152,69 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
-<h2 id="3107-dev-branch">[3.10.7] - Dev branch</h2>
+<h2 id="3107-2026-08-28">[3.10.7] - 2026-08-28</h2>
+<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<ul>
+<li>[RoboticVacuumCleaner]: The constructor now accepts a <code>RoboticVacuumCleanerOptions</code> object as its third parameter, consolidating <code>mode</code>, RVC mode, operational-state, service-area, <code>id</code>, <code>number</code>, and <code>tagList</code> configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to <code>new RoboticVacuumCleaner(name, serial, { ...options })</code>.</li>
+<li>[Appliances]: All Chapter 13 appliance constructors now accept an options object for endpoint and initial cluster configuration, including <code>mode</code>, <code>id</code>, <code>number</code>, and <code>tagList</code>. Existing defaults and two-argument <code>name, serial</code> construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:<ul>
+<li><code>new LaundryWasher(name, serial, currentMode, ...)</code>; use <code>new LaundryWasher(name, serial, { ...options })</code>.</li>
+<li><code>new Refrigerator(name, serial, currentMode, ...)</code>; use <code>new Refrigerator(name, serial, { ...options })</code>.</li>
+<li><code>new Dishwasher(name, serial, currentMode, ...)</code>; use <code>new Dishwasher(name, serial, { ...options })</code>.</li>
+<li><code>new LaundryDryer(name, serial, currentMode, ...)</code>; use <code>new LaundryDryer(name, serial, { ...options })</code>.</li>
+<li><code>new ExtractorHood(name, serial, hepaCondition, ...)</code>; use <code>new ExtractorHood(name, serial, { ...options })</code>.</li>
+<li><code>new MicrowaveOven(name, serial, currentMode, ...)</code>; use <code>new MicrowaveOven(name, serial, { ...options })</code>.</li>
+<li><code>Refrigerator.addCabinet(name, tagList, ...)</code>; use <code>Refrigerator.addCabinet(name, { ...options })</code>.</li>
+<li><code>Oven.addCabinet(name, tagList, ...)</code>; use <code>Oven.addCabinet(name, { ...options })</code>.</li>
+<li><code>Cooktop.addSurface(name, tagList, ...)</code>; use <code>Cooktop.addSurface(name, { ...options })</code>.</li>
+</ul>
+</li>
+<li>[Energy devices]: The Chapter 14 EVSE and energy-device constructors now accept an options object for endpoint and initial cluster configuration, including <code>mode</code>, <code>id</code>, <code>number</code>, and <code>tagList</code>. Existing defaults and two-argument <code>name, serial</code> construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:<ul>
+<li><code>new Evse(name, serial, currentMode, ...)</code>; use <code>new Evse(name, serial, { ...options })</code>.</li>
+<li><code>new WaterHeater(name, serial, waterTemperature, ...)</code>; use <code>new WaterHeater(name, serial, { ...options })</code>.</li>
+<li><code>new SolarPower(name, serial, voltage, ...)</code>; use <code>new SolarPower(name, serial, { ...options })</code>.</li>
+<li><code>new BatteryStorage(name, serial, batPercentRemaining, ...)</code>; use <code>new BatteryStorage(name, serial, { ...options })</code>.</li>
+<li><code>new HeatPump(name, serial, voltage, ...)</code>; use <code>new HeatPump(name, serial, { ...options })</code>.</li>
+</ul>
+</li>
+</ul>
 <h3 id="development-news">Development News</h3>
 <ul>
-<li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>Closure</code> device type and <code>ClosureControl</code> clusters.</li>
-<li>[chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the <code>WaterValve</code> device type and the <code>ValveConfigurationAndControl</code> cluster.</li>
+<li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
+<li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
+<li>[chip]: Electrical Utility Meter endpoint 1409 CHIP conformance is green ✅ for the automated harness tests covering the <code>MeterIdentification</code> cluster.</li>
+<li>[chip]: Electrical Meter endpoint 14091 CHIP conformance is green ✅ for the automated harness tests covering the <code>CommodityMetering</code> cluster.</li>
+<li>[chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>CommodityPrice</code> cluster.</li>
+<li>[chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all automated harness tests covering the <code>CommodityTariff</code> cluster.</li>
+<li>[chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the <code>PowerTopology</code> cluster.</li>
+<li>[chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the <code>MicrowaveOvenMode</code> and <code>MicrowaveOvenControl</code> clusters.</li>
+<li>[chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base <code>FanControl</code>, <code>HepaFilterMonitoring</code>, and <code>ActivatedCarbonFilterMonitoring</code> clusters.</li>
+<li>[chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OvenMode</code> and <code>OvenCavityOperationalState</code> clusters.</li>
+<li>[chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>OffOnlyOnOff</code> and <code>FixedLabel</code> clusters.</li>
+<li>[chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>LaundryDryerControls</code> cluster.</li>
+<li>[chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DishwasherMode</code> and <code>DishwasherAlarm</code> clusters.</li>
+<li>[chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>RefrigeratorAndTemperatureControlledCabinetMode</code> and <code>RefrigeratorAlarm</code> clusters.</li>
+<li>[chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the <code>LaundryWasherMode</code> cluster.</li>
+<li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcRunMode</code> cluster.</li>
+<li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcCleanMode</code> cluster.</li>
+<li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>RvcOperationalState</code> cluster.</li>
+<li>[chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the <code>ServiceArea</code> cluster.</li>
+<li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</li>
+<li>[chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the <code>ValveConfigurationAndControl</code> cluster.</li>
 <li>[chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the <code>OperationalState</code> cluster.</li>
+<li>[chip]: Pump endpoint 505 CHIP conformance is green ✅ for the automated harness tests covering the <code>PumpConfigurationAndControl</code> cluster.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[chip]: Add all applicable Matter 1.6 EnergyEvse and EnergyEvseMode tests for endpoint 1401, with dedicated PICS; patch <code>TC_EEVSE_2_2</code> so its <code>UserMaximumChargeCurrent</code> write targets the configured EVSE endpoint instead of the upstream test&#39;s hardcoded endpoint 1.</li>
+<li>[chip]: Add all seven Matter 1.6 Oven Mode and Oven Cavity Operational State tests for Oven Cabinet endpoint 13091 with dedicated PICS and documented applicability and conformance findings.</li>
+<li>[chip]: Add all Matter 1.6 OnOff and Fixed Label tests for Cooktop endpoint 1308 with dedicated PICS; patch the generic OnOff primary and OffOnly tests so their command guards correctly exercise an OffOnly server.</li>
+<li>[chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.</li>
+<li>[chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.</li>
+<li>[chip]: Add all Refrigerator Mode and Refrigerator Alarm server tests for endpoint 1302, with dedicated PICS and automated door-state/Notify-event control for <code>TC_REFALM_2_2</code>.</li>
+<li>[LaundryWasher]: Add <code>MatterbridgeLaundryWasherControlsServer</code> with Matter 1.6-compliant <code>SpinSpeedCurrent</code> write validation for the Spin and Rinse feature combination.</li>
+<li>[demoDevices]: Add a second Laundry Washer device exposing <code>TemperatureControl</code> with the <code>TemperatureNumber</code> and <code>TemperatureStep</code> features, alongside the existing <code>TemperatureLevel</code> washer.</li>
+<li>[chip]: Add all applicable Laundry Washer server tests for DeadFrontOnOff, LaundryWasherMode, LaundryWasherControls, NumberTemperatureControl, and LevelTemperatureControl, with dedicated PICS files. Patch <code>TC_WASHERCTRL_2_2</code> to omit its unencodable undefined-enum write while retaining its attribute, supported-list, valid-write, and readback coverage.</li>
+<li>[demoDevices]: Add all Chapter 12 and Chapter 13 device types, including the Robotic Vacuum Cleaner, every appliance device, composed refrigerator/freezer cabinets, four Cook Surface endpoints, and double-oven cabinets.</li>
 <li>[Closure]: Add the optional <code>ventilation</code>, <code>pedestrian</code>, and <code>calibration</code> options to the <code>Closure</code> constructor. Each option defaults to <code>false</code> and enables the corresponding ClosureControl feature when set to <code>true</code>. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.</li>
 <li>[WaterValve]: <code>MatterbridgeValveConfigurationAndControlServer</code> now implements the Matter 1.6 <code>ValveConfigurationAndControl</code> Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new <code>state.movementDuration</code>/<code>state.autoClose</code> (both disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
 <li>[WaterValve]: Add the optional <code>movementDuration</code> and <code>autoClose</code> parameters to <code>createDefaultValveConfigurationAndControlClusterServer()</code>, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.</li>
@@ -168,9 +222,13 @@
 <li>[OperationalState]: <code>MatterbridgeOperationalStateServer</code> now implements the Matter 1.6 <code>OperationalState</code> cluster&#39;s Pause/Resume compatibility tables, rejects Start with <code>UnableToStartOrResume</code> from the Error state, and emits the <code>OperationalError</code>/<code>OperationCompletion</code> events (<code>OperationCompletion</code>&#39;s <code>TotalOperationalTime</code>/<code>PausedTime</code> tracked across Start/Pause/Resume cycles).</li>
 <li>[OperationalState]: Add the optional <code>operationalStateList</code>, <code>operationalError</code>, <code>phaseList</code>, and <code>currentPhase</code> parameters to <code>createDefaultOperationalStateClusterServer()</code>.</li>
 <li>[Pump]: Add <code>MatterbridgePumpConfigurationAndControlServer</code>, synchronizing the <code>PumpConfigurationAndControl</code> cluster&#39;s <code>Speed</code> and <code>Capacity</code> attributes from the <code>OnOff</code>/<code>LevelControl</code> clusters per the Matter Device Library Pump device type clarifications (§5.5.5.1/§5.5.5.2): <code>CurrentLevel</code> maps to the setpoint percentage (Level 0 stops the pump, Level 1-200 is Level/2 percent, Level 201-255 is 100%), applied to <code>MaxConstSpeed</code> for <code>Speed</code> and expressed directly as <code>Capacity</code>; <code>OnOff.On</code> restores the last known <code>CurrentLevel</code>, falling back to <code>MaxLevel</code> if none is known yet. <code>createDefaultPumpConfigurationAndControlClusterServer()</code> also fills in reasonable medium-capacity-pump defaults (<code>MinConstSpeed</code>, <code>MaxConstSpeed</code>, <code>MaxPressure</code>, <code>MaxSpeed</code>, <code>MaxFlow</code>) for any physical limit left <code>null</code> by the caller.</li>
+<li>[Pump]: <code>MatterbridgePumpConfigurationAndControlServer</code> also mirrors <code>OperationMode</code> writes onto <code>EffectiveOperationMode</code> (§4.2.7.15), and rejects <code>OperationMode</code> writes with a <code>FAILURE</code> status while <code>PumpStatus.LocalOverride</code> is set (§4.2.6.1.3).</li>
+<li>[Pump]: <code>MatterbridgePumpConfigurationAndControlServer</code> forces <code>Speed</code>/<code>Capacity</code> to <code>MinConstSpeed</code>/<code>MaxConstSpeed</code> (§4.2.6.2) while <code>OperationMode</code> is Minimum/Maximum, independent of <code>LevelControl</code>; switching back to Normal restores the <code>LevelControl</code>-derived setpoint (§4.2.6.2.1).</li>
+<li>[endpoint]: Extend <code>createDefaultPowerTopologyClusterServer()</code> to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[docker]: Rename the <strong>24-ubuntu-slim</strong> base image and its Dockerfile, entrypoint, Docker ignore file, workflow, scripts, and documentation to <strong>node-ubuntu-slim</strong>.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.7.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.0.</li>
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.4.1.11.</li>
@@ -189,11 +247,20 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[Oven]: Expose and emit the mandatory Oven Cavity <code>OperationCompletion</code> event when an active oven operation is stopped, as required by Matter 1.6 Operational State §1.14.7.2 and Temperature Controlled Cabinet §13.4.5.</li>
+<li>[Oven]: Fully populate the Oven Cavity <code>OperationalStateList</code> with the mandatory <code>Paused</code> state, as required by Matter 1.6 Operational State §1.14.4.1 and Temperature Controlled Cabinet §13.4.5.</li>
+<li>[Oven]: Return <code>UnsupportedMode</code> with an empty status text when <code>OvenMode.ChangeToMode</code> requests a mode absent from <code>SupportedModes</code>, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.</li>
+<li>[Dishwasher]: Make <code>DishwasherMode.ChangeToMode</code> return <code>UnsupportedMode</code> for an unsupported mode, bind inherited Dishwasher Alarm attributes and <code>Notify</code> fields to the Dishwasher-specific <code>AlarmBitmap</code>, and advertise only the non-provisional <code>DoorError</code> alarm by default, as required by Matter 1.6.</li>
+<li>[Refrigerator]: Add <code>MatterbridgeRefrigeratorAlarmServer</code>, binding the inherited <code>Mask</code>, <code>State</code>, and <code>Supported</code> attributes and <code>Notify</code> event fields to the Refrigerator-specific <code>AlarmBitmap</code> so the <code>DoorOpen</code> bit is encoded correctly over Matter, as required by Matter 1.6 Refrigerator Alarm §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1.</li>
+<li>[LaundryWasher]: Reject a <code>SpinSpeedCurrent</code> value that is not a valid <code>SpinSpeeds</code> index with <code>CONSTRAINT_ERROR</code>, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.</li>
+<li>[LaundryWasher]: Return <code>UnsupportedMode</code> with an empty status text when <code>ChangeToMode</code> requests a mode absent from <code>SupportedModes</code>, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.</li>
+<li>[RoboticVacuumCleaner]: Refactor the RVC Run Mode, RVC Clean Mode, and RVC Operational State servers for Matter 1.6 conformance, including direct-mode-change restrictions, Pause/Resume compatibility, GoHome state handling, CountdownTime exposure, and the mandatory OperationCompletion event.</li>
 <li>[thread]: <code>checkUpdates</code> no longer checks the npm latest version for private plugins.</li>
+<li>[endpoint]: Fix <code>MatterbridgeCommodityPriceServer</code> to enable the optional <code>PriceChange</code> event (§ 9.9.8.1) so subscriptions to it succeed, and to omit the <code>Description</code>/<code>Components</code> fields from <code>CurrentPrice</code> (§ 9.9.6.3).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3106-2026-08-21">[3.10.6] - 2026-08-21</h2>
-<h3 id="development-breaking-changes">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-1">Development Breaking Changes</h3>
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
@@ -304,7 +371,7 @@
 <ul>
 <li>[instructions]: Add CHIP test and plugin frontend agents (Copilot, Claude and Codex) instruction files and update <a href="./README-DEV.html">Development Guide</a>.</li>
 </ul>
-<h3 id="development-breaking-changes-1">Development breaking changes</h3>
+<h3 id="development-breaking-changes-2">Development breaking changes</h3>
 <ul>
 <li>[onOff]: <code>MatterbridgeOnOffServer</code> now bakes in the Lighting feature, so always use <code>MatterbridgeOnOffServer.with()</code> instead of the bare class for endpoints created without the Lighting feature.</li>
 </ul>
@@ -417,7 +484,7 @@
 <ul>
 <li>[matter]: Bump <code>matter.js</code> to 0.17.5 and Matter to 1.6.0. See <a href="Matter-1.6.0.html">Matter 1.6.0 changes from 1.5.1</a> for delta from 1.5.1.</li>
 </ul>
-<h3 id="development-breaking-changes-2">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-3">Development Breaking changes</h3>
 <ul>
 <li>[endpoint]: Add <code>productLabel</code>, <code>productUrl</code> and <code>configurationVersion</code> parameters to the Basic Information creation methods. The default product labels are now <code>Matter Endpoint</code> and <code>Matter Bridged Endpoint</code>, and the default product URL is now <code>https://matterbridge.io</code>.</li>
 <li>[matter]: RainSensor, WaterFreezeDetector and WaterLeakDetector device types now require BooleanState ChangeEvent feature as mandatory.</li>
@@ -647,7 +714,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <ul>
 <li>[plugins]: A new plugin is now available <a href="https://github.com/Luligu/matterbridge-mqtt">matterbridge-mqtt</a>.</li>
 </ul>
-<h3 id="development-breaking-changes-3">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-4">Development Breaking Changes</h3>
 <ul>
 <li>[subscribeAttribute]: The <code>subscribeAttribute()</code> method is now synchronous and returns <code>MatterbridgeEndpoint</code> for chaining instead of <code>Promise&lt;boolean&gt;</code>.</li>
 <li>[conformance]: Remove from <code>onOffSwitch</code>, <code>dimmableSwitch</code> and <code>colorTemperatureSwitch</code> the extraneous cluster servers. The OnOff cluster server is still needed if you want Apple Home to show a switch and should be added manually with .createDefaultOnOffClusterServer().</li>
@@ -728,7 +795,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 <li>[matter]: Update to matter.js 0.17.1. See <a href="https://matterbridge.io/Matter.js-0.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
 <li>[matter]: Enable <code>tcp</code> transport with <code>udp</code> preference. If you override the default Matter port 5540, consider eventual port number collision for both udp and tcp protocols.</li>
 </ul>
-<h3 id="development-breaking-changes-4">Development Breaking changes</h3>
+<h3 id="development-breaking-changes-5">Development Breaking changes</h3>
 <ul>
 <li>[matterbridge]: Since this release upgrades matter to 1.5.1, it would be better to require matterbridge 3.8.0 in all plugins next release cause some changes in the plugin code will not be backward compatible.</li>
 <li>[endpoint]: Since the cluster clients have been added to each device type, instead of <code>addRequiredClusterServers()</code> call <code>addRequiredClusters()</code> (3.8.0 only) to add both required server clusters and required client clusters.</li>
@@ -843,7 +910,7 @@ or <code>@matterbridge/vitest-utils</code> instead.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="378-2026-05-09">[3.7.8] - 2026-05-09</h2>
-<h3 id="development-breaking-changes-5">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
 <ul>
 <li>[bin]: Remove mb-run bin. It will be replaced by mb-run package.</li>
 <li>[matter]: Add the matter.js renamed Semantic Tag Namespaces in <a href="Matter.js%200.17.html">Matter.js 0.17 changes from 0.16</a>.</li>
@@ -1610,7 +1677,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="340-2025-11-26">[3.4.0] - 2025-11-26</h2>
-<h3 id="development-breaking-changes-6">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
 <p>Removed the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.3.0).</li>
@@ -1641,7 +1708,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="338-2025-11-15">[3.3.8] - 2025-11-15</h2>
-<h3 id="development-breaking-changes-7">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
 <p>This will be the last release with the following long deprecated elements:</p>
 <ul>
 <li>[platform]: Matterbridge instead of PlatformMatterbridge in the platform constructor (deprecated since 3.0.0).</li>
@@ -2233,7 +2300,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="312-2025-07-06">[3.1.2] - 2025-07-06</h2>
-<h3 id="development-breaking-changes-8">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-9">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device. Refer to the <a href="README-DEV.html">documentation</a> for details on using mode.</li>
@@ -2250,7 +2317,7 @@ Node.js 23, like all odd-numbered versions, is not supported.</p>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">
 </a><h2 id="311-2025-07-04">[3.1.1] - 2025-07-04</h2>
-<h3 id="development-breaking-changes-9">Development Breaking Changes</h3>
+<h3 id="development-breaking-changes-10">Development Breaking Changes</h3>
 <ul>
 <li>[exports]: The single devices (i.e. Rvc, Evse etc...) are only exported from <code>matterbridge/devices</code>. Please update your imports to use the new export path. Refer to the <a href="README-DEV.html">documentation</a> for details on imports.</li>
 <li>[MatterbridgeEndpoint]: Added the mode property: <code>server</code> will make the device indipendent from its plugin. It has its own server node: QRCode, Fabrics and Sessions are visible in the Devices section of the Home page. This is a workaround for the Rvc Apple issue. With mode=server the Rvc (like any other device) can be paired directly to the controller like a native not bridged Matter device.</li>

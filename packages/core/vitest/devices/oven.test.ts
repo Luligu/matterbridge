@@ -10,12 +10,15 @@ const MATTER_CREATE_ONLY = true;
 
 import { CommonPositionTag } from '@matter/node';
 import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/node/behaviors';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { Identify } from '@matter/types/clusters/identify';
+import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -80,6 +83,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet1 = device.addCabinet('Oven Test Cabinet Top', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
     ]);
@@ -89,6 +93,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet2 = device.addCabinet(
       'Oven Test Cabinet Bottom',
       [{ mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label }],
@@ -112,6 +117,33 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.hasClusterServer(OvenMode.id)).toBeTruthy();
     expect(cabinet2.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
     expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+  });
+
+  test('add an oven cabinet with endpoint options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label }];
+    const configuredDevice = new Oven('Configured Oven', 'OV654321');
+    const configuredCabinet = configuredDevice.addCabinet('Configured Cabinet', {
+      id: 'ConfiguredCabinet',
+      number: EndpointNumber(13_09_1),
+      tagList,
+      currentMode: 1,
+      supportedModes: [{ label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] }],
+      targetTemperature: 200 * 100,
+      minTemperature: 50 * 100,
+      maxTemperature: 250 * 100,
+      step: 5 * 100,
+      currentTemperature: 25 * 100,
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      currentPhase: 0,
+      phaseList: ['pre-heating'],
+    });
+
+    expect(configuredCabinet.id).toBe('ConfiguredCabinet');
+    expect(configuredCabinet.number).toBe(EndpointNumber(13_09_1));
+    expect(configuredCabinet.tagList).toEqual(tagList);
+    expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: 25 * 100 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenModeServer)).toMatchObject({ currentMode: 1 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenCavityOperationalStateServer)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
   });
 
   test('add a oven device', async () => {
@@ -264,7 +296,7 @@ describe('Matterbridge ' + NAME, () => {
         'ovenCavityOperationalState(0x48).generatedCommandList(0xfff8)=[ 4 ]',
         "ovenCavityOperationalState(0x48).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
         'ovenCavityOperationalState(0x48).operationalState(0x4)=0',
-        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
+        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
         'ovenCavityOperationalState(0x48).phaseList(0x0)=null',
         'ovenMode(0x49).acceptedCommandList(0xfff9)=[ 0 ]',
         'ovenMode(0x49).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
@@ -356,7 +388,7 @@ describe('Matterbridge ' + NAME, () => {
         'ovenCavityOperationalState(0x48).generatedCommandList(0xfff8)=[ 4 ]',
         "ovenCavityOperationalState(0x48).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
         'ovenCavityOperationalState(0x48).operationalState(0x4)=0',
-        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
+        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
         "ovenCavityOperationalState(0x48).phaseList(0x0)=[ 'pre-heating', 'pre-heated', 'cooling down' ]",
         'ovenMode(0x49).acceptedCommandList(0xfff9)=[ 0 ]',
         'ovenMode(0x49).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
@@ -397,6 +429,7 @@ describe('Matterbridge ' + NAME, () => {
       operationalStateList: [
         { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
         { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
         { operationalStateId: OperationalState.OperationalStateEnum.Error },
       ],
       operationalState: OperationalState.OperationalStateEnum.Stopped,
@@ -412,6 +445,7 @@ describe('Matterbridge ' + NAME, () => {
       operationalStateList: [
         { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
         { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
         { operationalStateId: OperationalState.OperationalStateEnum.Error },
       ],
       operationalState: OperationalState.OperationalStateEnum.Running,
@@ -435,9 +469,10 @@ describe('Matterbridge ' + NAME, () => {
 
     // Change to mode 15
     vi.clearAllMocks();
-    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 15 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
-    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with invalid mode 15`);
+    const unsupportedResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenModeServer).changeToMode({ newMode: 15 }));
+    expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with unsupported mode 15`);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with unsupported mode 15`);
     loggerErrorSpy.mockClear();
   });
 
@@ -448,24 +483,38 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('start')).toBeTruthy();
     expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('pause')).toBeFalsy();
     expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('resume')).toBeFalsy();
+    expect(cabinet1.behaviors.elementsOf(MatterbridgeOvenCavityOperationalStateServer).events.has('operationCompletion')).toBeTruthy();
     expect((cabinet1 as any).state['ovenCavityOperationalState'].acceptedCommandList).toEqual([1, 2]);
     expect((cabinet1 as any).state['ovenCavityOperationalState'].generatedCommandList).toEqual([4]);
 
-    // Change to mode 2
-    vi.clearAllMocks();
-    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', { newMode: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
-    );
+    const operationCompletion = vi.fn();
+    cabinet1.eventsOf(MatterbridgeOvenCavityOperationalStateServer).operationCompletion.on(operationCompletion);
+    vi.useFakeTimers();
 
-    // Change to mode 15
-    vi.clearAllMocks();
-    await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.INFO,
-      `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,
-    );
+    try {
+      vi.clearAllMocks();
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', { newMode: 2 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.INFO,
+        `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
+      );
+
+      await vi.advanceTimersByTimeAsync(2000);
+      vi.clearAllMocks();
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.INFO,
+        `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,
+      );
+
+      // A repeated Stop does not complete the same operation again.
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(operationCompletion).toHaveBeenCalledTimes(1);
+    expect(operationCompletion.mock.calls[0][0]).toEqual({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime: 2, pausedTime: 0 });
   });
 
   test('start the server node', async () => {

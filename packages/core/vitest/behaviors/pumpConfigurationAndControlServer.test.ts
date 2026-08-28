@@ -308,4 +308,73 @@ describe('Server clusters and behaviors', () => {
     await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum);
     expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Maximum);
   });
+
+  test('should force Speed/Capacity to MinConstSpeed/MaxConstSpeed for Minimum/Maximum OperationMode, independent of LevelControl', async () => {
+    // §4.2.6.2 Minimum/Maximum Values: "run at the minimum/maximum possible speed", independent of the
+    // LevelControl-driven setpoint that only applies in Normal mode (§4.2.6.2.1). With minConstSpeed=1000,
+    // maxConstSpeed=3000: Minimum -> speed 1000, capacity round(1000/3000*100*200)=6667; Maximum -> speed
+    // 3000 (100%), capacity 20000.
+    const opSpeedPump = new MatterbridgeEndpoint(pump, { id: 'opSpeedPump' });
+    opSpeedPump.createDefaultIdentifyClusterServer();
+    opSpeedPump.createOnOffClusterServer();
+    opSpeedPump.behaviors.require(MatterbridgeLevelControlServer.with(), {
+      currentLevel: 0,
+      minLevel: 0,
+      maxLevel: 254,
+      onLevel: null,
+      options: { executeIfOff: false },
+    });
+    opSpeedPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
+    opSpeedPump.addRequiredClusterServers();
+    expect(await addDevice(aggregator, opSpeedPump)).toBeTruthy();
+
+    await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 120);
+    await flushAsync();
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
+
+    await opSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1000);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(6667);
+
+    await opSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
+
+    // A LevelControl change while Maximum has no effect on Speed/Capacity (level 42 -> 21% would otherwise
+    // give speed 630, capacity 4200 — clearly distinct from both Maximum's and Minimum's values above).
+    await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 42);
+    await flushAsync();
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
+
+    // Back to Normal: restores the LevelControl-derived setpoint for the CurrentLevel set while Maximum.
+    await opSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Normal);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(630);
+    expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(4200);
+  });
+
+  test('should report 0% Capacity for Minimum OperationMode when MaxConstSpeed/MaxSpeed are both unset', async () => {
+    // Minimum's Speed still reports MinConstSpeed even with no MaxConstSpeed/MaxSpeed to express it as a
+    // percentage of — Capacity falls back to 0% rather than dividing by zero.
+    const minNoMaxPump = new MatterbridgeEndpoint(pump, { id: 'minNoMaxPump' });
+    minNoMaxPump.createDefaultIdentifyClusterServer();
+    minNoMaxPump.createOnOffClusterServer();
+    minNoMaxPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
+    minNoMaxPump.addRequiredClusterServers();
+    expect(await addDevice(aggregator, minNoMaxPump)).toBeTruthy();
+
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed', null);
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'maxSpeed', null);
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(minNoMaxPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1000);
+    expect(minNoMaxPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
+
+    // MinConstSpeed unset too: Speed falls back to 0.
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'minConstSpeed', null);
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Normal);
+    await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
+    expect(minNoMaxPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
+    expect(minNoMaxPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
+  });
 });

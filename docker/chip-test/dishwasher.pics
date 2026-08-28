@@ -1,0 +1,31 @@
+# To run tests on the Dishwasher Mode and Dishwasher Alarm clusters --PICS is required
+# Matches the Dishwasher endpoint 1305.
+PICS_SDK_CI_ONLY=1
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+DISHM.S=1
+DISHM.C=0
+DISHM.S.A0000=1 # SupportedModes
+DISHM.S.A0001=1 # CurrentMode
+DISHM.S.C00.Rsp=1 # ChangeToMode
+DISHM.S.C01.Tx=1 # ChangeToModeResponse
+DISHM.S.M.CAN_MANUALLY_CONTROLLED=1
+DISHM.S.M.CAN_TEST_MODE_FAILURE=0
+
+DISHALM.S=1
+DISHALM.C=0
+DISHALM.S.F00=0 # Reset
+DISHALM.S.A0000=1 # Mask
+DISHALM.S.A0001=0 # Latch
+DISHALM.S.A0002=1 # State
+DISHALM.S.A0003=1 # Supported
+DISHALM.S.C00.Rsp=0 # Reset
+DISHALM.S.E00=1 # Notify
+DISHALM.S.M.InflowAlarmSupported=0
+DISHALM.S.M.DrainAlarmSupported=0
+DISHALM.S.M.DoorAlarmSupported=1
+DISHALM.S.M.TempLowAlarmSupported=0
+DISHALM.S.M.TempHighAlarmSupported=0
+DISHALM.S.M.WaterLevelAlarmSupported=0
+DISHALM.S.M.ManuallyControlled=0

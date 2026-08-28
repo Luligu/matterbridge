@@ -31,17 +31,66 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.10.7] - Dev branch
+## [3.10.7] - 2026-08-28
+
+### Development Breaking Changes
+
+- [RoboticVacuumCleaner]: The constructor now accepts a `RoboticVacuumCleanerOptions` object as its third parameter, consolidating `mode`, RVC mode, operational-state, service-area, `id`, `number`, and `tagList` configuration. The legacy positional parameter shape remains supported but is deprecated; update calls to `new RoboticVacuumCleaner(name, serial, { ...options })`.
+- [Appliances]: All Chapter 13 appliance constructors now accept an options object for endpoint and initial cluster configuration, including `mode`, `id`, `number`, and `tagList`. Existing defaults and two-argument `name, serial` construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:
+  - `new LaundryWasher(name, serial, currentMode, ...)`; use `new LaundryWasher(name, serial, { ...options })`.
+  - `new Refrigerator(name, serial, currentMode, ...)`; use `new Refrigerator(name, serial, { ...options })`.
+  - `new Dishwasher(name, serial, currentMode, ...)`; use `new Dishwasher(name, serial, { ...options })`.
+  - `new LaundryDryer(name, serial, currentMode, ...)`; use `new LaundryDryer(name, serial, { ...options })`.
+  - `new ExtractorHood(name, serial, hepaCondition, ...)`; use `new ExtractorHood(name, serial, { ...options })`.
+  - `new MicrowaveOven(name, serial, currentMode, ...)`; use `new MicrowaveOven(name, serial, { ...options })`.
+  - `Refrigerator.addCabinet(name, tagList, ...)`; use `Refrigerator.addCabinet(name, { ...options })`.
+  - `Oven.addCabinet(name, tagList, ...)`; use `Oven.addCabinet(name, { ...options })`.
+  - `Cooktop.addSurface(name, tagList, ...)`; use `Cooktop.addSurface(name, { ...options })`.
+- [Energy devices]: The Chapter 14 EVSE and energy-device constructors now accept an options object for endpoint and initial cluster configuration, including `mode`, `id`, `number`, and `tagList`. Existing defaults and two-argument `name, serial` construction are preserved. The following legacy positional configuration signatures remain supported but are deprecated:
+  - `new Evse(name, serial, currentMode, ...)`; use `new Evse(name, serial, { ...options })`.
+  - `new WaterHeater(name, serial, waterTemperature, ...)`; use `new WaterHeater(name, serial, { ...options })`.
+  - `new SolarPower(name, serial, voltage, ...)`; use `new SolarPower(name, serial, { ...options })`.
+  - `new BatteryStorage(name, serial, batPercentRemaining, ...)`; use `new BatteryStorage(name, serial, { ...options })`.
+  - `new HeatPump(name, serial, voltage, ...)`; use `new HeatPump(name, serial, { ...options })`.
 
 ### Development News
 
-- [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `Closure` device type and `ClosureControl` clusters.
-- [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `WaterValve` device type and the `ValveConfigurationAndControl` cluster.
+- [chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the `EnergyEvse` cluster.
+- [chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the `EnergyEvseMode` cluster.
+- [chip]: Electrical Utility Meter endpoint 1409 CHIP conformance is green ✅ for the automated harness tests covering the `MeterIdentification` cluster.
+- [chip]: Electrical Meter endpoint 14091 CHIP conformance is green ✅ for the automated harness tests covering the `CommodityMetering` cluster.
+- [chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CommodityPrice` cluster.
+- [chip]: Electrical Energy Tariff endpoint 14092 CHIP conformance is green ✅ for all automated harness tests covering the `CommodityTariff` cluster.
+- [chip]: PowerTopology endpoints 206, 2061, 2062, and 2063 CHIP conformance is green ✅ for all automated harness tests covering the `PowerTopology` cluster.
+- [chip]: MicrowaveOven endpoint 1311 CHIP conformance is green ✅ for all automated harness tests covering the `MicrowaveOvenMode` and `MicrowaveOvenControl` clusters.
+- [chip]: ExtractorHood endpoint 1310 CHIP conformance is green ✅ for all automated harness tests covering the base `FanControl`, `HepaFilterMonitoring`, and `ActivatedCarbonFilterMonitoring` clusters.
+- [chip]: Oven Cabinet endpoint 13091 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OvenMode` and `OvenCavityOperationalState` clusters.
+- [chip]: Cooktop endpoint 1308 CHIP conformance is green ✅ for all applicable automated harness tests covering the `OffOnlyOnOff` and `FixedLabel` clusters.
+- [chip]: LaundryDryer endpoint 1306 CHIP conformance is green ✅ for all applicable automated harness tests covering the `LaundryDryerControls` cluster.
+- [chip]: Dishwasher endpoint 1305 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DishwasherMode` and `DishwasherAlarm` clusters.
+- [chip]: Refrigerator endpoint 1302 CHIP conformance is green ✅ for all applicable automated harness tests covering the `RefrigeratorAndTemperatureControlledCabinetMode` and `RefrigeratorAlarm` clusters.
+- [chip]: LaundryWasher endpoint 1301 CHIP conformance is green ✅ for the automated harness tests covering the `LaundryWasherMode` cluster.
+- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcRunMode` cluster.
+- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcCleanMode` cluster.
+- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `RvcOperationalState` cluster.
+- [chip]: RoboticVacuumCleaner endpoint 1201 CHIP conformance is green ✅ for the automated harness tests covering the `ServiceArea` cluster.
+- [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
+- [chip]: WaterValve endpoint 506 CHIP conformance is green ✅ for the automated harness tests covering the `ValveConfigurationAndControl` cluster.
 - [chip]: IrrigationSystem endpoint 507 CHIP conformance is green ✅ for the automated harness tests covering the `OperationalState` cluster.
 - [chip]: Pump endpoint 505 CHIP conformance is green ✅ for the automated harness tests covering the `PumpConfigurationAndControl` cluster.
 
 ### Added
 
+- [chip]: Add all applicable Matter 1.6 EnergyEvse and EnergyEvseMode tests for endpoint 1401, with dedicated PICS; patch `TC_EEVSE_2_2` so its `UserMaximumChargeCurrent` write targets the configured EVSE endpoint instead of the upstream test's hardcoded endpoint 1.
+- [chip]: Add all seven Matter 1.6 Oven Mode and Oven Cavity Operational State tests for Oven Cabinet endpoint 13091 with dedicated PICS and documented applicability and conformance findings.
+- [chip]: Add all Matter 1.6 OnOff and Fixed Label tests for Cooktop endpoint 1308 with dedicated PICS; patch the generic OnOff primary and OffOnly tests so their command guards correctly exercise an OffOnly server.
+- [chip]: Add the Matter 1.6 Laundry Dryer Controls server test for endpoint 1306 with dedicated PICS; patch its unencodable undefined-enum write while retaining attribute, supported-list, valid-write, readback, and applicable state coverage.
+- [chip]: Add all nine Matter 1.6 Dishwasher Mode and Dishwasher Alarm server tests for endpoint 1305, with dedicated PICS and app-pipe mode-transition control.
+- [chip]: Add all Refrigerator Mode and Refrigerator Alarm server tests for endpoint 1302, with dedicated PICS and automated door-state/Notify-event control for `TC_REFALM_2_2`.
+- [LaundryWasher]: Add `MatterbridgeLaundryWasherControlsServer` with Matter 1.6-compliant `SpinSpeedCurrent` write validation for the Spin and Rinse feature combination.
+- [demoDevices]: Add a second Laundry Washer device exposing `TemperatureControl` with the `TemperatureNumber` and `TemperatureStep` features, alongside the existing `TemperatureLevel` washer.
+- [chip]: Add all applicable Laundry Washer server tests for DeadFrontOnOff, LaundryWasherMode, LaundryWasherControls, NumberTemperatureControl, and LevelTemperatureControl, with dedicated PICS files. Patch `TC_WASHERCTRL_2_2` to omit its unencodable undefined-enum write while retaining its attribute, supported-list, valid-write, and readback coverage.
+- [demoDevices]: Add all Chapter 12 and Chapter 13 device types, including the Robotic Vacuum Cleaner, every appliance device, composed refrigerator/freezer cabinets, four Cook Surface endpoints, and double-oven cabinets.
 - [Closure]: Add the optional `ventilation`, `pedestrian`, and `calibration` options to the `Closure` constructor. Each option defaults to `false` and enables the corresponding ClosureControl feature when set to `true`. The Calibration feature also adds the Calibrate command forwarder and conformant Calibrating state behavior.
 - [WaterValve]: `MatterbridgeValveConfigurationAndControlServer` now implements the Matter 1.6 `ValveConfigurationAndControl` Open/Close state machine (TargetState/TargetLevel/RemainingDuration transitions, fault handling) and can simulate the Open/Close movement duration and RemainingDuration countdown/auto-close, opt-in via the new `state.movementDuration`/`state.autoClose` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
 - [WaterValve]: Add the optional `movementDuration` and `autoClose` parameters to `createDefaultValveConfigurationAndControlClusterServer()`, to enable the built-in Open/Close movement and RemainingDuration auto-close simulation for endpoints with no real device implementation managing the valve.
@@ -51,9 +100,12 @@ If you like this project and find it useful, please consider giving it a star on
 - [Pump]: Add `MatterbridgePumpConfigurationAndControlServer`, synchronizing the `PumpConfigurationAndControl` cluster's `Speed` and `Capacity` attributes from the `OnOff`/`LevelControl` clusters per the Matter Device Library Pump device type clarifications (§5.5.5.1/§5.5.5.2): `CurrentLevel` maps to the setpoint percentage (Level 0 stops the pump, Level 1-200 is Level/2 percent, Level 201-255 is 100%), applied to `MaxConstSpeed` for `Speed` and expressed directly as `Capacity`; `OnOff.On` restores the last known `CurrentLevel`, falling back to `MaxLevel` if none is known yet. `createDefaultPumpConfigurationAndControlClusterServer()` also fills in reasonable medium-capacity-pump defaults (`MinConstSpeed`, `MaxConstSpeed`, `MaxPressure`, `MaxSpeed`, `MaxFlow`) for any physical limit left `null` by the caller.
 - [Pump]: `MatterbridgePumpConfigurationAndControlServer` also mirrors `OperationMode` writes onto `EffectiveOperationMode` (§4.2.7.15), and rejects `OperationMode` writes with a `FAILURE` status while `PumpStatus.LocalOverride` is set (§4.2.6.1.3).
 - [doorLock]: Add `DoorLock.Feature.WeekDayAccessSchedules`, `YearDayAccessSchedules` and `HolidaySchedules` support to `MatterbridgeDoorLockServer`: `setWeekDaySchedule`/`getWeekDaySchedule`/`clearWeekDaySchedule`, `setYearDaySchedule`/`getYearDaySchedule`/`clearYearDaySchedule` and `setHolidaySchedule`/`getHolidaySchedule`/`clearHolidaySchedule` now forward to the Matterbridge command handler before delegating to the built-in schedule store, mirroring the existing `setUser`/`getUser` pattern. Add `createScheduleDoorLockClusterServer()` to `MatterbridgeEndpoint`, mirroring `createUserPinDoorLockClusterServer()` (#612). Thanks Ludovic BOUÉ.
+- [Pump]: `MatterbridgePumpConfigurationAndControlServer` forces `Speed`/`Capacity` to `MinConstSpeed`/`MaxConstSpeed` (§4.2.6.2) while `OperationMode` is Minimum/Maximum, independent of `LevelControl`; switching back to Normal restores the `LevelControl`-derived setpoint (§4.2.6.2.1).
+- [endpoint]: Extend `createDefaultPowerTopologyClusterServer()` to configure NodeTopology, TreeTopology, SetTopology, and DynamicPowerFlow with available and active endpoint lists.
 
 ### Changed
 
+- [docker]: Rename the **24-ubuntu-slim** base image and its Dockerfile, entrypoint, Docker ignore file, workflow, scripts, and documentation to **node-ubuntu-slim**.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.7.
 - [matterbridge]: Bump `@types/bun` to v.1.4.0.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.4.1.11.
@@ -72,7 +124,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [Oven]: Expose and emit the mandatory Oven Cavity `OperationCompletion` event when an active oven operation is stopped, as required by Matter 1.6 Operational State §1.14.7.2 and Temperature Controlled Cabinet §13.4.5.
+- [Oven]: Fully populate the Oven Cavity `OperationalStateList` with the mandatory `Paused` state, as required by Matter 1.6 Operational State §1.14.4.1 and Temperature Controlled Cabinet §13.4.5.
+- [Oven]: Return `UnsupportedMode` with an empty status text when `OvenMode.ChangeToMode` requests a mode absent from `SupportedModes`, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.
+- [Dishwasher]: Make `DishwasherMode.ChangeToMode` return `UnsupportedMode` for an unsupported mode, bind inherited Dishwasher Alarm attributes and `Notify` fields to the Dishwasher-specific `AlarmBitmap`, and advertise only the non-provisional `DoorError` alarm by default, as required by Matter 1.6.
+- [Refrigerator]: Add `MatterbridgeRefrigeratorAlarmServer`, binding the inherited `Mask`, `State`, and `Supported` attributes and `Notify` event fields to the Refrigerator-specific `AlarmBitmap` so the `DoorOpen` bit is encoded correctly over Matter, as required by Matter 1.6 Refrigerator Alarm §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1.
+- [LaundryWasher]: Reject a `SpinSpeedCurrent` value that is not a valid `SpinSpeeds` index with `CONSTRAINT_ERROR`, as required by Matter 1.6 Laundry Washer Controls §8.6.6.2.
+- [LaundryWasher]: Return `UnsupportedMode` with an empty status text when `ChangeToMode` requests a mode absent from `SupportedModes`, as required by Matter 1.6 Mode Base §1.10.7.1.1 and §1.10.7.2.
+- [RoboticVacuumCleaner]: Refactor the RVC Run Mode, RVC Clean Mode, and RVC Operational State servers for Matter 1.6 conformance, including direct-mode-change restrictions, Pause/Resume compatibility, GoHome state handling, CountdownTime exposure, and the mandatory OperationCompletion event.
 - [thread]: `checkUpdates` no longer checks the npm latest version for private plugins.
+- [endpoint]: Fix `MatterbridgeCommodityPriceServer` to enable the optional `PriceChange` event (§ 9.9.8.1) so subscriptions to it succeed, and to omit the `Description`/`Components` fields from `CurrentPrice` (§ 9.9.6.3).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

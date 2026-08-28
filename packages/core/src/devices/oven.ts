@@ -3,7 +3,7 @@
  * @description This file contains the Oven class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,11 +21,13 @@
  * limitations under the License.
  */
 
+/* oxlint-disable typescript/no-namespace */
+
 // @matter
 import type { MaybePromise } from '@matter/general';
 import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
 import { OvenModeServer } from '@matter/node/behaviors/oven-mode';
-import type { Semtag } from '@matter/types';
+import type { EndpointNumber, Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
@@ -38,6 +40,54 @@ import { oven, powerSource, temperatureControlledCabinetHeater } from '../matter
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createNumberTemperatureControlClusterServer } from './temperatureControl.js';
 
+const MatterbridgeOvenCavityOperationalStateServerBase = OvenCavityOperationalStateServer.enable({ events: { operationCompletion: true } });
+
+/**
+ * Options for configuring an {@link Oven} endpoint.
+ */
+export interface OvenOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+}
+
+/**
+ * Options for configuring a heated Temperature Controlled Cabinet child endpoint.
+ */
+export interface OvenCabinetOptions {
+  /** Stable storage key for the endpoint. Defaults to the cabinet name. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList: Semtag[];
+  /** Initial oven mode. Defaults to 2 (Convection). */
+  currentMode?: number;
+  /** Supported oven modes. Defaults to the standard oven mode set. */
+  supportedModes?: OvenMode.ModeOption[];
+  /** Target temperature in hundredths of a degree Celsius. Defaults to 18000 (180°C). */
+  targetTemperature?: number;
+  /** Minimum temperature in hundredths of a degree Celsius. Defaults to 3000 (30°C). */
+  minTemperature?: number;
+  /** Maximum temperature in hundredths of a degree Celsius. Defaults to 30000 (300°C). */
+  maxTemperature?: number;
+  /** Temperature step in hundredths of a degree Celsius. Defaults to 1000 (10°C). */
+  step?: number;
+  /** Current temperature in hundredths of a degree Celsius. Defaults to 2000 (20°C). */
+  currentTemperature?: number;
+  /** Initial operational state. Defaults to Stopped. */
+  operationalState?: OperationalState.OperationalStateEnum;
+  /** Initial operational phase index. */
+  currentPhase?: number;
+  /** Supported operational phase names. */
+  phaseList?: string[];
+}
+
 /**
  * Matterbridge endpoint representing an oven device.
  */
@@ -47,6 +97,7 @@ export class Oven extends MatterbridgeEndpoint {
    *
    * @param {string} name - The name of the oven.
    * @param {string} serial - The serial number of the oven.
+   * @param {OvenOptions} [options] - Endpoint configuration.
    *
    * @remarks
    * 13.9 An oven represents a device that contains one or more cabinets, and optionally a single cooktop,
@@ -55,8 +106,13 @@ export class Oven extends MatterbridgeEndpoint {
    * An oven is always defined via endpoint composition.
    * - Use `addCabinet` to add one or more cabinets to the oven.
    */
-  constructor(name: string, serial: string) {
-    super([oven, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+  constructor(name: string, serial: string, options: OvenOptions = {}) {
+    super([oven, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Oven');
     this.createDefaultPowerSourceWiredClusterServer();
@@ -67,17 +123,7 @@ export class Oven extends MatterbridgeEndpoint {
    * Adds a Temperature Controlled Cabinet Heater to the oven.
    *
    * @param {string} name - The name of the cabinet.
-   * @param {Semtag[]} tagList - The tagList associated with the cabinet.
-   * @param {number} currentMode - The current mode of the cabinet. Defaults to 2 (which corresponds to 'Convection').
-   * @param {OvenMode.ModeOption[]} supportedModes - The supported modes of the cabinet. Defaults to a set of common oven modes.
-   * @param {number} targetTemperature - The selected temperature setpoint in degrees Celsius. Defaults to 180°C.
-   * @param {number} minTemperature - The minimum temperature for the cabinet. Defaults to 0°C.
-   * @param {number} maxTemperature - The maximum temperature for the cabinet. Defaults to 300°C.
-   * @param {number} step - The step size for temperature changes. Defaults to 10°C.
-   * @param {number} currentTemperature - The current temperature of the cabinet. Defaults to 20°C.
-   * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state of the cabinet. Defaults to Stopped.
-   * @param {number} [currentPhase] - Optional: the current phase of the cabinet.
-   * @param {string[]} [phaseList] - Optional: the list of phases for the cabinet.
+   * @param {OvenCabinetOptions} options - Endpoint, mode, temperature, and operational-state configuration.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the cabinet.
    *
@@ -85,11 +131,46 @@ export class Oven extends MatterbridgeEndpoint {
    * 13.4.1 A Temperature Controlled Cabinet Heater is a device that provides a heated space for warming food.
    * It is typically installed within an oven and can be used in conjunction with other heating elements.
    */
+  addCabinet(name: string, options: OvenCabinetOptions): MatterbridgeEndpoint;
+
+  /**
+   * Adds a cabinet using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link OvenCabinetOptions} object as the second argument instead.
+   */
+  // oxfmt-ignore
+  addCabinet(name: string, tagList: Semtag[], currentMode?: number, supportedModes?: OvenMode.ModeOption[], targetTemperature?: number, minTemperature?: number, maxTemperature?: number, step?: number, currentTemperature?: number, operationalState?: OperationalState.OperationalStateEnum, currentPhase?: number, phaseList?: string[]): MatterbridgeEndpoint;
+
   addCabinet(
     name: string,
-    tagList: Semtag[],
-    currentMode: number = 2,
-    supportedModes: OvenMode.ModeOption[] = [
+    optionsOrTagList: OvenCabinetOptions | Semtag[],
+    currentMode?: number,
+    supportedModes?: OvenMode.ModeOption[],
+    targetTemperature?: number,
+    minTemperature?: number,
+    maxTemperature?: number,
+    step?: number,
+    currentTemperature?: number,
+    operationalState?: OperationalState.OperationalStateEnum,
+    currentPhase?: number,
+    phaseList?: string[],
+  ): MatterbridgeEndpoint {
+    const options: OvenCabinetOptions = Array.isArray(optionsOrTagList)
+      ? {
+          tagList: optionsOrTagList,
+          currentMode,
+          supportedModes,
+          targetTemperature,
+          minTemperature,
+          maxTemperature,
+          step,
+          currentTemperature,
+          operationalState,
+          currentPhase,
+          phaseList,
+        }
+      : optionsOrTagList;
+    const configuredSupportedModes = options.supportedModes ?? [
       { label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] },
       { label: 'Convection', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Convection }] },
       { label: 'Grill', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Grill }] },
@@ -100,22 +181,24 @@ export class Oven extends MatterbridgeEndpoint {
       { label: 'Warming', mode: 8, modeTags: [{ value: OvenMode.ModeTag.Warming }] },
       { label: 'Proofing', mode: 9, modeTags: [{ value: OvenMode.ModeTag.Proofing }] },
       { label: 'Steam', mode: 10, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
-    ],
-    targetTemperature: number = 180 * 100,
-    minTemperature: number = 30 * 100,
-    maxTemperature: number = 300 * 100,
-    step: number = 10 * 100,
-    currentTemperature: number = 20 * 100, // Default to 20.00 degrees Celsius
-    operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
-    currentPhase?: number,
-    phaseList?: string[],
-  ): MatterbridgeEndpoint {
-    const cabinet = this.addChildDeviceType(name, temperatureControlledCabinetHeater, { tagList });
+    ];
+    const cabinet = this.addChildDeviceType(options.id ?? name, temperatureControlledCabinetHeater, { number: options.number, tagList: options.tagList });
     cabinet.log.logName = name;
-    createNumberTemperatureControlClusterServer(cabinet, targetTemperature, minTemperature, maxTemperature, step);
-    cabinet.createDefaultTemperatureMeasurementClusterServer(currentTemperature);
-    this.createDefaultOvenModeClusterServer(cabinet, currentMode, supportedModes);
-    this.createDefaultOvenCavityOperationalStateClusterServer(cabinet, operationalState, currentPhase, phaseList);
+    createNumberTemperatureControlClusterServer(
+      cabinet,
+      options.targetTemperature ?? 180 * 100,
+      options.minTemperature ?? 30 * 100,
+      options.maxTemperature ?? 300 * 100,
+      options.step ?? 10 * 100,
+    );
+    cabinet.createDefaultTemperatureMeasurementClusterServer(options.currentTemperature ?? 20 * 100);
+    this.createDefaultOvenModeClusterServer(cabinet, options.currentMode ?? 2, configuredSupportedModes);
+    this.createDefaultOvenCavityOperationalStateClusterServer(
+      cabinet,
+      options.operationalState ?? OperationalState.OperationalStateEnum.Stopped,
+      options.currentPhase,
+      options.phaseList,
+    );
     return cabinet;
   }
 
@@ -153,6 +236,9 @@ export class Oven extends MatterbridgeEndpoint {
    * @remarks
    * For this derived cluster, only these pre-defined strings may be used in the PhaseList attribute:
    * "pre-heating", "pre-heated", and "cooling down".
+   * Matter 1.6 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
+   * mandatory OperationalStateEnum values. Device Library Specification §13.4.5 requires the Temperature
+   * Controlled Cabinet device type's OperationalStateList to be fully populated.
    */
   // oxfmt-ignore
   createDefaultOvenCavityOperationalStateClusterServer(endpoint: MatterbridgeEndpoint, operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped, currentPhase?: number, phaseList?: string[]): MatterbridgeEndpoint {
@@ -162,6 +248,7 @@ export class Oven extends MatterbridgeEndpoint {
       operationalStateList: [
         { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
         { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
         { operationalStateId: OperationalState.OperationalStateEnum.Error },
       ],
       operationalState,
@@ -186,6 +273,10 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
   /**
    * Handles the OvenMode `ChangeToMode` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1 requires `UnsupportedMode` when `NewMode` does not
+   * match any `SupportedModes` entry. Section 1.10.7.2 requires an empty `StatusText` for `UnsupportedMode`.
+   *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
@@ -199,8 +290,8 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
       this.state.currentMode = request.newMode;
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
     } else {
-      device.log.error(`MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with invalid mode ${request.newMode}`);
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+      device.log.error(`MatterbridgeOvenModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with unsupported mode ${request.newMode}`);
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
   }
 }
@@ -209,7 +300,9 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
 /**
  * Oven cavity operational state server that initializes and updates operational state.
  */
-export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOperationalStateServer {
+export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOvenCavityOperationalStateServerBase {
+  declare protected internal: MatterbridgeOvenCavityOperationalStateServer.Internal;
+
   /**
    * Initializes operational state defaults.
    */
@@ -218,10 +311,18 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info('MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error');
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    super.initialize();
   }
 
   /**
    * Handles the OvenCavityOperationalState `Stop` command.
+   *
+   * @remarks
+   * Matter 1.6 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
+   * Controlled Cabinet exposes Oven Cavity Operational State. Application Cluster Specification §1.14.7.2
+   * recommends generating the event whenever the overall operation ends and defines its completion status and
+   * timing fields. A successful Stop ends the operation started by the initial Start command, so this method emits
+   * the event once and clears the stored start time. A repeated Stop does not emit another completion event.
    *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
@@ -230,6 +331,18 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info(
       `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Stopped and operational error to No error`,
     );
+    if (this.internal.operationStartedAt !== undefined) {
+      const totalOperationalTime = Math.round((Date.now() - this.internal.operationStartedAt) / 1000);
+      this.events.operationCompletion.emit(
+        {
+          completionErrorCode: this.state.operationalError.errorStateId,
+          totalOperationalTime,
+          pausedTime: 0,
+        },
+        this.context,
+      );
+      this.internal.operationStartedAt = undefined;
+    }
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
@@ -240,6 +353,11 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
   /**
    * Handles the OvenCavityOperationalState `Start` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.14.7.2.2 defines `TotalOperationalTime` from the initial
+   * Start command (or autonomous/manual start) until completion. Repeated Start commands therefore preserve the
+   * original start time.
+   *
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
   override start(): MaybePromise<OperationalState.OperationalCommandResponse> {
@@ -247,6 +365,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     device.log.info(
       `MatterbridgeOvenCavityOperationalStateServer: start (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called setting operational state to Running and operational error to No error`,
     );
+    this.internal.operationStartedAt ??= Date.now();
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     return {
@@ -254,3 +373,13 @@ export class MatterbridgeOvenCavityOperationalStateServer extends OvenCavityOper
     };
   }
 }
+
+/* v8 ignore start */
+export namespace MatterbridgeOvenCavityOperationalStateServer {
+  /** Internal timing state used to populate the mandatory OperationCompletion event. */
+  export class Internal extends MatterbridgeOvenCavityOperationalStateServerBase.Internal {
+    /** Wall-clock time at which the current operation began, or undefined when no operation is active. */
+    operationStartedAt: number | undefined;
+  }
+}
+/* v8 ignore stop */

@@ -93,7 +93,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.INFO,
       `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('device forEachAttribute', () => {
@@ -219,7 +222,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with invalid mode 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0`);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
@@ -246,6 +249,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a laundry dryer device with number temperature control', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
     device = new LaundryDryer('Laundry Dryer Test Device', 'LD123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('LaundryDryerTestDevice-LD123456');
@@ -266,7 +270,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.INFO,
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('invoke MatterbridgeNumberTemperatureControlServer commands', async () => {

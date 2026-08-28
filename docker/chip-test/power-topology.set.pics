@@ -1,0 +1,8 @@
+# PowerTopology SetTopology on CHIP ElectricalSensor endpoint 2062
+PWRTL.S=1
+PWRTL.S.F00=0 # NodeTopology
+PWRTL.S.F01=0 # TreeTopology
+PWRTL.S.F02=1 # SetTopology
+PWRTL.S.F03=0 # DynamicPowerFlow
+PWRTL.S.A0000=1 # AvailableEndpoints
+PWRTL.S.A0001=0 # ActiveEndpoints

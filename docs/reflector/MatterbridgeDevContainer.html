@@ -181,9 +181,11 @@
 docker network ls
 </code></pre>
 <h2 id="run-home-assistant-and-matter-server-in-docker-compose-with-docker-desktop">Run Home Assistant and Matter Server in Docker Compose with Docker Desktop</h2>
-<p>Will join the matterbridge bridge docker network.</p>
+<p>Will join the external <code>matterbridge</code> bridge docker network and use the external <code>homeassistant</code> and <code>matterserver</code> volumes. These volumes are shared across Compose projects and are not removed by <code>docker compose down</code>.</p>
 <p>The matterbridge-dev-container-docker-compose.yml is available <a href="https://matterbridge.io/reflector/matterbridge-dev-container-docker-compose.yml">here</a>.</p>
 <pre><code class="language-shell">docker network inspect matterbridge || docker network create --ipv6 matterbridge
+docker volume inspect homeassistant || docker volume create homeassistant
+docker volume inspect matterserver || docker volume create matterserver
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml down
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml pull
 docker compose -p matterbridge-dev-container -f matterbridge-dev-container-docker-compose.yml up -d --force-recreate

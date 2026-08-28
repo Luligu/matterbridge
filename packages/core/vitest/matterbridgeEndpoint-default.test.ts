@@ -77,6 +77,7 @@ import {
   ValveConfigurationAndControl,
   WindowCovering,
 } from '@matter/types/clusters';
+import { EndpointNumber } from '@matter/types/datatype';
 import { flushAsync, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -2472,6 +2473,30 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(null);
     expect(device.getAttribute(ElectricalPowerMeasurement.id, 'voltage')).toBe(null);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('create PowerTopology cluster servers with all supported features', async () => {
+    const nodeDevice = new MatterbridgeEndpoint([electricalSensor], { id: 'NodeTopologyElectricalSensor' });
+    const treeDevice = new MatterbridgeEndpoint([electricalSensor], { id: 'TreeTopologyElectricalSensor' });
+    const setDevice = new MatterbridgeEndpoint([electricalSensor], { id: 'SetTopologyElectricalSensor' });
+    const dynamicDevice = new MatterbridgeEndpoint([electricalSensor], { id: 'DynamicPowerFlowElectricalSensor' });
+    const availableEndpoints = [EndpointNumber(1), EndpointNumber(2)];
+    const activeEndpoints = [EndpointNumber(2)];
+
+    expect(nodeDevice.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology)).toBe(nodeDevice);
+    expect(treeDevice.createDefaultPowerTopologyClusterServer()).toBe(treeDevice);
+    expect(setDevice.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.SetTopology, availableEndpoints)).toBe(setDevice);
+    expect(dynamicDevice.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.DynamicPowerFlow, availableEndpoints, activeEndpoints)).toBe(dynamicDevice);
+
+    await add(setDevice);
+    await add(dynamicDevice);
+
+    expect(nodeDevice.hasAttributeServer(PowerTopology.id, 'availableEndpoints')).toBe(false);
+    expect(treeDevice.hasAttributeServer(PowerTopology.id, 'availableEndpoints')).toBe(false);
+    expect(setDevice.getAttribute(PowerTopology.id, 'availableEndpoints')).toEqual(availableEndpoints);
+    expect(setDevice.hasAttributeServer(PowerTopology.id, 'activeEndpoints')).toBe(false);
+    expect(dynamicDevice.getAttribute(PowerTopology.id, 'availableEndpoints')).toEqual(availableEndpoints);
+    expect(dynamicDevice.getAttribute(PowerTopology.id, 'activeEndpoints')).toEqual(activeEndpoints);
   });
 
   test('energy measurements for electricalSensor apparent', async () => {

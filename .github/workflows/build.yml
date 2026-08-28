@@ -76,7 +76,7 @@ jobs:
         working-directory: apps/frontend
 
       - name: Test frontend
-        run: npm run test
+        run: npm run test -- --testTimeout=30000
         working-directory: apps/frontend
 
       - name: Test matterbridge

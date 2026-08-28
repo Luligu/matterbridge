@@ -1,8 +1,10 @@
-Chip tests run started at 2026-08-24T09:54:13.164Z
+Chip tests run started at 2026-08-28T07:03:32.971Z
 
-✅ PumpConfigurationAndControl attributes on Pump (Test_TC_PCC_2_1)
-✅ PumpConfigurationAndControl Operation Mode on Pump (Test_TC_PCC_2_2)
-✅ PumpConfigurationAndControl Control Mode on Pump (Test_TC_PCC_2_3)
-✅ PumpConfigurationAndControl Life Time Counters on Pump (Test_TC_PCC_2_4)
+✅ OperationalState attributes on IrrigationSystem (TC_OPSTATE_2_1.py)
+✅ OperationalState Start/Stop on IrrigationSystem (TC_OPSTATE_2_2.py)
+✅ OperationalState Pause/Resume on IrrigationSystem (TC_OPSTATE_2_3.py)
+✅ OperationalState OperationalError event on IrrigationSystem (TC_OPSTATE_2_4.py)
+✅ OperationalState OperationCompletion event on IrrigationSystem (TC_OPSTATE_2_5.py)
+✅ OperationalState CountdownTime reporting on IrrigationSystem (TC_OPSTATE_2_6.py)
 
-Summary: 4/4 tests passed.
+Summary: 6/6 tests passed.

@@ -3,7 +3,7 @@
  * @description This file contains the HeatPump class.
  * @author Luca Liguori
  * @created 2025-06-29
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -23,7 +23,9 @@
 
 // @matter
 import { CommonAreaNamespaceTag, CommonNumberTag, PowerSourceTag } from '@matter/node';
+import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
@@ -31,6 +33,30 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 import { deviceEnergyManagement, electricalSensor, heatPump, powerSource, temperatureSensor, thermostat } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
+
+/** Options for configuring a {@link HeatPump} endpoint. */
+export interface HeatPumpOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Voltage in millivolts. */
+  voltage?: number | bigint | null;
+  /** Current in milliamperes. */
+  current?: number | bigint | null;
+  /** Power in milliwatts. */
+  power?: number | bigint | null;
+  /** Imported energy in mWh. */
+  energyImported?: number | bigint | null;
+  /** Minimum electrical power in milliwatts. */
+  absMinPower?: number;
+  /** Maximum electrical power in milliwatts. */
+  absMaxPower?: number;
+}
 
 /**
  * Matterbridge endpoint representing a heat pump device.
@@ -56,27 +82,53 @@ export class HeatPump extends MatterbridgeEndpoint {
    * - The device energy management cluster is set to `esaType` as `SpaceHeating`, `esaCanGenerate` as `false`, and `esaState` as `Online`.
    * - The absolute minimum and maximum power values can be set to indicate the range of power consumption for the heat pump.
    */
+  constructor(name: string, serial: string, options?: HeatPumpOptions);
+
+  /** @deprecated Pass a {@link HeatPumpOptions} object as the third argument instead. */
   constructor(
     name: string,
     serial: string,
-    voltage: number | bigint | null = null,
+    voltage?: number | bigint | null,
+    current?: number | bigint | null,
+    power?: number | bigint | null,
+    energyImported?: number | bigint | null,
+    absMinPower?: number,
+    absMaxPower?: number,
+  );
+
+  constructor(
+    name: string,
+    serial: string,
+    optionsOrVoltage?: HeatPumpOptions | number | bigint | null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
     energyImported: number | bigint | null = null,
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
+    const options: HeatPumpOptions =
+      typeof optionsOrVoltage === 'object' && optionsOrVoltage !== null
+        ? optionsOrVoltage
+        : { voltage: optionsOrVoltage, current, power, energyImported, absMinPower, absMaxPower };
     super([heatPump, powerSource, electricalSensor, deviceEnergyManagement], {
-      tagList: [getSemtag(PowerSourceTag.Grid)],
-      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      tagList: options.tagList ?? [getSemtag(PowerSourceTag.Grid)],
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      mode: options.mode,
     });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Heat Pump')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energyImported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SpaceHeating, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultElectricalPowerMeasurementClusterServer(options.voltage ?? null, options.current ?? null, options.power ?? null)
+      .createImportedElectricalEnergyMeasurementClusterServer(options.energyImported ?? null)
+      .createDefaultDeviceEnergyManagementClusterServer(
+        DeviceEnergyManagement.EsaType.SpaceHeating,
+        false,
+        DeviceEnergyManagement.EsaState.Online,
+        options.absMinPower ?? 0,
+        options.absMaxPower ?? 0,
+      )
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
 

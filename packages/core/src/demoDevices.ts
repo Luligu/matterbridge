@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.0.0
+ * @version 1.5.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -22,53 +22,200 @@
  */
 
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
+/* oxlint-disable max-lines-per-function */
 /* oxlint-disable typescript/no-non-null-assertion */
 
-import { ClosureTag, ClosureWindowTag, CommonNumberTag } from '@matter/node';
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+import {
+  ClosureTag,
+  ClosureWindowTag,
+  CommodityTariffChronologyTag,
+  CommodityTariffCommodityTag,
+  CommodityTariffFlowTag,
+  CommonNumberTag,
+  CommonPositionTag,
+  ElectricalMeasurementTag,
+  PowerSourceTag,
+  RefrigeratorTag,
+} from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { PowerTopology } from '@matter/types/clusters/power-topology';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { EndpointNumber } from '@matter/types/datatype';
+import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
+import { getErrorMessage } from '@matterbridge/utils/error';
 
+import { AirConditioner } from './devices/airConditioner.js';
 import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
+import { BatteryStorage } from './devices/batteryStorage.js';
 import { CastingVideoClient } from './devices/castingVideoClient.js';
 import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
+import { Cooktop } from './devices/cooktop.js';
+import { Dishwasher } from './devices/dishwasher.js';
+import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
+import { Evse } from './devices/evse.js';
+import { ExtractorHood } from './devices/extractorHood.js';
+import { HeatPump } from './devices/heatPump.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
+import { LaundryDryer } from './devices/laundryDryer.js';
+import { LaundryWasher } from './devices/laundryWasher.js';
+import { MicrowaveOven } from './devices/microwaveOven.js';
+import { Oven } from './devices/oven.js';
+import { Refrigerator } from './devices/refrigerator.js';
+import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
+import { SolarPower } from './devices/solarPower.js';
 import { Speaker } from './devices/speaker.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
+import { WaterHeater } from './devices/waterHeater.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getSemtag } from './matterbridgeEndpointHelpers.js';
 
+const demoPluginName = 'matterbridge-demo-devices';
+const demoPluginType = 'DynamicPlatform';
+const demoPluginVersion = '1.0.0';
+
+const demoPluginSchema: PlatformSchema = {
+  title: 'Matterbridge Demo Devices',
+  description: `${demoPluginName} v. ${demoPluginVersion} by Matterbridge`,
+  type: 'object',
+  properties: {
+    name: {
+      'description': 'Plugin name',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
+    },
+    type: {
+      'description': 'Plugin type',
+      'type': 'string',
+      'readOnly': true,
+      'ui:widget': 'hidden',
+    },
+    version: {
+      'description': 'Plugin version',
+      'type': 'string',
+      'readOnly': true,
+      'default': demoPluginVersion,
+      'ui:widget': 'hidden',
+    },
+    whiteList: {
+      description: 'Only the devices in the list will be exposed. If the list is empty, all devices will be exposed.',
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      uniqueItems: true,
+      selectFrom: 'name',
+    },
+    blackList: {
+      description: 'The devices in the list will not be exposed. If the list is empty, no devices will be excluded.',
+      type: 'array',
+      items: { type: 'string' },
+      default: [],
+      uniqueItems: true,
+      selectFrom: 'name',
+    },
+    debug: {
+      description: 'Enable debug logging for the plugin.',
+      type: 'boolean',
+      default: false,
+    },
+    unregisterOnShutdown: {
+      description: 'Unregister all devices when the plugin is stopped.',
+      type: 'boolean',
+      default: false,
+    },
+  },
+};
+
 export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
-  if (matterbridge.bridgeMode !== 'bridge' || !matterbridge.serverNode || !matterbridge.aggregatorNode) return;
+  if (matterbridge.bridgeMode !== 'bridge') {
+    matterbridge.log.error('Demo devices can only be created in bridge mode');
+    return;
+  }
   const serverNode = matterbridge.serverNode;
   const aggregator = matterbridge.aggregatorNode;
   if (!serverNode || !aggregator) {
     matterbridge.log.error('Demo devices can only be created when the server node and aggregator node are available');
     return;
   }
+  const configFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.config.json`);
+  const schemaFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.schema.json`);
+  const defaultConfig: PlatformConfig = {
+    name: demoPluginName,
+    type: demoPluginType,
+    version: demoPluginVersion,
+    debug: false,
+    unregisterOnShutdown: false,
+    whiteList: [],
+    blackList: [],
+  };
+  let config = defaultConfig;
+  try {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const storedConfig = JSON.parse(await readFile(configFile, 'utf8')) as PlatformConfig;
+    config = {
+      ...defaultConfig,
+      ...storedConfig,
+      name: demoPluginName,
+      type: demoPluginType,
+      version: demoPluginVersion,
+      whiteList: Array.isArray(storedConfig.whiteList) ? storedConfig.whiteList : [],
+      blackList: Array.isArray(storedConfig.blackList) ? storedConfig.blackList : [],
+    };
+  } catch (error) {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') matterbridge.log.error(`Failed to read demo devices config ${configFile}: ${getErrorMessage(error)}`);
+  }
+  try {
+    await writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+    await writeFile(schemaFile, JSON.stringify(demoPluginSchema, null, 2), 'utf8');
+  } catch (error) {
+    matterbridge.log.error(`Failed to write demo devices config or schema: ${getErrorMessage(error)}`);
+  }
   let ep: MatterbridgeEndpoint | undefined;
   matterbridge.plugins.set({
-    name: 'matterbridge-demo-devices',
+    name: demoPluginName,
     path: '',
-    type: 'DynamicPlatform',
-    version: '1.0.0',
+    type: demoPluginType,
+    version: demoPluginVersion,
     description: 'Matterbridge demo devices',
     author: 'Matterbridge',
     enabled: false,
     private: true,
     registeredDevices: 0,
+    configJson: config,
+    schemaJson: demoPluginSchema,
+    hasWhiteList: true,
+    hasBlackList: true,
   });
 
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const whiteList = config.whiteList as string[];
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const blackList = config.blackList as string[];
+    if (blackList.includes(deviceName)) {
+      matterbridge.log.info(`Skipping demo device ${deviceName} because it is in the blacklist`);
+      return;
+    }
+    if (whiteList.length > 0 && !whiteList.includes(deviceName)) {
+      matterbridge.log.info(`Skipping demo device ${deviceName} because it is not in the whitelist`);
+      return;
+    }
     device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber);
     device.addRequiredClusters();
-    device.plugin = 'matterbridge-demo-devices';
-    await matterbridge.addBridgedEndpoint('matterbridge-demo-devices', device);
+    device.plugin = demoPluginName;
+    await matterbridge.addBridgedEndpoint(demoPluginName, device);
   };
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;
@@ -77,19 +224,28 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   // Chapter 2 - Utility Device Types
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensor', number: EndpointNumber(2_06) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.TreeTopology);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
   await registerDevice(ep, 'Electrical Sensor', 'UTILITY-02-06');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorImported', number: EndpointNumber(2_06_1) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createImportedElectricalEnergyMeasurementClusterServer(200_000_000);
   await registerDevice(ep, 'Electrical Sensor Imported', 'UTILITY-02-06-1');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorExported', number: EndpointNumber(2_06_2) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.SetTopology, [EndpointNumber(2_06), EndpointNumber(2_06_1)]);
   ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
   ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000);
   await registerDevice(ep, 'Electrical Sensor Exported', 'UTILITY-02-06-2');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorDynamic', number: EndpointNumber(2_06_3) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.DynamicPowerFlow, [EndpointNumber(2_06), EndpointNumber(2_06_1)], [EndpointNumber(2_06)]);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
+  await registerDevice(ep, 'Electrical Sensor Dynamic', 'UTILITY-02-06-3');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DeviceEnergyManagement')!, bridgedNode, powerSource], { id: 'DeviceEnergyManagement', number: EndpointNumber(2_07) });
   ep.createDefaultDeviceEnergyManagementClusterServer();
@@ -155,7 +311,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   // Pump has no Element Requirement for OnOff Feature Lighting (unlike the plug-in/lighting device types above),
   // so the addRequiredClusters() default (Lighting feature) would be non-conformant here — override with the
   // plain, featureless OnOff cluster server instead.
-  ep.createOnOffClusterServer();
+  ep.createOnOffClusterServer(false);
+  ep.createLevelControlClusterServer(0);
   await registerDevice(ep, 'Pump', 'ACTUATOR-05-05');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
@@ -481,5 +638,274 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(CommonNumberTag.Four)],
   }).addRequiredClusters();
   await registerDevice(ep, 'Aggregator', 'GENERIC-11-02');
+
+  // Chapter 12 - Robotic Device Types
+
+  ep = new RoboticVacuumCleaner('Robotic Vacuum Cleaner', 'ROBOTIC-12-01', {
+    id: 'RoboticVacuumCleaner',
+    number: EndpointNumber(12_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+    // The upstream automated RVC tests use the reference application's PIXIT mode numbering (Idle=0,
+    // Cleaning=1). Keep that test-facing numbering explicit here without changing the public class defaults.
+    currentRunMode: 0,
+    supportedRunModes: [
+      { label: 'Idle', mode: 0, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
+      { label: 'Cleaning', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+      { label: 'Mapping', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Mapping }] },
+      { label: 'SpotCleaning', mode: 3, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }, { value: RvcRunMode.ModeTag.Max }] },
+    ],
+    currentCleanMode: 1,
+    supportedCleanModes: [
+      { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+      { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+      { label: 'DeepClean', mode: 3, modeTags: [{ value: RvcCleanMode.ModeTag.DeepClean }] },
+    ],
+  });
+  await registerDevice(ep, 'Robotic Vacuum Cleaner', 'ROBOTIC-12-01');
+
+  // Chapter 13 - Appliances Device Types
+
+  ep = new LaundryWasher('Laundry Washer Level Temperature', 'APPLIANCE-13-01', {
+    id: 'LaundryWasher',
+    number: EndpointNumber(13_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Laundry Washer', 'APPLIANCE-13-01');
+
+  ep = new LaundryWasher('Laundry Washer Number Temperature', 'APPLIANCE-13-01-2', {
+    id: 'LaundryWasherNumberTemperature',
+    number: EndpointNumber(13_01_2),
+    tagList: [getSemtag(CommonNumberTag.Two)],
+    temperatureSetpoint: 40 * 100,
+    minTemperature: 30 * 100,
+    maxTemperature: 60 * 100,
+    step: 10 * 100,
+  });
+  await registerDevice(ep, 'Laundry Washer Number Temperature', 'APPLIANCE-13-01-2');
+
+  const refrigeratorDevice = new Refrigerator('Refrigerator', 'APPLIANCE-13-02', {
+    id: 'Refrigerator',
+    number: EndpointNumber(13_02),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  refrigeratorDevice
+    .addCabinet('Refrigerator Cabinet Top', {
+      id: 'RefrigeratorCabinetTop',
+      number: EndpointNumber(13_02_1),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(RefrigeratorTag.Refrigerator)],
+    })
+    .addRequiredClusters();
+  refrigeratorDevice
+    .addCabinet('Freezer Cabinet Bottom', {
+      id: 'FreezerCabinetBottom',
+      number: EndpointNumber(13_02_2),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(RefrigeratorTag.Freezer)],
+      targetTemperature: -20 * 100,
+      minTemperature: -30 * 100,
+      maxTemperature: 10 * 100,
+      step: 10 * 100,
+    })
+    .addRequiredClusters();
+  await registerDevice(refrigeratorDevice, 'Refrigerator', 'APPLIANCE-13-02');
+
+  ep = new AirConditioner('Air Conditioner', 'APPLIANCE-13-03', {
+    id: 'AirConditioner',
+    number: EndpointNumber(13_03),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Air Conditioner', 'APPLIANCE-13-03');
+
+  ep = new Dishwasher('Dishwasher', 'APPLIANCE-13-05', {
+    id: 'Dishwasher',
+    number: EndpointNumber(13_05),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Dishwasher', 'APPLIANCE-13-05');
+
+  ep = new LaundryDryer('Laundry Dryer', 'APPLIANCE-13-06', {
+    id: 'LaundryDryer',
+    number: EndpointNumber(13_06),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Laundry Dryer', 'APPLIANCE-13-06');
+
+  const cooktopDevice = new Cooktop('Cooktop', 'APPLIANCE-13-08', {
+    id: 'Cooktop',
+    number: EndpointNumber(13_08),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  cooktopDevice
+    .addSurface('Cook Surface Top Left', {
+      id: 'CookSurfaceTopLeft',
+      number: EndpointNumber(13_08_1),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(CommonPositionTag.Left)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Top Right', {
+      id: 'CookSurfaceTopRight',
+      number: EndpointNumber(13_08_2),
+      tagList: [getSemtag(CommonPositionTag.Top), getSemtag(CommonPositionTag.Right)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Bottom Left', {
+      id: 'CookSurfaceBottomLeft',
+      number: EndpointNumber(13_08_3),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(CommonPositionTag.Left)],
+    })
+    .addRequiredClusters();
+  cooktopDevice
+    .addSurface('Cook Surface Bottom Right', {
+      id: 'CookSurfaceBottomRight',
+      number: EndpointNumber(13_08_4),
+      tagList: [getSemtag(CommonPositionTag.Bottom), getSemtag(CommonPositionTag.Right)],
+    })
+    .addRequiredClusters();
+  await registerDevice(cooktopDevice, 'Cooktop', 'APPLIANCE-13-08');
+
+  const ovenDevice = new Oven('Oven', 'APPLIANCE-13-09', {
+    id: 'Oven',
+    number: EndpointNumber(13_09),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  ovenDevice
+    .addCabinet('Oven Cabinet Top', {
+      id: 'OvenCabinetTop',
+      number: EndpointNumber(13_09_1),
+      tagList: [getSemtag(CommonPositionTag.Top)],
+    })
+    .addRequiredClusters();
+  ovenDevice
+    .addCabinet('Oven Cabinet Bottom', {
+      id: 'OvenCabinetBottom',
+      number: EndpointNumber(13_09_2),
+      tagList: [getSemtag(CommonPositionTag.Bottom)],
+    })
+    .addRequiredClusters();
+  await registerDevice(ovenDevice, 'Oven', 'APPLIANCE-13-09');
+
+  ep = new ExtractorHood('Extractor Hood', 'APPLIANCE-13-10', {
+    id: 'ExtractorHood',
+    number: EndpointNumber(13_10),
+    tagList: [getSemtag(CommonNumberTag.One)],
+    hepaCondition: 30,
+    hepaChangeIndication: ResourceMonitoring.ChangeIndication.Warning,
+    hepaLastChangedTime: 1_735_689_600,
+    hepaReplacementProductList: [
+      {
+        productIdentifierType: ResourceMonitoring.ProductIdentifierType.Upc,
+        productIdentifierValue: '012345678905',
+      },
+    ],
+    activatedCarbonCondition: 30,
+    activatedCarbonChangeIndication: ResourceMonitoring.ChangeIndication.Warning,
+    activatedCarbonLastChangedTime: 1_735_689_600,
+    activatedCarbonReplacementProductList: [
+      {
+        productIdentifierType: ResourceMonitoring.ProductIdentifierType.Ean,
+        productIdentifierValue: '4006381333931',
+      },
+    ],
+  });
+  await registerDevice(ep, 'Extractor Hood', 'APPLIANCE-13-10');
+
+  ep = new MicrowaveOven('Microwave Oven', 'APPLIANCE-13-11', {
+    id: 'MicrowaveOven',
+    number: EndpointNumber(13_11),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Microwave Oven', 'APPLIANCE-13-11');
+
+  // Chapter 14 - Energy Device Types
+
+  ep = new Evse('EVSE', 'ENERGY-14-01', {
+    id: 'Evse',
+    number: EndpointNumber(14_01),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'EVSE', 'ENERGY-14-01');
+
+  ep = new WaterHeater('Water Heater', 'ENERGY-14-02', {
+    id: 'WaterHeater',
+    number: EndpointNumber(14_02),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Water Heater', 'ENERGY-14-02');
+
+  ep = new SolarPower('Solar Power', 'ENERGY-14-03', {
+    id: 'SolarPower',
+    number: EndpointNumber(14_03),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Solar Power', 'ENERGY-14-03');
+
+  ep = new BatteryStorage('Battery Storage', 'ENERGY-14-04', {
+    id: 'BatteryStorage',
+    number: EndpointNumber(14_04),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Battery Storage', 'ENERGY-14-04');
+
+  ep = new HeatPump('Heat Pump', 'ENERGY-14-05', {
+    id: 'HeatPump',
+    number: EndpointNumber(14_05),
+    tagList: [getSemtag(CommonNumberTag.One)],
+  });
+  await registerDevice(ep, 'Heat Pump', 'ENERGY-14-05');
+
+  const electricalUtilityMeterEndpoint = new ElectricalUtilityMeter('Electrical Utility Meter', 'ENERGY-14-09', {
+    id: 'ElectricalUtilityMeter',
+    number: EndpointNumber(14_09),
+    tagList: [getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
+  });
+  electricalUtilityMeterEndpoint.addElectricalMeter('Electrical Meter', {
+    id: 'ElectricalMeter',
+    number: EndpointNumber(14_09_1),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Device Library Specification § 14.9.6.1 (Basic Utility Meter, Figure 30): optional endpoint, sibling of the
+  // meter endpoint, representing the upcoming import tariff for grid power.
+  electricalUtilityMeterEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Upcoming', {
+    id: 'ElectricalEnergyTariffUpcoming',
+    number: EndpointNumber(14_09_2),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  await registerDevice(electricalUtilityMeterEndpoint, 'Electrical Utility Meter', 'ENERGY-14-09');
+
+  // Device Library Specification § 14.9.6.2 (Separate EV Rate, Figure 32): building on the basic topology
+  // (§ 14.9.6.1), a second Electrical Utility Meter device keeps the grid meter (+ its optional upcoming tariff)
+  // and adds a separate EV meter (+ its optional upcoming tariff) for a separate EV charging rate.
+  const electricalUtilityMeterEvEndpoint = new ElectricalUtilityMeter('Electrical Utility Meter Ev', 'ENERGY-14-10', {
+    id: 'ElectricalUtilityMeterEv',
+    number: EndpointNumber(14_10),
+    tagList: [getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
+  });
+  electricalUtilityMeterEvEndpoint.addElectricalMeter('Electrical Meter', {
+    id: 'ElectricalMeter',
+    number: EndpointNumber(14_10_1),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Optional endpoint, sibling of the grid meter endpoint, representing the upcoming import tariff for grid power.
+  electricalUtilityMeterEvEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Upcoming', {
+    id: 'ElectricalEnergyTariffUpcoming',
+    number: EndpointNumber(14_10_2),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  electricalUtilityMeterEvEndpoint.addElectricalMeter('Electrical Meter Ev', {
+    id: 'ElectricalMeterEv',
+    number: EndpointNumber(14_10_3),
+    energyTariff: {},
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Ev), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
+  });
+  // Optional endpoint, sibling of the EV meter endpoint, representing the upcoming EV charging tariff.
+  electricalUtilityMeterEvEndpoint.addElectricalEnergyTariff('Electrical Energy Tariff Ev Upcoming', {
+    id: 'ElectricalEnergyTariffEvUpcoming',
+    number: EndpointNumber(14_10_4),
+    tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Ev), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
+  });
+  await registerDevice(electricalUtilityMeterEvEndpoint, 'Electrical Utility Meter Ev', 'ENERGY-14-10');
 }
 // v8 ignore end

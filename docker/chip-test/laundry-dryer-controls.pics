@@ -1,0 +1,11 @@
+# To run tests on the Laundry Dryer Controls cluster --PICS is required
+# Matches the Laundry Dryer endpoint 1306.
+PICS_SDK_CI_ONLY=1
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+DRYERCTRL.S=1
+DRYERCTRL.C=0
+DRYERCTRL.S.A0000=1 # SupportedDrynessLevels
+DRYERCTRL.S.A0001=1 # SelectedDrynessLevel
+DRYERCTRL.S.M.ManuallyControlled=0

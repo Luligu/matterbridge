@@ -89,7 +89,7 @@ ARG VERSION
 ARG VCS_REF
 ARG BUILD_DATE
 
-LABEL org.opencontainers.image.title="matterbridge-chip-test" \
+LABEL org.opencontainers.image.title="matterbridge:chip-test" \
   org.opencontainers.image.description="Matterbridge CHIP test environment" \
   org.opencontainers.image.version=$VERSION \
   org.opencontainers.image.revision=$VCS_REF \

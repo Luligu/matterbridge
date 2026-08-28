@@ -506,7 +506,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.attributes.onOff).toBe(false);
     });
 
-    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 10, 5);
+    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 0, 0);
     await expectCommand(light, OnOff, 'OnOff.onWithTimedOff', onWithTimedOffRequest, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
@@ -596,16 +596,6 @@ describe('Server clusters and behaviors', () => {
 
     const stepHueRequest = getStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
     await expectCommand(light, ColorControl, 'ColorControl.stepHue', stepHueRequest, (data) => {
-      expect(data.cluster).toBe('colorControl');
-    });
-
-    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
-    await expectCommand(light, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
-      expect(data.cluster).toBe('colorControl');
-    });
-
-    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
-    await expectCommand(light, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
@@ -771,6 +761,16 @@ describe('Server clusters and behaviors', () => {
       currentX: 30000,
       currentY: 30000,
       colorTemperatureMireds: 250,
+    });
+
+    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(enhancedLight, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(enhancedLight, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
     });
   });
 
@@ -1596,7 +1596,7 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeHepaFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`);
   });
 
   test('ActivatedCarbonFilterMonitoring server', async () => {
@@ -1607,7 +1607,10 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`,
+    );
   });
 
   test('DeviceEnergyManagement server', async () => {

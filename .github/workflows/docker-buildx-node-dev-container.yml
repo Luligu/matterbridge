@@ -1,4 +1,4 @@
-name: Build Docker Image 24-ubuntu-slim with buildx
+name: Build Docker Image node-dev-container with buildx
 
 on:
   # Allow manual dispatch
@@ -6,7 +6,7 @@ on:
 
 # Cancel previous runs when a new one is triggered
 concurrency:
-  group: docker-build-24-ubuntu-slim
+  group: docker-build-node-dev-container
   cancel-in-progress: true
 
 jobs:
@@ -42,29 +42,17 @@ jobs:
         with:
           version: latest
 
-      - name: Run Docker Buildx with Dockerfile.24-ubuntu-slim for version ${{ steps.meta.outputs.VERSION }}
+      - name: Run Docker Buildx with Dockerfile.node-dev-container for version ${{ steps.meta.outputs.VERSION }}
         run: |
           docker buildx build \
             --no-cache \
             --pull \
             --platform linux/amd64,linux/arm64 \
-            -f docker/Dockerfile.24-ubuntu-slim \
-            -t luligu/matterbridge:24-ubuntu-slim \
-            -t luligu/matterbridge:24-ubuntu-slim-${{ steps.meta.outputs.VERSION }} \
+            -f docker/Dockerfile.node-dev-container \
+            -t luligu/matterbridge:node-dev-container \
+            -t luligu/matterbridge:node-dev-container-${{ steps.meta.outputs.VERSION }} \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
             --push .
-          docker manifest inspect luligu/matterbridge:24-ubuntu-slim
-
-      - name: Trigger Matterbridge Docker Build Ubuntu
-        uses: actions/github-script@v9
-        with:
-          github-token: ${{ secrets.PAT_TOKEN }}
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'docker-buildx-ubuntu.yml',
-              ref: 'main'
-            })
+          docker manifest inspect luligu/matterbridge:node-dev-container

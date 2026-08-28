@@ -668,7 +668,31 @@ refrigerator.addCabinet(&#39;Refrigerator Top&#39;, [
 <p>The schema file is loaded from the root of the plugin package. The file must be named &#39;[PLUGIN-NAME].schema.json&#39; (i.e. &#39;matterbridge-test.schema.json&#39;).</p>
 <p>The properties of the schema file shall correspond to the properties of the config file.</p>
 <h2 id="deprecation-list">Deprecation list</h2>
-<p>No deprecated code at the moment.</p>
+<p>The following legacy positional configuration signatures are deprecated. Pass an options object instead. Existing defaults and two-argument <code>name, serial</code> construction remain supported.</p>
+<h3 id="robotic-vacuum-cleaner">Robotic vacuum cleaner</h3>
+<ul>
+<li><code>new RoboticVacuumCleaner(name, serial, mode, ...)</code>; use <code>new RoboticVacuumCleaner(name, serial, { ...options })</code>.</li>
+</ul>
+<h3 id="chapter-13-appliance-devices">Chapter 13 appliance devices</h3>
+<ul>
+<li><code>new LaundryWasher(name, serial, currentMode, ...)</code>; use <code>new LaundryWasher(name, serial, { ...options })</code>.</li>
+<li><code>new Refrigerator(name, serial, currentMode, ...)</code>; use <code>new Refrigerator(name, serial, { ...options })</code>.</li>
+<li><code>new Dishwasher(name, serial, currentMode, ...)</code>; use <code>new Dishwasher(name, serial, { ...options })</code>.</li>
+<li><code>new LaundryDryer(name, serial, currentMode, ...)</code>; use <code>new LaundryDryer(name, serial, { ...options })</code>.</li>
+<li><code>new ExtractorHood(name, serial, hepaCondition, ...)</code>; use <code>new ExtractorHood(name, serial, { ...options })</code>.</li>
+<li><code>new MicrowaveOven(name, serial, currentMode, ...)</code>; use <code>new MicrowaveOven(name, serial, { ...options })</code>.</li>
+<li><code>Refrigerator.addCabinet(name, tagList, ...)</code>; use <code>Refrigerator.addCabinet(name, { ...options })</code>.</li>
+<li><code>Oven.addCabinet(name, tagList, ...)</code>; use <code>Oven.addCabinet(name, { ...options })</code>.</li>
+<li><code>Cooktop.addSurface(name, tagList, ...)</code>; use <code>Cooktop.addSurface(name, { ...options })</code>.</li>
+</ul>
+<h3 id="chapter-14-energy-devices">Chapter 14 energy devices</h3>
+<ul>
+<li><code>new Evse(name, serial, currentMode, ...)</code>; use <code>new Evse(name, serial, { ...options })</code>.</li>
+<li><code>new WaterHeater(name, serial, waterTemperature, ...)</code>; use <code>new WaterHeater(name, serial, { ...options })</code>.</li>
+<li><code>new SolarPower(name, serial, voltage, ...)</code>; use <code>new SolarPower(name, serial, { ...options })</code>.</li>
+<li><code>new BatteryStorage(name, serial, batPercentRemaining, ...)</code>; use <code>new BatteryStorage(name, serial, { ...options })</code>.</li>
+<li><code>new HeatPump(name, serial, voltage, ...)</code>; use <code>new HeatPump(name, serial, { ...options })</code>.</li>
+</ul>
 <h1 id="frequently-asked-questions">Frequently asked questions</h1>
 <h2 id="why-plugins-cannot-install-matterbridge-as-a-dependency-devdependency-or-peerdependency">Why plugins cannot install matterbridge as a dependency, devDependency or peerDependency</h2>
 <p>There must be one and only one instance of Matterbridge and matter.js in the node_modules directory.</p>

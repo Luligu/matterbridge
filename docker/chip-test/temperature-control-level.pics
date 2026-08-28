@@ -1,0 +1,17 @@
+# To run tests on Temperature Control with the TemperatureLevel feature --PICS is required
+# Matches the LaundryWasher endpoint 1301.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+TCTL.S=1
+TCTL.C=0
+TCTL.S.F00=0 # TemperatureNumber
+TCTL.S.F01=1 # TemperatureLevel
+TCTL.S.F02=0 # TemperatureStep
+TCTL.S.A0000=0 # TemperatureSetpoint
+TCTL.S.A0001=0 # MinTemperature
+TCTL.S.A0002=0 # MaxTemperature
+TCTL.S.A0003=0 # Step
+TCTL.S.A0004=1 # SelectedTemperatureLevel
+TCTL.S.A0005=1 # SupportedTemperatureLevels
+TCTL.S.C00.Rsp=1 # SetTemperature
