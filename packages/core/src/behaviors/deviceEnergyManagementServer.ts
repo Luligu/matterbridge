@@ -60,7 +60,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     await super.initialize();
     // oxlint-disable-next-line typescript/unbound-method
     this.internal.powerAdjustCompletionCallback = this.callback(this.#completePowerAdjustmentOnTimeout, { lock: true });
-    // § 9.2.8.8 OptOutState "Effect on Receipt": if the user opts out of the cause that a PowerAdjustActive session
+    // Matter 1.6.0 § 9.2.8.8 OptOutState "Effect on Receipt": if the user opts out of the cause that a PowerAdjustActive session
     // is currently running under, the ESA shall behave as if it had received a CancelPowerAdjustRequest command.
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.events.optOutState$Changed, this.#handleOptOutStateChanged);
@@ -95,11 +95,11 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     const maxPower = Math.max(...entries.map((entry) => entry.maxPower));
     const minDuration = Math.min(...entries.map((entry) => entry.minDuration));
     const maxDuration = Math.max(...entries.map((entry) => entry.maxDuration));
-    // § 9.2.9.1.1 / § 9.2.9.1.2: Power/Duration shall be between the PowerAdjustStruct's Min/Max fields.
+    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if Power or Duration is outside the advertised PowerAdjustmentCapability limits.
     if (power < minPower || power > maxPower || duration < minDuration || duration > maxDuration) {
       throw new StatusResponseError('Power or duration out of range', Status.ConstraintError);
     }
-    // § 9.2.8.8: reject commands whose AdjustmentCauseEnum matches a cause the user has opted out of.
+    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if OptOutState does not permit the requested AdjustmentCauseEnum.
     const optOutBit =
       cause === DeviceEnergyManagement.AdjustmentCause.LocalOptimization ? DeviceEnergyManagement.OptOutState.LocalOptOut : DeviceEnergyManagement.OptOutState.GridOptOut;
     if ((this.state.optOutState & optOutBit) !== 0) {
@@ -114,12 +114,14 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
 
     this.internal.powerAdjustCompletionTimer?.stop();
     this.internal.powerAdjustPowerMw = Number(power);
+    // Matter 1.6.0 § 9.2.9.1.4: On acceptance, set ESAState to PowerAdjustActive and update PowerAdjustmentCapability's Cause to the requested value.
     this.state.esaState = DeviceEnergyManagement.EsaState.PowerAdjustActive;
     this.state.powerAdjustmentCapability = { powerAdjustCapability: entries, cause: adjustReason };
+    // Only the transition out of Online starts a new session and emits PowerAdjustStart — a cause-only update
+    // while already active (e.g. switching from LocalOptimization to GridOptimization) must not restart it, so a
+    // later PowerAdjustEnd still reports the duration elapsed since the original activation.
     if (!wasActive) {
-      // Only the transition out of Online starts a new session and emits PowerAdjustStart — a cause-only update
-      // while already active (e.g. switching from LocalOptimization to GridOptimization) must not restart it, so a
-      // later PowerAdjustEnd still reports the duration elapsed since the original activation.
+      // Matter 1.6.0 § 9.2.9.1.4: Generate PowerAdjustStart when the ESA begins to adjust its power.
       this.internal.powerAdjustActivationTimeMs = Time.nowMs;
       this.events.powerAdjustStart.emit(undefined, this.context);
     }
@@ -188,7 +190,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     const elapsedSeconds = Math.max(1, Math.round((Time.nowMs - activationTimeMs) / 1000));
     /* v8 ignore next */
     const powerMw = Math.abs(this.internal.powerAdjustPowerMw ?? 0);
-    // § 9.2.10.2.3: approximate energy used during the session, derived from power(mW) * duration(h).
+    // Matter 1.6.0 § 9.2.10.2.3: approximate energy used during the session, derived from power(mW) * duration(h).
     const energyUse = Math.max(1, Math.round((powerMw * elapsedSeconds) / 3600));
     this.internal.powerAdjustActivationTimeMs = undefined;
     this.internal.powerAdjustPowerMw = undefined;

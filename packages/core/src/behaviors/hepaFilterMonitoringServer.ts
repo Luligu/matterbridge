@@ -34,13 +34,17 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 /**
  * HEPA filter monitoring server that forwards reset commands and updates condition state.
  */
-export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition) {
+export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoringServer.with(
+  ResourceMonitoring.Feature.Condition,
+  ResourceMonitoring.Feature.Warning,
+  ResourceMonitoring.Feature.ReplacementProductList,
+) {
   /**
    * Resets filter condition to 100%.
    */
   override async resetCondition(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeHepaFilterMonitoringServer: resetting condition (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('HepaFilterMonitoring.resetCondition', {
       command: 'resetCondition',
       request: {},
@@ -49,8 +53,11 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
+    // Matter 1.6.0 § 2.8.7.1: Reset Condition and ChangeIndicator to indicate full resource availability, as initially configured.
     this.state.condition = 100;
+    this.state.changeIndication = ResourceMonitoring.ChangeIndication.Ok;
+    // Matter 1.6.0 § 2.8.7.1: Invocation of this command may update LastChangedTime based on the server's clock.
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000);
-    device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
+    device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 }

@@ -58,17 +58,11 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    /**
-     * Matter 1.6 Application Cluster Specification, 2.11.9.1.1 SelfTestRequest:
-     * only one SelfTestRequest may be processed at a time. When ExpressedState is any of
-     * SmokeAlarm, COAlarm, Testing, InterconnectSmoke, or InterconnectCO, the device SHALL NOT
-     * execute the self-test and SHALL return BUSY.
-     *
-     * Matterbridge rule: forward the command to the plugin before enforcing local behavior.
-     */
+    // Matter 1.6.0 § 2.11.7.1: Reject SelfTestRequest with BUSY if ExpressedState is SmokeAlarm, COAlarm, Testing, InterconnectSmoke, or InterconnectCO.
     if (this.state.expressedState !== SmokeCoAlarm.ExpressedState.Normal || this.state.testInProgress) {
       throw new StatusResponseError('SmokeCOAlarm self-test is busy', Status.Busy);
     }
+    // Matter 1.6.0 § 2.11.7.1: Set TestInProgress to true and ExpressedState to Testing on successful acceptance.
     this.state.testInProgress = true;
     this.state.expressedState = SmokeCoAlarm.ExpressedState.Testing;
     this.#scheduleSelfTestComplete();
@@ -101,6 +95,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
    */
   #completeSelfTest(): void {
     this.internal.selfTestTimer = undefined;
+    // Matter 1.6.0 § 2.11.7.1: On completion, set TestInProgress to false, update ExpressedState to reflect the current state, and generate SelfTestComplete.
     this.state.testInProgress = false;
     this.state.expressedState = SmokeCoAlarm.ExpressedState.Normal;
     this.events.selfTestComplete.emit(undefined, this.context);
