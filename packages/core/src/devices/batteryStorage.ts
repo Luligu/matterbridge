@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-20
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,9 +25,11 @@
 // @matter
 import { PowerSourceTag } from '@matter/node';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
@@ -35,6 +37,36 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 import { batteryStorage, deviceEnergyManagement, electricalSensor, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getDefaultElectricalPowerMeasurementClusterServer, getSemtag } from '../matterbridgeEndpointHelpers.js';
+
+/** Options for configuring a {@link BatteryStorage} endpoint. */
+export interface BatteryStorageOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Remaining battery percentage. */
+  batPercentRemaining?: number;
+  /** Battery charge level. */
+  batChargeLevel?: PowerSource.BatChargeLevel;
+  /** Voltage in millivolts. */
+  voltage?: number | bigint | null;
+  /** Current in milliamperes. */
+  current?: number | bigint | null;
+  /** Power in milliwatts. */
+  power?: number | bigint | null;
+  /** Imported energy in mWh. */
+  energyImported?: number | bigint | null;
+  /** Exported energy in mWh. */
+  energyExported?: number | bigint | null;
+  /** Minimum electrical power in milliwatts. */
+  absMinPower?: number;
+  /** Maximum electrical power in milliwatts. */
+  absMaxPower?: number;
+}
 
 /**
  * Matterbridge endpoint representing a battery storage device.
@@ -59,10 +91,27 @@ export class BatteryStorage extends MatterbridgeEndpoint {
    * - A battery storage inverter that can charge its battery at a maximum power of 2000W and can
    * discharge the battery at a maximum power of 3000W, would have a absMinPower: -3000W, absMaxPower: 2000W.
    */
+  constructor(name: string, serial: string, options?: BatteryStorageOptions);
+
+  /** @deprecated Pass a {@link BatteryStorageOptions} object as the third argument instead. */
   constructor(
     name: string,
     serial: string,
-    batPercentRemaining: number = 100,
+    batPercentRemaining?: number,
+    batChargeLevel?: PowerSource.BatChargeLevel,
+    voltage?: number | bigint | null,
+    current?: number | bigint | null,
+    power?: number | bigint | null,
+    energyImported?: number | bigint | null,
+    energyExported?: number | bigint | null,
+    absMinPower?: number,
+    absMaxPower?: number,
+  );
+
+  constructor(
+    name: string,
+    serial: string,
+    optionsOrBatPercentRemaining?: BatteryStorageOptions | number,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
@@ -72,17 +121,29 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
+    const options: BatteryStorageOptions =
+      typeof optionsOrBatPercentRemaining === 'object'
+        ? optionsOrBatPercentRemaining
+        : { batPercentRemaining: optionsOrBatPercentRemaining, batChargeLevel, voltage, current, power, energyImported, energyExported, absMinPower, absMaxPower };
     super([batteryStorage, powerSource, electricalSensor, deviceEnergyManagement], {
-      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
-      tagList: [getSemtag(PowerSourceTag.Grid)],
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList ?? [getSemtag(PowerSourceTag.Grid)],
+      mode: options.mode,
     });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Battery Storage')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.BatteryStorage, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultElectricalPowerMeasurementClusterServer(options.voltage ?? null, options.current ?? null, options.power ?? null)
+      .createDefaultElectricalEnergyMeasurementClusterServer(options.energyImported ?? null, options.energyExported ?? null)
+      .createDefaultDeviceEnergyManagementClusterServer(
+        DeviceEnergyManagement.EsaType.BatteryStorage,
+        true,
+        DeviceEnergyManagement.EsaState.Online,
+        options.absMinPower ?? 0,
+        options.absMaxPower ?? 0,
+      )
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
     fireAndForget(this.addFixedLabel('composed', 'Battery Storage'), this.log, 'BatteryStorage addFixedLabel');
@@ -90,13 +151,13 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     const battery = this.addChildDeviceType('Battery', [powerSource, electricalSensor], {
       tagList: [getSemtag(PowerSourceTag.Battery)],
     })
-      .createDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, 24_000) // Battery voltage in mV (24V).
+      .createDefaultPowerSourceRechargeableBatteryClusterServer(options.batPercentRemaining ?? 100, options.batChargeLevel ?? PowerSource.BatChargeLevel.Ok, 24_000) // Battery voltage in mV (24V).
       .createDefaultPowerTopologyClusterServer()
       // .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported);
+      .createDefaultElectricalEnergyMeasurementClusterServer(options.energyImported ?? null, options.energyExported ?? null);
     battery.behaviors.require(
       ElectricalPowerMeasurementServer.with(ElectricalPowerMeasurement.Feature.DirectCurrent),
-      getDefaultElectricalPowerMeasurementClusterServer(voltage, current, power),
+      getDefaultElectricalPowerMeasurementClusterServer(options.voltage ?? null, options.current ?? null, options.power ?? null),
     );
   }
 }

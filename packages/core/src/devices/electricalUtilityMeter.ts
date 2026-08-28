@@ -21,41 +21,62 @@
  * limitations under the License.
  */
 
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+
 // @matter
-import { CommodityTariffChronologyTag, CommodityTariffCommodityTag, PowerSourceTag } from '@matter/node';
+import { CommodityTariffChronologyTag, CommodityTariffCommodityTag, CommodityTariffFlowTag, ElectricalMeasurementTag, PowerSourceTag } from '@matter/node';
 import { CommodityMeteringServer } from '@matter/node/behaviors/commodity-metering';
 import { CommodityPriceServer } from '@matter/node/behaviors/commodity-price';
 import { CommodityTariffServer } from '@matter/node/behaviors/commodity-tariff';
 import { ElectricalGridConditionsServer } from '@matter/node/behaviors/electrical-grid-conditions';
 import { MeterIdentificationServer } from '@matter/node/behaviors/meter-identification';
 import { StatusResponse } from '@matter/types';
+import type { EndpointNumber } from '@matter/types';
 import type { CommodityMetering } from '@matter/types/clusters/commodity-metering';
 import type { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import type { MeterIdentification } from '@matter/types/clusters/meter-identification';
 import { type Currency, type Semtag, TariffUnit } from '@matter/types/globals';
+import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
+import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter, meterReferencePoint, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { getSemtag, optionsFor } from '../matterbridgeEndpointHelpers.js';
+import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
 /**
  * CommodityPrice server (Application Cluster Specification § 9.9) that implements the mandatory `GetDetailedPrice`
  * command (§ 9.9.7.1) by returning the endpoint's own already-published `currentPrice` attribute (§ 9.9.6.3) as-is.
  *
  * matter.js does not yet provide a default implementation of this command (it throws "unimplemented" by default).
+ *
+ * `PriceChange` (§ 9.9.8.1) is optional conformance with no feature gate, so matter.js excludes it from the
+ * cluster's runtime schema unless explicitly enabled via `.enable({ events: { priceChange: true } })` — without
+ * this, a `PriceChange` subscription request (chip `TC_SEPR_2_2`) fails with `INVALID_ACTION` even though the
+ * event is otherwise spec-conformant to emit.
  */
-export class MatterbridgeCommodityPriceServer extends CommodityPriceServer {
+export class MatterbridgeCommodityPriceServer extends CommodityPriceServer.enable({ events: { priceChange: true } }) {
   /**
    * Returns the endpoint's own already-published `currentPrice` attribute as the detailed price.
    *
    * Application Cluster Specification § 9.9.7.1 (GetDetailedPrice).
    *
-   * @returns {CommodityPrice.GetDetailedPriceResponse} The current price, unchanged.
+   * @param {CommodityPrice.GetDetailedPriceRequest} request - Get-detailed-price request payload.
+   * @returns {Promise<CommodityPrice.GetDetailedPriceResponse>} The current price, unchanged.
    */
-  override getDetailedPriceRequest(): CommodityPrice.GetDetailedPriceResponse {
+  override async getDetailedPriceRequest(request: CommodityPrice.GetDetailedPriceRequest): Promise<CommodityPrice.GetDetailedPriceResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeCommodityPriceServer: getDetailedPrice (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('CommodityPrice.getDetailedPriceRequest', {
+      command: 'getDetailedPriceRequest',
+      request,
+      cluster: CommodityPriceServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityPrice)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     return { currentPrice: this.state.currentPrice };
   }
 }
@@ -76,12 +97,24 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
    * Application Cluster Specification § 9.12.7.1 (GetTariffComponent).
    *
    * @param {CommodityTariff.GetTariffComponentRequest} request - Get-tariff-component request payload.
-   * @returns {CommodityTariff.GetTariffComponentResponse} The matching tariff component, with the label and day entry ids of the period it belongs to, if any.
+   * @returns {Promise<CommodityTariff.GetTariffComponentResponse>} The matching tariff component, with the label and day entry ids of the period it belongs to, if any.
    */
-  override getTariffComponent(request: CommodityTariff.GetTariffComponentRequest): CommodityTariff.GetTariffComponentResponse {
+  override async getTariffComponent(request: CommodityTariff.GetTariffComponentRequest): Promise<CommodityTariff.GetTariffComponentResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeCommodityTariffServer: getTariffComponent ${request.tariffComponentId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('CommodityTariff.getTariffComponent', {
+      command: 'getTariffComponent',
+      request,
+      cluster: CommodityTariffServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityTariff)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const tariffComponent = (this.state.tariffComponents ?? []).find((component) => component.tariffComponentId === request.tariffComponentId);
+    // Matter 1.6.0 § 9.12.7.1.2: Reject GetTariffComponent with NOT_FOUND if the requested TariffComponentID is unavailable.
     if (!tariffComponent) {
-      throw new StatusResponse.NotFoundError(`No TariffComponent with id ${request.tariffComponentId}`);
+      throw new StatusResponse.NotFoundError(
+        `MatterbridgeCommodityTariffServer: no TariffComponent with id ${request.tariffComponentId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
     }
     const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIDs.includes(request.tariffComponentId));
     return { label: period?.label ?? null, dayEntryIDs: period?.dayEntryIDs ?? [], tariffComponent };
@@ -93,21 +126,46 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
    * Application Cluster Specification § 9.12.7.3 (GetDayEntry).
    *
    * @param {CommodityTariff.GetDayEntryRequest} request - Get-day-entry request payload.
-   * @returns {CommodityTariff.GetDayEntryResponse} The matching day entry.
+   * @returns {Promise<CommodityTariff.GetDayEntryResponse>} The matching day entry.
    */
-  override getDayEntry(request: CommodityTariff.GetDayEntryRequest): CommodityTariff.GetDayEntryResponse {
+  override async getDayEntry(request: CommodityTariff.GetDayEntryRequest): Promise<CommodityTariff.GetDayEntryResponse> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeCommodityTariffServer: getDayEntry ${request.dayEntryId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('CommodityTariff.getDayEntry', {
+      command: 'getDayEntry',
+      request,
+      cluster: CommodityTariffServer.id,
+      attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityTariff)['attributes']>,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
     const dayEntry = (this.state.dayEntries ?? []).find((entry) => entry.dayEntryId === request.dayEntryId);
+    // Matter 1.6.0 § 9.12.7.3.2: Reject GetDayEntry with NOT_FOUND if the requested DayEntryID is unavailable.
     if (!dayEntry) {
-      throw new StatusResponse.NotFoundError(`No DayEntry with id ${request.dayEntryId}`);
+      throw new StatusResponse.NotFoundError(
+        `MatterbridgeCommodityTariffServer: no DayEntry with id ${request.dayEntryId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
     }
     return { dayEntry };
   }
 }
 
 /**
+ * CommodityMetering server (Application Cluster Specification § 9.11). The cluster defines no commands and no
+ * events, so there is no default behavior to override — this class exists to keep every cluster on this endpoint
+ * behind its own Matterbridge-prefixed server, matching the other Commodity* servers above.
+ */
+export class MatterbridgeCommodityMeteringServer extends CommodityMeteringServer {}
+
+/**
  * Options for {@link ElectricalUtilityMeter}. See Application Cluster Specification § 9.10 (Meter Identification).
  */
 export interface ElectricalUtilityMeterOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
   /** The meter type, decided by the manufacturer. Defaults to `null` (not available). § 9.10.6.1. */
   meterType?: MeterIdentification.MeterType | null;
   /** The unique identification of the connection point for the premises. Defaults to `null` (not available). § 9.10.6.2. */
@@ -125,6 +183,10 @@ export interface ElectricalUtilityMeterOptions {
  * (Commodity Metering).
  */
 export interface ElectricalMeterOptions {
+  /** Stable storage key for the endpoint. Defaults to `name`. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
   /** Voltage value in millivolts. Defaults to `null` (not available). */
   voltage?: number | bigint | null;
   /** Current value in milliamperes. Defaults to `null` (not available). */
@@ -143,7 +205,9 @@ export interface ElectricalMeterOptions {
   tariffUnit?: TariffUnit | null;
   /** The maximum number of entries in `meteredQuantity`. Defaults to `null` (not available). § 9.11.5.4. */
   maximumMeteredQuantities?: number | null;
-  /** Semantic tags for endpoint disambiguation, e.g. to disambiguate multiple electrical meters. */
+  /** Optional tariff cluster options. When present, the endpoint also exposes the Electrical Energy Tariff device type. */
+  energyTariff?: ElectricalEnergyTariffOptions;
+  /** Semantic tags for endpoint disambiguation, e.g. to disambiguate multiple electrical meters. Defaults to AC/Grid/Import/Current. */
   tagList?: Semtag[];
 }
 
@@ -152,6 +216,10 @@ export interface ElectricalMeterOptions {
  * (Commodity Price), § 9.12 (Commodity Tariff), and § 9.13 (Electrical Grid Conditions).
  */
 export interface ElectricalEnergyTariffOptions {
+  /** Stable storage key for the endpoint. Defaults to `name`. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
   /**
    * The tariff label, e.g. "Standard". Defaults to `null` (not available). Ignored (`tariffInfo` stays `null`) if
    * neither this, providerName, nor currency are provided. § 9.12.6.1 (TariffInfo).
@@ -212,8 +280,10 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
   constructor(name: string, serial: string, options: ElectricalUtilityMeterOptions = {}) {
     const { meterType = null, pointOfDelivery = null, meterSerialNumber = null, protocolVersion = null, tagList = [getSemtag(PowerSourceTag.Grid)] } = options;
     super([electricalUtilityMeter, meterReferencePoint, powerSource], {
-      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
       tagList,
+      mode: options.mode,
     });
 
     this.createDefaultIdentifyClusterServer();
@@ -221,6 +291,7 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDefaultMeterIdentificationClusterServer(meterType, pointOfDelivery, meterSerialNumber, protocolVersion);
     this.addRequiredClusterServers();
+    fireAndForget(this.addFixedLabel('composed', 'UtilityMeter'), this.log, 'Error adding composed label to UtilityMeter');
   }
 
   /**
@@ -241,7 +312,7 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
     meterSerialNumber: string | null = null,
     protocolVersion: string | null = null,
   ): this {
-    this.behaviors.require(MeterIdentificationServer, optionsFor(MeterIdentificationServer, { meterType, pointOfDelivery, meterSerialNumber, protocolVersion }));
+    this.behaviors.require(MeterIdentificationServer, { meterType, pointOfDelivery, meterSerialNumber, protocolVersion });
     return this;
   }
 
@@ -271,13 +342,20 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       meteredQuantityTimestamp = null,
       tariffUnit = null,
       maximumMeteredQuantities = null,
-      tagList,
+      energyTariff,
+      id,
+      number,
+      tagList = [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Grid), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Current)],
     } = options;
-    const meter = this.addChildDeviceType(name, [electricalMeter, electricalSensor], tagList ? { tagList } : {})
+    const meter = this.addChildDeviceType(id ?? name, energyTariff ? [electricalMeter, electricalEnergyTariff, electricalSensor] : [electricalMeter, electricalSensor], {
+      number,
+      tagList,
+    })
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported);
-    meter.behaviors.require(CommodityMeteringServer, optionsFor(CommodityMeteringServer, { meteredQuantity, meteredQuantityTimestamp, tariffUnit, maximumMeteredQuantities }));
+    meter.behaviors.require(MatterbridgeCommodityMeteringServer, { meteredQuantity, meteredQuantityTimestamp, tariffUnit, maximumMeteredQuantities });
+    if (energyTariff) this.configureElectricalEnergyTariffClusters(meter, energyTariff);
     meter.addRequiredClusterServers();
     return meter;
   }
@@ -301,6 +379,15 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
    * @returns {MatterbridgeEndpoint} The created electrical energy tariff endpoint.
    */
   addElectricalEnergyTariff(name: string, options: ElectricalEnergyTariffOptions = {}): MatterbridgeEndpoint {
+    const { id, number, tagList = [getSemtag(CommodityTariffChronologyTag.Current), getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)] } = options;
+    const tariff = this.addChildDeviceType(id ?? name, electricalEnergyTariff, { number, tagList });
+
+    this.configureElectricalEnergyTariffClusters(tariff, options);
+    tariff.addRequiredClusterServers();
+    return tariff;
+  }
+
+  private configureElectricalEnergyTariffClusters(endpoint: MatterbridgeEndpoint, options: ElectricalEnergyTariffOptions): void {
     const {
       tariffLabel = null,
       providerName = null,
@@ -309,42 +396,51 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       currentPrice = null,
       localGenerationAvailable = null,
       currentConditions = null,
-      tagList = [getSemtag(CommodityTariffChronologyTag.Current), getSemtag(CommodityTariffCommodityTag.ElectricalEnergy)],
     } = options;
-    const tariff = this.addChildDeviceType(name, electricalEnergyTariff, { tagList });
 
-    tariff.behaviors.require(MatterbridgeCommodityPriceServer, optionsFor(MatterbridgeCommodityPriceServer, { tariffUnit, currency, currentPrice }));
-
+    // Application Cluster Specification § 9.9.6.3: the Description and Components fields shall be omitted from
+    // CurrentPrice's value. matter.js's CommodityPriceStruct model declares a `default: []` for Components
+    // (ClassForValueModel.initialize() applies model defaults before overlaying caller-provided keys), so an
+    // omitted `components` key on a supplied currentPrice leaves that `[]` default in place rather than
+    // clearing it — explicitly overlaying `undefined` here clears it regardless of what the caller passed.
+    endpoint.behaviors.require(MatterbridgeCommodityPriceServer, {
+      tariffUnit,
+      currency,
+      currentPrice:
+        currentPrice === null
+          ? null
+          : {
+              periodStart: currentPrice.periodStart,
+              periodEnd: currentPrice.periodEnd,
+              price: currentPrice.price,
+              priceLevel: currentPrice.priceLevel,
+              description: undefined,
+              components: undefined,
+            },
+    });
     // Application Cluster Specification § 9.12.6.1: TariffInfo is null unless a label, provider name, or currency is given.
     const tariffInfo =
       tariffLabel !== null || providerName !== null || currency !== null ? { tariffLabel, providerName, currency, blockMode: CommodityTariff.BlockMode.NoBlock } : null;
-    tariff.behaviors.require(
-      MatterbridgeCommodityTariffServer,
-      optionsFor(MatterbridgeCommodityTariffServer, {
-        tariffInfo,
-        // § 9.12.6.2: TariffUnit SHALL be null when TariffInfo is null (chip TC_SETRF_TestBase.check_tariff_unit_attribute).
-        tariffUnit: tariffInfo === null ? null : tariffUnit,
-        startDate: null,
-        dayEntries: null,
-        dayPatterns: null,
-        calendarPeriods: null,
-        individualDays: null,
-        tariffComponents: null,
-        tariffPeriods: null,
-        currentDay: null,
-        nextDay: null,
-        currentDayEntry: null,
-        currentDayEntryDate: null,
-        nextDayEntry: null,
-        nextDayEntryDate: null,
-        currentTariffComponents: null,
-        nextTariffComponents: null,
-      }),
-    );
-
-    tariff.behaviors.require(ElectricalGridConditionsServer, optionsFor(ElectricalGridConditionsServer, { localGenerationAvailable, currentConditions }));
-
-    tariff.addRequiredClusterServers();
-    return tariff;
+    endpoint.behaviors.require(MatterbridgeCommodityTariffServer, {
+      tariffInfo,
+      // § 9.12.6.2: TariffUnit SHALL be null when TariffInfo is null (chip TC_SETRF_TestBase.check_tariff_unit_attribute).
+      tariffUnit: tariffInfo === null ? null : tariffUnit,
+      startDate: null,
+      dayEntries: null,
+      dayPatterns: null,
+      calendarPeriods: null,
+      individualDays: null,
+      tariffComponents: null,
+      tariffPeriods: null,
+      currentDay: null,
+      nextDay: null,
+      currentDayEntry: null,
+      currentDayEntryDate: null,
+      nextDayEntry: null,
+      nextDayEntryDate: null,
+      currentTariffComponents: null,
+      nextTariffComponents: null,
+    });
+    endpoint.behaviors.require(ElectricalGridConditionsServer, { localGenerationAvailable, currentConditions });
   }
 }
