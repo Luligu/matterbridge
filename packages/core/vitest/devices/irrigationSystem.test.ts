@@ -14,7 +14,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -26,11 +26,11 @@ import {
   startServerNode,
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
-import { stringify } from 'node-ansi-logger';
+import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { IrrigationSystem } from '../../src/devices/irrigationSystem.js';
 import { irrigationSystem } from '../../src/matterbridgeDeviceTypes.js';
-import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
+import { getSemtag, invokeSubscribeHandler } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -38,6 +38,7 @@ await setupTest(NAME, false);
 describe('Matterbridge ' + NAME, () => {
   let device: IrrigationSystem;
   let singleZoneBatteryDevice: IrrigationSystem;
+  let autoOpenCloseDevice: IrrigationSystem;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -132,6 +133,86 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a single zone battery irrigation system device', async () => {
     expect(await addDevice(server, singleZoneBatteryDevice)).toBeTruthy();
+  });
+
+  test('openAllZones opens all zone valves', async () => {
+    await device.openAllZones();
+    for (const tag of [1, 2, 3, 4]) {
+      const zone = device.getChildEndpointByOriginalId(`Zone ${tag}`);
+      expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Open);
+      expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Transitioning);
+    }
+  });
+
+  test('closeAllZones closes all zone valves', async () => {
+    await device.closeAllZones();
+    for (const tag of [1, 2, 3, 4]) {
+      const zone = device.getChildEndpointByOriginalId(`Zone ${tag}`);
+      expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
+      expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Transitioning);
+    }
+  });
+
+  test('create and add an irrigation system device with autoOpenClose', async () => {
+    autoOpenCloseDevice = new IrrigationSystem('Irrigation System AutoOpenClose', 'IRAOC001', { autoOpenClose: true }).addZone(getSemtag(CommonNumberTag.One));
+    expect(autoOpenCloseDevice).toBeDefined();
+    expect(await addDevice(server, autoOpenCloseDevice)).toBeTruthy();
+  });
+
+  test('autoOpenClose opens all zones when operationalState changes to Running', async () => {
+    await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Running);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Running,
+      OperationalState.OperationalStateEnum.Stopped,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Running');
+    const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
+    expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Open);
+  });
+
+  test('autoOpenClose closes all zones when operationalState changes to Paused', async () => {
+    await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Paused);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Paused,
+      OperationalState.OperationalStateEnum.Running,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Paused');
+    const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
+    expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
+  });
+
+  test('autoOpenClose closes all zones when operationalState changes to Stopped', async () => {
+    await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Running);
+    await autoOpenCloseDevice.openAllZones();
+    await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Stopped);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Stopped,
+      OperationalState.OperationalStateEnum.Running,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Stopped');
+    const zone = autoOpenCloseDevice.getChildEndpointByOriginalId('Zone 1');
+    expect(zone?.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
+  });
+
+  test('autoOpenClose only logs when operationalState changes to Error', async () => {
+    await autoOpenCloseDevice.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Error);
+    await invokeSubscribeHandler(
+      autoOpenCloseDevice,
+      OperationalState,
+      'operationalState',
+      OperationalState.OperationalStateEnum.Error,
+      OperationalState.OperationalStateEnum.Stopped,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, 'IrrigationSystem operationalState changed to: Error');
   });
 
   test('device forEachAttribute', () => {

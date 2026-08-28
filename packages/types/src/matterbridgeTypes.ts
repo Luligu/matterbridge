@@ -170,7 +170,7 @@ export interface StoragePlugin {
   author: string;
   /** Indicates whether the plugin is enabled */
   enabled: boolean;
-  /** Indicates whether the plugin is private */
+  /** Indicates whether the plugin is private. Check for updates will skip private plugins. */
   private: boolean;
   /** Path to the latest uploaded plugin tarball or undefined if not available */
   tarballPath?: string;

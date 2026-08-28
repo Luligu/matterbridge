@@ -1,0 +1,9 @@
+# To run tests on MeterIdentification --PICS is required
+# Matches createDefaultMeterIdentificationClusterServer() on CHIP ElectricalUtilityMeter endpoint 1409
+MTRID.S=1
+MTRID.S.F00=0 # PowerThreshold
+MTRID.S.A0000=1 # MeterType
+MTRID.S.A0001=1 # PointOfDelivery
+MTRID.S.A0002=1 # MeterSerialNumber
+MTRID.S.A0003=1 # ProtocolVersion
+MTRID.S.A0004=0 # PowerThreshold

@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-06-14
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -24,6 +24,7 @@
 
 // @matter
 import { PowerSourceTag } from '@matter/node';
+import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { Semtag } from '@matter/types/globals';
 // @matterbridge
@@ -33,6 +34,30 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 import { deviceEnergyManagement, electricalSensor, powerSource, solarPower } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { getSemtag } from '../matterbridgeEndpointHelpers.js';
+
+/** Options for configuring a {@link SolarPower} endpoint. */
+export interface SolarPowerOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Voltage in millivolts. */
+  voltage?: number | bigint | null;
+  /** Current in milliamperes. */
+  current?: number | bigint | null;
+  /** Power in milliwatts. */
+  power?: number | bigint | null;
+  /** Exported energy in mWh. */
+  energyExported?: number | bigint;
+  /** Minimum electrical power in milliwatts. */
+  absMinPower?: number;
+  /** Maximum electrical power in milliwatts. */
+  absMaxPower?: number;
+}
 
 /**
  * Matterbridge endpoint representing a solar power device.
@@ -50,27 +75,53 @@ export class SolarPower extends MatterbridgeEndpoint {
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
+  constructor(name: string, serial: string, options?: SolarPowerOptions);
+
+  /** @deprecated Pass a {@link SolarPowerOptions} object as the third argument instead. */
   constructor(
     name: string,
     serial: string,
-    voltage: number | bigint | null = null,
+    voltage?: number | bigint | null,
+    current?: number | bigint | null,
+    power?: number | bigint | null,
+    energyExported?: number | bigint,
+    absMinPower?: number,
+    absMaxPower?: number,
+  );
+
+  constructor(
+    name: string,
+    serial: string,
+    optionsOrVoltage?: SolarPowerOptions | number | bigint | null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
     energyExported: number | bigint = 0,
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
+    const options: SolarPowerOptions =
+      typeof optionsOrVoltage === 'object' && optionsOrVoltage !== null
+        ? optionsOrVoltage
+        : { voltage: optionsOrVoltage, current, power, energyExported, absMinPower, absMaxPower };
     super([solarPower, powerSource, electricalSensor, deviceEnergyManagement], {
-      id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
-      tagList: [getSemtag(PowerSourceTag.Solar)],
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList ?? [getSemtag(PowerSourceTag.Solar)],
+      mode: options.mode,
     });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Solar Power')
       .createDefaultPowerSourceWiredClusterServer()
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.SolarPv, true, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultElectricalPowerMeasurementClusterServer(options.voltage ?? null, options.current ?? null, options.power ?? null)
+      .createExportedElectricalEnergyMeasurementClusterServer(options.energyExported ?? 0)
+      .createDefaultDeviceEnergyManagementClusterServer(
+        DeviceEnergyManagement.EsaType.SolarPv,
+        true,
+        DeviceEnergyManagement.EsaState.Online,
+        options.absMinPower ?? 0,
+        options.absMaxPower ?? 0,
+      )
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
   }
@@ -101,7 +152,7 @@ export class SolarPower extends MatterbridgeEndpoint {
     })
       .createDefaultPowerTopologyClusterServer()
       .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(0, energyExported)
+      .createExportedElectricalEnergyMeasurementClusterServer(energyExported)
       .addRequiredClusterServers();
     fireAndForget(panel.addUserLabel('panel', name.slice(0, 16)), this.log, 'SolarPower addUserLabel'); // UserLabel has a max length of 16 characters
     return panel;

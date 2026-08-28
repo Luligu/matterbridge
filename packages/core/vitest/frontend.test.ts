@@ -28,6 +28,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { EndpointNumber } from '@matter/types/datatype';
+import { ThreeLevelAuto } from '@matter/types/globals';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { BridgeStatus } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
@@ -473,7 +474,7 @@ describe('Matterbridge frontend', () => {
       ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 5000],
       ['doorLock', 0x101, 'lockState', 0, 1],
       ['doorLock', 0x101, 'lockState', 0, 2],
-      ['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, latch: true, secureState: true }],
+      ['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, latch: true, speed: ThreeLevelAuto.Auto, secureState: true }],
       ['thermostat', 0x201, 'localTemperature', 0, 2000],
       ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 2100],
       ['thermostat', 0x201, 'occupiedCoolingSetpoint', 0, 2500],
@@ -529,6 +530,7 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('State: Not locked');
     expect(text).toContain('Position: FullyClosed');
     expect(text).toContain('Latch: true');
+    expect(text).toContain('Speed: Auto');
     expect(text).toContain('SecureState: true');
     expect(text).toContain('Temperature: 20°C');
     expect(text).toContain('Heat to: 21°C');
@@ -565,7 +567,7 @@ describe('Matterbridge frontend', () => {
     const nullMeasurements = runTuples([
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
       ['closureControl', 0x104, 'overallCurrentState', 0, null],
-      ['closureControl', 0x104, 'overallCurrentState', 0, { position: null, latch: null, secureState: null }],
+      ['closureControl', 0x104, 'overallCurrentState', 0, { position: null, latch: null, speed: null, secureState: null }],
       ['valveConfigurationAndControl', 0x81, 'currentState', 0, null],
       ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, null],
       ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, null],
@@ -583,6 +585,7 @@ describe('Matterbridge frontend', () => {
     expect(nullMeasurements).toContain('Illuminance: unknown');
     expect(nullMeasurements).toContain('Position: unknown');
     expect(nullMeasurements).toContain('Latch: unknown');
+    expect(nullMeasurements).toContain('Speed: unknown');
     expect(nullMeasurements).toContain('SecureState: unknown');
     expect(nullMeasurements).toContain('State: unknown');
     expect(nullMeasurements).toContain('Voc: unknown');

@@ -74,7 +74,7 @@ import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
 import { PressureMeasurementClient, PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { PumpConfigurationAndControlClient, PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
+import { PumpConfigurationAndControlClient } from '@matter/node/behaviors/pump-configuration-and-control';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementClient, RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementClient, ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
@@ -167,6 +167,7 @@ import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensing
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
@@ -469,7 +470,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === DoorLock.id) return MatterbridgeDoorLockServer;
   if (clusterId === ModeSelect.id) return MatterbridgeModeSelectServer;
   if (clusterId === ValveConfigurationAndControl.id) return MatterbridgeValveConfigurationAndControlServer.with('Level');
-  if (clusterId === PumpConfigurationAndControl.id) return PumpConfigurationAndControlServer.with('ConstantSpeed');
+  if (clusterId === PumpConfigurationAndControl.id) return MatterbridgePumpConfigurationAndControlServer.with('ConstantSpeed');
   if (clusterId === SmokeCoAlarm.id) return MatterbridgeSmokeCoAlarmServer.with('SmokeAlarm', 'CoAlarm');
   if (clusterId === Switch.id) return SwitchServer.with('MomentarySwitch', 'MomentarySwitchRelease', 'MomentarySwitchLongPress', 'MomentarySwitchMultiPress');
   if (clusterId === OperationalState.id) return MatterbridgeOperationalStateServer;
@@ -1640,6 +1641,10 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * Get the default OperationalState Cluster Server.
  *
  * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+ * @param {OperationalState.OperationalStateStruct[]} operationalStateList - The list of operational states supported by the device.
+ * @param {OperationalState.ErrorStateStruct} operationalError - The initial operational error state.
+ * @param {string[] | null} phaseList - The list of phase names supported by the device, or null if not supported.
+ * @param {number | null} currentPhase - The index of the current phase in phaseList, or null if phaseList is empty/null.
  * @returns {Behavior.Options<MatterbridgeOperationalStateServer>} - The default options for the OperationalState cluster server.
  *
  * @remarks
@@ -1649,20 +1654,25 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
  * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
  * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
  */
-export function getDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped) {
-  // TODO: matter.js 0.16.0 needs a with() method
+export function getDefaultOperationalStateClusterServer(
+  operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
+  operationalStateList: OperationalState.OperationalStateStruct[] = [
+    { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+    { operationalStateId: OperationalState.OperationalStateEnum.Running },
+    { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+    { operationalStateId: OperationalState.OperationalStateEnum.Error },
+  ],
+  operationalError: OperationalState.ErrorStateStruct = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+  phaseList: string[] | null = [],
+  currentPhase: number | null = null,
+) {
   return optionsFor(MatterbridgeOperationalStateServer.with(), {
-    phaseList: [],
-    currentPhase: null,
-    countdownTime: null,
-    operationalStateList: [
-      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
-      { operationalStateId: OperationalState.OperationalStateEnum.Running },
-      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
-      { operationalStateId: OperationalState.OperationalStateEnum.Error },
-    ],
+    phaseList,
+    currentPhase,
+    countdownTime: null, // optional
+    operationalStateList,
     operationalState,
-    operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    operationalError,
   });
 }
 

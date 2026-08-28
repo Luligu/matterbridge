@@ -3,7 +3,7 @@
  * @description This file contains the ExtractorHood class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,13 +22,49 @@
  */
 
 // @matter
+import type { EndpointNumber } from '@matter/types';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { extractorHood, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+
+/**
+ * Options for configuring an {@link ExtractorHood} endpoint.
+ */
+export interface ExtractorHoodOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  /** Initial HEPA filter condition from 0 to 100. */
+  hepaCondition?: number;
+  /** Initial HEPA filter change indication. */
+  hepaChangeIndication?: ResourceMonitoring.ChangeIndication;
+  /** HEPA filter in-place indicator. */
+  hepaInPlaceIndicator?: boolean;
+  /** HEPA filter last-changed time. */
+  hepaLastChangedTime?: number | null;
+  /** HEPA replacement products. */
+  hepaReplacementProductList?: ResourceMonitoring.ReplacementProduct[];
+  /** Initial activated-carbon filter condition from 0 to 100. */
+  activatedCarbonCondition?: number;
+  /** Initial activated-carbon filter change indication. */
+  activatedCarbonChangeIndication?: ResourceMonitoring.ChangeIndication;
+  /** Activated-carbon filter in-place indicator. */
+  activatedCarbonInPlaceIndicator?: boolean;
+  /** Activated-carbon filter last-changed time. */
+  activatedCarbonLastChangedTime?: number | null;
+  /** Activated-carbon replacement products. */
+  activatedCarbonReplacementProductList?: ResourceMonitoring.ReplacementProduct[];
+}
 
 /**
  * Matterbridge endpoint representing an extractor hood device.
@@ -40,44 +76,70 @@ export class ExtractorHood extends MatterbridgeEndpoint {
    * @param {string} name - The name of the extractor hood.
    * @param {string} serial - The serial number of the extractor hood.
    *
-   * @param {number} [hepaCondition] - The initial HEPA filter condition (range 0-100). Default is 100.
-   * @param {ResourceMonitoring.ChangeIndication} hepaChangeIndication - The initial HEPA filter change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
-   * @param {boolean | undefined} hepaInPlaceIndicator - The HEPA filter in-place indicator. Default is true.
-   * @param {number | null | undefined} hepaLastChangedTime - The last time the HEPA filter was changed. Default is null.
-   * @param {ResourceMonitoring.ReplacementProduct[]} hepaReplacementProductList - The list of HEPA filter replacement products. Default is an empty array.
-
-   * @param {number} [activatedCarbonCondition] - The initial activated carbon filter condition (range 0-100). Default is 100.
-   * @param {ResourceMonitoring.ChangeIndication} activatedCarbonChangeIndication - The initial activated carbon filter change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
-   * @param {boolean | undefined} activatedCarbonInPlaceIndicator - The activated carbon filter in-place indicator. Default is true.
-   * @param {number | null | undefined} activatedCarbonLastChangedTime - The last time the activated carbon filter was changed. Default is null.
-   * @param {ResourceMonitoring.ReplacementProduct[]} activatedCarbonReplacementProductList - The list of activated carbon filter replacement products. Default is an empty array.
+   * @param {ExtractorHoodOptions} [options] - Endpoint and initial filter configuration.
    */
+  constructor(name: string, serial: string, options?: ExtractorHoodOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
+   *
+   * @deprecated Pass an {@link ExtractorHoodOptions} object as the third argument instead.
+   */
+  // oxfmt-ignore
+  constructor(name: string, serial: string, hepaCondition?: number, hepaChangeIndication?: ResourceMonitoring.ChangeIndication, hepaInPlaceIndicator?: boolean, hepaLastChangedTime?: number | null, hepaReplacementProductList?: ResourceMonitoring.ReplacementProduct[], activatedCarbonCondition?: number, activatedCarbonChangeIndication?: ResourceMonitoring.ChangeIndication, activatedCarbonInPlaceIndicator?: boolean, activatedCarbonLastChangedTime?: number | null, activatedCarbonReplacementProductList?: ResourceMonitoring.ReplacementProduct[]);
+
   constructor(
     name: string,
     serial: string,
-    hepaCondition: number = 100,
-    hepaChangeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    hepaInPlaceIndicator: boolean | undefined = true,
-    hepaLastChangedTime: number | null | undefined = null,
-    hepaReplacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
-    activatedCarbonCondition: number = 100,
-    activatedCarbonChangeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
-    activatedCarbonInPlaceIndicator: boolean | undefined = true,
-    activatedCarbonLastChangedTime: number | null | undefined = null,
-    activatedCarbonReplacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
+    optionsOrHepaCondition?: ExtractorHoodOptions | number,
+    hepaChangeIndication?: ResourceMonitoring.ChangeIndication,
+    hepaInPlaceIndicator?: boolean,
+    hepaLastChangedTime?: number | null,
+    hepaReplacementProductList?: ResourceMonitoring.ReplacementProduct[],
+    activatedCarbonCondition?: number,
+    activatedCarbonChangeIndication?: ResourceMonitoring.ChangeIndication,
+    activatedCarbonInPlaceIndicator?: boolean,
+    activatedCarbonLastChangedTime?: number | null,
+    activatedCarbonReplacementProductList?: ResourceMonitoring.ReplacementProduct[],
   ) {
-    super([extractorHood, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const options: ExtractorHoodOptions =
+      typeof optionsOrHepaCondition === 'object'
+        ? optionsOrHepaCondition
+        : {
+            hepaCondition: optionsOrHepaCondition,
+            hepaChangeIndication,
+            hepaInPlaceIndicator,
+            hepaLastChangedTime,
+            hepaReplacementProductList,
+            activatedCarbonCondition,
+            activatedCarbonChangeIndication,
+            activatedCarbonInPlaceIndicator,
+            activatedCarbonLastChangedTime,
+            activatedCarbonReplacementProductList,
+          };
+    super([extractorHood, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Extractor Hood');
     this.createDefaultPowerSourceWiredClusterServer();
     this.createBaseFanControlClusterServer();
-    this.createDefaultHepaFilterMonitoringClusterServer(hepaCondition, hepaChangeIndication, hepaInPlaceIndicator, hepaLastChangedTime, hepaReplacementProductList);
+    this.createDefaultHepaFilterMonitoringClusterServer(
+      options.hepaCondition ?? 100,
+      options.hepaChangeIndication ?? ResourceMonitoring.ChangeIndication.Ok,
+      options.hepaInPlaceIndicator ?? true,
+      options.hepaLastChangedTime ?? null,
+      options.hepaReplacementProductList ?? [],
+    );
     this.createDefaultActivatedCarbonFilterMonitoringClusterServer(
-      activatedCarbonCondition,
-      activatedCarbonChangeIndication,
-      activatedCarbonInPlaceIndicator,
-      activatedCarbonLastChangedTime,
-      activatedCarbonReplacementProductList,
+      options.activatedCarbonCondition ?? 100,
+      options.activatedCarbonChangeIndication ?? ResourceMonitoring.ChangeIndication.Ok,
+      options.activatedCarbonInPlaceIndicator ?? true,
+      options.activatedCarbonLastChangedTime ?? null,
+      options.activatedCarbonReplacementProductList ?? [],
     );
 
     this.subscribeAttribute('fanControl', 'fanMode', (newValue: number, oldValue: number, context) => {

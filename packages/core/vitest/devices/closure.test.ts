@@ -39,6 +39,7 @@ await setupTest(NAME, false);
 describe('Matterbridge ' + NAME, () => {
   let device: Closure;
   let venetianBlind: Closure;
+  let gate: Closure;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -191,6 +192,114 @@ describe('Matterbridge ' + NAME, () => {
     const closureWithoutPowerSource = new Closure('Closure No Power Source Test Device', 'CLNONE', { powerSourceType: 'None' });
     expect(closureWithoutPowerSource.hasClusterServer(PowerSource.id)).toBeFalsy();
     expect(closureWithoutPowerSource.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'closureControl']);
+  });
+
+  test.each([
+    {
+      name: 'Ventilation',
+      serial: 'CLVENTILATION',
+      options: { ventilation: true },
+      expectedFeatures: { ventilation: true, pedestrian: false, calibration: false },
+      expectedCommands: [0, 1],
+    },
+    {
+      name: 'Pedestrian',
+      serial: 'CLPEDESTRIAN',
+      options: { pedestrian: true },
+      expectedFeatures: { ventilation: false, pedestrian: true, calibration: false },
+      expectedCommands: [0, 1],
+    },
+    {
+      name: 'Calibration',
+      serial: 'CLCALIBRATION',
+      options: { calibration: true },
+      expectedFeatures: { ventilation: false, pedestrian: false, calibration: true },
+      expectedCommands: [0, 1, 2],
+    },
+  ])('add only the $name optional feature', async ({ name, serial, options, expectedFeatures, expectedCommands }) => {
+    const closureWithFeature = new Closure(`Closure ${name} Test Device`, serial, options);
+    expect(await addDevice(server, closureWithFeature)).toBeTruthy();
+
+    expect(closureWithFeature.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      ...expectedFeatures,
+    });
+    expect(closureWithFeature.getAttribute(ClosureControl.id, 'acceptedCommandList')).toEqual(expectedCommands);
+  });
+
+  test('create and add a closure device with the Ventilation, Pedestrian, and Calibration features', async () => {
+    gate = new Closure('Sliding Gate Test Device', 'CL789012', {
+      ventilation: true,
+      pedestrian: true,
+      calibration: true,
+    });
+    expect(await addDevice(server, gate)).toBeTruthy();
+
+    expect(gate.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      ventilation: true,
+      pedestrian: true,
+      calibration: true,
+    });
+    expect(gate.getAttribute(ClosureControl.id, 'acceptedCommandList')).toEqual([0, 1, 2]);
+
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Moving);
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+    });
+
+    await expect(gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {})).rejects.toMatchObject({ code: Status.InvalidInState });
+
+    let calibrateForwarded = 0;
+    gate.addCommandHandler('ClosureControl.calibrate', (data) => {
+      calibrateForwarded++;
+      expect(data.command).toBe('calibrate');
+      expect(data.request).toEqual({});
+      expect(data.cluster).toBe('closureControl');
+      expect(data.endpoint).toBe(gate);
+    });
+    await gate.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Stopped);
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+    expect(calibrateForwarded).toBe(1);
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+
+    await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+    expect(calibrateForwarded).toBe(2);
+    expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+  });
+
+  test('reject moveTo with invalid field constraints', async () => {
+    // General Interaction Model requirement: an out-of-range enum or wrong-typed field is rejected with
+    // CONSTRAINT_ERROR ahead of any state-dependent check, regardless of the device's current MainState.
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: 99 as ClosureControl.TargetPosition,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: 'yes' as unknown as boolean,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    await expect(
+      device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        speed: 99 as ThreeLevelAuto,
+      }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
+
+    // None of the rejected commands above touched state.
+    expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
   });
 
   test('invoke closure control commands', async () => {
@@ -349,6 +458,136 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('simulate MoveTo completion via movementDuration', async () => {
+    const timedDevice = new Closure('Closure Timed Test Device', 'CLTIMED', { movementDuration: 1000 });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+
+    const movementCompleted = vi.fn();
+    const secureStateChanged = vi.fn();
+    (timedDevice.events as any).closureControl.movementCompleted.on(movementCompleted);
+    (timedDevice.events as any).closureControl.secureStateChanged.on(secureStateChanged);
+
+    // The completion timer is a plain setTimeout under the hood (see closure.ts), so fake timers let this fire
+    // deterministically without waiting out the real 1s duration.
+    vi.useFakeTimers();
+    try {
+      // Default state is fully closed and latched; moving to fully open while unlatching also flips SecureState.
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+        latch: false,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged.mock.calls[0]?.[0]).toMatchObject({ secureValue: false });
+
+      // A second move that doesn't change the latch-derived SecureState should not re-trigger SecureStateChanged.
+      movementCompleted.mockClear();
+      secureStateChanged.mockClear();
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyClosed,
+        latch: false,
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyClosed,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged).not.toHaveBeenCalled();
+
+      // A position-only MoveTo with no prior OverallTargetState to carry a latch value forward falls back to
+      // OverallCurrentState's own latch once the movement completes (the closure is currently unlatched, so
+      // this doesn't trip the "position change requires latch false while latched" check).
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', null);
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+
+      // A latch-only MoveTo with no prior OverallTargetState to carry a position value forward falls back to
+      // OverallCurrentState's own position once the movement completes.
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', null);
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: true,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: true,
+        speed: ThreeLevelAuto.Auto,
+        secureState: true,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+
+      // An explicit null position inherited from OverallTargetState (as left by e.g. setPartiallyOpened()) is
+      // treated the same as an absent one: it also falls back to OverallCurrentState's own position.
+      movementCompleted.mockClear();
+      await timedDevice.setAttribute(ClosureControl.id, 'overallTargetState', { position: null, latch: true, speed: ThreeLevelAuto.Auto });
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        latch: false,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('simulate Calibrate completion via calibrationDuration', async () => {
+    const timedDevice = new Closure('Closure Calibration Timed Test Device', 'CLCALTIMED', { calibration: true, calibrationDuration: 1000 });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+
+    // The completion timer is a plain setTimeout under the hood (see closure.ts), so fake timers let this fire
+    // deterministically without waiting out the real 1s duration.
+    vi.useFakeTimers();
+    try {
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(1);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('create and add a closure device with two panels', async () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
@@ -498,12 +737,12 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
-        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
         'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
         'closureControl(0x104).countdownTime(0x0)=0',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
-        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
+        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: true, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
         'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',

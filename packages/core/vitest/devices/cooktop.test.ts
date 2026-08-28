@@ -15,6 +15,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -30,6 +31,7 @@ import {
 import { stringify } from 'node-ansi-logger';
 
 import { Cooktop } from '../../src/devices/cooktop.js';
+import { MatterbridgeLevelTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { cooktop } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -79,6 +81,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(OnOff.id)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'onOff', 'fixedLabel']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     surface1 = device.addSurface('Surface Top Left', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
       { mfgCode: null, namespaceId: CommonPositionTag.Left.namespaceId, tag: CommonPositionTag.Left.tag, label: CommonPositionTag.Left.label },
@@ -90,6 +93,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(surface1.hasClusterServer(TemperatureMeasurement.id)).toBeTruthy();
     expect(surface1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'onOff']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     surface2 = device.addSurface('Surface Top Right', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
       { mfgCode: null, namespaceId: CommonPositionTag.Right.namespaceId, tag: CommonPositionTag.Right.tag, label: CommonPositionTag.Right.label },
@@ -100,6 +104,24 @@ describe('Matterbridge ' + NAME, () => {
     expect(surface2.hasClusterServer(TemperatureControl.id)).toBeTruthy();
     expect(surface2.hasClusterServer(TemperatureMeasurement.id)).toBeTruthy();
     expect(surface2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'onOff']);
+  });
+
+  test('add a cook surface with endpoint options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label }];
+    const configuredDevice = new Cooktop('Configured Cooktop', 'CT654321');
+    const configuredSurface = configuredDevice.addSurface('Configured Surface', {
+      id: 'ConfiguredSurface',
+      number: EndpointNumber(13_08_1),
+      tagList,
+      selectedTemperatureLevel: 1,
+      supportedTemperatureLevels: ['Low', 'High'],
+    });
+
+    expect(configuredSurface.id).toBe('ConfiguredSurface');
+    expect(configuredSurface.number).toBe(EndpointNumber(13_08_1));
+    expect(configuredSurface.tagList).toEqual(tagList);
+    const temperatureControlOptions = configuredSurface.behaviors.optionsFor(MatterbridgeLevelTemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel));
+    expect(temperatureControlOptions).toMatchObject({ selectedTemperatureLevel: 1, supportedTemperatureLevels: ['Low', 'High'] });
   });
 
   test('add a cooktop device', async () => {

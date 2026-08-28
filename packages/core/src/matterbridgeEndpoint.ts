@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgeEndpoint that extends the Endpoint class from the Matter.js library.
  * @author Luca Liguori
  * @created 2024-10-01
- * @version 2.2.0
+ * @version 2.3.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -52,7 +52,6 @@ import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-
 import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
 import { PowerTopologyServer } from '@matter/node/behaviors/power-topology';
 import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
-import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
 import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
 import { RelativeHumidityMeasurementServer } from '@matter/node/behaviors/relative-humidity-measurement';
 import { ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
@@ -118,6 +117,7 @@ import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensing
 import { MatterbridgeOnOffServer } from './behaviors/onOffServer.js';
 import { MatterbridgeOperationalStateServer } from './behaviors/operationalStateServer.js';
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
+import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
@@ -2283,12 +2283,37 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Power Topology Cluster Server with feature TreeTopology (the endpoint provides or consumes power to/from itself and its child endpoints). Only needed for an electricalSensor device type.
+   * Creates a default Power Topology Cluster Server. Only needed for an electricalSensor device type.
    *
+   * @param {PowerTopology.Feature} feature - Topology feature to enable. Defaults to TreeTopology.
+   * @param {EndpointNumber[]} availableEndpoints - Endpoints capable of providing or consuming power. Used by SetTopology and DynamicPowerFlow.
+   * @param {EndpointNumber[]} activeEndpoints - Endpoints currently providing or consuming power. Used by DynamicPowerFlow and must be a subset of availableEndpoints.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * - NodeTopology means the endpoint provides or consumes power to or from the entire node.
+   * - TreeTopology means the endpoint provides or consumes power to or from itself and its child endpoints.
+   * - SetTopology means the endpoint provides or consumes power to or from `availableEndpoints`.
+   * - DynamicPowerFlow also enables SetTopology and reports the currently participating endpoints through `activeEndpoints`.
+   * - `activeEndpoints` must be a subset of `availableEndpoints`.
    */
-  createDefaultPowerTopologyClusterServer(): this {
-    this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+  createDefaultPowerTopologyClusterServer(
+    feature: PowerTopology.Feature = PowerTopology.Feature.TreeTopology,
+    availableEndpoints: EndpointNumber[] = [],
+    activeEndpoints: EndpointNumber[] = [],
+  ): this {
+    if (feature === PowerTopology.Feature.NodeTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.NodeTopology));
+    } else if (feature === PowerTopology.Feature.TreeTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+    } else if (feature === PowerTopology.Feature.SetTopology) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology), { availableEndpoints });
+    } else if (feature === PowerTopology.Feature.DynamicPowerFlow) {
+      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology, PowerTopology.Feature.DynamicPowerFlow), {
+        availableEndpoints,
+        activeEndpoints,
+      });
+    }
     return this;
   }
 
@@ -4148,12 +4173,30 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates the default Valve Configuration And Control cluster server with features Level.
    *
    * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
-   * @param {number} [valveLevel] - The valve level to set. Defaults to 0.
+   * @param {number} [valveLevel] - The valve level to set (100 percent SHALL indicate the fully open position). Defaults to 0.
+   * @param {number} [movementDuration] - Simulated duration, in milliseconds, that an Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled).
+   * @param {boolean} [autoClose] - Whether the RemainingDuration countdown timer auto-closes the valve once it reaches 0. Defaults to `false` (disabled), leaving auto-close to the real device implementation.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The created server's `open()`/`close()` always set the attributes required by the Matter spec synchronously
+   * (TargetState/TargetLevel/OpenDuration/RemainingDuration, CurrentState set to Transitioning), but completion
+   * is simulated only if `movementDuration`/`autoClose` enable it — both disabled by default, and left disabled
+   * unless explicitly passed here, so the real device implementation stays in control:
+   * - `movementDuration` (`> 0`): CurrentState/CurrentLevel converge on TargetState/TargetLevel automatically
+   *   after this many milliseconds.
+   * - `autoClose` (`true`): RemainingDuration counts down once per second and the valve closes itself once it
+   *   reaches 0.
+   *
+   * `MatterbridgeValveConfigurationAndControlServer.initialize()` additionally sets both to CHIP-test-friendly
+   * values (`movementDuration = 2000`, `autoClose = true`) under `MATTERBRIDGE_CHIP_TEST` only, regardless of
+   * what's passed here.
    */
   createDefaultValveConfigurationAndControlClusterServer(
     valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,
     valveLevel: number = 0,
+    movementDuration: number = 0,
+    autoClose: boolean = false,
   ): this {
     this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(ValveConfigurationAndControl.Feature.Level), {
       currentState: valveState,
@@ -4167,6 +4210,9 @@ export class MatterbridgeEndpoint extends Endpoint {
       targetLevel: valveLevel,
       defaultOpenLevel: 100, // Writable and persistent across restarts
       levelStep: 1, // Fixed
+      // Simulation knobs
+      movementDuration,
+      autoClose,
     });
     return this;
   }
@@ -4175,19 +4221,36 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
    * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
+   * @param {number | null} [maxPressure] - The maximum pressure to set. Defaults to `null`.
+   * @param {number | null} [maxSpeed] - The maximum speed to set. Defaults to `null`.
+   * @param {number | null} [maxFlow] - The maximum flow to set. Defaults to `null`.
+   * @param {number | null} [minConstSpeed] - The minimum constant speed to set. Defaults to `null`.
+   * @param {number | null} [maxConstSpeed] - The maximum constant speed to set. Defaults to `null`.
+   * @param {number | null} [speed] - The speed to set. Defaults to `null`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultPumpConfigurationAndControlClusterServer(pumpMode: PumpConfigurationAndControl.OperationMode = PumpConfigurationAndControl.OperationMode.Normal): this {
-    this.behaviors.require(PumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed), {
-      minConstSpeed: null,
-      maxConstSpeed: null,
-      maxPressure: null,
-      maxSpeed: null,
-      maxFlow: null,
+  createDefaultPumpConfigurationAndControlClusterServer(
+    pumpMode: PumpConfigurationAndControl.OperationMode = PumpConfigurationAndControl.OperationMode.Normal,
+    maxPressure: number | null = null,
+    maxSpeed: number | null = null,
+    maxFlow: number | null = null,
+    minConstSpeed: number | null = null,
+    maxConstSpeed: number | null = null,
+    speed: number | null = null,
+  ): this {
+    this.behaviors.require(MatterbridgePumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed), {
+      minConstSpeed,
+      maxConstSpeed,
+      maxPressure,
+      maxSpeed,
+      maxFlow,
+      speed,
       effectiveOperationMode: pumpMode,
       effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
       capacity: null,
+      pumpStatus: new PumpConfigurationAndControl.PumpStatus({ running: false }),
       operationMode: pumpMode,
+      controlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
     });
     return this;
   }
@@ -4443,6 +4506,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * Creates a default OperationalState Cluster Server.
    *
    * @param {OperationalState.OperationalStateEnum} operationalState - The initial operational state id.
+   * @param {OperationalState.OperationalStateStruct[]} operationalStateList - The list of operational states supported by the device.
+   * @param {OperationalState.ErrorStateStruct} operationalError - The initial operational error state.
+   * @param {string[] | null} phaseList - The list of phase names supported by the device, or null if not supported.
+   * @param {number | null} currentPhase - The index of the current phase in phaseList, or null if phaseList is empty/null.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -4453,8 +4520,22 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - { operationalStateId: OperationalState.OperationalStateEnum.Paused, operationalStateLabel: 'Paused' },
    * - { operationalStateId: OperationalState.OperationalStateEnum.Error, operationalStateLabel: 'Error' },
    */
-  createDefaultOperationalStateClusterServer(operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped): this {
-    this.behaviors.require(MatterbridgeOperationalStateServer, getDefaultOperationalStateClusterServer(operationalState));
+  createDefaultOperationalStateClusterServer(
+    operationalState: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Stopped,
+    operationalStateList: OperationalState.OperationalStateStruct[] = [
+      { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+      { operationalStateId: OperationalState.OperationalStateEnum.Running },
+      { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+      { operationalStateId: OperationalState.OperationalStateEnum.Error },
+    ],
+    operationalError: OperationalState.ErrorStateStruct = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    phaseList: string[] | null = [],
+    currentPhase: number | null = null,
+  ): this {
+    this.behaviors.require(
+      MatterbridgeOperationalStateServer,
+      getDefaultOperationalStateClusterServer(operationalState, operationalStateList, operationalError, phaseList, currentPhase),
+    );
     return this;
   }
 

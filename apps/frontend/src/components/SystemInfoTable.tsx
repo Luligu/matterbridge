@@ -49,63 +49,37 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   if (debug) console.log('SystemInfoTable loading with systemInfo:', localSystemInfo, 'compact:', compact);
 
   // Compact some fields if compact is true
-  if (systemInfo && compact && localSystemInfo.totalMemory && localSystemInfo.freeMemory) {
+  if (compact && localSystemInfo.totalMemory && localSystemInfo.freeMemory) {
     const totalMemory = localSystemInfo.totalMemory;
     const freeMemory = localSystemInfo.freeMemory;
     localSystemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
     localSystemInfo.totalMemory = '';
   }
-  if (systemInfo && compact && localSystemInfo.heapTotal && localSystemInfo.heapUsed) {
+  if (compact && localSystemInfo.heapTotal && localSystemInfo.heapUsed) {
     const heapTotal = localSystemInfo.heapTotal;
     const heapUsed = localSystemInfo.heapUsed;
     localSystemInfo.heapUsed = `${heapUsed} / ${heapTotal}`;
     localSystemInfo.heapTotal = '';
   }
-  if (systemInfo && compact && localSystemInfo.osRelease && localSystemInfo.osType) {
+  if (compact && localSystemInfo.osRelease && localSystemInfo.osType) {
     const osType = localSystemInfo.osType;
     const osRelease = localSystemInfo.osRelease;
     localSystemInfo.osType = `${osType} (${osRelease})`;
     localSystemInfo.osRelease = '';
   }
-  if (systemInfo && compact && localSystemInfo.osArch && localSystemInfo.osPlatform) {
+  if (compact && localSystemInfo.osArch && localSystemInfo.osPlatform) {
     const osPlatform = localSystemInfo.osPlatform;
     const osArch = localSystemInfo.osArch;
     localSystemInfo.osPlatform = `${osPlatform} (${osArch})`;
     localSystemInfo.osArch = '';
   }
 
-  const handleMemoryUpdate = (totalMemory: string, freeMemory: string, heapTotal: string, heapUsed: string, rss: string) => {
-    setLocalSystemInfo((prev) => ({
-      ...prev,
-      totalMemory: totalMemory,
-      freeMemory: freeMemory,
-      heapTotal: heapTotal,
-      heapUsed: heapUsed,
-      rss: rss,
-    }));
-  };
-
-  const handleCpuUpdate = (cpuUsage: number) => {
-    setLocalSystemInfo((prev) => ({
-      ...prev,
-      cpuUsage: cpuUsage.toFixed(2) + ' %',
-    }));
-  };
-
-  const handleProcessCpuUpdate = (processCpuUsage: number) => {
-    setLocalSystemInfo((prev) => ({
-      ...prev,
-      processCpuUsage: processCpuUsage.toFixed(2) + ' %',
-    }));
-  };
-
-  const handleUptimeUpdate = (systemUptime: string, processUptime: string) => {
-    setLocalSystemInfo((prev) => ({
-      ...prev,
-      systemUptime: systemUptime,
-      processUptime: processUptime,
-    }));
-  };
+  // If bunVersion is present, use it as nodeVersion and remove bunVersion from the display
+  if (localSystemInfo.bunVersion) {
+    localSystemInfo.nodeVersion = localSystemInfo.bunVersion;
+    localSystemInfo.bunVersion = undefined;
+    keyNameMap.set('nodeVersion', 'Bun version');
+  }
 
   const handleViewHistory = () => {
     if (debug) console.log('SystemInfoTable handleViewHistory clicked');
@@ -113,6 +87,39 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   };
 
   useEffect(() => {
+    const handleMemoryUpdate = (totalMemory: string, freeMemory: string, heapTotal: string, heapUsed: string, rss: string) => {
+      setLocalSystemInfo((prev) => ({
+        ...prev,
+        totalMemory: totalMemory,
+        freeMemory: freeMemory,
+        heapTotal: heapTotal,
+        heapUsed: heapUsed,
+        rss: rss,
+      }));
+    };
+
+    const handleCpuUpdate = (cpuUsage: number) => {
+      setLocalSystemInfo((prev) => ({
+        ...prev,
+        cpuUsage: cpuUsage.toFixed(2) + ' %',
+      }));
+    };
+
+    const handleProcessCpuUpdate = (processCpuUsage: number) => {
+      setLocalSystemInfo((prev) => ({
+        ...prev,
+        processCpuUsage: processCpuUsage.toFixed(2) + ' %',
+      }));
+    };
+
+    const handleUptimeUpdate = (systemUptime: string, processUptime: string) => {
+      setLocalSystemInfo((prev) => ({
+        ...prev,
+        systemUptime: systemUptime,
+        processUptime: processUptime,
+      }));
+    };
+
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (debug) console.log('SystemInfoTable received WebSocket Message:', msg);
       if (
@@ -149,13 +156,6 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   }, [addListener, removeListener]);
 
   if (!localSystemInfo || closed) return null;
-
-  // If bunVersion is present, use it as nodeVersion and remove bunVersion from the display
-  if (localSystemInfo.bunVersion) {
-    localSystemInfo.nodeVersion = localSystemInfo.bunVersion;
-    localSystemInfo.bunVersion = undefined;
-    keyNameMap.set('nodeVersion', 'Bun version');
-  }
 
   if (debug) console.log('SystemInfoTable rendering...');
 

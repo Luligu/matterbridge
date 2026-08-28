@@ -114,7 +114,7 @@ function Test() {
     return () => {
       if (debug) console.log('Test useEffect online unmounted');
     };
-  }, [online, sendMessage, showSnackbarMessage]);
+  }, [online]);
 
   if (debug) console.log('Test rendering...');
   if (!online) {

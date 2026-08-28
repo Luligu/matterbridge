@@ -161,8 +161,11 @@
 <h3 id="matterbridge-chip-tool-docker-image">Matterbridge chip-tool docker image</h3>
 <p>The image (tag <strong>chip-test</strong> 400MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource and includes the connectedhomeip repository with chip-tool, chip-cert and all components required for yaml and phyton tests. The matterbridge instance inside the container is already paired in the chip-tool fabric to execute yaml tests and in the python harness fabric to execute python tests. In the container, the chip environment and phyton environment are already active. Just open a shell inside the container with bash and run the tests. Matterbridge frontend is as usual on port 8283. No volumes or port mapping needed.</p>
 <h3 id="matterbridge-docker-base-images">Matterbridge docker base images</h3>
-<p>The image (tag <strong>24-ubuntu-slim</strong> 83 MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
-<p>The image (tag <strong>bun-ubuntu-slim</strong> 79 MB) is based on <code>ubuntu:latest</code> with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun.</p>
+<p>The image (tag <strong>node-ubuntu-slim</strong> 83 MB) is based on <code>ubuntu:latest</code> with Node.js 24 LTS from NodeSource. It is used to build the <strong>ubuntu</strong> image but can also be used to open a shell in ubuntu latest with node 24 (node doesn&#39;t publish node:24-ubuntu).</p>
+<p>The image (tag <strong>bun-ubuntu-slim</strong> 79 MB) is based on <code>ubuntu:latest</code> with Bun from GitHub. It can be used to open a shell in ubuntu latest with Bun (bun doesn&#39;t publish an ubuntu based image).</p>
+<h3 id="matterbridge-dev-container-images">Matterbridge Dev Container images</h3>
+<p>The image (tag <strong>node-dev-container</strong>) is based on <code>node:24-trixie-slim</code> and provides a development environment for Node.js applications. It includes common development and networking tools, synchronized Bash history, and a non-root <code>node</code> user with passwordless sudo access.</p>
+<p>The image (tag <strong>bun-dev-container</strong>) is based on <code>oven/bun:slim</code> and provides a development environment for Bun applications. It includes common development and networking tools, synchronized Bash history, a non-root <code>bun</code> user with passwordless sudo access, and an <code>npm</code> shim that forwards supported commands to Bun.</p>
 <h3 id="docker-health-check">Docker health check</h3>
 <p>All images include a health check.</p>
 <p>How health checks work in different scenarios:</p>

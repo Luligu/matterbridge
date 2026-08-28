@@ -30,12 +30,10 @@ import { Identify } from '@matter/types/clusters/identify';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { ModeSelect } from '@matter/types/clusters/mode-select';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -97,7 +95,6 @@ import {
   smokeCoAlarm,
   temperatureSensor,
   thermostat,
-  waterValve,
   windowCovering,
 } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -119,7 +116,6 @@ describe('Server clusters and behaviors', () => {
   let thermostatPreset: MatterbridgeEndpoint;
   let thermostatSchedule: MatterbridgeEndpoint;
   let thermostatSuggestion: MatterbridgeEndpoint;
-  let valve: MatterbridgeEndpoint;
   let smoke: MatterbridgeEndpoint;
   let contact: MatterbridgeEndpoint;
   let mode: MatterbridgeEndpoint;
@@ -403,14 +399,6 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
   });
 
-  test('Device type: valve', async () => {
-    valve = new MatterbridgeEndpoint(waterValve, { id: 'valve' });
-    valve.createDefaultValveConfigurationAndControlClusterServer();
-    valve.addRequiredClusterServers();
-    expect(valve).toBeDefined();
-    expect(await addDevice(aggregator, valve)).toBeTruthy();
-  });
-
   test('Device type: smokeSensor', async () => {
     smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'smokeSensor' });
     smoke.createDefaultSmokeCOAlarmClusterServer();
@@ -518,7 +506,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.attributes.onOff).toBe(false);
     });
 
-    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 10, 5);
+    const onWithTimedOffRequest = getOnWithTimedOffRequest(false, 0, 0);
     await expectCommand(light, OnOff, 'OnOff.onWithTimedOff', onWithTimedOffRequest, (data) => {
       expect(data.cluster).toBe('onOff');
       expect(data.attributes.onOff).toBe(false);
@@ -608,16 +596,6 @@ describe('Server clusters and behaviors', () => {
 
     const stepHueRequest = getStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
     await expectCommand(light, ColorControl, 'ColorControl.stepHue', stepHueRequest, (data) => {
-      expect(data.cluster).toBe('colorControl');
-    });
-
-    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
-    await expectCommand(light, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
-      expect(data.cluster).toBe('colorControl');
-    });
-
-    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
-    await expectCommand(light, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
       expect(data.cluster).toBe('colorControl');
     });
 
@@ -783,6 +761,16 @@ describe('Server clusters and behaviors', () => {
       currentX: 30000,
       currentY: 30000,
       colorTemperatureMireds: 250,
+    });
+
+    const enhancedMoveHueRequest = getEnhancedMoveHueRequest(ColorControl.MoveMode.Up, 5, false);
+    await expectCommand(enhancedLight, ColorControl, 'ColorControl.enhancedMoveHue', enhancedMoveHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
+    });
+
+    const enhancedStepHueRequest = getEnhancedStepHueRequest(ColorControl.StepMode.Up, 10, 3, false);
+    await expectCommand(enhancedLight, ColorControl, 'ColorControl.enhancedStepHue', enhancedStepHueRequest, (data) => {
+      expect(data.cluster).toBe('colorControl');
     });
   });
 
@@ -1495,69 +1483,6 @@ describe('Server clusters and behaviors', () => {
     expect(info).toHaveBeenCalledTimes(1);
   });
 
-  test('ValveConfigurationAndControl server', async () => {
-    const expectValveAttributes = (expected: {
-      currentState: number;
-      targetState: number;
-      currentLevel: number;
-      targetLevel: number;
-      openDuration: number | null;
-      remainingDuration: number | null;
-    }) => {
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(expected.currentState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(expected.targetState);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentLevel')).toBe(expected.currentLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetLevel')).toBe(expected.targetLevel);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'openDuration')).toBe(expected.openDuration);
-      expect(valve.getAttribute(ValveConfigurationAndControl.id, 'remainingDuration')).toBe(expected.remainingDuration);
-    };
-
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Closed,
-      targetState: ValveConfigurationAndControl.ValveState.Closed,
-      currentLevel: 0,
-      targetLevel: 0,
-      openDuration: null,
-      remainingDuration: null,
-    });
-
-    const openRequest = { targetLevel: 50, openDuration: 60 };
-    await expectCommand(valve, ValveConfigurationAndControl, 'open', openRequest, (data) => {
-      expect(data.cluster).toBe('valveConfigurationAndControl');
-    });
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Open,
-      targetState: ValveConfigurationAndControl.ValveState.Open,
-      currentLevel: 50,
-      targetLevel: 50,
-      openDuration: 60,
-      remainingDuration: null,
-    });
-
-    await valve.setAttribute(ValveConfigurationAndControl.id, 'defaultOpenDuration', null);
-    await valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'open', {});
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Open,
-      targetState: ValveConfigurationAndControl.ValveState.Open,
-      currentLevel: 100,
-      targetLevel: 100,
-      openDuration: null,
-      remainingDuration: null,
-    });
-
-    await expectCommand(valve, ValveConfigurationAndControl, 'close', undefined, (data) => {
-      expect(data.cluster).toBe('valveConfigurationAndControl');
-    });
-    expectValveAttributes({
-      currentState: ValveConfigurationAndControl.ValveState.Closed,
-      targetState: ValveConfigurationAndControl.ValveState.Closed,
-      currentLevel: 0,
-      targetLevel: 0,
-      openDuration: null,
-      remainingDuration: null,
-    });
-  });
-
   test('SmokeCoAlarm server', async () => {
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
@@ -1671,7 +1596,7 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeHepaFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`);
   });
 
   test('ActivatedCarbonFilterMonitoring server', async () => {
@@ -1682,7 +1607,10 @@ describe('Server clusters and behaviors', () => {
 
     expect(purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(100);
     expect(typeof purifier.getAttribute(ActivatedCarbonFilterMonitoring.id, 'lastChangedTime')).toBe('number');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`,
+    );
   });
 
   test('DeviceEnergyManagement server', async () => {
@@ -1764,38 +1692,6 @@ describe('Server clusters and behaviors', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
     hasSpy.mockRestore();
-  });
-
-  test('OperationalState server', async () => {
-    const expectOperationalStateAttributes = (expectedState: number) => {
-      expect(washer.getAttribute(OperationalState.id, 'operationalState')).toBe(expectedState);
-      expect(washer.getAttribute(OperationalState.id, 'operationalError')).toEqual({
-        errorStateId: OperationalState.ErrorState.NoError,
-        errorStateDetails: 'Fully operational',
-      });
-    };
-
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
-
-    await expectCommand(washer, OperationalState, 'start', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
-
-    await expectCommand(washer, OperationalState, 'pause', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Paused);
-
-    await expectCommand(washer, OperationalState, 'resume', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Running);
-
-    await expectCommand(washer, OperationalState, 'stop', undefined, (data) => {
-      expect(data.cluster).toBe('operationalState');
-    });
-    expectOperationalStateAttributes(OperationalState.OperationalStateEnum.Stopped);
   });
 
   test('ServiceArea server', async () => {

@@ -1,0 +1,3 @@
+# To run tests on CommodityTariff --PICS is required
+# Matches MatterbridgeCommodityTariffServer on CHIP Electrical Energy Tariff endpoint 14092
+SETRF.S=1

@@ -14,6 +14,7 @@ import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-e
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -79,6 +80,28 @@ describe('Matterbridge ' + NAME, () => {
     device.addPanel('Solar Panel 2', CommonNumberTag.Two);
     device.addPanel('Solar Panel 3', CommonNumberTag.Three);
     device.addPanel('Solar Panel 4', CommonNumberTag.Four);
+  });
+
+  test('create solar power with explicit endpoint and measurement options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: 1, tag: 1, label: 'One' }];
+    const optionsDevice = new SolarPower('Solar Power', 'SP-OPTIONS', {
+      id: 'SolarPowerOptions',
+      number: EndpointNumber(14_03),
+      tagList,
+      voltage: 400_000,
+      current: 12_000,
+      power: 4_800_000,
+      energyExported: 10_000,
+      absMinPower: -5_000_000,
+      absMaxPower: 0,
+    });
+    expect(optionsDevice.id).toBe('SolarPowerOptions');
+    expect(optionsDevice.number).toBe(EndpointNumber(14_03));
+    expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('create solar power with an empty options object', () => {
+    expect(new SolarPower('Solar Power Defaults', 'SP-DEFAULTS', {})).toBeDefined();
   });
 
   test('add a solar power device', async () => {
@@ -160,12 +183,11 @@ describe('Matterbridge ' + NAME, () => {
         "deviceEnergyManagementMode(0x9f).supportedModes(0x0)=[ { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Device Energy Management', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Home Energy Management', mode: 3, modeTags: [ { mfgCode: undefined, value: 16387 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Grid Energy Management', mode: 4, modeTags: [ { mfgCode: undefined, value: 16387 } ] }, { label: 'Full Energy Management', mode: 5, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 }, { mfgCode: undefined, value: 16387 } ] } ]",
         'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
         'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
-        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
         'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)={ energy: 0, startTimestamp: undefined, endTimestamp: undefined, startSystime: undefined, endSystime: undefined, apparentEnergy: undefined, reactiveEnergy: undefined }',
-        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)={ energy: 0, startTimestamp: undefined, endTimestamp: undefined, startSystime: undefined, endSystime: undefined, apparentEnergy: undefined, reactiveEnergy: undefined }',
         'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
-        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
         'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
         'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
         'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',

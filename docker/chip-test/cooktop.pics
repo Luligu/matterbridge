@@ -1,0 +1,27 @@
+# To run tests on the Cooktop OffOnly On/Off and Fixed Label clusters --PICS is required
+# Matches the Cooktop endpoint 1308.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+OO.S=1
+OO.C=0
+OO.S.F00=0 # Lighting
+OO.S.F01=0 # DeadFrontBehavior
+OO.S.F02=1 # OffOnly
+OO.S.A0000=1 # OnOff
+OO.S.A4000=0 # GlobalSceneControl
+OO.S.A4001=0 # OnTime
+OO.S.A4002=0 # OffWaitTime
+OO.S.A4003=0 # StartUpOnOff
+OO.S.C00.Rsp=1 # Off
+OO.S.C01.Rsp=0 # On is excluded by OffOnly
+OO.S.C02.Rsp=0 # Toggle is excluded by OffOnly
+OO.S.C40.Rsp=0 # OffWithEffect
+OO.S.C41.Rsp=0 # OnWithRecallGlobalScene
+OO.S.C42.Rsp=0 # OnWithTimedOff
+OO.M.ManuallyControlled=0
+
+S.S=0 # Scenes Management is not present on the Cooktop endpoint
+
+FLABEL.S=1
+FLABEL.S.A0000=1 # LabelList

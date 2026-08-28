@@ -10,6 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 // @matter
 import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
+import { TlvOfModel } from '@matter/types';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { Identify } from '@matter/types/clusters/identify';
@@ -32,7 +33,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-import { Dishwasher, MatterbridgeDishwasherModeServer } from '../../src/devices/dishwasher.js';
+import { Dishwasher, MatterbridgeDishwasherAlarmServer, MatterbridgeDishwasherModeServer } from '../../src/devices/dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { dishwasher } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -146,9 +147,9 @@ describe('Matterbridge ' + NAME, () => {
         'dishwasherAlarm(0x5d).clusterRevision(0xfffd)=1',
         'dishwasherAlarm(0x5d).featureMap(0xfffc)={ reset: false }',
         'dishwasherAlarm(0x5d).generatedCommandList(0xfff8)=[  ]',
-        'dishwasherAlarm(0x5d).mask(0x0)={ inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true }',
+        'dishwasherAlarm(0x5d).mask(0x0)={ inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
         'dishwasherAlarm(0x5d).state(0x2)={ inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
-        'dishwasherAlarm(0x5d).supported(0x3)={ inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true }',
+        'dishwasherAlarm(0x5d).supported(0x3)={ inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
         'dishwasherMode(0x59).acceptedCommandList(0xfff9)=[ 0 ]',
         'dishwasherMode(0x59).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'dishwasherMode(0x59).clusterRevision(0xfffd)=3',
@@ -213,11 +214,33 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with invalid mode 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with unsupported mode 0`);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `DishwasherModeServer: changeToMode called with mode 1 => Light`);
+  });
+
+  test('encode DishwasherAlarm attributes with the cluster-specific bitmap', () => {
+    const alarms = { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true };
+    for (const attributeName of ['Mask', 'State', 'Supported']) {
+      const attribute = [...MatterbridgeDishwasherAlarmServer.schema.conformant.attributes].find(({ name }) => name === attributeName);
+      expect(attribute).toBeDefined();
+      if (!attribute) continue;
+      const schema = TlvOfModel(attribute);
+      expect(schema.decode(schema.encode(alarms))).toEqual(alarms);
+    }
+  });
+
+  test('encode the DishwasherAlarm Notify event with the cluster-specific bitmap', () => {
+    const notifyEvent = [...MatterbridgeDishwasherAlarmServer.schema.conformant.events].find(({ name }) => name === 'Notify');
+    expect(notifyEvent).toBeDefined();
+    if (!notifyEvent) return;
+
+    const active = { inflowError: true, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: true, waterLevelError: false };
+    const inactive = { inflowError: false, drainError: true, doorError: false, tempTooLow: true, tempTooHigh: false, waterLevelError: true };
+    const schema = TlvOfModel(notifyEvent);
+    expect(schema.decode(schema.encode({ active, inactive, state: active, mask: active }))).toEqual({ active, inactive, state: active, mask: active });
   });
 
   test('remove the laundry washer device', async () => {
@@ -225,6 +248,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a dishwasher device with number temperature control', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
     device = new Dishwasher('Dishwasher Test Device', 'DW123456', undefined, undefined, undefined, undefined, 5500, 3000, 9000, 1000);
     expect(device).toBeDefined();
     expect(device.id).toBe('DishwasherTestDevice-DW123456');
@@ -250,7 +274,10 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.INFO,
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('invoke MatterbridgeNumberTemperatureControlServer commands', async () => {

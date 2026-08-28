@@ -200,8 +200,8 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['hepaFilterMonitoring'].generatedCommandList).toEqual([]);
     await device.invokeBehaviorCommand(HepaFilterMonitoringServer, 'resetCondition'); // Reset condition
     await wait(100); // Wait for the device to be ready
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeHepaFilterMonitoringServer: resetting condition (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${device.id}.${device.number})`);
   });
 
   test('invoke MatterbridgeActivatedCarbonFilterMonitoringServer commands', async () => {
@@ -213,8 +213,8 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['activatedCarbonFilterMonitoring'].generatedCommandList).toEqual([]);
     await device.invokeBehaviorCommand(ActivatedCarbonFilterMonitoringServer, 'resetCondition'); // Reset condition
     await wait(100); // Wait for the device to be ready
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetting condition (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${device.id}.${device.number})`);
   });
 
   test('write attributes fanMode and percentSetting of fanControl cluster', async () => {

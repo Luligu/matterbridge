@@ -210,10 +210,12 @@ You need the Matterbridge reflector server tray app running on the host from the
 To test the sharing feature (it shares mDNS between all reflector clients),
 use this [reflector-docker-compose.yml](https://matterbridge.io/reflector/reflector-docker-compose.yml).
 
-With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**
+With this configuration Home Assistant (with Matter Server) works inside a Docker Desktop container without network host. The configuration is stored in the external `homeassistant` and `matterserver` volumes so it is shared across Compose projects and preserved by `docker compose down`. When asked by Home Assistant, connect to Matter Server with **ws://matterserver:5580/ws**.
 
 ```shell
 docker network inspect matterbridge || docker network create --ipv6 matterbridge
+docker volume inspect homeassistant || docker volume create homeassistant
+docker volume inspect matterserver || docker volume create matterserver
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml down
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml pull
 docker compose -p matterbridge-reflector -f reflector-docker-compose.yml up -d --force-recreate

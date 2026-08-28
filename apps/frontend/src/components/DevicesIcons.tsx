@@ -76,6 +76,7 @@ import { MbfWindow } from './MbfWindow';
 import { WebSocketContext } from './WebSocketProvider';
 
 const debugUpdate = false;
+const localDebug = false; // Set to true to enable debug logs only in DevicesIcons component
 
 // Lookup tables for enum values
 const FanModeLookup = ['Off', 'Low', 'Medium', 'High', 'On', 'Auto', 'Smart'];
@@ -135,6 +136,33 @@ const outletDeviceTypes = [0x010a, 0x010b];
 const switchDeviceTypes = [0x010f, 0x0110];
 const currentLevelDeviceTypes = [0x0100, 0x0101, 0x010c, 0x010d, 0x010a, 0x010b, 0x0110];
 const fanControlDeviceTypes = [0x002b, 0x002d]; // Fan, AirPurifier
+const closurePositionNames = ['Closed', 'Open', 'Partial', 'Pedestrian', 'Ventilation', 'Signature'] as const;
+
+/**
+ * Gets the ClosureControl current position name from an OverallCurrentState value.
+ *
+ * @param {unknown} value ClosureControl OverallCurrentState attribute value.
+ * @returns {string} The current position name, or N/A when unavailable or invalid.
+ */
+function getClosurePositionName(value: unknown): string {
+  if (typeof value !== 'object' || value === null || !('position' in value)) return 'N/A';
+  const position = value.position;
+  if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position >= closurePositionNames.length) return 'N/A';
+  return closurePositionNames[position];
+}
+
+/**
+ * Gets the WindowCovering current position name from a percentage in hundredths.
+ *
+ * @param {unknown} value WindowCovering currentPositionLiftPercent100ths attribute value.
+ * @returns {string} The current position name, or N/A when unavailable or invalid.
+ */
+function getWindowCoveringPositionName(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 10_000) return 'N/A';
+  if (value === 0) return closurePositionNames[0]; // Closed
+  if (value === 10_000) return closurePositionNames[1]; // Open
+  return closurePositionNames[2]; // Partial
+}
 
 interface RenderProps {
   icon: React.JSX.Element;
@@ -202,7 +230,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 
   if (debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
 
-  // Descriptor tagList
+  // Descriptor tagList details
   const tagList = clusters.find((cluster) => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'tagList')?.attributeLocalValue as
     | Array<{ namespaceId: number; tag: number; label: string }>
     | undefined;
@@ -214,25 +242,25 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
     details = tagListLabels.trim();
   }
 
-  // PowerSource
+  // PowerSource details
   deviceType === 0x0011 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'batVoltage')
       .map((cluster) => (details = `${(cluster.attributeLocalValue ?? 0) as number} mV`));
 
-  // LevelControl
+  // LevelControl details
   currentLevelDeviceTypes.includes(deviceType) &&
     clusters
       .filter((cluster) => cluster.clusterName === 'LevelControl' && cluster.attributeName === 'currentLevel')
       .map((cluster) => (details = `Level ${cluster.attributeValue}`));
 
-  // WindowCovering
+  // WindowCovering details
   deviceType === 0x0202 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths')
       .map((cluster) => (details = `Position ${(cluster.attributeLocalValue as number) / 100}%`));
 
-  // Thermostat
+  // Thermostat details
   deviceType === 0x0301 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedHeatingSetpoint')
@@ -242,19 +270,19 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       .filter((cluster) => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'occupiedCoolingSetpoint')
       .map((cluster) => (details = details + `Cool ${(cluster.attributeLocalValue as number) / 100}°C`));
 
-  // Fan, AirPurifier
+  // Fan, AirPurifier details
   fanControlDeviceTypes.includes(deviceType) &&
     clusters
       .filter((cluster) => cluster.clusterName === 'FanControl' && cluster.attributeName === 'percentCurrent')
       .map((cluster) => (details = `Speed ${cluster.attributeValue}%`));
 
-  // SmokeCoAlarm
+  // SmokeCoAlarm details
   deviceType === 0x0076 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'SmokeCoAlarm' && cluster.attributeName === 'coState')
       .map((cluster) => (details = cluster.attributeLocalValue === 0 ? 'No CO detected' : 'CO alarm!'));
 
-  // ElectricalPowerMeasurement
+  // ElectricalPowerMeasurement details
   deviceType === 0x0510 &&
     clusters
       .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'voltage')
@@ -268,7 +296,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       .filter((cluster) => cluster.clusterName === 'ElectricalPowerMeasurement' && cluster.attributeName === 'activePower')
       .map((cluster) => (details = details + `${(cluster.attributeLocalValue as number) / 1_000_000} kW`));
 
-  // ModeSelect
+  // ModeSelect details
   if (deviceType === 0x0027) {
     const mode = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
     const supportedModes = clusters.find((cluster) => cluster.clusterName === 'ModeSelect' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as
@@ -277,7 +305,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
     details = supportedModes?.find((m) => m.mode === mode)?.label || 'Unknown';
   }
 
-  // RvcRunMode
+  // RvcRunMode details
   if (deviceType === 0x0074) {
     const runMode = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'currentMode')?.attributeLocalValue as number | undefined;
     const runSupportedModes = clusters.find((cluster) => cluster.clusterName === 'RvcRunMode' && cluster.attributeName === 'supportedModes')?.attributeLocalValue as
@@ -376,7 +404,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
 
       {/* WindowCovering */}
       {deviceType===0x0202 && clusters.filter(cluster => cluster.clusterName === 'WindowCovering' && cluster.attributeName === 'currentPositionLiftPercent100ths').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={cluster.attributeLocalValue as number / 100} unit='%' />
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={getWindowCoveringPositionName(cluster.attributeLocalValue)} />
       ))}
       {/* WindowCoveringController */}
       {deviceType===0x0203 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
@@ -384,7 +412,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       ))}
       {/* Closure */}
       {deviceType===0x0230 && clusters.filter(cluster => cluster.clusterName === 'ClosureControl' && cluster.attributeName === 'overallCurrentState').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Closure' />
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={getClosurePositionName(cluster.attributeLocalValue)} />
       ))}
       {/* ClosureController */}
       {deviceType===0x023e && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
@@ -641,7 +669,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
   const stateUpdate = useCallback(
     (msg: WsMessageApiStateUpdate) => {
       /* v8 ignore next */
-      if (debug || debugUpdate)
+      if (debug || debugUpdate || localDebug)
         console.log(
           `DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
           msg.response,
@@ -649,7 +677,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
       if (!updateDevice) {
         /* v8 ignore next */
-        if (debug || debugUpdate)
+        if (debug || debugUpdate || localDebug)
           console.warn(
             `DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`,
           );
@@ -660,7 +688,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       );
       if (!updatedCluster) {
         /* v8 ignore next */
-        if (debug || debugUpdate)
+        if (debug || debugUpdate || localDebug)
           console.warn(
             `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
           );
@@ -670,7 +698,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       updatedCluster.attributeLocalValue = msg.response.value;
       setClusters({ ...clusters });
       /* v8 ignore next */
-      if (debug || debugUpdate)
+      if (debug || debugUpdate || localDebug)
         console.log(
           `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
         );
@@ -680,7 +708,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
 
   const clusterUpdate = useCallback((msg: WsMessageApiClustersResponse) => {
     /* v8 ignore next */
-    if (debug)
+    if (debug || localDebug)
       console.log(
         `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
         msg.response,
@@ -698,27 +726,27 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     }
     setEndpoints((prev) => ({ ...prev, [serial]: newEndpoints }));
     setClusters((prev) => ({ ...prev, [serial]: newClusters }));
-    if (debug) console.log(`DevicesIcons endpoints for "${serial}":`, newEndpoints);
-    if (debug) console.log(`DevicesIcons deviceTypes for "${serial}":`, msg.response.deviceTypes);
-    if (debug) console.log(`DevicesIcons clusters for "${serial}":`, newClusters);
+    if (debug || localDebug) console.log(`DevicesIcons endpoints for "${serial}":`, newEndpoints);
+    if (debug || localDebug) console.log(`DevicesIcons deviceTypes for "${serial}":`, msg.response.deviceTypes);
+    if (debug || localDebug) console.log(`DevicesIcons clusters for "${serial}":`, newClusters);
   }, []);
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug) console.log('DevicesIcons received WebSocket Message:', msg);
+      if (debug || localDebug) console.log('DevicesIcons received WebSocket Message:', msg);
       if (msg.method === 'refresh_required') {
-        if (debug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
+        if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
         sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === 'state_update' && msg.response) {
         stateUpdate(msg);
       } else if (msg.method === '/api/devices' && msg.response) {
-        if (debug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
+        if (debug || localDebug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
         setDevices(msg.response);
         setEndpoints({});
         setClusters({});
         // Request clusters for all devices
         for (const device of msg.response) {
-          if (debug) console.log('DevicesIcons sending /api/clusters');
+          if (debug || localDebug) console.log('DevicesIcons sending /api/clusters');
           sendMessage({
             id: uniqueId.current,
             sender: 'DevicesIcons',
@@ -734,24 +762,24 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if (debug) console.log('DevicesIcons WebSocket effect mounted');
+    if (debug || localDebug) console.log('DevicesIcons WebSocket effect mounted');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if (debug) console.log('DevicesIcons WebSocket effect unmounted');
+      if (debug || localDebug) console.log('DevicesIcons WebSocket effect unmounted');
     };
-  }, [addListener, clusterUpdate, devices, removeListener, sendMessage, stateUpdate]);
+  }, [addListener, clusterUpdate, removeListener, sendMessage, stateUpdate]);
 
   useEffect(() => {
-    if (debug) console.log('DevicesIcons useEffect online mounting');
+    if (debug || localDebug) console.log('DevicesIcons useEffect online mounting');
     if (online) {
-      if (debug) console.log('DevicesIcons useEffect online sending api requests');
+      if (debug || localDebug) console.log('DevicesIcons useEffect online sending api requests');
       sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
-    if (debug) console.log('DevicesIcons useEffect online mounted');
+    if (debug || localDebug) console.log('DevicesIcons useEffect online mounted');
 
     return () => {
-      if (debug) console.log('DevicesIcons useEffect online unmounted');
+      if (debug || localDebug) console.log('DevicesIcons useEffect online unmounted');
     };
   }, [online, sendMessage]);
 
@@ -760,7 +788,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
   const normalizedPlugin = filterPlugins?.trim().toLowerCase();
   const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
 
-  if (debug) console.log('DevicesIcons rendering...');
+  if (debug || localDebug) console.log('DevicesIcons rendering...');
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
       {devices

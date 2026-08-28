@@ -1,0 +1,22 @@
+# To run tests on the Laundry Washer Mode and Laundry Washer Controls clusters --PICS is required
+# Matches the LaundryWasher endpoint 1301.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+
+LWM.S=1
+LWM.C=0
+LWM.S.A0000=1 # SupportedModes
+LWM.S.A0001=1 # CurrentMode
+LWM.S.C00.Rsp=1 # ChangeToMode
+LWM.S.C01.Tx=1 # ChangeToModeResponse
+LWM.S.M.CAN_MANUALLY_CONTROLLED=0
+LWM.S.M.CAN_TEST_MODE_FAILURE=0
+
+WASHERCTRL.S=1
+WASHERCTRL.C=0
+WASHERCTRL.S.F00=1 # Spin
+WASHERCTRL.S.F01=1 # Rinse
+WASHERCTRL.S.A0000=1 # SpinSpeeds
+WASHERCTRL.S.A0001=1 # SpinSpeedCurrent
+WASHERCTRL.S.A0002=1 # NumberOfRinses
+WASHERCTRL.S.A0003=1 # SupportedRinses

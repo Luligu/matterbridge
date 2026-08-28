@@ -3,7 +3,7 @@
  * @description This file contains the AirConditioner class.
  * @author Luca Liguori
  * @created 2025-09-04
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,8 +22,10 @@
  */
 
 // @matter
+import type { EndpointNumber } from '@matter/types';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge
 import { powerSource, roomAirConditioner } from '../matterbridgeDeviceTypes.js';
@@ -35,6 +37,14 @@ import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
  * All temperatures in °C. Typical valid range 0–50 unless otherwise noted.
  */
 export interface AirConditionerOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
   /** Local ambient temperature (°C). Default 23. */
   localTemperature?: number;
   /** Occupied heating setpoint (°C). Default 21. */
@@ -121,7 +131,12 @@ export class AirConditioner extends MatterbridgeEndpoint {
       percentSetting = 0,
       percentCurrent = 0,
     } = options;
-    super([roomAirConditioner, powerSource], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    super([roomAirConditioner, powerSource], {
+      id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
+      number: options.number,
+      tagList: options.tagList,
+      mode: options.mode,
+    });
     this.createDefaultIdentifyClusterServer();
     this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Air Conditioner');
     this.createDefaultPowerSourceWiredClusterServer();

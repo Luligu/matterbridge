@@ -1096,7 +1096,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // If the plugin is local the node module resolution doesn't work (the plugin is not installed globally) so we link matterbridge in the plugin node_modules.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand) || process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS === 'jest') {
+      // The test environment can force this branch with "test" or suppress fixture linking with "false".
+      const linkLocalPlugins = process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
+      if ((isLocal && fs.existsSync(plugin.path) && !isLinked && !this.isShutdownCommand && linkLocalPlugins !== 'false') || linkLocalPlugins === 'test') {
         const { execSync } = await import('node:child_process');
         try {
           this.log.info(`Linking matterbridge to local plugin ${plg}${plugin.name}${nf}...`);
@@ -1112,7 +1114,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Try to reinstall the plugin from npm (for Docker recreate). When the container is recreated, the installed plugins are lost since they are stored in a non-persistent directory.
       // We don't do this when the add and other shutdown parameters are set because we shut down the process after adding the plugin
-      if ((!isLocal && !fs.existsSync(plugin.path) && !this.isShutdownCommand) || process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'jest') {
+      if ((!isLocal && !fs.existsSync(plugin.path) && !this.isShutdownCommand) || process.env.MATTERBRIDGE_REINSTALL_PLUGINS === 'test') {
         const { execSync } = await import('node:child_process');
         const sudo =
           hasParameter('sudo') ||

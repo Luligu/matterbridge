@@ -25,7 +25,8 @@ import DevicesTable from './DevicesTable';
 import { MbfPage } from './MbfPage';
 // Frontend
 import { WebSocketContext } from './WebSocketProvider';
-// const debug = true; // Set to true to enable debug logs in Devices component
+
+const localDebug = false; // Set to true to enable debug logs only in Devices component
 
 function Devices(): React.JSX.Element {
   // WebSocket context
@@ -36,7 +37,6 @@ function Devices(): React.JSX.Element {
   const [filterPlugins, setFilterPlugins] = useState('All plugins'); // Default to 'All plugins'
   const [filterDevices, setFilterDevices] = useState(''); // No filter by default
   const [viewMode, setViewMode] = useState('icon'); // Default to icon view
-  const [onlineEpoch, setOnlineEpoch] = useState(0);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -65,22 +65,22 @@ function Devices(): React.JSX.Element {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug && msg.id) console.log('Devices received WebSocket Message:', msg);
+      if ((debug || localDebug) && msg.id) console.log('Devices received WebSocket Message:', msg);
       if (msg.method === 'refresh_required' && msg.response.changed === 'plugins' && !msg.response.lock) {
-        if (debug) console.log(`Devices received refresh_required for plugins lock=${msg.response.lock}, sending /api/plugins request with id ${uniqueId.current}`);
+        if (debug || localDebug) console.log(`Devices received refresh_required for plugins lock=${msg.response.lock}, sending /api/plugins request with id ${uniqueId.current}`);
         sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current && msg.response) {
-        if (debug) console.log(`Devices received ${msg.response.length} plugins:`, msg.response);
+        if (debug || localDebug) console.log(`Devices received ${msg.response.length} plugins:`, msg.response);
         setPlugins(['All plugins', ...msg.response.map((p) => p.name)]);
       }
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if (debug) console.log('Devices added WebSocket listener');
+    if (debug || localDebug) console.log('Devices added WebSocket listener');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if (debug) console.log('Devices removed WebSocket listener');
+      if (debug || localDebug) console.log('Devices removed WebSocket listener');
     };
   }, [sendMessage, addListener, removeListener]);
 
@@ -89,8 +89,7 @@ function Devices(): React.JSX.Element {
     if (online) {
       // Recreate child views on reconnect to clear stale local websocket/data state.
       setPlugins(['All plugins']);
-      setOnlineEpoch((prev) => prev + 1);
-      if (debug) console.log('Devices sending /api/plugins request with id ', uniqueId.current);
+      if (debug || localDebug) console.log(`Devices sending /api/plugins request with id ${uniqueId.current}`);
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
@@ -116,7 +115,7 @@ function Devices(): React.JSX.Element {
     localStorage.setItem(MbfLsk.devicesViewMode, mode);
   };
 
-  if (debug) console.log('Devices rendering...');
+  if (debug || localDebug) console.log('Devices rendering...');
   if (!online) {
     return <Connecting />;
   }
@@ -200,10 +199,10 @@ function Devices(): React.JSX.Element {
       </div>
 
       {/* Table View mode*/}
-      {viewMode === 'table' && <DevicesTable key={`table-${onlineEpoch}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
+      {viewMode === 'table' && <DevicesTable key={`table-${online}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
 
       {/* Icon View mode*/}
-      {viewMode === 'icon' && <DevicesIcons key={`icon-${onlineEpoch}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
+      {viewMode === 'icon' && <DevicesIcons key={`icon-${online}`} filterPlugins={filterPlugins} filterDevices={filterDevices} />}
     </MbfPage>
   );
 }

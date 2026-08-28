@@ -1,8 +1,0 @@
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "rootDir": "../../..",
-    "types": ["node", "bun"]
-  },
-  "include": ["**/*.ts", "../src/**/*.ts", "../vitest/flushAsync.ts", "../../../buntest/bunSetupTest.ts"]
-}

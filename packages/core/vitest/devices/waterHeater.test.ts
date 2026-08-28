@@ -17,6 +17,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -71,16 +72,14 @@ describe('Matterbridge Water Heater', () => {
   });
 
   test('create a water heater device with all parameters', () => {
-    device = new WaterHeater(
-      'Water Heater Test Device',
-      'WH123456',
-      50,
-      55,
-      20,
-      80,
-      { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true },
-      90,
-    );
+    device = new WaterHeater('Water Heater Test Device', 'WH123456', {
+      waterTemperature: 50,
+      targetWaterTemperature: 55,
+      minHeatSetpointLimit: 20,
+      maxHeatSetpointLimit: 80,
+      heaterTypes: { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true },
+      tankPercentage: 90,
+    });
     expect(device).toBeDefined();
     expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
@@ -107,6 +106,34 @@ describe('Matterbridge Water Heater', () => {
     expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
     expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
+  });
+
+  test('create a water heater with explicit endpoint and measurement options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: 1, tag: 1, label: 'One' }];
+    const optionsDevice = new WaterHeater('Water Heater', 'WH-OPTIONS', {
+      id: 'WaterHeaterOptions',
+      number: EndpointNumber(14_02),
+      tagList,
+      waterTemperature: 48,
+      targetWaterTemperature: 52,
+      minHeatSetpointLimit: 15,
+      maxHeatSetpointLimit: 75,
+      heaterTypes: { heatPump: true },
+      tankPercentage: 80,
+      voltage: 230_000,
+      current: 8_000,
+      power: 1_840_000,
+      energy: 4_000,
+      absMinPower: 500,
+      absMaxPower: 2_000_000,
+    });
+    expect(optionsDevice.id).toBe('WaterHeaterOptions');
+    expect(optionsDevice.number).toBe(EndpointNumber(14_02));
+    expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('create a water heater with an empty options object', () => {
+    expect(new WaterHeater('Water Heater Defaults', 'WH-DEFAULTS', {})).toBeDefined();
   });
 
   test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
@@ -278,12 +305,12 @@ describe('Matterbridge Water Heater', () => {
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
     expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: boost (endpoint ${device.id}.${device.number})`);
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('waterHeaterManagement', 'cancelBoost', {});
     expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: cancel boost (endpoint ${device.id}.${device.number})`);
   });
 
   test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
@@ -295,11 +322,17 @@ describe('Matterbridge Water Heater', () => {
     expect((device as any).state['waterHeaterMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with unsupported newMode: 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterHeaterModeServer changeToMode called with newMode 1 => Auto`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode 1 => Auto (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('start the server node', async () => {

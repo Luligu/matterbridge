@@ -3,7 +3,7 @@
  * @description This file contains the CHIP test helpers of Matterbridge.
  * @author Luca Liguori
  * @created 2026-08-16
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+/* oxlint-disable max-lines */
+
 /* v8 ignore start - CHIP test glue only runs inside the chip-test Docker container, gated behind MATTERBRIDGE_CHIP_TEST */
 
 import { spawnSync } from 'node:child_process';
@@ -32,15 +34,29 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
 import { Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
+import { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import type { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
+import { MeterIdentification } from '@matter/types/clusters/meter-identification';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { TariffPriceType, TariffUnit } from '@matter/types/globals';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
+import { MatterbridgeRefrigeratorAlarmServer } from './devices/refrigerator.js';
+import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
@@ -51,6 +67,12 @@ type ChipTestAppPipeCommand = {
   Occupancy?: number;
   SensorFault?: number;
   SoilMoistureValue?: number;
+  Device?: string;
+  Type?: string;
+  Operation?: string;
+  Param?: number;
+  Error?: string;
+  DoorOpen?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -94,9 +116,56 @@ const deviceEnergyManagementUserOptOutGridTrigger = 0x0098000000000003n;
 const deviceEnergyManagementUserOptOutClearAllTrigger = 0x0098000000000004n;
 const deviceEnergyManagementForecastTrigger = 0x009800000000000fn;
 const deviceEnergyManagementForecastClearTrigger = 0x0098000000000010n;
+const energyEvseBasicTrigger = 0x0099000000000000n;
+const energyEvseBasicClearTrigger = 0x0099000000000001n;
+const energyEvsePluggedInTrigger = 0x0099000000000002n;
+const energyEvsePluggedInClearTrigger = 0x0099000000000003n;
+const energyEvseChargeDemandTrigger = 0x0099000000000004n;
+const energyEvseChargeDemandClearTrigger = 0x0099000000000005n;
+const energyEvseTimeOfUseModeTrigger = 0x0099000000000006n;
+const energyEvseGroundFaultTrigger = 0x0099000000000010n;
+const energyEvseOverTemperatureFaultTrigger = 0x0099000000000011n;
+const energyEvseFaultClearTrigger = 0x0099000000000012n;
+const energyEvseDiagnosticsCompleteTrigger = 0x0099000000000020n;
+const energyEvseTimeOfUseModeClearTrigger = 0x0099000000000021n;
+// TC_MTRID_3_1's test_event_fake_data/test_event_clear constants (src/python_testing/TC_MTRIDTestBase.py).
+const meterIdentificationAttributesValueSetTrigger = 0x0b06000000000000n;
+const meterIdentificationTestEventClearTrigger = 0x0b06000000000001n;
+// TC_COMMTR_3_1's test_event_fake_data/test_event_clear constants (src/python_testing/TC_COMMTR_TestBase.py).
+const commodityMeteringAttributesValueSetTrigger = 0x0b07000000000000n;
+const commodityMeteringTestEventClearTrigger = 0x0b07000000000001n;
+// TC_SEPR_2_2's kEventTriggerPriceUpdate constant (src/python_testing/TC_SEPRTestBase.py). SEPR has no Test
+// Event Clear counterpart — only a Price Update trigger and a (Forecasting-feature-gated, unused here) Forecast
+// Update trigger.
+const commodityPricePriceUpdateTrigger = 0x0095000000000000n;
+
+// TC_SETRF_TestBase.py's EventTriggerFakeData/EventTriggerClear/EventTriggerChangeDay/EventTriggerChangeTime —
+// unlike the other CommodityXxx clusters' repo-local trigger constants (chosen since those tests read them
+// indirectly via PIXIT config defaults), TC_SETRF's own test source hardcodes these directly as class attributes,
+// so these four values are copied verbatim rather than assigned a repo convention.
+const commodityTariffAttributesValueSetTrigger = 0x0700000000000000n;
+const commodityTariffTestEventClearTrigger = 0x0700000000000001n;
+const commodityTariffChangeDayTrigger = 0x0700000000000002n;
+const commodityTariffChangeTimeTrigger = 0x0700000000000003n;
+// The EVSE test triggers simulate cable connection/disconnection. Track their elapsed session time so the
+// SessionDuration attribute reflects the simulated connection while keeping the EVNotDetected test payload unchanged.
+const energyEvseSessionStartedAt = new Map<number, number>();
+const energyEvseSupplyStateBeforeFault = new Map<number, EnergyEvse.SupplyState>();
 // TC_BOOLCFG_4_2/4_3/4_4/5_1/5_2's sensorTrigger/sensorUntrigger constants (src/python_testing/TC_BOOLCFG_4_2.py etc.).
 const booleanStateConfigurationSensorTrigger = 0x0080000000000000n;
 const booleanStateConfigurationSensorUntriggerTrigger = 0x0080000000000001n;
+// TC_CLCTRL_5_1/TC_CLCTRL_6_1's triggerError/triggerProtected/triggerDisengaged/triggerSetupRequired/triggerClear
+// constants (src/python_testing/TC_CLCTRL_5_1.py's/TC_CLCTRL_6_1.py's own module-level assignments — both
+// files hardcode the same values rather than importing a shared constant).
+const closureControlErrorTrigger = 0x0104000000000000n;
+const closureControlProtectedTrigger = 0x0104000000000001n;
+const closureControlDisengagedTrigger = 0x0104000000000002n;
+const closureControlSetupRequiredTrigger = 0x0104000000000003n;
+const closureControlClearTrigger = 0x0104000000000004n;
+// MatterBaseTest.send_test_event_triggers() can OR the target endpoint into bits 32-47 of EventTrigger.
+// GeneralDiagnostics.TestEventTrigger has no endpoint field per spec, and Matterbridge targets tests from
+// chipTestActiveEndpointId instead, so normalize those framework-only endpoint bits out before dispatching.
+const testEventTriggerEndpointMask = 0x0000ffff00000000n;
 
 export const chipTestEnableKey = Uint8Array.from({ length: 16 }, (_, index) => index);
 const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff]);
@@ -264,34 +333,230 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
 }
 
 async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
-  if (eventTrigger === booleanStateConfigurationSensorTrigger || eventTrigger === booleanStateConfigurationSensorUntriggerTrigger) {
-    return await handleBooleanStateConfigurationTestEventTrigger(eventTrigger);
+  const normalizedEventTrigger = normalizeTestEventTrigger(eventTrigger);
+  if (
+    normalizedEventTrigger === normalizeTestEventTrigger(booleanStateConfigurationSensorTrigger) ||
+    normalizedEventTrigger === normalizeTestEventTrigger(booleanStateConfigurationSensorUntriggerTrigger)
+  ) {
+    return await handleBooleanStateConfigurationTestEventTrigger(normalizedEventTrigger);
   }
   if (
-    eventTrigger !== smokeCoAlarmWarningSmokeAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmCriticalSmokeAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmSmokeAlarmClearTrigger &&
-    eventTrigger !== smokeCoAlarmWarningCoAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmCriticalCoAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmCoAlarmClearTrigger &&
-    eventTrigger !== smokeCoAlarmYamlWarningCoAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmYamlCriticalCoAlarmTrigger &&
-    eventTrigger !== smokeCoAlarmYamlCoAlarmClearTrigger &&
-    eventTrigger !== smokeCoAlarmWarningBatteryAlertTrigger &&
-    eventTrigger !== smokeCoAlarmCriticalBatteryAlertTrigger &&
-    eventTrigger !== smokeCoAlarmBatteryAlertClearTrigger &&
-    eventTrigger !== smokeCoAlarmYamlWarningBatteryAlertTrigger &&
-    eventTrigger !== smokeCoAlarmYamlBatteryAlertClearTrigger &&
-    eventTrigger !== smokeCoAlarmHardwareFaultAlertTrigger &&
-    eventTrigger !== smokeCoAlarmHardwareFaultAlertClearTrigger &&
-    eventTrigger !== smokeCoAlarmEndOfServiceAlertTrigger &&
-    eventTrigger !== smokeCoAlarmEndOfServiceAlertClearTrigger &&
-    eventTrigger !== smokeCoAlarmDeviceMutedTrigger &&
-    eventTrigger !== smokeCoAlarmDeviceMutedClearTrigger
+    normalizedEventTrigger === normalizeTestEventTrigger(closureControlErrorTrigger) ||
+    normalizedEventTrigger === normalizeTestEventTrigger(closureControlProtectedTrigger) ||
+    normalizedEventTrigger === normalizeTestEventTrigger(closureControlDisengagedTrigger) ||
+    normalizedEventTrigger === normalizeTestEventTrigger(closureControlSetupRequiredTrigger) ||
+    normalizedEventTrigger === normalizeTestEventTrigger(closureControlClearTrigger)
   ) {
-    return (await handleElectricalEnergyTestEventTrigger(eventTrigger)) || (await handleDeviceEnergyManagementTestEventTrigger(eventTrigger));
+    return await handleClosureControlTestEventTrigger(normalizedEventTrigger);
   }
-  return await handleSmokeCoAlarmTestEventTrigger(eventTrigger);
+  if (
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmWarningSmokeAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmCriticalSmokeAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmSmokeAlarmClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmWarningCoAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmCriticalCoAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmCoAlarmClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlWarningCoAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlCriticalCoAlarmTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlCoAlarmClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmWarningBatteryAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmCriticalBatteryAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmBatteryAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlWarningBatteryAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlBatteryAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedClearTrigger)
+  ) {
+    return (
+      (await handleElectricalEnergyTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleDeviceEnergyManagementTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleEnergyEvseTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleMeterIdentificationTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleCommodityMeteringTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleCommodityPriceTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleCommodityTariffTestEventTrigger(normalizedEventTrigger))
+    );
+  }
+  return await handleSmokeCoAlarmTestEventTrigger(normalizedEventTrigger);
+}
+
+function normalizeTestEventTrigger(eventTrigger: bigint): bigint {
+  // oxlint-disable-next-line no-bitwise
+  return eventTrigger & ~testEventTriggerEndpointMask;
+}
+
+async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  const supportedTriggers = [
+    normalizeTestEventTrigger(energyEvseBasicTrigger),
+    normalizeTestEventTrigger(energyEvseBasicClearTrigger),
+    normalizeTestEventTrigger(energyEvsePluggedInTrigger),
+    normalizeTestEventTrigger(energyEvsePluggedInClearTrigger),
+    normalizeTestEventTrigger(energyEvseChargeDemandTrigger),
+    normalizeTestEventTrigger(energyEvseChargeDemandClearTrigger),
+    normalizeTestEventTrigger(energyEvseTimeOfUseModeTrigger),
+    normalizeTestEventTrigger(energyEvseGroundFaultTrigger),
+    normalizeTestEventTrigger(energyEvseOverTemperatureFaultTrigger),
+    normalizeTestEventTrigger(energyEvseFaultClearTrigger),
+    normalizeTestEventTrigger(energyEvseDiagnosticsCompleteTrigger),
+    normalizeTestEventTrigger(energyEvseTimeOfUseModeClearTrigger),
+  ];
+  if (!supportedTriggers.includes(eventTrigger) || !chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(EnergyEvse.id)) return false;
+  const log = chipTestMatterbridge.log;
+  const sessionIdAttribute = endpoint.getAttribute(EnergyEvse.id, 'sessionId');
+  const sessionId = typeof sessionIdAttribute === 'number' ? sessionIdAttribute : 0;
+  const state = getEnergyEvseState(endpoint.getAttribute(EnergyEvse.id, 'state'));
+
+  switch (eventTrigger) {
+    case normalizeTestEventTrigger(energyEvseBasicTrigger):
+      energyEvseSessionStartedAt.delete(chipTestActiveEndpointId);
+      await endpoint.setCluster(
+        EnergyEvse,
+        {
+          state: EnergyEvse.State.NotPluggedIn,
+          supplyState: EnergyEvse.SupplyState.Disabled,
+          faultState: EnergyEvse.FaultState.NoError,
+          minimumChargeCurrent: 6_000,
+          maximumChargeCurrent: 32_000,
+          userMaximumChargeCurrent: 32_000,
+        },
+        log,
+      );
+      return true;
+    case normalizeTestEventTrigger(energyEvseBasicClearTrigger):
+      return true;
+    case normalizeTestEventTrigger(energyEvsePluggedInTrigger): {
+      const nextSessionId = sessionId + 1;
+      energyEvseSessionStartedAt.set(chipTestActiveEndpointId, Time.nowMs);
+      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.PluggedInNoDemand, sessionId: nextSessionId, sessionDuration: 0, sessionEnergyCharged: 0 }, log);
+      await endpoint.triggerEvent(EnergyEvse, 'evConnected', { sessionId: nextSessionId }, log);
+      return true;
+    }
+    case normalizeTestEventTrigger(energyEvsePluggedInClearTrigger): {
+      const sessionStartedAt = energyEvseSessionStartedAt.get(chipTestActiveEndpointId);
+      const sessionDuration = sessionStartedAt === undefined ? 0 : Math.floor((Time.nowMs - sessionStartedAt) / 1_000);
+      await endpoint.triggerEvent(EnergyEvse, 'evNotDetected', { sessionId, state: EnergyEvse.State.PluggedInNoDemand, sessionDuration, sessionEnergyCharged: 1 }, log);
+      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.NotPluggedIn, sessionDuration, sessionEnergyCharged: 1 }, log);
+      energyEvseSessionStartedAt.delete(chipTestActiveEndpointId);
+      return true;
+    }
+    case normalizeTestEventTrigger(energyEvseChargeDemandTrigger): {
+      const charging = endpoint.getAttribute(EnergyEvse.id, 'supplyState') === EnergyEvse.SupplyState.ChargingEnabled;
+      const nextState = charging ? EnergyEvse.State.PluggedInCharging : EnergyEvse.State.PluggedInDemand;
+      await endpoint.setCluster(EnergyEvse, { state: nextState }, log);
+      if (charging) {
+        const maximumChargeCurrentAttribute = endpoint.getAttribute(EnergyEvse.id, 'maximumChargeCurrent');
+        const maximumCurrent = typeof maximumChargeCurrentAttribute === 'number' || typeof maximumChargeCurrentAttribute === 'bigint' ? maximumChargeCurrentAttribute : 0;
+        await endpoint.triggerEvent(EnergyEvse, 'energyTransferStarted', { sessionId, state: nextState, maximumCurrent }, log);
+      }
+      return true;
+    }
+    case normalizeTestEventTrigger(energyEvseChargeDemandClearTrigger):
+      if (state === EnergyEvse.State.PluggedInCharging) {
+        await endpoint.triggerEvent(EnergyEvse, 'energyTransferStopped', { sessionId, state, reason: EnergyEvse.EnergyTransferStoppedReason.EvStopped, energyTransferred: 0 }, log);
+      }
+      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.PluggedInNoDemand }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseTimeOfUseModeTrigger):
+      if (endpoint.hasClusterServer(EnergyEvseMode.id)) await endpoint.setCluster(EnergyEvseMode, { currentMode: 2 }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseTimeOfUseModeClearTrigger):
+      if (endpoint.hasClusterServer(EnergyEvseMode.id)) await endpoint.setCluster(EnergyEvseMode, { currentMode: 1 }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseGroundFaultTrigger):
+      await applyEnergyEvseFault(endpoint, EnergyEvse.FaultState.GroundFault, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseOverTemperatureFaultTrigger):
+      await applyEnergyEvseFault(endpoint, EnergyEvse.FaultState.OverTemperature, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseFaultClearTrigger):
+      await applyEnergyEvseFault(endpoint, EnergyEvse.FaultState.NoError, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseDiagnosticsCompleteTrigger):
+      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.NotPluggedIn, supplyState: EnergyEvse.SupplyState.Disabled }, log);
+      return true;
+    default:
+      return false;
+  }
+}
+
+async function applyEnergyEvseFault(endpoint: MatterbridgeEndpoint, faultState: EnergyEvse.FaultState, log: AnsiLogger): Promise<void> {
+  const previousFaultStateAttribute = endpoint.getAttribute(EnergyEvse.id, 'faultState');
+  const previousFaultState = typeof previousFaultStateAttribute === 'number' ? previousFaultStateAttribute : EnergyEvse.FaultState.NoError;
+  const state = getEnergyEvseState(endpoint.getAttribute(EnergyEvse.id, 'state'));
+  const supplyState = getEnergyEvseSupplyState(endpoint.getAttribute(EnergyEvse.id, 'supplyState'));
+  const restoredSupplyState = getEnergyEvseRestoredSupplyState(faultState, supplyState);
+  const sessionIdAttribute = endpoint.getAttribute(EnergyEvse.id, 'sessionId');
+  const sessionId = typeof sessionIdAttribute === 'number' ? sessionIdAttribute : null;
+  await endpoint.setCluster(
+    EnergyEvse,
+    {
+      faultState,
+      state: getEnergyEvseFaultTriggerState(faultState, restoredSupplyState),
+      supplyState: faultState === EnergyEvse.FaultState.NoError ? restoredSupplyState : EnergyEvse.SupplyState.DisabledError,
+    },
+    log,
+  );
+  await endpoint.triggerEvent(EnergyEvse, 'fault', { sessionId, state, faultStatePreviousState: previousFaultState, faultStateCurrentState: faultState }, log);
+}
+
+function getEnergyEvseRestoredSupplyState(faultState: EnergyEvse.FaultState, supplyState: EnergyEvse.SupplyState): EnergyEvse.SupplyState {
+  if (chipTestActiveEndpointId === undefined) return supplyState;
+  if (faultState === EnergyEvse.FaultState.NoError) {
+    const restoredSupplyState = energyEvseSupplyStateBeforeFault.get(chipTestActiveEndpointId) ?? supplyState;
+    energyEvseSupplyStateBeforeFault.delete(chipTestActiveEndpointId);
+    return restoredSupplyState;
+  }
+  if (!energyEvseSupplyStateBeforeFault.has(chipTestActiveEndpointId)) energyEvseSupplyStateBeforeFault.set(chipTestActiveEndpointId, supplyState);
+  return supplyState;
+}
+
+function getEnergyEvseFaultTriggerState(faultState: EnergyEvse.FaultState, supplyState: EnergyEvse.SupplyState): EnergyEvse.State {
+  if (faultState !== EnergyEvse.FaultState.NoError) return EnergyEvse.State.Fault;
+  return supplyState === EnergyEvse.SupplyState.ChargingEnabled ? EnergyEvse.State.PluggedInCharging : EnergyEvse.State.PluggedInDemand;
+}
+
+function getEnergyEvseSupplyState(value: unknown): EnergyEvse.SupplyState {
+  switch (value) {
+    case EnergyEvse.SupplyState.ChargingEnabled:
+      return EnergyEvse.SupplyState.ChargingEnabled;
+    case EnergyEvse.SupplyState.DisabledError:
+      return EnergyEvse.SupplyState.DisabledError;
+    case EnergyEvse.SupplyState.DisabledDiagnostics:
+      return EnergyEvse.SupplyState.DisabledDiagnostics;
+    default:
+      return EnergyEvse.SupplyState.Disabled;
+  }
+}
+
+/**
+ * Validates an Energy EVSE State attribute read from the generic endpoint API.
+ *
+ * @param {unknown} value - Attribute value to validate.
+ * @returns {EnergyEvse.State} Valid state, or `NotPluggedIn` when the value is absent or invalid.
+ */
+function getEnergyEvseState(value: unknown): EnergyEvse.State {
+  switch (value) {
+    case EnergyEvse.State.PluggedInNoDemand:
+      return EnergyEvse.State.PluggedInNoDemand;
+    case EnergyEvse.State.PluggedInDemand:
+      return EnergyEvse.State.PluggedInDemand;
+    case EnergyEvse.State.PluggedInCharging:
+      return EnergyEvse.State.PluggedInCharging;
+    case EnergyEvse.State.PluggedInDischarging:
+      return EnergyEvse.State.PluggedInDischarging;
+    case EnergyEvse.State.SessionEnding:
+      return EnergyEvse.State.SessionEnding;
+    case EnergyEvse.State.Fault:
+      return EnergyEvse.State.Fault;
+    default:
+      return EnergyEvse.State.NotPluggedIn;
+  }
 }
 
 // GeneralDiagnostics.TestEventTrigger carries no endpoint field on the wire, but every TC_SMOKECO_* chipTests.json
@@ -312,17 +577,17 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
   const hasCoAlarm = endpoint.hasAttributeServer(SmokeCoAlarm.id, 'coState');
 
   switch (eventTrigger) {
-    case smokeCoAlarmWarningSmokeAlarmTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmWarningSmokeAlarmTrigger):
       if (!hasSmokeAlarm) return;
       await endpoint.setCluster(SmokeCoAlarm, { smokeState: SmokeCoAlarm.AlarmState.Warning, expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, log);
       return;
-    case smokeCoAlarmCriticalSmokeAlarmTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmCriticalSmokeAlarmTrigger):
       if (!hasSmokeAlarm) return;
       await endpoint.setCluster(SmokeCoAlarm, { smokeState: SmokeCoAlarm.AlarmState.Critical, expressedState: SmokeCoAlarm.ExpressedState.SmokeAlarm }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'smokeAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, log);
       return;
-    case smokeCoAlarmSmokeAlarmClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmSmokeAlarmClearTrigger):
       if (!hasSmokeAlarm) return;
       await endpoint.setCluster(
         SmokeCoAlarm,
@@ -331,20 +596,20 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
-    case smokeCoAlarmWarningCoAlarmTrigger:
-    case smokeCoAlarmYamlWarningCoAlarmTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmWarningCoAlarmTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlWarningCoAlarmTrigger):
       if (!hasCoAlarm) return;
       await endpoint.setCluster(SmokeCoAlarm, { coState: SmokeCoAlarm.AlarmState.Warning, expressedState: SmokeCoAlarm.ExpressedState.CoAlarm }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, log);
       return;
-    case smokeCoAlarmCriticalCoAlarmTrigger:
-    case smokeCoAlarmYamlCriticalCoAlarmTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmCriticalCoAlarmTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlCriticalCoAlarmTrigger):
       if (!hasCoAlarm) return;
       await endpoint.setCluster(SmokeCoAlarm, { coState: SmokeCoAlarm.AlarmState.Critical, expressedState: SmokeCoAlarm.ExpressedState.CoAlarm }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'coAlarm', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, log);
       return;
-    case smokeCoAlarmCoAlarmClearTrigger:
-    case smokeCoAlarmYamlCoAlarmClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmCoAlarmClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlCoAlarmClearTrigger):
       if (!hasCoAlarm) return;
       await endpoint.setCluster(
         SmokeCoAlarm,
@@ -353,8 +618,8 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
-    case smokeCoAlarmWarningBatteryAlertTrigger:
-    case smokeCoAlarmYamlWarningBatteryAlertTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmWarningBatteryAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlWarningBatteryAlertTrigger):
       await endpoint.setCluster(
         SmokeCoAlarm,
         { batteryAlert: SmokeCoAlarm.AlarmState.Warning, expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Warning }) },
@@ -362,7 +627,7 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       );
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, log);
       return;
-    case smokeCoAlarmCriticalBatteryAlertTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmCriticalBatteryAlertTrigger):
       await endpoint.setCluster(
         SmokeCoAlarm,
         { batteryAlert: SmokeCoAlarm.AlarmState.Critical, expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }) },
@@ -370,8 +635,8 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       );
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Critical }, log);
       return;
-    case smokeCoAlarmBatteryAlertClearTrigger:
-    case smokeCoAlarmYamlBatteryAlertClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmBatteryAlertClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlBatteryAlertClearTrigger):
       await endpoint.setCluster(
         SmokeCoAlarm,
         { batteryAlert: SmokeCoAlarm.AlarmState.Normal, expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Normal }) },
@@ -379,23 +644,23 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       );
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
-    case smokeCoAlarmHardwareFaultAlertTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: true, expressedState: SmokeCoAlarm.ExpressedState.HardwareFault }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'hardwareFault', undefined, log);
       return;
-    case smokeCoAlarmHardwareFaultAlertClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: false, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
-    case smokeCoAlarmEndOfServiceAlertTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired, expressedState: SmokeCoAlarm.ExpressedState.EndOfService }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'endOfService', undefined, log);
       return;
-    case smokeCoAlarmEndOfServiceAlertClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
-    case smokeCoAlarmDeviceMutedTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmDeviceMutedTrigger):
       if (
         (hasSmokeAlarm && endpoint.getAttribute(SmokeCoAlarm.id, 'smokeState') === SmokeCoAlarm.AlarmState.Warning) ||
         (hasCoAlarm && endpoint.getAttribute(SmokeCoAlarm.id, 'coState') === SmokeCoAlarm.AlarmState.Warning)
@@ -404,7 +669,7 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
         await endpoint.triggerEvent(SmokeCoAlarm, 'alarmMuted', undefined, log);
       }
       return;
-    case smokeCoAlarmDeviceMutedClearTrigger:
+    case normalizeTestEventTrigger(smokeCoAlarmDeviceMutedClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { deviceMuted: SmokeCoAlarm.MuteState.NotMuted }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'muteEnded', undefined, log);
       return;
@@ -445,15 +710,59 @@ async function handleBooleanStateConfigurationTestEventTrigger(eventTrigger: big
 
 async function applyBooleanStateConfigurationTestEventTrigger(endpoint: MatterbridgeEndpoint, eventTrigger: bigint, log: AnsiLogger): Promise<void> {
   switch (eventTrigger) {
-    case booleanStateConfigurationSensorTrigger: {
+    case normalizeTestEventTrigger(booleanStateConfigurationSensorTrigger): {
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       const alarmsEnabled = endpoint.getAttribute(BooleanStateConfiguration.id, 'alarmsEnabled') as BooleanStateConfiguration.AlarmMode | undefined;
       await endpoint.setCluster(BooleanStateConfiguration, { alarmsActive: { visual: Boolean(alarmsEnabled?.visual), audible: Boolean(alarmsEnabled?.audible) } }, log);
       return;
     }
-    case booleanStateConfigurationSensorUntriggerTrigger:
+    case normalizeTestEventTrigger(booleanStateConfigurationSensorUntriggerTrigger):
       await endpoint.setCluster(BooleanStateConfiguration, { alarmsActive: { visual: false, audible: false }, alarmsSuppressed: { visual: false, audible: false } }, log);
       return;
+    default:
+      return;
+  }
+}
+
+// The Error/Protected/Disengaged/SetupRequired/Clear triggers carry no endpoint field on the wire, but every
+// TC_CLCTRL_5_1/TC_CLCTRL_6_1 chipTests.json entry sets "endpoint" to the one ClosureControl endpoint it
+// actually targets — see chipTestActiveEndpointId — so this never needs to guess or broadcast.
+async function handleClosureControlTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint || !endpoint.hasClusterServer(ClosureControl.id)) return false;
+
+  await applyClosureControlTestEventTrigger(endpoint, eventTrigger, chipTestMatterbridge.log);
+  return true;
+}
+
+async function applyClosureControlTestEventTrigger(endpoint: MatterbridgeEndpoint, eventTrigger: bigint, log: AnsiLogger): Promise<void> {
+  switch (eventTrigger) {
+    case normalizeTestEventTrigger(closureControlErrorTrigger): {
+      const errorState = [ClosureControl.ClosureError.PhysicallyBlocked];
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Error, currentErrorList: errorState }, log);
+      await endpoint.triggerEvent(ClosureControl, 'operationalError', { errorState }, log);
+      return;
+    }
+    case normalizeTestEventTrigger(closureControlProtectedTrigger):
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Protected }, log);
+      return;
+    case normalizeTestEventTrigger(closureControlDisengagedTrigger):
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Disengaged }, log);
+      await endpoint.triggerEvent(ClosureControl, 'engageStateChanged', { engageValue: false }, log);
+      return;
+    case normalizeTestEventTrigger(closureControlSetupRequiredTrigger):
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.SetupRequired }, log);
+      return;
+    case normalizeTestEventTrigger(closureControlClearTrigger): {
+      // TC_CLCTRL_6_1 step 6e expects an EngageStateChanged(engageValue=true) event when clearing back out of
+      // the Disengaged test state (steps 4d/11 clear Error/SetupRequired/Protected instead, which have no
+      // corresponding "re-engaged" event to emit), so only re-fire it when that was the state being cleared.
+      const wasDisengaged = endpoint.getAttribute(ClosureControl.id, 'mainState') === ClosureControl.MainState.Disengaged;
+      await endpoint.setCluster(ClosureControl, { mainState: ClosureControl.MainState.Stopped, currentErrorList: [] }, log);
+      if (wasDisengaged) await endpoint.triggerEvent(ClosureControl, 'engageStateChanged', { engageValue: true }, log);
+      return;
+    }
     default:
       return;
   }
@@ -541,6 +850,280 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
     applyFakeLoadTick().catch((error: unknown) => log.error(`Electrical fake load tick failed: ${error instanceof Error ? error.message : String(error)}`));
   }).start();
   cliEmitter.once('shutdown', () => electricalPowerMeasurementFakeLoadTimer?.stop());
+  return true;
+}
+
+// TC_MTRID_3_1's Attributes Value Set / Test Event Clear triggers (src/python_testing/TC_MTRIDTestBase.py).
+// createDemoDevices() registers only one MeterIdentification chip-test endpoint (1409, the
+// ElectricalUtilityMeter), and every TC_MTRID_2_1/3_1 chipTests.json entry pins "endpoint": 1409, so
+// chipTestActiveEndpointId is used directly. MeterType/PointOfDelivery/MeterSerialNumber/ProtocolVersion all
+// default to null (createDemoDevices() passes no MeterIdentification options), so the Attributes Value Set
+// trigger swaps in distinct non-null fake values — required for TC_MTRID_3_1's subscription assertions, which
+// check that each reported value differs from the value read before the trigger fired — and the Test Event
+// Clear trigger restores the original null values.
+const meterIdentificationFakeValues = {
+  meterType: MeterIdentification.MeterType.Utility,
+  pointOfDelivery: 'POD-CHIP-TEST',
+  meterSerialNumber: 'SN-CHIP-TEST',
+  protocolVersion: 'CHIP-TEST-1.0',
+};
+const meterIdentificationClearedValues = { meterType: null, pointOfDelivery: null, meterSerialNumber: null, protocolVersion: null };
+
+async function handleMeterIdentificationTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (eventTrigger !== meterIdentificationAttributesValueSetTrigger && eventTrigger !== meterIdentificationTestEventClearTrigger) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(MeterIdentification.id)) return false;
+  const log = chipTestMatterbridge.log;
+  await endpoint.setCluster(
+    MeterIdentification,
+    eventTrigger === meterIdentificationAttributesValueSetTrigger ? meterIdentificationFakeValues : meterIdentificationClearedValues,
+    log,
+  );
+  return true;
+}
+
+// TC_COMMTR_3_1's Attributes Value Set / Test Event Clear triggers (src/python_testing/TC_COMMTR_TestBase.py).
+// createDemoDevices() registers CommodityMetering on the Electrical Meter child endpoints created by
+// addElectricalMeter() (14091, 14101, 14103), and TC_COMMTR_2_1/3_1's chipTests.json entry pins
+// "endpoint": 14091, so chipTestActiveEndpointId is used directly. MeteredQuantity/MeteredQuantityTimestamp/
+// TariffUnit/MaximumMeteredQuantities all default to null (addElectricalMeter() is called with no
+// CommodityMetering options), so the Attributes Value Set trigger swaps in distinct non-null fake values —
+// required for TC_COMMTR_3_1's subscription assertions, which check that each reported value differs from
+// the value read before the trigger fired, and for MeteredQuantity's own constraint that
+// MaximumMeteredQuantities must not be null whenever MeteredQuantity is not null — and the Test Event Clear
+// trigger restores the original null values.
+const commodityMeteringFakeValues = {
+  maximumMeteredQuantities: 8,
+  meteredQuantity: [{ tariffComponentIDs: [1], quantity: 1_234 }],
+  meteredQuantityTimestamp: Math.floor(Date.now() / 1000),
+  tariffUnit: TariffUnit.KWh,
+};
+const commodityMeteringClearedValues = { maximumMeteredQuantities: null, meteredQuantity: null, meteredQuantityTimestamp: null, tariffUnit: null };
+
+async function handleCommodityMeteringTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (eventTrigger !== commodityMeteringAttributesValueSetTrigger && eventTrigger !== commodityMeteringTestEventClearTrigger) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(CommodityMetering.id)) return false;
+  const log = chipTestMatterbridge.log;
+  await endpoint.setCluster(CommodityMetering, eventTrigger === commodityMeteringAttributesValueSetTrigger ? commodityMeteringFakeValues : commodityMeteringClearedValues, log);
+  return true;
+}
+
+// TC_SEPR_2_2's Price Update TestEventTrigger (src/python_testing/TC_SEPRTestBase.py). createDemoDevices()
+// registers CommodityPrice on every Electrical Energy Tariff endpoint created by addElectricalEnergyTariff()/
+// addElectricalMeter()'s energyTariff option, and the TC_SEPR_2_1/2_2 chipTests.json entries pin
+// "endpoint": 14092 (the dedicated Electrical Energy Tariff Upcoming endpoint), so chipTestActiveEndpointId is
+// used directly. CurrentPrice defaults to null (configureElectricalEnergyTariffClusters() is called with no
+// currentPrice option), so the trigger publishes a fake CommodityPriceStruct and emits the matching PriceChange
+// event, satisfying TC_SEPR_2_2's "either Price or PriceLevel must be included" struct check and its "event's
+// CurrentPrice matches the attribute" assertion. Both Price and PriceLevel are populated (not just one) because
+// TC_SEPRTestBase.check_CommodityPriceStruct() checks each field against the Python SDK's `NullValue` sentinel
+// rather than `None` — the sentinel a genuinely absent (non-nullable) optional struct field actually decodes
+// to — so omitting either field would misfire that check's `assert_valid_int64`/`assert_valid_int16` on a
+// `None` value and fail; populating both sidesteps that upstream test quirk entirely. `components` is set to
+// `undefined` explicitly (not simply omitted) because matter.js's model declares a `default: []` for
+// CommodityPriceStruct's Components field (@matter/model's commodity-price.element.ts) and
+// ClassForValueModel.initialize() applies that default before overlaying caller-provided keys — an omitted key
+// leaves the `[]` default in place, but an explicit `undefined` key overlays and clears it, matching § 9.9.6.3's
+// "Description and Components fields shall be omitted in [the CurrentPrice] attribute's value". There is no
+// Test Event Clear trigger for this cluster.
+async function handleCommodityPriceTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (eventTrigger !== commodityPricePriceUpdateTrigger) return false;
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(CommodityPrice.id)) return false;
+  const log = chipTestMatterbridge.log;
+  // matter.js's epoch-s type is Unix epoch seconds at the API level (it validates a floor of 946_684_800, i.e.
+  // the Matter epoch of 2000-01-01T00:00:00Z, expressed in Unix time) — wire-level Matter-epoch conversion is
+  // handled internally, not by the caller.
+  const currentPrice = { periodStart: Math.floor(Time.nowMs / 1000), periodEnd: null, price: 2_500, priceLevel: 3, components: undefined };
+  await endpoint.setCluster(CommodityPrice, { currentPrice }, log);
+  await endpoint.triggerEvent(CommodityPrice, 'priceChange', { currentPrice }, log);
+  return true;
+}
+
+// TC_SETRF_2_2/2_3/3_1's Attributes Value Set / Test Event Clear / Change Day / Change Time TestEventTriggers
+// (src/python_testing/TC_SETRF_TestBase.py). createDemoDevices() registers CommodityTariff (Pricing feature
+// only — see MatterbridgeCommodityTariffServer) on the same Electrical Energy Tariff endpoints as CommodityPrice,
+// and the TC_SETRF_* chipTests.json entries pin "endpoint": 14092, so chipTestActiveEndpointId is used directly.
+// All 17 mandatory attributes default to null (configureElectricalEnergyTariffClusters() forces every
+// CommodityTariff attribute to null whenever tariffInfo is null — see its own comment), so the Attributes Value
+// Set trigger publishes a small, internally-consistent fake tariff (two DayEntryStructs per day, one
+// DayPatternStruct/CalendarPeriodStruct covering every day of the week, two TariffComponents/TariffPeriods
+// mapping 1:1 to the two day entries) and the Test Event Clear trigger restores the null baseline.
+//
+// TC_SETRF_2_3 additionally drives the Change Time and Change Day triggers and asserts a specific relationship
+// between the CurrentDay(Entry)/NextDay(Entry) values before and after each one (TC_SETRF_2_3.py steps 12-21):
+// Change Time must advance CurrentDayEntryDate to the previously-read NextDayEntryDate while leaving
+// CurrentDay/NextDay unchanged, and advance NextDayEntryDate again without touching NextDay. Change Day must
+// then advance CurrentDay to the previously-read NextDay while leaving CurrentDayEntry's day-of-week pointer
+// unchanged, advance NextDay again, and — counter-intuitively — the new CurrentDayEntryDate must NOT equal the
+// NextDayEntryDate that was read just before Change Day fired (`assert_not_equal` at TC_SETRF_2_3.py step 18),
+// even though the new CurrentDay does equal the old NextDay. A day-entry pointer that resets to the day's first
+// entry on every day change lands exactly on that old NextDayEntryDate and fails this assertion, so Change Day
+// instead carries the current entry-of-day index forward unchanged (only the day itself advances) — this is
+// self-consistent fake data chosen to satisfy the test's assertions, not a claim about how a real device's
+// day/entry transitions should compose.
+//
+// DayEntryStruct's RandomizationType field declares a model-level `default: 0` (@matter/model's
+// commodity-tariff.element.ts) despite its `[RNDM]` conformance forbidding it from being set at all when the
+// Randomization feature isn't enabled (as here) — ClassForValueModel.initialize() applies that default before
+// overlaying caller-provided keys, so an omitted key on a supplied DayEntry still leaks the `0` default onto the
+// wire and fails cluster-state validation with ConstraintError. Explicitly overlaying `undefined` clears it,
+// the same fix as CommodityPrice's Components field (see MatterbridgeCommodityPriceServer's own comment).
+const commodityTariffDayEntries = [
+  { dayEntryId: 1, startTime: 0, randomizationType: undefined },
+  { dayEntryId: 2, startTime: 720, randomizationType: undefined },
+];
+const commodityTariffDayPatternId = 1;
+const commodityTariffAllDaysOfWeek = { sunday: true, monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true };
+// TariffComponentStruct's PeakPeriod/PowerThreshold fields each declare a model-level `default: { type: "none" }`
+// (same @matter/model file), gated on the (disabled) PeakPeriod/PowerThreshold features — explicitly overlaying
+// `undefined` clears them for the same reason DayEntry's RandomizationType needs it above.
+const commodityTariffTariffComponents = [
+  {
+    tariffComponentId: 100,
+    price: { priceType: TariffPriceType.Standard, price: 1_000 },
+    threshold: null,
+    label: 'Morning Rate',
+    peakPeriod: undefined,
+    powerThreshold: undefined,
+  },
+  {
+    tariffComponentId: 101,
+    price: { priceType: TariffPriceType.Standard, price: 2_000 },
+    threshold: null,
+    label: 'Afternoon Rate',
+    peakPeriod: undefined,
+    powerThreshold: undefined,
+  },
+];
+const commodityTariffTariffPeriods = [
+  { label: 'Morning', dayEntryIDs: [1], tariffComponentIDs: [100] },
+  { label: 'Afternoon', dayEntryIDs: [2], tariffComponentIDs: [101] },
+];
+const commodityTariffClearedValues = {
+  tariffInfo: null,
+  tariffUnit: null,
+  startDate: null,
+  dayEntries: null,
+  dayPatterns: null,
+  calendarPeriods: null,
+  individualDays: null,
+  currentDay: null,
+  nextDay: null,
+  currentDayEntry: null,
+  currentDayEntryDate: null,
+  nextDayEntry: null,
+  nextDayEntryDate: null,
+  tariffComponents: null,
+  tariffPeriods: null,
+  currentTariffComponents: null,
+  nextTariffComponents: null,
+};
+let commodityTariffDayOffset = 0;
+let commodityTariffEntryIndex = 0;
+
+function buildCommodityTariffFakeValues(
+  dayOffset: number,
+  entryIndex: number,
+): {
+  tariffInfo: CommodityTariff.TariffInformation;
+  tariffUnit: TariffUnit;
+  startDate: number;
+  dayEntries: CommodityTariff.DayEntry[];
+  dayPatterns: CommodityTariff.DayPattern[];
+  calendarPeriods: CommodityTariff.CalendarPeriod[];
+  individualDays: CommodityTariff.Day[];
+  currentDay: CommodityTariff.Day;
+  nextDay: CommodityTariff.Day;
+  currentDayEntry: CommodityTariff.DayEntry;
+  currentDayEntryDate: number;
+  nextDayEntry: CommodityTariff.DayEntry;
+  nextDayEntryDate: number;
+  tariffComponents: CommodityTariff.TariffComponent[];
+  tariffPeriods: CommodityTariff.TariffPeriod[];
+  currentTariffComponents: CommodityTariff.TariffComponent[];
+  nextTariffComponents: CommodityTariff.TariffComponent[];
+} {
+  const anchor = Math.floor(Date.now() / 86_400_000) * 86_400;
+  // A calendar period that started a year ago (rather than "null", i.e. immediately) so that both the top-level
+  // StartDate attribute and this CalendarPeriodStruct's own StartDate differ from their null default — required
+  // for TC_SETRF_3_1's subscription assertion that every mandatory attribute's reported value differs from its
+  // pre-trigger (null) value — while still comparing strictly less than any CurrentDayEntryDate/NextDayEntryDate
+  // this fake data can produce, which get_day_pattern_IDs_for_active_calendar_period() (TC_SETRF_TestBase.py)
+  // requires to resolve the active calendar period.
+  const tariffStartDate = anchor - 365 * 86_400;
+  const dayOf = (offset: number): CommodityTariff.Day => ({ date: anchor + offset * 86_400, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1, 2] });
+  const entryDate = (offset: number, idx: number): number => anchor + offset * 86_400 + commodityTariffDayEntries[idx].startTime * 60;
+  const nextEntry = entryIndex === commodityTariffDayEntries.length - 1 ? { offset: dayOffset + 1, idx: 0 } : { offset: dayOffset, idx: entryIndex + 1 };
+  const tariffComponentsFor = (dayEntryId: number): CommodityTariff.TariffComponent[] =>
+    commodityTariffTariffPeriods
+      .filter((period) => period.dayEntryIDs.includes(dayEntryId))
+      .flatMap((period) => period.tariffComponentIDs)
+      .map((id) => commodityTariffTariffComponents.find((component) => component.tariffComponentId === id))
+      .filter((component): component is (typeof commodityTariffTariffComponents)[number] => component !== undefined);
+
+  return {
+    tariffInfo: {
+      tariffLabel: 'CHIP Test Tariff',
+      providerName: 'CHIP Test Provider',
+      currency: { currency: 840, decimalPoints: 2 },
+      blockMode: CommodityTariff.BlockMode.NoBlock,
+    },
+    tariffUnit: TariffUnit.KWh,
+    startDate: tariffStartDate,
+    dayEntries: commodityTariffDayEntries,
+    dayPatterns: [{ dayPatternId: commodityTariffDayPatternId, daysOfWeek: commodityTariffAllDaysOfWeek, dayEntryIDs: [1, 2] }],
+    calendarPeriods: [{ startDate: tariffStartDate, dayPatternIDs: [commodityTariffDayPatternId] }],
+    // A single day 30 days in the past — clear of any CurrentDay/NextDay date this fake data can produce — so
+    // IndividualDays also differs from its null default (see the tariffStartDate comment above for why that
+    // matters), while still trivially satisfying "the DayStruct in this list shall not overlap".
+    individualDays: [{ date: anchor - 30 * 86_400, dayType: CommodityTariff.DayType.Holiday, dayEntryIDs: [1, 2] }],
+    currentDay: dayOf(dayOffset),
+    nextDay: dayOf(dayOffset + 1),
+    currentDayEntry: commodityTariffDayEntries[entryIndex],
+    currentDayEntryDate: entryDate(dayOffset, entryIndex),
+    nextDayEntry: commodityTariffDayEntries[nextEntry.idx],
+    nextDayEntryDate: entryDate(nextEntry.offset, nextEntry.idx),
+    tariffComponents: commodityTariffTariffComponents,
+    tariffPeriods: commodityTariffTariffPeriods,
+    currentTariffComponents: tariffComponentsFor(commodityTariffDayEntries[entryIndex].dayEntryId),
+    nextTariffComponents: tariffComponentsFor(commodityTariffDayEntries[nextEntry.idx].dayEntryId),
+  };
+}
+
+async function handleCommodityTariffTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  if (
+    eventTrigger !== commodityTariffAttributesValueSetTrigger &&
+    eventTrigger !== commodityTariffTestEventClearTrigger &&
+    eventTrigger !== commodityTariffChangeDayTrigger &&
+    eventTrigger !== commodityTariffChangeTimeTrigger
+  ) {
+    return false;
+  }
+  if (!chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(CommodityTariff.id)) return false;
+  const log = chipTestMatterbridge.log;
+
+  if (eventTrigger === commodityTariffTestEventClearTrigger) {
+    commodityTariffDayOffset = 0;
+    commodityTariffEntryIndex = 0;
+    await endpoint.setCluster(CommodityTariff, commodityTariffClearedValues, log);
+    return true;
+  }
+  if (eventTrigger === commodityTariffAttributesValueSetTrigger) {
+    commodityTariffDayOffset = 0;
+    commodityTariffEntryIndex = 0;
+  } else if (eventTrigger === commodityTariffChangeTimeTrigger) {
+    commodityTariffEntryIndex = (commodityTariffEntryIndex + 1) % commodityTariffDayEntries.length;
+  } else if (eventTrigger === commodityTariffChangeDayTrigger) {
+    commodityTariffDayOffset += 1;
+  }
+  await endpoint.setCluster(CommodityTariff, buildCommodityTariffFakeValues(commodityTariffDayOffset, commodityTariffEntryIndex), log);
   return true;
 }
 
@@ -710,6 +1293,72 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
   }
 
   switch (command.Name) {
+    case 'Reset': {
+      if (!endpoint.behaviors.has(MatterbridgeRvcRunModeServer) || !endpoint.behaviors.has(MatterbridgeRvcOperationalStateServer)) {
+        matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command on non-RVC endpoint ${endpointId}`);
+        return;
+      }
+      const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      if (!idleMode) {
+        matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command because endpoint ${endpointId} has no Idle run mode`);
+        return;
+      }
+      await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, {
+        operationalState: RvcOperationalState.OperationalState.Stopped,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+      });
+      matterbridge.log.info(`CHIP test app pipe reset RVC endpoint ${endpointId}`);
+      return;
+    }
+    case 'ErrorEvent': {
+      const errorStates: Record<string, RvcOperationalState.ErrorState> = {
+        UnableToStartOrResume: RvcOperationalState.ErrorState.UnableToStartOrResume,
+        UnableToCompleteOperation: RvcOperationalState.ErrorState.UnableToCompleteOperation,
+        CommandInvalidInState: RvcOperationalState.ErrorState.CommandInvalidInState,
+        FailedToFindChargingDock: RvcOperationalState.ErrorState.FailedToFindChargingDock,
+        Stuck: RvcOperationalState.ErrorState.Stuck,
+        DustBinMissing: RvcOperationalState.ErrorState.DustBinMissing,
+        DustBinFull: RvcOperationalState.ErrorState.DustBinFull,
+        WaterTankEmpty: RvcOperationalState.ErrorState.WaterTankEmpty,
+        WaterTankMissing: RvcOperationalState.ErrorState.WaterTankMissing,
+        WaterTankLidOpen: RvcOperationalState.ErrorState.WaterTankLidOpen,
+        MopCleaningPadMissing: RvcOperationalState.ErrorState.MopCleaningPadMissing,
+        BatteryLow: RvcOperationalState.ErrorState.LowBattery,
+        CannotReachTargetArea: RvcOperationalState.ErrorState.CannotReachTargetArea,
+        DirtyWaterTankFull: RvcOperationalState.ErrorState.DirtyWaterTankFull,
+        DirtyWaterTankMissing: RvcOperationalState.ErrorState.DirtyWaterTankMissing,
+        WheelsJammed: RvcOperationalState.ErrorState.WheelsJammed,
+        BrushJammed: RvcOperationalState.ErrorState.BrushJammed,
+        NavigationSensorObscured: RvcOperationalState.ErrorState.NavigationSensorObscured,
+      };
+      const errorStateId = command.Error === undefined ? undefined : errorStates[command.Error];
+      if (errorStateId === undefined) {
+        matterbridge.log.warn(`Ignoring unsupported RVC ErrorEvent CHIP test app pipe command: ${JSON.stringify(command)}`);
+        return;
+      }
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, {
+        operationalState: RvcOperationalState.OperationalState.Error,
+        operationalError: { errorStateId, errorStateDetails: 'Simulated CHIP test fault' },
+      });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalError to ${command.Error} on endpoint ${endpointId}`);
+      return;
+    }
+    case 'ChargerFound':
+    case 'Charging':
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Charging });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Charging on endpoint ${endpointId}`);
+      return;
+    case 'Charged':
+    case 'Docked': {
+      const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      if (idleMode) await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
+      await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
+      matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Docked on endpoint ${endpointId}`);
+      return;
+    }
     case 'SetBooleanState':
       await endpoint.setStateOf(endpoint.behaviors.supported.booleanState, { stateValue: Boolean(command.NewState) });
       matterbridge.log.info(`CHIP test app pipe set BooleanState.StateValue to ${Boolean(command.NewState)} on endpoint ${endpointId}`);
@@ -725,6 +1374,64 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
     case 'SetSimulatedSoilMoisture':
       await endpoint.setStateOf(endpoint.behaviors.supported.soilMeasurement, { soilMoistureMeasuredValue: command.SoilMoistureValue ?? null });
       matterbridge.log.info(`CHIP test app pipe set SoilMeasurement.SoilMoistureMeasuredValue to ${command.SoilMoistureValue ?? null} on endpoint ${endpointId}`);
+      return;
+    case 'SetRefrigeratorDoorStatus': {
+      const doorOpen = Boolean(command.DoorOpen);
+      const wasDoorOpen = Boolean(endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).state.doorOpen);
+      await endpoint.setCluster(RefrigeratorAlarm, { state: { doorOpen } }, matterbridge.log);
+      await endpoint.triggerEvent(
+        'RefrigeratorAlarm',
+        'notify',
+        {
+          active: { doorOpen: doorOpen && !wasDoorOpen },
+          inactive: { doorOpen: !doorOpen && wasDoorOpen },
+          state: { doorOpen },
+          mask: endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).mask,
+        },
+        matterbridge.log,
+      );
+      matterbridge.log.info(`CHIP test app pipe set RefrigeratorAlarm.State.DoorOpen to ${doorOpen} on endpoint ${endpointId}`);
+      return;
+    }
+    case 'ModeChange':
+      if (command.Device === 'DishWasher' && command.Type === 'ToggleFailTransition') {
+        matterbridge.log.info(`CHIP test app pipe prepared DishwasherMode for a successful transition on endpoint ${endpointId}`);
+        return;
+      }
+      matterbridge.log.warn(`Ignoring unsupported ModeChange CHIP test app pipe command: ${JSON.stringify(command)}`);
+      return;
+    case 'OperationalStateChange':
+      // TC_OpstateCommon.py's send_manual_or_pipe_command() drives the DUT into states/errors a real command
+      // can't reach on its own (e.g. forcing Error), independently of the actual Pause/Stop/Start/Resume
+      // command handlers under test elsewhere in the same test. OnFault with NoError only clears the error
+      // (the test always follows it with an explicit Stop/Start pipe command of its own to pick the resulting
+      // state); any other error id also moves the device to Error, per the base cluster's Effect on Receipt.
+      switch (command.Operation) {
+        case 'Stop':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Stopped });
+          break;
+        case 'Start':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Running });
+          break;
+        case 'Pause':
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Paused });
+          break;
+        case 'OnFault': {
+          const errorStateId: OperationalState.ErrorState = command.Param ?? OperationalState.ErrorState.NoError;
+          const isNoError = errorStateId === OperationalState.ErrorState.NoError;
+          await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, {
+            operationalError: { errorStateId, errorStateDetails: isNoError ? 'Fully operational' : 'Simulated CHIP test fault' },
+            ...(isNoError ? {} : { operationalState: OperationalState.OperationalStateEnum.Error }),
+          });
+          break;
+        }
+        default:
+          matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe OperationalStateChange operation: ${JSON.stringify(command)}`);
+          return;
+      }
+      matterbridge.log.info(
+        `CHIP test app pipe OperationalStateChange(${command.Operation}${command.Param === undefined ? '' : `, ${command.Param}`}) applied on endpoint ${endpointId}`,
+      );
       return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
@@ -753,7 +1460,10 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('NewState' in value) || typeof value.NewState === 'boolean') &&
     (!('Occupancy' in value) || typeof value.Occupancy === 'number') &&
     (!('SensorFault' in value) || typeof value.SensorFault === 'number') &&
-    (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number')
+    (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number') &&
+    (!('Device' in value) || typeof value.Device === 'string') &&
+    (!('Operation' in value) || typeof value.Operation === 'string') &&
+    (!('Param' in value) || typeof value.Param === 'number')
   );
 }
 // v8 ignore end

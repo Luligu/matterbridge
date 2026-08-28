@@ -929,7 +929,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -970,7 +969,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1010,7 +1008,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1056,7 +1053,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1116,7 +1112,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);
@@ -1182,7 +1177,6 @@ describe('Matterbridge', () => {
       const interval = setInterval(() => {
         if (matterbridge.shutdown) {
           clearInterval(interval);
-          // oxlint-disable-next-line promise/no-multiple-resolved
           resolve(0);
         }
       }, 100);

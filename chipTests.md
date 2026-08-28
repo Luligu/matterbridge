@@ -1,6 +1,6 @@
-## Chip tests
+# Chip tests
 
-### Create and start the container (Linux, macOS, and Windows)
+## Create and start the container (Linux, macOS, and Windows)
 
 Run the `luligu/matterbridge:chip-test` docker image (already bundles a full Matterbridge instance built
 from the `dev` branch, started with `--novirtual` — nothing local is installed, built, or mounted):
@@ -12,13 +12,13 @@ from the `dev` branch, started with `--novirtual` — nothing local is installed
 node scripts/run-matterbridge-chip-tests.mjs --start
 ```
 
-### Run all configured tests inside the container
+## Run all configured tests inside the container
 
 ```shell
 node scripts/run-matterbridge-chip-tests.mjs
 ```
 
-### Manually run the tests inside the container
+## Manually run the tests inside the container
 
 Open a shell in the container
 
@@ -42,13 +42,13 @@ python3 src/python_testing/TC_DefaultWarnings.py --bool-arg pixit_allow_default_
 python3 scripts/tests/chipyaml/chiptool.py tests Test_TC_I_2_1 --endpoint 7
 ```
 
-### Stop the container
+## Stop the container
 
 ```shell
 node scripts/run-matterbridge-chip-tests.mjs --stop
 ```
 
-### Endpoint 0
+## Endpoint 0
 
 Root node clusters:
 
@@ -62,13 +62,228 @@ Root node clusters:
 - OperationalCredentials
 - PowerSource
 
-### Endpoint 1
+## Endpoint 1
 
 Aggregator clusters:
 
 - Descriptor
 
-### Known Issues
+## Endpoint 805
+
+Closure clusters:
+
+- ClosureControl (Positioning, MotionLatching and Speed features)
+
+## Endpoint 8051
+
+Closure Pedestrian clusters:
+
+- ClosureControl (Positioning, MotionLatching, Speed and Pedestrian features)
+
+## Endpoint 8052
+
+Closure Ventilation clusters:
+
+- ClosureControl (Positioning, MotionLatching, Speed and Ventilation features)
+
+## Endpoint 8053
+
+Closure Calibrate clusters:
+
+- ClosureControl (Positioning, MotionLatching, Speed and Calibration features)
+
+## Endpoint 8054
+
+Closure Complete clusters:
+
+- ClosureControl (Positioning, MotionLatching, Speed, Ventilation, Pedestrian and Calibration features)
+
+Used by `TC_CLCTRL_3_1`/`4_1`/`5_1` instead of endpoint 805: those tests each gate real coverage of one or
+more sections behind a feature (Calibration, Ventilation, Pedestrian) that the plain endpoint 805 doesn't
+support, so on 805 those sections always skip via the test's own live `FeatureMap` read rather than actually
+exercising them — see "Known Issues" below.
+
+## Endpoint 403
+
+Color Temperature Light clusters:
+
+- ColorControl (ColorTemperature feature only)
+
+## Endpoint 404
+
+Extended Color Light XY CT clusters:
+
+- ColorControl (Xy and ColorTemperature features)
+
+## Endpoint 4041
+
+Extended Color Light HS XY CT clusters:
+
+- ColorControl (HueSaturation, Xy and ColorTemperature features) — the "default" feature set
+  (`createDefaultColorControlClusterServer()`)
+
+## Endpoint 4042
+
+Extended Color Light EHS XY CT clusters:
+
+- ColorControl (HueSaturation, EnhancedHue, Xy and ColorTemperature features) — the most complete
+  ColorControl feature set of any Matterbridge endpoint (`createEnhancedColorControlClusterServer()`). No
+  endpoint enables the ColorLoop feature — see "Known Issues" below.
+
+## Endpoint 505
+
+Pump clusters:
+
+- PumpConfigurationAndControl (ConstantSpeed feature only)
+
+## Endpoint 506
+
+Water Valve clusters:
+
+- ValveConfigurationAndControl (Level feature only, no TimeSync)
+
+## Endpoint 507
+
+Irrigation System clusters:
+
+- OperationalState (base cluster; Pause/Stop/Start/Resume).
+
+## Endpoint 1201
+
+Robotic Vacuum Cleaner clusters:
+
+- RvcRunMode (Idle, Cleaning, Mapping, and SpotCleaning modes)
+- RvcCleanMode (Vacuum, Mop, and DeepClean modes)
+- RvcOperationalState (Stopped, Running, Paused, Error, SeekingCharger, Charging, and Docked states)
+- ServiceArea (Maps and SelectAreas; ProgressReporting and SkipArea are not implemented)
+
+## Endpoint 1301
+
+Laundry Washer with level temperature control clusters:
+
+- OnOff (DeadFrontBehavior)
+- LaundryWasherMode
+- LaundryWasherControls (Spin and Rinse)
+- TemperatureControl (TemperatureLevel)
+
+## Endpoint 13012
+
+Second Laundry Washer with numeric temperature control clusters:
+
+- OnOff (DeadFrontBehavior)
+- LaundryWasherMode
+- LaundryWasherControls (Spin and Rinse)
+- TemperatureControl (TemperatureNumber and TemperatureStep)
+- DeadFrontOnOff attributes and primary functionality pass 2/2.
+- LaundryWasherMode attributes and ChangeToMode pass 2/2.
+- LaundryWasherControls Spin attributes pass.
+- LaundryWasherControls Rinse attributes, supported-list, valid-write, and readback checks pass.
+- NumberTemperatureControl passes 2/2 and LevelTemperatureControl passes 1/1.
+
+The local `Test_TC_WASHERCTRL_2_2.yaml` patch removes only the upstream final step that writes undefined
+`NumberOfRinsesEnum` value `4`; CHIP rejects that value locally during encoding before any request reaches the DUT,
+so the step cannot test the expected `INVALID_IN_STATE` response. The patched Rinse test does not cover `INVALID_IN_STATE`;
+that requires a separate valid test scenario using a defined enum value that is unavailable in the current mode's `SupportedRinses` list.
+
+## Endpoint 1302
+
+Refrigerator clusters:
+
+- Refrigerator And Temperature Controlled Cabinet Mode
+- Refrigerator Alarm
+
+- `Test_TC_TCCM_2_1` contains only disabled manual verification steps and executes no conformance checks.
+- `Test_TC_REFALM_2_3` requires local alarm suppression, which endpoint 1302 does not implement.
+
+## Endpoint 1305
+
+Dishwasher clusters:
+
+- Dishwasher Mode
+- Dishwasher Alarm
+
+## Endpoint 1306
+
+Laundry Dryer cluster:
+
+- Laundry Dryer Controls
+
+The local `Test_TC_DRYERCTRL_2_1.yaml` patch omits the upstream write of undefined `DrynessLevelEnum` value `4`,
+the same class of issue as the WASHERCTRL patch above: chip-tool rejects that value during local command encoding
+before any request reaches the DUT, so the step cannot verify the expected `CONSTRAINT_ERROR`. Separately, the
+test's `INVALID_IN_STATE` scenario is gated by `DRYERCTRL.S.M.ManuallyControlled`, which endpoint 1306 does not
+support, so that step does not apply either.
+
+## Endpoint 1308
+
+Cooktop clusters:
+
+- OnOff (OffOnly)
+- Fixed Label
+
+The local `Test_TC_OO_2_2.yaml` patch adds the triggering command's PICS guard to each subsequent state read. The
+upstream test otherwise skips an unsupported `On` or `Toggle` command on an OffOnly endpoint but still asserts the
+state change that command would have caused. The local `Test_TC_OO_2_6.yaml` patch removes those same unsupported
+commands' contradictory PICS guards from the negative checks, allowing the test to verify the Matter 1.6-required
+`UNSUPPORTED_COMMAND` responses.
+
+## Endpoint 13091
+
+Top Oven Cabinet clusters:
+
+- Oven Mode
+- Oven Cavity Operational State
+
+- `CountdownTime` is not implemented on endpoint 13091. The corresponding upstream Matter 1.6 script also hardcodes
+  endpoint 1 instead of using its configured endpoint.
+
+## Endpoint 1311
+
+Microwave Oven clusters:
+
+- Microwave Oven Mode
+- Microwave Oven Control (`PowerAsNumber` and `PowerNumberLimits`)
+
+## Endpoint 1409
+
+Electrical Utility Meter clusters:
+
+- Meter Identification
+
+## Endpoint 14091
+
+Electrical Meter (child of Electrical Utility Meter, endpoint 1409) clusters:
+
+- Commodity Metering
+
+## Endpoint 14092
+
+Electrical Energy Tariff Upcoming (child of Electrical Utility Meter, endpoint 1409) clusters:
+
+- Commodity Price
+- Commodity Tariff
+
+## Patched CHIP tests
+
+Local copies under `docker/chip-test/patches/`, applied over the same-named upstream file inside the container
+by `--start` (see `chipTests.json`'s `"patches"` array and chip-tests instructions §12). Each is a stopgap for a
+stale/buggy upstream test file, not a Matterbridge behavior change — remove the entry (and the file) once the
+corresponding upstream fix merges and a new `chip-test` image is published with it baked in.
+
+| Patched file                   | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TC_DeviceBasicComposition.py` | `test_TC_DESC_2_1`'s hand-coded `Descriptor.TagList` namespace whitelist stops at `0x43` and predates the eight Matter 1.6 namespaces (five Closure, three Commodity Tariff) our devices can emit, so a fully spec-compliant `Closure` tag (`namespaceID=0x44`) is rejected. See "Known Issues" below and [PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481) (open/unmerged).                                                                                                                                                                                                                         |
+| `TC_FAN_3_2.py`                | The exact-report-count assertion (`FanMode` emits exactly 3 subscription reports) is timing-fragile: matter.js's report engine legitimately coalesces rapid intermediate value changes into one report, which the Matter spec allows. Upstream already fixed this on master ([PR #73629](https://github.com/project-chip/connectedhomeip/pull/73629), merged 2026-08-25) by synchronizing on each report instead of loosening the assertion; our patch is that fixed master file copied in as-is, not a local rewrite — not yet backported to `v1.6-branch`/`v1.6.1-branch` or baked into the published `chip-test` image. |
+| `Test_TC_OO_2_2.yaml`          | Adds the triggering command's PICS guard to each subsequent state read, so an unsupported `On`/`Toggle` command on an OffOnly endpoint (Cooktop, endpoint 1308) no longer asserts the state change that skipped command would have caused.                                                                                                                                                                                                                                                                                                                                                                                 |
+| `Test_TC_OO_2_3.yaml`          | The final exact-zero `OffWaitTime` assertion is timing-fragile (a couple of seconds of container/round-trip latency can leave a small residual value on this specific step). The patch relaxes that one check from an exact `value: 0` to a `constraints: minValue 0, maxValue 2 * PIXIT.OO.MaxCommunicationTurnaround` range.                                                                                                                                                                                                                                                                                             |
+| `Test_TC_OO_2_6.yaml`          | Removes the same unsupported `On`/`Toggle` commands' contradictory PICS guards from the negative checks, so the test can verify the Matter 1.6-required `UNSUPPORTED_COMMAND` responses on an OffOnly endpoint.                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `Test_TC_G_2_4.yaml`           | Step 6 is missing a `!G.S.F00` PICS guard upstream (confirmed unfixed on `project-chip/connectedhomeip` master), so it wrongly runs against a response that includes `GroupName` when `G.S.F00=1` (Matterbridge always reports GroupNames). Also pins `PIXIT.G.ENDPOINT1`/`PIXIT.G.ENDPOINT2` as real YAML integers directly in `config:`, since `chiptool.py`'s generic PIXIT-override CLI path stores overrides as raw strings with no int coercion.                                                                                                                                                                     |
+| `Test_TC_WASHERCTRL_2_2.yaml`  | Removes the upstream final step that writes undefined `NumberOfRinsesEnum` value `4`; CHIP rejects that value locally during enum encoding before any request reaches the DUT, so the step cannot test the expected `INVALID_IN_STATE` response.                                                                                                                                                                                                                                                                                                                                                                           |
+| `Test_TC_DRYERCTRL_2_1.yaml`   | Same class of issue as WASHERCTRL: omits the upstream write of undefined `DrynessLevelEnum` value `4`, which CHIP rejects locally during encoding before reaching the DUT, so the step cannot verify the expected `CONSTRAINT_ERROR`.                                                                                                                                                                                                                                                                                                                                                                                      |
+| `TC_MWOCTRL_2_2.py`            | Corrects the upstream `MaxPower < 100` assertion to `MaxPower <= 100`, as required by Matter 1.6 §8.13.5.5.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `TC_EEVSE_2_2.py`              | Targets the configured EVSE endpoint (1401) for the `UserMaximumChargeCurrent` write instead of the upstream test's hardcoded endpoint `1`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+
+# Known Issues
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
   a Matterbridge bug — patched locally (`docker/chip-test/patches/TC_DeviceBasicComposition.py`, see
@@ -90,28 +305,35 @@ Aggregator clusters:
 
 - **FanControl: `TC_FAN_3_2.py`'s exact-report-count assertion was inherently timing-fragile, not a
   Matterbridge bug — patched locally (`docker/chip-test/patches/TC_FAN_3_2.py`, see chip-tests instructions
-  §12).** The unpatched test iteratively writes `SpeedSetting` from 1 to `SpeedMax` (no delay between writes)
-  and asserted `FanMode` emits _exactly_ 3 subscription reports (one per Low/Medium/High transition).
-  Root-caused by directly reproducing the failure with a throwaway script against a running container:
-  writing **`PercentSetting`** (not `SpeedSetting`) at the same rapid pace — no Matterbridge code involved
-  beyond the attribute write itself — produces the _identical_ symptom (2 reports, both showing the final
-  value 3; the Low/Medium transitions are never delivered). This is matter.js's subscription/report engine
-  legitimately coalescing intermediate value changes that occur faster than its reporting interval into a
-  single report of the latest value — allowed by the Matter spec (a subscriber is only guaranteed eventual
-  consistency, not delivery of every transient value) and outside Matterbridge's control. `TC_FAN_3_1.py`
-  (which drives the same kind of `FanMode` cascade via `PercentSetting` writes) is not actually immune to this
-  coalescing — it just does not assert an exact count; it only checks that `FanMode` and `PercentSetting`
-  report the same number of times as each other, which holds regardless of how much coalescing occurs, since
-  both attributes change together in the same transaction. The patch applies the same tolerance to
-  `TC_FAN_3_2.py`: its hardcoded-exact-count assertion (`FanMode` report count `==` number of fan modes minus
-  one) is relaxed to an upper bound (`<=` that same number) — a fast, correct DUT triggering coalescing no
-  longer fails a fragile test assumption, while a real regression producing _more_ reports than the
-  theoretical maximum still would. Remove this patch (and its `chipTests.json` `"patches"` entry) once the
-  upstream test itself adopts an equivalent tolerance and a new `chip-test` image is published with it baked
-  in. Note this same coalescing occasionally makes `TC_FAN_3_1.py` itself flaky too (observed once directly):
-  its own report-count-parity assertion can still fail if the `FanMode` and `PercentSetting` subscriptions
-  happen to coalesce by a different amount from each other on a given run. Re-run the specific failing test
-  alone if this happens — it passes reliably in isolation.
+  §12).** The unpatched test (as still shipped in the `v1.6-branch`/`v1.6.1-branch` connectedhomeip branches,
+  and in the `chip-test` image's currently baked-in snapshot) iteratively writes `SpeedSetting` from 1 to
+  `SpeedMax` (no delay between writes) and asserted `FanMode` emits _exactly_ 3 subscription reports (one per
+  Low/Medium/High transition). Root-caused by directly reproducing the failure with a throwaway script
+  against a running container: writing **`PercentSetting`** (not `SpeedSetting`) at the same rapid pace — no
+  Matterbridge code involved beyond the attribute write itself — produces the _identical_ symptom (2 reports,
+  both showing the final value 3; the Low/Medium transitions are never delivered). This is matter.js's
+  subscription/report engine legitimately coalescing intermediate value changes that occur faster than its
+  reporting interval into a single report of the latest value — allowed by the Matter spec (a subscriber is
+  only guaranteed eventual consistency, not delivery of every transient value) and outside Matterbridge's
+  control. `TC_FAN_3_1.py` (which drives the same kind of `FanMode` cascade via `PercentSetting` writes) is
+  not actually immune to this coalescing — it just does not assert an exact count; it only checks that
+  `FanMode` and `PercentSetting` report the same number of times as each other, which holds regardless of how
+  much coalescing occurs, since both attributes change together in the same transaction.
+
+  Upstream has already fixed this independently: [PR #73629](https://github.com/project-chip/connectedhomeip/pull/73629)
+  ("TC-FAN-3.2 - Fix false failures from coalesced attribute reports"), merged to `connectedhomeip` master on
+  2026-08-25, adds a `wait_for_triggered_reports()`/`wait_for_latest_report_value()` synchronization step that
+  blocks after each `SpeedSetting` write until the corresponding `FanMode`/`PercentSetting` reports have
+  actually arrived, before moving on to the next write — removing the race instead of loosening the
+  assertion. The exact-count check itself is left untouched (`==`, not relaxed to `<=`). Our local patch is
+  simply master's fixed file copied in as-is (`diff` against `gh api .../contents/src/python_testing/TC_FAN_3_2.py`
+  at `master` is empty), since this fix is not yet backported to `v1.6-branch`/`v1.6.1-branch` and no new
+  `chip-test` image has been published with it baked in. Remove this patch (and its `chipTests.json`
+  `"patches"` entry) once PR #73629 reaches whichever branch/tag the `chip-test` image builds from and a new
+  image is published with it baked in. Note this same coalescing occasionally makes `TC_FAN_3_1.py` itself
+  flaky too (observed once directly): its own report-count-parity assertion can still fail if the `FanMode`
+  and `PercentSetting` subscriptions happen to coalesce by a different amount from each other on a given run.
+  Re-run the specific failing test alone if this happens — it passes reliably in isolation.
 
 - **OnOff: `Test_TC_OO_2_3`'s exact-zero `OffWaitTime` assertions are timing-fragile, not a Matterbridge
   bug.** This ~2-minute test drives matter.js's own native `OnTime`/`OffWaitTime` countdown timer
@@ -123,20 +345,6 @@ Aggregator clusters:
   same countdown behaves correctly everywhere else in the same run). Not `"skip": true` since it's not
   permanently inapplicable, just narrow-margin in this containerized environment — kept running and
   documented here, matching the same category as `TC_FAN_3_1.py`'s occasional flakiness above.
-
-- **OnOff: found and fixed a real bug via `TC_OO_2_7.py` (Scenes Management interaction) — `on()`/`off()`
-  silently dropped when invoked from `ScenesManagement`'s delayed scene-apply timer.** `RecallScene` with a
-  non-zero `transitionTime` schedules the actual `on()`/`off()` call on an _unlocked_ timer callback inside
-  matter.js's base `OnOffServer` (`#applySceneValues()` in `on-off/OnOffServer.ts`), whose implicit
-  transaction context only lives for the synchronous portion of that callback. `MatterbridgeOnOffServer`'s
-  `on()`/`off()`/`toggle()`/`offWithEffect()`/`onWithRecallGlobalScene()`/`onWithTimedOff()` all `await`
-  their command-handler forwarder _before_ calling `super.X()` — fine for a normal client-invoked command
-  (its request context survives the await), but that await outlived the scene-timer's short-lived context,
-  so `super.on()` threw `[expired-reference] ... This value is no longer available because its context has
-exited` and the real `OnOff` state mutation never happened (confirmed directly in the container logs).
-  Fixed in `packages/core/src/behaviors/onOffServer.ts` (v1.1.0) by gating the forwarder off entirely behind
-  `!MATTERBRIDGE_CHIP_TEST` for now — production behavior (forwarder always awaited first) is unchanged; a
-  proper fix (reordering the forwarder after `super.X()`, or locking the scene-apply callback) is still open.
 
 - **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
   (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
@@ -157,22 +365,6 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
-- **LevelControl: `TC_LVL_2_3.py` and `Test_TC_LVL_6_1` fail because `@matter/node`'s default
-  `LevelControlServer` never simulates a transition — it jumps `CurrentLevel` straight to the target and
-  ignores `transitionTime` entirely.** `LevelControlServer.js`'s `State.managedTransitionTimeHandling` flag
-  (default `false`) documents this directly: "The default implementation always set the target level
-  immediately and so ignores all transition times requested or configured." `createDefaultLevelControlClusterServer()`
-  (`matterbridgeEndpoint.ts`) does not opt into `managedTransitionTimeHandling`, so on `DimmableLight`
-  endpoint 402: `TC_LVL_2_3.py` subscribes for `RemainingTime` reports around a `MoveToLevel` with a non-zero
-  `transitionTime` and expects exactly 3 reports tracking the transition — since the level is set instantly,
-  `RemainingTime` never changes and 0 reports arrive. `Test_TC_LVL_6_1` starts a `Move`, waits 5s, sends
-  `Stop`, and expects `CurrentLevel` to be caught mid-transition (constrained between 64 and 86) — since
-  `Move` already jumped to its implicit target (254) the instant it was sent, `Stop` has nothing left to
-  halt. Both verified directly against the container (`CurrentLevel` reads back at the target value
-  immediately after any `MoveToLevel`/`Move`, regardless of `transitionTime`/`rate`). Not fixable via PICS;
-  `"skip": true` in `chipTests.json` for both, permanently inapplicable unless Matterbridge opts a bridged
-  light endpoint into `managedTransitionTimeHandling`.
-
 - **LevelControl: `Test_TC_LVL_3_1` Step 5h fails deterministically (3/3 reproductions) only inside
   `chiptool.py`'s single long-lived interactive-server session, not via standalone `chip-tool` invocations —
   suspected race in `@matter/node`, not Matterbridge code.** After `OnOff.Off` then a `MoveToLevel` sent with
@@ -184,9 +376,63 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   sequence sent back-to-back over `chiptool.py`'s one persistent session (no inter-command latency)
   consistently lets the `MoveToLevel` through instead. `"skip": true` in `chipTests.json`, pending deeper
   investigation into whether `@matter/node`'s state commit for `OnOff.Off` and the following command's read
-  of that state can race under pipelined delivery.
+  of that state can race under pipelined delivery. Re-verified unchanged after removing the `OnOff`/
+  `LevelControl` forwarder `await` under `MATTERBRIDGE_CHIP_TEST` (`onOffServer.ts`/`levelControlServer.ts`)
+  and after opting `LevelControl` into `managedTransitionTimeHandling`
+  (`packages/core/src/behaviors/levelControlServer.ts`): the failure is identical either way, confirming the
+  race lives entirely inside `@matter/node`'s own `OnOff`/`LevelControl` state handling, not in the
+  Matterbridge forwarder call or the transition-time gap.
 
-### matter.js discovery
+- **ColorControl: `Test_TC_CC_8_1`'s `EnhancedMoveHue` section fails because `StopMoveStep` never actually
+  stops an `EnhancedCurrentHue` transition on any Matterbridge ColorControl endpoint — a genuine
+  `@matter/node` bug.** `MatterbridgeColorControlServer` opts into `managedTransitionTimeHandling` under
+  `MATTERBRIDGE_CHIP_TEST` only (`packages/core/src/behaviors/colorControlServer.ts`, same mechanism as
+  LevelControl above, production behavior unchanged), which makes this test's HS `Stop` (step 9) and CT/HS
+  sections pass (60 successes/1 error, up from 10/1). It still fails at step 37 (Step 5e — the _second_
+  `EnhancedCurrentHue` read, 10s after `StopMoveStep`; the first read at step 5d, right after `Stop`, passes)
+  — the value keeps climbing at the full commanded rate for the entire post-`Stop` wait, as if `Stop` had no
+  effect at all. Root-caused directly against the container with an isolated repro script (start
+  `EnhancedMoveToHue`, `EnhancedMoveHue` at a fixed rate, `StopMoveStep`, then poll `EnhancedCurrentHue`
+  every second for 10s): `ColorControlServer.stopMoveStepLogic()`
+  (`@matter/node/dist/esm/behaviors/color-control/ColorControlServer.js`) only calls
+  `this.internal.transitions?.stop('enhancedCurrentHue')` when
+  `this.state.colorLoopActive === ColorControl.ColorLoopActive.Inactive` (`0`) — but `colorLoopActive` is
+  `undefined` (not `0`) whenever the `ColorLoop` feature isn't included in the cluster's feature set, which
+  is the case for every Matterbridge ColorControl endpoint (no `createXxxColorControlClusterServer()` helper
+  enables `ColorLoop`). `undefined === 0` is `false` in JavaScript, so this strict-equality guard is always
+  false when `ColorLoop` is absent, and the `enhancedCurrentHue` stop call is silently skipped every time —
+  the plain (non-enhanced) `Hue`/`Saturation`/`X`/`Y`/`ColorTemperature` stops right below it in the same
+  function are unconditional and work correctly, which is why the equivalent non-enhanced `Hue` `MoveHue`
+  `Stop` check earlier in this same test (step 2d/2e, `[221, 229]`) passes. This is inside `@matter/node`'s
+  own `ColorControlServer.stopMoveStepLogic()`, not Matterbridge code — the guard should presumably check for
+  `!== ColorControl.ColorLoopActive.Active` (or simply falsy) rather than requiring strict equality to
+  `Inactive`. `"skip": true` remains in `chipTests.json` for `Test_TC_CC_8_1`, pending an upstream fix.
+
+- **ColorControl: `TC_CC_6_5.py` (StartUpColorTemperatureMireds across a reboot) hits the same
+  `request_device_reboot()` synchronization gap as `Test_TC_OO_2_4`.** No restart flag file is configured for
+  this harness, so the test's reboot request silently falls through to a manual "reboot and press Enter"
+  prompt path instead of actually restarting Matterbridge — confirmed directly: the test proceeds without
+  error, but `ColorTemperatureMireds` reads back as the pre-write default (`250`) instead of the written
+  `StartUpColorTemperatureMireds` target (`323`), showing the DUT never actually restarted. `"skip": true` in
+  `chipTests.json`, same category as `Test_TC_OO_2_4`.
+
+## matter.js discovery
+
+- **Refrigerator Alarm / Dishwasher Alarm: `@matter/node`'s generic Alarm Base cluster schema resolves `Mask`/
+  `State`/`Supported`/`Notify` against an empty base-cluster `AlarmBitmap`, not the device-specific one — a
+  matter.js modeling gap, worked around locally in both single-class devices' cluster server code.**
+  `RefrigeratorAlarmServer`/`DishwasherAlarmServer` (`@matter/node`) each inherit their alarm-bearing attributes
+  and the `Notify` event from the shared Alarm Base cluster, but Alarm Base itself only declares an empty
+  `AlarmBitmap` type placeholder — the device-specific bits (Matter 1.6 Application Cluster Specification
+  §8.8.6.1 for Refrigerator, §8.4.4.1 for Dishwasher; Alarm Base §1.15.6.3, §1.15.6.4, §1.15.8.1 for the shared
+  element definitions) are never bound to the inherited elements' wire schema, so reading/writing them against
+  the real per-device bitmap fails. `MatterbridgeRefrigeratorAlarmServer` (`packages/core/src/devices/refrigerator.ts`)
+  and `MatterbridgeDishwasherAlarmServer` (`packages/core/src/devices/dishwasher.ts`) each redeclare `Mask`/
+  `State`/`Supported`/`Notify` via `<Alarm>Server.schema.extend(...)`, rebinding those elements' type to the
+  correct device-specific `AlarmBitmap` so the wire schema resolves correctly. This is a schema-level fix in
+  the single-class device's own server class, not a test-only patch — no corresponding
+  `docker/chip-test/patches/` entry exists for it, since it's part of the device implementation itself, not a
+  workaround for a stale upstream CHIP test file.
 
 - **GeneralCommissioning: `TC_CGEN_2_2.py` (ArmFailSafe command) fails intermittently with a generic
   `InteractionModelError: Failure (0x1)` — root cause traced into `@matter/node`'s `GeneralCommissioningServer`,

@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-18
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,10 +27,12 @@
 // @matter
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
+import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import type { Semtag } from '@matter/types/globals';
 // Utils
 import { fireAndForget } from '@matterbridge/utils/wait';
 
@@ -39,6 +41,39 @@ import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
+
+/** Available heating sources for a water heater. */
+export interface WaterHeaterTypes {
+  immersionElement1?: boolean;
+  immersionElement2?: boolean;
+  heatPump?: boolean;
+  boiler?: boolean;
+  other?: boolean;
+}
+
+/** Options for configuring a {@link WaterHeater} endpoint. */
+export interface WaterHeaterOptions {
+  /** Endpoint operating mode. */
+  mode?: 'server' | 'matter';
+  /** Stable storage key for the endpoint. Defaults to `${name}-${serial}` with spaces removed. */
+  id?: string;
+  /** Explicit endpoint number. */
+  number?: EndpointNumber;
+  /** Semantic tags for endpoint disambiguation. */
+  tagList?: Semtag[];
+  waterTemperature?: number;
+  targetWaterTemperature?: number;
+  minHeatSetpointLimit?: number;
+  maxHeatSetpointLimit?: number;
+  heaterTypes?: WaterHeaterTypes;
+  tankPercentage?: number;
+  voltage?: number | bigint | null;
+  current?: number | bigint | null;
+  power?: number | bigint | null;
+  energy?: number | bigint | null;
+  absMinPower?: number;
+  absMaxPower?: number;
+}
 
 /**
  * Matterbridge endpoint representing a water heater device.
@@ -67,14 +102,34 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    */
+  constructor(name: string, serial: string, options?: WaterHeaterOptions);
+
+  /** @deprecated Pass a {@link WaterHeaterOptions} object as the third argument instead. */
   constructor(
     name: string,
     serial: string,
-    waterTemperature = 50,
+    waterTemperature?: number,
+    targetWaterTemperature?: number,
+    minHeatSetpointLimit?: number,
+    maxHeatSetpointLimit?: number,
+    heaterTypes?: WaterHeaterTypes,
+    tankPercentage?: number,
+    voltage?: number | bigint | null,
+    current?: number | bigint | null,
+    power?: number | bigint | null,
+    energy?: number | bigint | null,
+    absMinPower?: number,
+    absMaxPower?: number,
+  );
+
+  constructor(
+    name: string,
+    serial: string,
+    optionsOrWaterTemperature?: WaterHeaterOptions | number,
     targetWaterTemperature = 55,
     minHeatSetpointLimit = 20,
     maxHeatSetpointLimit = 80,
-    heaterTypes: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean } = { immersionElement1: true },
+    heaterTypes: WaterHeaterTypes = { immersionElement1: true },
     tankPercentage = 90,
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
@@ -83,21 +138,49 @@ export class WaterHeater extends MatterbridgeEndpoint {
     absMinPower: number = 0,
     absMaxPower: number = 0,
   ) {
-    super([waterHeater], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    const options: WaterHeaterOptions =
+      typeof optionsOrWaterTemperature === 'object'
+        ? optionsOrWaterTemperature
+        : {
+            waterTemperature: optionsOrWaterTemperature,
+            targetWaterTemperature,
+            minHeatSetpointLimit,
+            maxHeatSetpointLimit,
+            heaterTypes,
+            tankPercentage,
+            voltage,
+            current,
+            power,
+            energy,
+            absMinPower,
+            absMaxPower,
+          };
+    super([waterHeater], { id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, number: options.number, tagList: options.tagList, mode: options.mode });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Water Heater')
-      .createDefaultHeatingThermostatClusterServer(waterTemperature, targetWaterTemperature, minHeatSetpointLimit, maxHeatSetpointLimit)
-      .createDefaultWaterHeaterManagementClusterServer(heaterTypes, {}, tankPercentage)
+      .createDefaultHeatingThermostatClusterServer(
+        options.waterTemperature ?? 50,
+        options.targetWaterTemperature ?? 55,
+        options.minHeatSetpointLimit ?? 20,
+        options.maxHeatSetpointLimit ?? 80,
+      )
+      .createDefaultWaterHeaterManagementClusterServer(options.heaterTypes ?? { immersionElement1: true }, {}, options.tankPercentage ?? 90)
       .createDefaultWaterHeaterModeClusterServer();
     fireAndForget(this.addFixedLabel('composed', 'Water Heater'), this.log, 'WaterHeater addFixedLabel');
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     this.addChildDeviceType('ElectricalSensor', electricalSensor)
       .createDefaultPowerTopologyClusterServer()
-      .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
-      .createDefaultElectricalEnergyMeasurementClusterServer(energy, 0)
+      .createDefaultElectricalPowerMeasurementClusterServer(options.voltage ?? null, options.current ?? null, options.power ?? null)
+      .createImportedElectricalEnergyMeasurementClusterServer(options.energy ?? null)
       .addRequiredClusterServers();
     this.addChildDeviceType('DeviceEnergyManagement', deviceEnergyManagement)
-      .createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.WaterHeating, false, DeviceEnergyManagement.EsaState.Online, absMinPower, absMaxPower)
+      .createDefaultDeviceEnergyManagementClusterServer(
+        DeviceEnergyManagement.EsaType.WaterHeating,
+        false,
+        DeviceEnergyManagement.EsaState.Online,
+        options.absMinPower ?? 0,
+        options.absMaxPower ?? 0,
+      )
       .createDefaultDeviceEnergyManagementModeClusterServer()
       .addRequiredClusterServers();
   }
@@ -178,7 +261,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
    */
   override async boost(request: WaterHeaterManagement.BoostRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWaterHeaterManagementServer: boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterManagement.boost', {
       command: 'boost',
       request,
@@ -186,11 +269,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    device.log.debug(`MatterbridgeWaterHeaterManagementServer boost called with: ${JSON.stringify(request)}`);
+    device.log.debug(`MatterbridgeWaterHeaterManagementServer: boost called with: ${JSON.stringify(request)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Active when the Boost command succeeds.
     this.state.boostState = WaterHeaterManagement.BoostState.Active;
-    // The implementation is responsible for setting the device accordingly with the boostInfo of the boost command
-    // super.boost({ boostInfo });
-    // boost is not implemented in matter.js
   }
 
   /**
@@ -198,7 +279,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
    */
   override async cancelBoost(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWaterHeaterManagementServer: cancel boost (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterManagement.cancelBoost', {
       command: 'cancelBoost',
       request: {},
@@ -206,11 +287,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-    device.log.debug(`MatterbridgeWaterHeaterManagementServer cancelBoost called`);
+    device.log.debug(`MatterbridgeWaterHeaterManagementServer: cancelBoost called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost is received.
     this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
-    // The implementation is responsible for setting the device accordingly with the cancelBoost command
-    // super.cancelBoost();
-    // cancelBoost is not implemented in matter.js
   }
 }
 
@@ -226,7 +305,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWaterHeaterModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WaterHeaterMode.changeToMode', {
       command: 'changeToMode',
       request,
@@ -235,12 +314,18 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
+    // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
     if (!supported) {
-      device.log.error(`MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
+      device.log.error(
+        `MatterbridgeWaterHeaterModeServer: changeToMode called with unsupported newMode: ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
+    // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
     this.state.currentMode = request.newMode;
-    device.log.debug(`MatterbridgeWaterHeaterModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
+    device.log.debug(
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

@@ -375,7 +375,7 @@ function Header() {
       removeListener(handleWebSocketMessage);
       if (debug) console.log(`Header removed WebSocket listener`);
     };
-  }, [addListener, removeListener, sendMessage, showSnackbarMessage]);
+  }, [addListener, removeListener, sendMessage]);
 
   useEffect(() => {
     if (online) {

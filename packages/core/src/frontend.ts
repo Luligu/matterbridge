@@ -62,6 +62,7 @@ import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { type ClusterId, type EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -1502,11 +1503,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         attributes += `Cover position: ${attributeValue / 100}% `;
       if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
       if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && attributeValue === null)
-        attributes += `Position: unknown Latch: unknown SecureState: unknown `;
+        attributes += `Position: unknown Latch: unknown Speed: unknown SecureState: unknown `;
       if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && isValidObject(attributeValue)) {
         const overallCurrentState = attributeValue as ClosureControl.OverallCurrentState;
         attributes += `Position: ${getEnumDescription(ClosureControl.CurrentPosition, overallCurrentState.position, { fallback: 'unknown' })} `;
         attributes += `Latch: ${overallCurrentState.latch ?? 'unknown'} `;
+        attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed, { fallback: 'unknown' })} `;
         attributes += `SecureState: ${overallCurrentState.secureState ?? 'unknown'} `;
       }
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;

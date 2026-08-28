@@ -409,7 +409,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       removeListener(handleWebSocketMessage);
       if (debug) console.log(`HomeDevices removed WebSocket listener`);
     };
-  }, [plugins, addListener, removeListener, sendMessage, isSelected]);
+  }, [addListener, removeListener, sendMessage, isSelected]);
 
   // Mix devices and selectDevices
   useEffect(() => {
@@ -432,7 +432,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       setMixedDevices(mixed);
       if (debug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
     }
-  }, [plugins, devices, selectDevices, setMixedDevices]);
+  }, [devices, selectDevices, setMixedDevices]);
 
   // Send API requests when online or mounting
   useEffect(() => {

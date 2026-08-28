@@ -10,11 +10,14 @@ const MATTER_CREATE_ONLY = true;
 
 import { CommonPositionTag, RefrigeratorTag } from '@matter/node';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { TlvOfModel } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -29,7 +32,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-import { MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
+import { MatterbridgeRefrigeratorAlarmServer, MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
 import { refrigerator } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -89,6 +92,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeTruthy();
     expect(device.hasClusterServer(RefrigeratorAlarm.id)).toBeTruthy();
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet1 = device.addCabinet('Refrigerator Test Cabinet Top', [
       { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
       { mfgCode: null, namespaceId: RefrigeratorTag.Refrigerator.namespaceId, tag: RefrigeratorTag.Refrigerator.tag, label: RefrigeratorTag.Refrigerator.label },
@@ -99,6 +103,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.hasClusterServer(RefrigeratorAlarm.id)).toBeFalsy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
 
+    // oxlint-disable-next-line typescript/no-deprecated
     cabinet2 = device.addCabinet(
       'Freezer Test Cabinet Bottom',
       [
@@ -115,6 +120,26 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet2.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeFalsy();
     expect(cabinet2.hasClusterServer(RefrigeratorAlarm.id)).toBeFalsy();
     expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
+  });
+
+  test('add a refrigerator cabinet with endpoint options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label }];
+    const configuredDevice = new Refrigerator('Configured Refrigerator', 'RF654321');
+    const configuredCabinet = configuredDevice.addCabinet('Configured Cabinet', {
+      id: 'ConfiguredCabinet',
+      number: EndpointNumber(13_02_1),
+      tagList,
+      targetTemperature: -20 * 100,
+      minTemperature: -30 * 100,
+      maxTemperature: 10 * 100,
+      step: 10 * 100,
+      currentTemperature: -18 * 100,
+    });
+
+    expect(configuredCabinet.id).toBe('ConfiguredCabinet');
+    expect(configuredCabinet.number).toBe(EndpointNumber(13_02_1));
+    expect(configuredCabinet.tagList).toEqual(tagList);
+    expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: -18 * 100 });
   });
 
   test('add a refrigerator device', async () => {
@@ -411,6 +436,37 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     requireSpy.mockRestore();
+  });
+
+  test('encode RefrigeratorAlarm attributes with the DoorOpen bitmap', () => {
+    for (const attributeName of ['Mask', 'State', 'Supported']) {
+      const attribute = [...MatterbridgeRefrigeratorAlarmServer.schema.conformant.attributes].find(({ name }) => name === attributeName);
+      expect(attribute).toBeDefined();
+      if (!attribute) continue;
+      const schema = TlvOfModel(attribute);
+      const encoded = schema.encode({ doorOpen: true });
+      expect(schema.decode(encoded)).toEqual({ doorOpen: true });
+    }
+  });
+
+  test('encode the RefrigeratorAlarm Notify event with the DoorOpen bitmap', () => {
+    const notifyEvent = [...MatterbridgeRefrigeratorAlarmServer.schema.conformant.events].find(({ name }) => name === 'Notify');
+    expect(notifyEvent).toBeDefined();
+    if (!notifyEvent) return;
+
+    const schema = TlvOfModel(notifyEvent);
+    const encoded = schema.encode({
+      active: { doorOpen: true },
+      inactive: { doorOpen: false },
+      state: { doorOpen: true },
+      mask: { doorOpen: true },
+    });
+    expect(schema.decode(encoded)).toEqual({
+      active: { doorOpen: true },
+      inactive: { doorOpen: false },
+      state: { doorOpen: true },
+      mask: { doorOpen: true },
+    });
   });
 
   test('invoke MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer commands', async () => {

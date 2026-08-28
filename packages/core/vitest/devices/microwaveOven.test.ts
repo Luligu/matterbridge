@@ -9,6 +9,7 @@ const MATTER_PORT = 8010;
 const MATTER_CREATE_ONLY = true;
 
 import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
+import { Status } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
@@ -85,7 +86,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, device)).toBeTruthy();
     await device.construction.ready;
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer initialized`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOperationalStateServer initialized: setting operational state to Stopped`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('device forEachAttribute', () => {
@@ -228,26 +232,27 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 120`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 30`);
 
-    // Test setCookingParameters - invalid cookTime (<0) -> default to 30sec
+    // Test setCookingParameters - invalid cookTime (<1) -> ConstraintError
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: -5, powerSetting: 10 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 7`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 10`);
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 7, cookTime: 0, powerSetting: 10 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
 
-    // Test setCookingParameters - cookTime > maxCookTime -> default to 30sec
+    // Test setCookingParameters - cookTime > maxCookTime -> ConstraintError
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 5000 })).rejects.toMatchObject({ code: Status.ConstraintError });
 
-    // Test setCookingParameters - invalid powerSetting (out of range) -> default to maxPower
+    // Test setCookingParameters - invalid powerSetting (out of range) -> ConstraintError
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, powerSetting: 150 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 3`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 45`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 3, cookTime: 45, powerSetting: 101 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // Test setCookingParameters - invalid powerSetting (not aligned to PowerStep) -> ConstraintError
+    vi.clearAllMocks();
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { powerSetting: 15 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
 
     // Test setCookingParameters - all valid values
     vi.clearAllMocks();

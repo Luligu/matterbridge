@@ -93,7 +93,7 @@ import {
 } from '@matter/types/clusters';
 import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
-import { AnsiLogger, debugStringify, er, hk, LogLevel } from 'node-ansi-logger';
+import { AnsiLogger, debugStringify, er, hk, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeBooleanStateConfigurationServer } from '../src/behaviors/booleanStateConfigurationServer.js';
 import { MatterbridgeColorControlServer } from '../src/behaviors/colorControlServer.js';
@@ -1167,11 +1167,11 @@ describe('Matterbridge ' + NAME, () => {
 
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('HepaFilterMonitoring', 'resetCondition', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeHepaFilterMonitoringServer: resetting condition (endpoint ${vent.id}.${vent.number})`);
 
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('ActivatedCarbonFilterMonitoring', 'resetCondition', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resetting condition (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetting condition (endpoint ${vent.id}.${vent.number})`);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {
@@ -1253,13 +1253,19 @@ describe('Matterbridge ' + NAME, () => {
     await leak.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: true });
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'suppressAlarm', { alarmsToSuppress: { audible: true, visual: true } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Suppressing alarm ${debugStringify({ audible: true, visual: true })} (endpoint ${leak.id}.${leak.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeBooleanStateConfigurationServer: suppressing alarm ${debugStringify({ audible: true, visual: true })}${nf} (endpoint ${leak.id}.${leak.number})`,
+    );
     vi.clearAllMocks();
     await leak.invokeBehaviorCommand('booleanStateConfiguration', 'enableDisableAlarm', { alarmsToEnableDisable: { audible: true, visual: false } });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsActive')).toEqual({ audible: true, visual: false });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsEnabled')).toEqual({ audible: true, visual: false });
     expect(leak.getAttribute('booleanStateConfiguration', 'alarmsSuppressed')).toEqual({ audible: true, visual: false });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Enabling/disabling alarm ${debugStringify({ audible: true, visual: false })} (endpoint ${leak.id}.${leak.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeBooleanStateConfigurationServer: enabling/disabling alarm ${debugStringify({ audible: true, visual: false })}${nf} (endpoint ${leak.id}.${leak.number})`,
+    );
   });
 
   test('invoke MatterbridgeOperationalStateServer commands', async () => {
@@ -1275,10 +1281,10 @@ describe('Matterbridge ' + NAME, () => {
     await laundry.invokeBehaviorCommand('operationalState', 'stop');
     await laundry.invokeBehaviorCommand('operationalState', 'pause');
     await laundry.invokeBehaviorCommand('operationalState', 'resume');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Start (endpoint ${laundry.id}.${laundry.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${laundry.id}.${laundry.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${laundry.id}.${laundry.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${laundry.id}.${laundry.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOperationalStateServer: start (endpoint ${laundry.id}.${laundry.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOperationalStateServer: stop (endpoint ${laundry.id}.${laundry.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOperationalStateServer: pause (endpoint ${laundry.id}.${laundry.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOperationalStateServer: resume (endpoint ${laundry.id}.${laundry.number})`);
   });
 
   test('rvc forEachAttribute', () => {
@@ -1291,7 +1297,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(69);
+    expect(count).toBe(70);
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
@@ -1318,18 +1324,19 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => Docked`);
+    expect(rvc.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(1);
     await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${rvc.id}.${rvc.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 3 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode 3 => Mapping`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode rejected direct non-Idle mode change from 2 to 3`);
+    expect(rvc.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
+    await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 });
+    await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 });
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 4 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode rejected direct non-Idle mode change from 3 to 4`);
   });
 
   test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
@@ -1345,7 +1352,7 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 1 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcCleanModeServer changeToMode called with newMode 1 => Vacuum`);
+    expect(rvc.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(1);
   });
 
   test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
@@ -1357,20 +1364,19 @@ describe('Matterbridge ' + NAME, () => {
     expect((rvc.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
     expect((rvc.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
     vi.clearAllMocks();
+    await rvc.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: 2 });
+    await rvc.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Running });
     await rvc.invokeBehaviorCommand('rvcOperationalState', 'RvcOperationalState.pause');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused and currentMode to Idle`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused`);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcOperationalState', 'RvcOperationalState.resume');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(
-      LogLevel.DEBUG,
-      `MatterbridgeRvcOperationalStateServer: resume called setting operational state to Running and currentMode to Cleaning`,
-    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to 1`);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('rvcOperationalState', 'RvcOperationalState.goHome');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to Docked and currentMode to Idle`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger`);
   });
 
   test('invoke MatterbridgeServiceAreaServer commands', async () => {
@@ -1392,24 +1398,27 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await heater.invokeBehaviorCommand('waterHeaterManagement', 'WaterHeaterManagement.boost', { boostInfo: { duration: 60 } });
     expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Boost (endpoint ${heater.id}.${heater.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: boost (endpoint ${heater.id}.${heater.number})`);
 
     vi.clearAllMocks();
     await heater.invokeBehaviorCommand('waterHeaterManagement', 'WaterHeaterManagement.cancelBoost', {});
     expect(heater.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancel boost (endpoint ${heater.id}.${heater.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: cancel boost (endpoint ${heater.id}.${heater.number})`);
   });
 
   test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
     vi.clearAllMocks();
     await heater.invokeBehaviorCommand('waterHeaterMode', 'WaterHeaterMode.changeToMode', { newMode: 1 });
     expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${heater.id}.${heater.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer: changing mode to 1 (endpoint ${heater.id}.${heater.number})`);
 
     vi.clearAllMocks();
     await heater.invokeBehaviorCommand('waterHeaterMode', 'WaterHeaterMode.changeToMode', { newMode: 0 }); // 0 is not a valid mode
     expect(heater.stateOf(WaterHeaterModeServer).currentMode).toBe(1);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeWaterHeaterModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with unsupported newMode: 0 (endpoint ${heater.id}.${heater.number})`,
+    );
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementServer commands', async () => {
@@ -1474,16 +1483,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
     expect(evse.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
     expect(evse.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
-    expect((evse as any).state['energyEvse'].acceptedCommandList).toEqual([1, 2, 5, 6, 7]);
+    expect((evse as any).state['energyEvse'].acceptedCommandList).toEqual([1, 2, 4, 5, 6, 7]);
     expect((evse as any).state['energyEvse'].generatedCommandList).toEqual([0]);
-    expect((evse as any).stateOf(MatterbridgeEnergyEvseServer).acceptedCommandList).toEqual([1, 2, 5, 6, 7]);
+    expect((evse as any).stateOf(MatterbridgeEnergyEvseServer).acceptedCommandList).toEqual([1, 2, 4, 5, 6, 7]);
     expect((evse as any).stateOf(MatterbridgeEnergyEvseServer).generatedCommandList).toEqual([0]);
     vi.clearAllMocks();
     await evse.invokeBehaviorCommand('energyEvse', 'disable');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer disable called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: disable called (endpoint ${evse.id}.${evse.number})`);
     vi.clearAllMocks();
     await evse.invokeBehaviorCommand('energyEvse', 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer enableCharging called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${evse.id}.${evse.number})`);
   });
 
   test('onOffSwitch device type matches OnOffLightSwitchDevice requirements', () => {

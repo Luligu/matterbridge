@@ -12,6 +12,9 @@ import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
 import { WebSocketContext } from './WebSocketProvider';
 
+const debugUpdate = false;
+const localDebug = false; // Set to true to enable debug logs only in DevicesTable component
+
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
     label: 'Plugin name',
@@ -139,7 +142,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const updateDevices = useCallback(
     (msg: WsMessageApiStateUpdate) => {
       /* v8 ignore next */
-      if (debug)
+      if (debug || debugUpdate || localDebug)
         console.log(
           `DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
           msg.response,
@@ -147,7 +150,8 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
       if (!updateDevice) {
         /* v8 ignore next */
-        if (debug) console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
+        if (debug || debugUpdate || localDebug)
+          console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
         return;
       }
       if (pluginName && endpoint && updateDevice.pluginName === pluginName && updateDevice.uniqueId === selectedDeviceUniqueId && msg.response.number.toString() === endpoint) {
@@ -156,7 +160,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         );
         if (!updatedCluster) {
           /* v8 ignore next */
-          if (debug)
+          if (debug || debugUpdate || localDebug)
             console.warn(
               `DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`,
             );
@@ -166,7 +170,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         updatedCluster.attributeLocalValue = msg.response.value;
         setClusters([...clusters]);
         /* v8 ignore next */
-        if (debug)
+        if (debug || debugUpdate || localDebug)
           console.log(
             `DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
           );
@@ -178,21 +182,21 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug) console.log('DevicesTable received WebSocket Message:', msg);
+      if (debug || localDebug) console.log('DevicesTable received WebSocket Message:', msg);
       if (msg.method === 'refresh_required' && msg.response.changed === 'devices') {
-        if (debug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} and sending /api/devices request`);
+        if (debug || localDebug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} and sending /api/devices request`);
         sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
       } else if (msg.method === 'state_update' && msg.response) {
         updateDevices(msg);
       } else if (msg.method === '/api/devices') {
-        if (debug) console.log(`DevicesTable received ${msg.response.length} devices:`, msg.response);
+        if (debug || localDebug) console.log(`DevicesTable received ${msg.response.length} devices:`, msg.response);
         setDevices(msg.response);
       } else if (msg.method === '/api/clusters') {
-        if (debug) console.log(`DevicesTable received ${msg.response.clusters.length} clusters for plugin ${msg.response.plugin}:`, msg.response);
+        if (debug || localDebug) console.log(`DevicesTable received ${msg.response.clusters.length} clusters for plugin ${msg.response.plugin}:`, msg.response);
         setClusters(msg.response.clusters);
         const endpointCounts: Record<string, number> = {};
         for (const cluster of msg.response.clusters) {
-          if (debug) console.log('Cluster:', cluster.endpoint);
+          if (debug || localDebug) console.log('Cluster:', cluster.endpoint);
           if (endpointCounts[cluster.endpoint]) {
             endpointCounts[cluster.endpoint]++;
           } else {
@@ -204,18 +208,18 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if (debug) console.log('DevicesTable added WebSocket listener');
+    if (debug || localDebug) console.log('DevicesTable added WebSocket listener');
 
     return () => {
       removeListener(handleWebSocketMessage);
-      if (debug) console.log('DevicesTable removed WebSocket listener');
+      if (debug || localDebug) console.log('DevicesTable removed WebSocket listener');
     };
   }, [sendMessage, addListener, removeListener, updateDevices]);
 
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      if (debug) console.log('DevicesTable sending api requests with id ', uniqueId.current);
+      if (debug || localDebug) console.log('DevicesTable sending api requests with id ', uniqueId.current);
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -225,7 +229,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   // Send /api/clusters request when a device row is clicked
   useEffect(() => {
     if (pluginName && endpoint && selectedDeviceUniqueId) {
-      if (debug) console.log('DevicesTable sending /api/clusters');
+      if (debug || localDebug) console.log('DevicesTable sending /api/clusters');
       sendMessage({
         id: uniqueId.current,
         sender: 'DevicesTable',
@@ -262,14 +266,15 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       setDeviceName(null);
       return;
     }
-    if (debug) console.log(`DevicesTable handleDeviceClick: selected device "${row.name}" with uniqueId "${row.uniqueId}", plugin "${row.pluginName}", endpoint "${row.endpoint}"`);
+    if (debug || localDebug)
+      console.log(`DevicesTable handleDeviceClick: selected device "${row.name}" with uniqueId "${row.uniqueId}", plugin "${row.pluginName}", endpoint "${row.endpoint}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
     setPluginName(row.pluginName);
     setEndpoint(row.endpoint ? row.endpoint.toString() : null);
     setDeviceName(row.name);
   };
 
-  if (debug) console.log('DevicesTable rendering...');
+  if (debug || localDebug) console.log('DevicesTable rendering...');
   if (!online) {
     return <Connecting />;
   }

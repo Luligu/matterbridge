@@ -1,5 +1,5 @@
 # To run tests on HepaFilterMonitoring --PICS is required
-# Matches createDefaultHepaFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903
+# Matches createDefaultHepaFilterMonitoringClusterServer() on CHIP AirPurifier endpoint 903 and Extractor Hood endpoint 1310
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
 HEPAFREMON.S=1

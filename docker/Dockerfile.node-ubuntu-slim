@@ -1,0 +1,89 @@
+# ─────────────── NODE STAGE ───────────────
+FROM ubuntu:latest AS node
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/* \
+  && \
+  set -eux \
+  && DPKG_ARCH=$(dpkg --print-architecture) \
+  && if [ "${DPKG_ARCH}" = "armhf" ]; then \
+  echo >&2 "ERROR: docker/Dockerfile.node-ubuntu-slim does not support linux/arm/v7 (armhf)."; \
+  echo >&2 "       Node.js v24 does not publish linux-armv7l binaries on nodejs.org."; \
+  exit 1; \
+  fi \
+  && case "${DPKG_ARCH}" in \
+  amd64) NODE_ARCH="x64" ;; \
+  arm64) NODE_ARCH="arm64" ;; \
+  *) NODE_ARCH="${DPKG_ARCH}" ;; \
+  esac \
+  && NODE_PATTERN="linux-${NODE_ARCH}\\.tar\\.xz$" \
+  && NODE_BASE_URL="https://nodejs.org/dist/latest-v24.x" \
+  && curl -4 -fsSL "${NODE_BASE_URL}/SHASUMS256.txt" -o /tmp/SHASUMS256.txt \
+  && NODE_LINE="$(grep -m 1 "${NODE_PATTERN}" /tmp/SHASUMS256.txt || true)" \
+  && if [ -z "${NODE_LINE}" ]; then \
+  echo >&2 "ERROR: Node.js binary not found for linux-${NODE_ARCH} in dist 'latest-v24.x'."; \
+  echo >&2 "       Looked for pattern: ${NODE_PATTERN}"; \
+  echo >&2 "       This Dockerfile is fixed to Node.js v24; use a different Dockerfile/image for other majors."; \
+  exit 1; \
+  fi \
+  && NODE_SHA256="$(echo "${NODE_LINE}" | awk '{print $1}')" \
+  && NODE_TARBALL="$(echo "${NODE_LINE}" | awk '{print $2}')" \
+  && curl -4 -fsSL "${NODE_BASE_URL}/${NODE_TARBALL}" -o /tmp/node.tar.xz \
+  && echo "${NODE_SHA256}  /tmp/node.tar.xz" | sha256sum -c - \
+  && mkdir -p /opt/node \
+  && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 --no-same-owner \
+  && rm -f /tmp/node.tar.xz \
+  && rm -f /tmp/SHASUMS256.txt \
+  && rm -rf /opt/node/share/doc /opt/node/share/man /opt/node/share/systemtap \
+  && rm -rf /tmp/* /var/tmp/* \
+  && export PATH=/opt/node/bin:$PATH
+
+# ─────────────── RELEASE STAGE ───────────────
+FROM ubuntu:latest AS release
+
+# 🛠️ Set noninteractive frontend
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Copy Node.js from the node stage
+COPY --from=node /opt/node /opt/node
+
+# Set environment variables for Node.js
+ENV PATH=/usr/local/bin:/opt/node/bin:$PATH
+ENV npm_config_prefix=/usr/local
+
+# ---- Build arguments injected by CI ----
+ARG VERSION
+ARG VCS_REF
+ARG BUILD_DATE
+
+# ---- OCI standard labels (https://opencontainers.org/) ----
+LABEL org.opencontainers.image.title="matterbridge:node-ubuntu-slim" \
+  org.opencontainers.image.description="Ubuntu 26.04 LTS (resolute) with Node.js 24 from nodejs.org" \
+  org.opencontainers.image.version=$VERSION \
+  org.opencontainers.image.revision=$VCS_REF \
+  org.opencontainers.image.source="git+https://github.com/Luligu/matterbridge.git" \
+  org.opencontainers.image.url="https://matterbridge.io" \
+  org.opencontainers.image.documentation="https://matterbridge.io/README.html" \
+  org.opencontainers.image.licenses="Apache-2.0" \
+  org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
+  org.opencontainers.image.created=$BUILD_DATE
+
+RUN \
+  apt-get update || (sleep 10 && apt-get update) || (sleep 20 && apt-get update) \
+  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* \
+  && rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/* /usr/share/lintian/* /usr/share/locale/*
+
+# Copy and execute the entrypoint script
+COPY ./docker/entrypoint.node-ubuntu-slim.sh ./
+RUN chmod +x ./entrypoint.node-ubuntu-slim.sh
+ENTRYPOINT ["./entrypoint.node-ubuntu-slim.sh"]
+CMD ["bash"]

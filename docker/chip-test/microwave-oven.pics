@@ -1,0 +1,22 @@
+# To run tests on MicrowaveOvenMode and MicrowaveOvenControl --PICS is required
+# Matches the Microwave Oven Mode and Control clusters on CHIP Microwave Oven endpoint 1311
+PICS_SDK_CI_ONLY=1
+MWOM.S=1
+MWOM.S.F00=0 # OnOff
+MWOM.S.A0000=1 # SupportedModes
+MWOM.S.A0001=1 # CurrentMode
+MWOCTRL.S=1
+MWOCTRL.S.F00=1 # PowerAsNumber
+MWOCTRL.S.F01=0 # PowerInWatts
+MWOCTRL.S.F02=1 # PowerNumberLimits
+MWOCTRL.S.A0000=1 # CookTime
+MWOCTRL.S.A0001=1 # MaxCookTime
+MWOCTRL.S.A0002=1 # PowerSetting
+MWOCTRL.S.A0003=1 # MinPower
+MWOCTRL.S.A0004=1 # MaxPower
+MWOCTRL.S.A0005=1 # PowerStep
+MWOCTRL.S.A0006=0 # SupportedWatts
+MWOCTRL.S.A0007=0 # SelectedWattIndex
+MWOCTRL.S.A0008=0 # WattRating
+MWOCTRL.S.C00.Rsp=1 # SetCookingParameters
+MWOCTRL.S.C01.Rsp=1 # AddMoreTime
