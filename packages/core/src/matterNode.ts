@@ -692,10 +692,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    const rootEndpoint = hasParameter('root-power-source') ? ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)) : ServerNode.RootEndpoint;
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
+    const serverNode = await ServerNode.create(rootEndpoint, {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
@@ -755,13 +757,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         reachable: true,
       },
 
-      powerSource: {
-        status: PowerSource.PowerSourceStatus.Active,
-        order: 0,
-        description: 'AC Power',
-        endpointList: [],
-        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-      },
+      ...(hasParameter('root-power-source')
+        ? {
+            powerSource: {
+              status: PowerSource.PowerSourceStatus.Active,
+              order: 0,
+              description: 'AC Power',
+              endpointList: [],
+              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+            },
+          }
+        : {}),
     });
 
     /**

@@ -316,7 +316,9 @@ describe('MatterNode', () => {
       1.5,
     );
 
+    process.argv.push('--root-power-source');
     const invalidServerNode = await matter.createServerNode(MATTER_PORT + 1, -1, 0x1000);
+    process.argv.splice(process.argv.indexOf('--root-power-source'), 1);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
@@ -348,6 +350,8 @@ describe('MatterNode', () => {
     await matter.serverNode?.construction.ready;
     await matter.aggregatorNode?.construction.ready;
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created ${plg}Matterbridge${db} server node`);
+    // Without --root-power-source, the Root endpoint SHALL NOT expose a Power Source cluster.
+    expect(matter.serverNode?.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBeFalsy();
   });
 
   test('Start server node for Matterbridge', async () => {

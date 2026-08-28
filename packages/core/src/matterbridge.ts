@@ -3005,7 +3005,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
-    let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    let rootEndpoint = hasParameter('root-power-source') ? ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)) : ServerNode.RootEndpoint;
     // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       this.log.warn(' ****************************************************************************************');
@@ -3076,13 +3076,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         reachable: true,
       },
 
-      powerSource: {
-        status: PowerSource.PowerSourceStatus.Active,
-        order: 0,
-        description: 'AC Power',
-        endpointList: [],
-        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-      },
+      ...(hasParameter('root-power-source')
+        ? {
+            powerSource: {
+              status: PowerSource.PowerSourceStatus.Active,
+              order: 0,
+              description: 'AC Power',
+              endpointList: [],
+              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+            },
+          }
+        : {}),
     });
 
     /**
