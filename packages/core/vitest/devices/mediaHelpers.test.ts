@@ -128,7 +128,7 @@ describe('Matterbridge ' + NAME, () => {
     const clientList = allMediaClientClusters.map((c) => c.id);
     createDefaultMediaBindingClusterServer(device, clientList);
 
-    const registeredClientList = (device.getClusterServerOptions(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList;
+    const registeredClientList = device.getClusterServerOptions(MatterbridgeBindingServer)?.clientList;
     for (const { id, key, client } of allMediaClientClusters) {
       expect(registeredClientList).toContain(id);
       expect(device.type.clientClusters[key]).toBe(client);
@@ -141,7 +141,7 @@ describe('Matterbridge ' + NAME, () => {
     const unmappedDevice = new MatterbridgeEndpoint([castingVideoClient, powerSource], { id: 'MediaHelpersUnmappedDevice' });
     createDefaultMediaBindingClusterServer(unmappedDevice, [Identify.id]);
 
-    const registeredClientList = (unmappedDevice.getClusterServerOptions(MatterbridgeBindingServer) as { clientList?: ClusterId[] } | undefined)?.clientList;
+    const registeredClientList = unmappedDevice.getClusterServerOptions(MatterbridgeBindingServer)?.clientList;
     expect(registeredClientList).toContain(Identify.id);
     expect(unmappedDevice.type.clientClusters['identify']).toBeUndefined();
   });

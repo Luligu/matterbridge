@@ -43,6 +43,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.
 - [ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.
 - [matterbridge]: Add the `--root-power-source` param to opt in to a wired AC PowerSource cluster on the Root endpoint (disabled by default, since it was found to break ElectricalPowerMeasurement rendering in Apple Home).
+- [endpoint]: Add typed overloads for the `getClusterServerOptions()` typed surface when called with `Behavior.Type` or `ClusterType`.
 - [buntest]: Add `wssTest.test.ts`, auditing a `wss` (WebSocket over TLS) mTLS handshake under Bun with both the global `WebSocket` and the `ws` package client, documenting that the `ws` client silently ignores top-level TLS options under Bun and requires them nested under `tls` (see [README-BUN.md](./README-BUN.md) known issues, and upstream [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396)).
 
 ### Changed

@@ -528,9 +528,73 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the initial options for the provided cluster server.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to get options for.
-   * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   * @param {Behavior.Type} cluster - The cluster to get options for.
+   * @returns {Partial<Behavior.StateOf<T>> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
    */
+  getClusterServerOptions<T extends Behavior.Type>(cluster: T): Partial<Behavior.StateOf<T>> | undefined;
+  /**
+   * Retrieves the initial options for the provided cluster server.
+   *
+   * @param {ClusterType} cluster - The cluster to get options for.
+   * @returns {Partial<ClusterAttributesOf<T>> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
+   */
+  getClusterServerOptions<T extends ClusterType>(cluster: T): Partial<ClusterAttributesOf<T>> | undefined;
+  /**
+   * Retrieves the initial options for the provided cluster server.
+   *
+   * @param {ClusterId | string} cluster - The cluster to get options for.
+   * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
+   */
+  getClusterServerOptions(cluster: ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined;
+
   getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
