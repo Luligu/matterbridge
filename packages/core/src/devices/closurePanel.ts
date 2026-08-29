@@ -50,16 +50,27 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
  */
 export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
 
+const MatterbridgeClosureDimensionServerBase = ClosureDimensionServer.with(
+  ClosureDimension.Feature.Positioning,
+  ClosureDimension.Feature.MotionLatching,
+  ClosureDimension.Feature.Speed,
+);
+
 /**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Always
- * supports Positioning; MotionLatching and Speed are optional per the Matter 1.5 data model (both are
- * `optionalConform`, not implied by Positioning) and may or may not be present depending on how the panel was
- * created by {@link createClosureDimensionClusterServer}. Code below that touches a MotionLatching-only element
- * (the LatchControlModes attribute) guards on `this.features.motionLatching` and casts `this.state`, mirroring
- * how {@link MatterbridgeFanControlServer} handles its own MultiSpeed-only elements, because this class's own
- * declared type only knows about the features listed in its `.with(...)` call below.
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * Declares Positioning, MotionLatching and Speed at the class level so the command handlers below get typed
+ * access to the MotionLatching-only LatchControlModes attribute and the Speed-only fields of DimensionState,
+ * mirroring how {@link MatterbridgeClosureControlServer} always declares Calibration. MotionLatching and Speed
+ * are `optionalConform` in the Matter 1.5 data model (not implied by Positioning), so {@link createClosureDimensionClusterServer}
+ * requires this server with a narrower `.with(...)` feature set per panel when a panel opts out of one or both -
+ * the class itself is not what gates a feature off, `require()` is. Code below that touches a MotionLatching- or
+ * Speed-only element still guards on `this.features.motionLatching` / `this.features.speed` because those
+ * elements are absent from `this.state` at runtime when the panel was required without the feature, even though
+ * this class's declared type always knows about them.
  */
-export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(ClosureDimension.Feature.Positioning) {
+export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimensionServerBase {
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -92,9 +103,10 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // latch - respond with INVALID_IN_STATE and remain in its current state. If MotionLatching is not supported,
     // latchControlModes is undefined and a Latch field in the request (which conformant peers won't send without
     // the feature) falls through to the same INVALID_IN_STATE response below.
-    // The LatchControlModes attribute only exists when MotionLatching is supported; this class's own declared type
-    // (see the class doc comment) does not know about it, hence the cast.
-    const latchControlModes = this.features.motionLatching ? (this.state as unknown as { latchControlModes?: ClosureDimension.LatchControlModes }).latchControlModes : undefined;
+    // The LatchControlModes attribute only exists on the actual cluster when the panel was required with the
+    // MotionLatching feature (see the class doc comment), so this still guards on `this.features.motionLatching`
+    // even though `this.state.latchControlModes` is typed as always present.
+    const latchControlModes = this.features.motionLatching ? this.state.latchControlModes : undefined;
     if (request.latch !== undefined && ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget latch change requires manual intervention per LatchControlModes');
     }
