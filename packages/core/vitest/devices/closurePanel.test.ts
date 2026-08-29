@@ -222,6 +222,26 @@ describe('Matterbridge ' + NAME, () => {
     expect(device5.getAttribute(ClosureDimension.id, 'modulationType')).toBe(ClosureDimension.ModulationType.SlatsOrientation);
   });
 
+  test('create a closure panel device with motionLatching and speed disabled', async () => {
+    const device6 = createClosurePanelTestEndpoint('Closure Panel Test Device 6', 'CP678901', 'lift', { motionLatching: false, speed: false });
+    expect(await addDevice(server, device6)).toBeTruthy();
+
+    expect(device6.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({ positioning: true, motionLatching: false, speed: false, translation: true });
+    expect(device6.hasAttributeServer(ClosureDimension.id, 'latchControlModes')).toBeFalsy();
+
+    // Position-only SetTarget still works without the Latch/Speed fields the disabled features would have required.
+    await device6.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 3000 });
+    expect(device6.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 3000 });
+  });
+
+  test('create a closure panel device with motionLatching enabled and speed disabled', async () => {
+    const device7 = createClosurePanelTestEndpoint('Closure Panel Test Device 7', 'CP789012', 'tilt', { speed: false });
+    expect(await addDevice(server, device7)).toBeTruthy();
+
+    expect(device7.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({ positioning: true, motionLatching: true, speed: false, rotation: true });
+    expect(device7.getAttribute(ClosureDimension.id, 'latchControlModes')).toMatchObject({ remoteLatching: true, remoteUnlatching: true });
+  });
+
   test('device forEachAttribute', () => {
     const attributes: {
       clusterName: string;

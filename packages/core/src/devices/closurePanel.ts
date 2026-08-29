@@ -51,14 +51,15 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
 
 /**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Supports
- * Positioning, MotionLatching and Speed.
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Always
+ * supports Positioning; MotionLatching and Speed are optional per the Matter 1.5 data model (both are
+ * `optionalConform`, not implied by Positioning) and may or may not be present depending on how the panel was
+ * created by {@link createClosureDimensionClusterServer}. Code below that touches a MotionLatching-only element
+ * (the LatchControlModes attribute) guards on `this.features.motionLatching` and casts `this.state`, mirroring
+ * how {@link MatterbridgeFanControlServer} handles its own MultiSpeed-only elements, because this class's own
+ * declared type only knows about the features listed in its `.with(...)` call below.
  */
-export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
-  ClosureDimension.Feature.Positioning,
-  ClosureDimension.Feature.MotionLatching,
-  ClosureDimension.Feature.Speed,
-) {
+export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(ClosureDimension.Feature.Positioning) {
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -88,8 +89,12 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // The Latch field is a bool, so every decoded value is within constraints: no CONSTRAINT_ERROR is possible for this field.
     // If the server supports the MotionLatching (LT) feature, it SHALL either fulfill the latch request and update
     // TargetState.Latch, or - if the LatchControlModes attribute specifies that manual intervention is required to
-    // latch - respond with INVALID_IN_STATE and remain in its current state.
-    const latchControlModes = this.state.latchControlModes;
+    // latch - respond with INVALID_IN_STATE and remain in its current state. If MotionLatching is not supported,
+    // latchControlModes is undefined and a Latch field in the request (which conformant peers won't send without
+    // the feature) falls through to the same INVALID_IN_STATE response below.
+    // The LatchControlModes attribute only exists when MotionLatching is supported; this class's own declared type
+    // (see the class doc comment) does not know about it, hence the cast.
+    const latchControlModes = this.features.motionLatching ? (this.state as unknown as { latchControlModes?: ClosureDimension.LatchControlModes }).latchControlModes : undefined;
     if (request.latch !== undefined && ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget latch change requires manual intervention per LatchControlModes');
     }
@@ -140,7 +145,9 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       // to the nearest valid position, i.e. an integer multiple of the Resolution attribute.
       ...(request?.position !== undefined ? { position: Math.round(request.position / resolution) * resolution } : null),
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      // The Speed field of DimensionState is mandatoryConform SP: only set it when the Speed feature is supported,
+      // otherwise the runtime conformance validator rejects the write.
+      ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
 
     // If all field values in the command match the corresponding field values in CurrentState, the command SHALL
@@ -247,8 +254,12 @@ export interface ClosurePanelOptions {
   resolution?: number;
   /** Number of units moved for each Step command. Constrained by the specs to a minimum of 1 (0.01%). Defaults to 1. */
   stepValue?: number;
-  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  /** Enable the ClosureDimension MotionLatching (LT) feature, so the panel can be secured to a position/state via a latch. Defaults to true. */
+  motionLatching?: boolean;
+  /** Supported remote latch control modes. Only used when `motionLatching` is true. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
+  /** Enable the ClosureDimension Speed (SP) feature, so the panel's motion speed can be throttled. Defaults to true. */
+  speed?: boolean;
   /** Direction of the translation. Only used when `dimensionType` is `'lift'`. Defaults to Downward. */
   translationDirection?: ClosureDimension.TranslationDirection;
   /** Axis of the rotation. Only used when `dimensionType` is `'tilt'`. Defaults to CenteredHorizontal. */
@@ -269,55 +280,84 @@ export interface ClosurePanelOptions {
  * @returns {MatterbridgeEndpoint} The current MatterbridgeEndpoint instance for chaining.
  */
 export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoint, dimensionType: ClosureDimensionType, options: ClosurePanelOptions): MatterbridgeEndpoint {
+  const motionLatching = options.motionLatching ?? true;
+  const speed = options.speed ?? true;
+
+  // The Latch and Speed fields of DimensionState are each mandatoryConform on their own feature (Matter 1.5 data
+  // model): matter.js's runtime conformance validator rejects a currentState/targetState carrying either field
+  // when the corresponding feature is disabled, so the defaults below only include the fields the enabled
+  // features actually support. Built as two separate object literals (rather than one shared default reused for
+  // both attributes) so currentState and targetState never end up aliasing the same object.
   const commonOptions = {
-    currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-    targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+    currentState: options.currentState ?? { position: 0, ...(motionLatching ? { latch: true } : {}), ...(speed ? { speed: ThreeLevelAuto.Auto } : {}) },
+    targetState: options.targetState ?? { position: 0, ...(motionLatching ? { latch: true } : {}), ...(speed ? { speed: ThreeLevelAuto.Auto } : {}) },
     // Resolution and StepValue are percent100ths with a specs constraint of "min 0.01%" (i.e. a minimum value of 1).
     resolution: Math.max(1, options.resolution ?? 1),
     stepValue: Math.max(1, options.stepValue ?? 1),
-    latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
   };
 
-  if (dimensionType === 'lift') {
-    endpoint.behaviors.require(
-      MatterbridgeClosureDimensionServer.with(
-        ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
-        ClosureDimension.Feature.Translation,
-      ),
-      {
-        ...commonOptions,
-        translationDirection: options.translationDirection ?? ClosureDimension.TranslationDirection.Downward,
-      },
-    );
-  } else if (dimensionType === 'tilt') {
-    endpoint.behaviors.require(
-      MatterbridgeClosureDimensionServer.with(
-        ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
-        ClosureDimension.Feature.Rotation,
-      ),
-      {
-        ...commonOptions,
-        rotationAxis: options.rotationAxis ?? ClosureDimension.RotationAxis.CenteredHorizontal,
-        overflow: options.overflow ?? ClosureDimension.Overflow.NoOverflow,
-      },
-    );
+  // The LatchControlModes attribute only exists on the cluster when MotionLatching is supported, so it's only
+  // added to the initial state passed to `behaviors.require()` in that case: including it unconditionally in
+  // `commonOptions` above would pass an initial-state property the `motionLatching: false` branches' server class
+  // below does not declare.
+  if (motionLatching) {
+    const motionLatchingOptions = { ...commonOptions, latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } };
+    if (dimensionType === 'lift') {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(
+          ClosureDimension.Feature.Positioning,
+          ClosureDimension.Feature.MotionLatching,
+          ClosureDimension.Feature.Translation,
+          ...(speed ? [ClosureDimension.Feature.Speed] : []),
+        ),
+        { ...motionLatchingOptions, translationDirection: options.translationDirection ?? ClosureDimension.TranslationDirection.Downward },
+      );
+    } else if (dimensionType === 'tilt') {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(
+          ClosureDimension.Feature.Positioning,
+          ClosureDimension.Feature.MotionLatching,
+          ClosureDimension.Feature.Rotation,
+          ...(speed ? [ClosureDimension.Feature.Speed] : []),
+        ),
+        {
+          ...motionLatchingOptions,
+          rotationAxis: options.rotationAxis ?? ClosureDimension.RotationAxis.CenteredHorizontal,
+          overflow: options.overflow ?? ClosureDimension.Overflow.NoOverflow,
+        },
+      );
+    } else {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(
+          ClosureDimension.Feature.Positioning,
+          ClosureDimension.Feature.MotionLatching,
+          ClosureDimension.Feature.Modulation,
+          ...(speed ? [ClosureDimension.Feature.Speed] : []),
+        ),
+        { ...motionLatchingOptions, modulationType: options.modulationType ?? ClosureDimension.ModulationType.SlatsOrientation },
+      );
+    }
   } else {
-    endpoint.behaviors.require(
-      MatterbridgeClosureDimensionServer.with(
-        ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
-        ClosureDimension.Feature.Modulation,
-      ),
-      {
-        ...commonOptions,
-        modulationType: options.modulationType ?? ClosureDimension.ModulationType.SlatsOrientation,
-      },
-    );
+    if (dimensionType === 'lift') {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(ClosureDimension.Feature.Positioning, ClosureDimension.Feature.Translation, ...(speed ? [ClosureDimension.Feature.Speed] : [])),
+        { ...commonOptions, translationDirection: options.translationDirection ?? ClosureDimension.TranslationDirection.Downward },
+      );
+    } else if (dimensionType === 'tilt') {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(ClosureDimension.Feature.Positioning, ClosureDimension.Feature.Rotation, ...(speed ? [ClosureDimension.Feature.Speed] : [])),
+        {
+          ...commonOptions,
+          rotationAxis: options.rotationAxis ?? ClosureDimension.RotationAxis.CenteredHorizontal,
+          overflow: options.overflow ?? ClosureDimension.Overflow.NoOverflow,
+        },
+      );
+    } else {
+      endpoint.behaviors.require(
+        MatterbridgeClosureDimensionServer.with(ClosureDimension.Feature.Positioning, ClosureDimension.Feature.Modulation, ...(speed ? [ClosureDimension.Feature.Speed] : [])),
+        { ...commonOptions, modulationType: options.modulationType ?? ClosureDimension.ModulationType.SlatsOrientation },
+      );
+    }
   }
 
   return endpoint;
