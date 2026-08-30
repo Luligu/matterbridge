@@ -102,6 +102,14 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     if (request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
       throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not a valid ThreeLevelAutoEnum value');
     }
+    // A field gated by an unsupported feature is itself a constraint violation (Matter core spec § field
+    // conformance): Latch/Speed only apply when this server was required with MotionLatching/Speed enabled.
+    if (request.latch !== undefined && !this.features.motionLatching) {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Latch is not applicable: MotionLatching feature is not supported');
+    }
+    if (request.speed !== undefined && !this.features.speed) {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not applicable: Speed feature is not supported');
+    }
 
     // 5.4.8.2. MoveTo Command
     // The Position, Latch, and Speed fields are all O.a+ (choice group 'a', at least one required): a MoveTo with
@@ -129,14 +137,16 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       ...(request?.position !== undefined ? { position: request.position } : null),
       // 5.4.8.2.2. Latch Field
       ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      // 5.4.8.2.3. Speed Field
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      // 5.4.8.2.3. Speed Field. Speed is mandatoryConform on its own feature (OverallTargetStateStruct), so this
+      // field is only set at all when Speed is supported - otherwise the constraint check above already rejected
+      // a request.speed, and the field must stay absent rather than fall back to a default value.
+      ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
     this.state.overallTargetState = nextTarget;
 
     // If the closure supports the Speed(SP) feature, it SHALL set the Speed field of the OverallCurrentState attribute to the new speed.
     if (currentState !== null) {
-      currentState = { ...currentState, speed: nextTarget.speed };
+      currentState = { ...currentState, ...(this.features.speed ? { speed: nextTarget.speed } : null) };
       this.state.overallCurrentState = currentState;
     }
 
@@ -148,7 +158,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
       (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
-      nextTarget.speed === currentState.speed;
+      (!this.features.speed || nextTarget.speed === currentState.speed);
     this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
 
     // Cancel any movement/calibration still in flight from a previous command before (re)scheduling.
@@ -194,10 +204,18 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    // The MotionLatching feature is always enabled on this server, so the secure state always follows the latch.
-    const secureState = latch === true;
+    // OverallCurrentState.SecureState conformance (Matter 1.5 § 5.4.6.5.4): secure requires Position FullyClosed
+    // when Positioning is supported (always true here) and Latch true when MotionLatching is supported. When
+    // MotionLatching is disabled, the closed position alone determines secure state.
+    const secureState = this.features.motionLatching ? latch === true : position === ClosureControl.CurrentPosition.FullyClosed;
+    const nextCurrentState = {
+      position,
+      ...(this.features.motionLatching ? { latch } : null),
+      ...(this.features.speed ? { speed: targetState.speed } : null),
+      secureState,
+    };
 
-    await closure.setState({ position, latch, speed: targetState.speed, secureState }, targetState, ClosureControl.MainState.Stopped, 0);
+    await closure.setState(nextCurrentState, targetState, ClosureControl.MainState.Stopped, 0);
     if (secureState !== previousState.secureState) {
       await closure.triggerSecureStateChanged(secureState);
     }
@@ -327,11 +345,11 @@ export interface ClosureOptions {
   mainState?: ClosureControl.MainState;
   /** Initial ClosureControl error list. Defaults to an empty list. */
   currentErrorList?: ClosureControl.ClosureError[];
-  /** Initial current state. Defaults to secure, latched, and fully closed. */
+  /** Initial current state. Defaults to secure, and fully closed, plus latched/at default speed when the corresponding feature is enabled. */
   overallCurrentState?: ClosureControl.OverallCurrentState;
-  /** Initial target state. Defaults to latched and fully closed. */
+  /** Initial target state. Defaults to fully closed, plus latched/at default speed when the corresponding feature is enabled. */
   overallTargetState?: ClosureControl.OverallTargetState;
-  /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
+  /** Supported remote latch control modes. Only applies when `motionLatching` is enabled. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureControl.LatchControlModes;
   /** Simulated duration, in milliseconds, that a MoveTo operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
   movementDuration?: number;
@@ -343,6 +361,10 @@ export interface ClosureOptions {
   pedestrian?: boolean;
   /** Enable the ClosureControl Calibration feature. Defaults to false. */
   calibration?: boolean;
+  /** Enable the ClosureControl MotionLatching feature. Defaults to true, matching prior always-on behavior; set to false for a closure with no physical latch. */
+  motionLatching?: boolean;
+  /** Enable the ClosureControl Speed feature. Defaults to true, matching prior always-on behavior; set to false for a closure with no controllable motion speed. */
+  speed?: boolean;
   /**
    * The unique storage key for the endpoint.
    * If not provided, a default key will be used.
@@ -384,27 +406,36 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime = 0,
       mainState = ClosureControl.MainState.Stopped,
       currentErrorList = [],
-      overallCurrentState = {
-        position: ClosureControl.CurrentPosition.FullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-        secureState: true,
-      },
-      overallTargetState = {
-        position: ClosureControl.TargetPosition.MoveToFullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-      },
-      latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      overallCurrentState,
+      overallTargetState,
+      latchControlModes,
       movementDuration = 0,
       calibrationDuration = 0,
       ventilation = false,
       pedestrian = false,
       calibration = false,
+      motionLatching = true,
+      speed = true,
       id,
       number,
       tagList = [getSemtag(ClosureTag.Covering)],
     } = options;
+    // The Latch and Speed fields of OverallCurrentState/OverallTargetState, and the LatchControlModes attribute,
+    // are each mandatoryConform on their own feature (Matter 1.5 data model): matter.js's runtime conformance
+    // validator rejects a state carrying a field the corresponding feature doesn't declare, so the defaults below
+    // only include the fields the enabled features actually support. Only applied to the *default* state (a
+    // caller-supplied overallCurrentState/overallTargetState/latchControlModes is used as-is).
+    const resolvedOverallCurrentState = overallCurrentState ?? {
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      ...(motionLatching ? { latch: true } : {}),
+      ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
+      secureState: true,
+    };
+    const resolvedOverallTargetState = overallTargetState ?? {
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+      ...(motionLatching ? { latch: true } : {}),
+      ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
+    };
     super(powerSourceType === 'None' ? [closure] : [closure, powerSource], {
       id: id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`,
       number,
@@ -435,21 +466,23 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime,
       mainState,
       currentErrorList,
-      overallCurrentState,
-      overallTargetState,
-      latchControlModes,
+      overallCurrentState: resolvedOverallCurrentState,
+      overallTargetState: resolvedOverallTargetState,
+      // LatchControlModes only exists on the cluster when MotionLatching is supported (see the comment above), so
+      // it's only added to the initial state passed to `behaviors.require()` below in that case.
+      ...(motionLatching ? { latchControlModes: latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : {}),
       movementDuration,
       calibrationDuration,
     };
-    // MatterbridgeClosureControlServer always declares Calibration/Ventilation/Pedestrian at the class level for
-    // typed access (see its class doc comment), but the class itself is not what gates a feature off - require()
-    // is. So the enabled feature set is always restated explicitly here, never left to fall back to the bare
-    // class, which would inherit the class's full declared set (including Calibration) regardless of options.
+    // MatterbridgeClosureControlServer always declares Positioning/MotionLatching/Speed/Calibration/Ventilation/
+    // Pedestrian at the class level for typed access (see its class doc comment), but the class itself is not what
+    // gates a feature off - require() is. So the enabled feature set is always restated explicitly here, never
+    // left to fall back to the bare class, which would inherit the class's full declared set regardless of options.
     this.behaviors.require(
       MatterbridgeClosureControlServer.with(
         ClosureControl.Feature.Positioning,
-        ClosureControl.Feature.MotionLatching,
-        ClosureControl.Feature.Speed,
+        ...(motionLatching ? [ClosureControl.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureControl.Feature.Speed] : []),
         ...(calibration ? [ClosureControl.Feature.Calibration] : []),
         ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
         ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
@@ -492,64 +525,79 @@ export class Closure extends MatterbridgeEndpoint {
   }
 
   /**
-   * Sets the ClosureControl attributes to a fully closed, latched, and secure state.
+   * Reads which optional MotionLatching/Speed features are enabled on this Closure's ClosureControl cluster, so
+   * setFullyClosed/setFullOpened/setPartiallyOpened only include the Latch/Speed fields OverallCurrentState/
+   * OverallTargetState actually support (see `ClosureOptions.motionLatching`/`speed`).
+   *
+   * @returns {{ motionLatching: boolean; speed: boolean }} Which of the two features are currently enabled.
+   */
+  private getClosureControlOptionalFeatures(): { motionLatching: boolean; speed: boolean } {
+    const featureMap = this.getAttribute(ClosureControl.id, 'featureMap') as { motionLatching?: boolean; speed?: boolean } | undefined;
+    return { motionLatching: featureMap?.motionLatching ?? false, speed: featureMap?.speed ?? false };
+  }
+
+  /**
+   * Sets the ClosureControl attributes to a fully closed, latched (if supported), and secure state.
    *
    * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
    */
   async setFullyClosed(): Promise<void> {
+    const { motionLatching, speed } = this.getClosureControlOptionalFeatures();
     await this.setState(
       {
         position: ClosureControl.CurrentPosition.FullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: true } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
         secureState: true,
       },
       {
         position: ClosureControl.TargetPosition.MoveToFullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: true } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
       },
     );
   }
 
   /**
-   * Sets the ClosureControl attributes to a fully opened, unlatched, and unsecured state.
+   * Sets the ClosureControl attributes to a fully opened, unlatched (if supported), and unsecured state.
    *
    * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
    */
   async setFullOpened(): Promise<void> {
+    const { motionLatching, speed } = this.getClosureControlOptionalFeatures();
     await this.setState(
       {
         position: ClosureControl.CurrentPosition.FullyOpened,
-        latch: false,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: false } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
         secureState: false,
       },
       {
         position: ClosureControl.TargetPosition.MoveToFullyOpen,
-        latch: false,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: false } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
       },
     );
   }
 
   /**
-   * Sets the ClosureControl attributes to a partially opened, unlatched, and unsecured state.
+   * Sets the ClosureControl attributes to a partially opened, unlatched (if supported), and unsecured state.
    *
    * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
    */
   async setPartiallyOpened(): Promise<void> {
+    const { motionLatching, speed } = this.getClosureControlOptionalFeatures();
     await this.setState(
       {
         position: ClosureControl.CurrentPosition.PartiallyOpened,
-        latch: false,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: false } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
         secureState: false,
       },
       {
         position: null,
-        latch: false,
-        speed: ThreeLevelAuto.Auto,
+        ...(motionLatching ? { latch: false } : {}),
+        ...(speed ? { speed: ThreeLevelAuto.Auto } : {}),
       },
     );
   }

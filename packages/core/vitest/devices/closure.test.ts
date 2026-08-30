@@ -277,6 +277,61 @@ describe('Matterbridge ' + NAME, () => {
     expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
   });
 
+  test('create a closure device with motionLatching and speed disabled', async () => {
+    const noLatchNoSpeed = new Closure('Closure No Latch No Speed Test Device', 'CLNOLATCHNOSPEED', { motionLatching: false, speed: false });
+    expect(await addDevice(server, noLatchNoSpeed)).toBeTruthy();
+
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({ positioning: true, motionLatching: false, speed: false });
+    expect(noLatchNoSpeed.hasAttributeServer(ClosureControl.id, 'latchControlModes')).toBeFalsy();
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.FullyClosed, secureState: true });
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({ position: ClosureControl.TargetPosition.MoveToFullyClosed });
+
+    // Position-only MoveTo still works without the Latch/Speed fields the disabled features would have required.
+    await noLatchNoSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { position: ClosureControl.TargetPosition.MoveToFullyOpen });
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({ position: ClosureControl.TargetPosition.MoveToFullyOpen });
+
+    // A Latch/Speed field on a MoveTo request is a constraint violation once the corresponding feature is disabled.
+    await expect(noLatchNoSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { latch: false })).rejects.toMatchObject({ code: Status.ConstraintError });
+    await expect(noLatchNoSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { speed: ThreeLevelAuto.High })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+
+    // setFullyClosed/setFullOpened/setPartiallyOpened only set the fields the enabled features support.
+    await noLatchNoSpeed.setFullyClosed();
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.FullyClosed, secureState: true });
+    await noLatchNoSpeed.setFullOpened();
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.FullyOpened, secureState: false });
+    await noLatchNoSpeed.setPartiallyOpened();
+    expect(noLatchNoSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.PartiallyOpened, secureState: false });
+  });
+
+  test('create a closure device with motionLatching enabled and speed disabled, and derive SecureState from position alone when unlatched', async () => {
+    const noSpeed = new Closure('Closure No Speed Test Device', 'CLNOSPEED', { speed: false, movementDuration: 1000 });
+    expect(await addDevice(server, noSpeed)).toBeTruthy();
+
+    expect(noSpeed.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({ positioning: true, motionLatching: true, speed: false });
+    expect(noSpeed.getAttribute(ClosureControl.id, 'latchControlModes')).toMatchObject({ remoteLatching: true, remoteUnlatching: true });
+
+    vi.useFakeTimers();
+    try {
+      // Move away from the fully closed/latched default so completeMoveTo has to derive a fresh SecureState.
+      await noSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { position: ClosureControl.TargetPosition.MoveToFullyOpen, latch: false });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(noSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.FullyOpened, latch: false, secureState: false });
+
+      // With MotionLatching enabled, SecureState still follows the Latch field alone regardless of Speed (unchanged
+      // from the always-on-features behavior; only the newly-supported disabled case derives it from Position).
+      await noSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { latch: true });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(noSpeed.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({ position: ClosureControl.CurrentPosition.FullyOpened, latch: true, secureState: true });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // A Speed field on a MoveTo request is a constraint violation once the Speed feature is disabled.
+    await expect(noSpeed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { speed: ThreeLevelAuto.High })).rejects.toMatchObject({ code: Status.ConstraintError });
+  });
+
   test('reject moveTo with invalid field constraints', async () => {
     // General Interaction Model requirement: an out-of-range enum or wrong-typed field is rejected with
     // CONSTRAINT_ERROR ahead of any state-dependent check, regardless of the device's current MainState.
