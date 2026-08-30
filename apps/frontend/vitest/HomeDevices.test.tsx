@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MbfTableColumn } from '../src/components/MbfTable';
 
@@ -120,6 +120,24 @@ function renderWithDevice(
 }
 
 describe('HomeDevices', () => {
+  // HomeDevices logs verbosely with `debug` mocked to true; keep the test output clean by silencing
+  // console.log/warn by default and asserting against the spy directly where a test needs to check a log.
+  let consoleLogSpy: ReturnType<typeof vi.spyOn>;
+  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Unmount while console is still muted, since unmount logs `HomeDevices removed WebSocket listener`
+    // and RTL's own automatic cleanup afterEach otherwise runs after ours (outer hooks run last).
+    cleanup();
+    consoleLogSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
+  });
+
   it('opens the plugin frontend without corrupting a configUrl query string', () => {
     renderWithDevice('./plugins/matterbridge-test/?device=test1');
 
@@ -182,8 +200,7 @@ describe('HomeDevices', () => {
     const { sendWebSocketMessage } = renderWithDevice('/plugins/matterbridge-test', { reachable: true });
     expect(screen.getByText('Online')).toBeInTheDocument();
 
-    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
+    consoleLogSpy.mockClear();
     sendWebSocketMessage({
       id: 0,
       method: 'state_update',
@@ -193,8 +210,6 @@ describe('HomeDevices', () => {
     expect(screen.getByText('Offline')).toBeInTheDocument();
     expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('HomeDevices mixing devices'));
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('HomeDevices skipping remix'));
-
-    consoleLogSpy.mockRestore();
   });
 
   it('ignores state_update messages for clusters other than reachable', () => {
@@ -226,7 +241,6 @@ describe('HomeDevices', () => {
 
   it('warns and leaves the list untouched when a reachable update targets an unknown device', () => {
     const { sendWebSocketMessage } = renderWithDevice('/plugins/matterbridge-test', { reachable: true });
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     sendWebSocketMessage({
       id: 0,
@@ -236,8 +250,6 @@ describe('HomeDevices', () => {
 
     expect(screen.getByText('Online')).toBeInTheDocument();
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining('device to update not found'));
-
-    consoleWarnSpy.mockRestore();
   });
 
   it('shows the loading footer message until the plugins finish loading, then the registered devices count', () => {
