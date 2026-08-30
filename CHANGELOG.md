@@ -40,12 +40,16 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
 - [chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
 - [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
-- [chip]: ClosureDimension endpoint 8062 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: ClosureDimension endpoint 8062 (Closure Panel Roller, Translation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: ClusurePanelVenetian endpoint 8064 (Closure Panel Venetian, Rotation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: ClosurePanelSmartGlass endpoint 8066 (Closure Panel Smart-Glass, Modulation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
 
 ### Added
 
 - [closureControl]: Add `motionLatching` and `speed` options to `ClosureOptions` to opt in to the optional MotionLatching and Speed features. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/622).
 - [closureDimension]: Add `motionLatching` and `speed` options to `ClosurePanelOptions` to opt in to the optional MotionLatching and Speed features per panel. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/618).
+- [closureControl]: `MatterbridgeClosureControlServer` can now simulate MoveTo/Calibrate completion, opt-in via the new `state.movementDuration`/`state.calibrationDuration` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [closureDimension]: Add the `movementDuration` option to `ClosurePanelOptions`; `MatterbridgeClosureDimensionServer` can now simulate SetTarget/Step completion (`CurrentState` converging to `TargetState`), opt-in via `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
 - [doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.
 - [ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.
 - [matterbridge]: Add the `--root-power-source` param to opt in to a wired AC PowerSource cluster on the Root endpoint (disabled by default, since it was found to break ElectricalPowerMeasurement rendering in Apple Home).
@@ -77,6 +81,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [Closure]: Fix Calibration slipping into the default ClosureControl feature map and command list; the Calibration feature and Calibrate command are now advertised only when the `calibration` option is enabled. Thanks Ludovic BOUÉ.
+- [Closure]: Fix `secureState` staying frozen at its initial value on `MoveTo` completion for a Closure without the MotionLatching feature; it now tracks `Position` (secure only when FullyClosed) as required by the Application Cluster Specification, and `SecureStateChanged` fires accordingly.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

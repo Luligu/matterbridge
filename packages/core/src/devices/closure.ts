@@ -219,7 +219,11 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    const secureState = this.features.motionLatching ? latch === true : previousState.secureState === true;
+    // Application Cluster Specification § 5.4.6.3: a closure without MotionLatching is secure exactly when
+    // fully closed — unlike the MotionLatching case, this must track Position, not stay frozen at whatever
+    // secureState was previously (TC_CLCTRL_6_1 §7 exercises exactly this: MoveTo FullyOpen/FullyClosed on a
+    // Positioning-only, non-MotionLatching closure expects SecureStateChanged(false)/SecureStateChanged(true)).
+    const secureState = this.features.motionLatching ? latch === true : position === ClosureControl.CurrentPosition.FullyClosed;
 
     await closure.setState(
       {

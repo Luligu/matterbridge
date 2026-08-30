@@ -639,13 +639,16 @@ describe('Matterbridge ' + NAME, () => {
       expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
       expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
         position: ClosureControl.CurrentPosition.FullyOpened,
-        secureState: true,
+        // Without MotionLatching, secureState tracks Position (secure only when FullyClosed) rather than
+        // staying frozen — Application Cluster Specification § 5.4.6.3, exercised by TC_CLCTRL_6_1 § 7.
+        secureState: false,
       });
       expect(timedDevice.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
         position: ClosureControl.TargetPosition.MoveToFullyOpen,
       });
       expect(movementCompleted).toHaveBeenCalledTimes(1);
-      expect(secureStateChanged).not.toHaveBeenCalled();
+      expect(secureStateChanged).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged.mock.calls[0]?.[0]).toMatchObject({ secureValue: false });
     } finally {
       vi.useRealTimers();
     }

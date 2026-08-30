@@ -1,5 +1,22 @@
-Chip tests run started at 2026-08-30T16:14:14.659Z
+Chip tests run started at 2026-08-30T16:27:13.556Z
 
-❌ ClosureControl event functionality on base Closure (TC_CLCTRL_6_1.py)
+✅ ClosureDimension attributes on Closure Panel Roller (TC_CLDIM_2_1.py)
+✅ ClosureDimension SetTarget command positioning functionality on Closure Panel Roller (TC_CLDIM_3_1.py)
+✅ ClosureDimension SetTarget command latching functionality on Closure Panel Roller (TC_CLDIM_3_2.py)
+✅ ClosureDimension SetTarget command field sanity checks on Closure Panel Roller (TC_CLDIM_3_3.py)
+✅ ClosureDimension Step command primary functionality on Closure Panel Roller (TC_CLDIM_4_1.py)
+✅ ClosureDimension Step command input sanity checks on Closure Panel Roller (TC_CLDIM_4_2.py)
+✅ ClosureDimension attributes on Closure Panel Venetian (TC_CLDIM_2_1.py)
+✅ ClosureDimension SetTarget command positioning functionality on Closure Panel Venetian (TC_CLDIM_3_1.py)
+✅ ClosureDimension SetTarget command latching functionality on Closure Panel Venetian (TC_CLDIM_3_2.py)
+✅ ClosureDimension SetTarget command field sanity checks on Closure Panel Venetian (TC_CLDIM_3_3.py)
+✅ ClosureDimension Step command primary functionality on Closure Panel Venetian (TC_CLDIM_4_1.py)
+✅ ClosureDimension Step command input sanity checks on Closure Panel Venetian (TC_CLDIM_4_2.py)
+✅ ClosureDimension attributes on Closure Panel Smart-Glass (TC_CLDIM_2_1.py)
+✅ ClosureDimension SetTarget command positioning functionality on Closure Panel Smart-Glass (TC_CLDIM_3_1.py)
+✅ ClosureDimension SetTarget command latching functionality on Closure Panel Smart-Glass (TC_CLDIM_3_2.py)
+✅ ClosureDimension SetTarget command field sanity checks on Closure Panel Smart-Glass (TC_CLDIM_3_3.py)
+✅ ClosureDimension Step command primary functionality on Closure Panel Smart-Glass (TC_CLDIM_4_1.py)
+✅ ClosureDimension Step command input sanity checks on Closure Panel Smart-Glass (TC_CLDIM_4_2.py)
 
-Summary: 0/1 tests passed.
+Summary: 18/18 tests passed.
