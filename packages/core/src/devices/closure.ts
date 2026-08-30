@@ -61,6 +61,15 @@ const MatterbridgeClosureControlServerBase = ClosureControlServer.with(
 
 /**
  * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * Declares Positioning, MotionLatching, Speed and Calibration at the class level so the command handlers below
+ * get typed access to the Calibration-only Calibrate command and CalibrationDuration-driven state, mirroring how
+ * {@link MatterbridgeClosureDimensionServer} always declares MotionLatching/Speed. Calibration, Ventilation and
+ * Pedestrian are all `optionalConform` in the Matter 1.5 data model (gated on Positioning only, never implied by
+ * it), so the `Closure` constructor requires this server with a narrower `.with(...)` feature set built from its
+ * `calibration`/`ventilation`/`pedestrian` options - the class itself is not what gates a feature off, `require()`
+ * is; requiring the bare class would silently inherit its full declared set regardless of those options.
  */
 export class MatterbridgeClosureControlServer extends MatterbridgeClosureControlServerBase {
   declare readonly state: MatterbridgeClosureControlServer.State;
@@ -432,17 +441,19 @@ export class Closure extends MatterbridgeEndpoint {
       movementDuration,
       calibrationDuration,
     };
+    // MatterbridgeClosureControlServer always declares Calibration/Ventilation/Pedestrian at the class level for
+    // typed access (see its class doc comment), but the class itself is not what gates a feature off - require()
+    // is. So the enabled feature set is always restated explicitly here, never left to fall back to the bare
+    // class, which would inherit the class's full declared set (including Calibration) regardless of options.
     this.behaviors.require(
-      calibration || ventilation || pedestrian
-        ? MatterbridgeClosureControlServer.with(
-            ClosureControl.Feature.Positioning,
-            ClosureControl.Feature.MotionLatching,
-            ClosureControl.Feature.Speed,
-            ...(calibration ? [ClosureControl.Feature.Calibration] : []),
-            ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
-            ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
-          )
-        : MatterbridgeClosureControlServer,
+      MatterbridgeClosureControlServer.with(
+        ClosureControl.Feature.Positioning,
+        ClosureControl.Feature.MotionLatching,
+        ClosureControl.Feature.Speed,
+        ...(calibration ? [ClosureControl.Feature.Calibration] : []),
+        ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
+        ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
+      ),
       closureControlOptions,
     );
   }

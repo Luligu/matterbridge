@@ -737,12 +737,12 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
-        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'closureControl(0x104).acceptedCommandList(0xfff9)=[ 0, 1 ]',
         'closureControl(0x104).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'closureControl(0x104).clusterRevision(0xfffd)=1',
         'closureControl(0x104).countdownTime(0x0)=0',
         'closureControl(0x104).currentErrorList(0x2)=[  ]',
-        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: true, protection: false, manuallyOperable: false }',
+        'closureControl(0x104).featureMap(0xfffc)={ positioning: true, motionLatching: true, instantaneous: false, speed: true, ventilation: false, pedestrian: false, calibration: false, protection: false, manuallyOperable: false }',
         'closureControl(0x104).generatedCommandList(0xfff8)=[  ]',
         'closureControl(0x104).latchControlModes(0x5)={ remoteLatching: true, remoteUnlatching: true }',
         'closureControl(0x104).mainState(0x1)=1',
