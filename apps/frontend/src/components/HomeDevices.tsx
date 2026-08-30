@@ -119,6 +119,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
 
   // Refs
   const uniqueId = useRef(getUniqueId());
+  const skipMixRef = useRef(false); // Set when a reachable update patches mixedDevices directly, to skip the next full remix
 
   const devicesColumns: MbfTableColumn<MixedApiDevices>[] = [
     {
@@ -294,7 +295,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // WebSocket message handler effect
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug || localDebug) console.log('HomeDevices received WebSocket Message:', msg);
+      // if (debug || localDebug) console.log('HomeDevices received WebSocket Message:', msg);
       // Broadcast messages
       // 'settings' | 'plugins' | 'devices' | 'matter';
       if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
@@ -339,6 +340,15 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
             // oxlint-disable-next-line typescript/no-unsafe-type-assertion
             prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
             return [...prev];
+          });
+          skipMixRef.current = true;
+          setMixedDevices((prev) => {
+            const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+            if (index < 0) return prev;
+            const next = [...prev];
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+            next[index] = { ...next[index], reachable: msg.response.value as boolean };
+            return next;
           });
         }
       }
@@ -415,6 +425,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
 
   // Mix devices and selectDevices
   useEffect(() => {
+    if (skipMixRef.current) {
+      skipMixRef.current = false;
+      if (debug || localDebug) console.log('HomeDevices skipping remix, already patched mixedDevices directly');
+      return;
+    }
     if (devices.length === 0 && selectDevices.length === 0) {
       setMixedDevices([]);
       return;
