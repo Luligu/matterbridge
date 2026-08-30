@@ -6,15 +6,15 @@
 
 set -euo pipefail
 
-echo "Running Matterbridge Bun Dev Container initialize.sh..."
+echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "Running Matterbridge Bun Dev Container initialize.sh..."
 
-echo "1.initialize - Creating the Matterbridge Docker network..."
+echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "1.initialize - Creating the Matterbridge Docker network..."
 docker network inspect matterbridge >/dev/null 2>&1 || docker network create --ipv6 matterbridge
 
-echo "2.initialize - Pulling the Bun dev container image..."
+echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "2.initialize - Pulling the Bun dev container image..."
 docker pull luligu/matterbridge:bun-dev-container
 
-echo "3.initialize - Setting script permissions..."
+echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "3.initialize - Setting script permissions..."
 chmod +x .devcontainer/bun/*.sh
 
-echo "4.initialize - Initialization completed!"
+echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "4.initialize - Initialization completed!"
