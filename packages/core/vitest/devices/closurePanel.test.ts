@@ -77,7 +77,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a closure panel device', () => {
-    device = createClosurePanelTestEndpoint('Closure Panel Test Device', 'CP123456', 'lift');
+    device = createClosurePanelTestEndpoint('Closure Panel Test Device', 'CP123456', 'lift', { motionLatching: true, speed: true });
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosurePanelTestDevice-CP123456');
 
@@ -88,8 +88,32 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
+  test('create a closure panel device with default optional features disabled', async () => {
+    const basicPanel = createClosurePanelTestEndpoint('Closure Panel Basic Test Device', 'CPBASIC', 'lift');
+    expect(await addDevice(server, basicPanel)).toBeTruthy();
+
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: false,
+      speed: false,
+      translation: true,
+    });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 0 });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0 });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'latchControlModes')).toBeUndefined();
+
+    await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: ThreeLevelAuto.High });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0 });
+  });
+
   test('add a closure panel device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+    expect(device.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      translation: true,
+    });
   });
 
   test('invoke closure dimension commands', async () => {
@@ -165,14 +189,14 @@ describe('Matterbridge ' + NAME, () => {
     device2 = createClosurePanelTestEndpoint('Closure Panel Test Device 2', 'CP654321', 'lift', { resolution: 2, stepValue: 6000 });
     expect(await addDevice(server, device2)).toBeTruthy();
 
-    await device2.setAttribute(ClosureDimension.id, 'currentState', { position: 0, latch: false, speed: ThreeLevelAuto.Auto });
+    await device2.setAttribute(ClosureDimension.id, 'currentState', { position: 0 });
     await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Increase,
       numberOfSteps: 2,
     });
     expect(device2.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 10000 });
 
-    await device2.setAttribute(ClosureDimension.id, 'currentState', { position: 10000, latch: false, speed: ThreeLevelAuto.Auto });
+    await device2.setAttribute(ClosureDimension.id, 'currentState', { position: 10000 });
     await device2.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
       direction: ClosureDimension.StepDirection.Decrease,
       numberOfSteps: 2,
@@ -185,9 +209,17 @@ describe('Matterbridge ' + NAME, () => {
       currentState: { position: null, latch: true, speed: ThreeLevelAuto.Auto },
       targetState: { position: 300, latch: true, speed: ThreeLevelAuto.Auto },
       stepValue: 10,
+      motionLatching: true,
+      speed: true,
       latchControlModes: { remoteLatching: false, remoteUnlatching: true },
     });
     expect(await addDevice(server, device4)).toBeTruthy();
+    expect(device4.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: true,
+      speed: true,
+      translation: true,
+    });
     expect(device4.getAttribute(ClosureDimension.id, 'latchControlModes')).toMatchObject({ remoteLatching: false, remoteUnlatching: true });
 
     // A null CurrentState.Position is treated as 0 for the Step position calculation.

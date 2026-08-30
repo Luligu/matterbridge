@@ -51,8 +51,7 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
 
 /**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Supports
- * Positioning, MotionLatching and Speed.
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
  */
 export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
   ClosureDimension.Feature.Positioning,
@@ -77,12 +76,16 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError('ClosureDimension.setTarget requires at least one of position, latch, or speed to be present');
     }
+    const supportsMotionLatching = this.features.motionLatching;
+    const supportsSpeed = this.features.speed;
 
     // 5.5.8.1.1. Position Field
     // percent100ths is constrained to the range 0-10000: a Position field outside that range SHALL return CONSTRAINT_ERROR.
     if (request.position !== undefined && (request.position < 0 || request.position > 10000)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.setTarget position must be between 0 and 10000');
     }
+    const hasSupportedField = request.position !== undefined || (supportsMotionLatching && request.latch !== undefined) || (supportsSpeed && request.speed !== undefined);
+    if (!hasSupportedField) return;
 
     // 5.5.8.1.2. Latch Field
     // The Latch field is a bool, so every decoded value is within constraints: no CONSTRAINT_ERROR is possible for this field.
@@ -90,13 +93,17 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // TargetState.Latch, or - if the LatchControlModes attribute specifies that manual intervention is required to
     // latch - respond with INVALID_IN_STATE and remain in its current state.
     const latchControlModes = this.state.latchControlModes;
-    if (request.latch !== undefined && ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))) {
+    if (
+      supportsMotionLatching &&
+      request.latch !== undefined &&
+      ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))
+    ) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget latch change requires manual intervention per LatchControlModes');
     }
 
     // 5.5.8.1.3. Speed Field
     // ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
-    if (request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
+    if (supportsSpeed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.setTarget speed must be a valid ThreeLevelAutoEnum value');
     }
 
@@ -128,7 +135,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // in this command is either not present or not explicitly set to False (Unlatched), a status code of
     // INVALID_IN_STATE SHALL be returned.
     const currentState = this.state.currentState;
-    if (request.position !== undefined && currentState?.latch === true && request.latch !== false) {
+    if (supportsMotionLatching && request.position !== undefined && currentState?.latch === true && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget position changes require latch false while the closure is latched');
     }
 
@@ -139,8 +146,8 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       // If a new position value is requested, the closure SHALL set the Position field of the TargetState attribute
       // to the nearest valid position, i.e. an integer multiple of the Resolution attribute.
       ...(request?.position !== undefined ? { position: Math.round(request.position / resolution) * resolution } : null),
-      ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      ...(supportsMotionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
+      ...(supportsSpeed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
 
     // If all field values in the command match the corresponding field values in CurrentState, the command SHALL
@@ -148,8 +155,8 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     const matchesCurrentState =
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
-      (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
-      nextTarget.speed === currentState.speed;
+      (!supportsMotionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
+      (!supportsSpeed || nextTarget.speed === currentState.speed);
     if (matchesCurrentState) return;
 
     this.state.targetState = nextTarget;
@@ -181,7 +188,8 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
 
     // 5.5.8.2.3. Speed Field
     // ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
-    if (request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
+    const supportsSpeed = this.features.speed;
+    if (supportsSpeed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.step speed must be a valid ThreeLevelAutoEnum value');
     }
 
@@ -189,7 +197,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // If this command is received while the Latch field of the CurrentState attribute is True (Latched), a status
     // code of INVALID_IN_STATE SHALL be returned.
     const currentState = this.state.currentState;
-    if (currentState?.latch === true) {
+    if (this.features.motionLatching && currentState?.latch === true) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.step is not allowed while the closure is latched');
     }
 
@@ -233,7 +241,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     this.state.targetState = {
       ...previousTarget,
       position: nextPosition,
-      ...(request.speed !== undefined ? { speed: request.speed } : null),
+      ...(supportsSpeed && request.speed !== undefined ? { speed: request.speed } : null),
     };
   };
 }
@@ -247,6 +255,10 @@ export interface ClosurePanelOptions {
   resolution?: number;
   /** Number of units moved for each Step command, expressed in percent100ths. Defaults to 100 (1%). */
   stepValue?: number;
+  /** Enable the ClosureDimension MotionLatching feature. Defaults to false. */
+  motionLatching?: boolean;
+  /** Enable the ClosureDimension Speed feature. Defaults to false. */
+  speed?: boolean;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
   /** Direction of the translation. Only used when `dimensionType` is `'lift'`. Defaults to Downward. */
@@ -269,23 +281,32 @@ export interface ClosurePanelOptions {
  * @returns {MatterbridgeEndpoint} The current MatterbridgeEndpoint instance for chaining.
  */
 export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoint, dimensionType: ClosureDimensionType, options: ClosurePanelOptions): MatterbridgeEndpoint {
+  const motionLatching = options.motionLatching ?? false;
+  const speed = options.speed ?? false;
   const commonOptions = {
-    currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-    targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+    currentState: {
+      position: options.currentState?.position ?? 0,
+      ...(motionLatching ? { latch: options.currentState?.latch ?? true } : null),
+      ...(speed ? { speed: options.currentState?.speed ?? ThreeLevelAuto.Auto } : null),
+    },
+    targetState: {
+      position: options.targetState?.position ?? 0,
+      ...(motionLatching ? { latch: options.targetState?.latch ?? true } : null),
+      ...(speed ? { speed: options.targetState?.speed ?? ThreeLevelAuto.Auto } : null),
+    },
     // Resolution and StepValue are percent100ths with a specs constraint of "min 0.01%" (i.e. a minimum value of 1).
     // Default to whole-percent granularity to match the 0%-100% precision exposed by most real closure APIs.
     resolution: Math.max(1, options.resolution ?? 100),
     stepValue: Math.max(1, options.stepValue ?? 100),
-    latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
+    ...(motionLatching ? { latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
   };
-
   if (dimensionType === 'lift') {
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Translation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,
@@ -296,9 +317,9 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Rotation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,
@@ -307,12 +328,13 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
       },
     );
   } else {
+    // this branch handles modulation
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Modulation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,
