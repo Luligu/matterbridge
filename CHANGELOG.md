@@ -41,6 +41,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [closureControl]: Add `motionLatching` and `speed` options to `ClosureOptions` to opt in to the optional MotionLatching and Speed features. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/622).
 - [closureDimension]: Add `motionLatching` and `speed` options to `ClosurePanelOptions` to opt in to the optional MotionLatching and Speed features per panel. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/618).
 - [doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.
 - [ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.

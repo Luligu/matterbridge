@@ -77,7 +77,6 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-
     // General Interaction Model requirement (not specific to ClosureControl): a command field constraint
     // violation, such as an enum field carrying a value outside its defined range or a field carrying the
     // wrong data type, SHALL be rejected with CONSTRAINT_ERROR ahead of any other command- or cluster-specific
@@ -87,12 +86,6 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     if (request.position !== undefined && !(request.position in targetToCurrentPosition)) {
       throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Position is not a valid TargetPositionEnum value');
     }
-    if (request.latch !== undefined && typeof request.latch !== 'boolean') {
-      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Latch is not a boolean value');
-    }
-    if (request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
-      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not a valid ThreeLevelAutoEnum value');
-    }
 
     // 5.4.8.2. MoveTo Command
     // The Position, Latch, and Speed fields are all O.a+ (choice group 'a', at least one required): a MoveTo with
@@ -100,6 +93,20 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError('ClosureControl.moveTo requires at least one of position, latch, or speed to be present');
     }
+
+    // 5.4.8.2.1. Position Field
+    if (request.position === undefined && (!this.features.motionLatching || request.latch === undefined) && (!this.features.speed || request.speed === undefined)) return;
+
+    // 5.4.8.2.2. Latch Field
+    if (this.features.motionLatching && request.latch !== undefined && typeof request.latch !== 'boolean') {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Latch is not a boolean value');
+    }
+
+    // 5.4.8.2.3. Speed Field
+    if (this.features.speed && request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not a valid ThreeLevelAutoEnum value');
+    }
+
     // 5.4.8.2.4. Effect on Receipt
     // If this command is received in any state other than Moving, WaitingForMotion, or Stopped, a status code of INVALID_IN_STATE SHALL be returned.
     if (![ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Stopped].includes(this.state.mainState)) {
@@ -109,7 +116,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     // If this command requests a position change while the Latch field of the OverallCurrentState attribute is True (Latched),
     // and the Latch field of this command is not set to False (Unlatched), a status code of INVALID_IN_STATE SHALL be returned.
     let currentState = this.state.overallCurrentState;
-    if (currentState?.latch === true && request.position !== undefined && request.latch !== false) {
+    if (this.features.motionLatching && currentState?.latch === true && request.position !== undefined && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError('ClosureControl.moveTo position changes require latch false while the closure is latched');
     }
 
@@ -119,14 +126,14 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       // 5.4.8.2.1. Position Field
       ...(request?.position !== undefined ? { position: request.position } : null),
       // 5.4.8.2.2. Latch Field
-      ...(request?.latch !== undefined ? { latch: request.latch } : null),
+      ...(this.features.motionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
       // 5.4.8.2.3. Speed Field
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
     this.state.overallTargetState = nextTarget;
 
     // If the closure supports the Speed(SP) feature, it SHALL set the Speed field of the OverallCurrentState attribute to the new speed.
-    if (currentState !== null) {
+    if (this.features.speed && currentState !== null) {
       currentState = { ...currentState, speed: nextTarget.speed };
       this.state.overallCurrentState = currentState;
     }
@@ -138,8 +145,8 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     const isAtTarget =
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
-      (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
-      nextTarget.speed === currentState.speed;
+      (!this.features.motionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
+      (!this.features.speed || nextTarget.speed === currentState.speed);
     this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
 
     // Cancel any movement/calibration still in flight from a previous command before (re)scheduling.
@@ -185,10 +192,19 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    // The MotionLatching feature is always enabled on this server, so the secure state always follows the latch.
-    const secureState = latch === true;
+    const secureState = this.features.motionLatching ? latch === true : previousState.secureState === true;
 
-    await closure.setState({ position, latch, speed: targetState.speed, secureState }, targetState, ClosureControl.MainState.Stopped, 0);
+    await closure.setState(
+      {
+        position,
+        ...(this.features.motionLatching ? { latch } : null),
+        ...(this.features.speed ? { speed: targetState.speed } : null),
+        secureState,
+      },
+      targetState,
+      ClosureControl.MainState.Stopped,
+      0,
+    );
     if (secureState !== previousState.secureState) {
       await closure.triggerSecureStateChanged(secureState);
     }
@@ -328,6 +344,10 @@ export interface ClosureOptions {
   movementDuration?: number;
   /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
   calibrationDuration?: number;
+  /** Enable the ClosureControl MotionLatching feature. Defaults to false. */
+  motionLatching?: boolean;
+  /** Enable the ClosureControl Speed feature. Defaults to false. */
+  speed?: boolean;
   /** Enable the ClosureControl Ventilation feature. Defaults to false. */
   ventilation?: boolean;
   /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
@@ -375,20 +395,13 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime = 0,
       mainState = ClosureControl.MainState.Stopped,
       currentErrorList = [],
-      overallCurrentState = {
-        position: ClosureControl.CurrentPosition.FullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-        secureState: true,
-      },
-      overallTargetState = {
-        position: ClosureControl.TargetPosition.MoveToFullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-      },
-      latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      overallCurrentState,
+      overallTargetState,
+      latchControlModes,
       movementDuration = 0,
       calibrationDuration = 0,
+      motionLatching = false,
+      speed = false,
       ventilation = false,
       pedestrian = false,
       calibration = false,
@@ -426,17 +439,26 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime,
       mainState,
       currentErrorList,
-      overallCurrentState,
-      overallTargetState,
-      latchControlModes,
+      overallCurrentState: {
+        position: overallCurrentState?.position ?? ClosureControl.CurrentPosition.FullyClosed,
+        ...(motionLatching ? { latch: overallCurrentState?.latch ?? true } : null),
+        ...(speed ? { speed: overallCurrentState?.speed ?? ThreeLevelAuto.Auto } : null),
+        secureState: overallCurrentState?.secureState ?? true,
+      },
+      overallTargetState: {
+        position: overallTargetState?.position ?? ClosureControl.TargetPosition.MoveToFullyClosed,
+        ...(motionLatching ? { latch: overallTargetState?.latch ?? true } : null),
+        ...(speed ? { speed: overallTargetState?.speed ?? ThreeLevelAuto.Auto } : null),
+      },
+      ...(motionLatching ? { latchControlModes: latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
       movementDuration,
       calibrationDuration,
     };
     this.behaviors.require(
       MatterbridgeClosureControlServer.with(
         ClosureControl.Feature.Positioning,
-        ClosureControl.Feature.MotionLatching,
-        ClosureControl.Feature.Speed,
+        ...(motionLatching ? [ClosureControl.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureControl.Feature.Speed] : []),
         ...(calibration ? [ClosureControl.Feature.Calibration] : []),
         ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
         ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
@@ -471,11 +493,24 @@ export class Closure extends MatterbridgeEndpoint {
     countdownTime = 0,
     currentErrorList: ClosureControl.ClosureError[] = [],
   ): Promise<void> {
+    const featureMap = this.getAttribute(ClosureControl.id, 'featureMap');
+    const supportsMotionLatching = featureMap?.motionLatching === true;
+    const supportsSpeed = featureMap?.speed === true;
+
     await this.setAttribute(ClosureControl, 'countdownTime', countdownTime);
     await this.setAttribute(ClosureControl, 'mainState', mainState);
     await this.setAttribute(ClosureControl, 'currentErrorList', currentErrorList);
-    await this.setAttribute(ClosureControl, 'overallCurrentState', currentState);
-    await this.setAttribute(ClosureControl, 'overallTargetState', targetState);
+    await this.setAttribute(ClosureControl, 'overallCurrentState', {
+      position: currentState.position,
+      ...(supportsMotionLatching ? { latch: currentState.latch } : null),
+      ...(supportsSpeed ? { speed: currentState.speed } : null),
+      secureState: currentState.secureState,
+    });
+    await this.setAttribute(ClosureControl, 'overallTargetState', {
+      position: targetState.position,
+      ...(supportsMotionLatching ? { latch: targetState.latch } : null),
+      ...(supportsSpeed ? { speed: targetState.speed } : null),
+    });
   }
 
   /**

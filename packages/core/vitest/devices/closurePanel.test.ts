@@ -8,7 +8,9 @@ const NAME = 'ClosurePanel';
 const MATTER_PORT = 8023;
 const MATTER_CREATE_ONLY = true;
 
+import { ClosurePanelTag } from '@matter/node';
 import { Status } from '@matter/types';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ThreeLevelAuto } from '@matter/types/globals';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -25,9 +27,11 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { stringify } from 'node-ansi-logger';
 
+import { Closure } from '../../src/devices/closure.js';
 import { createClosureDimensionClusterServer, type ClosureDimensionType, type ClosurePanelOptions } from '../../src/devices/closurePanel.js';
 import { closurePanel } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -104,6 +108,9 @@ describe('Matterbridge ' + NAME, () => {
 
     await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: ThreeLevelAuto.High });
     expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0 });
+
+    await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 5000 });
   });
 
   test('add a closure panel device', async () => {
@@ -236,6 +243,11 @@ describe('Matterbridge ' + NAME, () => {
     await device4.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: false });
     expect(device4.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ latch: false, speed: ThreeLevelAuto.Auto });
 
+    await device4.setAttribute(ClosureDimension.id, 'targetState', null);
+    await expect(device4.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+
     // Exercise the Direction Decrease branch, clamped at 0, a null previous TargetState, and an explicit Speed field.
     await device4.setAttribute(ClosureDimension.id, 'currentState', { position: null, latch: false, speed: ThreeLevelAuto.Auto });
     await device4.setAttribute(ClosureDimension.id, 'targetState', null);
@@ -247,15 +259,67 @@ describe('Matterbridge ' + NAME, () => {
     expect(device4.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0, speed: ThreeLevelAuto.Medium });
   });
 
+  test('reject closure dimension commands while associated closure control is in invalid state', async () => {
+    const closure = new Closure('Closure Panel Parent Test Device', 'CPPARENT', { motionLatching: true, speed: true });
+    const panel = closure.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)], 'lift', { motionLatching: true, speed: true });
+    expect(await addDevice(server, closure)).toBeTruthy();
+
+    await closure.setAttribute(ClosureControl.id, 'mainState', ClosureControl.MainState.Error);
+    await expect(panel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000, latch: false })).rejects.toMatchObject({
+      code: Status.InvalidInState,
+    });
+    await expect(
+      panel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        direction: ClosureDimension.StepDirection.Increase,
+        numberOfSteps: 1,
+      }),
+    ).rejects.toMatchObject({ code: Status.InvalidInState });
+  });
+
   test('cover constructor option defaults', async () => {
     device3 = createClosurePanelTestEndpoint('Closure Panel Test Device 3', 'CP345678', 'lift');
     expect(await addDevice(server, device3)).toBeTruthy();
+  });
+
+  test('create a tilt closure panel device with default optional features disabled', async () => {
+    const tiltPanel = createClosurePanelTestEndpoint('Closure Panel Tilt Default Test Device', 'CPTILTDEFAULT', 'tilt');
+    expect(await addDevice(server, tiltPanel)).toBeTruthy();
+
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      rotation: true,
+      motionLatching: false,
+      speed: false,
+    });
   });
 
   test('create a closure panel device with modulation dimension type', async () => {
     const device5 = createClosurePanelTestEndpoint('Closure Panel Test Device 5', 'CP567890', 'modulation');
     expect(await addDevice(server, device5)).toBeTruthy();
     expect(device5.getAttribute(ClosureDimension.id, 'modulationType')).toBe(ClosureDimension.ModulationType.SlatsOrientation);
+  });
+
+  test('create closure panel devices with optional tilt and modulation features', async () => {
+    const tiltPanel = createClosurePanelTestEndpoint('Closure Panel Tilt Feature Test Device', 'CPTILTFEATURES', 'tilt', { motionLatching: true, speed: true });
+    const modulationPanel = createClosurePanelTestEndpoint('Closure Panel Modulation Feature Test Device', 'CPMODFEATURES', 'modulation', {
+      motionLatching: true,
+      speed: true,
+    });
+    expect(await addDevice(server, tiltPanel)).toBeTruthy();
+    expect(await addDevice(server, modulationPanel)).toBeTruthy();
+
+    expect(tiltPanel.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      rotation: true,
+      motionLatching: true,
+      speed: true,
+    });
+    expect(modulationPanel.getAttribute(ClosureDimension.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      modulation: true,
+      motionLatching: true,
+      speed: true,
+    });
   });
 
   test('device forEachAttribute', () => {

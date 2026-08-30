@@ -70,7 +70,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a closure device', () => {
-    device = new Closure('Closure Test Device', 'CL123456');
+    device = new Closure('Closure Test Device', 'CL123456', { motionLatching: true, speed: true });
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosureTestDevice-CL123456');
 
@@ -90,6 +90,56 @@ describe('Matterbridge ' + NAME, () => {
 
   test('check attributes after adding device to server', () => {
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+  });
+
+  test('create closure device with default optional features disabled', async () => {
+    const basicClosure = new Closure('Closure Basic Test Device', 'CLBASIC');
+    expect(await addDevice(server, basicClosure)).toBeTruthy();
+
+    expect(basicClosure.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
+      positioning: true,
+      motionLatching: false,
+      speed: false,
+    });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.FullyClosed,
+      secureState: true,
+    });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+    });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'latchControlModes')).toBeUndefined();
+
+    await basicClosure.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { latch: true, speed: ThreeLevelAuto.High });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyClosed,
+    });
+
+    await basicClosure.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', { position: ClosureControl.TargetPosition.MoveToFullyOpen });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyOpen,
+    });
+
+    await basicClosure.setState(
+      {
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        latch: false,
+        speed: ThreeLevelAuto.High,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+        latch: false,
+        speed: ThreeLevelAuto.High,
+      },
+    );
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.FullyOpened,
+      secureState: false,
+    });
+    expect(basicClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToFullyOpen,
+    });
   });
 
   test('set closure state helpers', async () => {
@@ -199,21 +249,21 @@ describe('Matterbridge ' + NAME, () => {
       name: 'Ventilation',
       serial: 'CLVENTILATION',
       options: { ventilation: true },
-      expectedFeatures: { ventilation: true, pedestrian: false, calibration: false },
+      expectedFeatures: { motionLatching: false, speed: false, ventilation: true, pedestrian: false, calibration: false },
       expectedCommands: [0, 1],
     },
     {
       name: 'Pedestrian',
       serial: 'CLPEDESTRIAN',
       options: { pedestrian: true },
-      expectedFeatures: { ventilation: false, pedestrian: true, calibration: false },
+      expectedFeatures: { motionLatching: false, speed: false, ventilation: false, pedestrian: true, calibration: false },
       expectedCommands: [0, 1],
     },
     {
       name: 'Calibration',
       serial: 'CLCALIBRATION',
       options: { calibration: true },
-      expectedFeatures: { ventilation: false, pedestrian: false, calibration: true },
+      expectedFeatures: { motionLatching: false, speed: false, ventilation: false, pedestrian: false, calibration: true },
       expectedCommands: [0, 1, 2],
     },
   ])('add only the $name optional feature', async ({ name, serial, options, expectedFeatures, expectedCommands }) => {
@@ -222,8 +272,6 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(closureWithFeature.getAttribute(ClosureControl.id, 'featureMap')).toMatchObject({
       positioning: true,
-      motionLatching: true,
-      speed: true,
       ...expectedFeatures,
     });
     expect(closureWithFeature.getAttribute(ClosureControl.id, 'acceptedCommandList')).toEqual(expectedCommands);
@@ -234,6 +282,8 @@ describe('Matterbridge ' + NAME, () => {
       ventilation: true,
       pedestrian: true,
       calibration: true,
+      motionLatching: true,
+      speed: true,
     });
     expect(await addDevice(server, gate)).toBeTruthy();
 
@@ -459,7 +509,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('simulate MoveTo completion via movementDuration', async () => {
-    const timedDevice = new Closure('Closure Timed Test Device', 'CLTIMED', { movementDuration: 1000 });
+    const timedDevice = new Closure('Closure Timed Test Device', 'CLTIMED', { movementDuration: 1000, motionLatching: true, speed: true });
     expect(await addDevice(server, timedDevice)).toBeTruthy();
 
     const movementCompleted = vi.fn();
@@ -563,6 +613,38 @@ describe('Matterbridge ' + NAME, () => {
         secureState: false,
       });
       expect(movementCompleted).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('simulate MoveTo completion with default optional features disabled', async () => {
+    const timedDevice = new Closure('Closure Basic Timed Test Device', 'CLBASICTIMED', { movementDuration: 1000 });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+
+    const movementCompleted = vi.fn();
+    const secureStateChanged = vi.fn();
+    (timedDevice.events as any).closureControl.movementCompleted.on(movementCompleted);
+    (timedDevice.events as any).closureControl.secureStateChanged.on(secureStateChanged);
+
+    vi.useFakeTimers();
+    try {
+      await timedDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      });
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+        position: ClosureControl.CurrentPosition.FullyOpened,
+        secureState: true,
+      });
+      expect(timedDevice.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+        position: ClosureControl.TargetPosition.MoveToFullyOpen,
+      });
+      expect(movementCompleted).toHaveBeenCalledTimes(1);
+      expect(secureStateChanged).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
