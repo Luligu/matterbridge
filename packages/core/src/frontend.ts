@@ -1507,8 +1507,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && isValidObject(attributeValue)) {
         const overallCurrentState = attributeValue as ClosureControl.OverallCurrentState;
         attributes += `Position: ${getEnumDescription(ClosureControl.CurrentPosition, overallCurrentState.position, { fallback: 'unknown' })} `;
-        attributes += `Latch: ${overallCurrentState.latch ?? 'unknown'} `;
-        attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed, { fallback: 'unknown' })} `;
+        if ('latch' in overallCurrentState) attributes += `Latch: ${overallCurrentState.latch ?? 'unknown'} `;
+        if ('speed' in overallCurrentState) attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed, { fallback: 'unknown' })} `;
         attributes += `SecureState: ${overallCurrentState.secureState ?? 'unknown'} `;
       }
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;

@@ -475,7 +475,14 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
   await registerDevice(ep, 'Window Covering Controller', 'ENTRY-08-04');
 
-  ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05), movementDuration: 2000, calibrationDuration: 2000 });
+  ep = new Closure('Closure', 'ENTRY-08-05', {
+    id: 'Closure',
+    number: EndpointNumber(8_05),
+    movementDuration: 2000,
+    calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
+  });
   await registerDevice(ep, 'Closure', 'ENTRY-08-05');
 
   ep = new Closure('Closure Pedestrian', 'ENTRY-08-05-1', {
@@ -483,6 +490,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_1),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     pedestrian: true,
     tagList: [getSemtag(ClosureTag.Gate)],
   });
@@ -493,6 +502,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_2),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     ventilation: true,
     tagList: [getSemtag(ClosureTag.Window), getSemtag(ClosureWindowTag.Facade)],
   });
@@ -503,6 +514,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_3),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     calibration: true,
     tagList: [getSemtag(ClosureTag.GarageDoor)],
   });
@@ -513,6 +526,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_4),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     ventilation: true,
     pedestrian: true,
     calibration: true,
