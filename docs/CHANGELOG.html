@@ -155,6 +155,7 @@
 <h2 id="3108-dev-branch">[3.10.8] - Dev branch</h2>
 <h3 id="development-news">Development News</h3>
 <ul>
+<li>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matter behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</li>
 <li>[chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
 <li>[chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
 </ul>

@@ -1494,7 +1494,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a command handler for the specified command.
    *
-   * The handler function will be called when the specified command is received on the endpoint before the default behavior is executed.
+   * The handler function will be called when the specified command is received on the endpoint before the default
+   * Matter behavior command implementation starts its cluster-specific validation and state checks. A handler can
+   * therefore receive a request that Matterbridge later rejects with a Matter status error. Handlers that perform real
+   * side effects, such as sending commands to hardware, cloud APIs, or other external systems, must validate the
+   * relevant Matter preconditions and current cluster state themselves before acting.
+   *
+   * Use `subscribeAttribute()` instead when the action should run only after Matterbridge accepts the command and updates the corresponding attributes.
    *
    * The handler function is called with await and shall return immediately.
    *
@@ -1521,9 +1527,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `attributes`: The current writable attributes of the cluster that received the command (i.e. { onOff: true}).
    * > Be aware that this is the actual cluster state but is typed as a complete instance of the cluster.
    * > You can use this directly to access and change the current state of the cluster inside the handler function.
-   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implmentation shall update the current position).
-   * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
-   * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
+   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implementation shall update the current position).
+   * > YOU CANNOT CALL endpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
+   * > A transaction is already in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    * - `context`: The optional Matter action context for behavior-driven commands.
    */
