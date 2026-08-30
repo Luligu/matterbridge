@@ -433,16 +433,14 @@ export class Closure extends MatterbridgeEndpoint {
       calibrationDuration,
     };
     this.behaviors.require(
-      calibration || ventilation || pedestrian
-        ? MatterbridgeClosureControlServer.with(
-            ClosureControl.Feature.Positioning,
-            ClosureControl.Feature.MotionLatching,
-            ClosureControl.Feature.Speed,
-            ...(calibration ? [ClosureControl.Feature.Calibration] : []),
-            ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
-            ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
-          )
-        : MatterbridgeClosureControlServer,
+      MatterbridgeClosureControlServer.with(
+        ClosureControl.Feature.Positioning,
+        ClosureControl.Feature.MotionLatching,
+        ClosureControl.Feature.Speed,
+        ...(calibration ? [ClosureControl.Feature.Calibration] : []),
+        ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
+        ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
+      ),
       closureControlOptions,
     );
   }

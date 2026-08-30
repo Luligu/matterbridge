@@ -67,6 +67,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.65.0.
 - [frontend]: Bump `oxlint` to v.1.80.0.
 
+### Fixed
+
+- [Closure]: Fix Calibration slipping into the default ClosureControl feature map and command list; the Calibration feature and Calibrate command are now advertised only when the `calibration` option is enabled. Thanks Ludovic BOUÉ.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.7] - 2026-08-28
