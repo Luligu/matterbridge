@@ -29,7 +29,7 @@ import { MbfWindow } from './MbfWindow';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
-const localDebug = true; // Set to true to enable debug logs only in HomeDevices component
+const localDebug = false; // Set to true to enable debug logs only in HomeDevices component
 
 /**
  * Get the unique row ID for a device.
