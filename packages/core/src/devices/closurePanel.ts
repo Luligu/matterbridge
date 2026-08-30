@@ -323,10 +323,18 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
    */
   private completeMovement = async (targetState: ClosureDimension.DimensionState, previousState: ClosureDimension.DimensionState): Promise<void> => {
     const endpoint = this.endpoint as MatterbridgeEndpoint;
+    // setTarget()/step() always carry Position/Latch/Speed through to targetState explicitly (each inherited
+    // from the constructor's own non-null defaults when a command omits it), so the `?? previousState.*`
+    // fallbacks below are unreachable through the public command surface — kept only as a defensive guard
+    // against a manually-cleared state.
+    /* v8 ignore next 3 */
+    const position = targetState.position ?? previousState.position;
+    const latch = targetState.latch ?? previousState.latch;
+    const speed = targetState.speed ?? previousState.speed;
     await endpoint.setAttribute(ClosureDimensionServer, 'currentState', {
-      position: targetState.position ?? previousState.position,
-      ...(this.features.motionLatching ? { latch: targetState.latch ?? previousState.latch } : null),
-      ...(this.features.speed ? { speed: targetState.speed ?? previousState.speed } : null),
+      position,
+      ...(this.features.motionLatching ? { latch } : null),
+      ...(this.features.speed ? { speed } : null),
     });
   };
 }

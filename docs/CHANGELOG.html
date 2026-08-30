@@ -158,11 +158,18 @@
 <li>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matter behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</li>
 <li>[chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
 <li>[chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
+<li>[chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</li>
+<li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</li>
+<li>[chip]: ClosureDimension endpoint 8062 (Closure Panel Roller, Translation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
+<li>[chip]: ClusurePanelVenetian endpoint 8064 (Closure Panel Venetian, Rotation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
+<li>[chip]: ClosurePanelSmartGlass endpoint 8066 (Closure Panel Smart-Glass, Modulation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[closureControl]: Add <code>motionLatching</code> and <code>speed</code> options to <code>ClosureOptions</code> to opt in to the optional MotionLatching and Speed features. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/issues/622">https://github.com/Luligu/matterbridge/issues/622</a>).</li>
 <li>[closureDimension]: Add <code>motionLatching</code> and <code>speed</code> options to <code>ClosurePanelOptions</code> to opt in to the optional MotionLatching and Speed features per panel. Thanks Ludovic BOUÉ (<a href="https://github.com/Luligu/matterbridge/issues/618">https://github.com/Luligu/matterbridge/issues/618</a>).</li>
+<li>[closureControl]: <code>MatterbridgeClosureControlServer</code> can now simulate MoveTo/Calibrate completion, opt-in via the new <code>state.movementDuration</code>/<code>state.calibrationDuration</code> (both disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
+<li>[closureDimension]: Add the <code>movementDuration</code> option to <code>ClosurePanelOptions</code>; <code>MatterbridgeClosureDimensionServer</code> can now simulate SetTarget/Step completion (<code>CurrentState</code> converging to <code>TargetState</code>), opt-in via <code>state.movementDuration</code> (disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
 <li>[doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.</li>
 <li>[ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.</li>
 <li>[matterbridge]: Add the <code>--root-power-source</code> param to opt in to a wired AC PowerSource cluster on the Root endpoint (disabled by default, since it was found to break ElectricalPowerMeasurement rendering in Apple Home).</li>
@@ -194,6 +201,7 @@
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[Closure]: Fix Calibration slipping into the default ClosureControl feature map and command list; the Calibration feature and Calibrate command are now advertised only when the <code>calibration</code> option is enabled. Thanks Ludovic BOUÉ.</li>
+<li>[Closure]: Fix <code>secureState</code> staying frozen at its initial value on <code>MoveTo</code> completion for a Closure without the MotionLatching feature; it now tracks <code>Position</code> (secure only when FullyClosed) as required by the Application Cluster Specification, and <code>SecureStateChanged</code> fires accordingly.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3107-2026-08-28">[3.10.7] - 2026-08-28</h2>

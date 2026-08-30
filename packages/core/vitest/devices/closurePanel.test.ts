@@ -259,6 +259,47 @@ describe('Matterbridge ' + NAME, () => {
     expect(device4.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0, speed: ThreeLevelAuto.Medium });
   });
 
+  test('simulate SetTarget/Step completion via movementDuration', async () => {
+    const timedDevice = createClosurePanelTestEndpoint('Closure Panel Timed Test Device', 'CPTIMED', 'lift', { movementDuration: 1000, motionLatching: true, speed: true });
+    expect(await addDevice(server, timedDevice)).toBeTruthy();
+    await timedDevice.setAttribute(ClosureDimension.id, 'currentState', { position: 0, latch: false, speed: ThreeLevelAuto.Auto });
+
+    // The completion timer is a plain setTimeout under the hood (see closurePanel.ts), so fake timers let this
+    // fire deterministically without waiting out the real 1s duration.
+    vi.useFakeTimers();
+    try {
+      await timedDevice.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000, latch: false, speed: ThreeLevelAuto.High });
+      expect(timedDevice.getAttribute(ClosureDimension.id, 'currentState')).toMatchObject({ position: 0 });
+
+      // A second SetTarget before the first movement completes cancels the pending timer and reschedules.
+      await timedDevice.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 7000, latch: false, speed: ThreeLevelAuto.High });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 7000, latch: false, speed: ThreeLevelAuto.High });
+
+      // Step also schedules the same simulated convergence, driven off the just-converged CurrentState above;
+      // an omitted Step Speed field retains the previous target's speed (unlike SetTarget's own default-to-Auto).
+      await timedDevice.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', { direction: ClosureDimension.StepDirection.Increase, numberOfSteps: 1 });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedDevice.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 7100, latch: false, speed: ThreeLevelAuto.High });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('simulate SetTarget completion via movementDuration with default optional features disabled', async () => {
+    const timedBasicDevice = createClosurePanelTestEndpoint('Closure Panel Timed Basic Test Device', 'CPTIMEDBASIC', 'lift', { movementDuration: 1000 });
+    expect(await addDevice(server, timedBasicDevice)).toBeTruthy();
+
+    vi.useFakeTimers();
+    try {
+      await timedBasicDevice.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(timedBasicDevice.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 5000 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('reject closure dimension commands while associated closure control is in invalid state', async () => {
     const closure = new Closure('Closure Panel Parent Test Device', 'CPPARENT', { motionLatching: true, speed: true });
     const panel = closure.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)], 'lift', { motionLatching: true, speed: true });
