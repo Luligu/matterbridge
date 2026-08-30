@@ -164,6 +164,17 @@ function getWindowCoveringPositionName(value: unknown): string {
   return closurePositionNames[2]; // Partial
 }
 
+/**
+ * Gets the ClosureDimension current position name from a CurrentState value.
+ *
+ * @param {unknown} value ClosureDimension CurrentState attribute value.
+ * @returns {string} The current position name, or N/A when unavailable or invalid.
+ */
+function getClosureDimensionPositionName(value: unknown): string {
+  if (typeof value !== 'object' || value === null || !('position' in value)) return 'N/A';
+  return getWindowCoveringPositionName(value.position);
+}
+
 interface RenderProps {
   icon: React.JSX.Element;
   iconColor?: string;
@@ -417,6 +428,10 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* ClosureController */}
       {deviceType===0x023e && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value='Controller' />
+      ))}
+      {/* ClosurePanel */}
+      {deviceType===0x0231 && clusters.filter(cluster => cluster.clusterName === 'ClosureDimension' && cluster.attributeName === 'currentState').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<BlindsIcon/>} cluster={cluster} value={getClosureDimensionPositionName(cluster.attributeLocalValue)} />
       ))}
       {/* Thermostat */}
       {deviceType===0x0301 && clusters.filter(cluster => cluster.clusterName === 'Thermostat' && cluster.attributeName === 'localTemperature').map(cluster => (

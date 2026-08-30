@@ -1,36 +1,12 @@
-Chip tests run started at 2026-08-28T16:51:00.037Z
+Chip tests run started at 2026-08-30T13:12:45.865Z
 
-✅ DoorLock attributes on DoorLock (Test_TC_DRLK_2_1)
-✅ DoorLock LockDoor command on DoorLock (TC_DRLK_2_2.py)
-✅ DoorLock UnlockDoor command on DoorLock (TC_DRLK_2_3.py)
-✅ DoorLock UnlockWithTimeout command on DoorLock (Test_TC_DRLK_2_4)
-✅ DoorLock week day schedule commands on DoorLock (TC_DRLK_2_5.py)
-✅ DoorLock holiday schedule commands on DoorLock (Test_TC_DRLK_2_6)
-✅ DoorLock year day schedule commands on DoorLock (Test_TC_DRLK_2_7)
-✅ DoorLock user commands on DoorLock (Test_TC_DRLK_2_8)
-✅ DoorLock credential commands on DoorLock (TC_DRLK_2_9.py)
-✅ DoorLock events on DoorLock (Test_TC_DRLK_2_10)
-✅ DoorLock multiple credential types on DoorLock (Test_TC_DRLK_2_11)
-⏭️ DoorLock UnboltDoor command on DoorLock (TC_DRLK_2_12.py)
-   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 801 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
-⏭️ DoorLock Aliro functionality on DoorLock (TC_DRLK_2_13.py)
-   ↳ Requires the Aliro Provisioning feature; endpoint 801 does not implement it. The Python test still sends an unconditional ClearUser command when DRLK.S.F0d=0 and fails with UNSUPPORTED_COMMAND.
-✅ DoorLock client commands on DoorLock (Test_TC_DRLK_3_2)
-✅ DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules (Test_TC_DRLK_2_1)
-✅ DoorLock LockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_2.py)
-✅ DoorLock UnlockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_3.py)
-✅ DoorLock UnlockWithTimeout with PIN on DoorLockUserPINSchedules (Test_TC_DRLK_2_4)
-✅ DoorLock week day schedule commands on DoorLockUserPINSchedules (TC_DRLK_2_5.py)
-✅ DoorLock holiday schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_6)
-✅ DoorLock year day schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_7)
-✅ DoorLock user commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_8)
-✅ DoorLock PIN credential commands on DoorLockUserPINSchedules (TC_DRLK_2_9.py)
-✅ DoorLock events on DoorLockUserPINSchedules (Test_TC_DRLK_2_10)
-✅ DoorLock PIN credential type on DoorLockUserPINSchedules (Test_TC_DRLK_2_11)
-⏭️ DoorLock UnboltDoor command on DoorLockUserPINSchedules (TC_DRLK_2_12.py)
-   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 8012 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
-⏭️ DoorLock Aliro functionality on DoorLockUserPINSchedules (TC_DRLK_2_13.py)
-   ↳ Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0.
-✅ DoorLock client commands on DoorLockUserPINSchedules (Test_TC_DRLK_3_2)
+✅ ClosureControl attributes on base Closure (TC_CLCTRL_2_1.py)
+✅ ClosureControl Calibrate command primary functionality on base Closure (TC_CLCTRL_3_1.py)
+✅ ClosureControl MoveTo command position functionality on base Closure (TC_CLCTRL_4_1.py)
+✅ ClosureControl MoveTo command latching functionality on base Closure (TC_CLCTRL_4_2.py)
+✅ ClosureControl MoveTo command field sanity checks on base Closure (TC_CLCTRL_4_3.py)
+✅ ClosureControl MoveTo command CountdownTime functionality on base Closure (TC_CLCTRL_4_4.py)
+✅ ClosureControl Stop command primary functionality on base Closure (TC_CLCTRL_5_1.py)
+✅ ClosureControl event functionality on base Closure (TC_CLCTRL_6_1.py)
 
-Summary: 24/24 tests passed (4 skipped).
+Summary: 8/8 tests passed.

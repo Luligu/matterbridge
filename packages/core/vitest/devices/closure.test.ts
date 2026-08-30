@@ -90,6 +90,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('check attributes after adding device to server', () => {
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
+    expect(device.getSignaturePosition()).toBe(50_00);
   });
 
   test('create closure device with default optional features disabled', async () => {

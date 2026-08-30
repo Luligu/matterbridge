@@ -29,6 +29,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
+  ClosureCoveringTag,
+  ClosurePanelTag,
   ClosureTag,
   ClosureWindowTag,
   CommodityTariffChronologyTag,
@@ -41,6 +43,7 @@ import {
   RefrigeratorTag,
 } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -479,9 +482,6 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'Closure',
     number: EndpointNumber(8_05),
     movementDuration: 2000,
-    calibrationDuration: 2000,
-    motionLatching: true,
-    speed: true,
   });
   await registerDevice(ep, 'Closure', 'ENTRY-08-05');
 
@@ -534,6 +534,42 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(ClosureTag.Door)],
   });
   await registerDevice(ep, 'Closure Complete', 'ENTRY-08-05-4');
+
+  const closurePanelRoller = new Closure('Closure Panel Roller', 'ENTRY-08-06-1', {
+    id: 'ClosurePanelRoller',
+    number: EndpointNumber(8_06_1),
+    movementDuration: 2000,
+    signaturePosition: 50_00,
+    tagList: [getSemtag(ClosureTag.Covering)],
+  });
+  closurePanelRoller.addPanel('Roller', [getSemtag(ClosurePanelTag.Lift)], 'lift', { number: EndpointNumber(8_06_2) });
+  ep = closurePanelRoller;
+  await registerDevice(ep, 'Closure Panel Roller', 'ENTRY-08-06-1');
+
+  const closurePanelVenetian = new Closure('Closure Panel Venetian', 'ENTRY-08-06-3', {
+    id: 'ClosurePanelVenetian',
+    number: EndpointNumber(8_06_3),
+    movementDuration: 2000,
+    signaturePosition: 20_00,
+    tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
+  });
+  closurePanelVenetian.addPanel('Venetian', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', { number: EndpointNumber(8_06_4) });
+  ep = closurePanelVenetian;
+  await registerDevice(ep, 'Closure Panel Venetian', 'ENTRY-08-06-3');
+
+  const closurePanelSmartGlass = new Closure('Closure Panel Smart-Glass', 'ENTRY-08-06-5', {
+    id: 'ClosurePanelSmartGlass',
+    number: EndpointNumber(8_06_5),
+    movementDuration: 2000,
+    signaturePosition: 10_00,
+    tagList: [getSemtag(ClosureTag.Window)],
+  });
+  closurePanelSmartGlass.addPanel('Smart-Glass', [getSemtag(ClosurePanelTag.Lift, 'Opacity')], 'modulation', {
+    number: EndpointNumber(8_06_6),
+    modulationType: ClosureDimension.ModulationType.Opacity,
+  });
+  ep = closurePanelSmartGlass;
+  await registerDevice(ep, 'Closure Panel Smart-Glass', 'ENTRY-08-06-5');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
   await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');

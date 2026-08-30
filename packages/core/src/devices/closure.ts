@@ -315,6 +315,8 @@ export namespace MatterbridgeClosureControlServer {
     movementDuration = 0;
     /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
     calibrationDuration = 0;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
+    signaturePosition = 50_00;
   }
 }
 /* v8 ignore stop */
@@ -344,6 +346,8 @@ export interface ClosureOptions {
   movementDuration?: number;
   /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
   calibrationDuration?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
+  signaturePosition?: number;
   /** Enable the ClosureControl MotionLatching feature. Defaults to false. */
   motionLatching?: boolean;
   /** Enable the ClosureControl Speed feature. Defaults to false. */
@@ -400,6 +404,7 @@ export class Closure extends MatterbridgeEndpoint {
       latchControlModes,
       movementDuration = 0,
       calibrationDuration = 0,
+      signaturePosition = 50_00,
       motionLatching = false,
       speed = false,
       ventilation = false,
@@ -453,6 +458,7 @@ export class Closure extends MatterbridgeEndpoint {
       ...(motionLatching ? { latchControlModes: latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
       movementDuration,
       calibrationDuration,
+      signaturePosition,
     };
     this.behaviors.require(
       MatterbridgeClosureControlServer.with(
@@ -474,6 +480,16 @@ export class Closure extends MatterbridgeEndpoint {
    */
   getMainState(): ClosureControl.MainState | undefined {
     return this.getAttribute(ClosureControlServer, 'mainState');
+  }
+
+  /**
+   * Gets the simulated `signaturePosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Signature position.
+   *
+   * @returns {number | undefined} Current signature position.
+   */
+  getSignaturePosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'signaturePosition');
   }
 
   /**
@@ -638,11 +654,11 @@ export class Closure extends MatterbridgeEndpoint {
    * @param {string} name - Human-readable name of the panel endpoint.
    * @param {Semtag[]} tagList - The Closure Panel tagList (0x45) used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`, `ClosurePanelTag.Sliding`, `ClosurePanelTag.Rotate`).
    * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `lift` (ClosureDimension.Feature.Translation), `tilt` (ClosureDimension.Feature.Rotation) or `modulation` (ClosureDimension.Feature.Modulation).
-   * @param {ClosurePanelOptions} [options] - Optional initial ClosureDimension cluster state values.
+   * @param {ClosurePanelOptions} [options] - Optional endpoint number and initial ClosureDimension cluster state values.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
   addPanel(name: string, tagList: Semtag[], dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}): MatterbridgeEndpoint {
-    const panel = this.addChildDeviceType(name, closurePanel, { tagList });
+    const panel = this.addChildDeviceType(name, closurePanel, { number: options.number, tagList });
 
     createClosureDimensionClusterServer(panel, dimensionType, options);
 

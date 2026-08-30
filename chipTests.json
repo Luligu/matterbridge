@@ -1029,11 +1029,68 @@
       "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
     },
     {
-      "name": "ClosureControl attributes on ClosureComplete",
+      "name": "ClosureControl attributes on base Closure",
       "test": "TC_CLCTRL_2_1.py",
       "endpoint": 805,
-      "note": "Exercises PS, LT, SP, IS (branches per live FeatureMap read); no VT/PD/CL/PT/MO coverage.",
+      "note": "Exercises the default ClosureControl feature set on endpoint 805 with no optional features enabled.",
       "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl Calibrate command primary functionality on base Closure",
+      "test": "TC_CLCTRL_3_1.py",
+      "endpoint": 805,
+      "note": "Runs against the default ClosureControl feature set; Calibration-specific steps are skipped by the base PICS.",
+      "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command position functionality on base Closure",
+      "test": "TC_CLCTRL_4_1.py",
+      "endpoint": 805,
+      "note": "Exercises MoveTo position behavior on endpoint 805; LT/SP/VT/PD/CL optional sections are skipped by the base PICS.",
+      "args": ["--PICS /root/closure-control.pics", "--timeout 120"]
+    },
+    {
+      "name": "ClosureControl MoveTo command latching functionality on base Closure",
+      "test": "TC_CLCTRL_4_2.py",
+      "endpoint": 805,
+      "note": "Runs against the default ClosureControl feature set; latching-specific steps are skipped by the base PICS.",
+      "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command field sanity checks on base Closure",
+      "test": "TC_CLCTRL_4_3.py",
+      "endpoint": 805,
+      "note": "Exercises field constraint validation for the mandatory MoveTo position field; LT/SP checks are skipped by the base PICS.",
+      "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl MoveTo command CountdownTime functionality on base Closure",
+      "test": "TC_CLCTRL_4_4.py",
+      "endpoint": 805,
+      "note": "Exercises CountdownTime (A0000) timing and Stop-interrupt behavior on endpoint 805 with the base PICS.",
+      "args": ["--PICS /root/closure-control.pics", "--timeout 30"]
+    },
+    {
+      "name": "ClosureControl Stop command primary functionality on base Closure",
+      "test": "TC_CLCTRL_5_1.py",
+      "endpoint": 805,
+      "note": "Exercises Stop on endpoint 805; optional CL/PT/MO/IS sections are skipped by the base PICS.",
+      "resetBefore": true,
+      "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl event functionality on base Closure",
+      "test": "TC_CLCTRL_6_1.py",
+      "endpoint": 805,
+      "note": "Exercises ClosureControl events on endpoint 805 with optional LT/MO/IS sections skipped by the base PICS.",
+      "args": ["--PICS /root/closure-control.pics"]
+    },
+    {
+      "name": "ClosureControl attributes on ClosureComplete",
+      "test": "TC_CLCTRL_2_1.py",
+      "endpoint": 8054,
+      "note": "Exercises PS, LT, SP, IS (branches per live FeatureMap read); no VT/PD/CL/PT/MO coverage.",
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
       "name": "ClosureControl Calibrate command primary functionality on ClosureComplete",
@@ -1052,23 +1109,23 @@
     {
       "name": "ClosureControl MoveTo command latching functionality on ClosureComplete",
       "test": "TC_CLCTRL_4_2.py",
-      "endpoint": 805,
+      "endpoint": 8054,
       "note": "Exercises LT (latching), primary focus.",
-      "args": ["--PICS /root/closure-control.pics"]
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
       "name": "ClosureControl MoveTo command field sanity checks on ClosureComplete",
       "test": "TC_CLCTRL_4_3.py",
-      "endpoint": 805,
+      "endpoint": 8054,
       "note": "Exercises field constraint validation (CONSTRAINT_ERROR) for PS (Position), LT (Latch), and SP (Speed) MoveTo fields.",
-      "args": ["--PICS /root/closure-control.pics"]
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
       "name": "ClosureControl MoveTo command CountdownTime functionality on ClosureComplete",
       "test": "TC_CLCTRL_4_4.py",
-      "endpoint": 805,
+      "endpoint": 8054,
       "note": "Exercises CountdownTime (A0000) timing and Stop-interrupt behavior, plus LT.",
-      "args": ["--PICS /root/closure-control.pics", "--timeout 30"]
+      "args": ["--PICS /root/closure-control-complete.pics", "--timeout 30"]
     },
     {
       "name": "ClosureControl Stop command primary functionality on ClosureComplete",
@@ -1081,9 +1138,9 @@
     {
       "name": "ClosureControl event functionality on ClosureComplete",
       "test": "TC_CLCTRL_6_1.py",
-      "endpoint": 805,
+      "endpoint": 8054,
       "note": "Exercises the OperationalError/MovementCompleted/EngageStateChanged/SecureStateChanged events across PS, LT, MO, IS gating.",
-      "args": ["--PICS /root/closure-control.pics"]
+      "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
       "name": "FanControl mandatory functionality on Fan Complete",
