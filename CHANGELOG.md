@@ -54,7 +54,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `marked` to v.18.0.11.
 - [matterbridge]: Bump `oxfmt` to v.0.65.0.
 - [matterbridge]: Bump `oxlint` to v.1.80.0.
-- [thread]: Bump `@zip.js/zip.js` to v.2.8.60.
+- [matterbridge]: Bump `node-ansi-logger` to v.3.3.1.
+- [matterbridge]: Bump `node-persist-manager` to v.2.1.1.
+- [matterbridge]: Bump `express-rate-limit` to v.8.7.0.
+- [matterbridge]: Bump `multer` to v.2.3.0.
+- [matterbridge]: Bump `@zip.js/zip.js` to v.2.8.61.
 - [frontend]: Bump `frontend` version to v.3.5.10.
 - [frontend]: Bump `@testing-library/react` to v.16.3.3.
 - [frontend]: Bump `@types/node` to v.26.4.0.

@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@matter/main": "0.17.9",
-    "node-ansi-logger": "3.3.0"
+    "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {
     "@types/node": "26.4.0",
