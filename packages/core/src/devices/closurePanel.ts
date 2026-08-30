@@ -24,8 +24,10 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable unicorn/no-negated-condition */
 /* oxlint-disable typescript/no-misused-spread */
+/* oxlint-disable typescript/no-namespace */
 
 // @matter
+import type { MaybePromise } from '@matter/general';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { StatusResponse } from '@matter/types';
@@ -57,14 +59,43 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
  */
 export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
 
-/**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
- */
-export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
+const MatterbridgeClosureDimensionServerBase = ClosureDimensionServer.with(
   ClosureDimension.Feature.Positioning,
   ClosureDimension.Feature.MotionLatching,
   ClosureDimension.Feature.Speed,
-) {
+);
+
+/**
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * There is no real motor to wait on in the base implementation, so the built-in simulation timer that drives
+ * SetTarget/Step completion (`state.movementDuration`, in milliseconds) is disabled (`0`) by default — see the
+ * `MatterbridgeClosureDimensionServer.State` remarks.
+ *
+ * `initialize()` sets this knob to a CHIP-test-friendly value (`movementDuration = 2000`) under
+ * `MATTERBRIDGE_CHIP_TEST` only; production behavior (disabled) is otherwise unaffected. A real device
+ * implementation may also opt into the simulation directly by setting the same `state` value.
+ */
+export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimensionServerBase {
+  declare readonly state: MatterbridgeClosureDimensionServer.State;
+  declare protected internal: MatterbridgeClosureDimensionServer.Internal;
+
+  /**
+   * Enables the built-in SetTarget/Step movement simulation under MATTERBRIDGE_CHIP_TEST only; production
+   * behavior is unaffected (`movementDuration` stays 0, i.e. disabled, unless overridden by the real device
+   * implementation).
+   *
+   * @returns {MaybePromise} The result of the superclass initializer.
+   */
+  override initialize(): MaybePromise {
+    // v8 ignore next 2 - only enabled under MATTERBRIDGE_CHIP_TEST
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.state.movementDuration = 2000;
+    }
+    return super.initialize();
+  }
+
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -165,6 +196,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     if (matchesCurrentState) return;
 
     this.state.targetState = nextTarget;
+    this.scheduleMovement(nextTarget, currentState);
   };
 
   override step = async (request: ClosureDimension.StepRequest): Promise<void> => {
@@ -242,13 +274,87 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
     const previousTarget = this.state.targetState ?? {};
-    this.state.targetState = {
+    const nextTarget = {
       ...previousTarget,
       position: nextPosition,
       ...(this.features.speed && request.speed !== undefined ? { speed: request.speed } : null),
     };
+    this.state.targetState = nextTarget;
+    this.scheduleMovement(nextTarget, currentState);
+  };
+
+  /**
+   * Schedules (or cancels a pending, then schedules) the simulated convergence of `currentState` to
+   * `targetState`, per `movementDuration`.
+   *
+   * @remarks
+   * There is no real motor to wait on, so completion of a SetTarget/Step movement can optionally be simulated
+   * by `movementDuration`: `TargetState` is set synchronously on command receipt (by the caller), and
+   * `CurrentState` is updated this many milliseconds later, as if the panel had finished moving. A
+   * non-positive `movementDuration`, or no `currentState` to converge from, gates this off entirely — the
+   * server does nothing further, leaving completion (`CurrentState`) to whatever real device integration is
+   * wired up through the command handler forwarded at the top of `setTarget()`/`step()`.
+   *
+   * @param {ClosureDimension.DimensionState} targetState - The target state to converge `currentState` to.
+   * @param {ClosureDimension.DimensionState | null} currentState - The `currentState` read when the command was received.
+   * @returns {void}
+   */
+  private scheduleMovement(targetState: ClosureDimension.DimensionState, currentState: ClosureDimension.DimensionState | null): void {
+    // Cancel any movement still in flight from a previous command before (re)scheduling.
+    clearTimeout(this.internal.movementTimer);
+    if (currentState === null || this.state.movementDuration <= 0) {
+      this.internal.movementTimer = undefined;
+      return;
+    }
+    // Captured now because `this.state` can no longer be read once this command's transaction context has exited.
+    const previousState = currentState;
+    this.internal.movementTimer = setTimeout(() => {
+      this.internal.movementTimer = undefined;
+      void this.completeMovement(targetState, previousState);
+    }, this.state.movementDuration);
+  }
+
+  /**
+   * Simulates a SetTarget/Step movement completing: updates the `currentState` attribute to match `targetState`.
+   *
+   * @param {ClosureDimension.DimensionState} targetState - The target state the movement was simulating reaching.
+   * @param {ClosureDimension.DimensionState} previousState - The `currentState` captured when the movement was scheduled.
+   * @returns {Promise<void>} Resolves once the resulting attribute has been updated.
+   */
+  private completeMovement = async (targetState: ClosureDimension.DimensionState, previousState: ClosureDimension.DimensionState): Promise<void> => {
+    const endpoint = this.endpoint as MatterbridgeEndpoint;
+    await endpoint.setAttribute(ClosureDimensionServer, 'currentState', {
+      position: targetState.position ?? previousState.position,
+      ...(this.features.motionLatching ? { latch: targetState.latch ?? previousState.latch } : null),
+      ...(this.features.speed ? { speed: targetState.speed ?? previousState.speed } : null),
+    });
   };
 }
+
+/* v8 ignore start */
+export namespace MatterbridgeClosureDimensionServer {
+  export class Internal extends MatterbridgeClosureDimensionServerBase.Internal {
+    /** Pending timer that simulates completion of an in-progress SetTarget/Step; cancelled by Stop or a new SetTarget/Step. */
+    movementTimer?: NodeJS.Timeout;
+  }
+
+  /**
+   * Simulated timing knob for `setTarget()`/`step()`, in addition to the standard ClosureDimension attributes.
+   *
+   * @remarks
+   * There is no real motor to wait on, so completion of a movement can optionally be simulated by this fixed
+   * delay: `TargetState` is set synchronously on command receipt, and `CurrentState` is updated this many
+   * milliseconds later, as if the panel had finished moving. A non-positive value (the default) gates the
+   * handler off entirely — the server does nothing further after setting TargetState, leaving completion
+   * (`CurrentState`) to whatever real device integration is wired up through the command handler forwarded at
+   * the top of `setTarget()`/`step()`.
+   */
+  export class State extends MatterbridgeClosureDimensionServerBase.State {
+    /** Simulated duration, in milliseconds, that a SetTarget/Step operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
+    movementDuration = 0;
+  }
+}
+/* v8 ignore stop */
 
 export interface ClosurePanelOptions {
   /** Child endpoint number. */
@@ -267,6 +373,8 @@ export interface ClosurePanelOptions {
   speed?: boolean;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
+  /** Simulated duration, in milliseconds, that a SetTarget/Step operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
+  movementDuration?: number;
   /** Direction of the translation. Only used when `dimensionType` is `'lift'`. Defaults to Downward. */
   translationDirection?: ClosureDimension.TranslationDirection;
   /** Axis of the rotation. Only used when `dimensionType` is `'tilt'`. Defaults to CenteredHorizontal. */
@@ -305,6 +413,7 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
     resolution: Math.max(1, options.resolution ?? 100),
     stepValue: Math.max(1, options.stepValue ?? 100),
     ...(motionLatching ? { latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
+    movementDuration: options.movementDuration ?? 0,
   };
   if (dimensionType === 'lift') {
     endpoint.behaviors.require(

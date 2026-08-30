@@ -27,6 +27,7 @@
 /* oxlint-disable typescript/no-namespace */
 
 // @matter
+import type { MaybePromise } from '@matter/general';
 import { ClosureTag } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { type EndpointNumber, StatusResponse } from '@matter/types';
@@ -61,10 +62,36 @@ const MatterbridgeClosureControlServerBase = ClosureControlServer.with(
 
 /**
  * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * There is no real motor to wait on in the base implementation, so the two built-in simulation timers that
+ * drive MoveTo/Calibrate completion (`state.movementDuration`/`state.calibrationDuration`, both in
+ * milliseconds) are disabled (`0`) by default — see the `MatterbridgeClosureControlServer.State` remarks.
+ *
+ * `initialize()` sets both knobs to CHIP-test-friendly values (`movementDuration = 2000`,
+ * `calibrationDuration = 2000`) under `MATTERBRIDGE_CHIP_TEST` only; production behavior (both disabled) is
+ * otherwise unaffected. A real device implementation may also opt into either simulation directly by setting
+ * the same `state` values.
  */
 export class MatterbridgeClosureControlServer extends MatterbridgeClosureControlServerBase {
   declare readonly state: MatterbridgeClosureControlServer.State;
   declare protected internal: MatterbridgeClosureControlServer.Internal;
+
+  /**
+   * Enables the built-in MoveTo/Calibrate movement simulation under MATTERBRIDGE_CHIP_TEST only; production
+   * behavior is unaffected (`movementDuration`/`calibrationDuration` stay 0, i.e. disabled, unless overridden
+   * by the real device implementation).
+   *
+   * @returns {MaybePromise} The result of the superclass initializer.
+   */
+  override initialize(): MaybePromise {
+    // v8 ignore next 3 - only enabled under MATTERBRIDGE_CHIP_TEST
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.state.movementDuration = 2000;
+      this.state.calibrationDuration = 2000;
+    }
+    return super.initialize();
+  }
 
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);

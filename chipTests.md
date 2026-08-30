@@ -103,6 +103,51 @@ more sections behind a feature (Calibration, Ventilation, Pedestrian) that the p
 support, so on 805 those sections always skip via the test's own live `FeatureMap` read rather than actually
 exercising them — see "Known Issues" below.
 
+## Endpoint 8061
+
+Closure Panel Roller clusters:
+
+- ClosureControl (Positioning, MotionLatching and Speed features)
+
+## Endpoint 8062
+
+Closure Panel Roller's Roller panel (child of endpoint 8061) clusters:
+
+- ClosureDimension (Positioning and Translation features, no MotionLatching, no Speed)
+
+## Endpoint 8063
+
+Closure Panel Venetian clusters:
+
+- ClosureControl (Positioning, MotionLatching and Speed features)
+
+## Endpoint 8064
+
+Closure Panel Venetian's Venetian panel (child of endpoint 8063) clusters:
+
+- ClosureDimension (Positioning and Rotation features, no MotionLatching, no Speed)
+
+## Endpoint 8065
+
+Closure Panel Smart-Glass clusters:
+
+- ClosureControl (Positioning, MotionLatching and Speed features)
+
+## Endpoint 8066
+
+Closure Panel Smart-Glass's Smart-Glass panel (child of endpoint 8065) clusters:
+
+- ClosureDimension (Positioning and Modulation features, no MotionLatching, no Speed)
+
+Used by `TC_CLDIM_2_1`/`3_1`/`3_2`/`3_3`/`4_1`/`4_2` (endpoint 8062, the Translation shape, in
+`chipTests.json`) — see `docker/chip-test/closure-dimension-translation.pics`/
+`closure-dimension-rotation.pics`/`closure-dimension-modulation.pics` for the matching hand-verified PICS per
+shape (endpoints 8062/8064/8066 respectively), all with no MotionLatching and no Speed. `SetTarget`/`Step`
+simulate movement completion (`CurrentState` converging to `TargetState`) after `movementDuration` (2000ms on
+these demo panels, matching their parent `Closure`'s own `movementDuration`) — without it, any test step
+waiting for `CurrentState` to reach the requested target times out, since the base ClosureDimension server
+only ever writes `TargetState`.
+
 ## Endpoint 403
 
 Color Temperature Light clusters:

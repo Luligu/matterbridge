@@ -542,7 +542,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     signaturePosition: 50_00,
     tagList: [getSemtag(ClosureTag.Covering)],
   });
-  closurePanelRoller.addPanel('Roller', [getSemtag(ClosurePanelTag.Lift)], 'lift', { number: EndpointNumber(8_06_2) });
+  closurePanelRoller.addPanel('Roller', [getSemtag(ClosurePanelTag.Lift)], 'lift', { number: EndpointNumber(8_06_2), movementDuration: 2000 });
   ep = closurePanelRoller;
   await registerDevice(ep, 'Closure Panel Roller', 'ENTRY-08-06-1');
 
@@ -553,7 +553,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     signaturePosition: 20_00,
     tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
   });
-  closurePanelVenetian.addPanel('Venetian', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', { number: EndpointNumber(8_06_4) });
+  closurePanelVenetian.addPanel('Venetian', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', { number: EndpointNumber(8_06_4), movementDuration: 2000 });
   ep = closurePanelVenetian;
   await registerDevice(ep, 'Closure Panel Venetian', 'ENTRY-08-06-3');
 
@@ -567,6 +567,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   closurePanelSmartGlass.addPanel('Smart-Glass', [getSemtag(ClosurePanelTag.Lift, 'Opacity')], 'modulation', {
     number: EndpointNumber(8_06_6),
     modulationType: ClosureDimension.ModulationType.Opacity,
+    movementDuration: 2000,
   });
   ep = closurePanelSmartGlass;
   await registerDevice(ep, 'Closure Panel Smart-Glass', 'ENTRY-08-06-5');

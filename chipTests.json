@@ -1143,6 +1143,48 @@
       "args": ["--PICS /root/closure-control-complete.pics"]
     },
     {
+      "name": "ClosureDimension attributes on Closure Panel Roller",
+      "test": "TC_CLDIM_2_1.py",
+      "endpoint": 8062,
+      "note": "Exercises the default ClosureDimension attribute set (Positioning + Translation) on endpoint 8062 with no MotionLatching/Speed.",
+      "args": ["--PICS /root/closure-dimension-translation.pics"]
+    },
+    {
+      "name": "ClosureDimension SetTarget command positioning functionality on Closure Panel Roller",
+      "test": "TC_CLDIM_3_1.py",
+      "endpoint": 8062,
+      "note": "Exercises SetTarget position handling on endpoint 8062; Latching/Speed branches self-skip since the Roller panel doesn't implement those features.",
+      "args": ["--PICS /root/closure-dimension-translation.pics", "--timeout 120"]
+    },
+    {
+      "name": "ClosureDimension SetTarget command latching functionality on Closure Panel Roller",
+      "test": "TC_CLDIM_3_2.py",
+      "endpoint": 8062,
+      "note": "Runs against the base ClosureDimension feature set; the whole test body skips immediately because MotionLatching isn't supported by the Roller panel.",
+      "args": ["--PICS /root/closure-dimension-translation.pics"]
+    },
+    {
+      "name": "ClosureDimension SetTarget command field sanity checks on Closure Panel Roller",
+      "test": "TC_CLDIM_3_3.py",
+      "endpoint": 8062,
+      "note": "Exercises field constraint validation for SetTarget on endpoint 8062; Latching/Speed field checks self-skip since the Roller panel doesn't implement those features.",
+      "args": ["--PICS /root/closure-dimension-translation.pics", "--timeout 120"]
+    },
+    {
+      "name": "ClosureDimension Step command primary functionality on Closure Panel Roller",
+      "test": "TC_CLDIM_4_1.py",
+      "endpoint": 8062,
+      "note": "Exercises Step position handling on endpoint 8062; Latching/Speed branches self-skip since the Roller panel doesn't implement those features.",
+      "args": ["--PICS /root/closure-dimension-translation.pics", "--timeout 120"]
+    },
+    {
+      "name": "ClosureDimension Step command input sanity checks on Closure Panel Roller",
+      "test": "TC_CLDIM_4_2.py",
+      "endpoint": 8062,
+      "note": "Exercises Step field constraint validation (invalid Direction/Speed, NumberOfSteps=0) on endpoint 8062.",
+      "args": ["--PICS /root/closure-dimension-translation.pics"]
+    },
+    {
       "name": "FanControl mandatory functionality on Fan Complete",
       "test": "TC_FAN_2_1.py",
       "endpoint": 9024,

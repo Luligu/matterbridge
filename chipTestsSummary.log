@@ -1,12 +1,5 @@
-Chip tests run started at 2026-08-30T13:12:45.865Z
+Chip tests run started at 2026-08-30T16:14:14.659Z
 
-✅ ClosureControl attributes on base Closure (TC_CLCTRL_2_1.py)
-✅ ClosureControl Calibrate command primary functionality on base Closure (TC_CLCTRL_3_1.py)
-✅ ClosureControl MoveTo command position functionality on base Closure (TC_CLCTRL_4_1.py)
-✅ ClosureControl MoveTo command latching functionality on base Closure (TC_CLCTRL_4_2.py)
-✅ ClosureControl MoveTo command field sanity checks on base Closure (TC_CLCTRL_4_3.py)
-✅ ClosureControl MoveTo command CountdownTime functionality on base Closure (TC_CLCTRL_4_4.py)
-✅ ClosureControl Stop command primary functionality on base Closure (TC_CLCTRL_5_1.py)
-✅ ClosureControl event functionality on base Closure (TC_CLCTRL_6_1.py)
+❌ ClosureControl event functionality on base Closure (TC_CLCTRL_6_1.py)
 
-Summary: 8/8 tests passed.
+Summary: 0/1 tests passed.

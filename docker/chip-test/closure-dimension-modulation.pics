@@ -1,0 +1,16 @@
+# To run tests on ClosureDimension --PICS is required
+# Matches the ClosureDimension server on the Closure Panel Smart-Glass panel, endpoint 8066 (Modulation shape:
+# Positioning + Modulation features, no MotionLatching, no Speed) — see closure-dimension-translation.pics
+# (endpoint 8062, lift/Translation shape) and closure-dimension-rotation.pics (endpoint 8064, tilt/Rotation
+# shape) for the other two panel shapes, all likewise with no MotionLatching and no Speed.
+PICS_SDK_CI_ONLY=1
+CLDIM.S=1
+CLDIM.S.F00=1 # Positioning
+CLDIM.S.F07=1 # Modulation
+CLDIM.S.A0000=1 # CurrentState
+CLDIM.S.A0001=1 # TargetState
+CLDIM.S.A0002=1 # Resolution
+CLDIM.S.A0003=1 # StepValue
+CLDIM.S.A000A=1 # ModulationType
+CLDIM.S.C00.Rsp=1 # SetTarget
+CLDIM.S.C01.Rsp=1 # Step
