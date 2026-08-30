@@ -41,6 +41,7 @@ import {
   ElectricalMeasurementTag,
   PowerSourceTag,
   RefrigeratorTag,
+  SwitchesTag,
 } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
@@ -361,8 +362,35 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Pump Controller', 'SWITCH-06-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
   ep.createDefaultPowerSourceBatteryClusterServer();
+  await ep.addFixedLabel('composed', 'GenericSwitch');
+  // Each button combines a Switches-domain function tag with a Common Number position tag, per the Generic
+  // Switch device type section's guidance on applying tags from multiple namespaces (Matter spec § 21).
+  ep.addChildDeviceType('Button1', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_1),
+    tagList: [getSemtag(SwitchesTag.On), getSemtag(CommonNumberTag.One)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button2', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_2),
+    tagList: [getSemtag(SwitchesTag.Off), getSemtag(CommonNumberTag.Two)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button3', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_3),
+    tagList: [getSemtag(SwitchesTag.Up), getSemtag(CommonNumberTag.Three)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button4', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_4),
+    tagList: [getSemtag(SwitchesTag.Down), getSemtag(CommonNumberTag.Four)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
   await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06');
 
   // Chapter 7 - Sensor Devices
