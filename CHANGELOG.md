@@ -66,6 +66,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@vitejs/plugin-react` to v.6.1.1.
 - [frontend]: Bump `oxfmt` to v.0.65.0.
 - [frontend]: Bump `oxlint` to v.1.80.0.
+- [closureDimension]: Change `ClosurePanelOptions` defaults for `resolution` and `stepValue` to advertise whole-percent (1%) granularity by default instead of 0.01%, matching typical real closure APIs. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/620).
 
 ### Fixed
 

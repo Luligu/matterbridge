@@ -77,11 +77,15 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a closure panel device', () => {
-    device = createClosurePanelTestEndpoint('Closure Panel Test Device', 'CP123456', 'lift', { stepValue: 100 });
+    device = createClosurePanelTestEndpoint('Closure Panel Test Device', 'CP123456', 'lift');
     expect(device).toBeDefined();
     expect(device.id).toBe('ClosurePanelTestDevice-CP123456');
 
     expect(device.hasClusterServer(ClosureDimension.id)).toBeTruthy();
+    expect(device.getClusterServerOptions(ClosureDimension.id)).toMatchObject({
+      resolution: 100,
+      stepValue: 100,
+    });
   });
 
   test('add a closure panel device', async () => {
@@ -272,7 +276,7 @@ describe('Matterbridge ' + NAME, () => {
         'closureDimension(0x105).featureMap(0xfffc)={ positioning: true, motionLatching: true, unit: false, limitation: false, speed: true, translation: true, rotation: false, modulation: false }',
         'closureDimension(0x105).generatedCommandList(0xfff8)=[  ]',
         'closureDimension(0x105).latchControlModes(0xb)={ remoteLatching: true, remoteUnlatching: true }',
-        'closureDimension(0x105).resolution(0x2)=1',
+        'closureDimension(0x105).resolution(0x2)=100',
         'closureDimension(0x105).stepValue(0x3)=100',
         'closureDimension(0x105).targetState(0x1)={ position: 100, latch: true, speed: 0 }',
         'closureDimension(0x105).translationDirection(0x7)=0',
