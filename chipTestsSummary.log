@@ -1,28 +1,3 @@
-Chip tests run started at 2026-08-31T16:59:34.082Z
+Chip tests run started at 2026-08-31T17:05:47.467Z
 
 ✅ Thermostat attributes on Thermostat Auto (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Auto (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Auto (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 901 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Auto (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 901 implements Heating, Cooling, and AutoMode but not Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Auto (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 901 implements neither feature.
-✅ Thermostat attributes on Thermostat Heating (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Heating (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Heating (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9011 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Heating (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9011 is heating-only and does not implement Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Heating (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9011 implements neither feature.
-✅ Thermostat attributes on Thermostat Cooling (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Cooling (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Cooling (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9012 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Cooling (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9012 is cooling-only and does not implement Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Cooling (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9012 implements neither feature.
-
-Summary: 6/6 tests passed (9 skipped).

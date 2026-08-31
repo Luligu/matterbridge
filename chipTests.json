@@ -5,8 +5,7 @@
     "*.smokeCoAlarm.*",
     "*.DimmableLight.levelControl.*",
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
-    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode",
-    "*.Thermostat.thermostat.*"
+    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
