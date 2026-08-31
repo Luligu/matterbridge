@@ -1127,7 +1127,7 @@ describe('Server clusters and behaviors', () => {
     expect(presetCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: firstPresetRequest });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting preset to ${formatPresetHandleForLog(firstPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+      `MatterbridgeThermostatServer: setting preset to ${formatPresetHandleForLog(firstPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
     );
     expectPresetThermostatAttributes(null, 2100, 2500);
 
@@ -1135,7 +1135,7 @@ describe('Server clusters and behaviors', () => {
     expect(presetCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: secondPresetRequest });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting preset to ${formatPresetHandleForLog(secondPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+      `MatterbridgeThermostatServer: setting preset to ${formatPresetHandleForLog(secondPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
     );
     expectPresetThermostatAttributes(null, 1900, 2700);
 
@@ -1143,7 +1143,7 @@ describe('Server clusters and behaviors', () => {
     expect(presetCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: clearPresetRequest });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting preset to ${formatPresetHandleForLog(clearPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
+      `MatterbridgeThermostatServer: setting preset to ${formatPresetHandleForLog(clearPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
     );
     expectPresetThermostatAttributes(null, 1900, 2700);
 
@@ -1181,7 +1181,7 @@ describe('Server clusters and behaviors', () => {
     expect(scheduleCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSchedule, request: secondScheduleRequest });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting schedule to ${formatScheduleHandleForLog(secondScheduleRequest.scheduleHandle)} (endpoint ${thermostatSchedule.id}.${thermostatSchedule.number})`,
+      `MatterbridgeThermostatServer: setting schedule to ${formatScheduleHandleForLog(secondScheduleRequest.scheduleHandle)} (endpoint ${thermostatSchedule.id}.${thermostatSchedule.number})`,
     );
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
 
@@ -1251,14 +1251,14 @@ describe('Server clusters and behaviors', () => {
       // An EffectiveTime more than 24 hours in the future is rejected.
       const futureRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: nowSeconds + 24 * 60 * 60 + 1, expirationInMinutes: 30 };
       await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', futureRequest)).rejects.toThrow(
-        'EffectiveTime cannot be more than 24 hours in the future',
+        'requested EffectiveTime is more than 24 hours in the future',
       );
       expect(addCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: futureRequest });
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
 
       // An unknown PresetHandle is rejected, but the command is still forwarded to the command handler first.
       const invalidPresetRequest = { presetHandle: Uint8Array.from([9]), effectiveTime: nowSeconds, expirationInMinutes: 30 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', invalidPresetRequest)).rejects.toThrow('Requested PresetHandle not found');
+      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', invalidPresetRequest)).rejects.toThrow('requested PresetHandle not found');
       expect(addCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidPresetRequest });
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
 
@@ -1274,7 +1274,7 @@ describe('Server clusters and behaviors', () => {
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
       const overflowRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: nowSeconds, expirationInMinutes: 30 };
       await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', overflowRequest)).rejects.toThrow(
-        'Maximum number of thermostat suggestions reached',
+        'maximum number of thermostat suggestions reached',
       );
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
@@ -1297,7 +1297,7 @@ describe('Server clusters and behaviors', () => {
 
       // An unknown UniqueID is rejected, but the command is still forwarded to the command handler first.
       const invalidRemoveRequest = { uniqueId: 99 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', invalidRemoveRequest)).rejects.toThrow('Requested UniqueID not found');
+      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', invalidRemoveRequest)).rejects.toThrow('requested UniqueID not found');
       expect(removeCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidRemoveRequest });
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
 
@@ -1335,7 +1335,7 @@ describe('Server clusters and behaviors', () => {
       const currentSeconds = Math.floor(Date.now() / 1000);
       const rejectedRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: currentSeconds + 25 * 60 * 60, expirationInMinutes: 30 };
       await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', rejectedRequest)).rejects.toThrow(
-        'EffectiveTime cannot be more than 24 hours in the future',
+        'requested EffectiveTime is more than 24 hours in the future',
       );
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });

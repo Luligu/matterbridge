@@ -53,7 +53,8 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Initializing MatterbridgeWindowCoveringServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWindowCoveringServer: initializing (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    /* The device handles movement and stop on its own */
     this.internal.disableOperationalModeHandling = true;
     super.initialize();
   }
@@ -64,7 +65,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override async upOrOpen(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWindowCoveringServer: opening cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.upOrOpen', {
       command: 'upOrOpen',
       request: {},
@@ -73,10 +74,10 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called`);
+    device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await super.upOrOpen();
     device.log.debug(
-      `MatterbridgeWindowCoveringServer: upOrOpen result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)}`,
+      `MatterbridgeWindowCoveringServer: upOrOpen result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -86,7 +87,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override async downOrClose(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWindowCoveringServer: closing cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.downOrClose', {
       command: 'downOrClose',
       request: {},
@@ -95,10 +96,10 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called`);
+    device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await super.downOrClose();
     device.log.debug(
-      `MatterbridgeWindowCoveringServer: downOrClose result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)}`,
+      `MatterbridgeWindowCoveringServer: downOrClose result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -108,7 +109,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override async stopMotion(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeWindowCoveringServer: stopping cover (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('WindowCovering.stopMotion', {
       command: 'stopMotion',
       request: {},
@@ -117,10 +118,10 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called`);
+    device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await super.stopMotion();
     device.log.debug(
-      `MatterbridgeWindowCoveringServer: stopMotion result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)}`,
+      `MatterbridgeWindowCoveringServer: stopMotion result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -132,7 +133,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override async goToLiftPercentage(request: WindowCovering.GoToLiftPercentageRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeWindowCoveringServer: setting cover lift percentage to ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('WindowCovering.goToLiftPercentage', {
       command: 'goToLiftPercentage',
       request,
@@ -141,10 +144,12 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue}`);
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.goToLiftPercentage(request);
     device.log.debug(
-      `MatterbridgeWindowCoveringServer: goToLiftPercentage result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)}`,
+      `MatterbridgeWindowCoveringServer: goToLiftPercentage result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -156,7 +161,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   override async goToTiltPercentage(request: WindowCovering.GoToTiltPercentageRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeWindowCoveringServer: setting cover tilt percentage to ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('WindowCovering.goToTiltPercentage', {
       command: 'goToTiltPercentage',
       request,
@@ -165,18 +172,12 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue}`);
+    device.log.debug(
+      `MatterbridgeWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.goToTiltPercentage(request);
     device.log.debug(
-      `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)}`,
+      `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-  }
-
-  /**
-   * No-op: movement is handled by the device implementation.
-   */
-  /* v8 ignore next */
-  override handleMovement(): void {
-    // Do nothing here, as the device will handle the movement
   }
 }

@@ -1103,10 +1103,13 @@ describe('Matterbridge ' + NAME, () => {
     await coverLift.invokeBehaviorCommand('windowCovering', 'downOrClose');
     await coverLift.invokeBehaviorCommand('windowCovering', 'stopMotion');
     await coverLift.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: opening cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: closing cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: stopping cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`,
+    );
   });
 
   test('invoke MatterbridgeWindowCoveringServer with tilt commands', async () => {
@@ -1130,11 +1133,17 @@ describe('Matterbridge ' + NAME, () => {
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'stopMotion');
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`,
+    );
   });
 
   test('invoke MatterbridgeModeSelectServer commands', async () => {
@@ -1182,7 +1191,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((thermo.stateOf(thermostatServer) as any).acceptedCommandList).toEqual([0]);
     expect((thermo.stateOf(thermostatServer) as any).generatedCommandList).toEqual([]);
     await thermo.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermo.id}.${thermo.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeThermostatServer: setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermo.id}.${thermo.number})`,
+    );
   });
 
   test('invoke MatterbridgeValveConfigurationAndControlServer commands', async () => {
