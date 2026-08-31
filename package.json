@@ -415,6 +415,7 @@
     "chip:test:door-lock": "node scripts/run-matterbridge-chip-tests.mjs --test TC_DRLK_",
     "chip:test:pump": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PCC_",
     "chip:test:valve": "node scripts/run-matterbridge-chip-tests.mjs --test TC_VALCC_",
+    "chip:test:window-covering": "node scripts/run-matterbridge-chip-tests.mjs --test TC_WNCV_",
     "chip:test:operational-state": "node scripts/run-matterbridge-chip-tests.mjs --test TC_OPSTATE_",
     "chip:test:contact-sensor": "node scripts/run-matterbridge-chip-tests.mjs --test ContactSensor",
     "chip:test:light-sensor": "node scripts/run-matterbridge-chip-tests.mjs --test LightSensor",

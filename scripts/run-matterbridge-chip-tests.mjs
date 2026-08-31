@@ -543,9 +543,23 @@ function formatResultLines(result) {
   return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
 }
 
+// Formats a millisecond duration as "1h 02m 03s", omitting leading zero-valued units.
+function formatDuration(ms) {
+  const totalSeconds = Math.round(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (hours > 0 || minutes > 0) parts.push(`${minutes.toString().padStart(hours > 0 ? 2 : 1, '0')}m`);
+  parts.push(`${seconds.toString().padStart(hours > 0 || minutes > 0 ? 2 : 1, '0')}s`);
+  return parts.join(' ');
+}
+
 function runTests(nameFilter) {
   const tests = filterTests(allTests, nameFilter);
-  const startedAt = `Chip tests run started at ${new Date().toISOString()}\n\n`;
+  const startTime = Date.now();
+  const startedAt = `Chip tests run started at ${new Date(startTime).toISOString()}\n\n`;
   writeFileSync(logFile, startedAt);
   // Written incrementally (header now, one result appended as each test finishes, final status appended last)
   // rather than only at the end, so a run that's killed or times out partway through still leaves a readable,
@@ -635,8 +649,9 @@ function runTests(nameFilter) {
   const resultLines = results.flatMap(formatResultLines);
   const summary = `Summary: ${passedCount}/${executedResults.length} tests passed${skippedCount ? ` (${skippedCount} skipped)` : ''}.`;
 
-  appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n`);
-  appendFileSync(summaryLogFile, `\n${summary}\n`);
+  const endedAt = `Chip tests run ended at ${new Date().toISOString()} (total duration ${formatDuration(Date.now() - startTime)})\n`;
+  appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n${endedAt}`);
+  appendFileSync(summaryLogFile, `\n${summary}\n${endedAt}`);
   console.log(resultLines.join('\n'));
   console.log(summary);
 
