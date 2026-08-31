@@ -75,7 +75,7 @@ import { type WsMessageApiClustersResponse, type WsMessageApiResponse, type WsMe
 import { MbfWindow } from './MbfWindow';
 import { WebSocketContext } from './WebSocketProvider';
 
-const debugUpdate = false;
+const debugUpdate = false; // Set to true to enable debug logs for updates in DevicesIcons component
 const localDebug = false; // Set to true to enable debug logs only in DevicesIcons component
 
 // Lookup tables for enum values
@@ -681,53 +681,66 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  const stateUpdate = useCallback(
-    (msg: WsMessageApiStateUpdate) => {
-      /* v8 ignore next */
-      if (debug || debugUpdate || localDebug)
-        console.log(
-          `DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
-          msg.response,
-        );
-      const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
-      if (!updateDevice) {
-        /* v8 ignore next */
-        if (debug || debugUpdate || localDebug)
-          console.warn(
-            `DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`,
-          );
-        return;
-      }
-      const updatedCluster = clusters[updateDevice.serial]?.find(
-        (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
+  // Refs mirroring the latest devices/clusters state, so stateUpdate can read current values
+  // without depending on them, keeping its identity stable across state updates.
+  const devicesRef = useRef(devices);
+  useEffect(() => {
+    devicesRef.current = devices;
+  }, [devices]);
+
+  const clustersRef = useRef(clusters);
+  useEffect(() => {
+    clustersRef.current = clusters;
+  }, [clusters]);
+
+  const stateUpdate = useCallback((msg: WsMessageApiStateUpdate) => {
+    /* v8 ignore next */
+    if (debug || debugUpdate || localDebug) {
+      console.log(
+        `DevicesIcons received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
+        msg.response,
       );
-      if (!updatedCluster) {
-        /* v8 ignore next */
-        if (debug || debugUpdate || localDebug)
-          console.warn(
-            `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
-          );
-        return;
-      }
-      updatedCluster.attributeValue = String(msg.response.value);
-      updatedCluster.attributeLocalValue = msg.response.value;
-      setClusters({ ...clusters });
+    }
+    const devices = devicesRef.current;
+    const clusters = clustersRef.current;
+    const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+    if (!updateDevice) {
       /* v8 ignore next */
       if (debug || debugUpdate || localDebug)
-        console.log(
-          `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+        console.warn(
+          `DevicesIcons updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" number "${msg.response.number}" id "${msg.response.id}" not found in devices(${devices.length})`,
         );
-    },
-    [clusters, devices],
-  );
+      return;
+    }
+    const updatedCluster = clusters[updateDevice.serial]?.find(
+      (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
+    );
+    if (!updatedCluster) {
+      /* v8 ignore next */
+      if (debug || debugUpdate || localDebug)
+        console.warn(
+          `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
+        );
+      return;
+    }
+    updatedCluster.attributeValue = String(msg.response.value);
+    updatedCluster.attributeLocalValue = msg.response.value;
+    setClusters((prev) => ({ ...prev }));
+    /* v8 ignore next */
+    if (debug || debugUpdate || localDebug)
+      console.log(
+        `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+      );
+  }, []);
 
   const clusterUpdate = useCallback((msg: WsMessageApiClustersResponse) => {
     /* v8 ignore next */
-    if (debug || localDebug)
+    if (debug || localDebug) {
       console.log(
         `DevicesIcons received for device "${msg.response.deviceName}" serial "${msg.response.serialNumber}" deviceTypes (${msg.response.deviceTypes.length}) "${msg.response.deviceTypes.join(',')}" clusters (${msg.response.clusters.length}):`,
         msg.response,
       );
+    }
     if (msg.response.clusters.length === 0) return;
     const serial = msg.response.serialNumber;
     const newEndpoints: { endpoint: string; id: string; deviceTypes: number[] }[] = [];
@@ -736,7 +749,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       if (!newEndpoints.find((e) => e.endpoint === cluster.endpoint)) {
         newEndpoints.push({ endpoint: cluster.endpoint, id: cluster.id, deviceTypes: cluster.deviceTypes });
       }
-      if (['FixedLabel', 'Identify', 'Groups', 'PowerTopology'].includes(cluster.clusterName)) continue;
+      if (['FixedLabel', 'Identify', 'Groups', 'ScenesManagement', 'PowerTopology'].includes(cluster.clusterName)) continue;
       newClusters.push(cluster);
     }
     setEndpoints((prev) => ({ ...prev, [serial]: newEndpoints }));
@@ -748,7 +761,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
 
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
-      if (debug || localDebug) console.log('DevicesIcons received WebSocket Message:', msg);
+      // if (debug || localDebug) console.log('DevicesIcons received WebSocket Message:', msg);
       if (msg.method === 'refresh_required') {
         if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
         sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -823,7 +836,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
                   endpoint={endpoint.endpoint}
                   id={endpoint.id}
                   deviceType={deviceType}
-                  clusters={clusters[device.serial].filter((c) => c.endpoint === endpoint.endpoint)}
+                  clusters={(clusters[device.serial] ?? []).filter((c) => c.endpoint === endpoint.endpoint)}
                 />
               )),
             ),
