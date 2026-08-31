@@ -577,9 +577,9 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 9 - HVAC Device Types
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'Thermostat', number: EndpointNumber(9_01) });
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatAuto', number: EndpointNumber(9_01) });
   ep.createDefaultThermostatClusterServer(23, 21, 25, 2, 0, 47, 3, 50);
-  await registerDevice(ep, 'Thermostat', 'HVAC-09-01');
+  await registerDevice(ep, 'Thermostat Auto', 'HVAC-09-01');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatHeating', number: EndpointNumber(9_01_1) });
   ep.createDefaultHeatingThermostatClusterServer();

@@ -11,6 +11,8 @@
   "patches": [
     "TC_DeviceBasicComposition.py",
     "TC_FAN_3_2.py",
+    "TC_TSTAT_2_2.py",
+    "TC_TSTAT_Utils.py",
     "Test_TC_TSTAT_2_1.yaml",
     "Test_TC_OO_2_2.yaml",
     "Test_TC_OO_2_3.yaml",

@@ -332,42 +332,64 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
 | `Test_TC_DRLK_2_4.yaml`        | Replaces the upstream sample-app path's hardcoded 60-second `AutoRelockTime` and 70000 ms wait with typed `PIXIT.DRLK.AutoRelockTime` and `PIXIT.DRLK.AutoRelockWaitTimeMs` config values. Their defaults preserve upstream behavior; `chipTests.json` overrides them to 1 second and 6000 ms for endpoints 801 and 8011, retaining the expiry check while avoiding a 70-second suite delay.                                                                                                                                                                                                                               |
 | `TC_DRLK_2_5.py`               | Uses the configured test endpoint instead of hardcoded endpoint `1`, allowing the week day schedule test to target endpoint 8012.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `Test_TC_DRLK_2_6.yaml`        | Adds the missing `DRLK.S.F08 && DRLK.S.C1d.Rsp` guard to the final `ClearUser` cleanup. It also removes the invalid `OperatingModeEnum` value `5` step, which chip-tool rejects locally during enum encoding before the command reaches the DUT, so it cannot verify the expected `INVALID_COMMAND` response.                                                                                                                                                                                                                                                                                                              |
-| `Test_TC_DRLK_2_8.yaml`        | Removes the step that asks chip-tool to encode undefined `UserStatusEnum` value `5`. Encoding fails locally before a command reaches the DUT, so the step cannot test the expected `INVALID_COMMAND` response.                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `Test_TC_DRLK_2_8.yaml`        | Removes the step that asks chip-tool to encode undefined `UserStatusEnum` value `5`. Encoding fails locally before a command reaches the DUT, so the step cannot test the expected `INVALID_COMMAND` response. Master independently added a similar `SetUser` step with an out-of-range `UserType` value (`10`) elsewhere in the file — tried and reverted (2026-08-31): it hits the same local-encoding-rejection class of issue (`CONSTRAINT_ERROR` before the request reaches the DUT, so the DUT-side `INVALID_COMMAND` never gets exercised), failing the `DoorLockUserPINSchedules` run. Do not re-add it without a chip-tool/YAML-runner change that stops rejecting out-of-range enum literals locally. |
 | `TC_DRLK_2_9.py`               | Uses the configured test endpoint instead of hardcoded endpoint `1`. It also validates `InteractionModelError.clusterStatus` for Door Lock `DUPLICATE`/`OCCUPIED` responses and applies the test's existing duplicate-or-occupied sentinel consistently in both response and exception paths.                                                                                                                                                                                                                                                                                                                              |
 | `Test_TC_WASHERCTRL_2_2.yaml`  | Removes the upstream final step that writes undefined `NumberOfRinsesEnum` value `4`; CHIP rejects that value locally during enum encoding before any request reaches the DUT, so the step cannot test the expected `INVALID_IN_STATE` response.                                                                                                                                                                                                                                                                                                                                                                           |
 | `Test_TC_DRYERCTRL_2_1.yaml`   | Same class of issue as WASHERCTRL: omits the upstream write of undefined `DrynessLevelEnum` value `4`, which CHIP rejects locally during encoding before reaching the DUT, so the step cannot verify the expected `CONSTRAINT_ERROR`.                                                                                                                                                                                                                                                                                                                                                                                      |
 | `TC_MWOCTRL_2_2.py`            | Corrects the upstream `MaxPower < 100` assertion to `MaxPower <= 100`, as required by Matter 1.6 §8.13.5.5.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `TC_EEVSE_2_2.py`              | Targets the configured EVSE endpoint (1401) for the `UserMaximumChargeCurrent` write instead of the upstream test's hardcoded endpoint `1`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `TC_TSTAT_2_2.py`              | Not a local rewrite — copied verbatim from `connectedhomeip` **master** at commit [`4624ece9`](https://github.com/project-chip/connectedhomeip/commit/4624ece91bbb3ed9c576ae8321e6b809f1a189d8) (2026-08-10), unchanged since PR [#42326](https://github.com/project-chip/connectedhomeip/pull/42326) "Thermostat - Relocate setpoint logic to separate files" (merged 2026-07-17) rewrote it to drive a `ThermostatSimulator`/`ThermostatState` reference model (`TC_TSTAT_Utils.py`) instead of hand-computed, never-refreshed local variables. This replaces the older, pre-#42326 version baked into the `chip-test` image, whose hardcoded Step 6b expectation was simply wrong (see "Known Issues" below) and whose later steps relied on stale captured values that the correct DUT behavior happened to paper over. Not yet backported to a release branch or baked into the published `chip-test` image.                                                                       |
+| `TC_TSTAT_Utils.py`            | New file, not present in the `chip-test` image at all — `TC_TSTAT_2_2.py`'s reference-model dependency, introduced by the same PR [#42326](https://github.com/project-chip/connectedhomeip/pull/42326). Copied verbatim from `connectedhomeip` **master** at commit [`324f0aa3`](https://github.com/project-chip/connectedhomeip/commit/324f0aa34abb18b2ec0fafd53f7d3224500e92d7) (2026-07-17, the PR's merge commit). Defines `ThermostatState` (a full attribute snapshot) and `ThermostatSimulator` (mirrors the C++ `Setpoints::Fix()`/`ChangeLimits` reconciliation `TC_TSTAT_2_2.py` exercises), so `write_setpoint()`/`send_raise_lower_and_verify()` compute the expected outcome dynamically per-call instead of asserting fixed constants. Verified compatible with this image's baked `matter.testing` package (`EventSubscriptionHandler`, `TestStep`, `default_matter_test_main` all resolve).                                                                                              |
 
 # Known Issues
 
-- **Thermostat: `TC_TSTAT_2_2.py` exposes an AutoMode setpoint-limit validation gap on endpoint 901.** In
-  Step 6b, a `MinHeatSetpointLimit` write above `MinCoolSetpointLimit - MinSetpointDeadBand` should return
-  `CONSTRAINT_ERROR`, because the limit relationship cannot be restored by adjusting heating/cooling
-  setpoints. The server instead returns `SUCCESS` and moves `MinCoolSetpointLimit` upward with the accepted
-  `MinHeatSetpointLimit` value to preserve the deadband. The test remains enabled so the conformance gap is
-  visible; `resetBefore`/`resetAfter` clear its persisted Thermostat mutations around each run.
+- **Thermostat: `TC_TSTAT_2_2.py`'s upstream-baked (pre-rewrite) version had a false-positive at Step 6b —
+  not a Matterbridge/matter.js bug.** The old hardcoded test wrote `MinHeatSetpointLimit` to
+  `(existingCoolMinSetpoint - MinSetpointDeadBand) + 1` and asserted `CONSTRAINT_ERROR`, while later steps
+  (8c/9c/10a) relied on the server moving the *paired* `MinCoolSetpointLimit`/`MaxCoolSetpointLimit` to
+  restore the deadband and expected `SUCCESS`. Both expectations can't be right against the same mechanism,
+  and matter.js's `ThermostatServer#fixLimitDeadband` (moves the coupled limit within its own absolute
+  bounds, else `CONSTRAINT_ERROR`) matches the *reference* behavior: `connectedhomeip` master's rewritten
+  `TC_TSTAT_2_2.py` (below) — which uses a full simulator/reference model
+  (`docker/chip-test/patches/TC_TSTAT_Utils.py`'s `ThermostatSimulator`) instead of hand-computed constants —
+  confirms Step 6b (there, `target = minCoolSetpointLimit - minSetpointDeadBand + 10`) is expected to
+  **succeed** by moving the paired limit, exactly like matter.js already did. The old test's Step 6b
+  assertion was simply wrong (and its later steps' stale, never-refreshed local variables — e.g.
+  `MaxCoolSetpointLimitValue`, captured once near the start and never updated after 8c/9c write new values —
+  happened to keep working only because the "buggy" mechanism papered over the staleness). No matter.js
+  change was made; do not attempt to "fix" `#fixLimitDeadband` again without re-verifying against the
+  simulator-based test first.
 
   Matter 1.6 Application Cluster Specification,
   [§4.3.6 Setpoint Limits](chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.html):
 
-  > This imposes constraints which SHALL be maintained by any mechanism which modifies a limit or setpoint.
-  > Individual attribute descriptions detail the actions to be taken should a conflict arise while modifying
-  > the value.
-  >
   > If, and only if, the AUTO feature is supported, a deadband SHALL be maintained between Heating and Cooling
   > setpoints and limits:
   >
   > `MinHeatSetpointLimit <= (MinCoolSetpointLimit - MinSetpointDeadBand)`
 
-  Matter 1.6 Application Cluster Specification,
-  [§4.3.11.15 MinHeatSetpointLimit Attribute](chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.html):
+  **Fix applied:** replaced `docker/chip-test/patches/TC_TSTAT_2_2.py` with `connectedhomeip` master's
+  rewritten version (self-contained, driven by a `ThermostatState`/`ThermostatSimulator` reference model
+  instead of hardcoded/stale expected values) and added its dependency
+  `docker/chip-test/patches/TC_TSTAT_Utils.py` as a second patch entry in `chipTests.json`. Both files are
+  copied from `connectedhomeip` **master** as-is — the exact rewrite from PR
+  [#42326](https://github.com/project-chip/connectedhomeip/pull/42326) (merged 2026-07-17), see "Patched CHIP
+  tests" above for the exact commits — verified compatible with this image's baked `matter.testing` package
+  (`EventSubscriptionHandler`, `TestStep`, `default_matter_test_main` all resolve). Heat-only (endpoint 9011)
+  and Cool-only (endpoint 9012) now pass cleanly end-to-end with the new test.
 
-  > If an attempt is made to set this attribute to a value which conflicts with setpoint values then those
-  > setpoints SHALL be adjusted by the minimum amount to permit this attribute to be set to the desired value.
-  > If an attempt is made to set this attribute to a value which is not consistent with the constraints and
-  > cannot be resolved by modifying setpoints then a response with the status code CONSTRAINT_ERROR SHALL be
-  > returned.
+- **Thermostat: `TC_TSTAT_2_2.py` (new, simulator-based version) fails at Step 17 on endpoint 901 (Auto) —
+  a genuine, newly-surfaced issue, previously masked by the old test's Step 6b false failure.** After
+  `SetpointRaiseLower(Both, amount=-30)` at Step 17, `OccupiedCoolingSetpoint` reads back diverged from the
+  simulator's expected value (observed `2400`/`2451` vs. expected `2200`/`2250` across runs). Likely cause:
+  `ThermostatServer#setpointRaiseLower`'s `Both`-mode branch
+  (`node_modules/@matter/node/src/behaviors/thermostat/ThermostatServer.ts` ~line 171-196) computes a single
+  shared clamp-delta applied equally to both setpoints, without ever invoking the deadband-aware
+  reconciliation (`#fixSetpointRange`) that direct attribute writes and the `Heat`/`Cool`-only
+  `SetpointRaiseLower` branches use — while `TC_TSTAT_Utils.py`'s `ThermostatSimulator.raise_lower()`
+  independently clamps each setpoint to its own limits, then runs the same `fix()` reconciliation used for
+  attribute writes. Not yet investigated or fixed; the test remains enabled so the gap stays visible.
+  `resetBefore`/`resetAfter` clear its persisted Thermostat mutations around each run.
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
   a Matterbridge bug — patched locally (`docker/chip-test/patches/TC_DeviceBasicComposition.py`, see
