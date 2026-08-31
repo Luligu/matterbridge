@@ -1309,7 +1309,8 @@
       "name": "FanControl optional speed functionality on Fan Complete",
       "test": "TC_FAN_3_2.py",
       "endpoint": 9024,
-      "args": ["--PICS /root/fan-control-complete.pics"]
+      "args": ["--PICS /root/fan-control-complete.pics"],
+      "comment": "Waiting for matter.js to publish the fix"
     },
     {
       "name": "FanControl optional rock functionality on Fan Complete",
