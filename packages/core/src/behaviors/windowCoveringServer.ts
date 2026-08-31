@@ -77,6 +77,28 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       this.state.movementDuration = 3000;
     }
     super.initialize();
+    // oxlint-disable-next-line typescript/unbound-method
+    if (this.features.positionAwareLift) this.reactTo(this.events.currentPositionLiftPercent100ths$Changing, this.#syncLiftCurrentPositionPercentage);
+    // oxlint-disable-next-line typescript/unbound-method
+    if (this.features.positionAwareTilt) this.reactTo(this.events.currentPositionTiltPercent100ths$Changing, this.#syncTiltCurrentPositionPercentage);
+  }
+
+  /**
+   * Keeps `currentPositionLiftPercentage` equal to `currentPositionLiftPercent100ths / 100`.
+   *
+   * @param {number | null} percent100ths - The new lift position, in percent hundredths (0-10000), or null.
+   */
+  #syncLiftCurrentPositionPercentage(percent100ths: number | null): void {
+    this.state.currentPositionLiftPercentage = percent100ths === null ? percent100ths : Math.floor(percent100ths / 100);
+  }
+
+  /**
+   * Keeps `currentPositionTiltPercentage` equal to `currentPositionTiltPercent100ths / 100`.
+   *
+   * @param {number | null} percent100ths - The new tilt position, in percent hundredths (0-10000), or null.
+   */
+  #syncTiltCurrentPositionPercentage(percent100ths: number | null): void {
+    this.state.currentPositionTiltPercentage = percent100ths === null ? percent100ths : Math.floor(percent100ths / 100);
   }
 
   /**

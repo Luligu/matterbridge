@@ -689,6 +689,32 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultWindowCoveringClusterServer, createDefaultLiftTiltWindowCoveringClusterServer and createDefaultTiltWindowCoveringClusterServer with a null initial position', async () => {
+    const liftDevice = new MatterbridgeEndpoint(windowCovering, { id: 'LiftScreenNull' });
+    liftDevice.createDefaultWindowCoveringClusterServer(null);
+    await add(liftDevice);
+    expect(liftDevice.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBeNull();
+    expect(liftDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercentage')).toBeNull();
+
+    const liftTiltDevice = new MatterbridgeEndpoint(windowCovering, { id: 'TiltScreenNull' });
+    liftTiltDevice.createDefaultLiftTiltWindowCoveringClusterServer(null, null);
+    await add(liftTiltDevice);
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercentage')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercentage')).toBeNull();
+
+    const tiltDevice = new MatterbridgeEndpoint(windowCovering, { id: 'TiltOnlyScreenNull' });
+    tiltDevice.createDefaultTiltWindowCoveringClusterServer(null);
+    await add(tiltDevice);
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBeNull();
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercentage')).toBeNull();
+  });
+
   test('createDefaultThermostatClusterServer', async () => {
     const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoAuto' });
     expect(device).toBeDefined();

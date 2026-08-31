@@ -3023,7 +3023,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server with feature Lift and PositionAwareLift.
    *
-   * @param {number} positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.Rollershade). Must support feature Lift.
    * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.RollerShade). Must support feature Lift.
    * @param {number} movementDuration - Duration in milliseconds of the built-in lift movement simulation. Defaults to 0, which disables the simulation: `currentPositionLiftPercent100ths`/`operationalStatus` then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging `currentPositionLiftPercent100ths` to the target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
@@ -3034,15 +3034,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * configStatus attributes persists across restarts.
    */
   createDefaultWindowCoveringClusterServer(
-    positionPercent100ths?: number,
+    positionPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
     movementDuration: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type, // Must support feature Lift
-      numberOfActuationsLift: 0,
+      numberOfActuationsLift: 0, // persisted
       configStatus: {
+        // persisted
         operational: true,
         onlineReserved: false,
         liftMovementReversed: false,
@@ -3053,9 +3054,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support feature Lift
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-      targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+      targetPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed
+      currentPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed, persisted
+      currentPositionLiftPercentage: positionPercent100ths === null ? null : Math.floor(positionPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
       movementDuration,
     });
     return this;
@@ -3064,8 +3066,8 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
    *
-   * @param {number} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
-   * @param {number} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
    * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
    * @param {number} movementDuration - Duration in milliseconds of the built-in lift/tilt movement simulation. Defaults to 0, which disables the simulation: the current position/`operationalStatus` attributes then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging the current lift/tilt position to the respective target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
@@ -3076,8 +3078,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * configStatus attributes persists across restarts.
    */
   createDefaultLiftTiltWindowCoveringClusterServer(
-    positionLiftPercent100ths?: number,
-    positionTiltPercent100ths?: number,
+    positionLiftPercent100ths: number | null = 0,
+    positionTiltPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
     movementDuration: number = 0,
@@ -3091,9 +3093,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       ),
       {
         type, // Must support features Lift and Tilt
-        numberOfActuationsLift: 0,
-        numberOfActuationsTilt: 0,
+        numberOfActuationsLift: 0, // persisted
+        numberOfActuationsTilt: 0, // persisted
         configStatus: {
+          // persisted
           operational: true,
           onlineReserved: false,
           liftMovementReversed: false,
@@ -3104,11 +3107,13 @@ export class MatterbridgeEndpoint extends Endpoint {
         },
         operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
         endProductType, // Must support features Lift and Tilt
-        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-        targetPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        currentPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+        targetPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed
+        currentPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed, persisted
+        currentPositionLiftPercentage: positionLiftPercent100ths === null ? null : Math.floor(positionLiftPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
+        targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+        currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+        currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
         movementDuration,
       },
     );
@@ -3118,8 +3123,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
    *
-   * @param {number} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
-   * @param {number} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
    * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
    * @param {number} movementDuration - Duration in milliseconds of the built-in tilt movement simulation. Defaults to 0, which disables the simulation: `currentPositionTiltPercent100ths`/`operationalStatus` then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging `currentPositionTiltPercent100ths` to the target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
@@ -3130,15 +3134,16 @@ export class MatterbridgeEndpoint extends Endpoint {
    * configStatus attributes persists across restarts.
    */
   createDefaultTiltWindowCoveringClusterServer(
-    positionTiltPercent100ths?: number,
+    positionTiltPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorVenetianBlind,
     movementDuration: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
       type, // Must support features Lift and Tilt
-      numberOfActuationsTilt: 0,
+      numberOfActuationsTilt: 0, // persisted
       configStatus: {
+        // persisted
         operational: true,
         onlineReserved: false,
         liftMovementReversed: false,
@@ -3149,9 +3154,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support features Lift and Tilt
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-      targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+      targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+      currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+      currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
       movementDuration,
     });
     return this;

@@ -1351,6 +1351,23 @@ describe('Matterbridge ' + NAME, () => {
     }
   });
 
+  test('WindowCovering syncs currentPositionLift/TiltPercentage from the Percent100ths attributes, including back to null', async () => {
+    const percentageCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverPercentage' });
+    percentageCover.createDefaultLiftTiltWindowCoveringClusterServer();
+    percentageCover.addRequiredClusterServers();
+    expect(await server.add(percentageCover)).toBeDefined();
+
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', 5000);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionLiftPercentage')).toBe(50);
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', null);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionLiftPercentage')).toBeNull();
+
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', 5000);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionTiltPercentage')).toBe(50);
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', null);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionTiltPercentage')).toBeNull();
+  });
+
   test('invoke MatterbridgeModeSelectServer commands', async () => {
     expect(mode.behaviors.has(ModeSelectServer)).toBeTruthy();
     expect(mode.behaviors.has(MatterbridgeModeSelectServer)).toBeTruthy();

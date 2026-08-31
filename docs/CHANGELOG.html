@@ -155,14 +155,40 @@
 <h2 id="3108-dev-branch">[3.10.8] - Dev branch</h2>
 <h3 id="development-news">Development News</h3>
 <ul>
-<li>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matter behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</li>
-<li>[chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
-<li>[chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</li>
-<li>[chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</li>
-<li>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</li>
-<li>[chip]: ClosureDimension endpoint 8062 (Closure Panel Roller, Translation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
-<li>[chip]: ClusurePanelVenetian endpoint 8064 (Closure Panel Venetian, Rotation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
-<li>[chip]: ClosurePanelSmartGlass endpoint 8066 (Closure Panel Smart-Glass, Modulation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</li>
+<li><p>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
+</li>
+<li><p>[chip]: ThermostatHeating endpoint 9011 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
+</li>
+<li><p>[chip]: ThermostatCooling endpoint 9012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
+</li>
+<li><p>[chip]: ThermostatPresets endpoint 9013 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>Presets</code> feature (<code>TC_TSTAT_4_2.py</code>).</p>
+</li>
+<li><p>[chip]: ThermostatSchedules endpoint 9014 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>MatterScheduleConfiguration</code> feature.</p>
+</li>
+<li><p>[chip]: ThermostatSuggestions endpoint 9015 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>ThermostatSuggestions</code> feature (<code>TC_TSTAT_4_3.py</code>).</p>
+</li>
+<li><p>[chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</p>
+</li>
+<li><p>[chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>DoorLock</code> cluster.</p>
+</li>
+<li><p>[chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</p>
+</li>
+<li><p>[chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureControl</code> cluster.</p>
+</li>
+<li><p>[chip]: ClosureDimension endpoint 8062 (Closure Panel Roller, Translation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</p>
+</li>
+<li><p>[chip]: ClusurePanelVenetian endpoint 8064 (Closure Panel Venetian, Rotation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</p>
+</li>
+<li><p>[chip]: ClosurePanelSmartGlass endpoint 8066 (Closure Panel Smart-Glass, Modulation shape) CHIP conformance is green ✅ for the automated harness tests covering the <code>ClosureDimension</code> cluster.</p>
+</li>
+<li><p>[chip]: WindowCoveringLift endpoint 803 CHIP conformance is green ✅ for the automated harness tests covering the <code>WindowCovering</code> cluster.</p>
+</li>
+<li><p>[chip]: WindowCoveringTilt endpoint 8031 CHIP conformance is green ✅ for the automated harness tests covering the <code>WindowCovering</code> cluster.</p>
+</li>
+<li><p>[chip]: WindowCoveringLiftTilt endpoint 8032 CHIP conformance is green ✅ for the automated harness tests covering the <code>WindowCovering</code> cluster.</p>
+</li>
+<li><p>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matter behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</p>
+</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
@@ -176,6 +202,8 @@
 <li>[endpoint]: Add typed overloads for the <code>getClusterServerOptions()</code> typed surface when called with <code>Behavior.Type</code> or <code>ClusterType</code>.</li>
 <li>[buntest]: Add <code>wssTest.test.ts</code>, auditing a <code>wss</code> (WebSocket over TLS) mTLS handshake under Bun with both the global <code>WebSocket</code> and the <code>ws</code> package client, documenting that the <code>ws</code> client silently ignores top-level TLS options under Bun and requires them nested under <code>tls</code> (see <a href="./README-BUN.html">README-BUN.html</a> known issues, and upstream <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a>).</li>
 <li>[utils]: Add spec compliant <code>luxToMatter</code> and <code>matterToLux</code> utilities.</li>
+<li>[WindowCovering]: Add <code>createDefaultTiltWindowCoveringClusterServer()</code> to <code>MatterbridgeEndpoint</code>, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring <code>createDefaultWindowCoveringClusterServer()</code>.</li>
+<li>[WindowCovering]: <code>MatterbridgeWindowCoveringServer</code> can now simulate lift/tilt movement completion, opt-in via the new <code>state.movementDuration</code> (disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
