@@ -1,4 +1,4 @@
-Chip tests run started at 2026-08-31T17:14:52.529Z
+Chip tests run started at 2026-08-31T17:55:56.390Z
 
 ✅ Thermostat attributes on Thermostat Auto (Test_TC_TSTAT_2_1)
 ✅ Thermostat primary functionality on Thermostat Auto (TC_TSTAT_2_2.py)
@@ -31,5 +31,11 @@ Chip tests run started at 2026-08-31T17:14:52.529Z
 ✅ Thermostat Presets functionality on Thermostat Presets (TC_TSTAT_4_2.py)
 ⏭️ Thermostat Suggestions functionality on Thermostat Presets (TC_TSTAT_4_3.py)
    ↳ Requires the ThermostatSuggestions feature (TSTAT.S.F0A); endpoint 9013 implements Presets but not ThermostatSuggestions. The test hard-asserts the FeatureMap bit rather than self-skipping via PICS, so it fails outright instead of skipping cleanly if run.
+✅ Thermostat attributes on Thermostat Suggestions (Test_TC_TSTAT_2_1)
+✅ Thermostat primary functionality on Thermostat Suggestions (TC_TSTAT_2_2.py)
+⏭️ Thermostat functionality with client as DUT on Thermostat Suggestions (Test_TC_TSTAT_3_2)
+   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9015 implements only the Thermostat server role (TSTAT.S).
+✅ Thermostat Presets functionality on Thermostat Suggestions (TC_TSTAT_4_2.py)
+✅ Thermostat Suggestions functionality on Thermostat Suggestions (TC_TSTAT_4_3.py)
 
-Summary: 9/9 tests passed (11 skipped).
+Summary: 13/13 tests passed (12 skipped).

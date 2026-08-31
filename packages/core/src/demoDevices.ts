@@ -51,6 +51,7 @@ import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { Thermostat } from '@matter/types/clusters/thermostat';
 import { EndpointNumber } from '@matter/types/datatype';
 import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
 import { getErrorMessage } from '@matterbridge/utils/error';
@@ -598,7 +599,30 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   await registerDevice(ep, 'Thermostat Schedules', 'HVAC-09-01-4');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatSuggestions', number: EndpointNumber(9_01_5) });
-  ep.createDefaultThermostatSuggestionsClusterServer();
+  ep.createDefaultThermostatSuggestionsClusterServer(
+    23,
+    21,
+    25,
+    0,
+    0,
+    50,
+    0,
+    50,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    null,
+    [
+      { presetHandle: Uint8Array.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: true },
+      { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: true },
+    ],
+    // numberOfPresets per scenario left at 4 (above the 2 built-in presets above) so TC_TSTAT_4_2.py's AtomicRequest/Presets-write steps have room to add a preset on top of the pre-populated ones.
+    [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 4, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 4, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ],
+  );
   await registerDevice(ep, 'Thermostat Suggestions', 'HVAC-09-01-5');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Fan')!, bridgedNode, powerSource], { id: 'Fan', number: EndpointNumber(9_02) });

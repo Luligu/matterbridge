@@ -166,6 +166,15 @@ implement — `SetActivePresetRequest` and `AtomicRequest`/`AtomicResponse`, gat
 steps). Corrected against `FeatureMap: 291` (Heating+Cooling+AutoMode+Presets, verified via `chip-tool`) and
 re-verified end to end.
 
+## Endpoint 9015
+
+Thermostat Suggestions clusters:
+
+- Thermostat (Heating, Cooling, AutoMode, Presets, and ThermostatSuggestions features; no Occupancy, no
+  OutdoorTemperature)
+
+Configured with two real built-in presets (Occupied/Unoccupied, distinct `presetHandle`s)
+
 ## Endpoint 403
 
 Color Temperature Light clusters:
