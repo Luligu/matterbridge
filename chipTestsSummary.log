@@ -1,18 +1,29 @@
-Chip tests run started at 2026-08-31T13:03:04.197Z
+Chip tests run started at 2026-08-31T15:50:11.073Z
 
-❌ OffOnlyOnOff attributes on Cooktop (Test_TC_OO_2_1)
-❌ OffOnlyOnOff primary functionality on Cooktop (Test_TC_OO_2_2)
-   ↳ Patched locally so each state read inherits the PICS guard of the command that establishes its expected value, allowing the applicable Off path to run without asserting effects from unsupported On/Toggle commands.
-⏭️ OffOnlyOnOff secondary Lighting functionality on Cooktop (Test_TC_OO_2_3)
-   ↳ Not applicable: Test_TC_OO_2_3 requires the Lighting feature, which is mutually exclusive with the OffOnly feature implemented by endpoint 1308.
-⏭️ OffOnlyOnOff startup functionality on Cooktop (Test_TC_OO_2_4)
-   ↳ Not applicable: Test_TC_OO_2_4 requires the Lighting feature, which is mutually exclusive with the OffOnly feature implemented by endpoint 1308.
-❌ OffOnlyOnOff feature behavior on Cooktop (Test_TC_OO_2_6)
-   ↳ Patched locally to remove the contradictory On/Toggle command-support PICS guards so the test verifies their required UNSUPPORTED_COMMAND responses on an OffOnly server.
-⏭️ OffOnlyOnOff scenes management interaction on Cooktop (TC_OO_2_7.py)
-   ↳ Not applicable: TC-OO-2.7 requires a Scenes Management server, which endpoint 1308 does not expose.
-⏭️ OffOnlyOnOff functionality with client as DUT on Cooktop (Test_TC_OO_3_2_Simulated)
-   ↳ Not applicable: the Cooktop exposes an OnOff server and does not act as an OnOff client issuing commands to the test harness.
-❌ FixedLabel attributes and write protection on Cooktop (TC_FLABEL_2_1.py)
+✅ Thermostat attributes on Thermostat Auto (Test_TC_TSTAT_2_1)
+❌ Thermostat primary functionality on Thermostat Auto (TC_TSTAT_2_2.py)
+   ↳ Known matter.js conformance gap: an AutoMode MinHeatSetpointLimit write that violates the MinCoolSetpointLimit/MinSetpointDeadBand relationship returns Success and moves MinCoolSetpointLimit upward with the accepted MinHeatSetpointLimit instead of returning ConstraintError. resetBefore/resetAfter isolate the persisted setpoint mutations.
+⏭️ Thermostat functionality with client as DUT on Thermostat Auto (Test_TC_TSTAT_3_2)
+   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 901 implements only the Thermostat server role (TSTAT.S).
+⏭️ Thermostat Presets functionality on Thermostat Auto (TC_TSTAT_4_2.py)
+   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 901 implements Heating, Cooling, and AutoMode but not Presets.
+⏭️ Thermostat Suggestions functionality on Thermostat Auto (TC_TSTAT_4_3.py)
+   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 901 implements neither feature.
+❌ Thermostat attributes on Thermostat Heating (Test_TC_TSTAT_2_1)
+❌ Thermostat primary functionality on Thermostat Heating (TC_TSTAT_2_2.py)
+⏭️ Thermostat functionality with client as DUT on Thermostat Heating (Test_TC_TSTAT_3_2)
+   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9011 implements only the Thermostat server role (TSTAT.S).
+⏭️ Thermostat Presets functionality on Thermostat Heating (TC_TSTAT_4_2.py)
+   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9011 is heating-only and does not implement Presets.
+⏭️ Thermostat Suggestions functionality on Thermostat Heating (TC_TSTAT_4_3.py)
+   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9011 implements neither feature.
+❌ Thermostat attributes on Thermostat Cooling (Test_TC_TSTAT_2_1)
+❌ Thermostat primary functionality on Thermostat Cooling (TC_TSTAT_2_2.py)
+⏭️ Thermostat functionality with client as DUT on Thermostat Cooling (Test_TC_TSTAT_3_2)
+   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9012 implements only the Thermostat server role (TSTAT.S).
+⏭️ Thermostat Presets functionality on Thermostat Cooling (TC_TSTAT_4_2.py)
+   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9012 is cooling-only and does not implement Presets.
+⏭️ Thermostat Suggestions functionality on Thermostat Cooling (TC_TSTAT_4_3.py)
+   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9012 implements neither feature.
 
-Summary: 0/4 tests passed (4 skipped).
+Summary: 1/6 tests passed (9 skipped).

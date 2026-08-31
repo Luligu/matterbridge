@@ -404,6 +404,7 @@
     "chip:test:identify": "node scripts/run-matterbridge-chip-tests.mjs --test TC_I_",
     "chip:test:bridged-info": "node scripts/run-matterbridge-chip-tests.mjs --test TC_BRBINFO_",
     "chip:test:fan-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_FAN_",
+    "chip:test:thermostat": "node scripts/run-matterbridge-chip-tests.mjs --test TC_TSTAT_",
     "chip:test:on-off": "node scripts/run-matterbridge-chip-tests.mjs --test TC_OO_",
     "chip:test:level-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_LVL_",
     "chip:test:color-control": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CC_",

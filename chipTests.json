@@ -5,11 +5,13 @@
     "*.smokeCoAlarm.*",
     "*.DimmableLight.levelControl.*",
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
-    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
+    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode",
+    "*.Thermostat.thermostat.*"
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
     "TC_FAN_3_2.py",
+    "Test_TC_TSTAT_2_1.yaml",
     "Test_TC_OO_2_2.yaml",
     "Test_TC_OO_2_3.yaml",
     "Test_TC_OO_2_6.yaml",
@@ -1270,6 +1272,117 @@
       "args": ["--PICS /root/closure-dimension-modulation.pics"]
     },
     {
+      "name": "Thermostat attributes on Thermostat Auto",
+      "test": "Test_TC_TSTAT_2_1",
+      "endpoint": 901,
+      "args": ["--PICS /root/thermostat.auto.pics"]
+    },
+    {
+      "name": "Thermostat primary functionality on Thermostat Auto",
+      "test": "TC_TSTAT_2_2.py",
+      "endpoint": 901,
+      "args": ["--PICS /root/thermostat.auto.pics"],
+      "resetBefore": true,
+      "resetAfter": true,
+      "comment": "Known matter.js conformance gap: an AutoMode MinHeatSetpointLimit write that violates the MinCoolSetpointLimit/MinSetpointDeadBand relationship returns Success and moves MinCoolSetpointLimit upward with the accepted MinHeatSetpointLimit instead of returning ConstraintError. resetBefore/resetAfter isolate the persisted setpoint mutations."
+    },
+    {
+      "name": "Thermostat functionality with client as DUT on Thermostat Auto",
+      "test": "Test_TC_TSTAT_3_2",
+      "endpoint": 901,
+      "args": ["--PICS /root/thermostat.auto.pics"],
+      "skip": true,
+      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 901 implements only the Thermostat server role (TSTAT.S)."
+    },
+    {
+      "name": "Thermostat Presets functionality on Thermostat Auto",
+      "test": "TC_TSTAT_4_2.py",
+      "endpoint": 901,
+      "args": ["--PICS /root/thermostat.auto.pics"],
+      "skip": true,
+      "comment": "Requires the Presets feature (TSTAT.S.F08); endpoint 901 implements Heating, Cooling, and AutoMode but not Presets."
+    },
+    {
+      "name": "Thermostat Suggestions functionality on Thermostat Auto",
+      "test": "TC_TSTAT_4_3.py",
+      "endpoint": 901,
+      "args": ["--PICS /root/thermostat.auto.pics"],
+      "skip": true,
+      "comment": "Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 901 implements neither feature."
+    },
+    {
+      "name": "Thermostat attributes on Thermostat Heating",
+      "test": "Test_TC_TSTAT_2_1",
+      "endpoint": 9011,
+      "args": ["--PICS /root/thermostat.heat.pics"]
+    },
+    {
+      "name": "Thermostat primary functionality on Thermostat Heating",
+      "test": "TC_TSTAT_2_2.py",
+      "endpoint": 9011,
+      "args": ["--PICS /root/thermostat.heat.pics"]
+    },
+    {
+      "name": "Thermostat functionality with client as DUT on Thermostat Heating",
+      "test": "Test_TC_TSTAT_3_2",
+      "endpoint": 9011,
+      "args": ["--PICS /root/thermostat.heat.pics"],
+      "skip": true,
+      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9011 implements only the Thermostat server role (TSTAT.S)."
+    },
+    {
+      "name": "Thermostat Presets functionality on Thermostat Heating",
+      "test": "TC_TSTAT_4_2.py",
+      "endpoint": 9011,
+      "args": ["--PICS /root/thermostat.heat.pics"],
+      "skip": true,
+      "comment": "Requires the Presets feature (TSTAT.S.F08); endpoint 9011 is heating-only and does not implement Presets."
+    },
+    {
+      "name": "Thermostat Suggestions functionality on Thermostat Heating",
+      "test": "TC_TSTAT_4_3.py",
+      "endpoint": 9011,
+      "args": ["--PICS /root/thermostat.heat.pics"],
+      "skip": true,
+      "comment": "Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9011 implements neither feature."
+    },
+    {
+      "name": "Thermostat attributes on Thermostat Cooling",
+      "test": "Test_TC_TSTAT_2_1",
+      "endpoint": 9012,
+      "args": ["--PICS /root/thermostat.cool.pics"]
+    },
+    {
+      "name": "Thermostat primary functionality on Thermostat Cooling",
+      "test": "TC_TSTAT_2_2.py",
+      "endpoint": 9012,
+      "args": ["--PICS /root/thermostat.cool.pics"]
+    },
+    {
+      "name": "Thermostat functionality with client as DUT on Thermostat Cooling",
+      "test": "Test_TC_TSTAT_3_2",
+      "endpoint": 9012,
+      "args": ["--PICS /root/thermostat.cool.pics"],
+      "skip": true,
+      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9012 implements only the Thermostat server role (TSTAT.S)."
+    },
+    {
+      "name": "Thermostat Presets functionality on Thermostat Cooling",
+      "test": "TC_TSTAT_4_2.py",
+      "endpoint": 9012,
+      "args": ["--PICS /root/thermostat.cool.pics"],
+      "skip": true,
+      "comment": "Requires the Presets feature (TSTAT.S.F08); endpoint 9012 is cooling-only and does not implement Presets."
+    },
+    {
+      "name": "Thermostat Suggestions functionality on Thermostat Cooling",
+      "test": "TC_TSTAT_4_3.py",
+      "endpoint": 9012,
+      "args": ["--PICS /root/thermostat.cool.pics"],
+      "skip": true,
+      "comment": "Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9012 implements neither feature."
+    },
+    {
       "name": "FanControl mandatory functionality on Fan Complete",
       "test": "TC_FAN_2_1.py",
       "endpoint": 9024,
@@ -1379,7 +1492,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
-      "comment": "Requires 3 real DUT reboots (StartUpOnOff=0/1/2) with the OnOff value re-verified after each one actually restarts Matterbridge; this harness's single spawned test process with pre-piped stdin can't synchronize a real 'docker restart' with the test pausing at its UserPrompt step, so the assertion would be checked against a device that never actually rebooted."
+      "comment": "Requires 6 real DUT reboots (StartUpOnOff=0/1/2) with the OnOff value re-verified after each one actually restarts Matterbridge; this harness's single spawned test process with pre-piped stdin can't synchronize a real 'docker restart' with the test pausing at its UserPrompt step, so the assertion would be checked against a device that never actually rebooted."
     },
     {
       "name": "OnOff scenes management interaction on OnOffLight",

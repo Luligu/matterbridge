@@ -576,16 +576,9 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');
 
   // Chapter 9 - HVAC Device Types
-  //
-  // The base Thermostat/Fan/AirPurifier/ThermostatController endpoints below rely entirely on
-  // addRequiredClusters()'s default automated helper (invoked via registerDevice()) to create their
-  // required Thermostat/FanControl server clusters with sensible defaults, so no explicit
-  // createDefault*ClusterServer() call is needed for those. The five extra Thermostat endpoints exercise
-  // the other Thermostat feature-set helpers (Heating-only, Cooling-only, Presets, MatterScheduleConfiguration,
-  // ThermostatSuggestions) that createDefaultThermostatClusterServer()'s Heating+Cooling+AutoMode default
-  // doesn't cover, so those call the matching explicit helper before registerDevice() runs.
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'Thermostat', number: EndpointNumber(9_01) });
+  ep.createDefaultThermostatClusterServer(23, 21, 25, 2, 0, 47, 3, 50);
   await registerDevice(ep, 'Thermostat', 'HVAC-09-01');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatHeating', number: EndpointNumber(9_01_1) });

@@ -98,11 +98,6 @@ Closure Complete clusters:
 
 - ClosureControl (Positioning, MotionLatching, Speed, Ventilation, Pedestrian and Calibration features)
 
-Used by `TC_CLCTRL_3_1`/`4_1`/`5_1` instead of endpoint 805: those tests each gate real coverage of one or
-more sections behind a feature (Calibration, Ventilation, Pedestrian) that the plain endpoint 805 doesn't
-support, so on 805 those sections always skip via the test's own live `FeatureMap` read rather than actually
-exercising them — see "Known Issues" below.
-
 ## Endpoint 8061
 
 Closure Panel Roller clusters:
@@ -139,14 +134,23 @@ Closure Panel Smart-Glass's Smart-Glass panel (child of endpoint 8065) clusters:
 
 - ClosureDimension (Positioning and Modulation features, no MotionLatching, no Speed)
 
-Used by `TC_CLDIM_2_1`/`3_1`/`3_2`/`3_3`/`4_1`/`4_2`, run once per shape against each of endpoints
-8062/8064/8066 in `chipTests.json` — see `docker/chip-test/closure-dimension-translation.pics`/
-`closure-dimension-rotation.pics`/`closure-dimension-modulation.pics` for the matching hand-verified PICS per
-shape (endpoints 8062/8064/8066 respectively), all with no MotionLatching and no Speed. `SetTarget`/`Step`
-simulate movement completion (`CurrentState` converging to `TargetState`) after `movementDuration` (2000ms on
-these demo panels, matching their parent `Closure`'s own `movementDuration`) — without it, any test step
-waiting for `CurrentState` to reach the requested target times out, since the base ClosureDimension server
-only ever writes `TargetState`.
+## Endpoint 901
+
+Thermostat Auto clusters:
+
+- Thermostat (Heating, Cooling, and AutoMode features; 2°C deadband; heat limits 0–47°C; cool limits 3–50°C)
+
+## Endpoint 9011
+
+Thermostat Heating clusters:
+
+- Thermostat (Heating feature only)
+
+## Endpoint 9012
+
+Thermostat Cooling clusters:
+
+- Thermostat (Cooling feature only)
 
 ## Endpoint 403
 
@@ -319,6 +323,7 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TC_DeviceBasicComposition.py` | `test_TC_DESC_2_1`'s hand-coded `Descriptor.TagList` namespace whitelist stops at `0x43` and predates the eight Matter 1.6 namespaces (five Closure, three Commodity Tariff) our devices can emit, so a fully spec-compliant `Closure` tag (`namespaceID=0x44`) is rejected. See "Known Issues" below and [PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481) (open/unmerged).                                                                                                                                                                                                                         |
 | `TC_FAN_3_2.py`                | The exact-report-count assertion (`FanMode` emits exactly 3 subscription reports) is timing-fragile: matter.js's report engine legitimately coalesces rapid intermediate value changes into one report, which the Matter spec allows. Upstream already fixed this on master ([PR #73629](https://github.com/project-chip/connectedhomeip/pull/73629), merged 2026-08-25) by synchronizing on each report instead of loosening the assertion; our patch is that fixed master file copied in as-is, not a local rewrite — not yet backported to `v1.6-branch`/`v1.6.1-branch` or baked into the published `chip-test` image. |
+| `Test_TC_TSTAT_2_1.yaml`       | Uses the DUT's implemented `AbsMinHeatSetpointLimit`/`AbsMaxHeatSetpointLimit` for the corresponding `MinHeatSetpointLimit`/`MaxHeatSetpointLimit` checks instead of always applying the upstream 7°C/30°C fallback values. The hardcoded fallbacks remain for DUTs that do not implement the optional absolute-limit attributes. This permits endpoint 901's spec-valid 0°C minimum and endpoint 9011's spec-valid 50°C maximum while retaining the relative Matter 1.6 setpoint-limit checks.                                                                                                                            |
 | `Test_TC_OO_2_2.yaml`          | Adds the triggering command's PICS guard to each subsequent state read, so an unsupported `On`/`Toggle` command on an OffOnly endpoint (Cooktop, endpoint 1308) no longer asserts the state change that skipped command would have caused.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `Test_TC_OO_2_3.yaml`          | The final exact-zero `OffWaitTime` assertion is timing-fragile (a couple of seconds of container/round-trip latency can leave a small residual value on this specific step). The patch relaxes that one check from an exact `value: 0` to a `constraints: minValue 0, maxValue 2 * PIXIT.OO.MaxCommunicationTurnaround` range.                                                                                                                                                                                                                                                                                             |
 | `Test_TC_OO_2_6.yaml`          | Removes the same unsupported `On`/`Toggle` commands' contradictory PICS guards from the negative checks, so the test can verify the Matter 1.6-required `UNSUPPORTED_COMMAND` responses on an OffOnly endpoint.                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -335,6 +340,34 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
 | `TC_EEVSE_2_2.py`              | Targets the configured EVSE endpoint (1401) for the `UserMaximumChargeCurrent` write instead of the upstream test's hardcoded endpoint `1`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 # Known Issues
+
+- **Thermostat: `TC_TSTAT_2_2.py` exposes an AutoMode setpoint-limit validation gap on endpoint 901.** In
+  Step 6b, a `MinHeatSetpointLimit` write above `MinCoolSetpointLimit - MinSetpointDeadBand` should return
+  `CONSTRAINT_ERROR`, because the limit relationship cannot be restored by adjusting heating/cooling
+  setpoints. The server instead returns `SUCCESS` and moves `MinCoolSetpointLimit` upward with the accepted
+  `MinHeatSetpointLimit` value to preserve the deadband. The test remains enabled so the conformance gap is
+  visible; `resetBefore`/`resetAfter` clear its persisted Thermostat mutations around each run.
+
+  Matter 1.6 Application Cluster Specification,
+  [§4.3.6 Setpoint Limits](chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.html):
+
+  > This imposes constraints which SHALL be maintained by any mechanism which modifies a limit or setpoint.
+  > Individual attribute descriptions detail the actions to be taken should a conflict arise while modifying
+  > the value.
+  >
+  > If, and only if, the AUTO feature is supported, a deadband SHALL be maintained between Heating and Cooling
+  > setpoints and limits:
+  >
+  > `MinHeatSetpointLimit <= (MinCoolSetpointLimit - MinSetpointDeadBand)`
+
+  Matter 1.6 Application Cluster Specification,
+  [§4.3.11.15 MinHeatSetpointLimit Attribute](chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.html):
+
+  > If an attempt is made to set this attribute to a value which conflicts with setpoint values then those
+  > setpoints SHALL be adjusted by the minimum amount to permit this attribute to be set to the desired value.
+  > If an attempt is made to set this attribute to a value which is not consistent with the constraints and
+  > cannot be resolved by modifying setpoints then a response with the status code CONSTRAINT_ERROR SHALL be
+  > returned.
 
 - **Generic: `TC_DeviceBasicComposition.py`'s `test_TC_DESC_2_1` namespace whitelist predates Matter 1.6, not
   a Matterbridge bug — patched locally (`docker/chip-test/patches/TC_DeviceBasicComposition.py`, see
