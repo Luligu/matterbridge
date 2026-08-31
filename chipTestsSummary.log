@@ -1,4 +1,4 @@
-Chip tests run started at 2026-08-31T17:55:56.390Z
+Chip tests run started at 2026-08-31T18:02:39.289Z
 
 ✅ Thermostat attributes on Thermostat Auto (Test_TC_TSTAT_2_1)
 ✅ Thermostat primary functionality on Thermostat Auto (TC_TSTAT_2_2.py)
@@ -31,6 +31,14 @@ Chip tests run started at 2026-08-31T17:55:56.390Z
 ✅ Thermostat Presets functionality on Thermostat Presets (TC_TSTAT_4_2.py)
 ⏭️ Thermostat Suggestions functionality on Thermostat Presets (TC_TSTAT_4_3.py)
    ↳ Requires the ThermostatSuggestions feature (TSTAT.S.F0A); endpoint 9013 implements Presets but not ThermostatSuggestions. The test hard-asserts the FeatureMap bit rather than self-skipping via PICS, so it fails outright instead of skipping cleanly if run.
+✅ Thermostat attributes on Thermostat Schedules (Test_TC_TSTAT_2_1)
+✅ Thermostat primary functionality on Thermostat Schedules (TC_TSTAT_2_2.py)
+⏭️ Thermostat functionality with client as DUT on Thermostat Schedules (Test_TC_TSTAT_3_2)
+   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9014 implements only the Thermostat server role (TSTAT.S).
+⏭️ Thermostat Presets functionality on Thermostat Schedules (TC_TSTAT_4_2.py)
+   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9014 implements MatterScheduleConfiguration but not Presets.
+⏭️ Thermostat Suggestions functionality on Thermostat Schedules (TC_TSTAT_4_3.py)
+   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9014 implements neither feature.
 ✅ Thermostat attributes on Thermostat Suggestions (Test_TC_TSTAT_2_1)
 ✅ Thermostat primary functionality on Thermostat Suggestions (TC_TSTAT_2_2.py)
 ⏭️ Thermostat functionality with client as DUT on Thermostat Suggestions (Test_TC_TSTAT_3_2)
@@ -38,4 +46,4 @@ Chip tests run started at 2026-08-31T17:55:56.390Z
 ✅ Thermostat Presets functionality on Thermostat Suggestions (TC_TSTAT_4_2.py)
 ✅ Thermostat Suggestions functionality on Thermostat Suggestions (TC_TSTAT_4_3.py)
 
-Summary: 13/13 tests passed (12 skipped).
+Summary: 15/15 tests passed (15 skipped).

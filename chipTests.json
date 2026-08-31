@@ -1415,6 +1415,42 @@
       "comment": "Requires the ThermostatSuggestions feature (TSTAT.S.F0A); endpoint 9013 implements Presets but not ThermostatSuggestions. The test hard-asserts the FeatureMap bit rather than self-skipping via PICS, so it fails outright instead of skipping cleanly if run."
     },
     {
+      "name": "Thermostat attributes on Thermostat Schedules",
+      "test": "Test_TC_TSTAT_2_1",
+      "endpoint": 9014,
+      "args": ["--PICS /root/thermostat.schedules.pics"]
+    },
+    {
+      "name": "Thermostat primary functionality on Thermostat Schedules",
+      "test": "TC_TSTAT_2_2.py",
+      "endpoint": 9014,
+      "args": ["--PICS /root/thermostat.schedules.pics"]
+    },
+    {
+      "name": "Thermostat functionality with client as DUT on Thermostat Schedules",
+      "test": "Test_TC_TSTAT_3_2",
+      "endpoint": 9014,
+      "args": ["--PICS /root/thermostat.schedules.pics"],
+      "skip": true,
+      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9014 implements only the Thermostat server role (TSTAT.S)."
+    },
+    {
+      "name": "Thermostat Presets functionality on Thermostat Schedules",
+      "test": "TC_TSTAT_4_2.py",
+      "endpoint": 9014,
+      "args": ["--PICS /root/thermostat.schedules.pics"],
+      "skip": true,
+      "comment": "Requires the Presets feature (TSTAT.S.F08); endpoint 9014 implements MatterScheduleConfiguration but not Presets."
+    },
+    {
+      "name": "Thermostat Suggestions functionality on Thermostat Schedules",
+      "test": "TC_TSTAT_4_3.py",
+      "endpoint": 9014,
+      "args": ["--PICS /root/thermostat.schedules.pics"],
+      "skip": true,
+      "comment": "Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9014 implements neither feature."
+    },
+    {
       "name": "Thermostat attributes on Thermostat Suggestions",
       "test": "Test_TC_TSTAT_2_1",
       "endpoint": 9015,
