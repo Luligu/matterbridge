@@ -79,6 +79,10 @@ interface MixedApiDevices {
   cluster?: string;
   matter?: ApiMatter;
   selected?: boolean;
+  // 'device': from the authoritative /api/devices roster. 'select': a selectable-but-not-yet-registered
+  // device, known only from /api/select/devices for its plugin. Lets each response type patch only the
+  // rows it owns without touching or needing to know about the other's rows.
+  origin: 'device' | 'select';
 }
 
 interface HomeDevicesProps {
@@ -88,10 +92,15 @@ interface HomeDevicesProps {
 
 /**
  * Starts with sending api/plugins to get the list of plugins.
- * For each plugin, if enabled, loaded and started, send api/select/devices to get the list of selected devices.
- * Then send api/devices to get the list of all devices.
- * Mix both lists, giving priority to devices in the api/devices list.
- * The mixed list is displayed in a table.
+ * For each plugin, if enabled, loaded and started, send api/select/devices to get every device that plugin knows about,
+ * registered or not (this is how a not-yet-registered but selectable device is discovered).
+ * Then send api/devices to get the complete, authoritative list of all registered devices across every plugin.
+ * api/devices fully owns the registered-device rows: each response replaces them wholesale, since it is always the richer,
+ * up-to-date source for anything already registered. api/select/devices only ever adds rows for devices its response
+ * reports that aren't already covered by a registered-device row - in practice the not-yet-registered ones, since a
+ * registered device it also reports is already present via api/devices - and never touches a registered device's row.
+ * Live updates (device reachability, checkbox selection, matter info) patch a single row directly.
+ * The resulting list is displayed in a table.
  * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
  * The user can open the configuration page of a device if configUrl is set.
  * The user can open a QR code dialog if the device has matter information.
@@ -111,15 +120,13 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
   const [settings, setSettings] = useState<ApiSettings | null>(null); // Settings from /api/settings response
   const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
-  const [devices, setDevices] = useState<ApiDevicesWithSelected[]>([]);
-  const [selectDevices, setSelectDevices] = useState<ApiSelectDevicesWithSelected[]>([]);
-  const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table show these ones, mix of devices and selectDevices
+  const [registeredCount, setRegisteredCount] = useState(0); // Count from the last /api/devices response, for the footer.
+  const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table shows these: registered devices plus not-yet-registered selectable ones.
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
   const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   // Refs
   const uniqueId = useRef(getUniqueId());
-  const skipMixRef = useRef(false); // Set when a reachable update patches mixedDevices directly, to skip the next full remix
 
   const devicesColumns: MbfTableColumn<MixedApiDevices>[] = [
     {
@@ -330,26 +337,21 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.method === 'state_update') {
         if (msg.response.plugin && msg.response.serialNumber && msg.response.cluster.includes('BasicInformation') && msg.response.attribute === 'reachable') {
           if (debug || localDebug)
-            console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
-          setDevices((prev) => {
+            console.log(`HomeDevices updating device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}...`);
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          const reachable = msg.response.value as boolean;
+          setMixedDevices((prev) => {
             const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
             if (index < 0) {
               if (debug || localDebug) console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
               return prev;
             }
-            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-            prev[index] = { ...prev[index], reachable: msg.response.value as boolean };
-            return [...prev];
-          });
-          skipMixRef.current = true;
-          setMixedDevices((prev) => {
-            const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
-            if (index < 0) return prev;
             const next = [...prev];
-            // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-            next[index] = { ...next[index], reachable: msg.response.value as boolean };
+            next[index] = { ...next[index], reachable };
             return next;
           });
+          if (debug || localDebug)
+            console.log(`HomeDevices updated device reachability for plugin ${msg.response.plugin} serial ${msg.response.serialNumber} value ${msg.response.value}`);
         }
       }
       // Local messages
@@ -371,12 +373,12 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           }
           if (!running) return; // Do nothing until all plugins are loaded and started and not in error state
 
-          if (debug || localDebug) console.log(`HomeDevices reset plugins, devices and selectDevices`);
-          setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footer.
+          if (debug || localDebug) console.log(`HomeDevices reset plugins and mixedDevices, starting a fresh load cycle`);
+          setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footerLeft.
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
-          setDevices([]);
-          setSelectDevices([]);
+          setRegisteredCount(0);
+          setMixedDevices([]); // Full reload: start from a clean slate so a plugin that's no longer running doesn't leave stale rows behind.
           // Request all the devices
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
           if (debug || localDebug) console.log(`HomeDevices sent /api/devices`);
@@ -391,10 +393,18 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.id === uniqueId.current && msg.method === '/api/devices') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
         if (msg.response) {
-          for (const device of msg.response as ApiDevicesWithSelected[]) {
-            device.selected = isSelected(device);
-          }
-          setDevices(msg.response);
+          // /api/devices is the complete, authoritative roster: every response replaces all 'device'-origin
+          // rows wholesale (added, updated, or dropped to match exactly what it reports), while leaving
+          // 'select'-origin rows alone, except pruning any now superseded by a device that just got registered.
+          const registered: MixedApiDevices[] = (msg.response as ApiDevicesWithSelected[]).map((device) =>
+            Object.assign(device, { selected: isSelected(device), origin: 'device' as const }),
+          );
+          setRegisteredCount(registered.length);
+          setMixedDevices((prev) => {
+            const registeredKeys = new Set(registered.map((d) => `${d.pluginName}::${d.serial}`));
+            const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.pluginName}::${row.serial}`));
+            return [...registered, ...keptSelectOnly];
+          });
         }
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
         if (debug || localDebug)
@@ -403,12 +413,18 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
             msg.response,
           );
         if (msg.response && msg.response.length > 0) {
-          setSelectDevices((prevSelectDevices) => {
-            // Filter out devices not from the current plugin
-            const filteredDevices = prevSelectDevices.filter((device) => device.pluginName !== msg.response[0].pluginName);
-            // Add the new devices from the current plugin
-            const updatedDevices = msg.response.map((device) => ({ ...device, selected: isSelected(device) }));
-            return [...filteredDevices, ...updatedDevices];
+          const pluginName = msg.response[0].pluginName;
+          setMixedDevices((prev) => {
+            // This response lists every device the plugin knows, registered or not. Drop this plugin's
+            // previous select-only rows, then add back only the devices not already covered by a
+            // 'device'-origin row - the ones this plugin also reports as registered are skipped, since
+            // api/devices already has the richer, authoritative row for them.
+            const withoutStaleSelectOnly = prev.filter((row) => !(row.origin === 'select' && row.pluginName === pluginName));
+            const registeredRows = withoutStaleSelectOnly.filter((row) => row.origin === 'device');
+            const newSelectOnlyRows: MixedApiDevices[] = (msg.response as ApiSelectDevicesWithSelected[])
+              .filter((device) => !registeredRows.some((row) => row.pluginName === device.pluginName && row.serial.includes(device.serial)))
+              .map((device) => Object.assign(device, { selected: isSelected(device), origin: 'select' as const }));
+            return [...withoutStaleSelectOnly, ...newSelectOnlyRows];
           });
         }
       }
@@ -423,34 +439,6 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     };
   }, [addListener, removeListener, sendMessage, isSelected]);
 
-  // Mix devices and selectDevices
-  useEffect(() => {
-    if (skipMixRef.current) {
-      skipMixRef.current = false;
-      if (debug || localDebug) console.log('HomeDevices skipping remix, already patched mixedDevices directly');
-      return;
-    }
-    if (devices.length === 0 && selectDevices.length === 0) {
-      setMixedDevices([]);
-      return;
-    }
-    if (debug || localDebug) console.log(`HomeDevices mixing devices (${devices.length}) and selectDevices (${selectDevices.length})`);
-    const mixed: MixedApiDevices[] = [];
-    for (const device of devices) {
-      mixed.push(device);
-    }
-    for (const selectDevice of selectDevices) {
-      if (!devices.find((d) => d.pluginName === selectDevice.pluginName && d.serial.includes(selectDevice.serial))) {
-        // if (debug || localDebug) console.log('HomeDevices mixing selectDevice:', storedDevice.pluginName, storedDevice.serial);
-        mixed.push(selectDevice);
-      }
-    }
-    if (mixed.length > 0) {
-      setMixedDevices(mixed);
-      if (debug || localDebug) console.log(`HomeDevices mixed ${mixed.length} devices and selectDevices`);
-    }
-  }, [devices, selectDevices, setMixedDevices]);
-
   // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
@@ -463,28 +451,18 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
     if (debug || localDebug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
-    if (devices.findIndex((d) => d.pluginName === device.pluginName && d.serial === device.serial) < 0) {
-      if (debug || localDebug) console.warn(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in devices, trying in mixedDevices`);
-      setMixedDevices((prev) => {
-        const index = prev.findIndex((d) => d.pluginName === device.pluginName && d.serial === device.serial);
-        if (index < 0) {
-          console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in mixedDevices`);
-          return prev;
-        }
-        prev[index] = { ...prev[index], selected: event.target.checked };
-        return [...prev];
-      });
-    } else {
-      setDevices((prev) => {
-        const index = prev.findIndex((d) => d.pluginName === device.pluginName && d.serial === device.serial);
-        if (index < 0) {
-          console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in devices`);
-          return prev;
-        }
-        prev[index] = { ...prev[index], selected: event.target.checked };
-        return [...prev];
-      });
-    }
+    const selected = event.target.checked;
+    setMixedDevices((prev) => {
+      const index = prev.findIndex((d) => d.pluginName === device.pluginName && d.serial === device.serial);
+      // v8 ignore next -- just a logical check for index existence
+      if (index < 0) {
+        console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in mixedDevices`);
+        return prev;
+      }
+      const next = [...prev];
+      next[index] = { ...next[index], selected };
+      return next;
+    });
     if (event.target.checked) {
       sendMessage({
         id: uniqueId.current,
@@ -580,7 +558,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           getRowKey={getRowKey}
           rows={mixedDevices}
           columns={devicesColumns}
-          footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${devices.length.toString()}/${mixedDevices.length.toString()}`}
+          footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`}
           footerRight={restart ? 'Restart required' : ''}
         />
       </MbfWindow>
