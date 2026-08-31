@@ -550,14 +550,30 @@ class TC_TSTAT_2_2(MatterBaseTest):
 
         self.step("9b")
         if self.pics_guard(hasCoolingFeature and hasMaxCoolSetpointLimitAttribute):
-            await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.minCoolSetpointLimit - 10)
+            # Local correction: upstream writes self.state.minCoolSetpointLimit - 10 here, but the step's own
+            # documented intent (steps_TC_TSTAT_2_2's "9b" TestStep) is "value below the AbsMinCoolSetpointLimit",
+            # matching the analogous 8b/6b pattern (absMinCoolSetpointLimit - 10 / absMinHeatSetpointLimit - 1).
+            # minCoolSetpointLimit sits only slightly above absMinCoolSetpointLimit at this point in the flow, so
+            # the unpatched value lands exactly on (not below) the abs bound — a value the simulator's write()
+            # accepts (only abs bounds are range-checked before fix()) and reconciles by pulling
+            # MinCoolSetpointLimit down to match, cascading through the AutoMode deadband into the heat limits
+            # too. That corrupts every later "reset to default" step through 17/18, none of which re-read the
+            # limits they reset against.
+            await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.absMinCoolSetpointLimit - 10)
             await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.absMaxCoolSetpointLimit + 10)
 
         self.step("9c")
         if self.pics_guard(hasCoolingFeature and hasMaxCoolSetpointLimitAttribute):
             await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.absMaxCoolSetpointLimit)
             if self.pics_guard(hasAutoModeFeature):
-                await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.minCoolSetpointLimit)
+                # Local correction: upstream's hasAutoModeFeature branch here is byte-identical to its else
+                # branch (both write MaxCoolSetpointLimit = minCoolSetpointLimit), a copy-paste bug in
+                # connectedhomeip master's PR #42326 rewrite. Every analogous AutoMode branch elsewhere in this
+                # file (6c/7c/8c) instead computes a deadband-aware target; mirror that same symmetric pattern
+                # here: MaxCoolSetpointLimit >= MaxHeatSetpointLimit + MinSetpointDeadBand (Matter 1.6 §4.3.6),
+                # clamped to [minCoolSetpointLimit, absMaxCoolSetpointLimit].
+                target = max(self.state.minCoolSetpointLimit, min(self.state.absMaxCoolSetpointLimit, self.state.maxHeatSetpointLimit + self.state.minSetpointDeadBand))
+                await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, target)
             else:
                 await self.write_setpoint(cluster.Attributes.MaxCoolSetpointLimit, self.state.minCoolSetpointLimit)
 
