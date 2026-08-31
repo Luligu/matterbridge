@@ -1033,6 +1033,286 @@
       "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
     },
     {
+      "name": "WindowCovering attributes on WindowCovering Lift",
+      "test": "Test_TC_WNCV_2_1",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering ConfigStatus attribute on WindowCovering Lift",
+      "test": "Test_TC_WNCV_2_2",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering Mode attribute on WindowCovering Lift",
+      "test": "Test_TC_WNCV_2_3",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering Type attribute on WindowCovering Lift",
+      "test": "Test_TC_WNCV_2_4",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering EndProductType attribute on WindowCovering Lift",
+      "test": "Test_TC_WNCV_2_5",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_3_1",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_3_2",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_3_3",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command long-run verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_3_4",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command long-run verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_3_5",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_4_1",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_4_2",
+      "endpoint": 803,
+      "note": "Tilt-specific steps self-skip; this device has no Tilt feature.",
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command limits verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_4_3",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command limits verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_4_4",
+      "endpoint": 803,
+      "note": "Tilt-specific steps self-skip; this device has no Tilt feature.",
+      "args": ["--PICS /root/window-covering-lift.pics"]
+    },
+    {
+      "name": "WindowCovering positions storage verification on WindowCovering Lift",
+      "test": "Test_TC_WNCV_4_5",
+      "endpoint": 803,
+      "args": ["--PICS /root/window-covering-lift.pics"],
+      "skip": true,
+      "comment": "Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here."
+    },
+    {
+      "name": "WindowCovering attributes on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_2_1",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering ConfigStatus attribute on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_2_2",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering Mode attribute on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_2_3",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering Type attribute on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_2_4",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering EndProductType attribute on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_2_5",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_3_1",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_3_2",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_3_3",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command long-run verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_3_4",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command long-run verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_3_5",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_4_1",
+      "endpoint": 8031,
+      "note": "Lift-specific steps self-skip; this device has no Lift feature.",
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_4_2",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command limits verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_4_3",
+      "endpoint": 8031,
+      "note": "Lift-specific steps self-skip; this device has no Lift feature.",
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command limits verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_4_4",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering positions storage verification on WindowCovering Tilt",
+      "test": "Test_TC_WNCV_4_5",
+      "endpoint": 8031,
+      "args": ["--PICS /root/window-covering-tilt.pics"],
+      "skip": true,
+      "comment": "Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here."
+    },
+    {
+      "name": "WindowCovering attributes on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_2_1",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering ConfigStatus attribute on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_2_2",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering Mode attribute on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_2_3",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering Type attribute on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_2_4",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering EndProductType attribute on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_2_5",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_3_1",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_3_2",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_3_3",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering UpOrOpen command long-run verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_3_4",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering DownOrClose command long-run verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_3_5",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_4_1",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_4_2",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToLiftPercentage command limits verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_4_3",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering GoToTiltPercentage command limits verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_4_4",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"]
+    },
+    {
+      "name": "WindowCovering positions storage verification on WindowCovering Lift & Tilt",
+      "test": "Test_TC_WNCV_4_5",
+      "endpoint": 8032,
+      "args": ["--PICS /root/window-covering-lift-tilt.pics"],
+      "skip": true,
+      "comment": "Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here."
+    },
+    {
       "name": "ClosureControl attributes on base Closure",
       "test": "TC_CLCTRL_2_1.py",
       "endpoint": 805,

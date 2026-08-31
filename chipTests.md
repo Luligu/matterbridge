@@ -68,6 +68,24 @@ Aggregator clusters:
 
 - Descriptor
 
+## Endpoint 803
+
+Window Covering Lift clusters:
+
+- WindowCovering (Lift and PositionAwareLift features)
+
+## Endpoint 8031
+
+Window Covering Tilt clusters:
+
+- WindowCovering (Tilt and PositionAwareTilt features)
+
+## Endpoint 8032
+
+Window Covering Lift & Tilt clusters:
+
+- WindowCovering (Lift, Tilt, PositionAwareLift and PositionAwareTilt features)
+
 ## Endpoint 805
 
 Closure clusters:

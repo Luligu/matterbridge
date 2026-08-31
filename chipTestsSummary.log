@@ -1,49 +1,52 @@
-Chip tests run started at 2026-08-31T18:02:39.289Z
+Chip tests run started at 2026-08-31T21:46:55.330Z
 
-✅ Thermostat attributes on Thermostat Auto (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Auto (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Auto (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 901 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Auto (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 901 implements Heating, Cooling, and AutoMode but not Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Auto (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 901 implements neither feature.
-✅ Thermostat attributes on Thermostat Heating (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Heating (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Heating (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9011 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Heating (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9011 is heating-only and does not implement Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Heating (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9011 implements neither feature.
-✅ Thermostat attributes on Thermostat Cooling (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Cooling (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Cooling (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9012 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Cooling (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9012 is cooling-only and does not implement Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Cooling (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9012 implements neither feature.
-✅ Thermostat attributes on Thermostat Presets (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Presets (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Presets (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9013 implements only the Thermostat server role (TSTAT.S).
-✅ Thermostat Presets functionality on Thermostat Presets (TC_TSTAT_4_2.py)
-⏭️ Thermostat Suggestions functionality on Thermostat Presets (TC_TSTAT_4_3.py)
-   ↳ Requires the ThermostatSuggestions feature (TSTAT.S.F0A); endpoint 9013 implements Presets but not ThermostatSuggestions. The test hard-asserts the FeatureMap bit rather than self-skipping via PICS, so it fails outright instead of skipping cleanly if run.
-✅ Thermostat attributes on Thermostat Schedules (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Schedules (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Schedules (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9014 implements only the Thermostat server role (TSTAT.S).
-⏭️ Thermostat Presets functionality on Thermostat Schedules (TC_TSTAT_4_2.py)
-   ↳ Requires the Presets feature (TSTAT.S.F08); endpoint 9014 implements MatterScheduleConfiguration but not Presets.
-⏭️ Thermostat Suggestions functionality on Thermostat Schedules (TC_TSTAT_4_3.py)
-   ↳ Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9014 implements neither feature.
-✅ Thermostat attributes on Thermostat Suggestions (Test_TC_TSTAT_2_1)
-✅ Thermostat primary functionality on Thermostat Suggestions (TC_TSTAT_2_2.py)
-⏭️ Thermostat functionality with client as DUT on Thermostat Suggestions (Test_TC_TSTAT_3_2)
-   ↳ Requires the Thermostat client role (TSTAT.C); endpoint 9015 implements only the Thermostat server role (TSTAT.S).
-✅ Thermostat Presets functionality on Thermostat Suggestions (TC_TSTAT_4_2.py)
-✅ Thermostat Suggestions functionality on Thermostat Suggestions (TC_TSTAT_4_3.py)
+✅ WindowCovering attributes on WindowCovering Lift (Test_TC_WNCV_2_1)
+✅ WindowCovering ConfigStatus attribute on WindowCovering Lift (Test_TC_WNCV_2_2)
+✅ WindowCovering Mode attribute on WindowCovering Lift (Test_TC_WNCV_2_3)
+✅ WindowCovering Type attribute on WindowCovering Lift (Test_TC_WNCV_2_4)
+✅ WindowCovering EndProductType attribute on WindowCovering Lift (Test_TC_WNCV_2_5)
+✅ WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Lift (Test_TC_WNCV_3_1)
+✅ WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Lift (Test_TC_WNCV_3_2)
+✅ WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Lift (Test_TC_WNCV_3_3)
+✅ WindowCovering UpOrOpen command long-run verification on WindowCovering Lift (Test_TC_WNCV_3_4)
+✅ WindowCovering DownOrClose command long-run verification on WindowCovering Lift (Test_TC_WNCV_3_5)
+✅ WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Lift (Test_TC_WNCV_4_1)
+✅ WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Lift (Test_TC_WNCV_4_2)
+✅ WindowCovering GoToLiftPercentage command limits verification on WindowCovering Lift (Test_TC_WNCV_4_3)
+✅ WindowCovering GoToTiltPercentage command limits verification on WindowCovering Lift (Test_TC_WNCV_4_4)
+⏭️ WindowCovering positions storage verification on WindowCovering Lift (Test_TC_WNCV_4_5)
+   ↳ Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here.
+✅ WindowCovering attributes on WindowCovering Tilt (Test_TC_WNCV_2_1)
+✅ WindowCovering ConfigStatus attribute on WindowCovering Tilt (Test_TC_WNCV_2_2)
+✅ WindowCovering Mode attribute on WindowCovering Tilt (Test_TC_WNCV_2_3)
+✅ WindowCovering Type attribute on WindowCovering Tilt (Test_TC_WNCV_2_4)
+✅ WindowCovering EndProductType attribute on WindowCovering Tilt (Test_TC_WNCV_2_5)
+✅ WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Tilt (Test_TC_WNCV_3_1)
+✅ WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Tilt (Test_TC_WNCV_3_2)
+✅ WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Tilt (Test_TC_WNCV_3_3)
+✅ WindowCovering UpOrOpen command long-run verification on WindowCovering Tilt (Test_TC_WNCV_3_4)
+✅ WindowCovering DownOrClose command long-run verification on WindowCovering Tilt (Test_TC_WNCV_3_5)
+✅ WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Tilt (Test_TC_WNCV_4_1)
+✅ WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Tilt (Test_TC_WNCV_4_2)
+✅ WindowCovering GoToLiftPercentage command limits verification on WindowCovering Tilt (Test_TC_WNCV_4_3)
+✅ WindowCovering GoToTiltPercentage command limits verification on WindowCovering Tilt (Test_TC_WNCV_4_4)
+⏭️ WindowCovering positions storage verification on WindowCovering Tilt (Test_TC_WNCV_4_5)
+   ↳ Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here.
+✅ WindowCovering attributes on WindowCovering Lift & Tilt (Test_TC_WNCV_2_1)
+✅ WindowCovering ConfigStatus attribute on WindowCovering Lift & Tilt (Test_TC_WNCV_2_2)
+✅ WindowCovering Mode attribute on WindowCovering Lift & Tilt (Test_TC_WNCV_2_3)
+✅ WindowCovering Type attribute on WindowCovering Lift & Tilt (Test_TC_WNCV_2_4)
+✅ WindowCovering EndProductType attribute on WindowCovering Lift & Tilt (Test_TC_WNCV_2_5)
+✅ WindowCovering UpOrOpen command & OperationalStatus attribute verification on WindowCovering Lift & Tilt (Test_TC_WNCV_3_1)
+✅ WindowCovering DownOrClose command & OperationalStatus attribute verification on WindowCovering Lift & Tilt (Test_TC_WNCV_3_2)
+✅ WindowCovering StopMotion command & OperationalStatus attribute verification on WindowCovering Lift & Tilt (Test_TC_WNCV_3_3)
+✅ WindowCovering UpOrOpen command long-run verification on WindowCovering Lift & Tilt (Test_TC_WNCV_3_4)
+✅ WindowCovering DownOrClose command long-run verification on WindowCovering Lift & Tilt (Test_TC_WNCV_3_5)
+✅ WindowCovering GoToLiftPercentage command long-run verification on WindowCovering Lift & Tilt (Test_TC_WNCV_4_1)
+✅ WindowCovering GoToTiltPercentage command long-run verification on WindowCovering Lift & Tilt (Test_TC_WNCV_4_2)
+✅ WindowCovering GoToLiftPercentage command limits verification on WindowCovering Lift & Tilt (Test_TC_WNCV_4_3)
+✅ WindowCovering GoToTiltPercentage command limits verification on WindowCovering Lift & Tilt (Test_TC_WNCV_4_4)
+⏭️ WindowCovering positions storage verification on WindowCovering Lift & Tilt (Test_TC_WNCV_4_5)
+   ↳ Verifies position persistence across a reboot via SystemCommands.Reboot, a chip-tool pseudo-cluster (AccessoryServerBridge) that reboots a reference app the test harness launched itself. It cannot reboot our externally-running container, so this test can never exercise the reboot it depends on here.
 
-Summary: 15/15 tests passed (15 skipped).
+Summary: 42/42 tests passed (3 skipped).

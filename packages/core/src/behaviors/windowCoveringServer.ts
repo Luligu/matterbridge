@@ -39,9 +39,13 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * drives lift/tilt completion (`state.movementDuration`, in milliseconds) is disabled (`0`) by default — see the
  * `MatterbridgeWindowCoveringServer.State` remarks.
  *
- * `initialize()` sets `movementDuration` to a CHIP-test-friendly value (`2000`) under `MATTERBRIDGE_CHIP_TEST`
+ * `initialize()` sets `movementDuration` to a CHIP-test-friendly value (`3000`) under `MATTERBRIDGE_CHIP_TEST`
  * only; production behavior (disabled) is otherwise unaffected. A real device implementation may also opt into
  * the simulation directly by setting the same `state` value.
+ *
+ * `3000` (rather than an even `2000`/`2500`) is deliberate: `Test_TC_WNCV_3_3` waits a fixed 2000ms after
+ * UpOrOpen/DownOrClose and then asserts the covering is still mid-motion, so `movementDuration` must clear
+ * that checkpoint with margin rather than race it.
  */
 export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   WindowCovering.Feature.Lift,
@@ -70,7 +74,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     this.internal.disableOperationalModeHandling = true;
     // v8 ignore next 3 - only enabled under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      this.state.movementDuration = 2000;
+      this.state.movementDuration = 3000;
     }
     super.initialize();
   }
