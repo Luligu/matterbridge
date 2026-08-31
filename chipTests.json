@@ -1283,10 +1283,7 @@
       "name": "Thermostat primary functionality on Thermostat Auto",
       "test": "TC_TSTAT_2_2.py",
       "endpoint": 901,
-      "args": ["--PICS /root/thermostat.auto.pics"],
-      "resetBefore": true,
-      "resetAfter": true,
-      "comment": "Known matter.js conformance gap: an AutoMode MinHeatSetpointLimit write that violates the MinCoolSetpointLimit/MinSetpointDeadBand relationship returns Success and moves MinCoolSetpointLimit upward with the accepted MinHeatSetpointLimit instead of returning ConstraintError. resetBefore/resetAfter isolate the persisted setpoint mutations."
+      "args": ["--PICS /root/thermostat.auto.pics"]
     },
     {
       "name": "Thermostat functionality with client as DUT on Thermostat Auto",
