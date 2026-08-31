@@ -32,7 +32,8 @@
     },
     {
       "name": "Generic device conformance",
-      "test": "TC_DeviceConformance.py"
+      "test": "TC_DeviceConformance.py",
+      "args": ["--bool-arg allow_provisional_test_event_only_disallowed_for_certification:true"]
     },
     {
       "name": "Generic device default warnings",

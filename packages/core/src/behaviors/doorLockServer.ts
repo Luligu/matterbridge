@@ -239,15 +239,14 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     });
     device.log.debug(`MatterbridgeDoorLockServer: setCredential called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
-    const auth = this.auth;
     // Matter 1.6.0 § 5.2.10.21.1: Return DUPLICATE if CredentialData duplicates another credential of the same CredentialType.
-    if (auth.isDuplicateCredential(request.credential.credentialType, request.credentialData, request.credential.credentialIndex)) {
+    if (this.auth.isDuplicateCredential(request.credential.credentialType, request.credentialData, request.credential.credentialIndex)) {
       throw new DoorLock.DuplicateError(
         `MatterbridgeDoorLockServer: credential data duplicates another credential of the same type (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
     // Matter 1.6.0 § 5.2.10.21.1: Return OCCUPIED if an Add operation targets an occupied CredentialIndex.
-    if (request.operationType === DoorLock.DataOperationType.Add && auth.findCredential(request.credential.credentialType, request.credential.credentialIndex)) {
+    if (request.operationType === DoorLock.DataOperationType.Add && this.auth.findCredential(request.credential.credentialType, request.credential.credentialIndex)) {
       throw new DoorLock.OccupiedError(
         `MatterbridgeDoorLockServer: add operation targets an occupied credential index (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );

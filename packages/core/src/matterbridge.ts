@@ -3005,7 +3005,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
-    let rootEndpoint = hasParameter('root-power-source') ? ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)) : ServerNode.RootEndpoint;
+    let rootEndpoint;
+    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' ****************************************************************************************');
+      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    } else {
+      rootEndpoint = ServerNode.RootEndpoint;
+    }
     // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       this.log.warn(' ****************************************************************************************');

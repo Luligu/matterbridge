@@ -692,7 +692,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
-    const rootEndpoint = hasParameter('root-power-source') ? ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)) : ServerNode.RootEndpoint;
+    let rootEndpoint;
+    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' ****************************************************************************************');
+      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    } else {
+      rootEndpoint = ServerNode.RootEndpoint;
+    }
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration

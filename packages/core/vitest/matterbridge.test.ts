@@ -430,6 +430,7 @@ describe('Matterbridge', () => {
     expect(invalidServerNode.state.powerSource.order).toBe(0);
     expect(invalidServerNode.state.powerSource.endpointList).toEqual([]);
     expect(invalidServerNode.state.powerSource.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(' * Adding the PowerSource cluster server to the root endpoint.                           *');
     expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid discriminator 4096 for server node Matterbridge. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',
