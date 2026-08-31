@@ -664,6 +664,8 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
   );
 }
 
+const MemoizedDevice = memo(Device);
+
 interface DevicesIconsProps {
   filterPlugins: string;
   filterDevices: string;
@@ -810,8 +812,6 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       if (debug || localDebug) console.log('DevicesIcons useEffect online unmounted');
     };
   }, [online, sendMessage]);
-
-  const MemoizedDevice = memo(Device);
 
   const normalizedPlugin = filterPlugins?.trim().toLowerCase();
   const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
