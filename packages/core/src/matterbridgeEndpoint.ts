@@ -3110,6 +3110,45 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
+   *
+   * @param {number} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
+   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks mode attributes is writable and persists across restarts.
+   * currentPositionTiltPercent100ths persists across restarts.
+   * configStatus attributes persists across restarts.
+   */
+  createDefaultTiltWindowCoveringClusterServer(
+    positionTiltPercent100ths?: number,
+    type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
+    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorVenetianBlind,
+  ): this {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
+      type, // Must support features Lift and Tilt
+      numberOfActuationsTilt: 0,
+      configStatus: {
+        operational: true,
+        onlineReserved: false,
+        liftMovementReversed: false,
+        liftPositionAware: false,
+        tiltPositionAware: true,
+        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+      },
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      endProductType, // Must support features Lift and Tilt
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
+      targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+    });
+    return this;
+  }
+
+  /**
    * Sets the window covering lift target position as the current position and stops the movement.
    *
    */

@@ -63,6 +63,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [endpoint]: Add typed overloads for the `getClusterServerOptions()` typed surface when called with `Behavior.Type` or `ClusterType`.
 - [buntest]: Add `wssTest.test.ts`, auditing a `wss` (WebSocket over TLS) mTLS handshake under Bun with both the global `WebSocket` and the `ws` package client, documenting that the `ws` client silently ignores top-level TLS options under Bun and requires them nested under `tls` (see [README-BUN.md](./README-BUN.md) known issues, and upstream [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396)).
 - [utils]: Add spec compliant `luxToMatter` and `matterToLux` utilities.
+- [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
+- [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
 
 ### Changed
 

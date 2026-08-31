@@ -653,6 +653,42 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultTiltWindowCoveringClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(windowCovering, { id: 'TiltOnlyScreen' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTiltWindowCoveringClusterServer();
+    expect(device.hasAttributeServer('WindowCovering', 'type')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'operationalStatus')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'mode')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionTiltPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionTiltPercent100ths')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(WindowCovering.id, 'type')).toBe(WindowCovering.WindowCoveringType.TiltBlindTiltOnly);
+    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.InteriorVenetianBlind);
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(0);
+    expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(0);
+    expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+
+    await device.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', 50, device.log);
+    await device.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', 50, device.log);
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(50);
+
+    await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 2`));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
   test('createDefaultThermostatClusterServer', async () => {
     const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoAuto' });
     expect(device).toBeDefined();
