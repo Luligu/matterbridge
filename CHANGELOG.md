@@ -38,6 +38,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
 - [chip]: ThermostatHeating endpoint 9011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
 - [chip]: ThermostatCooling endpoint 9012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
+- [chip]: ThermostatPresets endpoint 9013 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `Presets` feature (`TC_TSTAT_4_2.py`).
 - [chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
 - [chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
 - [chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.

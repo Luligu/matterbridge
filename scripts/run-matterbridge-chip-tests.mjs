@@ -106,12 +106,19 @@
  * reference that same test without the extension. Applied once by start(), right after the container comes
  * up — not reapplied by resetContainerState()'s restart, since that only restarts the matterbridge process
  * and never touches the container's filesystem.
+ *
+ * start() also copies every docker/chip-test/*.pics file over the same-named file under /root/ in the
+ * container, right alongside applying "patches" — the image already bakes in its own copy of each file at
+ * build time (see §1 of the CHIP-test harness rules), but rebuilding and republishing the image is far more
+ * expensive than a local .pics edit, so this keeps a freshly-started container always in sync with whatever
+ * is checked in locally, the same way "patches" does for test files, without needing a manual `docker cp`
+ * after every --start.
  */
 
 /* eslint-disable no-console */
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -127,6 +134,9 @@ const summaryLogFile = resolve(root, 'chipTestsSummary.log');
 // remotePythonTestingDir/remoteCertificationDir in the container by applyPatches() — see the "patches" doc
 // comment above.
 const patchesDir = resolve(root, 'docker/chip-test/patches');
+// Local source of the hand-verified PICS files (see §1 of the CHIP-test harness rules), copied over the
+// same-named file under /root/ in the container by copyPicsFiles() — see the "patches" doc comment above.
+const picsDir = resolve(root, 'docker/chip-test');
 const remotePythonTestingDir = '/root/connectedhomeip/src/python_testing';
 const remoteCertificationDir = '/root/connectedhomeip/src/app/tests/suites/certification';
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
@@ -257,6 +267,7 @@ function start() {
 
   waitForContainerReady(startedAt);
   applyPatches();
+  copyPicsFiles();
   console.log('Chip-test container ready.');
 }
 
@@ -269,6 +280,18 @@ function applyPatches() {
     const localPath = join(patchesDir, patch);
     const remoteDir = patch.endsWith('.py') ? remotePythonTestingDir : remoteCertificationDir;
     runOrFail('docker', ['cp', localPath, `${containerName}:${remoteDir}/${patch}`]);
+  }
+}
+
+// Copies every docker/chip-test/*.pics file over the same-named file under /root/ in the container, so a
+// freshly-started container always picks up local .pics edits without a separate manual `docker cp` step —
+// see the "patches" doc comment above.
+function copyPicsFiles() {
+  const picsFiles = readdirSync(picsDir).filter((name) => name.endsWith('.pics'));
+  for (const picsFile of picsFiles) {
+    console.log(`Copying PICS file ${picsFile}...`);
+    const localPath = join(picsDir, picsFile);
+    runOrFail('docker', ['cp', localPath, `${containerName}:/root/${picsFile}`]);
   }
 }
 

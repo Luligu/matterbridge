@@ -5,7 +5,8 @@
     "*.smokeCoAlarm.*",
     "*.DimmableLight.levelControl.*",
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
-    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
+    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode",
+    "*.Thermostat*.thermostat.*"
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
@@ -1379,6 +1380,43 @@
       "args": ["--PICS /root/thermostat.cool.pics"],
       "skip": true,
       "comment": "Requires the Presets and ThermostatSuggestions features (TSTAT.S.F08 and TSTAT.S.F0A); endpoint 9012 implements neither feature."
+    },
+    {
+      "name": "Thermostat attributes on Thermostat Presets",
+      "test": "Test_TC_TSTAT_2_1",
+      "endpoint": 9013,
+      "args": ["--PICS /root/thermostat.auto.preset.pics"]
+    },
+    {
+      "name": "Thermostat primary functionality on Thermostat Presets",
+      "test": "TC_TSTAT_2_2.py",
+      "endpoint": 9013,
+      "args": ["--PICS /root/thermostat.auto.preset.pics"]
+    },
+    {
+      "name": "Thermostat functionality with client as DUT on Thermostat Presets",
+      "test": "Test_TC_TSTAT_3_2",
+      "endpoint": 9013,
+      "args": ["--PICS /root/thermostat.auto.preset.pics"],
+      "skip": true,
+      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9013 implements only the Thermostat server role (TSTAT.S)."
+    },
+    {
+      "name": "Thermostat Presets functionality on Thermostat Presets",
+      "test": "TC_TSTAT_4_2.py",
+      "endpoint": 9013,
+      "args": ["--PICS /root/thermostat.auto.preset.pics"],
+      "resetBefore": true,
+      "resetAfter": true,
+      "comment": "Mutates the persisted Presets list (add/remove/modify entries via AtomicRequest); resetBefore/resetAfter isolate those mutations so the test is repeatable and doesn't leak state into later runs."
+    },
+    {
+      "name": "Thermostat Suggestions functionality on Thermostat Presets",
+      "test": "TC_TSTAT_4_3.py",
+      "endpoint": 9013,
+      "args": ["--PICS /root/thermostat.auto.preset.pics"],
+      "skip": true,
+      "comment": "Requires the ThermostatSuggestions feature (TSTAT.S.F0A); endpoint 9013 implements Presets but not ThermostatSuggestions. The test hard-asserts the FeatureMap bit rather than self-skipping via PICS, so it fails outright instead of skipping cleanly if run."
     },
     {
       "name": "FanControl mandatory functionality on Fan Complete",

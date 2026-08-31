@@ -152,6 +152,20 @@ Thermostat Cooling clusters:
 
 - Thermostat (Cooling feature only)
 
+## Endpoint 9013
+
+Thermostat Presets clusters:
+
+- Thermostat (Heating, Cooling, AutoMode, and Presets features; no Occupancy, no OutdoorTemperature)
+
+`docker/chip-test/thermostat.auto.preset.pics` pre-existed but was unused and out of sync with the actual
+endpoint config (declared `TSTAT.S.F02`/`A0002`/`A0013`/`A0014` Occupancy support and `A0001`
+OutdoorTemperature, none of which `createDefaultPresetsThermostatClusterServer()`'s no-arg call in
+`demoDevices.ts` enables; was also missing `TSTAT.S.C06.Rsp`/`TSTAT.S.Cfe.Rsp`, which Matterbridge does
+implement — `SetActivePresetRequest` and `AtomicRequest`/`AtomicResponse`, gating most of `TC_TSTAT_4_2.py`'s
+steps). Corrected against `FeatureMap: 291` (Heating+Cooling+AutoMode+Presets, verified via `chip-tool`) and
+re-verified end to end.
+
 ## Endpoint 403
 
 Color Temperature Light clusters:
