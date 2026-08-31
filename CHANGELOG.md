@@ -83,6 +83,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [Closure]: Fix Calibration slipping into the default ClosureControl feature map and command list; the Calibration feature and Calibrate command are now advertised only when the `calibration` option is enabled. Thanks Ludovic BOUÉ.
 - [Closure]: Fix `secureState` staying frozen at its initial value on `MoveTo` completion for a Closure without the MotionLatching feature; it now tracks `Position` (secure only when FullyClosed) as required by the Application Cluster Specification, and `SecureStateChanged` fires accordingly.
 - [frontend]: Fix `HomeDevices` remixing the whole devices/selectDevices list (and rendering twice) on every single device reachability `state_update`; a reachable-only update now patches the affected row in `mixedDevices` directly instead of rebuilding the merged list.
+- [frontend]: Fix `DevicesIcons` tearing down and re-registering its WebSocket listener on every single `state_update`; `stateUpdate` now reads the current `devices`/`clusters` state through refs instead of closing over them, keeping its identity stable so the listener effect no longer remounts on every message.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

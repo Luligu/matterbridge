@@ -266,6 +266,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       setDeviceName(null);
       return;
     }
+    /* v8 ignore next */
     if (debug || localDebug)
       console.log(`DevicesTable handleDeviceClick: selected device "${row.name}" with uniqueId "${row.uniqueId}", plugin "${row.pluginName}", endpoint "${row.endpoint}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
