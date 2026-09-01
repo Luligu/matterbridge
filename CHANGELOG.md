@@ -69,6 +69,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: Add spec compliant `luxToMatter` and `matterToLux` utilities.
 - [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
 - [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [waterTankLevelMonitoring]: Add `createDefaultWaterTankLevelMonitoringClusterServer()` to `MatterbridgeEndpoint`, backed by a new `MatterbridgeWaterTankLevelMonitoringServer` behavior, mirroring `createDefaultHepaFilterMonitoringClusterServer()`/`createDefaultActivatedCarbonFilterMonitoringClusterServer()` (Resource Monitoring family: Condition, Warning, ReplacementProductList features, `resetCondition` command). No Matterbridge device type declares this cluster yet, as the only Matter device type that lists it (Humidifier/Dehumidifier) is planned for Matter 1.7.
 
 ### Changed
 
