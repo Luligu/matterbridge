@@ -242,6 +242,83 @@ export interface ElectricalEnergyTariffOptions {
   /** The current electricity supply conditions. Defaults to `null` (unknown). § 9.13.6.2. */
   currentConditions?: ElectricalGridConditions.ElectricalGridConditionsStruct | null;
   /**
+   * The UTC timestamp at which the published calendar becomes active. Defaults to `null` (not available). Forced to
+   * `null` regardless of the given value when `tariffInfo` is `null` (i.e. none of `tariffLabel`, `providerName`,
+   * `currency` are given), per § 9.12.6.3.
+   */
+  startDate?: number | null;
+  /**
+   * The list of day entries included in this calendar. Defaults to `null` (not available). Forced to `null`
+   * regardless of the given value when `tariffInfo` is `null`, per § 9.12.6.4.
+   */
+  dayEntries?: CommodityTariff.DayEntry[] | null;
+  /**
+   * The list of day patterns used in `calendarPeriods`. Defaults to `null` (not available). Forced to `null`
+   * regardless of the given value when `tariffInfo` is `null`, per § 9.12.6.5.
+   */
+  dayPatterns?: CommodityTariff.DayPattern[] | null;
+  /**
+   * The list of calendar periods comprising this calendar. Defaults to `null` (not available). Forced to `null`
+   * regardless of the given value when `tariffInfo` is `null`, per § 9.12.6.6.
+   */
+  calendarPeriods?: CommodityTariff.CalendarPeriod[] | null;
+  /**
+   * The list of days to overlay on this calendar. Defaults to `null` (not available). Forced to `null` regardless of
+   * the given value when `tariffInfo` is `null`, per § 9.12.6.7.
+   */
+  individualDays?: CommodityTariff.Day[] | null;
+  /**
+   * The current day's day entries. Defaults to `null` (not available). Forced to `null` regardless of the given
+   * value when `tariffInfo` is `null`, per § 9.12.6.8.
+   */
+  currentDay?: CommodityTariff.Day | null;
+  /**
+   * The next day's day entries. Defaults to `null` (not available). Forced to `null` regardless of the given value
+   * when `tariffInfo` is `null`, per § 9.12.6.9.
+   */
+  nextDay?: CommodityTariff.Day | null;
+  /**
+   * The currently active day entry. Defaults to `null` (not available). Forced to `null` regardless of the given
+   * value when `tariffInfo` is `null`, per § 9.12.6.10.
+   */
+  currentDayEntry?: CommodityTariff.DayEntry | null;
+  /**
+   * The UTC date when `currentDay`/`currentDayEntry`/`currentTariffComponents` were last updated. Defaults to `null`
+   * (not available). Forced to `null` regardless of the given value when `tariffInfo` is `null`, per § 9.12.6.11.
+   */
+  currentDayEntryDate?: number | null;
+  /**
+   * The predicted next active day entry. Defaults to `null` (not available). Forced to `null` regardless of the
+   * given value when `tariffInfo` is `null`, per § 9.12.6.12.
+   */
+  nextDayEntry?: CommodityTariff.DayEntry | null;
+  /**
+   * The predicted UTC date when `currentDay`/`currentDayEntry`/`currentTariffComponents` will update to
+   * `nextDay`/`nextDayEntry`/`nextTariffComponents`. Defaults to `null` (not available). Forced to `null` regardless
+   * of the given value when `tariffInfo` is `null`, per § 9.12.6.13.
+   */
+  nextDayEntryDate?: number | null;
+  /**
+   * The list of tariff components for the tariff. Defaults to `null` (not available). Forced to `null` regardless of
+   * the given value when `tariffInfo` is `null`, per § 9.12.6.14.
+   */
+  tariffComponents?: CommodityTariff.TariffComponent[] | null;
+  /**
+   * The list of tariff periods for the tariff. Defaults to `null` (not available). Forced to `null` regardless of
+   * the given value when `tariffInfo` is `null`, per § 9.12.6.15.
+   */
+  tariffPeriods?: CommodityTariff.TariffPeriod[] | null;
+  /**
+   * The currently active tariff components. Defaults to `null` (not available). Forced to `null` regardless of the
+   * given value when `tariffInfo` is `null`, per § 9.12.6.16.
+   */
+  currentTariffComponents?: CommodityTariff.TariffComponent[] | null;
+  /**
+   * The predicted next active tariff components. Defaults to `null` (not available). Forced to `null` regardless of
+   * the given value when `tariffInfo` is `null`, per § 9.12.6.17.
+   */
+  nextTariffComponents?: CommodityTariff.TariffComponent[] | null;
+  /**
    * Semantic tags for endpoint disambiguation. Defaults to the CurrentActiveTariff chronology tag and the
    * ElectricalEnergy commodity tag.
    */
@@ -396,6 +473,21 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
       currentPrice = null,
       localGenerationAvailable = null,
       currentConditions = null,
+      startDate = null,
+      dayEntries = null,
+      dayPatterns = null,
+      calendarPeriods = null,
+      individualDays = null,
+      currentDay = null,
+      nextDay = null,
+      currentDayEntry = null,
+      currentDayEntryDate = null,
+      nextDayEntry = null,
+      nextDayEntryDate = null,
+      tariffComponents = null,
+      tariffPeriods = null,
+      currentTariffComponents = null,
+      nextTariffComponents = null,
     } = options;
 
     // Application Cluster Specification § 9.9.6.3: the Description and Components fields shall be omitted from
@@ -421,25 +513,26 @@ export class ElectricalUtilityMeter extends MatterbridgeEndpoint {
     // Application Cluster Specification § 9.12.6.1: TariffInfo is null unless a label, provider name, or currency is given.
     const tariffInfo =
       tariffLabel !== null || providerName !== null || currency !== null ? { tariffLabel, providerName, currency, blockMode: CommodityTariff.BlockMode.NoBlock } : null;
+    // § 9.12.6.3-9.12.6.17: every schedule field SHALL be null while TariffInfo is null, same as TariffUnit above.
     endpoint.behaviors.require(MatterbridgeCommodityTariffServer, {
       tariffInfo,
       // § 9.12.6.2: TariffUnit SHALL be null when TariffInfo is null (chip TC_SETRF_TestBase.check_tariff_unit_attribute).
       tariffUnit: tariffInfo === null ? null : tariffUnit,
-      startDate: null,
-      dayEntries: null,
-      dayPatterns: null,
-      calendarPeriods: null,
-      individualDays: null,
-      tariffComponents: null,
-      tariffPeriods: null,
-      currentDay: null,
-      nextDay: null,
-      currentDayEntry: null,
-      currentDayEntryDate: null,
-      nextDayEntry: null,
-      nextDayEntryDate: null,
-      currentTariffComponents: null,
-      nextTariffComponents: null,
+      startDate: tariffInfo === null ? null : startDate,
+      dayEntries: tariffInfo === null ? null : dayEntries,
+      dayPatterns: tariffInfo === null ? null : dayPatterns,
+      calendarPeriods: tariffInfo === null ? null : calendarPeriods,
+      individualDays: tariffInfo === null ? null : individualDays,
+      tariffComponents: tariffInfo === null ? null : tariffComponents,
+      tariffPeriods: tariffInfo === null ? null : tariffPeriods,
+      currentDay: tariffInfo === null ? null : currentDay,
+      nextDay: tariffInfo === null ? null : nextDay,
+      currentDayEntry: tariffInfo === null ? null : currentDayEntry,
+      currentDayEntryDate: tariffInfo === null ? null : currentDayEntryDate,
+      nextDayEntry: tariffInfo === null ? null : nextDayEntry,
+      nextDayEntryDate: tariffInfo === null ? null : nextDayEntryDate,
+      currentTariffComponents: tariffInfo === null ? null : currentTariffComponents,
+      nextTariffComponents: tariffInfo === null ? null : nextTariffComponents,
     });
     endpoint.behaviors.require(ElectricalGridConditionsServer, { localGenerationAvailable, currentConditions });
   }

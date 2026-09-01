@@ -271,65 +271,81 @@ describe('Matterbridge ' + NAME, () => {
     });
   });
 
-  test('addElectricalEnergyTariff seeded with a full tariff schedule for command coverage', () => {
-    // Built directly (not via addElectricalEnergyTariff, which never exposes dayEntries/tariffComponents/tariffPeriods
-    // — they're "left to setAttribute()/setCluster() for the full day/tariff schedule"). Seeded in a single
-    // behaviors.require() call at construction time: matter.js's conformance validation for these array-of-struct
-    // attributes rejects a later setAttribute() update (it fills in defaults for the omitted optional fields of every
-    // entry and re-validates them against the enabled features, a path construction-time state doesn't hit), and a
-    // second require() call on an already-required behavior does not apply new options either. Needed to exercise
-    // MatterbridgeCommodityTariffServer.getTariffComponent/getDayEntry.
-    commandTariff = device.addChildDeviceType('Electrical Energy Tariff Commands', electricalEnergyTariff);
-    commandTariff.behaviors.require(MatterbridgeCommodityPriceServer, {
-      tariffUnit: TariffUnit.KWh,
+  test('addElectricalEnergyTariff with a full tariff schedule via options', () => {
+    // Seeded through addElectricalEnergyTariff's own schedule options (dayEntries/dayPatterns/calendarPeriods/
+    // individualDays/currentDay/nextDay/currentDayEntry/currentDayEntryDate/nextDayEntry/nextDayEntryDate/
+    // tariffComponents/tariffPeriods/currentTariffComponents/nextTariffComponents/startDate), applied in the single
+    // behaviors.require() call configureElectricalEnergyTariffClusters() already makes at construction time — a
+    // later setAttribute() update to these array-of-struct attributes is rejected by matter.js's conformance
+    // validation (it fills in defaults for the omitted optional fields of every entry and re-validates them against
+    // the enabled features, a path construction-time state doesn't hit), and a second require() call on an
+    // already-required behavior would not apply new options either. Also exercises
+    // MatterbridgeCommodityTariffServer.getTariffComponent/getDayEntry for command coverage.
+    const day: CommodityTariff.Day = { date: 1_700_000_000, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1] };
+    commandTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff Commands', {
+      tariffLabel: 'Standard',
+      providerName: 'Provider',
       currency: { currency: 978, decimalPoints: 4 },
       currentPrice: explicitCurrentPrice,
-    });
-    commandTariff.behaviors.require(MatterbridgeCommodityTariffServer, {
-      tariffInfo: { tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: CommodityTariff.BlockMode.NoBlock },
-      tariffUnit: TariffUnit.KWh,
-      startDate: null,
+      startDate: 1_700_000_000,
       dayEntries,
-      dayPatterns: null,
-      calendarPeriods: null,
-      individualDays: null,
+      dayPatterns: [
+        { dayPatternId: 1, daysOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, dayEntryIDs: [1] },
+      ],
+      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      individualDays: [day],
+      currentDay: day,
+      nextDay: day,
+      currentDayEntry: dayEntries[0],
+      currentDayEntryDate: 1_700_000_000,
+      nextDayEntry: dayEntries[0],
+      nextDayEntryDate: 1_700_086_400,
       tariffComponents,
       tariffPeriods,
-      currentDay: null,
-      nextDay: null,
-      currentDayEntry: null,
-      currentDayEntryDate: null,
-      nextDayEntry: null,
-      nextDayEntryDate: null,
-      currentTariffComponents: null,
-      nextTariffComponents: null,
+      currentTariffComponents: tariffComponents,
+      nextTariffComponents: tariffComponents,
     });
-    commandTariff.addRequiredClusterServers();
-    expect(commandTariff.getClusterServerOptions(CommodityTariff.id)).toMatchObject({ dayEntries, tariffComponents, tariffPeriods });
+    expect(commandTariff.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
+      startDate: 1_700_000_000,
+      dayEntries,
+      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      individualDays: [day],
+      currentDay: day,
+      nextDay: day,
+      currentDayEntry: dayEntries[0],
+      currentDayEntryDate: 1_700_000_000,
+      nextDayEntry: dayEntries[0],
+      nextDayEntryDate: 1_700_086_400,
+      tariffComponents,
+      tariffPeriods,
+      currentTariffComponents: tariffComponents,
+      nextTariffComponents: tariffComponents,
+    });
 
     // A second endpoint with tariffComponents set but tariffPeriods left null, to exercise the `tariffPeriods ?? []`
     // fallback and the resulting "component found, but no owning period" branch in getTariffComponent.
-    noPeriodTariff = device.addChildDeviceType('Electrical Energy Tariff No Periods', electricalEnergyTariff);
-    noPeriodTariff.behaviors.require(MatterbridgeCommodityTariffServer, {
-      tariffInfo: { tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: CommodityTariff.BlockMode.NoBlock },
-      tariffUnit: TariffUnit.KWh,
+    noPeriodTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff No Periods', {
+      tariffLabel: 'Standard',
+      providerName: 'Provider',
+      currency: { currency: 978, decimalPoints: 4 },
+      tariffComponents,
+    });
+  });
+
+  test('addElectricalEnergyTariff CommodityTariff schedule fields stay null while tariffInfo is null', () => {
+    const partialScheduleTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff Partial Schedule', {
+      startDate: 1_700_000_000,
+      dayEntries,
+      tariffComponents,
+      tariffPeriods,
+    });
+    expect(partialScheduleTariff.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
+      tariffInfo: null,
       startDate: null,
       dayEntries: null,
-      dayPatterns: null,
-      calendarPeriods: null,
-      individualDays: null,
-      tariffComponents,
+      tariffComponents: null,
       tariffPeriods: null,
-      currentDay: null,
-      nextDay: null,
-      currentDayEntry: null,
-      currentDayEntryDate: null,
-      nextDayEntry: null,
-      nextDayEntryDate: null,
-      currentTariffComponents: null,
-      nextTariffComponents: null,
     });
-    noPeriodTariff.addRequiredClusterServers();
   });
 
   test('add an electrical utility meter device', async () => {
