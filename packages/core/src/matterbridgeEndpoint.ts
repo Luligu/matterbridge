@@ -4155,7 +4155,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} condition - The initial condition value (range 0-100). Default is 100.
    * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
    * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
-   * @param {number | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
+   * @param {number | null | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
    * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
