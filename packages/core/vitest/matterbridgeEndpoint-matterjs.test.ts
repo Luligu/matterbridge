@@ -1159,7 +1159,7 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(0);
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await flushAsync();
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
@@ -1172,7 +1172,7 @@ describe('Matterbridge ' + NAME, () => {
       tilt: WindowCovering.MovementStatus.Closing,
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await flushAsync();
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
@@ -1183,7 +1183,7 @@ describe('Matterbridge ' + NAME, () => {
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ lift: WindowCovering.MovementStatus.Opening });
     await timedCover.invokeBehaviorCommand('windowCovering', 'stopMotion');
-    await new Promise((resolve) => setTimeout(resolve, 200));
+    await flushAsync();
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
