@@ -1570,7 +1570,7 @@
       "endpoint": 901,
       "args": ["--PICS /root/thermostat.auto.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 901 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Auto",
@@ -1606,7 +1606,7 @@
       "endpoint": 9011,
       "args": ["--PICS /root/thermostat.heat.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9011 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Heating",
@@ -1642,7 +1642,7 @@
       "endpoint": 9012,
       "args": ["--PICS /root/thermostat.cool.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9012 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Cooling",
@@ -1678,7 +1678,7 @@
       "endpoint": 9013,
       "args": ["--PICS /root/thermostat.auto.preset.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9013 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Presets",
@@ -1712,7 +1712,7 @@
       "endpoint": 9014,
       "args": ["--PICS /root/thermostat.schedules.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9014 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Schedules",
@@ -1748,7 +1748,7 @@
       "endpoint": 9015,
       "args": ["--PICS /root/thermostat.suggestions.pics"],
       "skip": true,
-      "comment": "Requires the Thermostat client role (TSTAT.C); endpoint 9015 implements only the Thermostat server role (TSTAT.S)."
+      "comment": "Requires the device to act as Thermostat client."
     },
     {
       "name": "Thermostat Presets functionality on Thermostat Suggestions",
@@ -1894,7 +1894,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
-      "comment": "Requires OO.C: the DUT itself must issue On/Off/Toggle/OffWithEffect/OnWithRecallGlobalScene/OnWithTimedOff commands to the TH. Matterbridge only ever exposes an OnOff cluster server for bridged devices, never acts as an OnOff client sending commands to a controller — permanently inapplicable."
+      "comment": "Requires the device to act as OnOff client."
     },
     {
       "name": "Groups attributes on OnOffLight",
@@ -1929,7 +1929,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/groups.pics"],
       "skip": true,
-      "comment": "Requires G.C: the DUT itself must issue AddGroup/ViewGroup/RemoveGroup/... commands to the TH as a Groups client, and every step in this YAML is disabled:true (manual verification flow). Matterbridge only ever exposes a Groups cluster server for bridged devices, never acts as a client — permanently inapplicable."
+      "comment": "Requires the device to act as Groups client."
     },
     {
       "name": "LevelControl attributes on DimmableLight",
@@ -2627,7 +2627,7 @@
       "test": "Test_TC_OO_3_2_Simulated",
       "endpoint": 1308,
       "skip": true,
-      "comment": "Not applicable: the Cooktop exposes an OnOff server and does not act as an OnOff client issuing commands to the test harness.",
+      "comment": "Requires the device to act as OnOff client.",
       "args": ["--PICS /root/on-off-off-only.pics"]
     },
     {
