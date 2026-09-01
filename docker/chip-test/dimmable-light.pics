@@ -1,0 +1,50 @@
+# To run tests on LevelControl (with its On/Off coupling steps) --PICS is required
+# Matches createDefaultLevelControlClusterServer() + createDefaultOnOffClusterServer() (via addRequiredClusterServers())
+# on CHIP DimmableLight endpoint 402. Combines on-off.pics and level-control.pics: TC_LVL_3_1/4_1/6_1/9_1 (and others)
+# have Off/On precondition steps gated on OO.* PICS keys that level-control.pics alone does not define, which made
+# those steps silently skip instead of run — see chipTests.md.
+PICS_USER_PROMPT=0
+PICS_SKIP_SAMPLE_APP=1
+OO.S=1
+OO.S.F00=1 # Lighting
+OO.S.F01=0 # DeadFrontBehavior
+OO.S.F02=0 # OffOnly (mutually exclusive with Lighting)
+OO.S.A0000=1 # OnOff
+OO.S.A4000=1 # GlobalSceneControl
+OO.S.A4001=1 # OnTime
+OO.S.A4002=1 # OffWaitTime
+OO.S.A4003=1 # StartUpOnOff
+OO.S.C00.Rsp=1 # Off
+OO.S.C01.Rsp=1 # On
+OO.S.C02.Rsp=1 # Toggle
+OO.S.C40.Rsp=1 # OffWithEffect
+OO.S.C41.Rsp=1 # OnWithRecallGlobalScene
+OO.S.C42.Rsp=1 # OnWithTimedOff
+OO.C=0 # Matterbridge only exposes an OnOff server, never acts as a client
+LVL.S=1
+LVL.S.F00=1 # OnOff
+LVL.S.F01=1 # Lighting
+LVL.S.F02=0 # Frequency
+LVL.S.A0000=1 # CurrentLevel
+LVL.S.A0001=1 # RemainingTime
+LVL.S.A0002=1 # MinLevel
+LVL.S.A0003=1 # MaxLevel
+LVL.S.A0004=0 # CurrentFrequency (Frequency feature not supported)
+LVL.S.A0005=0 # MinFrequency (Frequency feature not supported)
+LVL.S.A0006=0 # MaxFrequency (Frequency feature not supported)
+LVL.S.A000f=1 # Options
+LVL.S.A0010=0 # OnOffTransitionTime (optional, not implemented)
+LVL.S.A0011=1 # OnLevel
+LVL.S.A0012=0 # OnTransitionTime (optional, not implemented)
+LVL.S.A0013=0 # OffTransitionTime (optional, not implemented)
+LVL.S.A0014=0 # DefaultMoveRate (optional, not implemented)
+LVL.S.A4000=1 # StartUpCurrentLevel
+LVL.S.C00.Rsp=1 # MoveToLevel
+LVL.S.C01.Rsp=1 # Move
+LVL.S.C02.Rsp=1 # Step
+LVL.S.C03.Rsp=1 # Stop
+LVL.S.C04.Rsp=1 # MoveToLevelWithOnOff
+LVL.S.C05.Rsp=1 # MoveWithOnOff
+LVL.S.C06.Rsp=1 # StepWithOnOff
+LVL.S.C07.Rsp=1 # StopWithOnOff
+LVL.C=0 # Matterbridge only exposes a LevelControl server, never acts as a client

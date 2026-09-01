@@ -1,9 +1,16 @@
-Chip tests run started at 2026-08-31T22:40:52.051Z
+Chip tests run started at 2026-09-01T12:17:38.714Z
 
-✅ Generic device basic composition (TC_DeviceBasicComposition.py)
-✅ Generic device conformance (TC_DeviceConformance.py)
-✅ Generic device default warnings (TC_DefaultWarnings.py)
-✅ Generic TestEventTrigger command (TC_TestEventTrigger.py)
+✅ LevelControl attributes on DimmableLight (Test_TC_LVL_2_1)
+✅ LevelControl attributes are writable on DimmableLight (Test_TC_LVL_2_2)
+✅ LevelControl RemainingTime functionality on DimmableLight (TC_LVL_2_3.py)
+✅ LevelControl MoveToLevel verification on DimmableLight (Test_TC_LVL_3_1)
+✅ LevelControl Move verification on DimmableLight (Test_TC_LVL_4_1)
+✅ LevelControl Step verification on DimmableLight (Test_TC_LVL_5_1)
+✅ LevelControl Stop verification on DimmableLight (Test_TC_LVL_6_1)
+✅ LevelControl MoveToClosestFrequency verification on DimmableLight (Test_TC_LVL_7_1)
+⏭️ LevelControl commands with client as DUT (Test_TC_LVL_8_1)
+   ↳ Every step in this YAML is disabled:true (manual verification procedure, no automated assertions).
+✅ LevelControl OnOff interaction on DimmableLight (TC_LVL_9_1.py)
 
-Summary: 4/4 tests passed.
-Chip tests run ended at 2026-08-31T22:41:12.726Z (total duration 21s)
+Summary: 9/9 tests passed (1 skipped).
+Chip tests run ended at 2026-09-01T12:21:09.208Z (total duration 3m 30s)

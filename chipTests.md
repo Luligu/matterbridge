@@ -473,24 +473,6 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
-- **LevelControl: `Test_TC_LVL_3_1` Step 5h fails deterministically (3/3 reproductions) only inside
-  `chiptool.py`'s single long-lived interactive-server session, not via standalone `chip-tool` invocations —
-  suspected race in `@matter/node`, not Matterbridge code.** After `OnOff.Off` then a `MoveToLevel` sent with
-  `Options.ExecuteIfOff=0`, `CurrentLevel` should stay unchanged (test sends level `120`, expects the prior
-  `100` to survive) — `LevelControlServer`'s own `#optionsAllowExecution()` check reads the live `OnOffServer`
-  `OnOff` attribute and is supposed to block execution while the device is off. Replaying the exact same
-  `Off` → `MoveToLevel` sequence one `chip-tool` process at a time (each establishing its own fresh CASE
-  session, so there is round-trip latency between the two commands) blocks correctly every time; the same
-  sequence sent back-to-back over `chiptool.py`'s one persistent session (no inter-command latency)
-  consistently lets the `MoveToLevel` through instead. `"skip": true` in `chipTests.json`, pending deeper
-  investigation into whether `@matter/node`'s state commit for `OnOff.Off` and the following command's read
-  of that state can race under pipelined delivery. Re-verified unchanged after removing the `OnOff`/
-  `LevelControl` forwarder `await` under `MATTERBRIDGE_CHIP_TEST` (`onOffServer.ts`/`levelControlServer.ts`)
-  and after opting `LevelControl` into `managedTransitionTimeHandling`
-  (`packages/core/src/behaviors/levelControlServer.ts`): the failure is identical either way, confirming the
-  race lives entirely inside `@matter/node`'s own `OnOff`/`LevelControl` state handling, not in the
-  Matterbridge forwarder call or the transition-time gap.
-
 - **ColorControl: `Test_TC_CC_8_1`'s `EnhancedMoveHue` section fails because `StopMoveStep` never actually
   stops an `EnhancedCurrentHue` transition on any Matterbridge ColorControl endpoint — a genuine
   `@matter/node` bug.** `MatterbridgeColorControlServer` opts into `managedTransitionTimeHandling` under
