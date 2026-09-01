@@ -480,7 +480,9 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OperationalState.id) return MatterbridgeOperationalStateServer;
   if (clusterId === BooleanState.id) return BooleanStateServer.enable({ events: { stateChange: true } });
   if (clusterId === BooleanStateConfiguration.id) return MatterbridgeBooleanStateConfigurationServer;
-  if (clusterId === TemperatureAlarm.id) return MatterbridgeTemperatureAlarmServer.with(TemperatureAlarm.Feature.OverTemperature, TemperatureAlarm.Feature.UnderTemperature);
+  // TemperatureAlarm's OverTemperature/UnderTemperature features are optional and endpoint-specific (only enabled by
+  // createDefaultTemperatureAlarmClusterServer() when a matching threshold is provided), so no feature is declared here.
+  if (clusterId === TemperatureAlarm.id) return MatterbridgeTemperatureAlarmServer;
   if (clusterId === PowerTopology.id) return PowerTopologyServer.with('TreeTopology');
   if (clusterId === ElectricalPowerMeasurement.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
   if (clusterId === ElectricalEnergyMeasurement.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');

@@ -121,7 +121,7 @@ import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js'
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
-import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
+import { MatterbridgeTemperatureAlarmServer, normalizeTemperatureAlarm } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
@@ -4853,10 +4853,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * must be kept in sync by the plugin via updateAttribute() as the real temperature crosses the configured thresholds.
    */
   createDefaultTemperatureAlarmClusterServer(criticalOverTemperatureThreshold?: number, criticalUnderTemperatureThreshold?: number, mask?: TemperatureAlarm.Alarm): this {
-    const supported: TemperatureAlarm.Alarm = {
+    const supported = normalizeTemperatureAlarm({
       criticalOverTemperatureAlarm: criticalOverTemperatureThreshold !== undefined,
       criticalUnderTemperatureAlarm: criticalUnderTemperatureThreshold !== undefined,
-    };
+    });
     this.behaviors.require(
       MatterbridgeTemperatureAlarmServer.with(
         ...(criticalOverTemperatureThreshold !== undefined ? [TemperatureAlarm.Feature.OverTemperature] : []),
@@ -4864,8 +4864,8 @@ export class MatterbridgeEndpoint extends Endpoint {
       ),
       {
         // Base attributes
-        mask: mask ?? supported,
-        state: {},
+        mask: normalizeTemperatureAlarm(mask ?? supported),
+        state: normalizeTemperatureAlarm(),
         supported,
         // Feature.OverTemperature
         ...(criticalOverTemperatureThreshold !== undefined ? { criticalOverTemperatureThreshold } : {}),

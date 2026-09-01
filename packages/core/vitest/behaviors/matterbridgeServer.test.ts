@@ -1675,6 +1675,7 @@ describe('Server clusters and behaviors', () => {
       expect(data.cluster).toBe('temperatureAlarm');
     });
     expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(overDisabledMask);
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'state')).toEqual(idleState);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
       `MatterbridgeTemperatureAlarmServer: modifyEnabledAlarms called (endpoint ${temperatureCabinet.id}.${temperatureCabinet.number})`,
@@ -1684,6 +1685,11 @@ describe('Server clusters and behaviors', () => {
     await expect(
       temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: { ...enabledMask, minorOverTemperatureAlarm: true } }),
     ).rejects.toThrow();
+
+    // A sparse Mask (only the bits the caller cares about) is normalized to the full bitmap on both Mask and State.
+    await temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: { criticalUnderTemperatureAlarm: true } });
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'mask')).toEqual({ ...idleState, criticalUnderTemperatureAlarm: true });
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'state')).toEqual(idleState);
 
     // Re-enabling restores the full Mask.
     await temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: enabledMask });

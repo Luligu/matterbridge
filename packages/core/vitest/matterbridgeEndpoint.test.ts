@@ -808,6 +808,11 @@ describe('Matterbridge ' + NAME, () => {
       expect(device.hasClusterServer(clusterId)).toBe(true);
     }
     expect(device.getAllClusterServers()).toHaveLength(clusterIds.length + 2); // + descriptor + matterbridge
+    // addClusterServers() resolves TemperatureAlarm through createDefaultTemperatureAlarmClusterServer() with no
+    // thresholds, so neither optional OverTemperature/UnderTemperature feature (and their threshold attributes)
+    // should be forced on, regardless of what getBehaviourTypeFromClusterServerId() declares for SupportedBehaviors.
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalOverTemperatureThreshold')).toBe(false);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalUnderTemperatureThreshold')).toBe(false);
 
     await add(device);
   });

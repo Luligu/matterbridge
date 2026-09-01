@@ -45,6 +45,19 @@ const ALARM_BITS = [
   'criticalUnderTemperatureAlarm',
 ] as const;
 
+/**
+ * Normalizes a possibly-sparse {@link TemperatureAlarm.Alarm} bitmap to an object with an explicit boolean for
+ * every bit, matching how bitmap attributes are stored elsewhere in Matterbridge (e.g. BooleanStateConfiguration).
+ *
+ * @param {TemperatureAlarm.Alarm} alarm - The (possibly partial) bitmap to normalize. Defaults to an empty object.
+ * @returns {TemperatureAlarm.Alarm} A new bitmap with every bit explicitly set to `true` or `false`.
+ */
+export function normalizeTemperatureAlarm(alarm: TemperatureAlarm.Alarm = {}): TemperatureAlarm.Alarm {
+  const normalized: TemperatureAlarm.Alarm = {};
+  for (const bit of ALARM_BITS) normalized[bit] = Boolean(alarm[bit]);
+  return normalized;
+}
+
 const MatterbridgeTemperatureAlarmServerBase = TemperatureAlarmServer.enable({
   events: { notify: true },
   commands: { modifyEnabledAlarms: true },
@@ -83,8 +96,8 @@ export class MatterbridgeTemperatureAlarmServer extends MatterbridgeTemperatureA
     for (const bit of ALARM_BITS) {
       const now = Boolean(state[bit]);
       const before = Boolean(oldState[bit]);
-      if (now && !before) active[bit] = true;
-      if (!now && before) inactive[bit] = true;
+      active[bit] = now && !before;
+      inactive[bit] = !now && before;
     }
     this.events.notify.emit({ active, inactive, state, mask: this.state.mask }, this.context);
   }
@@ -129,12 +142,11 @@ export class MatterbridgeTemperatureAlarmServer extends MatterbridgeTemperatureA
     // Matter 1.6.0 § 1.15.7.2.1: Reject with InvalidCommand a Mask that sets bits for alarms which are not supported.
     this.#assertMaskSupported(request.mask);
     // Matter 1.6.0 § 1.15.7.2.2: On success, set the Mask attribute to the requested value.
-    this.state.mask = request.mask;
+    const mask = normalizeTemperatureAlarm(request.mask);
+    this.state.mask = mask;
     // Matter 1.6.0 § 1.15.7.2.2: Update State to reflect the new Mask; a disabled alarm cannot remain active.
     const state: TemperatureAlarm.Alarm = {};
-    for (const bit of ALARM_BITS) {
-      if (this.state.state[bit] && request.mask[bit]) state[bit] = true;
-    }
+    for (const bit of ALARM_BITS) state[bit] = Boolean(this.state.state[bit]) && mask[bit];
     this.state.state = state;
     device.log.debug(`MatterbridgeTemperatureAlarmServer: modifyEnabledAlarms called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
