@@ -70,6 +70,7 @@ import {
   SmokeCoAlarm,
   SoilMeasurement,
   Switch,
+  TemperatureAlarm,
   TemperatureMeasurement,
   Thermostat,
   ThermostatUserInterfaceConfiguration,
@@ -113,6 +114,7 @@ import {
   rainSensor,
   smokeCoAlarm,
   soilSensor,
+  temperatureControlledCabinetCooler,
   temperatureSensor,
   thermostat,
   waterFreezeDetector,
@@ -2489,6 +2491,31 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(true);
     expect(device.getAttribute(BooleanStateConfiguration.id, 'currentSensitivityLevel')).toBe(1);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultTemperatureAlarmClusterServer', async () => {
+    // TemperatureAlarm is an optional server cluster on the TemperatureControlledCabinet device type (Matter 1.6.0).
+    const device = new MatterbridgeEndpoint(temperatureControlledCabinetCooler, { id: 'TemperatureAlarm' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTemperatureAlarmClusterServer(6000, 200);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'mask')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalOverTemperatureThreshold')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalUnderTemperatureThreshold')).toBe(true);
+
+    await add(device);
+    const expectedMask = {
+      criticalOverTemperatureAlarm: true,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: true,
+    };
+    expect(device.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(expectedMask);
+    expect(device.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(expectedMask);
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalOverTemperatureThreshold')).toBe(6000);
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalUnderTemperatureThreshold')).toBe(200);
   });
 
   test('createDefaultDeviceEnergyManagementClusterServer', async () => {

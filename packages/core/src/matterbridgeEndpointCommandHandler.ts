@@ -59,6 +59,7 @@ import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational
 import type { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import type { ServiceArea } from '@matter/types/clusters/service-area';
 import type { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import type { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import type { Thermostat } from '@matter/types/clusters/thermostat';
 import type { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
@@ -773,6 +774,16 @@ export type CommandHandlerDataMap = {
     request: BooleanStateConfiguration.EnableDisableAlarmRequest;
     cluster: 'booleanStateConfiguration';
     attributes: ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Temperature Alarm
+  'modifyEnabledAlarms': CommandHandlerData<'TemperatureAlarm.modifyEnabledAlarms'>;
+  'TemperatureAlarm.modifyEnabledAlarms': {
+    command: 'modifyEnabledAlarms';
+    request: TemperatureAlarm.ModifyEnabledAlarmsRequest;
+    cluster: 'temperatureAlarm';
+    attributes: ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

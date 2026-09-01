@@ -87,6 +87,7 @@ import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configu
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
@@ -120,6 +121,7 @@ import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js'
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
+import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
@@ -4827,6 +4829,48 @@ export class MatterbridgeEndpoint extends Endpoint {
         alarmsSuppressed: { visual: false, audible: false },
         // Optional attributes
         sensorFault: { generalFault: sensorFault },
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default Temperature Alarm Cluster Server with optional OverTemperature and UnderTemperature critical thresholds.
+   *
+   * @param {number | undefined} criticalOverTemperatureThreshold - The over-temperature critical threshold (temperature x100, °C). Enables the OverTemperature feature when defined. Default is undefined (feature disabled).
+   * @param {number | undefined} criticalUnderTemperatureThreshold - The under-temperature critical threshold (temperature x100, °C). Enables the UnderTemperature feature when defined. Default is undefined (feature disabled).
+   * @param {TemperatureAlarm.Alarm} mask - The bitmap of alarms currently enabled. Default matches the enabled thresholds.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The Temperature Alarm Cluster Server (support for this cluster is provisional in Matter 1.6.0) is used to report
+   * temperature threshold violations, e.g. for a Temperature Controlled Cabinet (Refrigerator, Oven).
+   * Only the Mask, State, and Supported base attributes, the OverTemperature/UnderTemperature critical thresholds,
+   * the base ModifyEnabledAlarms command, and the base Notify event are implemented.
+   * The MajorThreshold, MinorThreshold, adjustable-threshold (SetTemperatureAlarmThresholds), and Reset features are
+   * not enabled: the Supported bit for a threshold not passed to this method stays false and the State attribute
+   * must be kept in sync by the plugin via updateAttribute() as the real temperature crosses the configured thresholds.
+   */
+  createDefaultTemperatureAlarmClusterServer(criticalOverTemperatureThreshold?: number, criticalUnderTemperatureThreshold?: number, mask?: TemperatureAlarm.Alarm): this {
+    const supported: TemperatureAlarm.Alarm = {
+      criticalOverTemperatureAlarm: criticalOverTemperatureThreshold !== undefined,
+      criticalUnderTemperatureAlarm: criticalUnderTemperatureThreshold !== undefined,
+    };
+    this.behaviors.require(
+      MatterbridgeTemperatureAlarmServer.with(
+        ...(criticalOverTemperatureThreshold !== undefined ? [TemperatureAlarm.Feature.OverTemperature] : []),
+        ...(criticalUnderTemperatureThreshold !== undefined ? [TemperatureAlarm.Feature.UnderTemperature] : []),
+      ),
+      {
+        // Base attributes
+        mask: mask ?? supported,
+        state: {},
+        supported,
+        // Feature.OverTemperature
+        ...(criticalOverTemperatureThreshold !== undefined ? { criticalOverTemperatureThreshold } : {}),
+        // Feature.UnderTemperature
+        ...(criticalUnderTemperatureThreshold !== undefined ? { criticalUnderTemperatureThreshold } : {}),
       },
     );
     return this;

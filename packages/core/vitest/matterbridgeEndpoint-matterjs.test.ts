@@ -125,6 +125,7 @@ import {
   onOffLightSwitch,
   onOffPlugInUnit,
   smokeCoAlarm,
+  temperatureControlledCabinetCooler,
   thermostat,
   waterHeater,
   waterLeakDetector,
@@ -165,6 +166,7 @@ describe('Matterbridge ' + NAME, () => {
   let coverLiftTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
   let vent: MatterbridgeEndpoint;
+  let temperatureCabinet: MatterbridgeEndpoint;
   let thermo: MatterbridgeEndpoint;
   let valve: MatterbridgeEndpoint;
   let mode: MatterbridgeEndpoint;
@@ -376,6 +378,16 @@ describe('Matterbridge ' + NAME, () => {
     expect(waterTank).toBeDefined();
     expect(waterTank.id).toBe('WaterTank');
     expect(waterTank.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'waterTankLevelMonitoring', 'identify', 'groups', 'scenesManagement', 'onOff']);
+  });
+
+  test('create a temperature controlled cabinet device', () => {
+    // TemperatureAlarm is an optional server cluster on the TemperatureControlledCabinet device type (Matter 1.6.0).
+    temperatureCabinet = new MatterbridgeEndpoint(temperatureControlledCabinetCooler, { id: 'TemperatureCabinet' });
+    temperatureCabinet.createDefaultTemperatureAlarmClusterServer(6000, 200);
+    temperatureCabinet.addRequiredClusterServers();
+    expect(temperatureCabinet).toBeDefined();
+    expect(temperatureCabinet.id).toBe('TemperatureCabinet');
+    expect(temperatureCabinet.hasClusterServer('temperatureAlarm')).toBe(true);
   });
 
   test('create a thermostat device', () => {
@@ -605,6 +617,10 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add water tank device to serverNode', async () => {
     expect(await server.add(waterTank)).toBeDefined();
+  });
+
+  test('add temperature controlled cabinet device to serverNode', async () => {
+    expect(await server.add(temperatureCabinet)).toBeDefined();
   });
 
   test('add thermostat device to serverNode', async () => {
@@ -1452,6 +1468,24 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await waterTank.invokeBehaviorCommand('WaterTankLevelMonitoring', 'resetCondition', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterTankLevelMonitoringServer: resetting condition (endpoint ${waterTank.id}.${waterTank.number})`);
+  });
+
+  test('invoke MatterbridgeTemperatureAlarmServer commands', async () => {
+    vi.clearAllMocks();
+    await temperatureCabinet.invokeBehaviorCommand('TemperatureAlarm', 'modifyEnabledAlarms', {
+      mask: {
+        criticalOverTemperatureAlarm: true,
+        majorOverTemperatureAlarm: false,
+        minorOverTemperatureAlarm: false,
+        minorUnderTemperatureAlarm: false,
+        majorUnderTemperatureAlarm: false,
+        criticalUnderTemperatureAlarm: true,
+      },
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeTemperatureAlarmServer: modifying enabled alarms (endpoint ${temperatureCabinet.id}.${temperatureCabinet.number})`,
+    );
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {

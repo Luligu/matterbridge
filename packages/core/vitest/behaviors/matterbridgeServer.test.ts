@@ -33,6 +33,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
@@ -94,6 +95,7 @@ import {
   onOffLight,
   powerSource,
   smokeCoAlarm,
+  temperatureControlledCabinetCooler,
   temperatureSensor,
   thermostat,
   windowCovering,
@@ -122,6 +124,7 @@ describe('Server clusters and behaviors', () => {
   let mode: MatterbridgeEndpoint;
   let purifier: MatterbridgeEndpoint;
   let waterTank: MatterbridgeEndpoint;
+  let temperatureCabinet: MatterbridgeEndpoint;
   let energyManagement: MatterbridgeEndpoint;
   let washer: MatterbridgeEndpoint;
   let rvc: RoboticVacuumCleaner;
@@ -445,6 +448,15 @@ describe('Server clusters and behaviors', () => {
     waterTank.addRequiredClusterServers();
     expect(waterTank).toBeDefined();
     expect(await addDevice(aggregator, waterTank)).toBeTruthy();
+  });
+
+  test('Device type: temperatureControlledCabinetCooler', async () => {
+    // TemperatureAlarm is an optional server cluster on the TemperatureControlledCabinet device type (Matter 1.6.0).
+    temperatureCabinet = new MatterbridgeEndpoint(temperatureControlledCabinetCooler, { id: 'temperatureCabinet' });
+    temperatureCabinet.createDefaultTemperatureAlarmClusterServer(6000, 200);
+    temperatureCabinet.addRequiredClusterServers();
+    expect(temperatureCabinet).toBeDefined();
+    expect(await addDevice(aggregator, temperatureCabinet)).toBeTruthy();
   });
 
   test('Device type: deviceEnergyManagement', async () => {
@@ -1634,6 +1646,48 @@ describe('Server clusters and behaviors', () => {
     expect(waterTank.getAttribute(WaterTankLevelMonitoring.id, 'condition')).toBe(100);
     expect(typeof waterTank.getAttribute(WaterTankLevelMonitoring.id, 'lastChangedTime')).toBe('number');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterTankLevelMonitoringServer: resetCondition called (endpoint ${waterTank.id}.${waterTank.number})`);
+  });
+
+  test('TemperatureAlarm server', async () => {
+    const enabledMask = {
+      criticalOverTemperatureAlarm: true,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: true,
+    };
+    const idleState = {
+      criticalOverTemperatureAlarm: false,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: false,
+    };
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(enabledMask);
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(enabledMask);
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'state')).toEqual(idleState);
+
+    // Disabling the over-temperature alarm forwards the command to the plugin and updates the Mask attribute.
+    const overDisabledMask = { ...enabledMask, criticalOverTemperatureAlarm: false };
+    await expectCommand(temperatureCabinet, TemperatureAlarm, 'modifyEnabledAlarms', { mask: overDisabledMask }, (data) => {
+      expect(data.cluster).toBe('temperatureAlarm');
+    });
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(overDisabledMask);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeTemperatureAlarmServer: modifyEnabledAlarms called (endpoint ${temperatureCabinet.id}.${temperatureCabinet.number})`,
+    );
+
+    // Requesting a bit that is not in the Supported attribute (e.g. MinorOverTemperature) is rejected.
+    await expect(
+      temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: { ...enabledMask, minorOverTemperatureAlarm: true } }),
+    ).rejects.toThrow();
+
+    // Re-enabling restores the full Mask.
+    await temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: enabledMask });
+    expect(temperatureCabinet.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(enabledMask);
   });
 
   test('DeviceEnergyManagement server', async () => {
