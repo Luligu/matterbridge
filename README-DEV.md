@@ -107,6 +107,14 @@ Dev containers have networking limitations depending on the host OS and Docker s
 
 - ✅ Matterbridge frontend works normally
 
+## CHIP conformance tests
+
+Matterbridge is validated against the Matter CHIP certification test suite (both the Python test scripts and
+the YAML certification tests used by the CSA's own CI), running weekly and on demand via
+[`chip-tests.yml`](.github/workflows/chip-tests.yml) — see the badge at the top of the [README](README.md).
+The full harness is composed of 368 tests and the latest run's
+pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSummary.log).
+
 ## Copilot instructions
 
 | File                                                                      | Notes                                                                              |
