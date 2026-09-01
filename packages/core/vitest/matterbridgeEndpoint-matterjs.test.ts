@@ -155,6 +155,7 @@ describe('Matterbridge ' + NAME, () => {
   let rvc: RoboticVacuumCleaner;
   let heater: MatterbridgeEndpoint;
   let evse: MatterbridgeEndpoint;
+  let waterTank: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -345,6 +346,17 @@ describe('Matterbridge ' + NAME, () => {
     expect(vent).toBeDefined();
     expect(vent.id).toBe('Fan');
     expect(vent.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'activatedCarbonFilterMonitoring', 'hepaFilterMonitoring', 'identify', 'groups', 'fanControl']);
+  });
+
+  test('create a water tank device', () => {
+    // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
+    // available in this SDK), so onOffLight is used here as a plain scaffold for the cluster server itself.
+    waterTank = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank' });
+    waterTank.createDefaultWaterTankLevelMonitoringClusterServer();
+    waterTank.addRequiredClusterServers();
+    expect(waterTank).toBeDefined();
+    expect(waterTank.id).toBe('WaterTank');
+    expect(waterTank.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'waterTankLevelMonitoring', 'identify', 'groups', 'scenesManagement', 'onOff']);
   });
 
   test('create a thermostat device', () => {
@@ -570,6 +582,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add fan device to serverNode', async () => {
     expect(await server.add(vent)).toBeDefined();
     // (matterbridge as any).frontend.getClusterTextFromDevice(vent);
+  });
+
+  test('add water tank device to serverNode', async () => {
+    expect(await server.add(waterTank)).toBeDefined();
   });
 
   test('add thermostat device to serverNode', async () => {
@@ -1387,6 +1403,12 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('ActivatedCarbonFilterMonitoring', 'resetCondition', {});
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetting condition (endpoint ${vent.id}.${vent.number})`);
+  });
+
+  test('invoke MatterbridgeWaterTankLevelMonitoringServer commands', async () => {
+    vi.clearAllMocks();
+    await waterTank.invokeBehaviorCommand('WaterTankLevelMonitoring', 'resetCondition', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterTankLevelMonitoringServer: resetting condition (endpoint ${waterTank.id}.${waterTank.number})`);
   });
 
   test('invoke MatterbridgeThermostatServer commands', async () => {

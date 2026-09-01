@@ -110,6 +110,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
@@ -285,6 +286,7 @@ if (!hasXmlDir) {
       ['WakeOnLan', WakeOnLan],
       ['WaterHeaterManagement', WaterHeaterManagement],
       ['WaterHeaterMode', WaterHeaterMode],
+      ['WaterTankLevelMonitoring', WaterTankLevelMonitoring],
       ['WebRtcTransportProvider', WebRtcTransportProvider],
       ['WebRtcTransportRequestor', WebRtcTransportRequestor],
       ['WindowCovering', WindowCovering],

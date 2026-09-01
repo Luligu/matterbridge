@@ -75,6 +75,7 @@ import {
   ThermostatUserInterfaceConfiguration,
   UserLabel,
   ValveConfigurationAndControl,
+  WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
@@ -2013,6 +2014,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(HepaFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
     expect(device.getAttribute(ActivatedCarbonFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultWaterTankLevelMonitoringClusterServer', async () => {
+    // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
+    // available in this SDK), so onOffLight is used here as a plain scaffold for the cluster server itself.
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultWaterTankLevelMonitoringClusterServer();
+    expect(device.hasAttributeServer(WaterTankLevelMonitoring, 'changeIndication')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(WaterTankLevelMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
   });
 
   test('createDefaultDoorLockClusterServer', async () => {
