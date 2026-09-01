@@ -459,6 +459,14 @@ describe('Matterbridge ' + NAME, () => {
     colorCapabilities.colorTemperature = false;
     expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(true);
 
+    loggerLogSpy.mockClear();
+    const newColorCapabilities = { ...colorCapabilities, hueSaturation: !colorCapabilities.hueSaturation };
+    expect(await device.updateAttribute('colorControl', 'colorCapabilities', newColorCapabilities, device.log)).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Update endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorCapabilities${db}`),
+    );
+
     await device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     // (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
@@ -2530,11 +2538,22 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('power source wired with Dc current type', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceWiredDc' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceWiredClusterServer(PowerSource.WiredCurrentType.Dc);
+    expect(device.hasClusterServer(PowerSource.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.id, 'description')).toBe('DC Power');
+  });
+
   test('energy measurements for electricalSensor', async () => {
     const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ElectricalSensor' });
     expect(device).toBeDefined();
     device.createDefaultPowerTopologyClusterServer();
-    device.createDefaultElectricalEnergyMeasurementClusterServer();
+    device.createDefaultElectricalEnergyMeasurementClusterServer(500);
     device.createDefaultElectricalPowerMeasurementClusterServer();
     expect(device.hasClusterServer(PowerTopology.id)).toBe(true);
     expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyReset')).toBe(true);
@@ -2547,7 +2566,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
-    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(null);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual({ energy: 500 });
     expect(device.getAttribute(ElectricalPowerMeasurement.id, 'voltage')).toBe(null);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -2624,6 +2643,11 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toEqual({ energy: 2000 });
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+
+    const deviceNull = new MatterbridgeEndpoint([electricalSensor], { id: 'ExportedElectricalSensorNull' });
+    deviceNull.createExportedElectricalEnergyMeasurementClusterServer();
+    await add(deviceNull);
+    expect(deviceNull.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(null);
   });
 
   test('createDefaultTemperatureMeasurementClusterServer', async () => {

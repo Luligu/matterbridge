@@ -40,22 +40,54 @@ import {
 } from '@matter/node/behaviors';
 import { EndpointNumber } from '@matter/types';
 import {
+  ActivatedCarbonFilterMonitoring,
+  AirQuality,
   BasicInformation,
   BooleanState,
+  BooleanStateConfiguration,
+  CarbonDioxideConcentrationMeasurement,
+  CarbonMonoxideConcentrationMeasurement,
+  ColorControl,
   Descriptor,
+  DeviceEnergyManagement,
+  DeviceEnergyManagementMode,
+  DoorLock,
+  ElectricalEnergyMeasurement,
+  ElectricalPowerMeasurement,
+  FanControl,
   FixedLabel,
   FlowMeasurement,
+  FormaldehydeConcentrationMeasurement,
   Groups,
+  HepaFilterMonitoring,
   Identify,
   IlluminanceMeasurement,
+  LevelControl,
+  NitrogenDioxideConcentrationMeasurement,
   OccupancySensing,
   OnOff,
+  OperationalState,
+  OzoneConcentrationMeasurement,
+  Pm1ConcentrationMeasurement,
+  Pm10ConcentrationMeasurement,
+  Pm25ConcentrationMeasurement,
+  PowerSource,
+  PowerTopology,
   PressureMeasurement,
+  PumpConfigurationAndControl,
+  RadonConcentrationMeasurement,
   RelativeHumidityMeasurement,
   ScenesManagement,
+  SmokeCoAlarm,
+  SoilMeasurement,
+  Switch,
   TemperatureMeasurement,
   Thermostat,
+  ThermostatUserInterfaceConfiguration,
+  TotalVolatileOrganicCompoundsConcentrationMeasurement,
   UserLabel,
+  ValveConfigurationAndControl,
+  WindowCovering,
 } from '@matter/types/clusters';
 import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -686,6 +718,65 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(OnOffServer)).toBe(true);
     expect(device.getAllClusterServers()).toHaveLength(5);
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'groups', 'onOff']);
+
+    await add(device);
+  });
+
+  test('addClusterServers with all the supported clusters', async () => {
+    const clusterIds = [
+      PowerSource.id,
+      Identify.id,
+      Groups.id,
+      ScenesManagement.id,
+      OnOff.id,
+      LevelControl.id,
+      ColorControl.id,
+      WindowCovering.id,
+      Thermostat.id,
+      ThermostatUserInterfaceConfiguration.id,
+      FanControl.id,
+      DoorLock.id,
+      ValveConfigurationAndControl.id,
+      PumpConfigurationAndControl.id,
+      SmokeCoAlarm.id,
+      Switch.id,
+      OperationalState.id,
+      BooleanState.id,
+      BooleanStateConfiguration.id,
+      PowerTopology.id,
+      ElectricalPowerMeasurement.id,
+      ElectricalEnergyMeasurement.id,
+      TemperatureMeasurement.id,
+      RelativeHumidityMeasurement.id,
+      PressureMeasurement.id,
+      FlowMeasurement.id,
+      IlluminanceMeasurement.id,
+      OccupancySensing.id,
+      SoilMeasurement.id,
+      AirQuality.id,
+      HepaFilterMonitoring.id,
+      ActivatedCarbonFilterMonitoring.id,
+      CarbonMonoxideConcentrationMeasurement.id,
+      CarbonDioxideConcentrationMeasurement.id,
+      NitrogenDioxideConcentrationMeasurement.id,
+      OzoneConcentrationMeasurement.id,
+      FormaldehydeConcentrationMeasurement.id,
+      Pm1ConcentrationMeasurement.id,
+      Pm25ConcentrationMeasurement.id,
+      Pm10ConcentrationMeasurement.id,
+      RadonConcentrationMeasurement.id,
+      TotalVolatileOrganicCompoundsConcentrationMeasurement.id,
+      DeviceEnergyManagement.id,
+      DeviceEnergyManagementMode.id,
+    ];
+
+    const device = new MatterbridgeEndpoint(onOffLight, { number: EndpointNumber(200) });
+    expect(device).toBeDefined();
+    device.addClusterServers(clusterIds);
+    for (const clusterId of clusterIds) {
+      expect(device.hasClusterServer(clusterId)).toBe(true);
+    }
+    expect(device.getAllClusterServers()).toHaveLength(clusterIds.length + 2); // + descriptor + matterbridge
 
     await add(device);
   });

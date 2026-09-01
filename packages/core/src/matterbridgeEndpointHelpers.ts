@@ -331,7 +331,7 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
   /* v8 ignore next -- This should never happen as the supported behavior is checked in getBehavior. */
   if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
-  return supportedBehavior.features ?? {};
+  return supportedBehavior.features;
 }
 
 /**

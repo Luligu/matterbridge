@@ -138,6 +138,9 @@ describe('Options helpers', () => {
     expect(getDefaultPowerSourceBatteryClusterServer()).toBeDefined();
     expect(getDefaultPowerSourceReplaceableBatteryClusterServer()).toBeDefined();
     expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).toBeDefined();
+    expect(getDefaultPowerSourceBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceReplaceableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultElectricalEnergyMeasurementClusterServer()).toBeDefined();
     expect(getDefaultElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getApparentElectricalPowerMeasurementClusterServer()).toBeDefined();
@@ -419,6 +422,15 @@ describe('Options helpers', () => {
     expect(clientList).toContain(ClosureControl.id);
     expect(clientList).toContain(FlowMeasurement.id);
     expect(clientList.filter((id) => id === ClosureControl.id)).toHaveLength(1);
+  });
+
+  test('addClusterClients merges into existing options with no clientList', async () => {
+    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsNoList' });
+    device.behaviors.require(MatterbridgeBindingServer, {});
+    device.addClusterClients([ClosureControl.id]);
+    await addDevice(aggregator, device);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
   });
 
   test('addRequiredClusterClients requires MatterbridgeBindingServer for device types with required client clusters', async () => {
